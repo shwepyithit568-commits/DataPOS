@@ -1,0 +1,43 @@
+# Hostinger/LiteSpeed injects a bare `upgrade-insecure-requests` CSP at the
+# vhost level, which replaces the app's full policy (incl. frame-src for the
+# Google Maps footer iframe and YouTube embeds). Directory-level Header
+# directives are applied after vhost-level ones, so re-declaring the full
+# policy here wins. A static header can't carry the per-request nonce, so
+# script-src uses 'unsafe-inline' 'unsafe-eval' in production; the nonce-based
+# policy in app/Http/Middleware/SecurityHeaders.php applies locally and takes
+# over automatically if the vhost override is ever removed. Keep the two in sync.
+# Serve the PWA manifest with its proper MIME type so browsers treat it as
+# an installable web app manifest (some ignore it when served as text/plain).
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-src 'self' https://www.google.com https://maps.google.com https://www.youtube.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Handle X-XSRF-Token Header
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>

@@ -1,0 +1,166 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Product extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'store_id',
+        'category_id',
+        'brand_id',
+        'sku',
+        'name',
+        'slug',
+        'description',
+        'meta_description',
+        'retail_price',
+        'old_price',
+        'sale_starts_at',
+        'sale_ends_at',
+        'wholesale_price',
+        'stock_status',
+        'image_path',
+        'warranty',
+        'return_policy',
+        'is_featured',
+    ];
+
+    protected $casts = [
+        'retail_price' => 'decimal:2',
+        'old_price' => 'decimal:2',
+        'sale_starts_at' => 'datetime',
+        'sale_ends_at' => 'datetime',
+        'wholesale_price' => 'decimal:2',
+        'is_featured' => 'boolean',
+    ];
+
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
+    public function images(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order', 'asc');
+    }
+
+    public function reviews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Review::class)->latest();
+    }
+
+    public function approvedReviews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->reviews()->approved();
+    }
+
+    public function variants(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    /**
+     * The default variant (for the price/SKU shown on cards & list pages).
+     */
+    public function defaultVariant(): ?ProductVariant
+    {
+        return $this->variants->firstWhere('is_default', true) ?? $this->variants->first();
+    }
+
+    /**
+     * True when the retail price is lower than the compare-at (old) price —
+     * the storefront shows a discount badge in that case.
+     */
+    public function isOnSale(): bool
+    {
+        return $this->old_price !== null
+            && (float) $this->old_price > (float) $this->retail_price
+            && $this->isSaleActive();
+    }
+
+    public function isSaleActive(): bool
+    {
+        $now = now();
+
+        if ($this->sale_starts_at && $this->sale_starts_at->gt($now)) {
+            return false;
+        }
+
+        if ($this->sale_ends_at && $this->sale_ends_at->lt($now)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function saleWindowLabel(): ?string
+    {
+        if (! $this->isOnSale()) {
+            return null;
+        }
+
+        if ($this->sale_ends_at) {
+            return 'Sale ends ' . $this->sale_ends_at->format('M j, g:i A');
+        }
+
+        if ($this->sale_starts_at) {
+            return 'Limited-time sale';
+        }
+
+        return null;
+    }
+
+    /**
+     * True when a sale is scheduled to start in the future — the storefront
+     * shows these as "starting soon" deals with a countdown to the start.
+     */
+    public function isUpcomingSale(): bool
+    {
+        return $this->old_price !== null
+            && (float) $this->old_price > (float) $this->retail_price
+            && $this->sale_starts_at !== null
+            && $this->sale_starts_at->gt(now());
+    }
+
+    public function discountPercent(): int
+    {
+        if (! $this->isOnSale()) {
+            return 0;
+        }
+        $retail = (float) $this->retail_price;
+        if ($retail <= 0) {
+            return 0;
+        }
+        return (int) round((((float) $this->old_price - $retail) / (float) $this->old_price) * 100);
+    }
+
+    public function getAllImagePathsAttribute(): array
+    {
+        $gallery = $this->images->pluck('image_path')->toArray();
+        if ($this->image_path && !in_array($this->image_path, $gallery)) {
+            array_unshift($gallery, $this->image_path);
+        }
+        return array_values(array_filter($gallery));
+    }
+
+    public function isInStock(): bool
+    {
+        return $this->stock_status === 'in_stock';
+    }
+}

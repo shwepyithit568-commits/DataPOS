@@ -1,0 +1,264 @@
+/* Automatic source detection is disabled (source(none)) so this admin
+   bundle only scans the explicit sources below — storefront product-card /
+   browse classes stay out of the admin CSS. */
+@import 'tailwindcss' source(none);
+@variant dark (&:where(.dark, .dark *));
+
+/* Hide Alpine.js elements until the framework has initialized */
+[x-cloak] { display: none !important; }
+
+/* Local @font-face Definitions (WOFF2 subsets — same files the storefront
+   bundle uses; the browser caches them, so admin pages share them). */
+@font-face {
+    font-family: 'Noto Sans Myanmar';
+    src: url('../assets/fonts/NotoSansMyanmar-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Outfit';
+    src: url('../assets/fonts/Outfit-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('../assets/fonts/Roboto-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Scoped content sources: only admin panel views (+ the shared components
+   the admin UI actually renders). Auth (login/register) and error pages
+   render via their own layouts that load app.css, so they are NOT needed
+   here. The storefront's heavy product/browse components are NOT scanned,
+   keeping the admin bundle small. JS is scanned so the admin toast classes
+   built dynamically in app.js (adminAlerts) are still emitted. */
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+/* Admin panel bundle: only the admin views/layout plus the shared
+   components the admin UI actually renders (toolbar, brand-icon, flag,
+   language-switcher, richtext-editor). The storefront-heavy product-card /
+   product-card-list / product-image / share-button components are NOT
+   scanned, keeping this bundle small. JS is scanned so the admin toast
+   classes built dynamically in app.js (adminAlerts) are still emitted. */
+@source '../views/admin/**/*.blade.php';
+@source '../views/layouts/admin/*.blade.php';
+@source '../views/components/admin/*.blade.php';
+@source '../views/components/brand-icon.blade.php';
+@source '../views/components/flag.blade.php';
+@source '../views/components/language-switcher.blade.php';
+@source '../views/components/richtext-editor.blade.php';
+@source '../js/app.js';
+
+@theme {
+    --font-sans: 'Outfit', 'Noto Sans Myanmar', 'Roboto', ui-sans-serif, system-ui, sans-serif;
+    --font-outfit: 'Outfit', sans-serif;
+    --font-roboto: 'Roboto', sans-serif;
+    --font-myanmar: 'Noto Sans Myanmar', sans-serif;
+}
+
+@layer utilities {
+    .glass-header {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.55));
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .dark .glass-header {
+        background: linear-gradient(180deg, rgba(17, 22, 40, 0.75), rgba(10, 14, 28, 0.6));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .glass-nav {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.5));
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border-top: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: 0 -10px 30px -10px rgba(124, 58, 237, 0.15);
+    }
+
+    .dark .glass-nav {
+        background: linear-gradient(180deg, rgba(15, 20, 36, 0.8), rgba(10, 14, 28, 0.6));
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 -10px 30px -10px rgba(0, 0, 0, 0.6);
+    }
+
+    .glass-badge {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    .glow-indigo {
+        box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.35);
+    }
+
+    .min-touch-target {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .admin-calculator,
+    .admin-calculator button {
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    .admin-calculator button {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* ---- Clean admin design system ----
+   Borderless panels: white surface + hairline-free soft presence. Used by
+   all admin pages for the "clean, full-width, borderless" look. */
+@layer components {
+    .admin-panel {
+        @apply bg-white dark:bg-slate-800/60 rounded-xl transition-colors duration-200;
+    }
+
+    .admin-page-header {
+        @apply flex flex-wrap items-center justify-between gap-3 mb-5;
+    }
+
+    .admin-page-title {
+        @apply text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white font-outfit tracking-tight;
+    }
+
+    .admin-page-sub {
+        @apply text-sm text-slate-500 dark:text-slate-400 mt-0.5;
+    }
+
+    /* ---- Quiet section headings (no heavy rule) ---- */
+    .admin-section-head {
+        @apply flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-2.5;
+    }
+
+    .admin-section-title {
+        @apply text-sm font-bold text-slate-900 dark:text-white tracking-tight;
+    }
+
+    .admin-section-sub {
+        @apply text-xs text-slate-500 dark:text-slate-400;
+    }
+
+    /* ---- Hairline-divided stat grids: one surface, subtle 1px separators ---- */
+    .admin-hairline-grid {
+        @apply grid gap-px overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-700/50;
+    }
+
+    .admin-hairline-cell {
+        @apply min-w-0 bg-white dark:bg-slate-800/90 p-3 sm:p-4;
+    }
+
+    /* ---- Stat blocks ---- */
+    .admin-stat-label {
+        @apply flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 leading-tight;
+    }
+
+    .admin-stat-value {
+        @apply mt-1.5 text-xl sm:text-2xl font-extrabold font-outfit tabular-nums text-slate-900 dark:text-white leading-none break-words;
+    }
+
+    .admin-stat-sub {
+        @apply mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-snug;
+    }
+
+    /* ---- Buttons: one primary + calm secondaries ---- */
+    .admin-primary-btn {
+        @apply inline-flex items-center justify-center gap-1.5 min-h-11 px-4 rounded-lg bg-violet-600 text-white text-sm font-bold shadow-sm transition hover:bg-violet-700 active:scale-[.98] focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-1 dark:focus:ring-offset-slate-900;
+    }
+
+    .admin-secondary-btn {
+        @apply inline-flex items-center justify-center gap-1.5 min-h-11 px-4 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-semibold border border-slate-200 dark:border-slate-700 transition hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white active:scale-[.98] focus:outline-none focus:ring-2 focus:ring-violet-500;
+    }
+
+    /* ---- Compact empty states ---- */
+    .admin-empty {
+        @apply flex flex-col items-center justify-center text-center px-4 py-5 rounded-lg bg-slate-50 dark:bg-slate-800/50;
+    }
+
+    .admin-empty-icon {
+        @apply inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700/80 text-slate-400 dark:text-slate-300 mb-2;
+    }
+
+    .admin-empty-title {
+        @apply text-sm font-semibold text-slate-600 dark:text-slate-300;
+    }
+
+    .admin-empty-sub {
+        @apply text-xs text-slate-400 dark:text-slate-500 mt-1;
+    }
+
+    /* ---- Quiet hairline (replaces heavy section rules) ---- */
+    .admin-quiet-divider {
+        @apply border-b border-slate-100 dark:border-slate-800/70;
+    }
+}
+
+/* Reserve the scrollbar gutter so pages don't shift horizontally when navigating
+   between long pages (scrollbar present) and short pages (no scrollbar). */
+html {
+    scrollbar-gutter: stable;
+}
+
+/* Custom thin branded scrollbar for horizontal scroll containers */
+.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+    height: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.5);
+    border-radius: 999px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.7);
+}
+.dark .scrollbar-thin {
+    scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+}
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .scrollbar-thin {
+        scrollbar-width: none;
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* ---- Site-wide readability: bolden key text weights ---- */
+.font-medium {
+    font-weight: 600;
+}
+.font-semibold {
+    font-weight: 700;
+}
+.font-bold {
+    font-weight: 800;
+}
+.font-extrabold {
+    font-weight: 900;
+}
+h1, h2, h3, h4 {
+    font-weight: 800;
+}

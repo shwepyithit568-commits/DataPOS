@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Admin areas and account pages are not meant for search engines.
+Disallow: /login
+Disallow: /register
+Disallow: /admin
+Disallow: /store/*/admin
+Disallow: /glass-finder/favorite

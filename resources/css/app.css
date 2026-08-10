@@ -1,0 +1,202 @@
+/* Automatic source detection is disabled (source(none)) so this storefront
+   bundle only scans the explicit sources below — the admin panel's classes
+   stay out of the storefront CSS entirely. */
+@import 'tailwindcss' source(none);
+@variant dark (&:where(.dark, .dark *));
+
+/* Hide Alpine.js elements until the framework has initialized */
+[x-cloak] { display: none !important; }
+
+
+/* Local @font-face Definitions (WOFF2 subsets — ~80% smaller than the
+   original TTFs; Latin + Myanmar + symbol ranges only). WOFF2 is
+   supported by every browser since 2018, so no TTF fallback is shipped. */
+@font-face {
+    font-family: 'Noto Sans Myanmar';
+    src: url('../assets/fonts/NotoSansMyanmar-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Outfit';
+    src: url('../assets/fonts/Outfit-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('../assets/fonts/Roboto-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+/* Storefront bundle: explicit scoped sources. The admin panel has its own
+   admin.css bundle, so the admin views/layout are intentionally NOT scanned
+   here — that keeps the storefront CSS free of admin-only utilities. */
+@source '../views/storefront/**/*.blade.php';
+@source '../views/customer/**/*.blade.php';
+@source '../views/auth/**/*.blade.php';
+@source '../views/errors/**/*.blade.php';
+@source '../views/layouts/storefront/*.blade.php';
+@source '../views/layouts/auth/*.blade.php';
+@source '../views/components/**/*.blade.php';
+@source not '../views/components/admin/**';
+@source '../views/welcome.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Outfit', 'Noto Sans Myanmar', 'Roboto', ui-sans-serif, system-ui, sans-serif;
+    --font-outfit: 'Outfit', sans-serif;
+    --font-roboto: 'Roboto', sans-serif;
+    --font-myanmar: 'Noto Sans Myanmar', sans-serif;
+}
+
+@layer utilities {
+    /* Solid-card surfaces for performance on low-end phones.
+       No backdrop-filter — cards are opaque so scrolling stays cheap.
+       Interactive overlays (menus/search/drawers) keep backdrop-blur separately. */
+    /* Shared badge base (discount/in-stock/featured pills over product images).
+       Color-specific gradient/shadow/border classes are added per instance. */
+    .badge-discount {
+        @apply px-2 py-0.5 text-xs font-extrabold rounded-full text-white backdrop-blur-md shadow-md border whitespace-nowrap;
+    }
+
+    /* Brand placeholder tile — hue is set per element via --cloud-hue (0-359).
+       Mirrors window.brandHue() so server + client cards color identically.
+       Hue wraps naturally (hsl accepts any angle), so no % 360 needed. */
+    .cloud-hue-bg {
+        background: linear-gradient(135deg, hsl(var(--cloud-hue, 210), 72%, 90%), hsl(calc(var(--cloud-hue, 210) + 45), 70%, 82%));
+    }
+
+    .glass-header {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.55));
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .dark .glass-header {
+        background: linear-gradient(180deg, rgba(17, 22, 40, 0.75), rgba(10, 14, 28, 0.6));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .glass-nav {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.5));
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border-top: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: 0 -10px 30px -10px rgba(124, 58, 237, 0.15);
+    }
+
+    .dark .glass-nav {
+        background: linear-gradient(180deg, rgba(15, 20, 36, 0.8), rgba(10, 14, 28, 0.6));
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 -10px 30px -10px rgba(0, 0, 0, 0.6);
+    }
+
+    .glass-badge {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    .glow-indigo {
+        box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.35);
+    }
+
+    .min-touch-target {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .admin-calculator,
+    .admin-calculator button {
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    .admin-calculator button {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* Reserve the scrollbar gutter so pages don't shift horizontally when navigating
+   between long pages (scrollbar present) and short pages (no scrollbar). */
+html {
+    scrollbar-gutter: stable;
+}
+
+/* Custom thin branded scrollbar for horizontal scroll containers */
+.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+    height: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.5);
+    border-radius: 999px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.7);
+}
+.dark .scrollbar-thin {
+    scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+}
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .scrollbar-thin {
+        scrollbar-width: none;
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* ---- scrollbar-none: hide scrollbar on both Firefox & WebKit ---- */
+.scrollbar-none {
+    scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+    display: none;
+}
+
+/* ---- Site-wide readability: bolden key text weights ----
+   These rules are unlayered, so they win over Tailwind's layered
+   utilities. Body copy (font-normal) is left untouched; headings and
+   every important weight step (medium → semibold → bold → extrabold)
+   are pushed one step heavier so text is clearly legible on phones. */
+.font-medium {
+    font-weight: 600;
+}
+.font-semibold {
+    font-weight: 700;
+}
+.font-bold {
+    font-weight: 800;
+}
+.font-extrabold {
+    font-weight: 900;
+}
+h1, h2, h3, h4 {
+    font-weight: 800;
+}
+
+

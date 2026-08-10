@@ -1,0 +1,16 @@
+HTTP/1.1 200 OK
+Host: localhost:8500
+Connection: close
+X-Powered-By: PHP/8.2.12
+Content-Type: text/html; charset=utf-8
+Cache-Control: no-cache, private
+Date: Mon, 27 Jul 2026 19:55:49 GMT
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-<per-request>' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-src 'self' https://www.google.com https://maps.google.com https://www.youtube.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'
+Set-Cookie: XSRF-TOKEN=<redacted>; expires=<redacted>; Max-Age=7200; path=/; samesite=lax
+Set-Cookie: datapos-commerce-session=<redacted>; expires=<redacted>; Max-Age=7200; path=/; httponly; samesite=lax
+
