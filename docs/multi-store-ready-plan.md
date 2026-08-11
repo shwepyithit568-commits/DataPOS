@@ -2,7 +2,7 @@
 
 > **ရည်ရွယ်ချက်:** Admin ကနေ နှိပ်ပြီး store အသစ် တည်ဆောက်/ပြင်/ပိတ်နိုင်အောင် လုပ်ဖို့ + store တစ်ခုထက်ပိုရှိတဲ့အခါ site မပျက်အောင် ပြင်ဖို့။
 >
-> **ရက်စွဲ:** 2026-08-09 · **Status:** Plan (မစရသေးဘူး) · **ဆုံးဖြတ်သူ:** Project Owner (ဆရာကြီး)
+> **ရက်စွဲ:** 2026-08-09 · **Status:** Phase 1 (Resolver Fix) ✅ Done 2026-08-11 · Phase 2 (Admin Store Management UI) ✅ Done 2026-08-11 — Phase 3 (full suite + build + UAT) / Phase 4 (commit → push → deploy) ကျန် · **ဆုံးဖြတ်သူ:** Project Owner (ဆရာကြီး)
 
 ---
 
@@ -48,7 +48,7 @@
 | Phase | အလုပ် | Priority | ဘာကြောင့် |
 |---|---|---|---|
 | **0** | Baseline — DB backup + လက်ရှိ tests ပြေး | မဖြစ်မနေ | ဘာမှမလုပ်ခင် လုံခြုံမှု |
-| **1** | Resolver fix — `is_primary` concept ထည့်ပြီး fallback ပြင်ရေး | **မဖြစ်မနေ (Critical)** | ဒါမရှိရင် store #2 ဖွင့်တာနဲ့ site ပျက် |
+| **1** | Resolver fix — `is_primary` concept ထည့်ပြီး fallback ပြင်ရေး | **မဖြစ်မနေ (Critical)** | ✅ **Done 2026-08-11** — migration `2026_08_11_000001` + `Store.is_primary` + resolver fallback + dashboard consistency + `StoreContextResolverTest` (6 tests) — changelog item 254 |
 | **2** | Admin Store Management UI — list/create/edit/deactivate | Feature | ဆရာကြီးရဲ့ ပင်မ တောင်းဆိုချက် |
 | **3** | Tests + Local UAT | မဖြစ်မနေ | regression မဖြစ်အောင် |
 | **4** | Deploy + Production verify | — | Deploy #19 ခန့် |

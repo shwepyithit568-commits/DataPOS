@@ -55,7 +55,22 @@ class ResolveStoreContext
             }
         }
 
+        // Primary active store wins (multi-store-ready plan Phase 1) — this
+        // keeps the root site working even when several stores are active.
+        // If more than one store is somehow flagged primary (data drift), pick
+        // the lowest id deterministically instead of returning null.
+        $primary = Store::where('is_active', true)
+            ->where('is_primary', true)
+            ->orderBy('id')
+            ->first();
+
+        if ($primary) {
+            return $primary;
+        }
+
+        // Legacy fallback: a single active store only.
         $activeStores = Store::where('is_active', true)
+            ->orderBy('id')
             ->limit(2)
             ->get();
 

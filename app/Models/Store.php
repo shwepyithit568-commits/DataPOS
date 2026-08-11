@@ -16,10 +16,12 @@ class Store extends Model
         'viber_number',
         'telegram_username',
         'is_active',
+        'is_primary',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'is_active'  => 'boolean',
+        'is_primary' => 'boolean',
     ];
 
     public function users(): BelongsToMany
@@ -27,6 +29,11 @@ class Store extends Model
         return $this->belongsToMany(User::class)
             ->withPivot(['role', 'status'])
             ->withTimestamps();
+    }
+
+    public function products(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Product::class);
     }
 
     public function setting(): \Illuminate\Database\Eloquent\Relations\HasOne

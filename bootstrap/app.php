@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'set.locale' => \App\Http\Middleware\SetLocale::class,
+            'platform_owner' => \App\Http\Middleware\EnsurePlatformOwner::class,
         ]);
 
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);

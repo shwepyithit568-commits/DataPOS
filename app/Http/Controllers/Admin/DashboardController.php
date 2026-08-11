@@ -36,7 +36,9 @@ class DashboardController extends Controller
             return view('admin.dashboard_select_store', compact('stores'));
         }
 
-        $store = $context->getStore() ?? Store::first();
+        $store = $context->getStore()
+            ?? Store::where('is_active', true)->where('is_primary', true)->orderBy('id')->first()
+            ?? Store::first();
 
         if (!$store) {
             $store = new Store(['id' => 0, 'name' => 'Default Store', 'slug' => 'default']);

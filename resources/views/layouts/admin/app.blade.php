@@ -276,6 +276,21 @@
                 </x-admin.nav-link>
             </div>
 
+            @if (auth()->user()?->isPlatformOwner())
+                @php $isStoreManagement = request()->is('admin/stores*'); @endphp
+                <div>
+                    <x-admin.nav-link variant="main"
+                        :href="route('admin.stores.index')"
+                        route-name="admin.stores.index"
+                        :active="$isStoreManagement"
+                        :label="__('messages.store_management')">
+                        <x-slot:icon>
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21V8l9-5 9 5v13M9 21v-6h6v6M3 21h18"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+                </div>
+            @endif
+
             @if ($canAccessStaffTools)
                 <x-admin.nav-group name="catalog" :label="__('messages.catalog')" icon-class="bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
                     <x-slot:icon>

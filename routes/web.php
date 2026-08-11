@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\HomeBannerController;
 use App\Http\Controllers\Admin\ImportHistoryController;
 use App\Http\Controllers\Admin\OrderAdminController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\StoreManagementController;
 use App\Http\Controllers\Admin\StoreSettingController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\VariantPresetController;
@@ -367,6 +368,18 @@ Route::get('/sitemap.xml', function () {
 // Admin Platform Owner global routes
 Route::middleware(['auth', SetLocale::class])->prefix('admin')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+    // Platform-level Store Management — deliberately NOT store-scoped (no
+    // store context needed) and platform_owner only (multi-store-ready plan §6.2).
+    Route::middleware('platform_owner')->group(function () {
+        Route::get('/stores', [StoreManagementController::class, 'index'])->name('admin.stores.index');
+        Route::get('/stores/create', [StoreManagementController::class, 'create'])->name('admin.stores.create');
+        Route::post('/stores', [StoreManagementController::class, 'store'])->name('admin.stores.store');
+        Route::get('/stores/{store}/edit', [StoreManagementController::class, 'edit'])->name('admin.stores.edit');
+        Route::put('/stores/{store}', [StoreManagementController::class, 'update'])->name('admin.stores.update');
+        Route::delete('/stores/{store}', [StoreManagementController::class, 'destroy'])->name('admin.stores.destroy');
+        Route::post('/stores/{store}/activate', [StoreManagementController::class, 'activate'])->name('admin.stores.activate');
+    });
 });
 
 // Store scoped admin routes protected by context & access middleware
