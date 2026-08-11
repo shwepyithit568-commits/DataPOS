@@ -189,12 +189,12 @@ flowchart TD
 
 # 5. Ecommerce နှင့် POS ဆက်နွယ်မှု — Confirmed
 
-Phase 1 တွင် Ecommerce နှင့် POS ကို Loosely Coupled ပုံစံဖြင့်ထားမည်။
+> **Amendment (2026-08-10, Owner Approved):** Ecommerce နှင့် POS သည် **တူညီသော Inventory Ledger** ကို Source of Truth အဖြစ် သုံးရမည် (§14)။ `products.stock_status` သည် Ledger မှ **Derived** ဖြစ်သည် — migration ကာလအတွင်း Cache / Compatibility Field အဖြစ်သာ ထားနိုင်ပြီး သီးခြား Competing Source of Truth အဖြစ် မသုံးရ။
 
 - Ecommerce သည် Online-only ဖြစ်မည်။
-- Ecommerce `In Stock / Out of Stock` ကို အစပိုင်းတွင် Manual Maintain လုပ်မည်။
-- Online Order များကို Viber / Telegram မှတစ်ဆင့် လက်ရှိ Business Process အတိုင်း Confirm လုပ်နိုင်သည်။
-- Confirmed Online Order ကို POS ထဲ Manual Entry လုပ်မည်။
+- Online Order Lifecycle ကို **Adapter / Service** မှတစ်ဆင့် Ledger သို့ ထည့်ရမည် — `online_reserve` / `online_confirm` / `online_cancel` Movement Types (§14.1) — Phase 1 Foundation ထဲ ပါ။
+- Online Order များကို Viber / Telegram မှတစ်ဆင့် လက်ရှိ Business Process အတိုင်း Confirm လုပ်နိုင်သည် — Confirm ဖြစ်သော Order ကို Ledger သို့ Confirmation Movement ဖြင့် ထည့်မည် (Manual Entry ဖြင့် မဟုတ်)။
+- POS နှင့် Ecommerce သည် တူညီသော Stock ကို မျှဝေသုံးစွဲသောကြောင့် **Oversell မဖြစ်စေရ**။
 - POS Sale တွင် `sale_source` Field ရှိရမည်။
 
 Values—
@@ -211,7 +211,7 @@ Optional—
 - Ecommerce Order Reference
 - Customer Information
 
-Phase 1 တွင် Automatic Ecommerce Inventory Sync သည် Out of Scope ဖြစ်သည်။
+Ecommerce Inventory ကို POS နှင့် သီးခြား Manual Maintain လုပ်ခြင်းသည် မရှိတော့ပါ — Inventory Adapter (Phase 1 Foundation) မှ Ledger သို့ အလိုအလျောက် ထည့်ရမည်။
 
 Ecommerce `orders` table ကို POS Sales အတွက် တစ်ခုတည်းသော Transaction Table အဖြစ် မသုံးရ။
 
@@ -561,6 +561,8 @@ Different Branch အတွက် Different Application Build မလိုရ။
 
 တစ်ခုတည်းကို Inventory Truth အဖြစ် မသုံးရ။
 
+Ledger သည် **POS ရော Ecommerce ရော** နှစ်ခုလုံး၏ Source of Truth ဖြစ်သည် (POS-only Stock System မဟုတ်)။ Ecommerce Order များကို Adapter / Service မှတစ်ဆင့် ထည့်ရမည်။
+
 Stock Change တိုင်း Immutable Inventory Movement တစ်ခု ဖန်တီးရမည်။
 
 Recommended Entities—
@@ -593,6 +595,9 @@ Minimum Movement Types—
 | `adjustment_in` | + |
 | `adjustment_out` | − |
 | `internal_use` | − |
+| `online_reserve` | − (reserve hold — available မှ ပိတ်) |
+| `online_confirm` | 0 (reserve → committed သို့ ပြောင်း — နှစ်ထပ်မနုတ်) |
+| `online_cancel` | + (reserve ကို ပြန်လွှတ် — available ပြန်) |
 
 Movement တိုင်းတွင် အနည်းဆုံး—
 
@@ -644,6 +649,17 @@ Exception လိုပါက—
 - Audit Log
 
 မဖြစ်မနေ ရှိရမည်။
+
+---
+
+## 14.4 Inventory Valuation — Weighted-Average Costing (2026-08-10 Owner Approved)
+
+- Unit Cost ကို **Weighted-Average** ဖြင့် တွက်ရမည်။
+- Receiving ပြုလုပ်ချိန်တွင် Average Cost ပြန်တွက်: `(လက်ရှိ qty × လက်ရှိ avg cost + အဝင် qty × အဝင် unit cost) ÷ (စုစုပေါင်း qty)`
+- Return / Adjustment များသည် **Current Average Cost** ဖြင့် သတ်မှတ်ရမည်။
+- Serial / IMEI-specific Item များသည် လိုအပ်ပါက **Specific Cost** ထားနိုင်သည် (retain specific cost where necessary)။
+- **Negative Stock ဖြစ်ပါက Average Cost Calculation ကို ရှင်းလင်းစွာ သတ်မှတ်ရမည်** — Default က Negative Stock ကို Block (§14.3)။ Authorized Manager Override ကို နောက်မှ ဒီဇိုင်းလုပ်နိုင်ပြီး Override တိုင်း **Audit + မြင်သာစွာ Report** လုပ်ရမည်။
+- Money / Quantity အတွက် Float မသုံးရ — MMK ကို Integer (ကျပ်) ဖြင့် သိမ်း၊ Quantity ကို DECIMAL ဖြင့် သိမ်းရမည် (Open Decision #15 — Resolved 2026-08-10)။
 
 ---
 
@@ -1280,60 +1296,82 @@ Product Catalog အကြီးကြီးကို Alpine.js ထဲ တစ်�
 
 # 28. Implementation Phases — Approved Order
 
-## Phase 0 — Repository + Data Audit
+## Phase 0 — Architecture Decisions & Risk Removal
 
-- Laravel Version
-- Packages
-- Modules
-- Routes
-- Models
-- Migrations
-- Policies
-- Tests
-- Deployment Environment
-- Existing Store/User/Product/Order Mapping
-- AppSheet / Sheets Data Profile
-- Gap Analysis
-- Migration Plan
+- Tenancy / Deployment Decision (Cloud SaaS vs Local Install — 02-target-design §2.3)
+- Store / Domain Resolver Fix (`docs/multi-store-ready-plan.md`)
+- Shared Ecommerce / POS Inventory Source of Truth Design (§5, §14)
+- Money & Rounding Policy (Open Decision #15 — Resolved)
+- Weighted-Average Inventory Valuation (§14.4)
+- Negative-Stock Policy (§14.3)
+- Offline Mode Separation (Cloud PWA Queue vs Local LAN — §19, 02-target-design §2.12)
+- Permission Matrix — Store Modules / Branch Capabilities / User Roles / Approvals (§8)
+- Data-Quality Audit
+- Architecture Decision Records (ADR)
+- Detailed Acceptance Tests
 
 Broad Refactor မလုပ်မီ Owner Review လိုရမည်။
 
 ---
 
-## Phase 1 — Foundation
+## Phase 1 — Minimum Shared Foundation
 
-- Branches
-- Warehouses
-- Capabilities
-- User Branch Roles
-- Policies
+- Default Branch / Warehouse (Store တိုင်းတွင် auto-create — 02-target-design §2.11)
+- Store Module Middleware — Static Routes + Module/Capability Enforcement (route:cache compatible)
+- Branch Roles & Policies
 - Device Registration / Revocation
-- SKU / Barcode Normalization
-- Inventory Movement Ledger
-- Derived Balances
+- SKU / Barcode / UOM Normalization
+- Customers & Suppliers
+- Inventory Movement Ledger + Derived Balances
+- Opening Stock (`opening_balance`)
+- Ecommerce Inventory Adapter (`orders` → ledger: reserve / confirm / cancel)
 - Audit Foundation
 - Approval Foundation
+- Concurrency & Idempotency Tests
 
 ---
 
-## Phase 2 — Online POS
+## Phase 2 — Usable Online POS MVP
 
-- Cart
-- Pricing
-- Payments
-- Receipt
-- Posted Sale
-- Inventory Integration
-- Finance Integration
-- Returns
-- Void / Reversal
-- Audit
+- Cashier Shifts + Opening Cash
+- Barcode / HID Scanner Input
+- Product & Variant Search
+- Cart + Hold / Resume Sale
+- Retail & Wholesale Pricing
+- Split Payments — Cash / KPay / WavePay / CB Pay / MMQR
+- **Customer Credit / Debt**
+- Receipt & Reprint
+- Sale Return / Refund / Reversal
+- Simple Stock Receiving
+- Opening Stock
+- Inventory Adjustment (Manager Approval)
+- **Daily Closing** (Expected vs Actual Cash)
+- Minimal Sales / Cash / Stock Reports
+- Audit Trail
+- Posted Sale — Atomic (Sale + Payments + Movements + Finance in one transaction)
 
 Offline Complexity မထည့်မီ Online Integrity ကို အရင် Validate လုပ်ရမည်။
 
 ---
 
-## Phase 3 — Offline PWA
+## Phase 2.5 — AlinnThit Production Pilot
+
+- Clean Product / Customer / Supplier Data
+- Opening-Stock Reconciliation
+- Debt Opening Balances
+- AppSheet / Google Sheets Parallel Validation
+- Real Cashier Workflow
+- Returns / Refunds + Customer Debt + Daily Closing
+- Backup & Restore Test
+- Performance + Store-Isolation Test
+- Several Weeks of Observed Real Usage
+- Written Recovery / Cutover Runbook
+
+Pilot Workflow မတည်မငြိမ်ခင် ပြင်ပဖောက်သည်ကို မရောင်းရ။
+
+---
+
+## Phase 3 — Cloud PWA Offline Queue (Cloud SaaS အတွက်သာ)
 
 - Installable `/pos`
 - IndexedDB Branch Dataset
@@ -1348,39 +1386,46 @@ Offline Complexity မထည့်မီ Online Integrity ကို အရင်
 
 ---
 
-## Phase 4 — Operations
+## Phase 4 — Operations Modules
 
-- Purchases
+- Full Purchasing
 - Purchase Returns
+- Supplier Payables
 - Adjustments
 - Stock Counts
 - Transfers
 - Service Jobs
 - Service Parts
-- Customer Debt
-- Supplier Payable
 - Expenses
-- Finance
-- Daily Closing
-- Reports
+- Finance Ledger
+- Finance / Accounting Period Closing
+- Advanced Reports
 
 ---
 
-## Phase 5 — Migration + Cutover
+## Phase 5 — Local LAN/SQLite Edition & Resale Readiness
 
-- Clean Legacy Data
-- Approved Import
-- Opening Balance Reconciliation
-- Inventory Reconciliation
-- Debt Reconciliation
-- Active Service Jobs Migration
-- Staff Training
-- Parallel Validation
-- Controlled Cutover
-- AppSheet Read-only
-- Retirement
+### 5a. Local Installation, Backup, Restore, Update
+- SQLite Single-tenant Install (Model B — 02-target-design §2.3)
+- Browser Devices → LAN / Wi-Fi
+- **Versioned Backup / Restore** — WAL checkpoint, consistent snapshot, assets, manifest, checksums, integrity verify, restore dry-run, pre-restore backup, version compatibility
+- Versioned Update Workflow
+- ပထမ Local Release တွင် Central Cloud Sync မပါ
 
-Future Ecommerce Inventory / Order Automation ကို Separate Approved Phase အဖြစ်သာ လုပ်ရမည်။
+### 5b. Provisioning, Plans, Licensing, Support, Monitoring
+- Offline License — Signed Payload, Public-Key Verify — **Private Key ကို Install ထဲ မထည့်ရ**
+- Tenant Provisioning (Cloud) + Plan Gating
+- Store Support Mode — Reason / Time / Audit (02-target-design §2.13)
+- Monitoring + Error Reporting + Measurable Upgrade Triggers (02-target-design §2.16)
+- Resale Documentation + Training
+
+---
+
+## Phase 6 — Customer-driven Industry Packs
+
+Validated Demand ရှိမှသာ ဆောက်မည် — Pharmacy / Gold Shop / Grocery / Restaurant / Fuel / Fashion Matrix
+
+> Cloud PWA Offline Sync (§19) နှင့် Local LAN/SQLite Mode သည် **မတူညီသော System နှစ်ခု** — Phase တစ်ခုထဲ မရော။
 
 ---
 
@@ -1720,7 +1765,7 @@ AI Agent သည် အောက်ပါအခြေအနေတွင် ရပ
 12. Barcode Scanner Model
 13. Label Printer Model
 14. Tax Usage
-15. Price / Discount Calculation Rules
+15. Price / Discount Calculation Rules — **RESOLVED 2026-08-10 (Owner):** Money/rounding policy — Float မသုံး၊ MMK integer (ကျပ်)၊ quantity DECIMAL၊ discount → tax → grand total စဉ်၊ receipt round ကို final step တစ်ခါတည်း၊ posted sale totals immutable (02-target-design §2.6, §14.4)
 16. Negative Stock Exception Policy
 17. Return / Exchange Time Limits
 18. Item Condition Rules

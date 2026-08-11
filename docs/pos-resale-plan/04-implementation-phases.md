@@ -1,137 +1,213 @@
 # ၄။ တည်ဆောက်ရမယ့် အဆင့်ဆင့် (Implementation Phases)
 
-> **ဒီဖိုင်မှာ:** POS စနစ်ကို ဘယ်ကစပြီး ဘယ်လို အဆင့်ဆင့် ဆောက်မလဲ — SoT §19 ကို လက်တွေ့ကျအောင် ခွဲထားတာ။
+> **ဒီဖိုင်မှာ:** POS စနစ်ကို ဘယ်ကစပြီး ဘယ်လို အဆင့်ဆင့် ဆောက်မလဲ။
+>
+> **Revision 2 (2026-08-10):** Owner မှ အတည်ပြုထားသော phase structure အသစ် — MVP scope ပြင်ပြီး (debt + closing က Phase 2)၊ AlinnThit pilot phase အသစ် ထည့်ပြီး၊ offline system ၂ မျိုး ခွဲပြီး။
 >
 > **မူအရ:** အဆင့်တိုင်း ပြီးရင် စမ်းသပ်ပြီးမှ နောက်တစ်ဆင့်။ မလိုအပ်တဲ့အရာ ကြိုမဆောက်နဲ့။
 
 ---
 
-## Phase 0 — Audit & Foundation (အခု စလို့ရပြီ)
+## Implementation Order (အဓိက ဦးစားပေး)
 
-**ရည်ရွယ်ချက်:** ဘာရှိပြီးသားလဲ၊ ဘာလိုလဲ သေချာသိ + အုတ်မြစ် ပြင်ဆင်
+1. **Online Cloud POS** (Phase 0 → 2)
+2. **AlinnThit production pilot** (Phase 2.5) — resale မလုပ်ခင် မဖြစ်မနေ
+3. **Cloud PWA offline queue** (Phase 3)
+4. **Local LAN/SQLite edition** (Phase 5)
+5. **Cloud-to-local sync** — proven customer demand ရှိမှသာ
+
+> Cloud PWA offline sync နဲ့ Local-server mode ကို phase တစ်ခုထဲ **မရော**။
+
+---
+
+## Phase 0 — Architecture Decisions & Risk Removal
+
+**ရည်ရွယ်ချက်:** ကုဒ်မရေးခင် ဆုံးဖြတ်ချက်တွေ အတည်ပြု + risk ရှင်းပြီး foundation ပြင်ဆင်
 
 | အလုပ် | အသေးစိတ် | Status |
 |---|---|---|
-| Codebase audit | Laravel 12, models, routes, tests တွေ inventory | ✅ ဒီဖိုင်တွေထဲမှာ ရေးပြီးသား |
-| Multi-store resolver ပြင် | Store ၂ ခုရှိရင် home မပျက်အောင် | ⏳ `docs/multi-store-ready-plan.md` ရှိပြီးသား |
-| Data quality report | AppSheet/Google Sheets ဒေတာ စစ် | ⏳ စရန် |
-| Gap analysis | SoT vs လက်ရှိ codebase — ကွာဟချက် | ⏳ စရန် |
+| Tenancy/deployment decision | Cloud SaaS vs Local install — 02-target-design §2.3 | ✅ Approved 2026-08-10 — SoT နှစ်ဖိုင်လုံးတွင် မှတ်ပြီး |
+| Store/domain resolver ပြင် | `docs/multi-store-ready-plan.md` အတိုင်း — store ၂ ခု active ရင် home မပျက်အောင် | ⏳ ရှိပြီးသား plan — စရန် (ပထမဆုံး implementation task) |
+| Shared Ecommerce/POS inventory source of truth | Ledger ဒီဇိုင်း + adapter + stock_status derived ပြောင်း | ✅ SoT §5/§14.1 (MM) + §4/§10.1 (EN) ပြင်ပြီး — implementation စရန် |
+| Money & rounding policy | Integer MMK, precision, rounding order (02 §2.6) — acceptance test နဲ့ သေချာ | ✅ Approved 2026-08-10 — SoT Open Decision #15/#6 Resolved |
+| Weighted-average valuation | CostingService design (02 §2.7) | ✅ Rule က SoT §14.4/§10.4 မှာ မှတ်ပြီး — CostingService implementation စရန် |
+| Negative-stock policy | Default block + future override rules (02 §2.8) | ⏳ Owner approve လို |
+| Offline mode separation | Cloud queue vs Local — 02 §2.12 | ✅ ဒီစာရွက်စာတမ်းမှာ သတ်မှတ်ပြီး |
+| Permission matrix | Store modules / branch capabilities / user roles / approvals — 4 levels | ⏳ စရန် |
+| Data-quality audit | AppSheet/Google Sheets ဒေတာ စစ် | ⏳ စရန် |
+| Architecture Decision Records (ADR) | ဆုံးဖြတ်ချက်တိုင်း ADR ရေး | ⏳ စရန် |
+| Detailed acceptance tests | Phase 1–2 အတွက် acceptance criteria | ⏳ စရန် |
 
-**ထွက်ကုန်:** Phase 1 အတွက် task breakdown + acceptance tests
-
----
-
-## Phase 1 — POS Foundation (အရင်ဆုံး ဆောက်ရမယ့် အုတ်မြစ်)
-
-**ရည်ရွယ်ချက်:** POS ရဲ့ အခြေခံ data model + security
-
-| အလုပ် | အသေးစိတ် |
-|---|---|
-| Branches + Warehouses | `branches`, `warehouses` tables + CRUD |
-| Capabilities | `capabilities`, `branch_capabilities` — ဖွင့်ပိတ် ထိန်းချုပ်မှု |
-| User branch roles + policies | `user_branch_roles` — Owner/Admin/Manager/Cashier/Read-only |
-| Device registration/revocation | POS device တွေ မှတ်ပုံတင် |
-| **enabled_modules (feature flags)** | Store အလိုက် POS/Ecommerce ဖွင့်ပိတ် — **resale အတွက် အရေးအကြီးဆုံး** |
-| SKU/barcode normalization | Product မှာ UOM + barcode ထည့် |
-| **Inventory movement ledger** | `inventory_movements` + `inventory_balances` — SoT §10 |
-| Audit + approval foundation | `audit_logs`, `approvals` — SoT §15 |
-| Backup/Restore commands | `php artisan backup` / `restore` |
-
-**ဘာကြောင့် ဒီအစီအစဉ်လဲ:** ဒါတွေက နောက် module အကုန်ရဲ့ အောက်ခံ — ဒါမရှိရင် ဘာမှ မဆောက်နဲ့။
+**ထွက်ကုန်:** Approved decisions + ADRs + Phase 1 task breakdown + acceptance tests
 
 ---
 
-## Phase 2 — Online POS (ဦးစွာ online — offline မရောက်ခင်)
+## Phase 1 — Minimum Shared Foundation
 
-**ရည်ရွယ်ချက်:** Core POS ကို online မှာ အရင် အလုပ်ဖြစ်အောင် (complexity မြင့်တဲ့ offline ကို နောက်မှ)
+**ရည်ရွယ်ချက်:** POS ရော Ecommerce ရော မှီခိုရမယ့် အုတ်မြစ် — ဒါမရှိရင် ဘာမှ မဆောက်နဲ့
 
 | အလုပ် | အသေးစိတ် |
 |---|---|
-| POS cart + payment + receipt | `/pos` UI — barcode scan, qty, payment methods |
-| Posted sale transaction | Sale header + lines + payments — atomic (SoT §11.2) |
-| Stock integration | Sale → inventory movement − |
-| Finance integration | Sale → finance ledger entry |
-| Returns / Void / Reversal | မှားရင် ပြန်ပြင် (ရိုက်ဖျက်လို့ မရ — SoT §11.1) |
-| Audit | အကုန် မှတ်တမ်း |
+| Default branch/warehouse | Store တိုင်းကို default branch + warehouse auto-create (02 §2.11) |
+| Store module middleware | Static routes + module/capability enforcement (02 §2.4) — route:cache compatible |
+| Branch roles & policies | `user_branch_roles` + policies — Owner/Admin/Manager/Cashier/Read-only |
+| Barcode/UOM foundation | Product UOM + barcode + decimal qty |
+| Customers & suppliers | Master data — debt အတွက် foundation |
+| **Inventory movements & balances** | Ledger (02 §2.5) — immutable, idempotent, transactional |
+| Opening stock | `opening_balance` movements — migration batch နဲ့ |
+| **Ecommerce inventory adapter** | `orders` → ledger integration — reserve/confirm/cancel — oversell မဖြစ်ရ |
+| Audit & approvals | `audit_logs`, `approvals` (SoT §15, §20) |
+| Concurrency & idempotency tests | Parallel sale, duplicate posting, retry — အကုန် test |
 
-**ဘာကြောင့် online ဦးစား:** Offline sync က ရှုပ်ထွေးတယ် — online မှာ မှန်အောင် စမ်းပြီးမှ offline ထည့်မယ် (SoT §19 Phase 2 → 3)။
+**Exit criteria:** Ledger က POS + Ecommerce နှစ်ဖက်စလုံး ထိန်းနိုင် · cross-store leak 0 · route:cache + module middleware အလုပ်ဖြစ် · SQLite+MySQL green
 
 ---
 
-## Phase 3 — Offline PWA + Sync (offline-first)
+## Phase 2 — Usable Online POS MVP
 
-**ရည်ရွယ်ချက်:** Internet မရှိတဲ့အခါလည်း ဆက်အလုပ်လုပ်နိုင်
+**ရည်ရွယ်ချက်:** ဆိုင်မှာ တကယ်သုံးလို့ရတဲ့ online POS — offline complexity မထည့်ခင် online integrity အရင် validate (SoT §28)
 
 | အလုပ် | အသေးစိတ် |
 |---|---|
-| `/pos` PWA installable | သီးခြား service worker (`/pos/sw.js`) |
+| Cashier shifts + opening cash | Shift open/close — 02 §2.10 |
+| Barcode/HID scanner input | /pos UI |
+| Product & variant search | Live search |
+| Cart | Add/update/qty — retail/wholesale pricing |
+| Hold/resume sale | Draft → Held → Resume |
+| Split payments | Cash / KPay / WavePay / CB Pay / MMQR |
+| **Customer credit/debt** | Receivables — MVP ထဲ ပါ (SoT §17) |
+| Receipt & reprint | Receipt number at posting · reprint audit |
+| Sale return/refund/reversal | State machine (02 §2.9) |
+| Simple stock receiving | Goods receipt → `purchase_received` |
+| Opening stock | `opening_balance` |
+| Inventory adjustment (manager approval) | Cashier submit → manager approve → movement |
+| **Daily closing** | Cashier shift closing + branch daily summary (02 §2.10) — expected vs actual cash |
+| Minimal reports | Sales / cash / stock |
+| Audit trail | အကုန် မှတ်တမ်း |
+
+**Exit criteria:** အထက်ပါ MVP items အကုန် online မှာ အလုပ်ဖြစ် · atomic posting · oversell 0 · daily closing reconcile ရတယ် · 608 tests + POS tests green
+
+> **မှတ်ချက်:** Full purchasing / purchase returns / supplier payables / advanced accounting တွေက Operations (Phase 4) — MVP မဟုတ်ဘူး။
+
+---
+
+## Phase 2.5 — AlinnThit Production Pilot
+
+**ရည်ရွယ်ချက်:** ပြင်ပဖောက်သည်ကို မရောင်းခင် ကိုယ့်ဆိုင်မှာ စမ်းပြီး workflow မှန်ကြောင်း အတည်ပြု
+
+| အလုပ် | အသေးစိတ် |
+|---|---|
+| Clean product/customer/supplier data | Data quality + import |
+| Opening-stock reconciliation | Ledger vs လက်ရှိ |
+| Debt opening balances | Receivables import |
+| AppSheet/Google Sheets parallel validation | နှစ်စနစ် တွဲပြေး → ကိုက်ကြောင်း စစ် |
+| Real cashier workflow | တကယ့် ဆိုင်မှာ သုံး |
+| Returns/refunds + customer debt + daily closing | MVP features တွေ real usage |
+| Backup & restore test | Versioned workflow စမ်း |
+| Performance test + store-isolation test | Load + tenant leak မရှိကြောင်း |
+| Several weeks of observed real usage | Stabilization period |
+| Written recovery/cutover runbook | Rollback/failover လုပ်နည်း စာရွက် |
+
+**Exit criteria:** Pilot workflow မတည်မငြိမ်ခင် **ပြင်ပဖောက်သည်ကို မရောင်းရ** · runbook အပြည့် · reconciliation diff = 0
+
+---
+
+## Phase 3 — Cloud PWA Offline Queue
+
+**ရည်ရွယ်ချက်:** Internet မရှိတဲ့အခါလည်း cloud POS ဆက်အလုပ်လုပ်နိုင် (Model A အတွက်)
+
+| အလုပ် | အသေးစိတ် |
+|---|---|
+| `/pos` PWA installable | သီးခြား service worker (`/pos/sw.js`) — storefront SW မထိ (SoT §4.3) |
 | IndexedDB branch dataset | လိုတဲ့ဒေတာ သိမ်း (offline queue) |
-| Idempotent sync API | `client_transaction_id` unique — duplicate မဖြစ်ရ (SoT §14) |
-| Queue status UI | syncing / pending / failed / error — မမြင်ရအောင် မဝှက် |
-| Device handoff | Windows ↔ Android ပြောင်းတဲ့အခါ စည်းမျဉ်း (SoT §7.2) |
-| Local mode (SQLite) | Offline-only ဖောက်သည်အတွက် — backup/restore + offline license |
+| Offline transaction queue | Draft → ready → syncing → synced + error states (SoT §19.4) |
+| Idempotent sync API | `client_transaction_id` unique — duplicate မဖြစ်ရ (SoT §19.2) |
+| Device registration/revocation | Device handoff workflow (SoT §9.2) |
+| Queue status & recovery | syncing/pending/failed/error — မမြင်ရအောင် မဝှက် + failed-queue recovery/export |
+| Conflict strategy | Posted immutable → correction document (SoT §19.5) |
 
-**ဘာကြောင့် နောက်မှ:** ဒါက အရှုပ်ထွေးဆုံး — core မှန်မှ ဒါ အလုပ်ဖြစ်မယ်။
+**Exit criteria:** Offline sale → reconnect → sync → balance မှန် · duplicate 0 · revoked device reject · Windows + Android field test pass
 
 ---
 
-## Phase 4 — Operations Modules (လုပ်ငန်းခွင်တွေ)
+## Phase 4 — Operations Modules
 
-**ရည်ရွယ်ချက်:** POS အပြင် ကျန် module တွေ (SoT §9)
+**ရည်ရွယ်ချက်:** MVP အပြင် ကျန် module တွေ (SoT §13)
 
 | Module | အချိန် |
 |---|---|
-| Purchases + Receiving + Purchase Returns | Phase 4 |
-| Inventory Adjustments (Manager approval) | Phase 4 |
-| Stock Counts + Transfers | Phase 4 |
-| **Service Jobs** (ဖုန်းပြုပြင်ရေး) | Phase 4 |
-| Customer Debt + Supplier Payables | Phase 4 |
-| Expenses + Finance + **Daily Closing** | Phase 4 |
-| Reports | Phase 4 |
+| Full purchasing + purchase returns + supplier payables | Phase 4 |
+| Stock transfers + stock counts | Phase 4 |
+| Service jobs (ဖုန်းပြုပြင်ရေး) + service parts | Phase 4 |
+| Expenses + finance ledger | Phase 4 |
+| Advanced reports | Phase 4 |
+| Finance/accounting period closing | Phase 4 |
 
 ---
 
-## Phase 5 — Migration & Cutover (AppSheet → Laravel)
+## Phase 5 — Local LAN/SQLite Edition & Resale Readiness
 
-**ရည်ရွယ်ချက်:** အဟောင်း (AppSheet/Sheets) ဒေတာ ပြောင်းပြီး လက်ခံ
+**ရည်ရွယ်ချက်:** Offline-only ဖောက်သည်အတွက် Local install + ပြင်ပရောင်းချဖို့ ပြင်ဆင် — ကျယ်ရင် ၂ ပိုင်း ခွဲ:
 
-| အလုပ် | အသေးစိတ် |
+### 5a. Local installation, backup, restore, update workflow
+- SQLite single-tenant install (Model B — 02 §2.3)
+- Browser devices → LAN/Wi-Fi
+- **Versioned backup/restore** (02 §2.15): WAL checkpoint, snapshot, assets, manifest, checksums, integrity verify, restore dry-run, pre-restore backup, version compat validation
+- Versioned update workflow (upgrade path)
+- **ပထမ Local release တွင် central cloud sync မပါ**
+
+### 5b. Provisioning, plans, licensing, support mode, monitoring, documentation
+- **Offline license** — signed payload, public-key verify — **private signing key ကို install ထဲ မထည့်ရ**
+- Tenant provisioning tooling (Cloud) + plan gating
+- Store Support Mode (02 §2.13)
+- Monitoring + error reporting + measurable upgrade triggers (02 §2.16)
+- Resale documentation + training materials
+
+**Exit criteria:** Local install ကို ဖောက်သည်အသစ်တစ်ယောက်ဆီ ပေးပြီး backup→restore→update အကုန် အလုပ်ဖြစ် · license verify/reject test pass
+
+---
+
+## Phase 6 — Customer-driven Industry Packs
+
+**ရည်ရွယ်ချက်:** ဖောက်သည်အစစ် ပေါ်လာမှသာ ဆောက်မယ် — validated demand မရှိရင် မဆောက်
+
+| Pack | ဘယ်အခါ |
 |---|---|
-| Clean + import | AppSheet/Sheets → Laravel (SoT §17) |
-| Reconcile | Opening balances, inventory, debts, active jobs |
-| Parallel validation | နှစ်စနစ် တွဲပြေး → ကိုက်ကြောင်း စစ် |
-| Cutover | AppSheet → read-only → retire |
+| Pharmacy (expiry/batch) | ဆေးဆိုင် ဖောက်သည် ရလာရင် |
+| Gold Shop (ကျပ်/ပဲ/ရွေး + daily rate + karat) | ရွှေဆိုင် ဖောက်သည် ရလာရင် |
+| Grocery (scale + multi-unit) / Restaurant (KOT/tables) / Fuel / Fashion matrix | Demand ပေါ်မှ တစ်ခုချင်းစီ |
 
 ---
 
-## Resale တိုးချဲ့မှု (ဖောက်သည်တွေ ပေါ်လာရင်)
+## Resale တိုးချဲ့မှု (ဘယ်အချိန် ဘာလုပ်မလဲ)
 
 | ဘယ်အခါ | ဘာလုပ် |
 |---|---|
-| ဖောက်သည်တွေ စဝင်လာတဲ့အခါ | `store:create` command + enabled_modules + license — ဒါတွေ Phase 1 မှာ ရှိပြီးသား |
-| ပထမဆုံး ဖောက်သည်က ဆေးဆိုင် ဆိုရင် | Expiry date pack ဆောက် (core မှာ expiry ရှိပြီးသားဆိုရင် လွယ်) |
-| ရွှေဆိုင် ဝယ်လာရင် | Weight pricing pack (UOM ရှိပြီးသား) |
-| ပထမဆုံး offline-only ဖောက်သည် | Local mode (SQLite) — Phase 3 မှာ ပါပြီးသား |
+| Phase 2.5 pilot မတည်မငြိမ်ခင် | **ပြင်ပဖောက်သည်ကို မရောင်းရ** |
+| Pilot ပြီးမှ Cloud ဖောက်သည်သစ် | `store:create` + enabled_modules — Phase 1 မှာ ရှိပြီးသား |
+| Offline-only ဖောက်သည်သစ် | Local LAN edition — Phase 5 ပြီးမှ |
+| License စတင်ရောင်းချင်ရင် | Signed offline license (5b) — MVP မစမ်းရသေးခင် မလုပ် |
+| Industry pack လိုလာရင် | Phase 6 — demand ရှိမှ |
 
 ---
 
 ## တည်ဆောက်စဉ် လိုက်နာရမယ့် အခြေခံစည်းမျဉ်း
 
-1. **Store/tenant isolation** — store A ဒေတာ store B မှာ မပေါ်ရ
-2. **Server-side authorization** — UI hide တစ်ခုတည်း မလုံလောက်
-3. **Inventory/finance ကို atomic + auditable** — partial မဖြစ်ရ
-4. **Idempotency** — sync retry လုပ်ရင် duplicate မဖြစ်ရ
-5. **SQLite + MySQL နှစ်မျိုးလုံး** — migration/test run ရမယ်
-6. **Burmese/English label** — နှစ်ဘာသာ
-7. **Test ရေးရမယ်** — feature တိုင်းနဲ့
-8. **SoT နဲ့ ဆန့်ကျင်ရင် ရပ်ပြီး မေး** — မခန့်မှန်းနဲ့
+1. **Store/tenant isolation** — store A ဒေတာ store B မှာ မပေါ်ရ (SoT §6)
+2. **Server-side authorization** — static routes + middleware — UI hide တစ်ခုတည်း မလုံလောက်
+3. **Inventory/finance ကို atomic + auditable** — partial မဖြစ်ရ (SoT §15.2, §19.3)
+4. **Idempotency** — sync retry လုပ်ရင် duplicate မဖြစ်ရ (SoT §19.2)
+5. **Money/quantity float မသုံး** — integer MMK + decimal precision (02 §2.6)
+6. **Negative stock default block** (02 §2.8)
+7. **SQLite + MySQL နှစ်မျိုးလုံး** — migration/test run ရမယ်
+8. **Burmese/English label** — နှစ်ဘာသာ (lang ၃ ဖိုင်)
+9. **Test ရေးရမယ်** — feature တိုင်းနဲ့
+10. **SoT နဲ့ ဆန့်ကျင်ရင် ရပ်ပြီး မေး** — မခန့်မှန်းနဲ့ (02-target-design ရဲ့ SoT Conflicts ဇယား)
 
 ---
 
 ## ဆက်ဆွေးနွေးရန်
 
-ဒီဖိုင်တွေ ဖတ်ပြီးရင် ဆရာကြီးနဲ့ ဒီအကြောင်းတွေ ဆွေးနွေးနိုင်ပါတယ်:
-- Phase 0 ကစလား / Phase 1 ကစလား
-- Plan/စျေးနှုန်း ပုံစံ
-- ဘယ်လုပ်ငန်းကို ဦးစားပေးမလဲ
-- Cloud mode ပဲလား Local mode ပါ လား
+- ✅ SoT amendment ၅ ခု (02-target-design §SoT Conflicts) — **Approved 2026-08-10 + နှစ်ဖိုင်လုံးတွင် apply ပြီး**
+- Phase 0 ရဲ့ ကျန် Owner decisions (negative stock override, hosting trigger thresholds) အတည်ပြုဖို့
+- AlinnThit pilot ရဲ့ စတင်ရက် / data source

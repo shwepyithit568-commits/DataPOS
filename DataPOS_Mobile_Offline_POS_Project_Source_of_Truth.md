@@ -84,12 +84,12 @@ flowchart TD
 
 ## 4. Ecommerce and POS Relationship — Confirmed
 
-Phase 1 deliberately keeps Ecommerce and POS loosely coupled.
+> **Amendment (2026-08-10, Owner Approved):** Ecommerce and POS share the **same Inventory Ledger** as the source of truth (§10). `products.stock_status` is **derived** from the ledger — it may remain only as a cache/compatibility field during migration and must never be an independent competing source of truth.
 
 - Ecommerce remains online-only.
-- Ecommerce `In Stock` / `Out of Stock` is maintained manually at first.
-- Online orders are confirmed through Viber/Telegram using the current business process.
-- Confirmed online orders are manually entered into POS.
+- Online-order lifecycle enters the ledger through an **adapter/service** using `online_reserve` / `online_confirm` / `online_cancel` movement types (§10.1) — part of the Phase 1 foundation.
+- Online orders may still be confirmed through Viber/Telegram using the current business process; a confirmed order is posted to the ledger via a confirmation movement, not a manual POS entry.
+- POS and Ecommerce share the same stock, so overselling must be prevented.
 - POS sales include a `sale_source` field:
   - `Walk-in`
   - `Ecommerce`
@@ -98,7 +98,7 @@ Phase 1 deliberately keeps Ecommerce and POS loosely coupled.
   - `Facebook`
   - `Other`
 - An optional Ecommerce order reference and customer details may be recorded.
-- Automatic Ecommerce inventory synchronization is out of scope for Phase 1.
+- Manual, separate Ecommerce stock maintenance is discontinued — the inventory adapter (Phase 1 foundation) feeds the ledger automatically.
 
 Do not reuse the Ecommerce `orders` table as the only POS sales table. Ecommerce orders and completed POS sales have different lifecycle, offline, payment, stock, and audit requirements.
 
@@ -257,6 +257,8 @@ Modules may be disabled per branch through capabilities; they must not require d
 
 Do not use only `products.quantity` as inventory truth. Every stock change creates an immutable stock movement.
 
+The ledger is the source of truth for **both POS and Ecommerce** (not a POS-only stock system). Ecommerce orders are integrated through an adapter/service so both channels cannot oversell the same stock.
+
 Recommended core entities:
 
 - `products`
@@ -285,6 +287,9 @@ Minimum movement types:
 | `adjustment_in` | + |
 | `adjustment_out` | − |
 | `internal_use` | − |
+| `online_reserve` | − (reserve hold — removes from available) |
+| `online_confirm` | 0 (reserve → committed; no double decrement) |
+| `online_cancel` | + (releases reserve — back to available) |
 
 Every movement should include at least:
 
@@ -314,6 +319,15 @@ Do not represent these states with ad hoc negative quantities or unstructured no
 ### 10.3 Negative stock
 
 Default behavior: block a sale that would cause negative available stock. Any approved exception must be an explicit business setting, logged, and restricted to authorized roles.
+
+### 10.4 Inventory valuation — weighted-average costing (2026-08-10 Owner Approved)
+
+- Unit cost uses **weighted-average** costing.
+- Receiving recalculates the average: `(current qty × current avg cost + incoming qty × incoming unit cost) ÷ (total qty)`
+- Returns and adjustments are valued at the **current average cost**.
+- Serial/IMEI-specific items may retain **specific cost** where necessary.
+- **Negative stock must define its effect on average-cost calculation** — negative stock is blocked by default (§10.3). A specifically authorized manager override may be designed later; every override must be audited and visibly reported.
+- Never use floating point for money or inventory quantities — store MMK as integer kyat and quantities as DECIMAL (Open Decision #6 — partially resolved 2026-08-10).
 
 ---
 
@@ -649,32 +663,71 @@ Never allow AppSheet and Laravel to act as simultaneous writable masters for the
 
 ## 19. Implementation Phases — Approved Order
 
-### Phase 0 — Repository and data audit
+### Phase 0 — Architecture decisions and risk removal
 
-- Inventory existing Laravel version, packages, modules, routes, models, migrations, policies, tests, and deployment environment.
-- Map existing `stores`, users, products, orders, and middleware to the target domains.
-- Profile supplied AppSheet/Google Sheets data.
-- Produce gap analysis and migration plan.
+- Tenancy/deployment decision (Cloud SaaS vs Local install — 02-target-design §2.3).
+- Store/domain resolver fix (`docs/multi-store-ready-plan.md`).
+- Shared Ecommerce/POS inventory source of truth design (§4, §10).
+- Money and rounding policy (Open Decision #6 — resolved).
+- Weighted-average inventory valuation (§10.4).
+- Negative-stock policy (§10.3).
+- Offline-mode separation (Cloud PWA queue vs Local LAN — §14, 02-target-design §2.12).
+- Permission matrix — store modules / branch capabilities / user roles / approvals (§6).
+- Data-quality audit.
+- Architecture Decision Records (ADR).
+- Detailed acceptance tests.
 - Do not begin broad refactoring before owner review.
 
-### Phase 1 — Foundation
+### Phase 1 — Minimum shared foundation
 
-- Branches, warehouses, capabilities
-- User branch roles and policies
+- Default branch/warehouse (auto-created per store — 02-target-design §2.11)
+- Store module middleware — static routes + module/capability enforcement (route:cache compatible)
+- Branch roles and policies
 - Device registration/revocation
-- SKU/barcode normalization
+- SKU/barcode/UOM normalization
+- Customers and suppliers
 - Inventory movement ledger and derived balances
+- Opening stock (`opening_balance`)
+- Ecommerce inventory adapter (`orders` → ledger: reserve / confirm / cancel)
 - Audit and approval foundations
+- Concurrency and idempotency tests
 
-### Phase 2 — Online POS
+### Phase 2 — Usable Online POS MVP
 
-- Cart, pricing, payments, receipt
-- Posted sale transaction
-- Stock and finance integration
-- Returns, void/reversal, and audit
+- Cashier shifts and opening cash
+- Barcode/HID scanner input
+- Product and variant search
+- Cart with hold/resume
+- Retail and wholesale pricing
+- Split payments — Cash / KPay / WavePay / CB Pay / MMQR
+- **Customer credit/debt**
+- Receipt and reprint
+- Sale return/refund/reversal
+- Simple stock receiving
+- Opening stock
+- Inventory adjustment (manager approval)
+- **Daily closing** (expected vs actual cash)
+- Minimal sales/cash/stock reports
+- Audit trail
+- Atomic posted sale (sale + payments + movements + finance in one transaction)
 - Initially online to validate core integrity before offline complexity
 
-### Phase 3 — Offline PWA
+### Phase 2.5 — AlinnThit production pilot
+
+- Clean product/customer/supplier data
+- Opening-stock reconciliation
+- Debt opening balances
+- AppSheet/Google Sheets parallel validation
+- Real cashier workflow
+- Returns/refunds, customer debt, and daily closing
+- Backup and restore test
+- Performance and store-isolation tests
+- Several weeks of observed real usage
+- Written recovery/cutover runbook
+
+Do not sell to external customers before the pilot workflow is stable.
+
+### Phase 3 — Cloud PWA offline queue (Cloud SaaS only)
 
 - Installable `/pos` application
 - IndexedDB branch dataset
@@ -684,25 +737,38 @@ Never allow AppSheet and Laravel to act as simultaneous writable masters for the
 - Active-device handoff
 - Windows and Android field testing
 
-### Phase 4 — Operations
+### Phase 4 — Operations modules
 
-- Purchases and purchase returns
+- Full purchasing and purchase returns
+- Supplier payables
 - Adjustments and stock counts
 - Inter-branch transfers
 - Service jobs and parts
-- Customer debt and supplier payable
-- Expenses, finance, and daily closing
-- Reports
+- Expenses and finance ledger
+- Finance/accounting period closing
+- Advanced reports
 
-### Phase 5 — Migration and cutover
+### Phase 5 — Local LAN/SQLite edition and resale readiness
 
-- Clean and import approved AppSheet/Sheet data
-- Reconcile opening balances, inventory, debts, and active jobs
-- Staff training and parallel validation
-- Controlled cutover
-- AppSheet read-only and retirement
+**5a. Local installation, backup, restore, update**
+- SQLite single-tenant install (Model B — 02-target-design §2.3)
+- Browser devices over LAN/Wi-Fi
+- Versioned backup/restore — WAL checkpoint, consistent snapshot, assets, manifest, checksums, integrity verify, restore dry-run, pre-restore backup, version compatibility
+- Versioned update workflow
+- No central cloud sync in the first Local release
 
-Future automation of Ecommerce inventory/order integration requires a separate approved phase.
+**5b. Provisioning, plans, licensing, support, monitoring**
+- Offline license — signed payload verified by public key; never include the private signing key in customer installations
+- Tenant provisioning tooling (Cloud) + plan gating
+- Store Support Mode — reason/time/audit (02-target-design §2.13)
+- Monitoring, error reporting, and measurable upgrade triggers (02-target-design §2.16)
+- Resale documentation and training
+
+### Phase 6 — Customer-driven industry packs
+
+Build only for validated customer demand — Pharmacy / Gold Shop / Grocery / Restaurant / Fuel / Fashion matrix.
+
+> Cloud PWA offline sync (§14) and Local LAN/SQLite mode are **two different systems** — do not combine them into one phase.
 
 ---
 
@@ -833,7 +899,7 @@ Do not guess these values during implementation:
 3. Exact warehouse layout for each branch.
 4. Receipt printer model, paper width, connection method, and cash drawer requirements.
 5. Barcode scanner and label printer models.
-6. Whether taxes are used and how prices/discounts are calculated.
+6. Whether taxes are used and how prices/discounts are calculated. — **PARTIALLY RESOLVED 2026-08-10 (Owner):** money/rounding policy defined — no floats, MMK integer (kyat), DECIMAL quantity, discount → tax → grand-total order, receipt rounding only at the final step, immutable posted-sale totals (02-target-design §2.6, §10.4). Whether taxes are used at all remains open.
 7. Negative-stock exception policy, if any.
 8. Return/exchange time limits and item-condition rules.
 9. Service warranty rules and required intake fields.
