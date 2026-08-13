@@ -3,6 +3,10 @@
 ဒီဖိုင်က **Hosting ပေါ်က Website မှာ အတိုင်းအတိ ပြန်ပြင်ဆင်ဖို့** အတွက် ရည်ရွယ်ထားပါတယ်။
 ဒီနေ့ မင်းနဲ့ငါ လုပ်ခဲ့တဲ့ အပြောင်းအလဲတွေအားလုံးကို နံပါတ်စဉ်အလိုက် ချရေးထားပါတယ်။
 
+> **File status (2026-08-13):** `2026-08-13_FIXES.md` ကို ဒီဖိုင်ထဲ ပေါင်းထည့်ပြီး
+> **ဒီဖိုင်က တစ်ခုတည်းသော CHANGELOG** ဖြစ်ပါတယ် (items 1–271 = 08-11 အထိ history + 08-13 fixes အဆုံးမှာ)။
+> အပြောင်းအလဲအသစ်တိုင်းကို ဒီဖိုင်ရဲ့ အဆုံးမှာ item အသစ် ထည့်ပါ။
+
 ---
 
 ## 📁 Project အချက်အလက်
@@ -862,7 +866,7 @@ Hosting မှာ ပြန်လုပ်ပြီးရင် အောက်�
 - **`SpreadsheetImportReader::normalizeHeader`** null-safe (null header cell တွေအတွက်)။
 - **Tests:** `GlassFinderTest` အသစ် — `test_app_data_sheet_format_imports_with_spaced_stock_values` (App_Data sheet format + "Out Of Stock"/"In Stock" normalization + fully-blank inactive row ကို skip) → full suite **354 pass / 1766 assertions** ✅
 - **Browser verified (Playwright):** admin `/store/datapos-mobile/admin/glass-finder` — **591 items / 591 total**, Import History မှာ "ACDC Mobile Glass List.xlsx · KoKoLInn · 591/591"; storefront `/glass-finder?store_slug=datapos-mobile` — brand chips 13 ခု (Apple/itel...), "iPhone 16 Pro Max" search → **Glass Code K101 (Apple, Out of Stock)** + "Add Glass Code (K101)" button ✅
-- **Files:** `app/Services/SpreadsheetImportReader.php`, `app/Services/GlassFinderImportService.php`, `tests/Feature/GlassFinderTest.php`, `2026-08-02_FIXES.md`
+- **Files:** `app/Services/SpreadsheetImportReader.php`, `app/Services/GlassFinderImportService.php`, `tests/Feature/GlassFinderTest.php`, `CHANGELOG.md`
 
 ---
 
@@ -1805,7 +1809,7 @@ Hosting မှာ ပြန်လုပ်ပြီးရင် အောက်�
 
 ### 227. ✅ Production CSP — Hostinger vhost override fixed
 - **ဖြစ်စဉ်:** Deploy #13 ပြီးနောက် ပထမဆုံး production CSP verification မှာ — **Hostinger/LiteSpeed က vhost အဆင့်မှာ bare `Content-Security-Policy: upgrade-insecure-requests` inject လုပ်ပြီး middleware ရဲ့ nonce policy ကို ဖျောက်လိုက်တာ** (origin ကို SSH ကနေ တိုက်ရိုက် curl ပြီး အတည်ပြု; acdcmm.com ကတော့ full policy ပြနေတာ အတည်ပြု)
-- **အဖြေ:** acdcmm-proven pattern — `public/.htaccess` ထဲမှာ directory-level `Header always set Content-Security-Policy "..."` (vhost header ပြီးမှ apply လို့ အနိုင်ရ) · **trade-off:** static header မှာ per-request nonce မထည့်လို့ production `script-src` = `'unsafe-inline' 'unsafe-eval'` (acdcmm နဲ့တူ) · nonce middleware က local မှာ ဆက်သုံး, vhost override ဖျက်ရင် production မှာပါ အလိုအလျောက် ဝင် · `docs/production-deployment-guide.md` မှာ quirk + verify command မှတ် — **`public/.htaccess` နဲ့ middleware ကို sync ထားရ**
+- **အဖြေ:** acdcmm-proven pattern — `public/.htaccess` ထဲမှာ directory-level `Header always set Content-Security-Policy "..."` (vhost header ပြီးမှ apply လို့ အနိုင်ရ) · **trade-off:** static header မှာ per-request nonce မထည့်လို့ production `script-src` = `'unsafe-inline' 'unsafe-eval'` (acdcmm နဲ့တူ) · nonce middleware က local မှာ ဆက်သုံး, vhost override ဖျက်ရင် production မှာပါ အလိုအလျောက် ဝင် · `docs/docs/ops/DEPLOYMENT.md` မှာ quirk + verify command မှတ် — **`public/.htaccess` နဲ့ middleware ကို sync ထားရ**
 - **Verify:** `curl -sI https://datapos.com/ | grep -i content-security-policy` → full policy (frame-src Google Maps + YouTube ပါ) ✓ · home/product/how-to-order 200 ✓
 
 ---
@@ -1822,7 +1826,7 @@ Hosting မှာ ပြန်လုပ်ပြီးရင် အောက်�
 - *(အစောပိုင်း session မှာ ပြီးခဲ့တဲ့ အလုပ်တွေ — changelog မှာ နောက်ကြောင်းပြန် မှတ်တမ်းတင်ခြင်း)*
 - **Nonce-based CSP:** `SecurityHeaders` middleware — per-request `base64_encode(random_bytes(18))` nonce → `View::share('cspNonce')` → Blade inline `<script>` တိုင်းမှာ `nonce="{{ $cspNonce }}"` · inline event handlers (onclick/onchange/…) တွေကို delegated listeners (`resources/js/csp-helpers.js`: `data-ios-href`, `data-catalog-view`, `data-auto-submit`, `data-confirm`, `data-print`, `data-img-fallback`) အဖြစ် ပြောင်း · `script-src` မှာ `'unsafe-inline'` ဖြုတ် (`'unsafe-eval'` က Alpine standard build အတွက် ဆက်ထား) · admin + auth + storefront layouts အကုန် · `app.js`/`app-admin.js` — CSP nonce API
 - **Google Maps iframes:** `frame-src` မှာ `https://www.google.com https://maps.google.com https://www.youtube.com` ထည့် — footer map embed + how-to-order YouTube embeds အလုပ်လုပ်တယ်
-- **Test:** 70 targeted tests + full suite green (511) ✓ · browser-verified (homepage console clean, nonce works, maps render, Viber iOS href swap) ✓ · `headers.txt` sample snapshot + `docs/production-deployment-guide.md` update ✓
+- **Test:** 70 targeted tests + full suite green (511) ✓ · browser-verified (homepage console clean, nonce works, maps render, Viber iOS href swap) ✓ · `headers.txt` sample snapshot + `docs/docs/ops/DEPLOYMENT.md` update ✓
 
 ---
 
@@ -2375,3 +2379,67 @@ Hosting မှာ ပြန်လုပ်ပြီးရင် အောက်�
 **Found & fixed live:** Laravel binds controller **primitive params positionally**, so `import(Request, StoreContext, string $tab)` received the `{store_slug}` value — the tab is now read via `$request->route('tab')` (same pattern as the existing admin controllers).
 
 **Deploy:** `php artisan migrate` only. **Note:** error reports are downloadable from Import History; fix failed rows and re-import. The products tab reuses the existing `ProductImportService` (no duplicate logic).
+
+
+---
+
+## 2026-08-13 — Product Import 500 Bug နဲ့ "Ks 0" ဈေးပြသမှု Bug ပြင်ဆင်ချက်
+
+> ဒီ fix ၂ ခုက `D:\xmapp\htdocs\data_ecommerce` (AlinnThit) မှာ ဒီနေ့တွေ့ရှိ ပြင်ဆင်ပြီး
+> live မှာ အတည်ပြုပြီးသား — ဒီ DataPOS မှာလည်း **တူညီတဲ့ bug ၂ ခု ရှိနေလို့** အတိအကျ ပြန်ပြင်ထားတယ်။
+> အသေးစိတ် root cause / verification: `data_ecommerce\CHANGELOG.md` မှာ ကြည့်ပါ။
+
+---
+
+## ပြင်ဆင်ချက် ၁ — ProductImportService: variants JSON မှာ `stock_status` မပါရင် 500
+
+**File:** `app/Services/ProductImportService.php` (variantsFromRow, line 572)
+
+အရင် (bug):
+
+```php
+'stock_status' => in_array($variant['stock_status'] ?? 'in_stock', self::VALID_STOCK_STATUSES, true)
+    ? $variant['stock_status']          // ← key မရှိရင် "Undefined array key" error → 500
+    : 'in_stock',
+```
+
+ပြင် (fix):
+
+```php
+'stock_status' => in_array($variant['stock_status'] ?? 'in_stock', self::VALID_STOCK_STATUSES, true)
+    ? ($variant['stock_status'] ?? 'in_stock')
+    : 'in_stock',
+```
+
+**သက်ရောက်မှု:** `[{"name":"Connector"}]` လို name-only variant JSON ပါတဲ့ Excel ကို
+Confirm Import လုပ်တဲ့အခါ 500 မတက်တော့ဘူး (အရင်က transaction တစ်ခုလုံး rollback ဖြစ်တယ်)။
+
+---
+
+## ပြင်ဆင်ချက် ၂ — Variant price 0 ဆို "Ks 0" ပြမှု → product price fallback
+
+**Files (3):**
+
+| File | အပြောင်းအလဲ |
+|---|---|
+| `resources/views/components/product-card.blade.php` | variant retail/wholesale price > 0 ဆိုမှ သုံး၊ မဟုတ်ရင် product price |
+| `resources/views/components/product-card-list.blade.php` | အထက်အတိုင်း (list view) |
+| `resources/views/storefront/catalog/show.blade.php` | Alpine `price` getter — variant price ≤ 0 ဆို baseRetail/baseWhole fallback; option button မှာ "· 0" မပြတော့ဘူး (x-show) |
+
+**သက်ရောက်မှု:** import ကနေ variant ဈေးမပါတဲ့ ပစ္စည်းတွေမှာ product page/card တွေက
+"Ks 0" မပြတော့ဘဲ product ရဲ့ တကယ့်ဈေး ပြတယ်။
+
+---
+
+## စစ်ဆေးပြီးသား (Verification)
+
+- `php -l app/Services/ProductImportService.php` → No syntax errors
+- `php artisan view:cache` → Blade templates cached successfully (view ၃ ခုလုံး compile ရတယ်)
+- `git diff --stat` — ဒီ fix 4 ဖိုင်ပဲ ပါတယ် (CashierShiftController.php က Boss ရဲ့ WIP — မထိဘူး)
+
+## ⚠️ သတိထားရန်
+
+- Blade `x-data` attribute ထဲက comment မှာ **double quote (`"`) မထည့်ရဘူး** — HTML attribute ဖြတ်ပြီး
+  Alpine SyntaxError ဖြစ်တယ် (AlinnThit မှာ ဒီနေ့ တစ်ခါ မှားခဲ့လို့ မှတ်ထား)။ single quote ပဲ သုံးပါ။
+- ဒီ DataPOS fix တွေက **local code ထဲပဲ** ပြင်ထားတာ — live deploy မလုပ်ရသေးဘူး
+  (DataPOS က local-only — deploy script သီးခြား ရေးရမယ်)။

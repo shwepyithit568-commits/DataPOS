@@ -51,7 +51,7 @@ Developer သို့မဟုတ် AI Agent တိုင်းသည်—
 2. `Source_of_Truth.md`
 3. Approved Architecture Decision Records — ADR
 4. `DataPOS_AI_Agent_Instructions_MM.md`
-5. `2026-08-02_FIXES.md`
+5. `CHANGELOG.md`
 6. `Testing_check.md`
 7. Current Application Behavior + Automated Tests
 8. Legacy AppSheet / Google Sheets Behavior
@@ -1299,7 +1299,7 @@ Product Catalog အကြီးကြီးကို Alpine.js ထဲ တစ်�
 ## Phase 0 — Architecture Decisions & Risk Removal
 
 - Tenancy / Deployment Decision (Cloud SaaS vs Local Install — 02-target-design §2.3)
-- Store / Domain Resolver Fix (`docs/multi-store-ready-plan.md`)
+- Store / Domain Resolver Fix (`docs/CHANGELOG.md`)
 - Shared Ecommerce / POS Inventory Source of Truth Design (§5, §14)
 - Money & Rounding Policy (Open Decision #15 — Resolved)
 - Weighted-Average Inventory Valuation (§14.4)
@@ -1553,7 +1553,7 @@ Code Changed
 +
 Relevant Testing / Verification
 +
-2026-08-02_FIXES.md Updated
+CHANGELOG.md Updated
 +
 Testing_check.md Updated if applicable
 +
@@ -1566,7 +1566,7 @@ DONE
 
 # 33. Documentation Rules — Mandatory
 
-## `2026-08-02_FIXES.md`
+## `CHANGELOG.md`
 
 Meaningful Code Change တိုင်း Update လုပ်ရမည်။
 
@@ -1670,7 +1670,7 @@ AI Agent Task တိုင်း အနည်းဆုံး စဉ်းစာ�
 
 1. `DataPOS_AI_Agent_Instructions_MM.md` ဖတ်
 2. `Source_of_Truth.md` ဖတ်
-3. `2026-08-02_FIXES.md` စစ်
+3. `CHANGELOG.md` စစ်
 4. `Testing_check.md` စစ်
 5. Working Tree စစ်
 6. Unrelated User Changes မပျက်စေရ
@@ -1793,7 +1793,7 @@ Production Hosting အတွက်—
 - MySQL
 - 48-month plan
 - Daily Backups
-- Restore Procedure via `docs/backup-strategy.md`
+- Restore Procedure via `docs/docs/ops/DEPLOYMENT.md`
 
 Phase 1–3 အတွက် Shared Hosting အသုံးပြုနိုင်သည်။
 

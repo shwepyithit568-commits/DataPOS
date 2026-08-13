@@ -12,14 +12,14 @@
 
 | အချက် | တန်ဖိုး | ရင်းမြစ် |
 |---|---|---|
-| Hosting | Hostinger — datapos.com | `deployment-runbook.md` |
-| SSH | `ssh -p <SSH_PORT> -i ~/.ssh/<hostinger-key> <HOSTINGER_USER>@<HOSTINGER_IP>` | `deployment-runbook.md` |
+| Hosting | Hostinger — datapos.com | `docs/archive/deployment-runbook.md` |
+| SSH | `ssh -p <SSH_PORT> -i ~/.ssh/<hostinger-key> <HOSTINGER_USER>@<HOSTINGER_IP>` | `docs/archive/deployment-runbook.md` |
 | App path | `/home/<HOSTINGER_USER>/domains/datapos.com/laravel_app` | split layout |
 | Webroot | `/home/<HOSTINGER_USER>/domains/datapos.com/public_html` | split layout |
-| Deploy | `./deploy-datapos.sh` (code) · `RUN_MIGRATIONS=true ./deploy-datapos.sh` (code+migrations) | `deployment-runbook.md` |
-| DB | MySQL (`datapos_db`) — mysqldump backup | `backup-strategy.md` |
-| Storage | `storage/app/public` (products, banners, uploads) — webroot နဲ့ symlink | `backup-strategy.md` |
-| Pilot store slug | `datapos-mobile` (canonical) | `deployment-runbook.md` |
+| Deploy | `./deploy-datapos.sh` (code) · `RUN_MIGRATIONS=true ./deploy-datapos.sh` (code+migrations) | `docs/archive/deployment-runbook.md` |
+| DB | MySQL (`datapos_db`) — mysqldump backup | `docs/ops/DEPLOYMENT.md` |
+| Storage | `storage/app/public` (products, banners, uploads) — webroot နဲ့ symlink | `docs/ops/DEPLOYMENT.md` |
+| Pilot store slug | `datapos-mobile` (canonical) | `docs/archive/deployment-runbook.md` |
 
 ### POS module ရဲ့ မဖောက်ဖျက်နိုင်တဲ့ စည်းမျဉ်း (ဒီ runbook ကို သက်ရောက်တဲ့ဟာ)
 
@@ -42,13 +42,13 @@ ssh -p <SSH_PORT> -i ~/.ssh/<hostinger-key> <HOSTINGER_USER>@<HOSTINGER_IP> \
   "mysqldump -u <DB_USER> -p<DB_PASS> datapos_db | gzip > <backup-root>/db/datapos_$(date +%Y%m%d_%H%M%S).sql.gz"
 ```
 
-- Retention: နောက်ဆုံး **30 ရက်** (ပုံမှန် policy — `backup-strategy.md`).
+- Retention: နောက်ဆုံး **30 ရက်** (ပုံမှန် policy — `docs/ops/DEPLOYMENT.md`).
 - **Pilot ကာလအတွင်း ထပ်ဆောင်း:** shift မပိတ်ခင် + daily closing approve မလုပ်ခင် backup ယူပါ (ပြန်လှည့်ရင် တစ်နေ့လုံး ပျက်မှာ မဟုတ်ဘဲ closing အကြိုအထိ ပြန်ရအောင်)။
 
 ### ၂.၂ အပတ်စဉ် — Storage (uploaded files)
 
 ```powershell
-# Windows (robocopy mirror) — backup-strategy.md အတိုင်း:
+# Windows (robocopy mirror) — docs/ops/DEPLOYMENT.md အတိုင်း:
 robocopy "<project-root>\storage\app\public" "<backup-root>\storage" /MIR /Z
 ```
 
@@ -56,7 +56,7 @@ POS ကိုယ်တိုင် storage မသုံးပေမယ့် pro
 
 ### ၂.၃ ပြောင်းလဲမှု တိုင်း — `.env`
 
-`.env` (DB credentials, APP_KEY, MAIL_PASSWORD) ကို encrypted နေရာမှာ သိမ်း — **git ထဲ ဘယ်တော့မှ မထည့်ရ** (scrub history သင်ခန်းစာ — `scrub-secrets-from-git-history.md` ကြည့်)။
+`.env` (DB credentials, APP_KEY, MAIL_PASSWORD) ကို encrypted နေရာမှာ သိမ်း — **git ထဲ ဘယ်တော့မှ မထည့်ရ** (scrub history သင်ခန်းစာ — `docs/ops/DEPLOYMENT.md` ကြည့်)။
 
 ### ၂.၄ Pilot-တိကျသော Backup စစ်ဆေးစာရင်း (Backup & Restore Test — Phase 2.5 item)
 
@@ -713,11 +713,11 @@ Incident တိုင်း ဒီပုံစံနဲ့ `docs/ops/` ထဲမ
 
 ## ၇။ ဆက်စပ်ဖိုင်များ
 
-- `backup-strategy.md` — ပုံမှန် DB/storage/.env backup policy
-- `deployment-runbook.md` — deploy + rollback checklist (deploy #4–#24 မှတ်တမ်း)
-- `production-deployment-guide.md` — ပထမဆုံး production setup
-- `docs/archive/production-readiness-audit.md` — launch readiness စစ်ဆေးစာရင်း (archived)
-- `scrub-secrets-from-git-history.md` — secrets မပေါက်ကြားရေး (ဒီ runbook က `.env` backup ကို encrypted နေရာမှာသာ သိမ်းရမယ်လို့ ပြောတာ ဒီကနေ)
+- `docs/ops/DEPLOYMENT.md` — ပုံမှန် DB/storage/.env backup policy
+- `docs/archive/deployment-runbook.md` — deploy + rollback checklist (အရင် site ရဲ့ history — archived 2026-08-13)
+- `docs/ops/DEPLOYMENT.md` — ပထမဆုံး production setup
+- launch readiness audit — 2026-08-13 မှာ ဖျက်ပြီး (record: `CHANGELOG.md` ထဲမှာ)
+- `docs/ops/DEPLOYMENT.md` — secrets မပေါက်ကြားရေး (ဒီ runbook က `.env` backup ကို encrypted နေရာမှာသာ သိမ်းရမယ်လို့ ပြောတာ ဒီကနေ)
 
 ## ၈။ Acceptance (ဒီ runbook ပြည့်စုံမှု စစ်ဆေးစာရင်း)
 

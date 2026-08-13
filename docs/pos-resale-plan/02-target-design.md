@@ -262,7 +262,7 @@ Voided (posting မတိုင်ခင် — draft/held ကိုသာ)
 - **ပထမ Local release မှာ central cloud sync မပါ** — dedicated backup/restore/update workflow သာ
 - Cloud-to-local sync က **proven customer demand ရှိမှသာ** (နောက်ပိုင်း)
 
-**ဒီနှစ်ခုကို phase တစ်ခုထဲ မရော။** Recommended order → 04-implementation-phases.md
+**ဒီနှစ်ခုကို phase တစ်ခုထဲ မရော။** Recommended order → ROADMAP.md
 
 ---
 
@@ -362,5 +362,5 @@ Inventory ကို **shared ledger (immutable movements)** နဲ့ ထိန�
 
 ## ၂.၁၈ ဆက်ဖတ်ရန်
 
-- `03-sales-market-model.md` — ဖောက်သည်တွေကို ဘယ်လို ရောင်းမလဲ
-- `04-implementation-phases.md` — ဘယ်ကစ ဆောက်မလဲ
+- `ROADMAP.md` (Sales & Market Model section) — ဖောက်သည်တွေကို ဘယ်လို ရောင်းမလဲ
+- `ROADMAP.md` — ဘယ်ကစ ဆောက်မလဲ
