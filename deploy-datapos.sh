@@ -15,11 +15,19 @@
 #   - Requires the SSH key that is already set up for the acdcmm.com deployment.
 set -euo pipefail
 
+# 🛡️ DEPLOY GUARD — Hostinger deploy is DISABLED until the project is ready to go live.
+# This script will NOT connect anywhere unless you explicitly opt in:
+#   ALLOW_HOSTINGER_DEPLOY=true ./deploy-datapos.sh
+if [ "${ALLOW_HOSTINGER_DEPLOY:-false}" != "true" ]; then
+    echo "ABORT: Hostinger deploy is disabled. Set ALLOW_HOSTINGER_DEPLOY=true to run." >&2
+    exit 1
+fi
+
 # --- Config (edit if Hostinger details change) ---
-HOST="***REMOVED***"
-PORT="***REMOVED***"
-USER="***REMOVED***"
-KEY="${HOME}/.ssh/***REMOVED***"
+HOST="<HOSTINGER_IP>"
+PORT="<SSH_PORT>"
+USER="<HOSTINGER_USER>"
+KEY="${HOME}/.ssh/<hostinger-key>"
 TARGET="/home/${USER}/domains/datapos.com"
 RUN_MIGRATIONS="${RUN_MIGRATIONS:-false}"
 
@@ -33,8 +41,7 @@ APP_EXCLUDES=(
   --exclude='./.freebuff'
   --exclude='./.env'
   --exclude='./.env.*'
-  --exclude='./database/database.sqlite'
-  --exclude='./database/database.sqlite-*'
+  --exclude='./database/*.sqlite*'
   --exclude='./storage/app/private'
   --exclude='./storage/app/public'
   --exclude='./storage/framework/cache'

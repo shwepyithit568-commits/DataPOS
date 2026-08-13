@@ -34,4 +34,5 @@ D:/xmapp/php/php.exe artisan serve --port=8501
 
 ## Git မှတ်စု
 
-main project ရဲ့ `.gitignore` မှာ `/DataPOS` ထည့်ထားပြီးပြီ — ဒီဖိုဒါက main repo ထဲ **မဝင်ပါဘူး**။ DataPOS ကို သီးခြား git repo အဖြစ် စတင်ဖို့ ဆုံးဖြတ်ရင် `git init` လုပ်ရမယ် (လိုအပ်ရင် လုပ်ပေးပါမယ်)။
+DataPOS က သီးခြား git repo ဖြစ်နေပြီ — `main` branch, remote = `https://github.com/shwepyithit568-commits/DataPOS.git`။
+Documentation အပြည့်အစုံ: `docs/README.md` (index) — changelog `2026-08-02_FIXES.md` · rules `Source_of_Truth_MM.md` + `DataPOS_Mobile_Offline_POS_Project_Source_of_Truth.md` · testing `Testing_check.md`။

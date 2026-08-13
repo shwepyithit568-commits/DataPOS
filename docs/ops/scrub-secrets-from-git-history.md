@@ -1,6 +1,6 @@
 # Scrub Production Credentials from Git History
 
-> **ဘာကြောင့် ဒီဖိုင် လိုလဲ:** `docs/production-env-datapos.md` (အခု `docs/ops/production-env-datapos.md`)
+> **ဘာကြောင့် ဒီဖိုင် လိုလဲ:** `docs/production-env-datapos.md` (အခု `docs/ops/production-env-datapos.md` — **2026-08-13 တွင် working tree ကနေ ဖျက်လိုက်ပြီ**၊ ဒါပေမဲ့ git history ထဲမှာ ကျန်နေဆဲ — ဒီအောက်က scrub ညွှန်ကြားချက်တွေက history အတွက် ဆက်အသုံးဝင်တယ်)
 > ထဲမှာ **တကယ့် production credentials** (`APP_KEY`, `DB_PASSWORD`, `MAIL_PASSWORD`) တွေ ပါခဲ့ပြီး
 > **initial commit (59976ee) ကတည်းက** git history ထဲ ရောက်နေပါသည်။
 > Working tree မှာ values တွေကို REDACTED လုပ်ပြီးသားဖြစ်သော်လည်း **အဟောင်း commits တွေထဲမှာ

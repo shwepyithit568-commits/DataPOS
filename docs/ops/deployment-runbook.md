@@ -47,7 +47,7 @@ RUN_MIGRATIONS=true ./deploy-datapos.sh      # code deploy + pending migrations
 
 Guarantees:
 - Server `.env`, `vendor/`, `node_modules/`, storage uploads and caches are NEVER overwritten.
-- Requires SSH key `~/.ssh/***REMOVED***` (same key as acdcmm.com deployment).
+- Requires SSH key `~/.ssh/<hostinger-key>` (same key as acdcmm.com deployment).
 
 Post-deploy cleanup (added 2026-08-08) runs automatically after upload:
 1. Removes `public_html/favicon.svg` (1.4MB legacy file, replaced by favicon.ico + apple-touch-icon.png).
@@ -62,8 +62,8 @@ curl -s -o /dev/null -w "%{http_code}\n" https://datapos.com/
 curl -s https://datapos.com/ | grep -o 'assets/app-[A-Za-z0-9_-]*\.css'   # storefront bundle
 curl -s -o /dev/null -w "%{size_download}\n" https://datapos.com/favicon.ico  # expect ~11KB
 # Stale assets should be gone:
-ssh -p ***REMOVED*** -i ~/.ssh/***REMOVED*** ***REMOVED***@***REMOVED*** \
-  "ls /home/***REMOVED***/domains/datapos.com/public_html/build/assets/ | grep -c ttf"  # expect 0
+ssh -p <SSH_PORT> -i ~/.ssh/<hostinger-key> <HOSTINGER_USER>@<HOSTINGER_IP> \
+  "ls /home/<HOSTINGER_USER>/domains/datapos.com/public_html/build/assets/ | grep -c ttf"  # expect 0
 ```
 
 ## Deploy History
@@ -84,12 +84,12 @@ Result: `DEPLOY_OK`; migration `2026_08_08_000001_add_unique_name_to_brands_tabl
 ```bash
 # Duplicate normalized brand names per store (expect 0):
 printf '%s\n' '$dups = DB::table("brands")->selectRaw("store_id, LOWER(TRIM(name)) as norm, COUNT(*) c")->groupBy("store_id","norm")->havingRaw("COUNT(*) > 1")->get(); echo "NAME_DUPS=" . $dups->count();' | \
-  ssh -p ***REMOVED*** -i ~/.ssh/***REMOVED*** ***REMOVED***@***REMOVED*** \
-  "cd /home/***REMOVED***/domains/datapos.com/laravel_app && php artisan tinker 2>/dev/null"
+  ssh -p <SSH_PORT> -i ~/.ssh/<hostinger-key> <HOSTINGER_USER>@<HOSTINGER_IP> \
+  "cd /home/<HOSTINGER_USER>/domains/datapos.com/laravel_app && php artisan tinker 2>/dev/null"
 # Duplicate slugs per store (expect 0) + brand count (expect 61):
 printf '%s\n' '$d = DB::table("brands")->selectRaw("store_id, slug, COUNT(*) c")->groupBy("store_id","slug")->havingRaw("COUNT(*) > 1")->get(); echo "SLUG_DUPS=" . $d->count() . " TOTAL=" . DB::table("brands")->count();' | \
-  ssh -p ***REMOVED*** -i ~/.ssh/***REMOVED*** ***REMOVED***@***REMOVED*** \
-  "cd /home/***REMOVED***/domains/datapos.com/laravel_app && php artisan tinker 2>/dev/null"
+  ssh -p <SSH_PORT> -i ~/.ssh/<hostinger-key> <HOSTINGER_USER>@<HOSTINGER_IP> \
+  "cd /home/<HOSTINGER_USER>/domains/datapos.com/laravel_app && php artisan tinker 2>/dev/null"
 ```
 
 Audit result for Deploy #4: `NAME_DUPS=0`, `SLUG_DUPS=0`, `TOTAL=61` (matches local). Post-deploy, the constraint was verified live by inserting a duplicate inside a transaction (blocked with `1062 Duplicate entry`) then rolling back — brand count stayed 61, no test rows left.
@@ -377,7 +377,7 @@ php artisan production:create-store --name="DataPOS" --slug=datapos-mobile
 Optional store settings can be provided during bootstrap or updated later from `/store/datapos-mobile/admin/settings`:
 
 ```bash
-php artisan production:create-store --name="DataPOS" --slug=datapos-mobile --phone=09899101720 --viber=09899101720 --telegram=osgunlocker --address="Yuzana Plaza, Yangon" --opening-hours="09:00 AM To 05:00 PM" --delivery-info="Myanmar countrywide delivery" --payment-info="KPay, CBPay, Bank" --default-language=my
+php artisan production:create-store --name="DataPOS" --slug=datapos-mobile --phone=<PHONE> --viber=<PHONE> --telegram=<TELEGRAM_USERNAME> --address="<ADDRESS>" --opening-hours="09:00 AM To 05:00 PM" --delivery-info="Myanmar countrywide delivery" --payment-info="KPay, CBPay, Bank" --default-language=my
 ```
 
 Use the Telegram username without the leading `@` when passing it to the command.
@@ -1056,7 +1056,7 @@ Hosting မှာ ပြန်လုပ်ပြီးရင် အောက်�
 
 #### 65. Store Settings — Contact & Social Content Updated
 - **ဘာလုပ်ထားလဲ:** DataPOS Contact & Social settings ထဲမှာ Main Phone, Viber, Telegram, Address, Facebook, YouTube, floating chat button label/link, chat channels တွေကိုဖြည့်ထားတယ်။
-- **Contact fields:** `phone=09899101720`, `viber_number=959892499955`, `telegram_username=@osgunlocker`, `address=No 478, KhaingShweWar St, NyaungDon.` အဖြစ် update ထားတယ်။
+- **Contact fields:** `phone=<PHONE>`, `viber_number=<VIBER>`, `telegram_username=@<TELEGRAM_USERNAME>`, `address=<ADDRESS>` အဖြစ် update ထားတယ်။
 - **Social fields:** `facebook_url=https://facebook.com/datapos`, `youtube_url=https://youtube.com/@datapos` ထည့်ထားတယ်။ TikTok link မသိသေးလို့ blank ထားထားတယ်။
 - **Floating chat:** Label ကို `ဆိုင်ကိုမေးမယ်` ထားပြီး Viber, Telegram, Facebook, YouTube, Call Now channels တွေကို popup ထဲမှာပြနိုင်အောင်စီထားတယ်။ Existing uploaded channel icon images တွေကို မဖျက်ဘဲဆက်သုံးထားတယ်။
 

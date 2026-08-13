@@ -20,13 +20,12 @@ Coding မစမီ သက်ဆိုင်ရာ documentation ကို ဒ�
 
 | Folder | အကြောင်း | Files |
 |---|---|---|
-| `docs/prompts/` | Agent conversation start templates (new chat မှာ paste လုပ်ရန်) | `01_PROJECT_START` · `02_BUG_FIX` · `03_NEW_FEATURE` · `04_UI_LAYOUT` · `05_STOREFRONT_CUSTOMIZATION_ROADMAP` · `NEW_CONVERSATION_START` · `AI Development Agent Instructions (MM)` |
+| `docs/prompts/` | Agent conversation templates (new chat မှာ paste လုပ်ရန်) | `TEMPLATES_MM.md` (project-start · bug-fix · new-feature · new-conversation · category-image) · `04_UI_LAYOUT_PROMPT_MM.md` · `05_STOREFRONT_CUSTOMIZATION_ROADMAP_MM.md` · `AI Development Agent Instructions (MM)` |
 | `docs/pos-resale-plan/` | POS + Resale စနစ် တည်ဆောက်ရေး အစီအစဉ် (00–04) | overview → current-state → target-design → sales-model → implementation-phases |
 | `docs/plans/` | Forward-looking feature plans | `multi-store-ready-plan.md` |
-| `docs/ops/` | Deployment / operations / security | `deployment-runbook.md` · `production-deployment-guide.md` · `production-env-datapos.md` (⚠️ values redacted) · `production-env-example.md` · `production-readiness-audit.md` · `backup-strategy.md` · `database-performance-audit.md` |
-| `docs/uat/` | User acceptance testing | `local-uat-checklist.md` · `local-uat-results.md` · `local-device-test-note.md` |
-| `docs/assets/` | Utility / creative prompts | `category-image-prompts.md` |
-| `docs/archive/` | Dated / done one-off logs (ပြီးသွားသော အလုပ် မှတ်တမ်း) | `2026-08-11-order-delete-feature.md` |
+| `docs/ops/` | Deployment / operations / security | `deployment-runbook.md` · `production-deployment-guide.md` · `pilot-recovery-cutover-runbook.md` · `production-env-example.md` · `backup-strategy.md` · `scrub-secrets-from-git-history.md` |
+| `docs/uat/` | User acceptance testing | `local-uat.md` (checklist + results/defect log + LAN device test note) |
+| `docs/archive/` | Dated / done one-off logs + completed audit reports (ပြီးသွားသော အလုပ် မှတ်တမ်း) | `2026-08-11-order-delete-feature.md` · `database-performance-audit.md` · `production-readiness-audit.md` |
 
 ## 🔁 Workflow အတိုချုပ်
 
@@ -38,8 +37,8 @@ Coding မစမီ သက်ဆိုင်ရာ documentation ကို ဒ�
 
 ## ⚠️ Security note
 
-`docs/ops/production-env-datapos.md` ထဲမှာ အရင်က **တကယ့် production credentials** (APP_KEY, DB_PASSWORD, MAIL_PASSWORD) ပါခဲ့ပြီး
-git history ထဲ ရောက်နေပါသည်။ လက်ရှိ file မှာ values အားလုံး REDACTED ဖြစ်ပြီးသားဖြစ်သည်။
-**အကြံပြုချက်:** လုံခြုံရေးအတွက် (a) ဒီဖိုင်ကို repo ကနေ ဖျက်ပြီး (b) မလိုအပ်တော့ပါက
-ဒီ secrets တွေ သုံးနေတဲ့ Hostinger server ရဲ့ APP_KEY / DB_PASSWORD / MAIL_PASSWORD တွေကို
+`docs/ops/production-env-datapos.md` မှာ အရင်က **တကယ့် production credentials** (APP_KEY, DB_PASSWORD, MAIL_PASSWORD) ပါခဲ့ပြီး
+git history ထဲ ရောက်နေပါသည် — ဖိုင်ကို **2026-08-13 တွင် repo ကနေ ဖျက်လိုက်ပြီ** (safe template = `production-env-example.md`)
+သို့သော် **git history ထဲမှာ ကျန်နေဆဲ** — repo ကို public မလုပ်မခင် `docs/ops/scrub-secrets-from-git-history.md` အတိုင်း history scrub လုပ်ရမည်။
+မလိုအပ်တော့ပါက ဒီ secrets တွေ သုံးနေတဲ့ Hostinger server ရဲ့ APP_KEY / DB_PASSWORD / MAIL_PASSWORD တွေကို
 ပြောင်းလဲ (rotate) လုပ်သင့်သည်။

@@ -295,7 +295,7 @@ git push origin main
 ./deploy-datapos.sh
 
 # 3. Production DB — migration + primary သတ်မှတ်
-ssh -p ***REMOVED*** -i ~/.ssh/***REMOVED*** <host> "cd <app_path> && php artisan migrate --force && php artisan tinker --execute=\"App\Models\Store::where('slug','datapos-mobile')->update(['is_primary'=>true]);\""
+ssh -p <SSH_PORT> -i ~/.ssh/<hostinger-key> <host> "cd <app_path> && php artisan migrate --force && php artisan tinker --execute=\"App\Models\Store::where('slug','datapos-mobile')->update(['is_primary'=>true]);\""
 
 # 4. Caches clear
 ssh ... "php artisan view:clear && php artisan config:clear && php artisan cache:clear"
