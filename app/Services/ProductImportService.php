@@ -569,7 +569,7 @@ class ProductImportService
                     ? (float) $this->sanitizeNumber($variant['wholesale_price'])
                     : null,
                 'stock_status' => in_array($variant['stock_status'] ?? 'in_stock', self::VALID_STOCK_STATUSES, true)
-                    ? $variant['stock_status']
+                    ? ($variant['stock_status'] ?? 'in_stock')
                     : 'in_stock',
                 'is_default' => (bool) ($variant['is_default'] ?? ($i === 0)),
                 'sort_order' => $i,

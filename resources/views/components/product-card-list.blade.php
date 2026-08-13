@@ -10,8 +10,10 @@
     $defaultVariant = $product->defaultVariant();
     $cardImage = $defaultVariant?->image_path ?: $product->image_path;
 
-    $retailPrice = $defaultVariant?->retail_price ?? $product->retail_price;
-    $wholesalePrice = $defaultVariant?->wholesale_price ?? $product->wholesale_price;
+    // A variant with a 0/empty price (e.g. a name-only variant row from an
+    // import) must never display as "Ks 0" — fall back to the product price.
+    $retailPrice = $defaultVariant && (float) $defaultVariant->retail_price > 0 ? $defaultVariant->retail_price : $product->retail_price;
+    $wholesalePrice = $defaultVariant && (float) ($defaultVariant->wholesale_price ?? 0) > 0 ? $defaultVariant->wholesale_price : $product->wholesale_price;
     $effectivePrice = $isWholesaleApproved && $wholesalePrice > 0 ? $wholesalePrice : $retailPrice;
     $cartName = $defaultVariant ? "{$product->name} - {$defaultVariant->name}" : $product->name;
     $effectiveSku = $defaultVariant?->sku ?: $product->sku;

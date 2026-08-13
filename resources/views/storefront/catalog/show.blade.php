@@ -85,7 +85,12 @@
         get hasVariants() { return this.variants.length > 0; },
         get selected() { return this.variants[this.selectedIndex] ?? null; },
         get price() {
-            if (this.selected) return this.isWholesale && (this.selected.wholesale_price || 0) > 0 ? this.selected.wholesale_price : this.selected.retail_price;
+            if (this.selected) {
+                const p = this.isWholesale && (this.selected.wholesale_price || 0) > 0 ? this.selected.wholesale_price : this.selected.retail_price;
+                // Name-only variant rows (imports without variant prices) must
+                // never show 'Ks 0' — fall back to the product price.
+                return p > 0 ? p : (this.isWholesale && this.baseWhole > 0 ? this.baseWhole : this.baseRetail);
+            }
             return this.isWholesale && this.baseWhole > 0 ? this.baseWhole : this.baseRetail;
         },
         get sku() { return this.selected ? (this.selected.sku || this.baseSku) : this.baseSku; },
@@ -439,7 +444,7 @@
                                                 class="px-3 py-1.5 rounded-full text-xs sm:text-xs font-black transition border"
                                                 :class="selectedIndex === i ? 'bg-sky-600 text-white border-sky-600 shadow-md shadow-sky-500/25' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-sky-400'">
                                                 <span x-text="v.name"></span>
-                                                <span class="opacity-70" x-text="'· ' + fmt(isWholesale && (v.wholesale_price || 0) > 0 ? v.wholesale_price : v.retail_price)"></span>
+                                                <span class="opacity-70" x-show="(isWholesale && (v.wholesale_price || 0) > 0 ? v.wholesale_price : v.retail_price) > 0" x-text="'· ' + fmt(isWholesale && (v.wholesale_price || 0) > 0 ? v.wholesale_price : v.retail_price)"></span>
                                             </button>
                                         </template>
                                     </div>
