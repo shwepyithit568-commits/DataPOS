@@ -15,7 +15,7 @@
 | **Phase 2.5 — Pilot data import hub (part 1)** | ✅ ပြီးစီး (item 271) — products / customers / suppliers CSV-XLSX import |
 | **Test suite** | ✅ **821 passed / 3671 assertions** (`php artisan test`) |
 | **DB** | SQLite (`database/database.sqlite`) — migrations အားလုံး run ပြီး |
-| **Git** | main branch · remote `github.com/shwepyithit568-commits/DataPOS.git` · local က origin ထက် 1 commit ရှေ့ |
+| **Git** | main branch · remote `github.com/shwepyithit568-commits/DataPOS.git` · local = origin/main (in sync, 2026-08-13) |
 | **Deploy** | **မလုပ်ရသေးဘူး — local development သာ** (အောက်က ⚠️ ကြည့်ပါ) |
 
 ### POS Module မှာ ပါပြီးသား အရာတွေ (`/pos` routes — web.php:567+)
@@ -114,6 +114,8 @@ git history ထဲ ရောက်နေပါသည် — ဖိုင်က�
 ---
 
 ## 📦 Release Notes
+
+> ⚠️ **ဒီ Release Notes တွေက မူရင်း project (`data_ecommerce`) ရဲ့ v0.1.0-rc1 မှတ်တမ်းပါ** — DataPOS ကို ကူးယူချိန်က သိမ်းထားတာ။ အဲဒီ project ရဲ့ ပထမဆုံး production store က ACDC Mobile (`acdc-mobile`) ဖြစ်ခဲ့တယ် — ဒီအောက်က "acdc-mobile" / "datapos-mobile remains local/UAT only" စာကြောင်းတွေက အဲဒီ project အတွက်ပါ။ **DataPOS အတွက် canonical production slug က `datapos-mobile`** (deploy မလုပ်ရသေးလို့ လက်ရှိ ဆုံးဖြတ်ချက် — `docs/ops/DEPLOYMENT.md` ကြည့်ပါ)။
 
 # DataPOS Ecommerce v0.1.0-rc1
 

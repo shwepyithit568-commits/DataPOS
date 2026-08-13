@@ -1,6 +1,6 @@
 # AlinnThit Pilot — Recovery & Cutover Runbook
 
-> **ရည်ရွယ်ချက်:** Phase 2.5 (AlinnThit production pilot) အတွက် backup → restore → rollback → failover → cutover အကုန် ဘယ်လို လုပ်ရမယ်ဆိုတဲ့ လက်တွေ့ လုပ်ထုံးလုပ်နည်း။ Pilot မတည်မငြိမ်ခင် **ပြင်ပဖောက်သည်ကို မရောင်းရ** ဆိုတဲ့ စည်းကမ်း (04-implementation-phases §2.5 exit criteria) ရဲ့ အခြေခံ။
+> **ရည်ရွယ်ချက်:** Phase 2.5 (AlinnThit production pilot) အတွက် backup → restore → rollback → failover → cutover အကုန် ဘယ်လို လုပ်ရမယ်ဆိုတဲ့ လက်တွေ့ လုပ်ထုံးလုပ်နည်း။ Pilot မတည်မငြိမ်ခင် **ပြင်ပဖောက်သည်ကို မရောင်းရ** ဆိုတဲ့ စည်းကမ်း (ROADMAP.md Phase 2.5 exit criteria) ရဲ့ အခြေခံ။
 >
 > **အခြေအနေ:** Phase 2 (Online POS MVP, items 261–270) ပြီးပြီ · Phase 2.5 part 1 (pilot data import hub, item 271) ပြီးပြီ · ဒီ runbook က Phase 2.5 ရဲ့ ကျန် "Backup & restore test" + "Written recovery/cutover runbook" items အတွက်။
 >

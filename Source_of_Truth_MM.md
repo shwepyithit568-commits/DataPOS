@@ -1299,7 +1299,7 @@ Product Catalog အကြီးကြီးကို Alpine.js ထဲ တစ်�
 ## Phase 0 — Architecture Decisions & Risk Removal
 
 - Tenancy / Deployment Decision (Cloud SaaS vs Local Install — 02-target-design §2.3)
-- Store / Domain Resolver Fix (`docs/CHANGELOG.md`)
+- Store / Domain Resolver Fix (`CHANGELOG.md`)
 - Shared Ecommerce / POS Inventory Source of Truth Design (§5, §14)
 - Money & Rounding Policy (Open Decision #15 — Resolved)
 - Weighted-Average Inventory Valuation (§14.4)
@@ -1793,7 +1793,7 @@ Production Hosting အတွက်—
 - MySQL
 - 48-month plan
 - Daily Backups
-- Restore Procedure via `docs/docs/ops/DEPLOYMENT.md`
+- Restore Procedure via `docs/ops/DEPLOYMENT.md`
 
 Phase 1–3 အတွက် Shared Hosting အသုံးပြုနိုင်သည်။
 
@@ -1805,7 +1805,7 @@ Laravel + MySQL Stack သည် Portable ဖြစ်ရမည်။
 
 Deployment Process ကို Repeatable ဖြစ်အောင်—
 
-`docs/deployment-runbook.md`
+`docs/archive/deployment-runbook.md`
 
 အသုံးပြုရမည်။
 

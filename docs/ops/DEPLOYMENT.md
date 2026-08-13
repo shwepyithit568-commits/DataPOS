@@ -247,8 +247,7 @@ object-src 'none'
 > (`mapEmbedSrc()` → `www.google.com/maps?...&output=embed`) and the YouTube video embeds
 > used on the How-to-Order page.
 
-	> **Note:** `'unsafe-inline'` and `'unsafe-eval'` are required by Livewire's Alpine.js integration.
-	> When migrating to a nonce-based CSP, update both the middleware and the Blade layouts.
+> `script-src` သည် **nonce-based** ဖြစ်သည် (အပေါ်က CSP section ကြည့်ပါ) — `'unsafe-inline'` ကို script များအတွက် ခွင့်မပြုတော့ပါ။
 
 > **⚠️ Hostinger production quirk (verified 2026-08-09):** LiteSpeed injects a bare
 > `Content-Security-Policy: upgrade-insecure-requests` at the vhost level, which **replaces** the
@@ -315,9 +314,7 @@ The app stores originally-uploaded images without compression. For production:
 
 ---
 
-## Backup Strategy
-
-# DataPOS — Production Backup Strategy
+## 9. Production Backup Strategy
 
 ## 1. Database Backup (MySQL)
 
@@ -409,9 +406,7 @@ npm run build
 
 ---
 
-## Production .env Example (safe template)
-
-# Production Environment Example
+## 10. Production .env Example (safe template)
 
 Use this as a checklist when creating the real server `.env`. Do not commit the real `.env`.
 
@@ -435,7 +430,7 @@ DB_USERNAME=database_user
 DB_PASSWORD=strong_database_password
 
 SESSION_DRIVER=database
-CACHE_STORE=database
+CACHE_STORE=file        # file က database ထက် မြန်တယ် (အပေါ်က Performance Recommendations)
 FILESYSTEM_DISK=local
 
 MAIL_MAILER=smtp
@@ -462,9 +457,7 @@ The first real production store is `DataPOS` with canonical slug `datapos-mobile
 
 ---
 
-## Scrubbing Secrets From Git History
-
-# Scrub Production Credentials from Git History
+## 11. Scrubbing Secrets From Git History
 
 > **ဘာကြောင့် ဒီဖိုင် လိုလဲ:** `docs/production-env-datapos.md` (အခု `docs/ops/production-env-datapos.md` — **2026-08-13 တွင် working tree ကနေ ဖျက်လိုက်ပြီ**၊ ဒါပေမဲ့ git history ထဲမှာ ကျန်နေဆဲ — ဒီအောက်က scrub ညွှန်ကြားချက်တွေက history အတွက် ဆက်အသုံးဝင်တယ်)
 > ထဲမှာ **တကယ့် production credentials** (`APP_KEY`, `DB_PASSWORD`, `MAIL_PASSWORD`) တွေ ပါခဲ့ပြီး
@@ -474,16 +467,17 @@ The first real production store is `DataPOS` with canonical slug `datapos-mobile
 
 ---
 
-## 1. လက်ရှိ အခြေအနေ (ဒီ repo အတွက် အတည်ပြုပြီး)
+### လက်ရှိ အခြေအနေ (ဒီ repo — 2026-08-13 ပြန်စစ်ပြီး)
 
 | အချက် | အခြေအနေ |
 |---|---|
-| Total commits | **4** (59976ee → 38e1fbb → a84d860 → 8c0a265) — history က သေးငယ်လို့ rewrite ပေါ့ပါးသည် |
-| Secrets ပါသော ဖိုင် | `docs/production-env-datapos.md` တစ်ခုတည်းသာ (initial commit မှ စ၍ commit ၄ ခုလုံးတွင်) |
+| Total commits | **14** (36f0cac → adb155a) |
+| Secrets ပါသော ဖိုင်များ (history) | `docs/ops/production-env-datapos.md` — APP_KEY / DB_PASSWORD / MAIL_PASSWORD (initial commit မှ စ) · **Hostinger SSH credentials** (IP / port / user / key-path) — `deploy-datapos.sh` + docs အဟောင်း commits တွေမှာ |
+| Working tree | 2026-08-13: tracked ဖိုင်တွေမှာ real credential အကုန် REDACTED/ဖျက်ပြီး ✓ (`git grep` → clean) |
 | `.env` ကိုယ်တိုင် | **ဘယ်တော့မှ commit မဖြစ်ဖူး** ✓ (`.env.example` သာ — အန္တရာယ်ကင်း) |
 | Remote | `https://github.com/shwepyithit568-commits/DataPOS.git` — **private ဖြစ်ဖွယ်ရှိ** (unauthenticated API က 404) |
-| Branch | `main` — local = origin/main (up to date) |
-| filter-repo | **မရှိသေးပါ** — `pip install git-filter-repo` ဖြင့် ထည့်ရမည် |
+| Branch | `main` — local = origin/main (in sync, 2026-08-13) |
+| filter-repo | **မလုပ်ရသေးပါ** — အောက်က Option A (fresh clone) အတိုင်း run ရန် |
 
 ---
 

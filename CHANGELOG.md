@@ -1809,7 +1809,7 @@ Hosting မှာ ပြန်လုပ်ပြီးရင် အောက်�
 
 ### 227. ✅ Production CSP — Hostinger vhost override fixed
 - **ဖြစ်စဉ်:** Deploy #13 ပြီးနောက် ပထမဆုံး production CSP verification မှာ — **Hostinger/LiteSpeed က vhost အဆင့်မှာ bare `Content-Security-Policy: upgrade-insecure-requests` inject လုပ်ပြီး middleware ရဲ့ nonce policy ကို ဖျောက်လိုက်တာ** (origin ကို SSH ကနေ တိုက်ရိုက် curl ပြီး အတည်ပြု; acdcmm.com ကတော့ full policy ပြနေတာ အတည်ပြု)
-- **အဖြေ:** acdcmm-proven pattern — `public/.htaccess` ထဲမှာ directory-level `Header always set Content-Security-Policy "..."` (vhost header ပြီးမှ apply လို့ အနိုင်ရ) · **trade-off:** static header မှာ per-request nonce မထည့်လို့ production `script-src` = `'unsafe-inline' 'unsafe-eval'` (acdcmm နဲ့တူ) · nonce middleware က local မှာ ဆက်သုံး, vhost override ဖျက်ရင် production မှာပါ အလိုအလျောက် ဝင် · `docs/docs/ops/DEPLOYMENT.md` မှာ quirk + verify command မှတ် — **`public/.htaccess` နဲ့ middleware ကို sync ထားရ**
+- **အဖြေ:** acdcmm-proven pattern — `public/.htaccess` ထဲမှာ directory-level `Header always set Content-Security-Policy "..."` (vhost header ပြီးမှ apply လို့ အနိုင်ရ) · **trade-off:** static header မှာ per-request nonce မထည့်လို့ production `script-src` = `'unsafe-inline' 'unsafe-eval'` (acdcmm နဲ့တူ) · nonce middleware က local မှာ ဆက်သုံး, vhost override ဖျက်ရင် production မှာပါ အလိုအလျောက် ဝင် · `docs/ops/DEPLOYMENT.md` မှာ quirk + verify command မှတ် — **`public/.htaccess` နဲ့ middleware ကို sync ထားရ**
 - **Verify:** `curl -sI https://datapos.com/ | grep -i content-security-policy` → full policy (frame-src Google Maps + YouTube ပါ) ✓ · home/product/how-to-order 200 ✓
 
 ---
@@ -1826,7 +1826,7 @@ Hosting မှာ ပြန်လုပ်ပြီးရင် အောက်�
 - *(အစောပိုင်း session မှာ ပြီးခဲ့တဲ့ အလုပ်တွေ — changelog မှာ နောက်ကြောင်းပြန် မှတ်တမ်းတင်ခြင်း)*
 - **Nonce-based CSP:** `SecurityHeaders` middleware — per-request `base64_encode(random_bytes(18))` nonce → `View::share('cspNonce')` → Blade inline `<script>` တိုင်းမှာ `nonce="{{ $cspNonce }}"` · inline event handlers (onclick/onchange/…) တွေကို delegated listeners (`resources/js/csp-helpers.js`: `data-ios-href`, `data-catalog-view`, `data-auto-submit`, `data-confirm`, `data-print`, `data-img-fallback`) အဖြစ် ပြောင်း · `script-src` မှာ `'unsafe-inline'` ဖြုတ် (`'unsafe-eval'` က Alpine standard build အတွက် ဆက်ထား) · admin + auth + storefront layouts အကုန် · `app.js`/`app-admin.js` — CSP nonce API
 - **Google Maps iframes:** `frame-src` မှာ `https://www.google.com https://maps.google.com https://www.youtube.com` ထည့် — footer map embed + how-to-order YouTube embeds အလုပ်လုပ်တယ်
-- **Test:** 70 targeted tests + full suite green (511) ✓ · browser-verified (homepage console clean, nonce works, maps render, Viber iOS href swap) ✓ · `headers.txt` sample snapshot + `docs/docs/ops/DEPLOYMENT.md` update ✓
+- **Test:** 70 targeted tests + full suite green (511) ✓ · browser-verified (homepage console clean, nonce works, maps render, Viber iOS href swap) ✓ · `headers.txt` sample snapshot + `docs/ops/DEPLOYMENT.md` update ✓
 
 ---
 
@@ -2086,7 +2086,7 @@ Hosting မှာ ပြန်လုပ်ပြီးရင် အောက်�
 
 ### 254. ✅ Multi-store readiness Phase 1 — primary-store resolver fix (root home survives store #2)
 
-- **Goal (multi-store-ready-plan.md Phase 1):** store ၂ ခု active ဖြစ်လာရင် root `/` home မပျက်အောင် resolver ကို ပြင်တာ။ နောက်ခံ: `ResolveStoreContext` fallback က active store တစ်ခုတည်းရှိမှသာ ရွေးတယ် — store #2 ဖွင့်တာနဲ့ null ပြန်ပြီး home empty state ဖြစ်တယ်။
+- **Goal (multi-store-ready-plan.md Phase 1 — plan ကို 2026-08-13 တွင် ROADMAP.md ထဲ ပေါင်းပြီး):** store ၂ ခု active ဖြစ်လာရင် root `/` home မပျက်အောင် resolver ကို ပြင်တာ။ နောက်ခံ: `ResolveStoreContext` fallback က active store တစ်ခုတည်းရှိမှသာ ရွေးတယ် — store #2 ဖွင့်တာနဲ့ null ပြန်ပြီး home empty state ဖြစ်တယ်။
 - **Migration** `2026_08_11_000001_add_is_primary_to_stores_table.php` — `stores.is_primary` boolean (default false, after `is_active`). SQLite + MySQL compatible (add column).
 - **Model** `app/Models/Store.php` — `is_primary` → `$fillable` + `$casts` (boolean).
 - **Resolver** `app/Http/Middleware/ResolveStoreContext.php` — fallback priority: (1) logged-in user's active store membership → (2) **primary active store** (အသစ် — two-primary data drift ရှိရင် lowest id ကို deterministic ရွေး) → (3) active store တစ်ခုတည်း (legacy) → (4) null (clear empty state, crash မဟုတ်)။
@@ -2097,7 +2097,7 @@ Hosting မှာ ပြန်လုပ်ပြီးရင် အောက်�
 
 ### 255. ✅ Multi-store readiness Phase 2 — Admin Store Management UI (platform owner)
 
-- **Goal (multi-store-ready-plan.md Phase 2):** `production:create-store` CLI ကို Admin UI နဲ့ ဖြည့်စွက် — Platform Owner က browser ကနေ store list / create / edit / deactivate / reactivate လုပ်နိုင်အောင်။ Store ကို hard delete မလုပ် (deactivate-only, `is_active=false`), primary-single rule (primary store ကို deactivate/ဖျက်လို့ မရ — ဦးစွာ အခြား store ကို primary ပြောင်းရမယ်), last-active guard (နောက်ဆုံး active store ကို deactivate မလုပ်ရ)။
+- **Goal (multi-store-ready-plan.md Phase 2 — plan ကို 2026-08-13 တွင် ROADMAP.md ထဲ ပေါင်းပြီး):** `production:create-store` CLI ကို Admin UI နဲ့ ဖြည့်စွက် — Platform Owner က browser ကနေ store list / create / edit / deactivate / reactivate လုပ်နိုင်အောင်။ Store ကို hard delete မလုပ် (deactivate-only, `is_active=false`), primary-single rule (primary store ကို deactivate/ဖျက်လို့ မရ — ဦးစွာ အခြား store ကို primary ပြောင်းရမယ်), last-active guard (နောက်ဆုံး active store ကို deactivate မလုပ်ရ)။
 - **Controller** `app/Http/Controllers/Admin/StoreManagementController.php` (အသစ်) — `index / create / store / edit / update / destroy` — validation: `name` unique, `slug` lowercase unique regex, `is_active` boolean, `is_primary` ကို single-primary rule နဲ့ စစ်; deactivate ချိန် primary ဖြစ်နေရင် reassign လုပ်ပြီးမှ deactivate; product count (`withCount`) နဲ့ flash messages ပါ။
 - **Middleware** `app/Http/Middleware/EnsurePlatformOwner.php` (အသစ်) + alias `platform.owner` — global admin group အတွင်း `/admin/stores*` routes ကို platform owner သာ ဝင်ခွင့် (store-scoped middleware မဟုတ် — ဘယ် store context မှာမဆို owner က store list မြင်ရမယ်)။
 - **Routes** `routes/web.php` — `Route::middleware(['platform.owner'])->prefix('admin/stores')...` → `admin.stores.index/create/store/edit/update/destroy`.

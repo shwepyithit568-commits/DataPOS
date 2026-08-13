@@ -12,10 +12,9 @@
 
 | ဖိုင် | အကြောင်းအရာ | ဘာတွေသိရမလဲ |
 |---|---|---|
-| `ROADMAP.md` | **လုပ်ပြီးသား အခြေအနေ** | လက်ရှိ ပရောဂျက်မှာ ဘာတွေ ရှိပြီးသားလဲ — Ecommerce, multi-store, PWA, web push, admin စနစ်, POS Phase 1–2.5p1 (821 tests pass, 2026-08-13) |
+| `ROADMAP.md` | **ခြုံငုံ အစီအစဉ် (လုပ်ပြီးသား + ဆက်ဆောက်မယ့်ဟာ)** | လက်ရှိ အခြေအနေ (Ecommerce, multi-store, PWA, POS Phase 1–2.5p1 — 821 tests pass 2026-08-13) + Implementation Phases: Phase 0 (Decisions) → 1 (Foundation) → 2 (Online POS MVP) → 2.5 (AlinnThit Pilot) → 3 (Cloud PWA offline) → 4 (Operations) → 5 (Local + Resale) → 6 (Industry packs) |
 | `02-target-design.md` | **လိုချင်တဲ့ ပုံစံ** | Architecture — တစ်ခုတည်းသော codebase, deployment model ၂ မျိုး (Cloud SaaS / Local install), shared inventory ledger, money/rounding policy, POS sale state machine, cashier shift |
 | ~~`03-sales-market-model.md`~~ | ~~စျေးကွက်အလိုက် ရောင်းချ/ထိန်းချုပ်ပုံ~~ | **2026-08-13: ဒီ `ROADMAP.md` ထဲ ပေါင်းပြီး** — အောက်က "Sales & Market Model" section ကြည့်ပါ |
-| `ROADMAP.md` | **တည်ဆောက်ရမယ့် အဆင့်ဆင့်** | Phase 0 (Decisions) → Phase 1 (Foundation) → Phase 2 (Online POS MVP) → 2.5 (AlinnThit Pilot) → 3 (Cloud PWA offline) → 4 (Operations) → 5 (Local + Resale) → 6 (Industry packs) |
 
 ---
 
@@ -38,19 +37,18 @@
 
 ## ဖတ်ရန် အစီအစဉ်
 
-1. `ROADMAP.md` ကစဖတ်ပါ (ဘာရှိပြီးသားလဲ သိအောင်)
+1. `ROADMAP.md` ကစဖတ်ပါ (ဘာရှိပြီးသားလဲ + ဘယ်ကစမလဲ သိအောင်)
 2. `02-target-design.md` ဖတ်ပါ (ဘယ်ကို ဦးတည်နေလဲ သိအောင်)
-3. ဒီဖိုင်ရဲ့ အောက်က "Sales & Market Model" section ဖတ်ပါ (ဘယ်လို ရောင်းမလဲ သိအောင်)
-4. `ROADMAP.md` ဖတ်ပါ (ဘယ်ကစမလဲ သိအောင်)
+3. ဒီဖိုင်ရဲ့ အောက်က "Sales & Market Model" + "Implementation Phases" section တွေ ဖတ်ပါ (ဘယ်လို ရောင်းမလဲ + ဘယ်ကစမလဲ သိအောင်)
 
 ---
 
 ## ဆက်စပ်ဖိုင်များ
 
 - `Source_of_Truth_MM.md` / `DataPOS_Mobile_Offline_POS_Project_Source_of_Truth.md` — POS စနစ်ရဲ့ အခြေခံ စည်းမျဉ်း (အရေးအကြီးဆုံး — ဒီပြင်ဆင်ချက်တွေနဲ့ ဆန့်ကျင်နေတဲ့ အခန်းတွေ ရှိနေလို့ amendment လိုအပ်မယ်)
-- `docs/CHANGELOG.md` — multi-store admin စနစ် တိုးတက်မှု အစီအစဉ်
-- `docs/deployment-runbook.md` — deploy လုပ်နည်း မှတ်တမ်း
-- `docs/docs/ops/DEPLOYMENT.md` — backup/restore မှတ်တမ်း (Local edition အတွက် versioned workflow နဲ့ ချိတ်ဆက်)
+- `CHANGELOG.md` — implementation history / changelog (items 1–271)
+- `docs/archive/deployment-runbook.md` — အရင် site ရဲ့ deploy history (archived 2026-08-13)
+- `docs/ops/DEPLOYMENT.md` — deploy / backup-restore / secrets scrub မှတ်တမ်း
 
 
 ---
@@ -199,7 +197,7 @@
 | Deploy | `deploy-datapos.sh` — **⚠️ အရင် project ရဲ့ live ကို သွားတဲ့ script — DataPOS အတွက် မသုံးရသေး** (README ကြည့်ပါ) |
 | Testing | **821 tests pass / 3671 assertions** — PHPUnit, SQLite local (2026-08-13 run ပြီး) |
 | Dev server | `php artisan serve --port=8501` (README/.env အတိုင်း) |
-| Git | main · remote `github.com/shwepyithit568-commits/DataPOS.git` · **local က origin ထက် 1 commit ရှေ့ (unpushed)** |
+| Git | main · remote `github.com/shwepyithit568-commits/DataPOS.git` · **local = origin/main (in sync, 2026-08-13)** |
 
 ---
 
@@ -242,7 +240,7 @@
 |---|---|---|
 | Pilot data import — opening-stock reconciliation, debt opening balances | Phase 2.5 | import hub (part 1) ပြီးပြီ — ကျန် |
 | AppSheet/Google Sheets parallel validation + real cashier usage + stabilization | Phase 2.5 | pilot ကာလ အလုပ် |
-| Backup & restore test (versioned workflow) | Phase 2.5 | runbook ရေးပြီး (`docs/ops/pilot-recovery-cutover-runbook.md`) — **drill မလုပ်ရသေး** |
+| Backup & restore test (versioned workflow) | Phase 2.5 | runbook (`docs/ops/pilot-recovery-cutover-runbook.md`) — Drill #1 (SQLite) ✅ · §2.5A local MySQL ✅ · Drill #2 localhost rehearsal ✅ (2026-08-13, runbook §2.6) · **production drill ကျန် — deploy ပြီးမှ** |
 | `/pos` PWA offline queue — IndexedDB, idempotent sync API, device registration | Phase 3 | storefront SW နဲ့ မရော |
 | Full purchasing + purchase returns + supplier payables | Phase 4 | MVP က receive-without-PO |
 | Stock transfers + stock counts · Service jobs (phone repair) · Expenses + finance ledger · Advanced reports · Accounting period closing | Phase 4 | |
@@ -269,9 +267,9 @@ Final Burmese/English/Chinese terminology
 
 ## ၁.၅ နောက်ဆက်လုပ်ရမှာများ (Next Steps — အစီအစဉ်)
 
-1. **Git sync** — `cfa9e10` push + 08-13 fix files နဲ့ changelog commit (WIP `CashierShiftController.php` နဲ့ သီးခြားခွဲ)
+1. ~~**Git sync**~~ — ✅ ပြီးပြီ (2026-08-13): docs consolidation `19222c1` + fix ၂ ခု `8fe8228` / `adb155a` (CashierShiftController အပါအဝင်) — origin/main နဲ့ in sync
 2. **Phase 2.5 ကျန်** — opening-stock reconciliation → debt opening balances → backup/restore drill →
-   real cashier usage (ဆိုင်မှာ တကယ်သုံး) → parallel validation → stabilization (04-implementation-phases §2.5)
+   real cashier usage (ဆိုင်မှာ တကယ်သုံး) → parallel validation → stabilization (ဒီဖိုင် Phase 2.5 exit criteria)
 3. **Phase 3 — Cloud PWA Offline Queue** — `/pos/sw.js` + IndexedDB + idempotent sync API + device registration
 4. **Phase 4 — Operations Modules** (purchasing, transfers, service, expenses, reports, period closing)
 5. **Phase 5 — Local LAN/SQLite Edition + Resale Readiness**
@@ -323,10 +321,10 @@ Final Burmese/English/Chinese terminology
 | အလုပ် | အသေးစိတ် | Status |
 |---|---|---|
 | Tenancy/deployment decision | Cloud SaaS vs Local install — 02-target-design §2.3 | ✅ Approved 2026-08-10 — SoT နှစ်ဖိုင်လုံးတွင် မှတ်ပြီး |
-| Store/domain resolver ပြင် | `docs/CHANGELOG.md` အတိုင်း — store ၂ ခု active ရင် home မပျက်အောင် | ⏳ ရှိပြီးသား plan — စရန် (ပထမဆုံး implementation task) |
-| Shared Ecommerce/POS inventory source of truth | Ledger ဒီဇိုင်း + adapter + stock_status derived ပြောင်း | ✅ SoT §5/§14.1 (MM) + §4/§10.1 (EN) ပြင်ပြီး — implementation စရန် |
+| Store/domain resolver ပြင် | `CHANGELOG.md` အတိုင်း — store ၂ ခု active ရင် home မပျက်အောင် | ✅ 2026-08-13 (`7ae71ef`) — primary-store resolver fix + admin store management UI |
+| Shared Ecommerce/POS inventory source of truth | Ledger ဒီဇိုင်း + adapter + stock_status derived ပြောင်း | ✅ SoT ပြင်ပြီး + implementation ပြီး (item 257–260 — ledger + adapter) |
 | Money & rounding policy | Integer MMK, precision, rounding order (02 §2.6) — acceptance test နဲ့ သေချာ | ✅ Approved 2026-08-10 — SoT Open Decision #15/#6 Resolved |
-| Weighted-average valuation | CostingService design (02 §2.7) | ✅ Rule က SoT §14.4/§10.4 မှာ မှတ်ပြီး — CostingService implementation စရန် |
+| Weighted-average valuation | CostingService design (02 §2.7) | ✅ Rule က SoT §14.4/§10.4 မှာ မှတ်ပြီး + CostingService ပြီး (item 257–260) |
 | Negative-stock policy | Default block + future override rules (02 §2.8) | ⏳ Owner approve လို |
 | Offline mode separation | Cloud queue vs Local — 02 §2.12 | ✅ ဒီစာရွက်စာတမ်းမှာ သတ်မှတ်ပြီး |
 | Permission matrix | Store modules / branch capabilities / user roles / approvals — 4 levels | ⏳ စရန် |

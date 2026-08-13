@@ -666,7 +666,7 @@ Never allow AppSheet and Laravel to act as simultaneous writable masters for the
 ### Phase 0 — Architecture decisions and risk removal
 
 - Tenancy/deployment decision (Cloud SaaS vs Local install — 02-target-design §2.3).
-- Store/domain resolver fix (`docs/CHANGELOG.md`).
+- Store/domain resolver fix (`CHANGELOG.md`).
 - Shared Ecommerce/POS inventory source of truth design (§4, §10).
 - Money and rounding policy (Open Decision #6 — resolved).
 - Weighted-average inventory valuation (§10.4).
@@ -908,7 +908,7 @@ Do not guess these values during implementation:
 12. Historical migration depth and official cutover date.
 13. Exact daily-closing approval and discrepancy thresholds.
 14. Offline retention duration and local-device privacy policy.
-15. Hosting/server capacity, backup frequency, and recovery targets. — **RESOLVED 2026-08-04 (Owner):** **Hostinger Unlimited Web Hosting**, 48-month term on the owner's own account (~$181.92 upfront ≈ $3.79/mo; renews at $16.99/mo) with MySQL. Backup: Hostinger daily backups plus the documented restore procedure (`docs/docs/ops/DEPLOYMENT.md`). This plan covers Phase 1–3 (single Laravel app serving storefront + `/pos` PWA + sync API; offline devices sync in bursts which suits shared hosting). **Planned upgrade path: switch to a VPS when the 48-month term expires** (or earlier if Phase 4–5 multi-branch workload requires it) — the Laravel + MySQL stack is portable and `docs/deployment-runbook.md` is repeatable.
+15. Hosting/server capacity, backup frequency, and recovery targets. — **RESOLVED 2026-08-04 (Owner):** **Hostinger Unlimited Web Hosting**, 48-month term on the owner's own account (~$181.92 upfront ≈ $3.79/mo; renews at $16.99/mo) with MySQL. Backup: Hostinger daily backups plus the documented restore procedure (`docs/ops/DEPLOYMENT.md`). This plan covers Phase 1–3 (single Laravel app serving storefront + `/pos` PWA + sync API; offline devices sync in bursts which suits shared hosting). **Planned upgrade path: switch to a VPS when the 48-month term expires** (or earlier if Phase 4–5 multi-branch workload requires it) — the Laravel + MySQL stack is portable and `docs/archive/deployment-runbook.md` is repeatable.
 16. Burmese/English terminology and final receipt layout.
 
 Record each approved answer in this document or an ADR before building the dependent feature.
