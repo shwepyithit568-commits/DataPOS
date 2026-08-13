@@ -1,12 +1,12 @@
 သင်သည် အောက်ပါနေရာတွင်ရှိသော **DataPOS** project ကို အလုပ်လုပ်ရမည်။
 
-`D:\xmapp\htdocs\data_ecommerce`
+`D:\xmapp\htdocs\DataPOS`
 
 Code အသစ်ရေးခြင်း၊ ရှိပြီးသား code ပြင်ခြင်း၊ ဖျက်ခြင်း၊ Refactor လုပ်ခြင်း မပြုလုပ်မီ အောက်ပါ project instruction / documentation files များကို အရင်ဖတ်ပြီး လိုက်နာပါ။
 
-1. `DataPOS_AI_Agent_Instructions_MM.md`
+1. `AI Development Agent Instructions (MM).md`
 2. `2026-08-02_FIXES.md`
-3. `Source_of_Truth.md`
+3. `Source_of_Truth_MM.md`
 4. `Testing_check.md`
 
 ဤဖိုင်များကို DataPOS project ၏ authoritative project context အဖြစ် သတ်မှတ်ပါ။
@@ -26,14 +26,14 @@ Code အသစ်ရေးခြင်း၊ ရှိပြီးသား code
 - Code ပြင်ပြီးပါက relevant verification / testing လုပ်ပါ။
 - Meaningful code change တိုင်း `2026-08-02_FIXES.md` ကို update လုပ်ပါ။
 - Bug/Test status ပြောင်းပါက `Testing_check.md` ကို update လုပ်ပါ။
-- Business Rule သို့မဟုတ် Architecture Rule အမှန်တကယ် ပြောင်းမှသာ `Source_of_Truth.md` ကို update လုပ်ပါ။
+- Business Rule သို့မဟုတ် Architecture Rule အမှန်တကယ် ပြောင်းမှသာ `Source_of_Truth_MM.md` ကို update လုပ်ပါ။
 - Code + Testing + Documentation ပြည့်စုံမှသာ `DONE` ဟု သတ်မှတ်ပါ။
 - Tailwind class အသစ် သို့မဟုတ် arbitrary class ထည့်ပါက `npm run build` run ရမည်ဟု final response တွင် သတိပေးပါ။
 - Migration အသစ်ပါက `php artisan migrate` run ရမည်ဟု final response တွင် သတိပေးပါ။
 
 Development Server:
 
-`php artisan serve --host=0.0.0.0 --port=8500`
+`php artisan serve --host=0.0.0.0 --port=8501`
 
 `Port 8000` သည် project အဟောင်းဖြစ်သောကြောင့် မသုံးပါနှင့်။
 

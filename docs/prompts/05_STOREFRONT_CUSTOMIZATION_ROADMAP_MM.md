@@ -265,7 +265,7 @@ partials မဟုတ်ပါ။ ထို့ကြောင့် section cont
 3. Regression risk စစ် (full test suite + preview)
 4. `2026-08-02_FIXES.md` Item အသစ်ဖြင့် update
 5. `Testing_check.md` update (သက်ဆိုင်ပါက)
-6. Business/Architecture Rule ပြောင်းမှသာ `Source_of_Truth.md` update
+6. Business/Architecture Rule ပြောင်းမှသာ `Source_of_Truth_MM.md` update
 
 ## လုပ်ငန်းစဉ် (Priority Order)
 

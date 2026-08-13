@@ -13,7 +13,7 @@
 လက်ရှိ alinnthit.com ecommerce (D:\xmapp\htdocs\data_ecommerce) နဲ့ လုံးဝ သီးခြားပါ။
 
 အရင်ဆုံး ဒီဖိုင်တွေကို ဖတ်ပါ:
-- DataPOS_Mobile_Offline_POS_Project_Source_of_Truth.md  (POS စနစ်ရဲ့ စည်းမျဉ်းစာချုပ် — MUST READ)
+- DataPOS_Mobile_Offline_POS_Project_Source_of_Truth_MM.md  (POS စနစ်ရဲ့ စည်းမျဉ်းစာချုပ် — MUST READ)
 - docs/pos-resale-plan/00-overview.md → 04-implementation-phases.md  (ခြုံငုံအစီအစဉ်)
 - README.md  (run နည်း)
 
@@ -25,7 +25,7 @@
 - Brand: AlinnThit အားလုံး DataPOS အဖြစ် ပြောင်းပြီးပြီ (slug datapos-mobile)
 
 ပထမဆုံး တာဝန်:
-DataPOS_Mobile_Offline_POS_Project_Source_of_Truth.md ထဲက Phase 0/1 foundation ကို စတင်ပါ —
+DataPOS_Mobile_Offline_POS_Project_Source_of_Truth_MM.md ထဲက Phase 0/1 foundation ကို စတင်ပါ —
 Branch, Warehouse, Inventory ledger အခြေခံ models + migrations တည်ဆောက်ပါ။
 SQLite နဲ့ MySQL နှစ်မျိုးလုံး compatible ဖြစ်အောင် ရေးပါ။
 အရေးကြီး: ecommerce ရဲ့ orders/products ဇယားတွေကို ပြန်သုံး/ပြောင်း မလုပ်ပါနဲ့ — POS tables တွေက

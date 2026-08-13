@@ -11,7 +11,7 @@ UI လှအောင်ပြင်ရုံသာ မဟုတ်ဘဲ Existi
 အရင်ဆုံး အောက်ပါ Documentation များကို သက်ဆိုင်ရာအတိုင်း စစ်ပါ။
 
 1. `2026-08-02_FIXES.md`
-2. `Source_of_Truth.md`
+2. `Source_of_Truth_MM.md`
 3. `Testing_check.md`
 
 ပြီးရင် ပြင်မည့် Page ၏ Existing Implementation ကို စစ်ပါ။
@@ -423,7 +423,7 @@ Bug Fix နှင့်ဆိုင်ပါက—
 
 Business Rule / Architecture Rule မပြောင်းပါက—
 
-`Source_of_Truth.md`
+`Source_of_Truth_MM.md`
 
 ကို မလိုအပ်ဘဲ မပြင်ပါနှင့်။
 

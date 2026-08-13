@@ -24,7 +24,7 @@ Bug ပြင်ပြီးပါက—
 - Regression risk ကို စစ်ပါ
 - `2026-08-02_FIXES.md` တွင် Item အသစ်ဖြင့် change log ထည့်ပါ
 - `Testing_check.md` တွင် issue status ကို update လုပ်ပါ
-- Business/Architecture Rule အမှန်တကယ် ပြောင်းမှသာ `Source_of_Truth.md` ကို update လုပ်ပါ
+- Business/Architecture Rule အမှန်တကယ် ပြောင်းမှသာ `Source_of_Truth_MM.md` ကို update လုပ်ပါ
 
 Final response ကို တိုတိုပဲပေးပါ။
 

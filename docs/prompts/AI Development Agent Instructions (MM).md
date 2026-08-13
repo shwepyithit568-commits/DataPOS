@@ -2,7 +2,7 @@
 
 **Version:** 2.0-MM  
 **Project:** DataPOS  
-**Project Path:** `D:\xmapp\htdocs\data_ecommerce`
+**Project Path:** `D:\xmapp\htdocs\DataPOS`
 
 ---
 
@@ -49,7 +49,7 @@
 Project ကို အမြဲတမ်း—
 
 ```bash
-php artisan serve --host=0.0.0.0 --port=8500
+php artisan serve --host=0.0.0.0 --port=8501
 ```
 
 ဖြင့် run ရမည်။
@@ -64,7 +64,7 @@ Code ပြင်ခြင်း၊ Feature အသစ်ထည့်ခြင်
 
 ```text
 2026-08-02_FIXES.md
-Source_of_Truth.md
+Source_of_Truth_MM.md
 Testing_check.md
 ```
 
@@ -72,7 +72,7 @@ Testing_check.md
 
 ---
 
-## 3.1 `Source_of_Truth.md`
+## 3.1 `Source_of_Truth_MM.md`
 
 ဤဖိုင်တွင် Project ၏ အဓိက Business Rules နှင့် Architecture Rules များပါဝင်သည်။
 
@@ -88,7 +88,7 @@ Testing_check.md
 - Business Workflow
 - Critical Architectural Decisions
 
-ရှိပြီးသား code နှင့် `Source_of_Truth.md` တို့ မကိုက်ညီပါက မိမိသဘောဖြင့် တစ်ခုရွေးပြီး မပြင်ရ။
+ရှိပြီးသား code နှင့် `Source_of_Truth_MM.md` တို့ မကိုက်ညီပါက မိမိသဘောဖြင့် တစ်ခုရွေးပြီး မပြင်ရ။
 
 Conflict ကို အရင်ဖော်ထုတ်ပြီးမှ ပြင်ဆင်ရမည်။
 
@@ -824,9 +824,9 @@ Recommended Status—
 
 ---
 
-# 27. `Source_of_Truth.md` UPDATE RULE
+# 27. `Source_of_Truth_MM.md` UPDATE RULE
 
-Minor Bug Fix တိုင်း `Source_of_Truth.md` မပြင်ရ။
+Minor Bug Fix တိုင်း `Source_of_Truth_MM.md` မပြင်ရ။
 
 အောက်ပါ Authoritative Rule ပြောင်းသည့်အခါမှ Update လုပ်ရမည်။
 
@@ -962,7 +962,7 @@ Task ပြီးပြီဟု Reply မပေးမီ အောက်ပါ�
 [ ] Regression Risk Checked
 [ ] 2026-08-02_FIXES.md Updated
 [ ] Testing_check.md Updated If Applicable
-[ ] Source_of_Truth.md Updated If Business Rule Changed
+[ ] Source_of_Truth_MM.md Updated If Business Rule Changed
 ```
 
 Required Item တစ်ခုခု မပြီးသေးပါက `Fully Completed` ဟု မပြောရ။

@@ -3,7 +3,7 @@
 Coding မစမီ—
 
 1. `2026-08-02_FIXES.md` ထဲမှာ ဆင်တူ implementation ရှိမရှိ ရှာပါ။
-2. `Source_of_Truth.md` ထဲမှာ သက်ဆိုင်ရာ business / architecture rules ကို စစ်ပါ။
+2. `Source_of_Truth_MM.md` ထဲမှာ သက်ဆိုင်ရာ business / architecture rules ကို စစ်ပါ။
 3. `Testing_check.md` ထဲမှာ ဆက်စပ် known issue / limitation ရှိမရှိ စစ်ပါ။
 4. ရှိပြီးသား Controller, Service, Blade Component, Alpine.js logic, Admin UI pattern, Storefront filter pattern များကို Reuse / Extend လုပ်နိုင်မလား စစ်ပါ။
 
@@ -37,7 +37,7 @@ Implementation ပြီးပါက—
 - Regression risk စစ်ပါ
 - `2026-08-02_FIXES.md` ကို Item အသစ်ဖြင့် update လုပ်ပါ
 - `Testing_check.md` ကို သက်ဆိုင်ပါက update လုပ်ပါ
-- Business/Architecture Rule ပြောင်းမှသာ `Source_of_Truth.md` ကို update လုပ်ပါ
+- Business/Architecture Rule ပြောင်းမှသာ `Source_of_Truth_MM.md` ကို update လုပ်ပါ
 
 Final response တွင်—
 
