@@ -48,14 +48,15 @@
 
 | အလုပ် | အသေးစိတ် |
 |---|---|
-| Default branch/warehouse | Store တိုင်းကို default branch + warehouse auto-create (02 §2.11) |
+| Default branch/warehouse | Store တိုင်းကို default branch + warehouse auto-create (02 §2.11) — ✅ **2026-08-11 done** (branches/warehouses tables + StoreLocationService::ensureDefaults + controller/CLI hooks + `inventory:ensure-locations` backfill + ledger FK + 10 tests — changelog item 258) |
 | Store module middleware | Static routes + module/capability enforcement (02 §2.4) — route:cache compatible |
 | Branch roles & policies | `user_branch_roles` + policies — Owner/Admin/Manager/Cashier/Read-only |
 | Barcode/UOM foundation | Product UOM + barcode + decimal qty |
+| Weighted-average costing | CostingService (02 §2.7) — ✅ **2026-08-11 done** (`App\POS\Services\CostingService` — receiving recalc, COGS carry, returns, serial specific cost, reversal replay — 12 tests — changelog item 260) |
 | Customers & suppliers | Master data — debt အတွက် foundation |
-| **Inventory movements & balances** | Ledger (02 §2.5) — immutable, idempotent, transactional |
-| Opening stock | `opening_balance` movements — migration batch နဲ့ |
-| **Ecommerce inventory adapter** | `orders` → ledger integration — reserve/confirm/cancel — oversell မဖြစ်ရ |
+| **Inventory movements & balances** | Ledger (02 §2.5) — immutable, idempotent, transactional — ✅ **2026-08-11 part 1 done** (migration + enum + models + InventoryService + `inventory:reconcile` + 19 tests — changelog item 257) |
+| Opening stock | `opening_balance` movements — migration batch နဲ့ — movement type + service အသင့် (ledger part 1 ထဲ) |
+| **Ecommerce inventory adapter** | `orders` → ledger integration — reserve/confirm/cancel — oversell မဖြစ်ရ — ✅ **2026-08-11 done** (`OrderInventoryAdapter` + `OrderAdminController@updateStatus` hook — reserve on confirm, commit on delivered, release on cancel, oversell block — 13 tests — changelog item 259) |
 | Audit & approvals | `audit_logs`, `approvals` (SoT §15, §20) |
 | Concurrency & idempotency tests | Parallel sale, duplicate posting, retry — အကုန် test |
 
@@ -69,23 +70,28 @@
 
 | အလုပ် | အသေးစိတ် |
 |---|---|
-| Cashier shifts + opening cash | Shift open/close — 02 §2.10 |
-| Barcode/HID scanner input | /pos UI |
-| Product & variant search | Live search |
-| Cart | Add/update/qty — retail/wholesale pricing |
-| Hold/resume sale | Draft → Held → Resume |
-| Split payments | Cash / KPay / WavePay / CB Pay / MMQR |
-| **Customer credit/debt** | Receivables — MVP ထဲ ပါ (SoT §17) |
-| Receipt & reprint | Receipt number at posting · reprint audit |
-| Sale return/refund/reversal | State machine (02 §2.9) |
-| Simple stock receiving | Goods receipt → `purchase_received` |
-| Opening stock | `opening_balance` |
-| Inventory adjustment (manager approval) | Cashier submit → manager approve → movement |
-| **Daily closing** | Cashier shift closing + branch daily summary (02 §2.10) — expected vs actual cash |
-| Minimal reports | Sales / cash / stock |
-| Audit trail | အကုန် မှတ်တမ်း |
+| Cashier shifts + opening cash | ✅ item 261 — shift open/close, opening cash, cash in/out, daily summary (02 §2.10) |
+| Barcode/HID scanner input | ✅ item 262 — /pos barcode/SKU/name search (HID scanner types into the search box) |
+| Product & variant search | ✅ item 262 — live search w/ ledger balance |
+| Cart | ✅ item 262 — add/merge/update/remove (retail pricing; wholesale နောက်) |
+| Hold/resume sale | ✅ item 262 — session draft → held row → resume/void |
+| Sale posting | ✅ item 262 — atomic: receipt @ posting, ledger movements, payments, drawer |
+| Split payments | ✅ item 262 — payment modal: Cash / KPay / WavePay / CB Pay / MMQR, change calc (02 §2.8) |
+| **Customer credit/debt** | ✅ item 264 — customer attach + `credit` payment → `customer_ledger_entries` (sale_debt/collection/reversal), balance = SUM, collect form (SoT §17) |
+| Receipt & reprint | ✅ item 263 — printable receipt + reprint audit trail (SoT §8) |
+| Audit trail (foundation) | ✅ item 263 — `audit_logs` table + AuditLog model (Phase 1 item, first consumer: reprints) |
+| Sale return/refund/reversal | ✅ item 265 — `pos_returns` doc + `sales_return` ledger @ original cost + cash→drawer / credit→debt + partially_refunded/refunded (SoT §15.1, 02 §2.9) |
+| Simple stock receiving | ✅ item 268 — `goods_receipts` doc (GRV-Ymd-####, idempotent) → `purchase_received` ledger @ unit cost → weighted-avg recalc (SoT §6) |
+| Opening stock | ✅ item 269 — `opening_stock_requests` (OSR-Ymd-####): staff submits → manager approves → `opening_balance` ledger @ unit cost + avg set (SoT §6) |
+| Inventory adjustment (manager approval) | ✅ item 270 — `inventory_adjustments` (ADJ-Ymd-####): cashier submits signed +/− with reason → manager approves → `adjustment_in/out` @ avg cost, avg unchanged (SoT §6) |
+| ~~Audit trail~~ | ✅ အကုန် မှတ်တမ်း — items 261–270 |
+| **Daily closing** | ✅ item 266 — `daily_closings` per store+date: expected (shift drawer math + e-method sales + credit info) vs counted, diff, explanation, **manager approval**, offline gate (SoT §18, 02 §2.10) |
+| Minimal reports | ✅ item 267 — `/pos/reports/{sales,cash,stock}` read-only: sales + method totals (cashier/date filters), cash drawer per-shift + aggregates, stock qty × avg cost value (ledger cache) |
 
-**Exit criteria:** အထက်ပါ MVP items အကုန် online မှာ အလုပ်ဖြစ် · atomic posting · oversell 0 · daily closing reconcile ရတယ် · 608 tests + POS tests green
+
+**Exit criteria:** အထက်ပါ MVP items အကုန် online မှာ အလုပ်ဖြစ် · atomic posting · oversell 0 · daily closing reconcile ရတယ် · POS tests green
+
+> ✅ **2026-08-11 — Phase 2 (Online POS MVP) အကုန်ပြီးပြီ (items 261–270).** နောက်တစ်ဆင့်: Phase 2.5 AlinnThit pilot.
 
 > **မှတ်ချက်:** Full purchasing / purchase returns / supplier payables / advanced accounting တွေက Operations (Phase 4) — MVP မဟုတ်ဘူး။
 
@@ -97,7 +103,7 @@
 
 | အလုပ် | အသေးစိတ် |
 |---|---|
-| Clean product/customer/supplier data | Data quality + import |
+| Clean product/customer/supplier data | ✅ item 271 — `/admin/pilot-import` hub (Products/Customers/Suppliers tabs): CSV/XLSX upload → **dry-run preview** (validation + duplicate detection: SKU / phone / phone-then-name) → confirm → ImportHistory + error reports · `suppliers` master table · templates |
 | Opening-stock reconciliation | Ledger vs လက်ရှိ |
 | Debt opening balances | Receivables import |
 | AppSheet/Google Sheets parallel validation | နှစ်စနစ် တွဲပြေး → ကိုက်ကြောင်း စစ် |
