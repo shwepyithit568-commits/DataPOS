@@ -19,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
     })
+    ->withCommands([
+        \App\POS\Console\InventoryReconcileCommand::class,
+        \App\POS\Console\EnsureStoreLocationsCommand::class,
+    ])
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();

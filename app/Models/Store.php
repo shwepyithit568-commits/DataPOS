@@ -55,4 +55,28 @@ class Store extends Model
     {
         return $this->hasMany(StoreDeliveryMethod::class);
     }
+
+    /* ------------------------------------------------------------------ */
+    /*  POS locations (target-design §2.11)                                */
+    /* ------------------------------------------------------------------ */
+
+    public function branches(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\POS\Models\Branch::class);
+    }
+
+    public function warehouses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\POS\Models\Warehouse::class);
+    }
+
+    public function defaultBranch(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\POS\Models\Branch::class)->where('is_default', true);
+    }
+
+    public function defaultWarehouse(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\POS\Models\Warehouse::class)->where('is_default', true);
+    }
 }

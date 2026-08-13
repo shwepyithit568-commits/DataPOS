@@ -182,6 +182,9 @@ Artisan::command('production:create-store
             'default_language' => $data['default_language'],
         ]);
 
+        // Every store gets a default branch + warehouse automatically (target-design §2.11).
+        app(\App\POS\Services\StoreLocationService::class)->ensureDefaults($store);
+
         return $store;
     });
 
