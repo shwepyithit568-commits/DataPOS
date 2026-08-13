@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Store;
+use App\POS\Exceptions\InventoryException;
+use App\POS\Integrations\OrderInventoryAdapter;
 use App\Services\StoreContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -94,6 +96,18 @@ class OrderAdminController extends Controller
             'status' => ['required', 'in:pending_contact,confirmed,delivered,cancelled'],
         ]);
 
+        $fromStatus = $order->status;
+
+        // Inventory ledger integration (SoT §5 / target-design §2.5): reserve /
+        // commit / release stock BEFORE the status persists — a failed
+        // reservation blocks the transition so POS and online orders can never
+        // oversell the same stock.
+        try {
+            app(OrderInventoryAdapter::class)->handleStatusChange($order, $fromStatus, $validated['status']);
+        } catch (InventoryException $e) {
+            return back()->withErrors(['status' => $e->getMessage()]);
+        }
+
         $order->update(['status' => $validated['status']]);
 
         // Notify the team that the order progressed (deduped per status value,
@@ -167,6 +181,31 @@ class OrderAdminController extends Controller
         $order->update(['admin_note' => $note === '' ? null : $note]);
 
         return back()->with('success', 'Admin note saved.');
+    }
+
+    /**
+     * Delete an order — owner (store_manager) only.
+     * Cascades to order items via the model relationship.
+     */
+    public function destroy(string $store_slug, Order $order, StoreContext $context): RedirectResponse
+    {
+        $store = $context->getStore();
+
+        if ($order->store_id !== $store->id) {
+            abort(403, 'Unauthorized store order access.');
+        }
+
+        // Only store_manager (owner) can delete orders
+        $user = request()->user();
+        if (!$user->isPlatformOwner() && !$user->hasStoreRole($store->id, ['store_manager'])) {
+            abort(403, 'Only the store owner can delete orders.');
+        }
+
+        $orderNumber = $order->order_number;
+        $order->items()->delete();
+        $order->delete();
+
+        return back()->with('success', "Order {$orderNumber} has been deleted.");
     }
 
     /**

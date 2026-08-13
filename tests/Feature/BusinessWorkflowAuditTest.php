@@ -126,6 +126,17 @@ class BusinessWorkflowAuditTest extends TestCase
             'stock_status' => 'in_stock',
         ]);
 
+        // The inventory ledger is the stock source of truth (SoT §5) — seed
+        // opening stock so confirming the order can reserve it (otherwise the
+        // adapter correctly blocks confirmation for unavailable stock).
+        app(\App\POS\Services\InventoryService::class)->postMovement([
+            'store_id' => $this->storeA->id,
+            'product_id' => $product->id,
+            'movement_type' => 'opening_balance',
+            'quantity_delta' => 10,
+            'client_transaction_id' => 'audit-scenario3-open',
+        ]);
+
         // Customer Creates Order via single product order request route
         $orderResponse = $this->post("/store/{$this->storeA->slug}/orders", [
             'product_id' => $product->id,

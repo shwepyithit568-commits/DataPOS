@@ -406,6 +406,13 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
+                    @php $isPilotImport = request()->is('store/*/admin/pilot-import*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.pilot-import.index', $storeRouteParams)" route-name="store.admin.pilot-import.index" :active="$isPilotImport" :label="__('messages.pilot_import')">
+                        <x-slot:icon>
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h10M4 12h10M4 17h6M15 8l5 5m0 0-5 5m5-5h-9"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
                     @php $isImportHistory = request()->is('store/*/admin/import-history*'); @endphp
                     <x-admin.nav-link :href="route('store.admin.import-history.index', $storeRouteParams)" route-name="store.admin.import-history.index" :active="$isImportHistory" :label="__('messages.import_history')">
                         <x-slot:icon>

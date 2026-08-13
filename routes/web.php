@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\GlassFinderAdminController;
 use App\Http\Controllers\Admin\HomeBannerController;
 use App\Http\Controllers\Admin\ImportHistoryController;
 use App\Http\Controllers\Admin\OrderAdminController;
+use App\Http\Controllers\Admin\PilotImportController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\StoreManagementController;
 use App\Http\Controllers\Admin\StoreSettingController;
@@ -515,6 +516,12 @@ Route::prefix('store/{store_slug}')
         Route::post('/admin/products/import', [ProductController::class, 'import'])->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports']);
         Route::post('/admin/products/import/confirm', [ProductController::class, 'confirmImport'])->name('store.admin.products.import.confirm')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports']);
 
+        // Pilot Data Import hub (products / customers / suppliers)
+        Route::get('/admin/pilot-import/{tab?}', [PilotImportController::class, 'index'])->name('store.admin.pilot-import.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->whereIn('tab', ['products', 'customers', 'suppliers']);
+        Route::post('/admin/pilot-import/{tab}', [PilotImportController::class, 'import'])->name('store.admin.pilot-import.import')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports'])->whereIn('tab', ['products', 'customers', 'suppliers']);
+        Route::post('/admin/pilot-import/{tab}/confirm', [PilotImportController::class, 'confirmImport'])->name('store.admin.pilot-import.confirm')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports'])->whereIn('tab', ['products', 'customers', 'suppliers']);
+        Route::get('/admin/pilot-import/{tab}/template', [PilotImportController::class, 'downloadTemplate'])->name('store.admin.pilot-import.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->whereIn('tab', ['products', 'customers', 'suppliers']);
+
         // Admin Import History
         Route::get('/admin/import-history', [ImportHistoryController::class, 'index'])->name('store.admin.import-history.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/import-history/{history}', [ImportHistoryController::class, 'show'])->name('store.admin.import-history.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -549,8 +556,68 @@ Route::prefix('store/{store_slug}')
         Route::patch('/admin/orders/{order}/status', [OrderAdminController::class, 'updateStatus'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::patch('/admin/orders/{order}/finances', [OrderAdminController::class, 'updateFinances'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::patch('/admin/orders/{order}/note', [OrderAdminController::class, 'updateNote'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::delete('/admin/orders/{order}', [OrderAdminController::class, 'destroy'])->middleware(EnsureStoreAccess::class . ':store_manager');
 
         // Admin Web Push management (subscriber count, test/custom send, history)
         Route::get('/admin/push', [PushNotificationController::class, 'index'])->name('store.admin.push.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/push/history', [PushNotificationController::class, 'history'])->name('store.admin.push.history')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // POS module — cashier shifts + opening cash (target-design §2.10).
+        // Statically registered, store-scoped, staff/store_manager only.
+        Route::prefix('/pos')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->group(function () {
+            Route::get('/', [\App\POS\Http\Controllers\CashierShiftController::class, 'index'])->name('pos.index');
+            Route::post('/shifts', [\App\POS\Http\Controllers\CashierShiftController::class, 'open'])->name('pos.shifts.open');
+            Route::post('/shifts/{shift}/cash-events', [\App\POS\Http\Controllers\CashierShiftController::class, 'cashEvent'])->name('pos.shifts.cash-event');
+            Route::post('/shifts/{shift}/close', [\App\POS\Http\Controllers\CashierShiftController::class, 'close'])->name('pos.shifts.close');
+
+            // POS cart + sale posting (target-design §2.8).
+            Route::get('/products', [\App\POS\Http\Controllers\PosSaleController::class, 'search'])->name('pos.products.search');
+
+            // POS customer credit/debt (SoT §17) — attach customer, collect debt.
+            Route::get('/customers', [\App\POS\Http\Controllers\PosSaleController::class, 'customers'])->name('pos.customers.search');
+            Route::post('/customers/{customer}/collect', [\App\POS\Http\Controllers\PosSaleController::class, 'collect'])->name('pos.customers.collect');
+            Route::post('/cart', [\App\POS\Http\Controllers\PosSaleController::class, 'addItem'])->name('pos.cart.add');
+            Route::post('/cart/{line}', [\App\POS\Http\Controllers\PosSaleController::class, 'updateLine'])->name('pos.cart.update');
+            Route::delete('/cart/{line}', [\App\POS\Http\Controllers\PosSaleController::class, 'removeLine'])->name('pos.cart.remove');
+            Route::post('/hold', [\App\POS\Http\Controllers\PosSaleController::class, 'hold'])->name('pos.hold');
+            Route::post('/resume/{sale}', [\App\POS\Http\Controllers\PosSaleController::class, 'resume'])->name('pos.resume');
+            Route::post('/void/{sale}', [\App\POS\Http\Controllers\PosSaleController::class, 'void'])->name('pos.void');
+            Route::post('/post/{sale?}', [\App\POS\Http\Controllers\PosSaleController::class, 'post'])->name('pos.post');
+            Route::get('/sales/{sale}/receipt', [\App\POS\Http\Controllers\PosSaleController::class, 'receipt'])->name('pos.receipt');
+
+            // POS returns / refunds (target-design §2.9, SoT §15.1).
+            Route::get('/sales/{sale}/refund', [\App\POS\Http\Controllers\PosReturnController::class, 'create'])->name('pos.refund.create');
+            Route::post('/sales/{sale}/refunds', [\App\POS\Http\Controllers\PosReturnController::class, 'store'])->name('pos.refund.store');
+
+            // Branch daily closing (SoT §18) — view/create by staff, approve by manager.
+            Route::get('/closing', [\App\POS\Http\Controllers\DailyClosingController::class, 'index'])->name('pos.closing.index');
+            Route::post('/closing', [\App\POS\Http\Controllers\DailyClosingController::class, 'store'])->name('pos.closing.store');
+            Route::post('/closing/{closing}/approve', [\App\POS\Http\Controllers\DailyClosingController::class, 'approve'])->name('pos.closing.approve')
+                ->middleware(EnsureStoreAccess::class . ':store_manager');
+
+            // Minimal reports (target-design §2.10) — sales / cash drawer / stock.
+            Route::get('/reports/sales', [\App\POS\Http\Controllers\PosReportController::class, 'sales'])->name('pos.reports.sales');
+            Route::get('/reports/cash', [\App\POS\Http\Controllers\PosReportController::class, 'cash'])->name('pos.reports.cash');
+            Route::get('/reports/stock', [\App\POS\Http\Controllers\PosReportController::class, 'stock'])->name('pos.reports.stock');
+
+            // Simple stock receiving (MVP Phase 2) — goods receipt → purchase_received ledger.
+            Route::get('/receiving', [\App\POS\Http\Controllers\GoodsReceiptController::class, 'index'])->name('pos.receiving.index');
+            Route::post('/receiving', [\App\POS\Http\Controllers\GoodsReceiptController::class, 'store'])->name('pos.receiving.store');
+
+            // Opening stock (MVP Phase 2) — staff submits, manager approves → opening_balance ledger.
+            Route::get('/opening-stock', [\App\POS\Http\Controllers\OpeningStockController::class, 'index'])->name('pos.opening-stock.index');
+            Route::post('/opening-stock', [\App\POS\Http\Controllers\OpeningStockController::class, 'store'])->name('pos.opening-stock.store');
+            Route::post('/opening-stock/{openingStockRequest}/approve', [\App\POS\Http\Controllers\OpeningStockController::class, 'approve'])->name('pos.opening-stock.approve')
+                ->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::post('/opening-stock/{openingStockRequest}/reject', [\App\POS\Http\Controllers\OpeningStockController::class, 'reject'])->name('pos.opening-stock.reject')
+                ->middleware(EnsureStoreAccess::class . ':store_manager');
+
+            // Inventory adjustments (MVP Phase 2, final) — staff submits, manager approves → adjustment_in/out ledger.
+            Route::get('/adjustments', [\App\POS\Http\Controllers\InventoryAdjustmentController::class, 'index'])->name('pos.adjustments.index');
+            Route::post('/adjustments', [\App\POS\Http\Controllers\InventoryAdjustmentController::class, 'store'])->name('pos.adjustments.store');
+            Route::post('/adjustments/{inventoryAdjustment}/approve', [\App\POS\Http\Controllers\InventoryAdjustmentController::class, 'approve'])->name('pos.adjustments.approve')
+                ->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::post('/adjustments/{inventoryAdjustment}/reject', [\App\POS\Http\Controllers\InventoryAdjustmentController::class, 'reject'])->name('pos.adjustments.reject')
+                ->middleware(EnsureStoreAccess::class . ':store_manager');
+        });
     });

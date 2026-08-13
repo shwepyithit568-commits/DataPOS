@@ -58,6 +58,9 @@ class StoreManagementController extends Controller
                 $this->demoteOtherPrimaries($store->id);
             }
 
+            // Every store gets a default branch + warehouse automatically (target-design §2.11).
+            app(\App\POS\Services\StoreLocationService::class)->ensureDefaults($store);
+
             StorefrontSetting::create([
                 'store_id' => $store->id,
                 'store_name' => trim($validated['name']),

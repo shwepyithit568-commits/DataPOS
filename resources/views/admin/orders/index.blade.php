@@ -146,6 +146,16 @@
                             class="px-3 py-1.5 rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/60 font-semibold text-xs border border-sky-200 dark:border-sky-800 whitespace-nowrap">
                             🧾
                         </a>
+                        @if(auth()->user()->isPlatformOwner() || auth()->user()->hasStoreRole($store->id, ['store_manager']))
+                            <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/orders/' . $order->id) }}" class="inline"
+                                onsubmit="return confirm('Are you sure you want to delete this order? This cannot be undone.')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="px-2.5 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/60 font-semibold text-xs border border-red-200 dark:border-red-800" title="Delete order">
+                                    🗑
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -238,6 +248,16 @@
                                         class="px-2.5 py-1.5 rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/60 font-semibold text-xs border border-sky-200 dark:border-sky-800 whitespace-nowrap">
                                         🧾
                                     </a>
+                                    @if(auth()->user()->isPlatformOwner() || auth()->user()->hasStoreRole($store->id, ['store_manager']))
+                                        <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/orders/' . $order->id) }}" class="inline"
+                                            onsubmit="return confirm('Are you sure you want to delete this order? This cannot be undone.')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="px-2 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/60 font-semibold text-xs border border-red-200 dark:border-red-800" title="Delete order">
+                                                🗑
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
