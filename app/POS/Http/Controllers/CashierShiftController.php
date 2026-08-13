@@ -36,12 +36,10 @@ class CashierShiftController extends Controller
         $store = $context->getStore();
         $user = auth()->user();
 
-        $openShift = $this->shifts->openShiftFor($store, $user)
-            ?? CashierShift::query()
-                ->where('store_id', $store->id)
-                ->where('status', 'open')
-                ->latest('opened_at')
-                ->first();
+        // Only the cashier's OWN open shift is shown. Showing another
+        // cashier's open shift would be misleading — posting already requires
+        // an own shift via openShiftFor().
+        $openShift = $this->shifts->openShiftFor($store, $user);
 
         $summary = $this->shifts->dailySummary($store, now());
 
