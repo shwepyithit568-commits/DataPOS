@@ -23,6 +23,10 @@ export default defineConfig({
         // this the dev URLs were written as http://[::1]:5173 and browsers
         // failed to load stylesheets from them.
         origin: 'http://localhost:5173',
+        // The app is served from 127.0.0.1:8501, so Vite assets are cross-origin.
+        // Reflect the request Origin instead of echoing `origin` above, or
+        // browsers block the fonts/scripts (ACAO mismatch → CORS error).
+        cors: { origin: true },
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },

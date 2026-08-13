@@ -44,14 +44,27 @@ class SecurityHeaders
         // required by Alpine's standard build. frame-src allows the Google Maps
         // embed (mapEmbedSrc) and the YouTube video embeds on the how-to-order
         // page. style-src keeps 'unsafe-inline' for Tailwind/Vite inline styles.
+        //
+        // Local dev: when the Vite dev server is running (public/hot exists),
+        // @vite injects asset URLs on the cross-origin dev server (port 5173).
+        // Allow that origin here or every injected stylesheet/script/font is
+        // refused ('self' only covers the app origin). Production keeps the
+        // strict 'self'-only policy because the condition never matches there.
+        $devSrc = '';
+        $devConnect = '';
+        if (app()->environment('local') && file_exists(public_path('hot'))) {
+            $devSrc = ' http://localhost:5173 http://127.0.0.1:5173';
+            $devConnect = ' ws://localhost:5173 ws://127.0.0.1:5173'; // Vite HMR websocket
+        }
+
         $response->headers->set(
             'Content-Security-Policy',
             "default-src 'self'; "
-            . "script-src 'self' 'nonce-{$nonce}' 'unsafe-eval'; "
-            . "style-src 'self' 'unsafe-inline'; "
-            . "img-src 'self' data: blob:; "
-            . "font-src 'self'; "
-            . "connect-src 'self'; "
+            . "script-src 'self' 'nonce-{$nonce}' 'unsafe-eval'{$devSrc}; "
+            . "style-src 'self' 'unsafe-inline'{$devSrc}; "
+            . "img-src 'self' data: blob:{$devSrc}; "
+            . "font-src 'self'{$devSrc}; "
+            . "connect-src 'self'{$devSrc}{$devConnect}; "
             . "frame-src 'self' https://www.google.com https://maps.google.com https://www.youtube.com; "
             . "frame-ancestors 'none'; "
             . "form-action 'self'; "
