@@ -12,7 +12,7 @@
 
 | ဖိုင် | အကြောင်းအရာ | ဘာတွေသိရမလဲ |
 |---|---|---|
-| `ROADMAP.md` | **ခြုံငုံ အစီအစဉ် (လုပ်ပြီးသား + ဆက်ဆောက်မယ့်ဟာ)** | လက်ရှိ အခြေအနေ (Ecommerce, multi-store, PWA, POS Phase 1–2.5p1 — 821 tests pass 2026-08-13) + Implementation Phases: Phase 0 (Decisions) → 1 (Foundation) → 2 (Online POS MVP) → 2.5 (AlinnThit Pilot) → 3 (Cloud PWA offline) → 4 (Operations) → 5 (Local + Resale) → 6 (Industry packs) |
+| `ROADMAP.md` | **ခြုံငုံ အစီအစဉ် (လုပ်ပြီးသား + ဆက်ဆောက်မယ့်ဟာ)** | လက်ရှိ အခြေအနေ (Ecommerce, multi-store, PWA, POS Phase 1–2.5p1 + **Cashier Home UI (desktop 2-pane / mobile bottom-sheet drawer)** — **831 tests pass 2026-08-17**) + Implementation Phases: Phase 0 (Decisions) → 1 (Foundation) → 2 (Online POS MVP) → 2.5 (AlinnThit Pilot) → 3 (Cloud PWA offline) → 4 (Operations) → 5 (Local + Resale) → 6 (Industry packs) |
 | `02-target-design.md` | **လိုချင်တဲ့ ပုံစံ** | Architecture — တစ်ခုတည်းသော codebase, deployment model ၂ မျိုး (Cloud SaaS / Local install), shared inventory ledger, money/rounding policy, POS sale state machine, cashier shift |
 | ~~`03-sales-market-model.md`~~ | ~~စျေးကွက်အလိုက် ရောင်းချ/ထိန်းချုပ်ပုံ~~ | **2026-08-13: ဒီ `ROADMAP.md` ထဲ ပေါင်းပြီး** — အောက်က "Sales & Market Model" section ကြည့်ပါ |
 
@@ -195,7 +195,7 @@
 | Frontend | Blade + **Alpine.js** + **Tailwind CSS v4** (CSS-based `@theme`) |
 | Assets | Vite — `app.css`/`app.js` (storefront) + `admin.css`/`app-admin.js` (admin) သီးခြား |
 | Deploy | `deploy-datapos.sh` — **⚠️ အရင် project ရဲ့ live ကို သွားတဲ့ script — DataPOS အတွက် မသုံးရသေး** (README ကြည့်ပါ) |
-| Testing | **821 tests pass / 3671 assertions** — PHPUnit, SQLite local (2026-08-13 run ပြီး) |
+| Testing | **831 tests pass / 3746 assertions** — PHPUnit, SQLite local (2026-08-17 run ပြီး) |
 | Dev server | `php artisan serve --port=8501` (README/.env အတိုင်း) |
 | Git | main · remote `github.com/shwepyithit568-commits/DataPOS.git` · **local = origin/main (in sync, 2026-08-13)** |
 
@@ -231,6 +231,12 @@
 ### ဒီနေ့ (2026-08-13) ပြင်ထားတာ — `CHANGELOG.md`
 - Product import 500 bug (variants JSON မှာ `stock_status` မပါရင် crash → fallback fix, `ProductImportService.php`)
 - "Ks 0" ဈေးပြသမှု (variant price 0 → product price fallback — product-card ×2 + catalog/show)
+
+### ဒီနေ့ (2026-08-17) ပြင်ထားတာ — `CHANGELOG.md`
+- **Cashier Home UI အပြည့်:** desktop 2-pane (grid + cart) / mobile 1-tab + floating cart → bottom-sheet drawer (swipe/backdrop/Escape close) · single-row scroll rows (module links / category / brand chips + toolbar) · `x-pos.chip-scroll` component
+- **POS 500 fixes:** `resume`/`void`/`post` — `$store_slug` positional binding (Laravel 11/12 position-based resolve) + HTTP regression tests + `StoreScopedRouteSignatureTest` reflection guard (route အကုန် audit clean)
+- **HTML caching:** private → `no-store` · public storefront → ETag + `max-age=60` + 304 · build assets → immutable (project `server.php` + `.htaccess`) · SW v5 network-first navigations
+- Admin dashboard POS quick-action bar (shift status + jump to sale) · Store Settings quick-action render fix · `AdminDashboardTest` time-of-day fix
 
 ---
 

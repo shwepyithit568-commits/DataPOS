@@ -2443,3 +2443,106 @@ Confirm Import လုပ်တဲ့အခါ 500 မတက်တော့ဘူ
   Alpine SyntaxError ဖြစ်တယ် (AlinnThit မှာ ဒီနေ့ တစ်ခါ မှားခဲ့လို့ မှတ်ထား)။ single quote ပဲ သုံးပါ။
 - ဒီ DataPOS fix တွေက **local code ထဲပဲ** ပြင်ထားတာ — live deploy မလုပ်ရသေးဘူး
   (DataPOS က local-only — deploy script သီးခြား ရေးရမယ်)။
+
+
+---
+
+## 2026-08-17 — POS Cashier Home UI + route-binding fixes + cache hardening
+
+> **ဒီနေ့အလုပ်:** POS စာမျက်နှာ (cashier home) ကို `D:linthit_pos` ကိုးကားချက်နဲ့
+> နှိုင်းယှဉ်ပြီး desktop/mobile နှစ်မျိုးစလုံး အပြည့်အဝ အလုပ်လုပ်အောင် ပြင်ဆင်တယ်။
+> ဒီလမ်းမှာ POS 500 bug ၃ ခု + test infra ကွာဟချက် + HTML caching မူဝါဒ
+> (stale nonce/CSRF ပြဿနာ) ကိုပါ ရှင်းလင်းခဲ့တယ်။ **Tests: 831 passed (3746 assertions).**
+
+### ၁. POS Cashier Home — desktop 2-pane + mobile bottom-sheet drawer
+
+**Files (2):** `resources/views/pos/index.blade.php`, `resources/js/app-admin.js`, `resources/css/admin.css`
+
+- **Desktop (lg+):** ဘယ်မှာ product grid (search/category/brand filter) + ညာမှာ sticky cart panel
+  — 2-tab မလို၊ ဘေးချင်း မြင်ရတယ်။
+- **Mobile (max-lg):** 1 tab + **floating cart button** (🛒 badge + စုစုပေါင်း) → နှိပ်ရင်
+  **bottom-sheet drawer** အောက်ကနေ တက်လာတယ် — handle bar + ✕ + customer attach +
+  qty stepper + Subtotal/Total + **Post Sale** ခလုတ် (payment modal အထိ)။
+- **Touch support:** swipe-down ဆွဲချ (resistive 0.6× + fling) / backdrop tap / Escape — ၃ မျိုးလုံး ပိတ်လို့ရတယ်။
+  Scroll guard: cart list ထိပ်ရောက်နေမှသာ drag ကိုင်တယ် (အတွင်းမှာ scroll လုပ်နေတုန်း မပိတ်အောင်)။
+- **Alpine patch:** `app-admin.js` — x-show toggle ကို synchronous ဖြစ်အောင် patch
+  (webview/background tab မှာ requestAnimationFrame stall ဖြစ်ပြီး modal ပြန်မပေါ်တဲ့ bug)။
+- **Tailwind @source:** `resources/css/admin.css` မှာ `views/pos/**` + `views/components/pos/*`
+  ထည့်တယ် (source(none) + explicit list မို့ မထည့်ရင် POS class တွေ silent ပျောက်တယ်)။
+
+### ၂. Mobile single-row scroll rows (chip style)
+
+**Files (1):** `resources/views/pos/index.blade.php` + အသစ် `resources/views/components/pos/chip-scroll.blade.php`
+
+- Module-links row (🧾 Held Sales, 📋 Closing, 📊 Reports, 📦 Receiving, 🏷️ Opening, 🔧 Adjustments) +
+  category/brand chips + toolbar (search/scan/import/shift pill) — **mobile မှာ single-row
+  horizontal scroll** (`flex-nowrap` + `overflow-x-auto` + scrollbar ဖျောက် + `shrink-0`)၊
+  desktop မှာ wrap အတိုင်း။
+- Category/brand chips: `scroll-smooth` + `snap-x snap-proximity` + `overscroll-x-contain` (iOS back-swipe ကာကွယ်) +
+  **active state ၃ ဆင့်** (solid blue + `ring-2 ring-blue-600/30` + ✓ checkmark)။
+- Row ၃ ခုလုံးကို **`<x-pos.chip-scroll>` component** အဖြစ် ထုတ်တယ် (variant: chips / links + label prop)။
+
+### ၃. POS 500 fix — `$store_slug` positional binding (resume / void / post)
+
+**Files (2):** `app/POS/Http/Controllers/PosSaleController.php`, `tests/Feature/POS/PosUiEndpointsTest.php` + အသစ် `tests/Feature/StoreScopedRouteSignatureTest.php`
+
+- **အကြောင်းရင်း:** Laravel 11/12 က controller params တွေကို **name မဟုတ်ဘဲ position နဲ့** resolve လုပ်တယ် —
+  route `/store/{store_slug}/pos/resume/{sale}` မို့ `resume(Request, StoreContext, PosSale $sale)` ဆို
+  `$sale` ဆီ store slug string ရောက်ပြီး TypeError 500။ အလုပ်ဖြစ်နေတဲ့ `receipt`/`updateLine`/`removeLine`
+  တွေက `string $store_slug` ရှေ့ကထည့်ထားလို့ပဲ။
+- **ပြင်:** ၃ ခုလုံးမှာ `string $store_slug` ထည့်။ HTTP regression tests (hold → resume → void +
+  `/post/{sale}`) — အရင်က service ကိုပဲ တိုက်ရိုက်စမ်းပြီး HTTP route မစမ်းဖူးလို့ လွတ်နေတာ။
+- **Guard test:** store-scoped route အကုန် reflection scan လုပ်ပြီး ဒီ bug pattern တွေ့ရင် fail —
+  resume fix ကို ခဏ revert လုပ်ပြီး ဖမ်းမိကြောင်း သက်သေပြပြီးပြီ။ **Audit:** route အကုန် clean
+  (ကျန် ~60 ခုလုံး မှန်တယ် — `$request->route()` ဖတ်တဲ့ဟာတွေ safe)။
+
+### ၄. AdminDashboardTest — မနက် 00:00–03:00 မှာ fail တဲ့ pre-existing bug
+
+**Files (1):** `tests/Feature/AdminDashboardTest.php`
+
+- "3 နာရီအရင်" order ကို "ဒီနေ့ revenue" လို့ ယူဆထားလို့ မနက်စောစော run ရင် မနေ့က ဖြစ်ပြီး fail —
+  stale order ကို total 0 ထား + revenue အတွက် fresh same-day order သပ်သပ်ထည့် (time-independent)။
+
+### ၅. HTML caching မူဝါဒ — stale nonce/CSRF ပြဿနာ အဆုံးသတ်
+
+**Files (5):** `app/Http/Middleware/SecurityHeaders.php` + အသစ် `app/Http/Middleware/CachePublicPage.php`,
+`server.php` (project root, အသစ်), `public/.htaccess`, `public/sw.js` (v5)
+
+- **Private pages (POS/admin/account/auth) → `Cache-Control: no-store, private`** (HTML မှသာ;
+  static assets/robots.txt မထိ)။
+- **Public storefront pages (home/product/browse) → `CachePublicPage` middleware:**
+  `private, max-age=60, must-revalidate` + **ETag** — body ထဲက per-request entropy (CSP nonce,
+  flag component SVG id, product-card `cardKey`) ကို normalize ပြီးမှ hash (မဟုတ်ရင် request တိုင်း
+  ETag ပြောင်းပြီး 304 ဘယ်တော့မှ match မဖြစ်)။ Laravel က Symfony `prepare()` မခေါ်လို့ **304 ကို
+  middleware ထဲမှာ ကိုယ်တိုင်** (`isNotModified` → `setNotModified`) — live မှာ 304 အတည်ပြုပြီး။
+- **Build assets (public/build/*) → `public, max-age=31536000, immutable`** — dev မှာ project
+  `server.php` router (built-in server က `return false` ရင် header ပစ်ချလို့ `/build/` ကို `readfile()`
+  နဲ့ ကိုယ်တိုင်ကျွေး; **`-t public` docroot flag မဖြစ်မနေ** — မပါရင် static files 404)၊
+  production မှာ `.htaccess` (`E=BUILD_ASSET:1` env flag + Header rule — /build/ ထဲပဲ သက်ရောက်)။
+- **Service worker v5:** navigations ကို **network-first (offline fallback)** ပြောင်း —
+  stale-while-revalidate က expired nonce HTML ကျွေးပြီး CSP errors ဖြစ်စေတာ (ဒီ session တစ်လျှောက်
+  အကြိမ်ကြိမ် ဖြစ်ခဲ့တဲ့ဟာ)။ Assets က cache-first + immutable → ထပ်မဆွဲတော့ဘူး။
+- **Run doc** (`.freebuff/run.md`): server start ကို `php -S 127.0.0.1:8501 -t public server.php` နဲ့
+  update (artisan serve အစား) — ဘာကြောင့်လဲ ရှင်းပြထား။
+
+### စစ်ဆေးပြီးသား (Verification)
+
+- `php artisan test` → **831 passed (3746 assertions)** (ဒီနေ့အစ 821 → အဆုံး 831)
+- Live (curl): build CSS/font → `immutable` header ✓ · robots.txt → header မပါ ✓ · POS → `no-store` ✓ ·
+  storefront home → ETag + max-age ✓ · If-None-Match → **304** ✓ (stale tag → 200)
+- Preview (mobile viewport): FAB → drawer → variant picker → checkout → payment modal — end-to-end ✓၊
+  swipe-down/backdrop/Escape ပိတ်တာ real touch events နဲ့ ✓၊ build resources ၆ ခုလုံး transferSize 0B (cache) ✓
+- `node --check public/sw.js`, `php -l server.php` → pass
+
+### ⚠️ သတိထားရန်
+
+- **Preview webview console ထဲ CSP error ၂ ခု** (scroll-restore + PWA-install scripts) ပေါ်နေတုန်းပဲ —
+  **app မဟုတ်ဘဲ webview ရဲ့ navigation cache က header/body ကို မတူတဲ့ ဗားရှင်းနဲ့ ပေါင်းကျွေးတဲ့
+  environment artifact** (curl + `cache:'no-store'` fetch နှစ်ခုလုံးမှာ nonce match — server မှန်ကန်)။
+  Page က လုံးဝ အလုပ်လုပ်တယ် (Alpine/cart/products)။ Real browser မှာ မရှိဘူး။
+- **Server run ပုံ ပြောင်းပြီ:** `artisan serve` အစား `php -S 127.0.0.1:8501 -t public server.php`
+  (`.freebuff/run.md` ကြည့်ပါ) — `-t public` မေ့ရင် static files 404 ဖြစ်မယ်။
+- **sw.js ကို နောက်တစ်ခါ ပြင်ရင် `CACHE_VERSION` ကို bump** လုပ်ပါ (v5 ရောက်နေပြီ)။
+- **Build ပြီးတိုင်း** POS/Alpine class အသစ်တွေ ရှိရင် `npm run build` ပြန်လုပ်ပါ (Tailwind
+  `@source` က pos views + components ပါပြီးသားပေမယ့် class အသစ်က compile ဖြစ်ဖို့ build လို)။
+
