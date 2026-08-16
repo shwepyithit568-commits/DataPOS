@@ -48,6 +48,10 @@ class AdminDashboardTest extends TestCase
             'stock_status' => 'in_stock',
         ]);
 
+        // Stale pending_contact order — older than the 2h uncontacted threshold.
+        // Total is 0 so it can never feed the revenue stat: being 3h old it
+        // falls on *yesterday* when the suite runs between 00:00 and 03:00 and
+        // on *today* otherwise, which would flip the revenue assertion.
         Order::create([
             'store_id' => $store->id,
             'order_number' => 'ORD-STAT-1',
@@ -55,9 +59,9 @@ class AdminDashboardTest extends TestCase
             'customer_phone' => '09333333333',
             'contact_channel' => 'viber',
             'pricing_type' => 'retail',
-            'total_amount' => 1000.00,
+            'total_amount' => 0.00,
             'status' => 'pending_contact',
-        ])->forceFill(['created_at' => now()->subHours(3)])->save(); // stale — older than the 2h uncontacted threshold
+        ])->forceFill(['created_at' => now()->subHours(3)])->save();
 
         Order::create([
             'store_id' => $store->id,
@@ -70,6 +74,19 @@ class AdminDashboardTest extends TestCase
             'status' => 'cancelled',
         ]);
 
+        // Fresh same-day order — the deterministic source of today's revenue
+        // (cancelled ORD-STAT-2 is excluded, stale ORD-STAT-1 totals 0).
+        Order::create([
+            'store_id' => $store->id,
+            'order_number' => 'ORD-STAT-3',
+            'customer_name' => 'Client C',
+            'customer_phone' => '09333333335',
+            'contact_channel' => 'viber',
+            'pricing_type' => 'retail',
+            'total_amount' => 1000.00,
+            'status' => 'pending_contact',
+        ]);
+
         $response = $this->actingAs($manager)->get('/store/store-a/admin/dashboard');
 
         $response->assertStatus(200);
@@ -79,8 +96,8 @@ class AdminDashboardTest extends TestCase
         $response->assertSee('Product A1');
         $response->assertSee('Cancelled Orders');
         $response->assertSee('data-cancelled-orders-stat', false);
-        // Today / This Week stat cards (2 today orders; revenue excludes the
-        // cancelled order → 1000 + 2000 = Ks 3,000 total, Ks 1,000 revenue)
+        // Today / This Week stat cards (revenue excludes the cancelled order
+        // and comes from the fresh ORD-STAT-3 → Ks 1,000 revenue at any hour)
         $response->assertSee('Today Orders');
         $response->assertSee('This Week Orders');
         $response->assertSee('data-today-orders-stat', false);

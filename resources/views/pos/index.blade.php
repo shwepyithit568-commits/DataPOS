@@ -1,14 +1,43 @@
 @extends('layouts.pos.app')
 
 @section('content')
-    <div class="mx-auto max-w-5xl px-4 py-6 space-y-6">
+    @php
+        $posLabels = [
+            'added' => __('messages.pos_item_added'),
+            'held' => __('messages.sale_held'),
+            'shift_required' => __('messages.pos_shift_required'),
+            'select_variant' => __('messages.pos_select_variant'),
+            'variant' => __('messages.pos_variant'),
+            'add_to_cart' => __('messages.pos_add_to_cart'),
+            'out_of_stock' => __('messages.pos_out_of_stock'),
+            'in_stock' => __('messages.pos_in_stock'),
+            'no_products' => __('messages.pos_no_products'),
+            'clear_cart' => __('messages.pos_clear_cart'),
+        ];
+    @endphp
+
+    <div class="space-y-5"
+         x-data="posApp({
+             baseUrl: '{{ url('/store/' . $store->slug . '/pos') }}',
+             csrf: '{{ csrf_token() }}',
+             labels: {{ \Illuminate\Support\Js::from($posLabels) }}
+         })"
+         x-init="init()">
+
+        {{-- Toast notice (AJAX feedback) --}}
+        <div x-show="notice" x-cloak
+             class="fixed top-20 left-1/2 -translate-x-1/2 z-[90] px-4 py-2.5 rounded-xl text-sm font-bold shadow-xl border"
+             :class="noticeType === 'error' ? 'bg-rose-600 text-white border-rose-500' : 'bg-emerald-600 text-white border-emerald-500'"
+             role="status">
+            <span x-text="notice"></span>
+        </div>
 
         {{-- Flash messages --}}
         @if (session('success'))
             <div class="rounded-xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-4 py-3 text-sm font-semibold">
                 ✅ {{ session('success') }}
                 @if (session('posted_receipt'))
-                    <span class="block mt-1 text-xs font-mono">#{{ session('posted_receipt') }} · Change: Ks {{ number_format((float) session('posted_change')) }}</span>
+                    <span class="block mt-1 text-xs font-mono">#{{ session('posted_receipt') }} · {{ __('messages.change') }}: Ks {{ number_format((float) session('posted_change')) }}</span>
                     @if (session('posted_debt'))
                         <span class="block mt-1 text-xs font-bold text-amber-600 dark:text-amber-400">💳 {{ __('messages.balance_due') }}: Ks {{ number_format((float) session('posted_debt')) }}</span>
                     @endif
@@ -27,287 +56,501 @@
             </div>
         @endif
 
-        {{-- ── Cart + sale posting ─────────────────────────────────────── --}}
-        <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm"
-                 x-data="{
-            showPayment: false,
-            customer: null,
-            cash: '{{ $cartTotals['total'] }}',
-            kpay: 0, wavepay: 0, cbpay: 0, mmqr: 0, credit: 0,
-            cq: '', cresults: [], copen: false,
-            async csearch() {
-                if (this.cq.trim() === '') { this.cresults = []; this.copen = false; return; }
-                const res = await fetch('{{ url('/store/' . $store->slug . '/pos/customers') }}?q=' + encodeURIComponent(this.cq), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                const json = await res.json();
-                this.cresults = json.customers || [];
-                this.copen = true;
-            },
-            attach(c) {
-                this.customer = c;
-                this.cq = c.name;
-                this.cresults = [];
-                this.copen = false;
-                if (this.remaining > 0 && this.credit === 0) this.credit = Math.max(0, Math.round(this.remaining / 100) * 100);
-            },
-            clearCustomer() { this.customer = null; this.cq = ''; this.credit = 0; },
-            get paid() {
-                return ['cash','kpay','wavepay','cbpay','mmqr','credit'].reduce((s, k) => s + (parseFloat(this[k]) || 0), 0);
-            },
-            get remaining() { return parseFloat('{{ $cartTotals['total'] }}') - this.paid; },
-            get change() { return this.remaining < 0 ? -this.remaining : 0; },
-            get exact() {
-                if (this.credit > 0 && !this.customer) return false; // debt needs an attached customer
-                return this.remaining <= 0.005; // overpay is fine — becomes change
-            }
-        }">
-            <div class="flex items-center justify-between gap-3 mb-4">
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ __('messages.cart') }}</p>
-                    <h2 class="text-lg font-black mt-0.5">{{ __('messages.scan_or_search') }}</h2>
+        {{-- ── Toolbar (reference: alinthit_pos pos_toolbar.dart) ─────────── --}}
+        <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            {{-- Row 1: search + actions + shift status + keyboard shortcuts --}}
+            <div class="flex flex-wrap lg:flex-wrap max-lg:flex-nowrap max-lg:overflow-x-auto max-lg:whitespace-nowrap [&>*]:shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden items-center gap-2.5 px-4 pt-3.5 pb-3">
+                {{-- Search (barcode / SKU / name — F1) --}}
+                <div class="relative flex-1 min-w-[220px] max-w-md max-lg:w-64 max-lg:flex-none">
+                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </span>
+                    <input type="text" x-ref="searchInput" x-model="q" @input="onSearch()" @keydown.enter.prevent="loadGrid()"
+                           placeholder="{{ __('messages.pos_search_placeholder') }}"
+                           class="w-full h-12 rounded-2xl border border-blue-600/20 dark:border-blue-500/20 bg-slate-50 dark:bg-slate-800 pl-11 pr-14 text-sm font-bold placeholder:font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
+                    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400 text-[10px] font-black">F1</span>
                 </div>
-                <div class="flex items-center gap-2">
-                    @if ($openShift)
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                            ● {{ $openShift->register_name }}
+
+                {{-- Scan barcode (USB scanners type into search + Enter) --}}
+                <button type="button" @click="$refs.searchInput.focus()"
+                        class="w-12 h-12 rounded-2xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 transition grid place-items-center shrink-0"
+                        title="{{ __('messages.pos_scan_barcode') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/><path d="M7 8h10"/><path d="M7 16h10"/></svg>
+                </button>
+
+                {{-- Import web order --}}
+                <button type="button" @click="$refs.searchInput.focus()"
+                        class="w-12 h-12 rounded-2xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 transition grid place-items-center shrink-0"
+                        title="{{ __('messages.pos_import_web_order') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+                </button>
+
+                <div class="flex-1"></div>
+
+                {{-- Shift status pill --}}
+                <span class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wide border"
+                      :class="shiftOpen ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'">
+                    <span class="w-2 h-2 rounded-full" :class="shiftOpen ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'"></span>
+                    <template x-if="shiftOpen"><span>{{ __('messages.pos_shift_active') }}</span></template>
+                    <template x-if="!shiftOpen"><span>{{ __('messages.sale_requires_shift') }}</span></template>
+                </span>
+
+                {{-- End shift --}}
+                <button type="button" x-show="shiftOpen" x-cloak
+                        @click="document.getElementById('pos-shift-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+                        class="shrink-0 w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition grid place-items-center"
+                        title="{{ __('messages.pos_end_shift') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                </button>
+
+                {{-- Keyboard shortcuts (hidden on small screens) --}}
+                <div class="hidden xl:flex items-center gap-1.5">
+                    @foreach ([
+                        ['F1', 'pos_hint_search'], ['F2', 'pos_hint_checkout'], ['F3', 'pos_hint_customer'],
+                        ['F4', 'pos_hint_clear'], ['F5', 'pos_hint_reload'], ['F6', 'pos_hint_hold'], ['F7', 'pos_hint_held'],
+                    ] as [$key, $hint])
+                        <span class="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <span class="px-1.5 py-0.5 rounded-md bg-blue-600/10 text-blue-600 dark:text-blue-400 text-[9px] font-black">{{ $key }}</span>
+                            <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{{ __('messages.' . $hint) }}</span>
                         </span>
-                    @else
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
-                            {{ __('messages.sale_requires_shift') }}
-                        </span>
-                    @endif
-                    <a href="{{ url('/store/' . $store->slug . '/pos/closing') }}"
-                       class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                        📋 {{ __('messages.closing_title') }}
-                    </a>
-                    <a href="{{ url('/store/' . $store->slug . '/pos/reports/sales') }}"
-                       class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                        📊 {{ __('messages.reports_title') }}
-                    </a>
-                    <a href="{{ url('/store/' . $store->slug . '/pos/receiving') }}"
-                       class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                        📦 {{ __('messages.receiving_title') }}
-                    </a>
-                    <a href="{{ url('/store/' . $store->slug . '/pos/opening-stock') }}"
-                       class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                        🏷️ {{ __('messages.opening_stock_title') }}
-                    </a>
-                    <a href="{{ url('/store/' . $store->slug . '/pos/adjustments') }}"
-                       class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                        🔧 {{ __('messages.adjustment_title') }}
-                    </a>
+                    @endforeach
                 </div>
             </div>
 
-            {{-- Product search (barcode / SKU / name) --}}
-            <div class="relative mb-5" x-data="{ q: '', results: [], open: false, async search() {
-                if (this.q.trim() === '') { this.results = []; this.open = false; return; }
-                const res = await fetch('{{ url('/store/' . $store->slug . '/pos/products') }}?q=' + encodeURIComponent(this.q), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                const json = await res.json();
-                this.results = json.results || [];
-                this.open = true;
-            } }">
-                <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
-                    <input type="text" x-model="q" @input.debounce.250ms="search()" @keydown.enter.prevent="search()"
-                           placeholder="{{ __('messages.pos_search_placeholder') }}" autofocus
-                           class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-10 pr-4 py-3 text-base font-semibold focus:ring-2 focus:ring-sky-500 outline-none">
-                </div>
-                <div x-show="open && results.length" x-cloak
-                     class="absolute z-30 inset-x-0 top-full mt-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl max-h-80 overflow-y-auto">
-                    <template x-for="r in results" :key="r.type + '-' + r.id">
-                        <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/cart') }}">
-                            @csrf
-                            <input type="hidden" name="product_id" :value="r.product_id">
-                            <input type="hidden" name="product_variant_id" :value="r.type === 'variant' ? r.id : ''">
-                            <input type="hidden" name="quantity" value="1">
-                            <button type="submit" class="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
-                                <span class="min-w-0">
-                                    <span class="block text-sm font-semibold truncate" x-text="r.name"></span>
-                                    <span class="block text-xs text-slate-500 font-mono" x-text="r.sku || ''"></span>
-                                </span>
-                                <span class="shrink-0 flex items-center gap-3">
-                                    <span class="text-sm font-black" x-text="'Ks ' + Number(r.price).toLocaleString()"></span>
-                                    <span class="text-xs px-1.5 py-0.5 rounded-md font-bold" :class="parseFloat(r.balance) > 0 ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300' : 'bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-300'"
-                                          x-text="'×' + r.balance"></span>
-                                    <span class="text-xs font-bold text-sky-600 dark:text-sky-400">+</span>
-                                </span>
-                            </button>
-                        </form>
-                    </template>
-                </div>
-                <div x-show="open && q.trim() !== '' && !results.length" x-cloak
-                     class="absolute z-30 inset-x-0 top-full mt-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl px-4 py-3 text-sm text-slate-500">
-                    {{ __('messages.no_results') }}
-                </div>
-            </div>
+            {{-- Row 2: module links --}}
+            <x-pos.chip-scroll variant="links" class="bg-slate-50/60 dark:bg-slate-800/30">
+                <button type="button" id="pos-held-toggle"
+                        class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900 transition"
+                        @click="document.getElementById('pos-held-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })">
+                    🧾 {{ __('messages.held_sales') }} <span x-text="'(' + cart.held_count + ')'"></span>
+                </button>
+                @foreach ([
+                    ['pos/closing', 'closing_title', '📋'],
+                    ['pos/reports/sales', 'reports_title', '📊'],
+                    ['pos/receiving', 'receiving_title', '📦'],
+                    ['pos/opening-stock', 'opening_stock_title', '🏷️'],
+                    ['pos/adjustments', 'adjustment_title', '🔧'],
+                ] as [$path, $label, $icon])
+                    <a href="{{ url('/store/' . $store->slug . '/' . $path) }}"
+                       class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition">
+                        {{ $icon }} {{ __('messages.' . $label) }}
+                    </a>
+                @endforeach
+            </x-pos.chip-scroll>
 
-            {{-- Customer attach (credit/debt — SoT §17) --}}
-            <div class="mb-5">
-                <div class="flex items-center justify-between gap-3 mb-2">
-                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ __('messages.customer') }}</p>
-                    <template x-if="customer">
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300">
-                            👤 <span x-text="customer.name"></span>
-                            <span x-show="parseFloat(customer.balance) > 0" x-text="' · ' + {{ __('messages.debt') }} + ' Ks ' + Number(customer.balance).toLocaleString()"></span>
-                            <button type="button" @click="clearCustomer()" class="ml-1 text-rose-500 font-black">✕</button>
-                        </span>
-                    </template>
-                </div>
-                <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">👤</span>
-                    <input type="text" x-model="cq" @input.debounce.250ms="csearch()" :disabled="customer !== null"
-                           placeholder="{{ __('messages.customer_search_placeholder') }}"
-                           class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-10 pr-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-sky-500 outline-none disabled:opacity-50">
-                </div>
-                <div x-show="copen && cresults.length" x-cloak
-                     class="relative z-20 mt-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl max-h-60 overflow-y-auto">
-                    <template x-for="c in cresults" :key="c.id">
-                        <button type="button" @click="attach(c)"
-                                class="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
-                            <span class="min-w-0">
-                                <span class="block text-sm font-semibold truncate" x-text="c.name"></span>
-                                <span class="block text-xs text-slate-500 font-mono" x-text="c.phone || ''"></span>
-                            </span>
-                            <span class="shrink-0 text-xs font-bold" :class="parseFloat(c.balance) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'"
-                                  x-text="parseFloat(c.balance) > 0 ? '{{ __('messages.debt') }} ' + Number(c.balance).toLocaleString() : ''"></span>
-                        </button>
-                    </template>
-                </div>
-                <div x-show="copen && cq.trim() !== '' && !cresults.length" x-cloak
-                     class="relative z-20 mt-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl px-4 py-3 text-sm text-slate-500">
-                    {{ __('messages.no_customers_found') }}
-                </div>
-                <p x-show="credit > 0 && !customer" x-cloak class="mt-2 text-xs font-bold text-rose-600 dark:text-rose-400">
-                    ⚠️ {{ __('messages.credit_requires_customer') }}
-                </p>
-            </div>
+            {{-- Row 3: category chips --}}
+            <x-pos.chip-scroll :label="__('messages.categories')">
+                <button type="button" @click="toggleCategory(0)"
+                        class="shrink-0 snap-start px-3.5 py-1.5 rounded-2xl text-[13px] font-black border transition"
+                        :class="categoryId === 0 ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25 ring-2 ring-blue-600/30' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
+                    <span x-show="categoryId === 0" class="inline-block mr-0.5">✓</span>{{ __('messages.pos_all') }}
+                </button>
+                <template x-for="c in categories" :key="'cat-' + c.id">
+                    <button type="button" @click="toggleCategory(c.id)"
+                            class="shrink-0 snap-start px-3.5 py-1.5 rounded-2xl text-[13px] font-black border transition"
+                            :class="categoryId === c.id ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25 ring-2 ring-blue-600/30' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
+                        <span x-show="categoryId === c.id" class="inline-block mr-0.5">✓</span><span x-text="c.name"></span>
+                    </button>
+                </template>
+            </x-pos.chip-scroll>
 
-            {{-- Cart lines --}}
-            @if ($cart)
-                <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-50 dark:bg-slate-800/60 text-xs text-slate-500 dark:text-slate-400">
-                            <tr>
-                                <th class="text-left px-3 py-2">{{ __('messages.cart') }}</th>
-                                <th class="text-center px-3 py-2">{{ __('messages.qty') }}</th>
-                                <th class="text-right px-3 py-2">{{ __('messages.unit_price') }}</th>
-                                <th class="text-right px-3 py-2">{{ __('messages.line_total') }}</th>
-                                <th class="text-center px-3 py-2"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                            @foreach ($cart as $line)
-                                <tr>
-                                    <td class="px-3 py-2.5">
-                                        <p class="font-semibold">{{ $line['name'] }}</p>
-                                        <p class="text-xs text-slate-500 font-mono">{{ $line['sku'] }} · {{ __('messages.stock_on_hand') }}: {{ $line['balance'] }}</p>
-                                    </td>
-                                    <td class="px-3 py-2.5 text-center">
-                                        <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/cart/' . $line['index']) }}" class="inline-flex items-center gap-1">
-                                            @csrf
-                                            <input type="number" name="quantity" value="{{ rtrim(rtrim($line['quantity'], '0'), '.') }}" min="0.001" step="1" required
-                                                   class="w-20 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 text-center text-sm font-semibold">
-                                            <button type="submit" class="text-xs font-bold text-sky-600 dark:text-sky-400 px-1">✓</button>
-                                        </form>
-                                    </td>
-                                    <td class="px-3 py-2.5 text-right font-semibold">Ks {{ number_format((float) $line['unit_price']) }}</td>
-                                    <td class="px-3 py-2.5 text-right font-black">Ks {{ number_format((float) $line['line_total']) }}</td>
-                                    <td class="px-3 py-2.5 text-center">
-                                        <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/cart/' . $line['index']) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-rose-500 hover:text-rose-700 font-bold px-1">✕</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+            {{-- Row 4: brand chips --}}
+            <x-pos.chip-scroll :label="__('messages.brands')">
+                <button type="button" @click="toggleBrand(0)"
+                        class="shrink-0 snap-start px-3 py-1 rounded-2xl text-xs font-bold border transition"
+                        :class="brandId === 0 ? 'bg-blue-600 text-white border-blue-600 ring-2 ring-blue-600/30' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
+                    <span x-show="brandId === 0" class="inline-block mr-0.5">✓</span>{{ __('messages.pos_all') }}
+                </button>
+                <template x-for="b in brands" :key="'brand-' + b.id">
+                    <button type="button" @click="toggleBrand(b.id)"
+                            class="shrink-0 snap-start px-3 py-1 rounded-2xl text-xs font-bold border transition"
+                            :class="brandId === b.id ? 'bg-blue-600 text-white border-blue-600 ring-2 ring-blue-600/30' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
+                        <span x-show="brandId === b.id" class="inline-block mr-0.5">✓</span><span x-text="b.name"></span>
+                    </button>
+                </template>
+            </x-pos.chip-scroll>
+        </section>
 
-                <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
-                    <div class="text-sm text-slate-500 dark:text-slate-400 space-y-0.5">
-                        <p>{{ __('messages.subtotal') }}: <span class="font-bold text-slate-700 dark:text-slate-200">Ks {{ number_format((float) $cartTotals['subtotal']) }}</span></p>
-                        <p class="text-base font-black text-slate-900 dark:text-white">{{ __('messages.total') }}: Ks {{ number_format((float) $cartTotals['total']) }}</p>
+        {{-- ── Two-panel: product grid (left) + cart (right) ─────────────── --}}
+        <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px] items-start">
+
+            {{-- LEFT: product grid --}}
+            <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-sm min-w-0">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ __('messages.pos_products') }}</p>
+                        <h2 class="text-lg font-black mt-0.5">{{ __('messages.scan_or_search') }}</h2>
                     </div>
+                    <span class="text-xs font-semibold text-slate-400" x-show="gridLoading">…</span>
+                </div>
 
-                    <div class="flex items-center gap-2">
-                        <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/hold') }}">
-                            @csrf
-                            <button type="submit" class="rounded-xl px-4 py-2.5 text-sm font-bold bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition">
-                                ⏸ {{ __('messages.hold_sale') }}
-                            </button>
-                        </form>
+                {{-- Product cards (reference: pos_product_card.dart) --}}
+                <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3.5 max-h-[58vh] overflow-y-auto pr-1 pb-1">
+                    <template x-for="p in products" :key="p.id">
+                        <div class="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition hover:shadow-lg hover:-translate-y-0.5"
+                             :class="parseFloat(p.balance) > 0 ? '' : 'opacity-55'">
+                            {{-- Image section --}}
+                            <div class="relative m-2 aspect-[4/3] rounded-xl bg-slate-100 dark:bg-slate-900/70 grid place-items-center overflow-hidden">
+                                <template x-if="p.image">
+                                    <img :src="p.image" alt="" loading="lazy" class="absolute inset-0 w-full h-full object-contain p-3">
+                                </template>
+                                <template x-if="!p.image">
+                                    <span class="text-4xl opacity-30 select-none">🛍️</span>
+                                </template>
 
-                        {{-- Payment modal --}}
-                        <div>
-                            <button type="button" @click="showPayment = true" :disabled="!{{ $openShift ? 'true' : 'false' }}"
-                                    class="rounded-xl px-5 py-2.5 text-sm font-black bg-sky-600 text-white hover:bg-sky-500 transition disabled:opacity-40 disabled:cursor-not-allowed">
-                                💳 {{ __('messages.post_sale') }}
-                            </button>
+                                {{-- Stock status badge (top-right) --}}
+                                <span class="absolute top-2 right-2 px-2 py-0.5 rounded-md text-[9px] font-black text-white shadow-sm"
+                                      :class="parseFloat(p.balance) <= 0 ? 'bg-rose-500' : (parseFloat(p.balance) <= 5 ? 'bg-amber-500' : 'bg-emerald-500')"
+                                      x-text="parseFloat(p.balance) <= 0 ? labels.out_of_stock : (parseFloat(p.balance) <= 5 ? ('×' + p.balance) : labels.in_stock)"></span>
 
-                            <div x-show="showPayment" x-cloak class="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" @keydown.escape.window="showPayment = false">
-                                <div class="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-5 shadow-2xl">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <h3 class="text-lg font-black">{{ __('messages.payments') }}</h3>
-                                        <button type="button" @click="showPayment = false" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                                {{-- Variants badge (top-left) --}}
+                                <span x-show="p.variants && p.variants.length > 0" x-cloak
+                                      class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-blue-600 text-white text-[9px] font-black shadow-sm"
+                                      x-text="'↕ ' + p.variants.length + ' ' + labels.variant"></span>
+
+                                {{-- Category badge (bottom-left) --}}
+                                <span x-show="p.category" x-cloak
+                                      class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-white/90 dark:bg-slate-900/90 text-[9px] font-black uppercase tracking-wider text-slate-500 border border-slate-200 dark:border-slate-700 shadow-sm"
+                                      x-text="p.category"></span>
+                            </div>
+
+                            {{-- Info section --}}
+                            <div class="px-3 pb-3 pt-1">
+                                <p class="text-sm font-bold leading-snug line-clamp-2 min-h-[2.5em]" x-text="p.name"></p>
+                                <div class="mt-2 flex items-end justify-between gap-2">
+                                    <div class="min-w-0">
+                                        <p class="text-[11px] text-rose-500 font-bold line-through" x-show="p.old_price && parseFloat(p.old_price) > parseFloat(p.price)" x-text="'Ks ' + Number(p.old_price).toLocaleString()"></p>
+                                        <p class="text-base font-extrabold text-blue-600 dark:text-blue-400 leading-none" x-text="'Ks ' + Number(p.price).toLocaleString()"></p>
                                     </div>
-
-                                    <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/post') }}" class="grid gap-3">
-                                        @csrf
-                                        <input type="hidden" name="customer_id" :value="customer ? customer.id : ''">
-                                        @foreach (['cash', 'kpay', 'wavepay', 'cb_pay', 'mmqr', 'credit'] as $i => $method)
-                                            <label class="flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5"
-                                                   :class="customer || $method !== 'credit' ? 'border-slate-200 dark:border-slate-700' : 'border-rose-300 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/20'">
-                                                <span class="text-sm font-bold">
-                                                    {{ __('messages.payment_' . $method) }}
-                                                    @if ($method === 'credit')
-                                                        <span class="block text-[10px] font-semibold text-slate-400">{{ __('messages.credit_hint') }}</span>
-                                                    @endif
-                                                </span>
-                                                <input type="hidden" name="payments[{{ $i }}][method]" value="{{ $method }}">
-                                                <input type="number" name="payments[{{ $i }}][amount]" min="0" step="100" x-model="{{ $method === 'cash' ? 'cash' : $method }}"
-                                                       :disabled="{{ $method === 'credit' ? '!customer' : 'false' }}"
-                                                       class="w-36 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1.5 text-right text-sm font-semibold disabled:opacity-40">
-                                            </label>
-                                        @endforeach
-
-                                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 text-sm space-y-1">
-                                            <p class="flex justify-between"><span class="text-slate-500">{{ __('messages.total') }}</span><span class="font-black">Ks {{ number_format((float) $cartTotals['total']) }}</span></p>
-                                            <p class="flex justify-between" x-show="remaining !== 0">
-                                                <span class="text-slate-500">{{ __('messages.subtotal') }} (ကျန်)</span>
-                                                <span class="font-bold" :class="remaining < 0 ? 'text-rose-600' : 'text-amber-600'" x-text="'Ks ' + remaining.toLocaleString()"></span>
-                                            </p>
-                                            <p class="flex justify-between" x-show="change > 0">
-                                                <span class="text-slate-500">{{ __('messages.change') }}</span>
-                                                <span class="font-black text-emerald-600" x-text="'Ks ' + change.toLocaleString()"></span>
-                                            </p>
-                                            <p class="flex justify-between" x-show="credit > 0">
-                                                <span class="text-slate-500">{{ __('messages.balance_due') }}</span>
-                                                <span class="font-black text-amber-600 dark:text-amber-400" x-text="'Ks ' + credit.toLocaleString()"></span>
-                                            </p>
-                                        </div>
-
-                                        <button type="submit" :disabled="!exact" :class="exact ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'"
-                                                class="rounded-xl px-4 py-3 text-sm font-black text-white transition">
-                                            {{ __('messages.post_sale') }}
-                                        </button>
-                                    </form>
+                                    <button type="button" @click="addProduct(p)" :disabled="parseFloat(p.balance) <= 0"
+                                            class="shrink-0 w-10 h-10 rounded-xl bg-blue-600 text-white grid place-items-center shadow-lg shadow-blue-600/30 hover:bg-blue-500 active:scale-90 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                                            :title="p.variants && p.variants.length > 0 ? labels.select_variant : labels.add_to_cart">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                                    </button>
                                 </div>
                             </div>
                         </div>
+                    </template>
+                </div>
+
+                {{-- Empty state --}}
+                <div x-show="!gridLoading && !products.length"
+                     class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                    🔎 <span x-text="labels.no_products"></span>
+                </div>
+            </section>
+
+            {{-- RIGHT: cart panel (reference: pos_cart_panel.dart) --}}
+            {{-- Desktop (lg+): sticky side column (2-pane with the grid). Mobile: the
+                 cart becomes a bottom-sheet drawer that slides up when the floating
+                 cart button below is tapped — both share the same posApp cart state. --}}
+            <div x-data="{
+                    mobileCartOpen: false,
+                    dragY: 0,
+                    touchStartY: 0,
+                    dragging: false,
+                    scrollBlocked: false,
+                    prevY: 0,
+                    prevT: 0,
+                    vel: 0,
+                    onTouchStart(e) {
+                        if (!this.mobileCartOpen || window.innerWidth >= 1024) return;
+                        this.dragging = true;
+                        this.scrollBlocked = false;
+                        this.dragY = 0;
+                        this.prevY = this.prevT = 0;
+                        this.vel = 0;
+                        this.touchStartY = e.touches[0].clientY;
+                        // Only drag the sheet when the touched scroll container is at its top,
+                        // so the cart list / customer results still scroll normally.
+                        let el = e.target;
+                        while (el && el !== this.$refs.drawer) {
+                            if (el.scrollTop > 0) { this.scrollBlocked = true; break; }
+                            el = el.parentElement;
+                        }
+                    },
+                    onTouchMove(e) {
+                        if (!this.dragging || window.innerWidth >= 1024) return;
+                        const now = performance.now();
+                        const y = e.touches[0].clientY;
+                        if (this.prevT && now > this.prevT) {
+                            this.vel = (y - this.prevY) / (now - this.prevT);
+                        }
+                        this.prevY = y; this.prevT = now;
+                        const dy = y - this.touchStartY;
+                        if (dy <= 0 || this.scrollBlocked || this.$refs.drawer.scrollTop > 0) { this.dragY = 0; return; }
+                        // Follow the finger (resistive: only 60% of the distance feels native).
+                        this.dragY = dy;
+                        this.$refs.drawer.style.transform = 'translateY(' + Math.min(dy * 0.6, 320) + 'px)';
+                        e.preventDefault();
+                    },
+                    onTouchEnd() {
+                        if (!this.dragging) return;
+                        this.dragging = false;
+                        if (this.$refs.drawer) this.$refs.drawer.style.transform = '';
+                        const fling = this.dragY > 30 && this.vel > 0.6;
+                        if (this.dragY > 90 || fling) this.mobileCartOpen = false;
+                        this.dragY = 0;
+                    },
+                    onTouchCancel() {
+                        this.dragging = false;
+                        if (this.$refs.drawer) this.$refs.drawer.style.transform = '';
+                        this.dragY = 0;
+                    }
+                }">
+
+                {{-- Mobile backdrop: tap to close (bottom sheet convention) --}}
+                <div x-show="mobileCartOpen" x-cloak @click="mobileCartOpen = false"
+                     class="hidden max-lg:block fixed inset-0 z-50 bg-black/40"></div>
+
+            <aside id="pos-cart-panel" x-ref="drawer"
+                   @keydown.escape.window="mobileCartOpen = false"
+                   @touchstart="onTouchStart($event)" @touchmove="onTouchMove($event)" @touchend="onTouchEnd()" @touchcancel="onTouchCancel()"
+                   class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 lg:shadow-sm lg:sticky lg:top-20 max-lg:fixed max-lg:inset-x-3 max-lg:bottom-3 max-lg:z-50 max-lg:max-h-[85dvh] max-lg:overflow-y-auto max-lg:rounded-3xl max-lg:shadow-2xl"
+                   :class="mobileCartOpen ? '' : 'max-lg:translate-y-[120%]'">
+
+                {{-- Mobile drawer handle + header (bottom sheet only) --}}
+                <div class="hidden max-lg:flex items-center justify-center pt-2.5 px-4">
+                    <div class="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+                </div>
+                <div class="hidden max-lg:flex items-center justify-between gap-3 px-4 pb-3 pt-2 border-b border-slate-100 dark:border-slate-800">
+                    <p class="text-sm font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('messages.pos_cart_title') }}</p>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-black bg-blue-600/10 text-blue-600 dark:text-blue-400" x-text="'🛒 ' + cart.lines.length + ' · Ks ' + Number(cart.totals.total).toLocaleString()"></span>
+                        <button type="button" @click="mobileCartOpen = false" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition">✕</button>
                     </div>
                 </div>
-            @else
-                <div class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                    🛒 {{ __('messages.cart_empty') }} — {{ __('messages.scan_or_search') }}
-                </div>
-            @endif
-        </section>
 
-        {{-- ── Held sales ──────────────────────────────────────────────── --}}
+                {{-- Customer selector header --}}
+                <div class="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 shrink-0 rounded-full bg-blue-600/10 text-blue-600 dark:text-blue-400 grid place-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-black truncate" x-text="customer ? customer.name : '{{ __('messages.walk_in_customer') }}'"></p>
+                            <p class="text-xs text-slate-400" x-text="customer ? '{{ __('messages.customer') }}' : '{{ __('messages.select_customer') }}'"></p>
+                        </div>
+                        <button type="button" @click="$refs.customerInput.focus()"
+                                class="shrink-0 w-10 h-10 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 transition grid place-items-center"
+                                title="{{ __('messages.pos_quick_add_customer') }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+                        </button>
+                    </div>
+
+                    {{-- Customer search (F3) --}}
+                    <div class="relative mt-3">
+                        <input type="text" x-ref="customerInput" x-model="cq" @input.debounce.250ms="csearch()" :disabled="customer !== null"
+                               placeholder="{{ __('messages.customer_search_placeholder') }}"
+                               class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50">
+                        <div x-show="copen && cresults.length" x-cloak
+                             class="absolute z-30 inset-x-0 top-full mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl max-h-56 overflow-y-auto">
+                            <template x-for="c in cresults" :key="c.id">
+                                <button type="button" @click="attach(c)"
+                                        class="w-full text-left px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                                    <span class="min-w-0">
+                                        <span class="block text-sm font-semibold truncate" x-text="c.name"></span>
+                                        <span class="block text-[11px] text-slate-500 font-mono" x-text="c.phone || ''"></span>
+                                    </span>
+                                    <span class="shrink-0 text-[11px] font-bold" :class="parseFloat(c.balance) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'"
+                                          x-text="parseFloat(c.balance) > 0 ? '{{ __('messages.debt') }} ' + Number(c.balance).toLocaleString() : ''"></span>
+                                </button>
+                            </template>
+                        </div>
+                        <div x-show="copen && cq.trim() !== '' && !cresults.length" x-cloak
+                             class="absolute z-30 inset-x-0 top-full mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl px-3 py-2 text-sm text-slate-500">
+                            {{ __('messages.no_customers_found') }}
+                        </div>
+                    </div>
+
+                    <template x-if="customer">
+                        <div class="mt-2 flex items-center justify-between gap-2">
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                                👤 <span x-text="customer.name"></span>
+                                <span x-show="parseFloat(customer.balance) > 0" x-text="' · ' + '{{ __('messages.debt') }}' + ' ' + Number(customer.balance).toLocaleString()"></span>
+                            </span>
+                            <button type="button" @click="clearCustomer()" class="text-rose-500 hover:text-rose-700 font-black text-xs">✕ {{ __('messages.customer') }}</button>
+                        </div>
+                    </template>
+                    <p x-show="credit > 0 && !customer" x-cloak class="mt-1.5 text-[11px] font-bold text-rose-600 dark:text-rose-400">
+                        ⚠️ {{ __('messages.credit_requires_customer') }}
+                    </p>
+                </div>
+
+                {{-- Cart header (desktop only — mobile uses the drawer header) --}}
+                <div class="hidden lg:flex items-center justify-between gap-3 px-4 py-3">
+                    <p class="text-sm font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('messages.pos_cart_title') }}</p>
+                    <span class="px-2.5 py-1 rounded-full text-xs font-black bg-blue-600/10 text-blue-600 dark:text-blue-400" x-text="'🛒 ' + cart.lines.length"></span>
+                </div>
+
+                {{-- Cart lines --}}
+                <div class="space-y-2.5 px-4 max-h-[38vh] overflow-y-auto pr-2">
+                    <template x-for="line in cart.lines" :key="line.index">
+                        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 px-3 py-2.5 shadow-sm">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0">
+                                    <p class="text-sm font-bold leading-snug truncate" x-text="line.name"></p>
+                                    <p class="text-xs text-slate-400 font-mono mt-0.5" x-text="'Ks ' + Number(line.unit_price).toLocaleString()"></p>
+                                </div>
+                                <button type="button" @click="removeLine(line)"
+                                        class="shrink-0 w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 grid place-items-center transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between gap-2 mt-2">
+                                <div class="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+                                    <button type="button" @click="changeQty(line, -1)" class="w-9 h-9 text-blue-600 dark:text-blue-400 font-black hover:bg-slate-100 dark:hover:bg-slate-800 transition">−</button>
+                                    <span class="w-9 text-center text-sm font-black" x-text="line.quantity"></span>
+                                    <button type="button" @click="changeQty(line, 1)" class="w-9 h-9 text-blue-600 dark:text-blue-400 font-black hover:bg-slate-100 dark:hover:bg-slate-800 transition">+</button>
+                                </div>
+                                <p class="text-sm font-extrabold text-blue-600 dark:text-blue-400" x-text="'Ks ' + Number(line.line_total).toLocaleString()"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div x-show="!cart.lines.length" x-cloak class="px-4 py-10 text-center">
+                    <div class="text-5xl opacity-20 mb-3">🛒</div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 font-semibold">{{ __('messages.pos_no_products_added') }}</p>
+                </div>
+
+                {{-- Summary + actions (reference summary section) --}}
+                <div class="mt-3 border-t border-slate-100 dark:border-slate-800 px-4 pt-3 pb-4 bg-slate-50/60 dark:bg-slate-800/30 rounded-t-2xl">
+                    <p class="flex justify-between text-sm text-slate-500 dark:text-slate-400 mb-1">
+                        <span>{{ __('messages.subtotal') }}</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-200" x-text="'Ks ' + Number(cart.totals.subtotal).toLocaleString()"></span>
+                    </p>
+                    <div class="border-t border-dashed border-slate-200 dark:border-slate-700 my-2.5"></div>
+                    <p class="flex justify-between items-center mb-4">
+                        <span class="text-base font-black">{{ __('messages.total') }}</span>
+                        <span class="text-2xl font-extrabold text-blue-600 dark:text-blue-400" x-text="'Ks ' + Number(cart.totals.total).toLocaleString()"></span>
+                    </p>
+
+                    <div class="flex items-stretch gap-2">
+                        <button type="button" @click="clearCart()" :disabled="!cart.lines.length"
+                                class="shrink-0 w-12 rounded-xl border-2 border-rose-500/20 text-rose-500 hover:bg-rose-500/10 grid place-items-center transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                :title="labels.clear_cart">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 12.5-5 5"/><path d="m9.5 12.5 5 5"/><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>
+                        </button>
+                        <button type="button" @click="hold()" :disabled="!cart.lines.length"
+                                class="flex-1 rounded-xl px-3 py-3 text-xs font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                            ⏸ {{ __('messages.hold_sale') }}
+                        </button>
+                        <button type="button" x-show="cart.held_count > 0" x-cloak
+                                @click="document.getElementById('pos-held-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+                                class="shrink-0 w-12 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 grid place-items-center transition"
+                                :title="labels.held">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        </button>
+                        <button type="button" id="pos-checkout-btn" @click="openPayment(); mobileCartOpen = false"
+                                :disabled="!cart.lines.length || !shiftOpen"
+                                class="flex-[2] rounded-xl px-3 py-3 text-sm font-black text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
+                            {{ __('messages.post_sale') }}
+                        </button>
+                    </div>
+                    <p x-show="!shiftOpen" class="mt-2 text-[11px] font-bold text-amber-600 dark:text-amber-400" x-text="labels.shift_required"></p>
+                </div>
+            </aside>
+
+                {{-- Floating cart + checkout button (mobile only) --}}
+                <button type="button" @click="mobileCartOpen = true"
+                        class="hidden max-lg:inline-flex fixed bottom-5 right-5 z-40 items-center gap-2.5 rounded-2xl bg-blue-600 text-white pl-4 pr-5 py-3.5 shadow-xl shadow-blue-600/40 hover:bg-blue-500 active:scale-95 transition">
+                    <span class="relative shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                        <span class="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black grid place-items-center" x-text="cart.lines.length"></span>
+                    </span>
+                    <span class="text-left leading-tight">
+                        <span class="block text-[10px] font-bold uppercase tracking-wide opacity-80">{{ __('messages.pos_cart_title') }}</span>
+                        <span class="block text-sm font-black" x-text="'Ks ' + Number(cart.totals.total).toLocaleString()"></span>
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        {{-- ── Variant picker modal ─────────────────────────────────────── --}}
+        <div x-show="variantProduct" x-cloak class="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" @keydown.escape.window="variantProduct = null">
+            <div class="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-5 shadow-2xl">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="min-w-0">
+                        <h3 class="text-base font-black" x-text="labels.select_variant"></h3>
+                        <p class="text-sm text-slate-500 truncate" x-text="variantProduct ? variantProduct.name : ''"></p>
+                    </div>
+                    <button type="button" @click="variantProduct = null" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                </div>
+                <div class="space-y-2 max-h-72 overflow-y-auto">
+                    <template x-for="v in variantProduct ? variantProduct.variants : []" :key="v.id">
+                        <button type="button" @click="addVariant(v)" :disabled="parseFloat(v.balance) <= 0"
+                                class="w-full text-left rounded-xl border px-3 py-2.5 flex items-center justify-between gap-2 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                :class="parseFloat(v.balance) > 0 ? 'border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:shadow-md' : 'border-slate-200 dark:border-slate-800 opacity-60'">
+                            <span class="min-w-0">
+                                <span class="block text-sm font-bold truncate" x-text="v.name"></span>
+                                <span class="block text-[11px] text-slate-500 font-mono" x-text="v.sku || ''"></span>
+                            </span>
+                            <span class="shrink-0 text-right">
+                                <span class="block text-sm font-black text-blue-600 dark:text-blue-400" x-text="'Ks ' + Number(v.price).toLocaleString()"></span>
+                                <span class="block text-[10px] font-bold" :class="parseFloat(v.balance) > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'"
+                                      x-text="parseFloat(v.balance) > 0 ? ('×' + v.balance) : labels.out_of_stock"></span>
+                            </span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        {{-- ── Payment modal (posts server-side, atomic) ─────────────────── --}}
+        <div x-show="showPayment" x-cloak class="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" @keydown.escape.window="showPayment = false">
+            <div class="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-5 shadow-2xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-black">{{ __('messages.payments') }}</h3>
+                    <button type="button" @click="showPayment = false" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                </div>
+
+                <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/post') }}" class="grid gap-3">
+                    @csrf
+                    <input type="hidden" name="customer_id" :value="customer ? customer.id : ''">
+                    @foreach (['cash', 'kpay', 'wavepay', 'cb_pay', 'mmqr', 'credit'] as $i => $method)
+                        <label class="flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5"
+                               :class="customer || '{{ $method }}' !== 'credit' ? 'border-slate-200 dark:border-slate-700' : 'border-rose-300 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/20'">
+                            <span class="text-sm font-bold">
+                                {{ __('messages.payment_' . $method) }}
+                                @if ($method === 'credit')
+                                    <span class="block text-[10px] font-semibold text-slate-400">{{ __('messages.credit_hint') }}</span>
+                                @endif
+                            </span>
+                            <input type="hidden" name="payments[{{ $i }}][method]" value="{{ $method }}">
+                            <input type="number" name="payments[{{ $i }}][amount]" min="0" step="100" x-model="{{ $method === 'cash' ? 'cash' : ($method === 'cb_pay' ? 'cbpay' : $method) }}"
+                                   :disabled="{{ $method === 'credit' ? '!customer' : 'false' }}"
+                                   class="w-36 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1.5 text-right text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-40">
+                        </label>
+                    @endforeach
+
+                    <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 text-sm space-y-1">
+                        <p class="flex justify-between"><span class="text-slate-500">{{ __('messages.total') }}</span><span class="font-black" x-text="'Ks ' + Number(cart.totals.total).toLocaleString()"></span></p>
+                        <p class="flex justify-between" x-show="remaining !== 0">
+                            <span class="text-slate-500">{{ __('messages.subtotal') }} (ကျန်)</span>
+                            <span class="font-bold" :class="remaining < 0 ? 'text-rose-600' : 'text-amber-600'" x-text="'Ks ' + remaining.toLocaleString()"></span>
+                        </p>
+                        <p class="flex justify-between" x-show="change > 0">
+                            <span class="text-slate-500">{{ __('messages.change') }}</span>
+                            <span class="font-black text-emerald-600" x-text="'Ks ' + change.toLocaleString()"></span>
+                        </p>
+                        <p class="flex justify-between" x-show="credit > 0">
+                            <span class="text-slate-500">{{ __('messages.balance_due') }}</span>
+                            <span class="font-black text-amber-600 dark:text-amber-400" x-text="'Ks ' + credit.toLocaleString()"></span>
+                        </p>
+                    </div>
+
+                    <button type="submit" :disabled="!exact" :class="exact ? 'bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'"
+                            class="rounded-xl px-4 py-3 text-sm font-black text-white transition">
+                        {{ __('messages.post_sale') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        {{-- ── Held sales ───────────────────────────────────────────────── --}}
         @if ($heldSales->isNotEmpty())
-            <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+            <section id="pos-held-section" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
                 <p class="text-xs font-bold uppercase tracking-wide text-slate-400 mb-3">{{ __('messages.held_sales') }}</p>
                 <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach ($heldSales as $sale)
@@ -333,7 +576,7 @@
             </section>
         @endif
 
-        {{-- ── Today's posted sales ────────────────────────────────────── --}}
+        {{-- ── Today's posted sales ─────────────────────────────────────── --}}
         @if ($todaySales->isNotEmpty())
             <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
                 <p class="text-xs font-bold uppercase tracking-wide text-slate-400 mb-3">{{ __('messages.today_sales') }}</p>
@@ -354,7 +597,7 @@
                             @foreach ($todaySales as $sale)
                                 @php $saleDebt = $sale->payments->firstWhere('method', 'credit')?->amount ?? '0'; @endphp
                                 <tr>
-                                    <td class="px-3 py-2.5 font-mono font-bold text-sky-600 dark:text-sky-400">{{ $sale->receipt_number }}</td>
+                                    <td class="px-3 py-2.5 font-mono font-bold text-blue-600 dark:text-blue-400">{{ $sale->receipt_number }}</td>
                                     <td class="px-3 py-2.5">{{ $sale->cashier?->name }}</td>
                                     <td class="px-3 py-2.5">
                                         @if ($sale->customer)
@@ -379,14 +622,10 @@
                                         @if ($sale->status !== 'refunded')
                                             <a href="{{ url('/store/' . $store->slug . '/pos/sales/' . $sale->id . '/refund') }}"
                                                class="inline-block px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-600 transition"
-                                               title="{{ __('messages.refund_sale') }}">
-                                                ↩
-                                            </a>
+                                               title="{{ __('messages.refund_sale') }}">↩</a>
                                         @endif
                                         <a href="{{ url('/store/' . $store->slug . '/pos/sales/' . $sale->id . '/receipt') }}" target="_blank"
-                                           class="inline-block px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-bold hover:bg-sky-100 dark:hover:bg-sky-900 transition">
-                                            🖨️
-                                        </a>
+                                           class="inline-block px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900 transition">🖨️</a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -396,167 +635,150 @@
             </section>
         @endif
 
-        <div class="grid gap-6 lg:grid-cols-2">
+        <div class="grid gap-5 xl:grid-cols-2">
 
-        {{-- ── Shift status / open ─────────────────────────────────────── --}}
-        <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-            @if ($openShift)
-                <div class="flex items-start justify-between gap-3 mb-4">
-                    <div>
-                        <p class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ __('messages.open_shift') }}</p>
-                        <h2 class="text-lg font-black mt-0.5">{{ $openShift->register_name }}</h2>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            {{ __('messages.cashier') }}: {{ $openShift->cashier?->name }} ·
-                            {{ __('messages.opened_at') }}: {{ $openShift->opened_at->format('H:i') }}
-                        </p>
+            {{-- ── Shift status / open ─────────────────────────────────── --}}
+            <section id="pos-shift-card" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+                @if ($openShift)
+                    <div class="flex items-start justify-between gap-3 mb-4">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ __('messages.open_shift') }}</p>
+                            <h2 class="text-lg font-black mt-0.5">{{ $openShift->register_name }}</h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                {{ __('messages.cashier') }}: {{ $openShift->cashier?->name }} ·
+                                {{ __('messages.opened_at') }}: {{ $openShift->opened_at->format('H:i') }}
+                            </p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">● {{ __('messages.shift_open') }}</span>
                     </div>
-                    <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                        ● {{ __('messages.shift_open') }}
-                    </span>
-                </div>
 
-                <dl class="grid grid-cols-2 gap-3 text-sm mb-5">
-                    <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
-                        <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.opening_cash') }}</dt>
-                        <dd class="font-black mt-0.5">Ks {{ number_format((float) $openShift->opening_cash) }}</dd>
-                    </div>
-                    <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
-                        <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.cash_in_out') }}</dt>
-                        <dd class="font-black mt-0.5 text-sky-600 dark:text-sky-400">
-                            +{{ number_format((float) $openShift->cash_in) }} / −{{ number_format((float) $openShift->cash_out) }}
-                        </dd>
-                    </div>
-                    <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
-                        <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.cash_sales') }}</dt>
-                        <dd class="font-black mt-0.5">Ks {{ number_format((float) $openShift->cash_sales) }}</dd>
-                    </div>
-                    <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
-                        <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.cash_refunds') }}</dt>
-                        <dd class="font-black mt-0.5">Ks {{ number_format((float) $openShift->cash_refunds) }}</dd>
-                    </div>
-                </dl>
+                    <dl class="grid grid-cols-2 gap-3 text-sm mb-5">
+                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
+                            <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.opening_cash') }}</dt>
+                            <dd class="font-black mt-0.5">Ks {{ number_format((float) $openShift->opening_cash) }}</dd>
+                        </div>
+                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
+                            <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.cash_in_out') }}</dt>
+                            <dd class="font-black mt-0.5 text-blue-600 dark:text-blue-400">+{{ number_format((float) $openShift->cash_in) }} / −{{ number_format((float) $openShift->cash_out) }}</dd>
+                        </div>
+                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
+                            <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.cash_sales') }}</dt>
+                            <dd class="font-black mt-0.5">Ks {{ number_format((float) $openShift->cash_sales) }}</dd>
+                        </div>
+                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
+                            <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.cash_refunds') }}</dt>
+                            <dd class="font-black mt-0.5">Ks {{ number_format((float) $openShift->cash_refunds) }}</dd>
+                        </div>
+                    </dl>
 
-                {{-- Cash in/out --}}
-                <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/shifts/' . $openShift->id . '/cash-events') }}"
-                      class="grid grid-cols-[1fr_auto] gap-2 mb-5" x-data="{ type: 'cash_in' }">
-                    @csrf
-                    <div class="grid grid-cols-2 gap-2">
-                        <select name="type" x-model="type" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
-                            <option value="cash_in">+ {{ __('messages.cash_in') }}</option>
-                            <option value="cash_out">− {{ __('messages.cash_out') }}</option>
-                        </select>
-                        <input type="number" name="amount" min="1" step="100" required placeholder="Ks"
-                               class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
-                    </div>
-                    <input type="text" name="reason" maxlength="255" placeholder="{{ __('messages.reason') }}"
-                           class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
-                    <button type="submit"
-                            class="rounded-xl px-4 py-2 text-sm font-bold bg-sky-600 text-white hover:bg-sky-500 transition">
-                        {{ __('messages.save') }}
-                    </button>
-                </form>
-
-                {{-- Close shift --}}
-                <div x-data="{ show: false }" class="border-t border-slate-200 dark:border-slate-800 pt-4">
-                    <button type="button" @click="show = !show"
-                            class="w-full rounded-xl px-4 py-3 text-sm font-bold bg-rose-600 text-white hover:bg-rose-500 transition">
-                        {{ __('messages.close_shift') }}
-                    </button>
-                    <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/shifts/' . $openShift->id . '/close') }}"
-                          x-show="show" x-cloak class="mt-3 grid gap-2">
+                    <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/shifts/' . $openShift->id . '/cash-events') }}"
+                          class="grid grid-cols-[1fr_auto] gap-2 mb-5" x-data="{ type: 'cash_in' }">
                         @csrf
-                        <input type="number" name="actual_closing_amount" min="0" step="100" required placeholder="{{ __('messages.actual_closing_amount') }} (Ks)"
+                        <div class="grid grid-cols-2 gap-2">
+                            <select name="type" x-model="type" class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
+                                <option value="cash_in">+ {{ __('messages.cash_in') }}</option>
+                                <option value="cash_out">− {{ __('messages.cash_out') }}</option>
+                            </select>
+                            <input type="number" name="amount" min="1" step="100" required placeholder="Ks"
+                                   class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
+                        </div>
+                        <input type="text" name="reason" maxlength="255" placeholder="{{ __('messages.reason') }}"
                                class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
-                        <textarea name="notes" rows="2" maxlength="1000" placeholder="{{ __('messages.notes') }}"
-                                  class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"></textarea>
-                        <button type="submit" class="rounded-xl px-4 py-2 text-sm font-bold bg-rose-600 text-white hover:bg-rose-500 transition">
-                            {{ __('messages.confirm_close_shift') }}
-                        </button>
+                        <button type="submit" class="rounded-xl px-4 py-2 text-sm font-bold bg-blue-600 text-white hover:bg-blue-500 transition">{{ __('messages.save') }}</button>
                     </form>
-                </div>
-            @else
-                <p class="text-xs font-bold uppercase tracking-wide text-slate-400 mb-4">{{ __('messages.no_open_shift') }}</p>
-                <h2 class="text-lg font-black mb-4">{{ __('messages.open_new_shift') }}</h2>
-                <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/shifts') }}" class="grid gap-3">
-                    @csrf
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">{{ __('messages.register_name') }}</label>
-                        <input type="text" name="register_name" required maxlength="100" value="{{ old('register_name') }}"
-                               class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
-                               placeholder="Register 1">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">{{ __('messages.opening_cash') }} (Ks)</label>
-                        <input type="number" name="opening_cash" min="0" step="100" value="{{ old('opening_cash', 0) }}"
-                               class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
-                    </div>
-                    <button type="submit" class="rounded-xl px-4 py-3 text-sm font-bold bg-sky-600 text-white hover:bg-sky-500 transition">
-                        {{ __('messages.open_shift') }}
-                    </button>
-                </form>
-            @endif
-        </section>
 
-        {{-- ── Today's summary ─────────────────────────────────────────── --}}
-        <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-            <p class="text-xs font-bold uppercase tracking-wide text-slate-400 mb-1">{{ __('messages.today_summary') }}</p>
-            <h2 class="text-lg font-black mb-4">{{ now()->format('d M Y') }}</h2>
+                    <div x-data="{ show: false }" class="border-t border-slate-200 dark:border-slate-800 pt-4">
+                        <button type="button" @click="show = !show"
+                                class="w-full rounded-xl px-4 py-3 text-sm font-bold bg-rose-600 text-white hover:bg-rose-500 transition">{{ __('messages.close_shift') }}</button>
+                        <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/shifts/' . $openShift->id . '/close') }}"
+                              x-show="show" x-cloak class="mt-3 grid gap-2">
+                            @csrf
+                            <input type="number" name="actual_closing_amount" min="0" step="100" required placeholder="{{ __('messages.actual_closing_amount') }} (Ks)"
+                                   class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
+                            <textarea name="notes" rows="2" maxlength="1000" placeholder="{{ __('messages.notes') }}"
+                                      class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"></textarea>
+                            <button type="submit" class="rounded-xl px-4 py-2 text-sm font-bold bg-rose-600 text-white hover:bg-rose-500 transition">{{ __('messages.confirm_close_shift') }}</button>
+                        </form>
+                    </div>
+                @else
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400 mb-4">{{ __('messages.no_open_shift') }}</p>
+                    <h2 class="text-lg font-black mb-4">{{ __('messages.open_new_shift') }}</h2>
+                    <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/shifts') }}" class="grid gap-3">
+                        @csrf
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">{{ __('messages.register_name') }}</label>
+                            <input type="text" name="register_name" required maxlength="100" value="{{ old('register_name') }}"
+                                   class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" placeholder="Register 1">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">{{ __('messages.opening_cash') }} (Ks)</label>
+                            <input type="number" name="opening_cash" min="0" step="100" value="{{ old('opening_cash', 0) }}"
+                                   class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
+                        </div>
+                        <button type="submit" class="rounded-xl px-4 py-3 text-sm font-bold bg-blue-600 text-white hover:bg-blue-500 transition">{{ __('messages.open_shift') }}</button>
+                    </form>
+                @endif
+            </section>
 
-            @if ($summary['shift_count'] > 0)
-                <dl class="grid grid-cols-2 gap-3 text-sm mb-4">
-                    <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
-                        <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.closed_shifts') }}</dt>
-                        <dd class="font-black mt-0.5">{{ $summary['shift_count'] }}</dd>
-                    </div>
-                    <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
-                        <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.expected_cash') }}</dt>
-                        <dd class="font-black mt-0.5">Ks {{ number_format((float) $summary['expected']) }}</dd>
-                    </div>
-                    <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
-                        <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.actual_cash') }}</dt>
-                        <dd class="font-black mt-0.5">Ks {{ number_format((float) $summary['actual']) }}</dd>
-                    </div>
-                    <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
-                        <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.difference') }}</dt>
-                        <dd class="font-black mt-0.5 {{ (float) $summary['difference'] < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
-                            {{ (float) $summary['difference'] < 0 ? '−' : '+' }}Ks {{ number_format(abs((float) $summary['difference'])) }}
-                        </dd>
-                    </div>
-                </dl>
+            {{-- ── Today's summary ─────────────────────────────────────── --}}
+            <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+                <p class="text-xs font-bold uppercase tracking-wide text-slate-400 mb-1">{{ __('messages.today_summary') }}</p>
+                <h2 class="text-lg font-black mb-4">{{ now()->format('d M Y') }}</h2>
 
-                <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-50 dark:bg-slate-800/60 text-xs text-slate-500 dark:text-slate-400">
-                            <tr>
-                                <th class="text-left px-3 py-2">{{ __('messages.cashier') }}</th>
-                                <th class="text-left px-3 py-2">{{ __('messages.register') }}</th>
-                                <th class="text-right px-3 py-2">{{ __('messages.opening_cash') }}</th>
-                                <th class="text-right px-3 py-2">{{ __('messages.actual') }}</th>
-                                <th class="text-right px-3 py-2">{{ __('messages.difference') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                            @foreach ($summary['shifts'] as $shift)
+                @if ($summary['shift_count'] > 0)
+                    <dl class="grid grid-cols-2 gap-3 text-sm mb-4">
+                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
+                            <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.closed_shifts') }}</dt>
+                            <dd class="font-black mt-0.5">{{ $summary['shift_count'] }}</dd>
+                        </div>
+                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
+                            <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.expected_cash') }}</dt>
+                            <dd class="font-black mt-0.5">Ks {{ number_format((float) $summary['expected']) }}</dd>
+                        </div>
+                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
+                            <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.actual_cash') }}</dt>
+                            <dd class="font-black mt-0.5">Ks {{ number_format((float) $summary['actual']) }}</dd>
+                        </div>
+                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
+                            <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.difference') }}</dt>
+                            <dd class="font-black mt-0.5 {{ (float) $summary['difference'] < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+                                {{ (float) $summary['difference'] < 0 ? '−' : '+' }}Ks {{ number_format(abs((float) $summary['difference'])) }}
+                            </dd>
+                        </div>
+                    </dl>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-50 dark:bg-slate-800/60 text-xs text-slate-500 dark:text-slate-400">
                                 <tr>
-                                    <td class="px-3 py-2.5 font-semibold">{{ $shift->cashier?->name }}</td>
-                                    <td class="px-3 py-2.5">{{ $shift->register_name }}</td>
-                                    <td class="px-3 py-2.5 text-right">Ks {{ number_format((float) $shift->opening_cash) }}</td>
-                                    <td class="px-3 py-2.5 text-right">Ks {{ number_format((float) $shift->actual_closing_amount) }}</td>
-                                    <td class="px-3 py-2.5 text-right font-bold {{ (float) $shift->difference < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
-                                        {{ (float) $shift->difference < 0 ? '−' : '+' }}Ks {{ number_format(abs((float) $shift->difference)) }}
-                                    </td>
+                                    <th class="text-left px-3 py-2">{{ __('messages.cashier') }}</th>
+                                    <th class="text-left px-3 py-2">{{ __('messages.register') }}</th>
+                                    <th class="text-right px-3 py-2">{{ __('messages.opening_cash') }}</th>
+                                    <th class="text-right px-3 py-2">{{ __('messages.actual') }}</th>
+                                    <th class="text-right px-3 py-2">{{ __('messages.difference') }}</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @else
-                <div class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                    {{ __('messages.no_closed_shifts_today') }}
-                </div>
-            @endif
-        </section>
-
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                @foreach ($summary['shifts'] as $shift)
+                                    <tr>
+                                        <td class="px-3 py-2.5 font-semibold">{{ $shift->cashier?->name }}</td>
+                                        <td class="px-3 py-2.5">{{ $shift->register_name }}</td>
+                                        <td class="px-3 py-2.5 text-right">Ks {{ number_format((float) $shift->opening_cash) }}</td>
+                                        <td class="px-3 py-2.5 text-right">Ks {{ number_format((float) $shift->actual_closing_amount) }}</td>
+                                        <td class="px-3 py-2.5 text-right font-bold {{ (float) $shift->difference < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+                                            {{ (float) $shift->difference < 0 ? '−' : '+' }}Ks {{ number_format(abs((float) $shift->difference)) }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                        {{ __('messages.no_closed_shifts_today') }}
+                    </div>
+                @endif
+            </section>
         </div>
 
         {{-- ── Customer balances (receivables — SoT §17) ───────────────── --}}

@@ -135,7 +135,7 @@ Route::get('/', function (StoreContext $context) {
     }
 
     return view('welcome', compact('store', 'setting', 'banners', 'categories', 'categoryTree', 'featuredProducts', 'newArrivals', 'flashSales', 'upcomingSales', 'flashTarget', 'flashTargetStarts'));
-})->middleware([ResolveStoreContext::class, SetLocale::class])->name('storefront.home');
+})->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page')->name('storefront.home');
 
 // Store-scoped storefront home (e.g. /store/datapos-mobile)
 // Resolves the store from the slug and renders the same storefront home.
@@ -236,17 +236,17 @@ Route::get('/store/{store_slug}', function (StoreContext $context) {
     }
 
     return view('welcome', compact('store', 'setting', 'banners', 'categories', 'categoryTree', 'featuredProducts', 'newArrivals', 'flashSales', 'upcomingSales', 'flashTarget', 'flashTargetStarts'));
-})->middleware([ResolveStoreContext::class, SetLocale::class])->name('storefront.store.home');
+})->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page')->name('storefront.store.home');
 
 
 Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
-Route::get('/products', [CatalogController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class]);
+Route::get('/products', [CatalogController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page');
 Route::get('/products/suggestions', [CatalogController::class, 'suggestions'])->middleware([ResolveStoreContext::class, SetLocale::class, 'throttle:60,1']);
-Route::get('/store/{store_slug}/product/{slug}', [CatalogController::class, 'show'])->middleware([ResolveStoreContext::class, SetLocale::class]);
+Route::get('/store/{store_slug}/product/{slug}', [CatalogController::class, 'show'])->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page');
 
 // AliExpress-style two-pane category browser (left rail + brands/sub-categories panel)
-Route::get('/browse', [BrowseController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class]);
+Route::get('/browse', [BrowseController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page');
 
 // Customer product review submission (guest friendly — name + optional phone)
 Route::post('/store/{store_slug}/product/{slug}/reviews', [ReviewController::class, 'store'])
@@ -572,11 +572,15 @@ Route::prefix('store/{store_slug}')
 
             // POS cart + sale posting (target-design §2.8).
             Route::get('/products', [\App\POS\Http\Controllers\PosSaleController::class, 'search'])->name('pos.products.search');
+            Route::get('/products-grid', [\App\POS\Http\Controllers\PosSaleController::class, 'grid'])->name('pos.products.grid');
+            Route::get('/cart-state', [\App\POS\Http\Controllers\PosSaleController::class, 'cartState'])->name('pos.cart-state');
 
             // POS customer credit/debt (SoT §17) — attach customer, collect debt.
             Route::get('/customers', [\App\POS\Http\Controllers\PosSaleController::class, 'customers'])->name('pos.customers.search');
             Route::post('/customers/{customer}/collect', [\App\POS\Http\Controllers\PosSaleController::class, 'collect'])->name('pos.customers.collect');
             Route::post('/cart', [\App\POS\Http\Controllers\PosSaleController::class, 'addItem'])->name('pos.cart.add');
+            // /cart/clear must be registered before /cart/{line} (route order).
+            Route::post('/cart/clear', [\App\POS\Http\Controllers\PosSaleController::class, 'clearCart'])->name('pos.cart.clear');
             Route::post('/cart/{line}', [\App\POS\Http\Controllers\PosSaleController::class, 'updateLine'])->name('pos.cart.update');
             Route::delete('/cart/{line}', [\App\POS\Http\Controllers\PosSaleController::class, 'removeLine'])->name('pos.cart.remove');
             Route::post('/hold', [\App\POS\Http\Controllers\PosSaleController::class, 'hold'])->name('pos.hold');

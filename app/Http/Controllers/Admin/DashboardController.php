@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\WholesaleApplication;
+use App\POS\Services\CashierShiftService;
 use App\Services\StoreContext;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -21,6 +22,11 @@ class DashboardController extends Controller
      * 60-second stale-while-revalidate reduces DB load significantly.
      */
     private const STATS_CACHE_TTL = 60;
+
+    public function __construct(
+        protected CashierShiftService $shifts,
+    ) {
+    }
 
     public function index(StoreContext $context): View
     {
@@ -113,12 +119,22 @@ class DashboardController extends Controller
         $recentWholesale = WholesaleApplication::where('store_id', $storeId)->with('user')->latest()->take(5)->get();
         $recentProducts = Product::where('store_id', $storeId)->with(['category', 'brand'])->latest()->take(5)->get();
 
+        // Staff-tool access + open cashier shift for the current user — powers
+        // the POS quick-action strip in the dashboard header. (Computed here
+        // because layout-composer vars don't reach the child dashboard view.)
+        $canAccessStaffTools = $user->hasStoreRole($store->id, ['store_manager', 'staff']);
+        $canManageSettings = $user->hasStoreRole($store->id, 'store_manager');
+        $openShift = $canAccessStaffTools ? $this->shifts->openShiftFor($store, $user) : null;
+
         return view('admin.dashboard', compact(
             'store',
             'stats',
             'recentOrders',
             'recentWholesale',
-            'recentProducts'
+            'recentProducts',
+            'openShift',
+            'canAccessStaffTools',
+            'canManageSettings'
         ) + $stats);
     }
 

@@ -1,12 +1,14 @@
 /* DataPOS — service worker (PWA app-shell)
  *
  * Strategy:
- *  - Navigations (HTML pages): stale-while-revalidate. Serve the cached copy
- *    instantly, refresh it from the network in the background, and when the
- *    network is unavailable fall back to the cached version (or the cached
- *    homepage as a last resort).
+ *  - Navigations (HTML pages): network-first. The browser's HTTP cache (short
+ *    max-age + ETag revalidation on public pages, no-store on private ones) is
+ *    the source of truth, so a stale-while-revalidate copy would serve an
+ *    expired CSP nonce / CSRF token (the CSP errors seen in the past). The SW
+ *    only steps in when offline: serve the last good copy, falling back to the
+ *    precached homepage.
  *  - Same-origin static assets (CSS/JS/fonts/images): cache-first with a
- *    background refresh.
+ *    background refresh (build assets are immutable → effectively cache-forever).
  *  - Never cached: POST/other non-GET requests, API/JSON endpoints, cart
  *    (order-builder), checkout/orders, account and admin pages, auth pages.
  *
@@ -15,7 +17,7 @@
  */
 'use strict';
 
-var CACHE_VERSION = 'datapos-v3';
+var CACHE_VERSION = 'datapos-v5';
 var SHELL_CACHE = CACHE_VERSION + '-shell';
 
 /* Requests that must NEVER touch the cache (privacy + correctness). */
@@ -33,6 +35,11 @@ function isExcluded(url) {
     if (path.indexOf('order-builder') !== -1) return true;
     if (path.indexOf('/orders') !== -1) return true;
     if (path.indexOf('/checkout') !== -1) return true;
+
+    // POS module (/store/{slug}/pos/...) — every render carries a per-request
+    // CSP nonce + CSRF token and live session state; serving a stale-while-
+    // revalidate copy leaks an expired nonce/token and breaks the cashier UI.
+    if (path.indexOf('/pos/') !== -1 || path.slice(-4) === '/pos') return true;
 
     // Private / authenticated areas
     if (path.indexOf('/account') !== -1) return true;
@@ -120,28 +127,20 @@ self.addEventListener('fetch', function (event) {
         return;
     }
 
-    // Navigations (HTML pages): stale-while-revalidate with offline fallback.
+    // Navigations (HTML pages): network-first with offline fallback. Every
+    // page carries a per-request CSP nonce + CSRF token, so a stale cached
+    // copy would break — the browser HTTP cache (max-age + ETag on public
+    // pages, no-store on private) handles repeat visits correctly.
     if (request.mode === 'navigate') {
         event.respondWith(
-            caches.match(request).then(function (cached) {
-                // Background refresh of the live page.
-                var refresh = fetch(request).then(function (response) {
-                    cachePut(request, response);
-                    return response;
-                }).catch(function () {
-                    return null;
-                });
-
-                // Serve cache immediately, but hand the fresh network response
-                // to the browser when it arrives.
-                if (cached) {
-                    refresh; // fire and forget — update the cache quietly
-                    return cached;
+            fetch(request).then(function (response) {
+                if (response && response.status === 200) {
+                    cachePut(request, response); // keep a fresh copy for offline
                 }
-                return refresh.then(function (networkResponse) {
-                    if (networkResponse) return networkResponse;
-                    // Offline and nothing cached for this URL: try the homepage.
-                    return caches.match('/').then(function (home) {
+                return response;
+            }).catch(function () {
+                return caches.match(request).then(function (cached) {
+                    return cached || caches.match('/').then(function (home) {
                         return home || Response.error();
                     });
                 });

@@ -39,6 +39,17 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
+        // Dynamic HTML pages carry a per-request CSP nonce, a CSRF token and
+        // live session state — never let browsers/webviews heuristically cache
+        // them (a stale copy leaks an expired nonce/token). Static assets are
+        // untouched: only text/html responses get Cache-Control: no-store.
+        // Storefront public pages opted in via CachePublicPage keep their own
+        // private max-age + ETag policy instead.
+        if (str_contains((string) $response->headers->get('Content-Type', ''), 'text/html')
+            && ! $request->attributes->get('cache_public_page', false)) {
+            $response->headers->set('Cache-Control', 'no-store, private');
+        }
+
         // Content-Security-Policy: restricts resource loading origins.
         // script-src: nonce-based (see the docblock above); 'unsafe-eval' is
         // required by Alpine's standard build. frame-src allows the Google Maps

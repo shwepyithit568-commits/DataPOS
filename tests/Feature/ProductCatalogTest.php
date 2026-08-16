@@ -1020,6 +1020,19 @@ class ProductCatalogTest extends TestCase
         $this->getJson('/products/suggestions?store_slug=nope&search=iphone')->assertNotFound();
     }
 
+    public function test_live_search_suggestions_without_active_store_return_empty_payload(): void
+    {
+        // No stores configured at all (fresh install). The search bar fires
+        // this endpoint on page load to preload trending chips — it must
+        // answer 200 with empty sections, never 404.
+        $this->getJson('/products/suggestions?search=')
+            ->assertOk()
+            ->assertJsonCount(0, 'trending')
+            ->assertJsonCount(0, 'categories')
+            ->assertJsonCount(0, 'brands')
+            ->assertJsonCount(0, 'products');
+    }
+
     public function test_live_search_suggestions_include_categories_and_brands(): void
     {
         $store = Store::create(['name' => 'Store', 'slug' => 'store-main']);

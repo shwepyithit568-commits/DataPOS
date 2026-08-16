@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>POS - {{ $store->name }}</title>
-    <meta name="theme-color" content="#38bdf8">
+    <meta name="theme-color" content="#2563eb">
     <script nonce="{{ $cspNonce }}">
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
@@ -18,9 +18,9 @@
 <body class="bg-slate-100 dark:bg-slate-950 text-gray-900 dark:text-slate-100 font-sans antialiased min-h-dvh flex flex-col transition-colors duration-200">
 
     <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800">
-        <div class="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-3">
+        <div class="mx-auto max-w-[1600px] px-4 py-3 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
-                <div class="w-9 h-9 rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400 grid place-items-center font-black">₱</div>
+                <div class="w-9 h-9 rounded-xl bg-blue-600/15 text-blue-600 dark:text-blue-400 grid place-items-center font-black">₱</div>
                 <div class="min-w-0">
                     <p class="font-black text-sm truncate">{{ $store->name }}</p>
                     <p class="text-xs text-slate-500 dark:text-slate-400">POS · {{ auth()->user()?->name }}</p>
@@ -41,7 +41,7 @@
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-5xl mx-auto px-4 py-6">
+    <main class="flex-1 w-full max-w-[1600px] mx-auto px-4 py-6">
         @if (session('success'))
             <div class="mb-4 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-sm font-semibold" role="alert">
                 {{ session('success') }}

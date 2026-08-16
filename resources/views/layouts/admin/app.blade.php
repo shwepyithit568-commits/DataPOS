@@ -203,6 +203,7 @@
         x-data="{
             catalogOpen: {{ Str::contains($currentPath, ['products', 'categories', 'brands', 'variant-presets']) ? 'true' : 'false' }},
             salesOpen: {{ Str::contains($currentPath, ['orders']) ? 'true' : 'false' }},
+            posOpen: {{ request()->is('store/*/pos*') ? 'true' : 'false' }},
             wholesaleOpen: {{ Str::contains($currentPath, ['wholesale']) ? 'true' : 'false' }},
             contentOpen: {{ Str::contains($currentPath, ['blog', 'reviews']) ? 'true' : 'false' }},
             toolsOpen: {{ Str::contains($currentPath, ['glass-finder', 'import-history']) ? 'true' : 'false' }},
@@ -210,6 +211,7 @@
             closeGroups() {
                 this.catalogOpen = false;
                 this.salesOpen = false;
+                this.posOpen = false;
                 this.wholesaleOpen = false;
                 this.contentOpen = false;
                 this.toolsOpen = false;
@@ -358,6 +360,61 @@
                                 <span data-pending-order-count="{{ $pendingOrderCount }}" class="bg-red-500 text-white text-xs px-1.5 rounded-full font-bold max-w-[3rem] truncate">{{ $pendingOrderCount }}</span>
                             </x-slot:badge>
                         @endif
+                    </x-admin.nav-link>
+                </x-admin.nav-group>
+
+                <x-admin.nav-group name="pos" :label="__('messages.pos')" icon-class="bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
+                    <x-slot:icon>
+                        {{-- Cash register / POS terminal icon --}}
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M4 5h16v5H4V5Zm2 5v9h12v-9M7 12h2m-2 4h2m5-4h3m-3 4h3"/></svg>
+                    </x-slot:icon>
+
+                    @php $isPosHome = request()->is('store/*/pos') || request()->is('store/*/pos/'); @endphp
+                    <x-admin.nav-link :href="route('pos.index', $storeRouteParams)" route-name="pos.index" :active="$isPosHome" :label="__('messages.pos_sale')">
+                        <x-slot:icon>
+                            {{-- Credit-card / checkout icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16v14H4V5Zm0 6h16M7 15h4"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
+                    @php $isPosClosing = request()->is('store/*/pos/closing*'); @endphp
+                    <x-admin.nav-link :href="route('pos.closing.index', $storeRouteParams)" route-name="pos.closing.index" :active="$isPosClosing" :label="__('messages.closing_title')">
+                        <x-slot:icon>
+                            {{-- Clipboard-check icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
+                    @php $isPosReports = request()->is('store/*/pos/reports*'); @endphp
+                    <x-admin.nav-link :href="route('pos.reports.sales', $storeRouteParams)" route-name="pos.reports.sales" :active="$isPosReports" :label="__('messages.reports_title')">
+                        <x-slot:icon>
+                            {{-- Bar-chart icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
+                    @php $isPosReceiving = request()->is('store/*/pos/receiving*'); @endphp
+                    <x-admin.nav-link :href="route('pos.receiving.index', $storeRouteParams)" route-name="pos.receiving.index" :active="$isPosReceiving" :label="__('messages.receiving_title')">
+                        <x-slot:icon>
+                            {{-- Box-in icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.5 12 3 3 8.5V16l9 5.5 9-5.5V8.5ZM3 8.5l9 5.5m0 0 9-5.5M12 14v7.5"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
+                    @php $isPosOpeningStock = request()->is('store/*/pos/opening-stock*'); @endphp
+                    <x-admin.nav-link :href="route('pos.opening-stock.index', $storeRouteParams)" route-name="pos.opening-stock.index" :active="$isPosOpeningStock" :label="__('messages.opening_stock_title')">
+                        <x-slot:icon>
+                            {{-- Tag icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13 11 4H4v7l9 9 7-7ZM7.5 7.5h.01"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
+                    @php $isPosAdjustments = request()->is('store/*/pos/adjustments*'); @endphp
+                    <x-admin.nav-link :href="route('pos.adjustments.index', $storeRouteParams)" route-name="pos.adjustments.index" :active="$isPosAdjustments" :label="__('messages.adjustment_title')">
+                        <x-slot:icon>
+                            {{-- Sliders/wrench icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3 2.4-2.4Z"/></svg>
+                        </x-slot:icon>
                     </x-admin.nav-link>
                 </x-admin.nav-group>
 

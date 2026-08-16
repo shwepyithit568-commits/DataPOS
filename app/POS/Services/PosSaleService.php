@@ -95,6 +95,54 @@ class PosSaleService
     }
 
     /* ------------------------------------------------------------------ */
+    /*  Product grid (POS home — reference UI from alinthit_pos)           */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Products for the POS product grid: live ledger balances, category/brand
+     * names and selectable variants, filterable by category / brand / query.
+     *
+     * @return array<int, array{id:int, name:string, sku:?string, price:string, balance:string, category_id:?int, category:?string, brand:?string, variants:array<int, array{id:int, name:string, sku:?string, price:string, balance:string}>}>
+     */
+    public function gridProducts(Store $store, ?int $categoryId = null, ?int $brandId = null, string $query = '', int $limit = 120): array
+    {
+        $q = trim($query);
+
+        $products = Product::query()
+            ->where('store_id', $store->id)
+            ->when($categoryId, fn ($w) => $w->where('category_id', $categoryId))
+            ->when($brandId, fn ($w) => $w->where('brand_id', $brandId))
+            ->when($q !== '', fn ($w) => $w->where(fn ($w2) => $w2->where('sku', 'like', "%{$q}%")->orWhere('name', 'like', "%{$q}%")))
+            ->with(['category:id,name', 'brand:id,name', 'variants:id,product_id,name,sku,retail_price,is_default'])
+            ->orderBy('name')
+            ->orderBy('id')
+            ->limit($limit)
+            ->get();
+
+        return $products->map(function (Product $p) use ($store) {
+            return [
+                'id' => $p->id,
+                'name' => $p->name,
+                'sku' => $p->sku,
+                'price' => (string) $p->retail_price,
+                'old_price' => $p->old_price !== null ? (string) $p->old_price : null,
+                'image' => $p->image_path ? asset('storage/' . $p->image_path) : null,
+                'balance' => $this->inventory->totalOnHand($store->id, $p->id),
+                'category_id' => $p->category_id,
+                'category' => $p->category?->name,
+                'brand' => $p->brand?->name,
+                'variants' => $p->variants->map(fn ($v) => [
+                    'id' => $v->id,
+                    'name' => $v->name,
+                    'sku' => $v->sku,
+                    'price' => (string) ($v->retail_price ?? $p->retail_price),
+                    'balance' => $this->inventory->totalOnHand($store->id, $p->id, $v->id),
+                ])->values()->all(),
+            ];
+        })->values()->all();
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  Session cart                                                       */
     /* ------------------------------------------------------------------ */
 
@@ -225,6 +273,40 @@ class PosSaleService
             'subtotal' => $subtotal,
             'discount' => '0',
             'total' => $subtotal,
+        ];
+    }
+
+    /**
+     * Live cart snapshot for the POS UI — the JSON payload returned by the
+     * cart-state endpoint and echoed back after every AJAX cart mutation so
+     * the product grid + cart panel stay in sync without a page reload.
+     *
+     * @return array{shift_open:bool, lines:array<int, array{index:int, product_id:int, product_variant_id:?int, name:string, sku:?string, quantity:string, unit_price:string, line_total:string, balance:string}>, totals:array{subtotal:string, discount:string, total:string}, held_count:int}
+     */
+    public function cartState(Store $store, ?User $actor): array
+    {
+        $lines = array_map(function (array $line) {
+            return [
+                'index' => $line['index'],
+                'product_id' => $line['product_id'],
+                'product_variant_id' => $line['product_variant_id'],
+                'name' => $line['name'],
+                'sku' => $line['sku'],
+                'quantity' => $line['quantity'],
+                'unit_price' => $line['unit_price'],
+                'line_total' => $line['line_total'],
+                'balance' => $line['balance'],
+            ];
+        }, $this->cartResolved($store));
+
+        return [
+            'shift_open' => (bool) $this->shifts->openShiftFor($store, $actor),
+            'lines' => array_values($lines),
+            'totals' => $this->cartTotals($store),
+            'held_count' => PosSale::query()
+                ->where('store_id', $store->id)
+                ->where('status', 'held')
+                ->count(),
         ];
     }
 

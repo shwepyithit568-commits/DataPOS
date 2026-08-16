@@ -4,6 +4,8 @@ namespace App\POS\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Brand;
+use App\Models\Category;
 use App\Models\User;
 use App\POS\Exceptions\InventoryException;
 use App\POS\Models\PosSale;
@@ -47,6 +49,46 @@ class PosSaleController extends Controller
         return response()->json([
             'results' => $this->sales->searchProducts($store, $data['q']),
         ]);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Product grid + live cart state (AJAX — reference alinthit_pos UI)  */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Full product grid for the POS home (browse + category/brand filters),
+     * with live ledger balances and variants — used by the left product panel.
+     */
+    public function grid(Request $request, StoreContext $context): JsonResponse
+    {
+        $store = $context->getStore();
+
+        $data = $request->validate([
+            'q' => ['nullable', 'string', 'max:120'],
+            'category_id' => ['nullable', 'integer'],
+            'brand_id' => ['nullable', 'integer'],
+        ]);
+
+        return response()->json([
+            'products' => $this->sales->gridProducts(
+                $store,
+                isset($data['category_id']) ? (int) $data['category_id'] : null,
+                isset($data['brand_id']) ? (int) $data['brand_id'] : null,
+                $data['q'] ?? '',
+            ),
+            'categories' => Category::query()->where('store_id', $store->id)->orderBy('name')->get(['id', 'name']),
+            'brands' => Brand::query()->where('store_id', $store->id)->orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
+    /**
+     * Live cart snapshot (lines + totals + shift state) for the cart panel.
+     */
+    public function cartState(Request $request, StoreContext $context): JsonResponse
+    {
+        $store = $context->getStore();
+
+        return response()->json($this->sales->cartState($store, $request->user()));
     }
 
     /* ------------------------------------------------------------------ */
@@ -150,7 +192,7 @@ class PosSaleController extends Controller
     /*  Cart operations                                                    */
     /* ------------------------------------------------------------------ */
 
-    public function addItem(Request $request, StoreContext $context): RedirectResponse
+    public function addItem(Request $request, StoreContext $context): JsonResponse|RedirectResponse
     {
         $store = $context->getStore();
 
@@ -163,13 +205,13 @@ class PosSaleController extends Controller
         try {
             $this->sales->addToCart($store, (int) $data['product_id'], isset($data['product_variant_id']) ? (int) $data['product_variant_id'] : null, (string) $data['quantity']);
         } catch (InventoryException $e) {
-            return back()->with('error', $e->getMessage());
+            return $this->jsonOrRedirect($request, $store, null, $e->getMessage());
         }
 
-        return back();
+        return $this->jsonOrRedirect($request, $store, __('messages.pos_item_added'));
     }
 
-    public function updateLine(Request $request, StoreContext $context, int $line): RedirectResponse
+    public function updateLine(Request $request, string $store_slug, StoreContext $context, int $line): JsonResponse|RedirectResponse
     {
         $store = $context->getStore();
 
@@ -180,30 +222,67 @@ class PosSaleController extends Controller
         try {
             $this->sales->updateCartLine($store, $line, (string) $data['quantity']);
         } catch (InventoryException $e) {
-            return back()->with('error', $e->getMessage());
+            return $this->jsonOrRedirect($request, $store, null, $e->getMessage());
         }
 
-        return back();
+        return $this->jsonOrRedirect($request, $store);
     }
 
-    public function removeLine(StoreContext $context, int $line): RedirectResponse
+    public function removeLine(Request $request, string $store_slug, StoreContext $context, int $line): JsonResponse|RedirectResponse
     {
         $store = $context->getStore();
 
         try {
             $this->sales->removeCartLine($store, $line);
         } catch (InventoryException $e) {
-            return back()->with('error', $e->getMessage());
+            return $this->jsonOrRedirect($request, $store, null, $e->getMessage());
         }
 
-        return back();
+        return $this->jsonOrRedirect($request, $store);
+    }
+
+    /**
+     * Drop the whole session cart (F4 clear-cart shortcut).
+     */
+    public function clearCart(Request $request, StoreContext $context): JsonResponse|RedirectResponse
+    {
+        $store = $context->getStore();
+        $this->sales->clearCart($store);
+
+        return $this->jsonOrRedirect($request, $store, __('messages.pos_cart_cleared'));
+    }
+
+    /**
+     * JSON cart mutation responses for the AJAX POS UI; plain form posts
+     * (non-XHR) keep the classic redirect-with-flash behaviour.
+     */
+    private function jsonOrRedirect(Request $request, \App\Models\Store $store, ?string $success = null, ?string $error = null): JsonResponse|RedirectResponse
+    {
+        $wantsJson = $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+
+        if ($wantsJson) {
+            if ($error !== null) {
+                return response()->json(['error' => $error], 422);
+            }
+
+            return response()->json([
+                'success' => $success ?? true,
+                'cart' => $this->sales->cartState($store, $request->user()),
+            ]);
+        }
+
+        if ($error !== null) {
+            return back()->with('error', $error);
+        }
+
+        return $success !== null ? back()->with('success', $success) : back();
     }
 
     /* ------------------------------------------------------------------ */
     /*  Hold / resume / void                                               */
     /* ------------------------------------------------------------------ */
 
-    public function hold(Request $request, StoreContext $context): RedirectResponse
+    public function hold(Request $request, StoreContext $context): JsonResponse|RedirectResponse
     {
         $store = $context->getStore();
         $user = $request->user();
@@ -212,43 +291,43 @@ class PosSaleController extends Controller
         try {
             $sale = $this->sales->holdCart($store, $user, $shift);
         } catch (InventoryException $e) {
-            return back()->with('error', $e->getMessage());
+            return $this->jsonOrRedirect($request, $store, null, $e->getMessage());
         }
 
-        return back()->with('success', __('messages.sale_held') . " #{$sale->id}");
+        return $this->jsonOrRedirect($request, $store, __('messages.sale_held') . " #{$sale->id}");
     }
 
-    public function resume(Request $request, StoreContext $context, PosSale $sale): RedirectResponse
+    public function resume(Request $request, string $store_slug, StoreContext $context, PosSale $sale): JsonResponse|RedirectResponse
     {
         $store = $context->getStore();
 
         try {
             $this->sales->resumeHeld($store, $sale);
         } catch (InventoryException $e) {
-            return back()->with('error', $e->getMessage());
+            return $this->jsonOrRedirect($request, $store, null, $e->getMessage());
         }
 
-        return back()->with('success', __('messages.sale_resumed'));
+        return $this->jsonOrRedirect($request, $store, __('messages.sale_resumed'));
     }
 
-    public function void(Request $request, StoreContext $context, PosSale $sale): RedirectResponse
+    public function void(Request $request, string $store_slug, StoreContext $context, PosSale $sale): JsonResponse|RedirectResponse
     {
         $store = $context->getStore();
 
         try {
             $this->sales->voidHeld($store, $sale, $request->user());
         } catch (InventoryException $e) {
-            return back()->with('error', $e->getMessage());
+            return $this->jsonOrRedirect($request, $store, null, $e->getMessage());
         }
 
-        return back()->with('success', __('messages.sale_voided'));
+        return $this->jsonOrRedirect($request, $store, __('messages.sale_voided'));
     }
 
     /* ------------------------------------------------------------------ */
     /*  Post (atomic)                                                      */
     /* ------------------------------------------------------------------ */
 
-    public function post(Request $request, StoreContext $context, ?PosSale $sale = null): RedirectResponse
+    public function post(Request $request, string $store_slug, StoreContext $context, ?PosSale $sale = null): RedirectResponse
     {
         $store = $context->getStore();
         $user = $request->user();

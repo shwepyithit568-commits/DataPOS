@@ -96,6 +96,235 @@ Alpine.data('brandAssetUploader', (field, opts = {}) => ({
     },
 }))
 
+/* ---- posApp: POS home (two-panel cashier UI — reference: alinthit_pos)
+
+   Left panel = searchable product grid (category/brand filters, tap to add,
+   variant picker). Right panel = live cart (qty steppers, customer attach,
+   hold, checkout). Cart mutations run as AJAX against JSON endpoints and the
+   cart snapshot is refreshed from the response — no page reloads mid-sale.
+   Keyboard shortcuts: F1 search, F2 checkout, F3 customer, F4 clear cart,
+   F5 reload grid, F6 hold, F7 held orders. ---- */
+Alpine.data('posApp', (opts = {}) => ({
+    baseUrl: opts.baseUrl || '',
+    csrf: opts.csrf || '',
+    labels: opts.labels || {},
+
+    // Product grid
+    q: '',
+    categoryId: 0,
+    brandId: 0,
+    products: [],
+    categories: [],
+    brands: [],
+    gridLoading: false,
+    gridTimer: null,
+
+    // Cart + payments
+    cart: { shift_open: false, lines: [], totals: { subtotal: '0', total: '0' }, held_count: 0 },
+    cartBusy: false,
+    variantProduct: null,
+    showPayment: false,
+    customer: null,
+    cash: '0',
+    kpay: 0, wavepay: 0, cbpay: 0, mmqr: 0, credit: 0,
+    cq: '', cresults: [], copen: false,
+    notice: '', noticeType: '', noticeTimer: null,
+
+    /* ---- init ---- */
+    async init() {
+        await this.loadGrid();
+        await this.refreshCart();
+        window.addEventListener('keydown', (e) => this.shortcut(e));
+    },
+
+    url(path) {
+        return this.baseUrl + path;
+    },
+
+    async fetchJson(path, options = {}) {
+        const headers = { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': this.csrf };
+        if (options.body) headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        const res = await fetch(this.url(path), { ...options, headers, credentials: 'same-origin' });
+        let data = {};
+        try { data = await res.json(); } catch (e) { /* empty body */ }
+        if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+        return data;
+    },
+
+    /* ---- product grid ---- */
+    async loadGrid() {
+        this.gridLoading = true;
+        try {
+            const params = new URLSearchParams();
+            if (this.q.trim()) params.set('q', this.q.trim());
+            if (this.categoryId) params.set('category_id', this.categoryId);
+            if (this.brandId) params.set('brand_id', this.brandId);
+            const data = await this.fetchJson('/products-grid?' + params.toString());
+            this.products = data.products || [];
+            this.categories = data.categories || [];
+            this.brands = data.brands || [];
+        } catch (e) {
+            this.flash(e.message, 'error');
+        } finally {
+            this.gridLoading = false;
+        }
+    },
+
+    onSearch() {
+        clearTimeout(this.gridTimer);
+        this.gridTimer = setTimeout(() => this.loadGrid(), 250);
+    },
+
+    toggleCategory(id) {
+        this.categoryId = this.categoryId === id ? 0 : id;
+        this.loadGrid();
+    },
+
+    toggleBrand(id) {
+        this.brandId = this.brandId === id ? 0 : id;
+        this.loadGrid();
+    },
+
+    /* ---- cart mutations (AJAX) ---- */
+    async addProduct(p) {
+        if (p.variants && p.variants.length > 0) { this.variantProduct = p; return; }
+        await this.mutate('/cart', { product_id: p.id, quantity: '1' });
+    },
+
+    async addVariant(v) {
+        const p = this.variantProduct;
+        this.variantProduct = null;
+        if (!p) return;
+        await this.mutate('/cart', { product_id: p.id, product_variant_id: v.id, quantity: '1' });
+    },
+
+    async changeQty(line, delta) {
+        const qty = (parseFloat(line.quantity) || 0) + delta;
+        if (qty <= 0) { await this.removeLine(line); return; }
+        await this.mutate('/cart/' + line.index, { quantity: String(qty) });
+    },
+
+    async removeLine(line) {
+        await this.mutate('/cart/' + line.index, {}, { method: 'DELETE' });
+    },
+
+    async clearCart() {
+        if (!this.cart.lines.length) return;
+        await this.mutate('/cart/clear', {});
+    },
+
+    async hold() {
+        if (!this.cart.lines.length) return;
+        try {
+            const data = await this.fetchJson('/hold', { method: 'POST', body: new URLSearchParams({}) });
+            if (data.cart) this.cart = data.cart;
+            this.flash(this.labels.held || 'Sale held', 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        }
+    },
+
+    async mutate(path, body, options = {}) {
+        if (this.cartBusy) return;
+        this.cartBusy = true;
+        try {
+            const data = await this.fetchJson(path, { method: options.method || 'POST', body: new URLSearchParams(body) });
+            if (data.cart) this.cart = data.cart;
+            this.flash(this.labels.added || 'OK', 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        } finally {
+            this.cartBusy = false;
+        }
+    },
+
+    async refreshCart() {
+        try {
+            const data = await this.fetchJson('/cart-state');
+            this.cart = data;
+        } catch (e) { /* cart refresh is best-effort */ }
+    },
+
+    openPayment() {
+        if (!this.shiftOpen) { this.flash(this.labels.shift_required || 'Open a shift first', 'error'); return; }
+        if (!this.cart.lines.length) return;
+        // Pre-fill cash with the exact total unless the cashier already typed one.
+        if (!this.cash || parseFloat(this.cash) === 0) this.cash = this.cart.totals.total;
+        this.showPayment = true;
+    },
+
+    /* ---- customer attach (credit/debt) ---- */
+    async csearch() {
+        if (this.cq.trim() === '') { this.cresults = []; this.copen = false; return; }
+        try {
+            const data = await this.fetchJson('/customers?q=' + encodeURIComponent(this.cq));
+            this.cresults = data.customers || [];
+            this.copen = true;
+        } catch (e) { this.cresults = []; }
+    },
+
+    attach(c) {
+        this.customer = c;
+        this.cq = c.name;
+        this.cresults = [];
+        this.copen = false;
+        if (this.remaining > 0 && this.credit === 0) this.credit = Math.max(0, Math.round(this.remaining / 100) * 100);
+    },
+
+    clearCustomer() { this.customer = null; this.cq = ''; this.credit = 0; },
+
+    /* ---- payment math ---- */
+    get paid() {
+        return ['cash', 'kpay', 'wavepay', 'cbpay', 'mmqr', 'credit'].reduce((s, k) => s + (parseFloat(this[k]) || 0), 0);
+    },
+    get remaining() { return parseFloat(this.cart.totals.total || 0) - this.paid; },
+    get change() { return this.remaining < 0 ? -this.remaining : 0; },
+    get shiftOpen() { return !!this.cart.shift_open; },
+    get exact() {
+        if (this.credit > 0 && !this.customer) return false;
+        return this.remaining <= 0.005;
+    },
+
+    /* ---- feedback ---- */
+    flash(msg, type) {
+        this.notice = msg;
+        this.noticeType = type;
+        clearTimeout(this.noticeTimer);
+        this.noticeTimer = setTimeout(() => { this.notice = ''; }, 3500);
+    },
+
+    /* ---- keyboard shortcuts ---- */
+    shortcut(e) {
+        if (!e.key || !e.key.toUpperCase().startsWith('F')) return;
+        const k = e.key.toUpperCase();
+        const actions = {
+            F1: () => { e.preventDefault(); this.$refs.searchInput && this.$refs.searchInput.focus(); },
+            F2: () => { e.preventDefault(); this.openPayment(); },
+            F3: () => { e.preventDefault(); this.$refs.customerInput && this.$refs.customerInput.focus(); },
+            F4: () => { e.preventDefault(); this.clearCart(); },
+            F5: () => { e.preventDefault(); this.loadGrid(); },
+            F6: () => { e.preventDefault(); this.hold(); },
+            F7: () => { e.preventDefault(); const el = document.getElementById('pos-held-toggle'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+        };
+        if (actions[k]) actions[k]();
+    },
+}))
+
+/* ---- x-show resilience: don't depend on requestAnimationFrame ----
+   Alpine's transitions plugin routes every x-show toggle (including the
+   fallback for elements without x-transition) through rAF. In embedded
+   webviews / background tabs rAF can be throttled or stall entirely, which
+   silently keeps payment/variant modals hidden after their first toggle.
+   Elements that declare x-transition keep the animated path; everything else
+   toggles synchronously so modals/toasts always reveal. ---- */
+if (Element.prototype._x_toggleAndCascadeWithTransitions) {
+    const nativeToggle = Element.prototype._x_toggleAndCascadeWithTransitions;
+    Element.prototype._x_toggleAndCascadeWithTransitions = function (el, value, show, hide) {
+        if (el._x_transition) return nativeToggle.call(this, el, value, show, hide);
+        value ? show() : hide();
+    };
+}
+
 Alpine.start();
 
 /* ---- Admin new-order / wholesale alerts (chime + browser notification) ---- */

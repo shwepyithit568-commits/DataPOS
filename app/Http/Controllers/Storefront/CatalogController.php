@@ -174,7 +174,19 @@ class CatalogController extends Controller
     {
         $store = $context->getStore();
 
-        abort_unless($store, 404, 'Store not found.');
+        // No active store (e.g. a fresh install before any store is configured):
+        // the search bar fires this endpoint on page load to preload the trending
+        // chips, so answer with an empty payload instead of a 404 that only adds
+        // console noise. An explicitly requested unknown store slug is still
+        // rejected earlier by the ResolveStoreContext middleware (404).
+        if (! $store) {
+            return response()->json([
+                'trending' => [],
+                'categories' => [],
+                'brands' => [],
+                'products' => [],
+            ]);
+        }
 
         $search = trim((string) $request->get('search', ''));
 

@@ -9,13 +9,48 @@
         </div>
     </div>
 
+    {{-- POS quick-action strip: live shift status + one-click jump to the sale screen --}}
+    @if ($canAccessStaffTools)
+        <div class="rounded-2xl overflow-hidden border border-sky-200 dark:border-sky-900 bg-gradient-to-r from-sky-500 to-sky-600 dark:from-sky-950/90 dark:to-slate-900 text-white shadow-lg shadow-sky-500/20 dark:shadow-sky-950/40">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 px-5 py-4">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/15 text-lg font-black" aria-hidden="true">₱</span>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold uppercase tracking-wider text-sky-100/90">{{ __('messages.pos') }}</p>
+                        @if ($openShift)
+                            <p class="font-black truncate flex items-center gap-1.5">
+                                <span class="inline-block h-2 w-2 rounded-full bg-emerald-300 animate-pulse shrink-0" aria-hidden="true"></span>
+                                {{ __('messages.shift_open') }}
+                            </p>
+                            <p class="text-xs text-sky-100/90 truncate">
+                                {{ $openShift->register_name }} · {{ $openShift->cashier?->name }} ·
+                                {{ __('messages.opened_at') }} {{ $openShift->opened_at->format('H:i') }} ·
+                                {{ __('messages.cash_sales') }}: Ks {{ number_format((float) $openShift->cash_sales) }}
+                            </p>
+                        @else
+                            <p class="font-black truncate flex items-center gap-1.5">
+                                <span class="inline-block h-2 w-2 rounded-full bg-amber-300 shrink-0" aria-hidden="true"></span>
+                                {{ __('messages.no_open_shift') }}
+                            </p>
+                            <p class="text-xs text-sky-100/90">{{ __('messages.pos_open_shift_hint') }}</p>
+                        @endif
+                    </div>
+                </div>
+                <a href="{{ route('pos.index', ['store_slug' => $store->slug]) }}"
+                   class="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-white text-sky-700 px-5 py-3 text-sm font-black shadow hover:bg-sky-50 active:scale-[0.98] transition">
+                    🧾 {{ __('messages.pos_sale') }} →
+                </a>
+            </div>
+        </div>
+    @endif
+
     {{-- Quick Actions: one clear primary action, calm secondaries --}}
     <div class="flex flex-wrap items-center gap-2">
         <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}" class="admin-primary-btn">{{ __('messages.add_product') }}</a>
         <a href="{{ route('store.admin.orders.index', ['store_slug' => $store->slug]) }}" class="admin-secondary-btn">{{ __('messages.manage_orders') }}</a>
         <a href="{{ route('store.admin.wholesale.applications.index', ['store_slug' => $store->slug]) }}" class="admin-secondary-btn">{{ __('messages.wholesale_apps') }}</a>
         <a href="{{ route('store.admin.glass-finder.index', ['store_slug' => $store->slug]) }}" class="admin-secondary-btn">{{ __('messages.glass_finder') }}</a>
-        @if ($adminCanManageSettings ?? false)
+        @if ($canManageSettings)
             <a href="{{ route('store.admin.settings.edit', ['store_slug' => $store->slug]) }}" class="admin-secondary-btn">{{ __('messages.store_settings') }}</a>
         @endif
     </div>

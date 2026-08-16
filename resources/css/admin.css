@@ -47,8 +47,11 @@
    scanned, keeping this bundle small. JS is scanned so the admin toast
    classes built dynamically in app.js (adminAlerts) are still emitted. */
 @source '../views/admin/**/*.blade.php';
+@source '../views/pos/**/*.blade.php';
 @source '../views/layouts/admin/*.blade.php';
+@source '../views/layouts/pos/*.blade.php';
 @source '../views/components/admin/*.blade.php';
+@source '../views/components/pos/*.blade.php';
 @source '../views/components/brand-icon.blade.php';
 @source '../views/components/flag.blade.php';
 @source '../views/components/language-switcher.blade.php';

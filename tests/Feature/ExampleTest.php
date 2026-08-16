@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * Verify the application returns a successful response with all
      * required security headers set by the SecurityHeaders middleware.
@@ -25,6 +28,22 @@ class ExampleTest extends TestCase
         $response->assertHeader('Permissions-Policy');
         $response->assertHeader('Content-Security-Policy');
 
+        // The storefront home is a public page: browser-cacheable with a short
+        // max-age + ETag revalidation (CachePublicPage middleware). The CSP
+        // nonce travels WITH the cached response, so it stays self-consistent.
+        $response->assertHeader('ETag');
+        $this->assertStringContainsString('max-age=60', (string) $response->headers->get('Cache-Control'));
+        $this->assertStringNotContainsString('no-store', (string) $response->headers->get('Cache-Control'));
+
+        // Conditional GET: revalidating with the ETag must yield a 304 (no
+        // body) rather than a full re-render, while a mismatched tag still
+        // returns the full 200.
+        $this->get('/', ['If-None-Match' => $response->headers->get('ETag')])
+            ->assertStatus(304)
+            ->assertHeader('ETag', $response->headers->get('ETag'));
+        $this->get('/', ['If-None-Match' => '"stale-etag"'])
+            ->assertStatus(200);
+
         // script-src must be nonce-based: it carries a per-request nonce and
         // no longer allows unsafe-inline (inline event handlers were replaced
         // by the delegated listeners in resources/js/csp-helpers.js).
@@ -33,6 +52,18 @@ class ExampleTest extends TestCase
         $this->assertNotEmpty($matches[1], 'CSP must define script-src');
         $this->assertStringContainsString("'nonce-", $matches[1]);
         $this->assertStringNotContainsString("'unsafe-inline'", $matches[1]);
+    }
+
+    /**
+     * Private / dynamic pages (auth, admin, POS, …) must never be cached:
+     * they carry session state + a CSRF token where a stale copy breaks forms.
+     */
+    public function test_private_pages_are_no_store(): void
+    {
+        $response = $this->get('/login');
+
+        $response->assertStatus(200);
+        $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
     }
 
     /**
@@ -55,6 +86,10 @@ class ExampleTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('Content-Type');
         $this->assertStringContainsString('text/plain', $response->headers->get('Content-Type'));
+        // Cache-Control: no-store is scoped to text/html — non-HTML responses
+        // (robots.txt, static assets) must keep Laravel's default no-cache
+        // instead of our stricter no-store.
+        $this->assertStringNotContainsString('no-store', (string) $response->headers->get('Cache-Control'));
         $response->assertSee('User-agent: *');
         $response->assertSee('Disallow: /admin');
         $response->assertSee('Disallow: /login');
