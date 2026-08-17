@@ -120,7 +120,7 @@ Alpine.data('posApp', (opts = {}) => ({
     gridTimer: null,
 
     // Cart + payments
-    cart: { shift_open: false, lines: [], totals: { subtotal: '0', total: '0' }, held_count: 0, held: [] },
+    cart: { shift_open: false, lines: [], totals: { subtotal: '0', total: '0' }, held_count: 0, held: [], expiry: { threshold_hours: 24, oldest_held_at: null, soon_count: 0 } },
     cartBusy: false,
     variantProduct: null,
     showPayment: false,
@@ -222,6 +222,14 @@ Alpine.data('posApp', (opts = {}) => ({
 
     expiredNotice(count) {
         return (this.labels.holds_expired || ':count stale held sale(s) auto-expired and voided.').replace(':count', count);
+    },
+
+    // Relative age of a held sale, e.g. '2h 15m' — for the expiry stats strip.
+    ageLabel(iso) {
+        if (!iso) return '';
+        const mins = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+        const h = Math.floor(mins / 60), m = mins % 60;
+        return (h > 0 ? h + 'h ' : '') + m + 'm';
     },
 
     async hold() {

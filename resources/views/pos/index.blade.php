@@ -18,6 +18,9 @@
             'voided' => __('messages.sale_voided'),
             'held_since' => __('messages.held_since'),
             'holds_expired' => __('messages.holds_expired'),
+            'oldest_hold' => __('messages.oldest_hold'),
+            'soon_to_expire' => __('messages.soon_to_expire'),
+            'expiry_off' => __('messages.expiry_off'),
         ];
     @endphp
 
@@ -557,7 +560,20 @@
                refreshes the list live — no page reload needed) ─────────── --}}
         <section id="pos-held-section" x-show="cart.held.length > 0" x-cloak
                  class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-            <p class="text-xs font-bold uppercase tracking-wide text-slate-400 mb-3">{{ __('messages.held_sales') }}</p>
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+                <p class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ __('messages.held_sales') }}</p>
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-bold">
+                    <span class="rounded-md bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 px-2 py-0.5"
+                          x-show="cart.expiry?.oldest_held_at"
+                          x-text="'⏱ ' + labels.oldest_hold.replace(':age', ageLabel(cart.expiry.oldest_held_at))"></span>
+                    <span class="rounded-md bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 px-2 py-0.5"
+                          x-show="cart.expiry?.soon_count > 0"
+                          x-text="'⚠ ' + labels.soon_to_expire.replace(':count', cart.expiry.soon_count)"></span>
+                    <span class="rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5"
+                          x-show="cart.expiry?.threshold_hours === 0"
+                          x-text="'🕓 ' + labels.expiry_off"></span>
+                </div>
+            </div>
             <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 <template x-for="h in cart.held" :key="h.id">
                     <div class="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/30 p-3 flex items-center justify-between gap-2">

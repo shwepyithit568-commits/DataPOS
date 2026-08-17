@@ -281,11 +281,12 @@ class PosSaleService
      * cart-state endpoint and echoed back after every AJAX cart mutation so
      * the product grid + cart panel stay in sync without a page reload.
      *
-     * @return array{shift_open:bool, lines:array<int, array{index:int, product_id:int, product_variant_id:?int, name:string, sku:?string, quantity:string, unit_price:string, line_total:string, balance:string}>, totals:array{subtotal:string, discount:string, total:string}, held_count:int, held:array<int, array{id:int, total:string, items_count:int, held_at:string}>, expired_count:int}
+     * @return array{shift_open:bool, lines:array<int, array{index:int, product_id:int, product_variant_id:?int, name:string, sku:?string, quantity:string, unit_price:string, line_total:string, balance:string}>, totals:array{subtotal:string, discount:string, total:string}, held_count:int, held:array<int, array{id:int, total:string, items_count:int, held_at:string}>, expired_count:int, expiry:array{threshold_hours:int, oldest_held_at:?string, soon_count:int}}
      */
     public function cartState(Store $store, ?User $actor): array
     {
         $expiredCount = $this->expireStaleHolds($store);
+        $threshold = $store->setting?->posHoldExpiryHours() ?? 24;
 
         $lines = array_map(function (array $line) {
             return [
@@ -308,6 +309,16 @@ class PosSaleService
             ->orderByDesc('id')
             ->get();
 
+        $oldest = $held->sortBy('created_at')->first();
+        $soonCount = 0;
+        if ($threshold > 0 && $held->isNotEmpty()) {
+            // 'Soon to expire' = remaining time under an hour (threshold of 1h
+            // makes every hold qualify, which is accurate — all expire within
+            // the hour). A disabled window (0) reports no soon holds.
+            $soonCutoff = now()->subHours(max(0, $threshold - 1));
+            $soonCount = $held->filter(fn (PosSale $sale) => $sale->created_at?->lt($soonCutoff))->count();
+        }
+
         return [
             'shift_open' => (bool) $this->shifts->openShiftFor($store, $actor),
             'lines' => array_values($lines),
@@ -320,6 +331,11 @@ class PosSaleService
                 'held_at' => $sale->created_at?->format('H:i') ?? '—',
             ])->values()->all(),
             'expired_count' => $expiredCount,
+            'expiry' => [
+                'threshold_hours' => $threshold,
+                'oldest_held_at' => $oldest?->created_at?->toIso8601String(),
+                'soon_count' => $soonCount,
+            ],
         ];
     }
 
