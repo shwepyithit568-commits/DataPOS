@@ -394,6 +394,36 @@ class PosSaleTest extends TestCase
         $this->assertSame('3.000', $this->inventory->totalOnHand($store->id, $product->id));
     }
 
+    public function test_stale_holds_are_auto_expired_and_fresh_ones_kept(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, ['retail_price' => 25000]);
+        $this->seedStock($store, $product, '5');
+        $shift = $this->openShift($store, $cashier);
+
+        $this->sales->addToCart($store, $product->id, null, '1');
+        $stale = $this->sales->holdCart($store, $cashier, $shift);
+        $stale->forceFill(['created_at' => now()->subDays(2)])->save();
+
+        $this->sales->addToCart($store, $product->id, null, '1');
+        $fresh = $this->sales->holdCart($store, $cashier, $shift);
+
+        $expired = $this->sales->expireStaleHolds($store, 24);
+        $this->assertSame(1, $expired);
+        $this->assertSame('voided', $stale->refresh()->status);
+        $this->assertNotNull($stale->voided_at);
+        $this->assertStringContainsString('Expired', $stale->notes);
+        $this->assertSame('held', $fresh->refresh()->status);
+
+        // cart-state surfaces only the fresh hold, with a held-since time.
+        $state = $this->sales->cartState($store, $cashier);
+        $this->assertSame(1, $state['held_count']);
+        $this->assertCount(1, $state['held']);
+        $this->assertSame($fresh->id, $state['held'][0]['id']);
+        $this->assertMatchesRegularExpression('/^\d{2}:\d{2}$/', $state['held'][0]['held_at']);
+    }
+
     public function test_void_held_sale_marks_voided_without_stock_impact(): void
     {
         $store = $this->makeStore();

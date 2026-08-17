@@ -274,6 +274,7 @@ class PosUiEndpointsTest extends TestCase
         $this->assertCount(1, $held->json('cart.held'));
         $this->assertSame('20000.00', $held->json('cart.held.0.total'));
         $this->assertSame(1, $held->json('cart.held.0.items_count'));
+        $this->assertMatchesRegularExpression('/^\d{2}:\d{2}$/', $held->json('cart.held.0.held_at'));
 
         $sale = PosSale::where('store_id', $store->id)->where('status', 'held')->latest('id')->first();
         $this->assertNotNull($sale);

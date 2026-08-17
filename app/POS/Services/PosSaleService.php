@@ -281,10 +281,12 @@ class PosSaleService
      * cart-state endpoint and echoed back after every AJAX cart mutation so
      * the product grid + cart panel stay in sync without a page reload.
      *
-     * @return array{shift_open:bool, lines:array<int, array{index:int, product_id:int, product_variant_id:?int, name:string, sku:?string, quantity:string, unit_price:string, line_total:string, balance:string}>, totals:array{subtotal:string, discount:string, total:string}, held_count:int, held:array<int, array{id:int, total:string, items_count:int}>}
+     * @return array{shift_open:bool, lines:array<int, array{index:int, product_id:int, product_variant_id:?int, name:string, sku:?string, quantity:string, unit_price:string, line_total:string, balance:string}>, totals:array{subtotal:string, discount:string, total:string}, held_count:int, held:array<int, array{id:int, total:string, items_count:int, held_at:string}>}
      */
     public function cartState(Store $store, ?User $actor): array
     {
+        $this->expireStaleHolds($store);
+
         $lines = array_map(function (array $line) {
             return [
                 'index' => $line['index'],
@@ -315,8 +317,36 @@ class PosSaleService
                 'id' => (int) $sale->id,
                 'total' => (string) $sale->total,
                 'items_count' => (int) $sale->items_count,
+                'held_at' => $sale->created_at?->format('H:i') ?? '—',
             ])->values()->all(),
         ];
+    }
+
+    /**
+     * Auto-expire holds older than a day (lazy, runs on every cart-state read
+     * so a stale hold leaves the list within a day of use — no cron needed).
+     * They are marked 'voided' with a note so the audit trail is kept and they
+     * cannot be recalled anymore.
+     */
+    public function expireStaleHolds(Store $store, int $olderThanHours = 24): int
+    {
+        $cutoff = now()->subHours($olderThanHours);
+
+        $stale = PosSale::query()
+            ->where('store_id', $store->id)
+            ->where('status', 'held')
+            ->where('created_at', '<', $cutoff)
+            ->get();
+
+        foreach ($stale as $sale) {
+            $sale->update([
+                'status' => 'voided',
+                'voided_at' => now(),
+                'notes' => trim(($sale->notes ?? '') . ' Expired — held over ' . $olderThanHours . 'h, auto-voided at ' . now()->format('Y-m-d H:i')),
+            ]);
+        }
+
+        return $stale->count();
     }
 
     /* ------------------------------------------------------------------ */

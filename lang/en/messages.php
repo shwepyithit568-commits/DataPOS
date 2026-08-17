@@ -242,6 +242,7 @@ return [
     'register_occupied_by' => 'In use by :cashier since :time',
     'register_drawer_state' => 'Opening Ks :opening · Sales Ks :sales',
     'pick_another_register' => 'Pick another register name to open your shift.',
+    'held_since' => 'Held since :time',
     'shift_open' => 'Shift Open',
     'shift_closed' => 'Shift closed.',
     'shift_opened' => 'Shift opened.',

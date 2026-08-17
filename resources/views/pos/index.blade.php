@@ -16,6 +16,7 @@
             'cart' => __('messages.cart'),
             'resumed' => __('messages.sale_resumed'),
             'voided' => __('messages.sale_voided'),
+            'held_since' => __('messages.held_since'),
         ];
     @endphp
 
@@ -562,6 +563,8 @@
                         <div class="min-w-0">
                             <p class="text-xs font-bold text-amber-700 dark:text-amber-300" x-text="'#' + h.id + ' · ' + h.items_count + ' ' + labels.cart"></p>
                             <p class="text-sm font-black" x-text="'Ks ' + Number(h.total).toLocaleString()"></p>
+                            <p class="mt-1 inline-flex items-center gap-1 rounded-md bg-amber-200/70 dark:bg-amber-900/60 px-1.5 py-0.5 text-[10px] font-black text-amber-800 dark:text-amber-200"
+                               x-text="'⏱ ' + labels.held_since.replace(':time', h.held_at)"></p>
                         </div>
                         <div class="flex gap-1">
                             <button type="button" @click="resumeHeld(h.id)" :disabled="cartBusy"
