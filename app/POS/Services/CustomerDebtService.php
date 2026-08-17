@@ -93,6 +93,41 @@ class CustomerDebtService
     }
 
     /**
+     * Record a customer's opening (pre-cutover) debt balance (SoT §17).
+     * A NEW `opening_balance` entry (+amount, source manual) — the balance
+     * stays derived as SUM(amount). Idempotent via $clientTransactionId.
+     */
+    public function recordOpeningBalance(
+        Store $store,
+        int $customerId,
+        string $amount,
+        User $actor,
+        ?string $notes = null,
+        ?string $clientTransactionId = null,
+        ?int $branchId = null,
+    ): CustomerLedgerEntry {
+        if (bccomp($amount, '0', 2) <= 0) {
+            throw new InventoryException('Opening balance amount must be positive.');
+        }
+
+        $customer = User::find($customerId);
+        if (! $customer || ! $customer->stores()->wherePivot('store_id', $store->id)->exists()) {
+            throw new InventoryException('Customer is not attached to this store — cannot post an opening balance.');
+        }
+
+        return $this->createEntry($store, [
+            'customer_id' => $customerId,
+            'branch_id' => $branchId,
+            'type' => CustomerLedgerEntry::TYPE_OPENING_BALANCE,
+            'amount' => $amount,
+            'source_type' => 'manual',
+            'notes' => $notes ?: 'Opening balance (pilot cutover)',
+            'created_by' => $actor->id,
+            'client_transaction_id' => $clientTransactionId,
+        ]);
+    }
+
+    /**
      * Reduce a customer's receivable when a credit-sold item is refunded.
      * A NEW `refund` entry (negative amount) referencing the return — the
      * balance is derived as SUM(amount), never edited directly (SoT §17).

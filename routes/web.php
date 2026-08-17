@@ -519,10 +519,10 @@ Route::prefix('store/{store_slug}')
         Route::post('/admin/products/import/confirm', [ProductController::class, 'confirmImport'])->name('store.admin.products.import.confirm')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports']);
 
         // Pilot Data Import hub (products / customers / suppliers)
-        Route::get('/admin/pilot-import/{tab?}', [PilotImportController::class, 'index'])->name('store.admin.pilot-import.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->whereIn('tab', ['products', 'customers', 'suppliers']);
-        Route::post('/admin/pilot-import/{tab}', [PilotImportController::class, 'import'])->name('store.admin.pilot-import.import')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports'])->whereIn('tab', ['products', 'customers', 'suppliers']);
-        Route::post('/admin/pilot-import/{tab}/confirm', [PilotImportController::class, 'confirmImport'])->name('store.admin.pilot-import.confirm')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports'])->whereIn('tab', ['products', 'customers', 'suppliers']);
-        Route::get('/admin/pilot-import/{tab}/template', [PilotImportController::class, 'downloadTemplate'])->name('store.admin.pilot-import.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->whereIn('tab', ['products', 'customers', 'suppliers']);
+        Route::get('/admin/pilot-import/{tab?}', [PilotImportController::class, 'index'])->name('store.admin.pilot-import.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
+        Route::post('/admin/pilot-import/{tab}', [PilotImportController::class, 'import'])->name('store.admin.pilot-import.import')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports'])->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
+        Route::post('/admin/pilot-import/{tab}/confirm', [PilotImportController::class, 'confirmImport'])->name('store.admin.pilot-import.confirm')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports'])->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
+        Route::get('/admin/pilot-import/{tab}/template', [PilotImportController::class, 'downloadTemplate'])->name('store.admin.pilot-import.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
 
         // Admin Import History
         Route::get('/admin/import-history', [ImportHistoryController::class, 'index'])->name('store.admin.import-history.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');

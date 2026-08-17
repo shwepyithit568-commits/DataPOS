@@ -2702,3 +2702,10 @@ Confirm Import လုပ်တဲ့အခါ 500 မတက်တော့ဘူ
 - Tests: 7 new (report clean vs flagged, approve posts + converges, second
   approval safe, insufficient-stock rollback, staff view / manager approve /
   outsider + cross-store blocked).
+
+## 2026-08-17 — Debt opening balances import (Phase 2.5)
+
+- New **Debt** tab in the pilot import hub (`/store/{slug}/admin/pilot-import/debt`): upload CSV/XLSX (`phone, amount[, notes]`) → dry-run preview → confirm posts one immutable `opening_balance` ledger entry per row (SoT §17 — balance stays SUM(amount), source `manual`).
+- Rows resolve customers by normalized phone (shared customer model — same rule as POS/ecommerce); a phone with no in-store customer is flagged (import customers first). Duplicate phones within a file are skipped; invalid amounts fail with a downloadable error report.
+- `CustomerDebtService::recordOpeningBalance()` (idempotent via client_transaction_id, cross-store guard). Confirm is transactional + audit logged (`debt_opening_imported`); ImportHistory records the run. No migration needed — `customer_ledger_entries.type` already supports `opening_balance`.
+- Tests: `tests/Feature/DebtOpeningImportTest.php` (10) — full suite **884 pass / 4049 assertions**.

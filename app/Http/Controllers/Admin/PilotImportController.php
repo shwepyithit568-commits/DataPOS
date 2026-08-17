@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ImportHistory;
 use App\Services\CustomerImportService;
+use App\Services\DebtOpeningImportService;
 use App\Services\ProductImportService;
 use App\Services\StoreContext;
 use App\Services\SupplierImportService;
@@ -28,7 +29,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class PilotImportController extends Controller
 {
-    public const TABS = ['products', 'customers', 'suppliers'];
+    public const TABS = ['products', 'customers', 'suppliers', 'debt'];
 
     public function index(Request $request, StoreContext $context): View
     {
@@ -100,8 +101,14 @@ class PilotImportController extends Controller
 
         $validated = $request->validate([
             'token' => ['required', 'string'],
-            'duplicate_strategy' => ['required', 'in:skip,update'],
         ]);
+
+        if ($tab !== 'debt') {
+            $validated = $request->validate([
+                'token' => ['required', 'string'],
+                'duplicate_strategy' => ['required', 'in:skip,update'],
+            ]);
+        }
 
         $sessionKey = "imports.pilot.{$tab}.{$validated['token']}";
         $pendingImport = session()->pull($sessionKey);
@@ -113,13 +120,22 @@ class PilotImportController extends Controller
         $storedPath = $pendingImport['path'];
 
         try {
-            $result = $this->service($tab)->import(
-                Storage::disk('local')->path($storedPath),
-                $store,
-                $request->user(),
-                $pendingImport['filename'] ?? "{$tab}-import.csv",
-                $validated['duplicate_strategy']
-            );
+            if ($tab === 'debt') {
+                $result = $this->service($tab)->import(
+                    Storage::disk('local')->path($storedPath),
+                    $store,
+                    $request->user(),
+                    $pendingImport['filename'] ?? "{$tab}-import.csv",
+                );
+            } else {
+                $result = $this->service($tab)->import(
+                    Storage::disk('local')->path($storedPath),
+                    $store,
+                    $request->user(),
+                    $pendingImport['filename'] ?? "{$tab}-import.csv",
+                    $validated['duplicate_strategy']
+                );
+            }
 
             return back()->with('import_result', $result);
         } catch (\InvalidArgumentException|\RuntimeException $e) {
@@ -141,12 +157,16 @@ class PilotImportController extends Controller
         }
 
         $filename = "{$tab}-import-template.csv";
-        $columns = $tab === 'customers'
-            ? ['name', 'phone', 'email', 'role']
-            : ['name', 'phone', 'email', 'contact_person', 'address', 'notes'];
-        $example = $tab === 'customers'
-            ? ['Ma Su', '09 123 456 789', 'masu@example.com', 'retail_customer']
-            : ['ACDC Mobile', '09 987 654 321', '', 'U Aung', 'No. 45, Maha Bandula Road, Yangon', ''];
+        $columns = match ($tab) {
+            'customers' => ['name', 'phone', 'email', 'role'],
+            'debt' => ['phone', 'amount', 'notes'],
+            default => ['name', 'phone', 'email', 'contact_person', 'address', 'notes'],
+        };
+        $example = match ($tab) {
+            'customers' => ['Ma Su', '09 123 456 789', 'masu@example.com', 'retail_customer'],
+            'debt' => ['09123456789', '150000', 'Opening balance from old ledger'],
+            default => ['ACDC Mobile', '09 987 654 321', '', 'U Aung', 'No. 45, Maha Bandula Road, Yangon', ''],
+        };
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -177,12 +197,13 @@ class PilotImportController extends Controller
         return $tab;
     }
 
-    private function service(string $tab): ProductImportService|CustomerImportService|SupplierImportService
+    private function service(string $tab): ProductImportService|CustomerImportService|SupplierImportService|DebtOpeningImportService
     {
         return match ($tab) {
             'products' => app(ProductImportService::class),
             'customers' => app(CustomerImportService::class),
             'suppliers' => app(SupplierImportService::class),
+            'debt' => app(DebtOpeningImportService::class),
         };
     }
 
