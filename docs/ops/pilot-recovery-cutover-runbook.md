@@ -89,7 +89,7 @@ POS ကိုယ်တိုင် storage မသုံးပေမယ့် pro
 >
 > ⚠️ **မလုပ်ခင် အရင်ဆုံး §2.5A local dry-run ကို run ပါ** — ဒီ flow-test script ကို **local MySQL** (`datapos_db_test`) မှာ pass ဖြစ်မှသာ ဒီ production drill ကို ဆက်လုပ်ပါ။ (Drill #1 = SQLite · §2.5A = local MySQL · ဒီအခန်း = production MySQL — တစ်ဆင့်ချင်း တက်ရတယ်။)
 >
-> ⚠️ **ဒီ project က Hostinger မှာ မတင်ရသေးပါ (2026-08-13)** — production server မရှိသေးလို့ ဒီ drill ရဲ့ step ၇ ခုလုံးကို **localhost** ပေါ်မှာ local MySQL `datapos_db` (live stand-in) → `datapos_db_test` round-trip အနေနဲ့ run ပြီး §2.6 Drill Log မှာ မှတ်တမ်းတင်ထားတယ် (mysqldump → restore → reconcile → flow → cleanup)။ **Hostinger မှာ deploy ပြီးမှ** production MySQL နဲ့ ဒီအတိုင်း ထပ်စစ်ရန် ကျန်။
+> ⚠️ **ဒီ project က Hostinger မှာ မတင်ရသေးပါ (2026-08-13)** — production server မရှိသေးလို့ ဒီ drill ရဲ့ step ၇ ခုလုံးကို **localhost** ပေါ်မှာ local MySQL `datapos_db` (live stand-in) → `datapos_db_test` round-trip အနေနဲ့ run ပြီး §2.6 Drill Log မှာ မှတ်တမ်းတင်ထားတယ် (mysqldump → restore → reconcile → flow → cleanup)။ **Hostinger မှာ deploy ပြီးမှ** production MySQL နဲ့ ဒီအတိုင်း ထပ်စစ်ရန် ကျန် — **execution runbook: `docs/ops/backup-restore-production-drill.md` (Drill #3)** — §2.4 checklist mapping + config table + copy-paste SSH steps + Drill Log template ပါ။
 
 **Pre-flight (မစခင် ပြီးထားရမယ့်ဟာ):**
 

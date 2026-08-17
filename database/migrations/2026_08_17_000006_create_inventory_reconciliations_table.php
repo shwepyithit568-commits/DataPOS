@@ -51,10 +51,10 @@ return new class extends Migration
 
         Schema::create('inventory_reconciliation_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('inventory_reconciliation_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('store_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
+            $table->foreignId('inventory_reconciliation_id');
+            $table->foreignId('store_id');
+            $table->foreignId('product_id');
+            $table->foreignId('product_variant_id')->nullable();
             $table->decimal('imported_quantity', 16, 3)->default(0); // approved OSR lines
             $table->decimal('recorded_quantity', 16, 3)->default(0); // ledger opening position
             $table->decimal('difference', 16, 3)->default(0);        // imported − recorded
@@ -63,6 +63,19 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['store_id', 'product_id']);
+
+            // Explicit short FK names — the default Laravel name
+            // (`inventory_reconciliation_items_inventory_reconciliation_id_foreign`,
+            // 66 chars) exceeds MySQL/MariaDB's 64-char identifier limit and
+            // fails the migration there (SQLite is unaffected).
+            $table->foreign('inventory_reconciliation_id', 'rec_items_rec_id_fk')
+                ->references('id')->on('inventory_reconciliations')->cascadeOnDelete();
+            $table->foreign('store_id', 'rec_items_store_id_fk')
+                ->references('id')->on('stores')->cascadeOnDelete();
+            $table->foreign('product_id', 'rec_items_product_id_fk')
+                ->references('id')->on('products')->cascadeOnDelete();
+            $table->foreign('product_variant_id', 'rec_items_variant_id_fk')
+                ->references('id')->on('product_variants')->nullOnDelete();
         });
     }
 
