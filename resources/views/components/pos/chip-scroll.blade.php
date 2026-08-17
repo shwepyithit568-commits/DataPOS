@@ -22,13 +22,18 @@
 
 @php
     $variants = [
-        'chips' => 'overflow-x-auto scroll-smooth overscroll-x-contain snap-x snap-proximity py-2.5',
+        // 'chips' rows always scroll; cursor-grab advertises the mouse drag.
+        'chips' => 'overflow-x-auto scroll-smooth overscroll-x-contain snap-x snap-proximity cursor-grab py-2.5',
         'links' => 'flex-wrap lg:flex-wrap max-lg:flex-nowrap max-lg:overflow-x-auto max-lg:whitespace-nowrap [&>*]:shrink-0 py-2.5',
     ];
     $base = 'flex items-center gap-2 px-4 border-t border-slate-100 dark:border-slate-800 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
 @endphp
 
-<div {{ $attributes->merge(['class' => trim("$base {$variants[$variant]} $class")]) }}>
+<div x-data="dragScroll()"
+     @pointerdown="down($el, $event)" @pointermove="move($el, $event)"
+     @pointerup="up($el, $event)" @pointercancel="up($el, $event)"
+     @click.capture="onClick($event)" @dragstart.prevent
+     {{ $attributes->merge(['class' => trim("$base {$variants[$variant]} $class")]) }}>
     @if ($label)
         <span class="shrink-0 text-[10px] font-black uppercase tracking-wider text-slate-400">{{ $label }}</span>
     @endif

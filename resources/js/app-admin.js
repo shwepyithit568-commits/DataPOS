@@ -490,6 +490,103 @@ if (Element.prototype._x_toggleAndCascadeWithTransitions) {
     };
 }
 
+/* ---- Drag-to-scroll for horizontal chip rows (mouse on desktop) ----
+   The category/brand/module rows scroll sideways with a hidden scrollbar;
+   on touch devices native touch-scroll works, but a desktop mouse has no
+   way to move them — this makes the rows draggable (grab → drag) and
+   swallows the stray click a drag can leave on a chip.
+
+   IMPORTANT: no pointer capture. Capturing on pointerdown retargets the
+   browser's click event to the row container, which breaks every chip
+   click. Instead we observe with window-level listeners and only engage
+   the drag (cursor, snap off, click-suppression) after the pointer has
+   actually moved beyond a threshold — a plain click is untouched. */
+Alpine.data('dragScroll', () => ({
+    el: null,
+    dragging: false,
+    started: false,   // drag actually engaged (moved past threshold)
+    startX: 0,
+    startLeft: 0,
+    targetLeft: null, // pending scroll position (written once per frame)
+    raf: null,
+    suppressClick: false,
+    onMove: null,
+    onUp: null,
+
+    down(el, e) {
+        if (e.pointerType !== 'mouse') return; // touch/pen scroll natively
+        this.el = el;
+        this.dragging = true;
+        this.started = false;
+        this.startX = e.clientX;
+        this.startLeft = el.scrollLeft;
+        this.onMove = (ev) => this.move(ev);
+        this.onUp = (ev) => this.up(ev);
+        window.addEventListener('pointermove', this.onMove);
+        window.addEventListener('pointerup', this.onUp);
+        window.addEventListener('pointercancel', this.onUp);
+    },
+
+    move(e) {
+        if (!this.dragging || !this.el) return;
+        const dx = e.clientX - this.startX;
+        if (!this.started) {
+            if (Math.abs(dx) <= 6) return;
+            // Past the threshold: engage the drag. Kill scroll-snap AND the
+            // row's `scroll-smooth` (scroll-behavior: smooth) — both fight
+            // direct scrollLeft writes and make the drag feel jerky.
+            this.started = true;
+            const el = this.el;
+            el.style.scrollSnapType = 'none';
+            el.style.scrollBehavior = 'auto';
+            el.style.cursor = 'grabbing';
+            el.classList.add('select-none');
+        }
+        // Coalesce to one scrollLeft write per animation frame — mouse
+        // pointermove can fire faster than the screen refreshes, and each
+        // intermediate write just queues work.
+        this.targetLeft = this.startLeft - dx;
+        if (this.raf) return;
+        this.raf = requestAnimationFrame(() => {
+            this.raf = null;
+            if (this.el && this.targetLeft !== null) {
+                this.el.scrollLeft = this.targetLeft;
+            }
+        });
+    },
+
+    up() {
+        if (!this.dragging) return;
+        this.dragging = false;
+        const el = this.el;
+        this.el = null;
+        if (this.raf) {
+            cancelAnimationFrame(this.raf);
+            this.raf = null;
+        }
+        window.removeEventListener('pointermove', this.onMove);
+        window.removeEventListener('pointerup', this.onUp);
+        window.removeEventListener('pointercancel', this.onUp);
+        if (el && this.started) {
+            el.style.scrollSnapType = '';
+            el.style.scrollBehavior = '';
+            el.style.cursor = '';
+            el.classList.remove('select-none');
+            // A drag is not a click — swallow the click fired on release so
+            // the chip the mouse happened to land on is not activated.
+            this.suppressClick = true;
+            setTimeout(() => { this.suppressClick = false; }, 100);
+        }
+    },
+
+    onClick(e) {
+        if (this.suppressClick) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    },
+}));
+
 Alpine.start();
 
 /* ---- Admin new-order / wholesale alerts (chime + browser notification) ---- */

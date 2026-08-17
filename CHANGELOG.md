@@ -2668,3 +2668,13 @@ Confirm Import လုပ်တဲ့အခါ 500 မတက်တော့ဘူ
 - Demo seed: Mg Hla (Store Manager, 09100000002) has PIN `1234`.
 - Tests: 5 new (below/above threshold, wrong PIN, correct PIN + approver
   persisted on the posted item, enforcement off).
+
+### 2026-08-17 — POS: mouse drag-to-scroll on chip rows
+
+- The horizontally scrolling category/brand/module chip rows are now
+  draggable with the mouse on desktop (grab cursor, snap disabled during the
+  drag, click after a drag is swallowed so chips aren't activated by
+  accident). Touch devices keep native touch-scroll.
+- The drag uses window-level listeners with no pointer capture, and only
+  engages after the pointer moves past a threshold — so a plain click on a
+  chip still fires normally (a capture-based first pass broke chip clicks).
