@@ -13,6 +13,9 @@
             'in_stock' => __('messages.pos_in_stock'),
             'no_products' => __('messages.pos_no_products'),
             'clear_cart' => __('messages.pos_clear_cart'),
+            'cart' => __('messages.cart'),
+            'resumed' => __('messages.sale_resumed'),
+            'voided' => __('messages.sale_voided'),
         ];
     @endphp
 
@@ -548,33 +551,28 @@
             </div>
         </div>
 
-        {{-- ── Held sales ───────────────────────────────────────────────── --}}
-        @if ($heldSales->isNotEmpty())
-            <section id="pos-held-section" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-                <p class="text-xs font-bold uppercase tracking-wide text-slate-400 mb-3">{{ __('messages.held_sales') }}</p>
-                <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach ($heldSales as $sale)
-                        <div class="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/30 p-3 flex items-center justify-between gap-2">
-                            <div class="min-w-0">
-                                <p class="text-xs font-bold text-amber-700 dark:text-amber-300">#{{ $sale->id }} · {{ $sale->items->count() }} {{ __('messages.cart') }}</p>
-                                <p class="text-sm font-black">Ks {{ number_format((float) $sale->total) }}</p>
-                            </div>
-                            <div class="flex gap-1">
-                                <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/resume/' . $sale->id) }}">
-                                    @csrf
-                                    <button type="submit" class="text-xs font-bold px-2 py-1 rounded-lg bg-amber-500 text-white hover:bg-amber-400">{{ __('messages.resume') }}</button>
-                                </form>
-                                <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/void/' . $sale->id) }}"
-                                      onsubmit="return confirm('Void this held sale?')">
-                                    @csrf
-                                    <button type="submit" class="text-xs font-bold px-2 py-1 rounded-lg bg-rose-500 text-white hover:bg-rose-400">{{ __('messages.void_sale') }}</button>
-                                </form>
-                            </div>
+        {{-- ── Held sales (client-rendered from cart-state so a hold/resume
+               refreshes the list live — no page reload needed) ─────────── --}}
+        <section id="pos-held-section" x-show="cart.held.length > 0" x-cloak
+                 class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+            <p class="text-xs font-bold uppercase tracking-wide text-slate-400 mb-3">{{ __('messages.held_sales') }}</p>
+            <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                <template x-for="h in cart.held" :key="h.id">
+                    <div class="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/30 p-3 flex items-center justify-between gap-2">
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-amber-700 dark:text-amber-300" x-text="'#' + h.id + ' · ' + h.items_count + ' ' + labels.cart"></p>
+                            <p class="text-sm font-black" x-text="'Ks ' + Number(h.total).toLocaleString()"></p>
                         </div>
-                    @endforeach
-                </div>
-            </section>
-        @endif
+                        <div class="flex gap-1">
+                            <button type="button" @click="resumeHeld(h.id)" :disabled="cartBusy"
+                                    class="text-xs font-bold px-2 py-1 rounded-lg bg-amber-500 text-white hover:bg-amber-400 disabled:opacity-50">{{ __('messages.resume') }}</button>
+                            <button type="button" @click="voidHeld(h.id)" :disabled="cartBusy"
+                                    class="text-xs font-bold px-2 py-1 rounded-lg bg-rose-500 text-white hover:bg-rose-400 disabled:opacity-50">{{ __('messages.void_sale') }}</button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </section>
 
         {{-- ── Today's posted sales ─────────────────────────────────────── --}}
         @if ($todaySales->isNotEmpty())
@@ -715,6 +713,9 @@
                                     <li>
                                         <span class="font-bold">{{ $busy->register_name }}</span> —
                                         {{ __('messages.register_occupied_by', ['cashier' => $busy->cashier?->name ?? '—', 'time' => $busy->opened_at?->format('H:i') ?? '—']) }}
+                                        <span class="mt-0.5 block opacity-80">
+                                            {{ __('messages.register_drawer_state', ['opening' => number_format((float) $busy->opening_cash), 'sales' => number_format((float) $busy->cash_sales)]) }}
+                                        </span>
                                     </li>
                                 @endforeach
                             </ul>

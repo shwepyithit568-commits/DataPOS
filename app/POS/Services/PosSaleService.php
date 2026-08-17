@@ -281,7 +281,7 @@ class PosSaleService
      * cart-state endpoint and echoed back after every AJAX cart mutation so
      * the product grid + cart panel stay in sync without a page reload.
      *
-     * @return array{shift_open:bool, lines:array<int, array{index:int, product_id:int, product_variant_id:?int, name:string, sku:?string, quantity:string, unit_price:string, line_total:string, balance:string}>, totals:array{subtotal:string, discount:string, total:string}, held_count:int}
+     * @return array{shift_open:bool, lines:array<int, array{index:int, product_id:int, product_variant_id:?int, name:string, sku:?string, quantity:string, unit_price:string, line_total:string, balance:string}>, totals:array{subtotal:string, discount:string, total:string}, held_count:int, held:array<int, array{id:int, total:string, items_count:int}>}
      */
     public function cartState(Store $store, ?User $actor): array
     {
@@ -299,14 +299,23 @@ class PosSaleService
             ];
         }, $this->cartResolved($store));
 
+        $held = PosSale::query()
+            ->withCount('items')
+            ->where('store_id', $store->id)
+            ->where('status', 'held')
+            ->orderByDesc('id')
+            ->get();
+
         return [
             'shift_open' => (bool) $this->shifts->openShiftFor($store, $actor),
             'lines' => array_values($lines),
             'totals' => $this->cartTotals($store),
-            'held_count' => PosSale::query()
-                ->where('store_id', $store->id)
-                ->where('status', 'held')
-                ->count(),
+            'held_count' => $held->count(),
+            'held' => $held->map(fn (PosSale $sale) => [
+                'id' => (int) $sale->id,
+                'total' => (string) $sale->total,
+                'items_count' => (int) $sale->items_count,
+            ])->values()->all(),
         ];
     }
 
@@ -358,7 +367,7 @@ class PosSaleService
         });
     }
 
-    public function resumeHeld(Store $store, PosSale $sale): void
+    public function resumeHeld(Store $store, PosSale $sale, ?User $actor = null): void
     {
         if (! $sale->isHeld() || (int) $sale->store_id !== (int) $store->id) {
             throw new InventoryException('This held sale cannot be resumed.');
@@ -372,6 +381,14 @@ class PosSaleService
                 'quantity' => (string) $item->quantity,
             ];
         }
+
+        // The held record leaves the held list the moment it is recalled — it
+        // is marked 'resumed' (not deleted, so the audit trail is kept) and
+        // can only be posted or voided from here on.
+        $sale->update([
+            'status' => 'resumed',
+            'notes' => trim(($sale->notes ?? '') . ' Resumed by ' . ($actor?->name ?? 'unknown') . ' at ' . now()->format('Y-m-d H:i')),
+        ]);
 
         session([$this->cartKey($store) => $lines]);
     }
@@ -577,7 +594,9 @@ class PosSaleService
             $customerId, $creditTotal,
         ) {
             if ($heldSale) {
-                if ((int) $heldSale->store_id !== (int) $store->id || ! $heldSale->isHeld()) {
+                // held = still waiting in the held list; resumed = recalled
+                // into the active cart. Both reuse the same row when posted.
+                if ((int) $heldSale->store_id !== (int) $store->id || ! in_array($heldSale->status, ['held', 'resumed'], true)) {
                     throw new InventoryException('The held sale cannot be posted from this store.');
                 }
                 $sale = $heldSale;

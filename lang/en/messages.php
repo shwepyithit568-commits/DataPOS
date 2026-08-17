@@ -240,6 +240,7 @@ return [
     'no_open_shift' => 'No Open Shift',
     'registers_in_use' => 'Registers In Use',
     'register_occupied_by' => 'In use by :cashier since :time',
+    'register_drawer_state' => 'Opening Ks :opening · Sales Ks :sales',
     'pick_another_register' => 'Pick another register name to open your shift.',
     'shift_open' => 'Shift Open',
     'shift_closed' => 'Shift closed.',

@@ -240,6 +240,7 @@ return [
     'no_open_shift' => '无开启中的班次',
     'registers_in_use' => '使用中的收银台',
     'register_occupied_by' => '由 :cashier 自 :time 使用中',
+    'register_drawer_state' => '期初 Ks :opening · 销售 Ks :sales',
     'pick_another_register' => '请选择其他收银台名称来开启班次。',
     'shift_open' => '班次进行中',
     'shift_closed' => '班次已关闭。',

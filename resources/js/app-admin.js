@@ -120,7 +120,7 @@ Alpine.data('posApp', (opts = {}) => ({
     gridTimer: null,
 
     // Cart + payments
-    cart: { shift_open: false, lines: [], totals: { subtotal: '0', total: '0' }, held_count: 0 },
+    cart: { shift_open: false, lines: [], totals: { subtotal: '0', total: '0' }, held_count: 0, held: [] },
     cartBusy: false,
     variantProduct: null,
     showPayment: false,
@@ -221,6 +221,35 @@ Alpine.data('posApp', (opts = {}) => ({
             this.flash(this.labels.held || 'Sale held', 'success');
         } catch (e) {
             this.flash(e.message, 'error');
+        }
+    },
+
+    async resumeHeld(id) {
+        if (this.cartBusy) return;
+        this.cartBusy = true;
+        try {
+            const data = await this.fetchJson('/resume/' + id, { method: 'POST', body: new URLSearchParams({}) });
+            if (data.cart) this.cart = data.cart;
+            this.flash(this.labels.resumed || 'Sale resumed', 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        } finally {
+            this.cartBusy = false;
+        }
+    },
+
+    async voidHeld(id) {
+        if (this.cartBusy) return;
+        if (!confirm('Void this held sale?')) return;
+        this.cartBusy = true;
+        try {
+            const data = await this.fetchJson('/void/' + id, { method: 'POST', body: new URLSearchParams({}) });
+            if (data.cart) this.cart = data.cart;
+            this.flash(this.labels.voided || 'Sale voided', 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        } finally {
+            this.cartBusy = false;
         }
     },
 

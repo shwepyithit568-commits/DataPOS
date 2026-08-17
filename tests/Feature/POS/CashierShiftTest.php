@@ -113,7 +113,8 @@ class CashierShiftTest extends TestCase
             ->assertStatus(200)
             ->assertSee(__('messages.registers_in_use'))
             ->assertSee('R1')
-            ->assertSee($cashierA->name);
+            ->assertSee($cashierA->name)
+            ->assertSee(__('messages.register_drawer_state', ['opening' => '1,000', 'sales' => '0']));
     }
 
     public function test_pos_page_does_not_flag_own_shift_as_occupied(): void

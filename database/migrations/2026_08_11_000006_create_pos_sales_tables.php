@@ -27,7 +27,7 @@ return new class extends Migration
             $table->foreignId('cashier_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('customer_id')->nullable()->constrained('users')->nullOnDelete(); // retail customers are users
             $table->string('receipt_number', 40)->nullable()->index();
-            $table->string('status', 20)->default('draft'); // draft|held|posted|partially_refunded|refunded|reversed|voided
+            $table->string('status', 20)->default('draft'); // draft|held|resumed|posted|partially_refunded|refunded|reversed|voided
             $table->decimal('subtotal', 12, 2)->default(0);
             $table->decimal('discount', 12, 2)->default(0);
             $table->decimal('tax', 12, 2)->default(0);

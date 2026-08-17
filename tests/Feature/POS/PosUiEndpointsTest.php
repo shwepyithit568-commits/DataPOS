@@ -242,7 +242,15 @@ class PosUiEndpointsTest extends TestCase
         $resumed->assertJsonCount(1, 'cart.lines');
         $resumed->assertJsonPath('cart.lines.0.product_id', $product->id);
 
-        // Void the same held sale via HTTP.
+        // The recalled sale leaves the held list (marked 'resumed', not held).
+        $this->assertSame('resumed', $sale->refresh()->status);
+        $this->assertSame(0, $resumed->json('cart.held_count'));
+        $this->assertSame([], $resumed->json('cart.held'));
+
+        // A recalled sale cannot be resumed a second time.
+        $this->postJson("/store/{$store->slug}/pos/resume/{$sale->id}")->assertStatus(422);
+
+        // Void the recalled sale via HTTP.
         $voided = $this->postJson("/store/{$store->slug}/pos/void/{$sale->id}");
         $voided->assertOk();
         $this->assertSame('voided', $sale->refresh()->status);
@@ -258,7 +266,14 @@ class PosUiEndpointsTest extends TestCase
         $this->shifts->openShift($store, ['register_name' => 'REG-1', 'opening_cash' => 0], $cashier);
 
         $this->postJson("/store/{$store->slug}/pos/cart", ['product_id' => $product->id, 'quantity' => '1'])->assertOk();
-        $this->postJson("/store/{$store->slug}/pos/hold")->assertOk();
+        $held = $this->postJson("/store/{$store->slug}/pos/hold");
+        $held->assertOk();
+
+        // The cart-state payload carries the held list (id, total, items).
+        $this->assertSame(1, $held->json('cart.held_count'));
+        $this->assertCount(1, $held->json('cart.held'));
+        $this->assertSame('20000.00', $held->json('cart.held.0.total'));
+        $this->assertSame(1, $held->json('cart.held.0.items_count'));
 
         $sale = PosSale::where('store_id', $store->id)->where('status', 'held')->latest('id')->first();
         $this->assertNotNull($sale);

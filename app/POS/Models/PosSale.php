@@ -12,8 +12,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * POS sale (target-design §2.8 state machine).
  *
  * status: draft → held → posted → partially_refunded / refunded / reversed.
- * Voided applies to draft/held only — a posted sale is immutable and can only
- * be refunded/reversed (a later module). Receipt number is assigned at posting.
+ * A held sale that is recalled becomes 'resumed' (leaves the held list, keeps
+ * the audit trail) and can then be posted or voided. Voided applies to
+ * draft/held only — a posted sale is immutable and can only be refunded/
+ * reversed (a later module). Receipt number is assigned at posting.
  */
 class PosSale extends Model
 {

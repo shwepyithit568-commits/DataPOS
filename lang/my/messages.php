@@ -240,6 +240,7 @@ return [
     'no_open_shift' => 'Shift ဖွင့်ထားခြင်း မရှိပါ',
     'registers_in_use' => 'အသုံးပြုနေသော စာရင်းသွင်းစက်များ',
     'register_occupied_by' => ':cashier က :time ကတည်းက သုံးနေသည်',
+    'register_drawer_state' => 'အဖွင့် Ks :opening · ရောင်းရ Ks :sales',
     'pick_another_register' => 'သင့် shift ဖွင့်ရန် အခြား register အမည်ကို ရွေးပါ။',
     'shift_open' => 'Shift ဖွင့်ထားသည်',
     'shift_closed' => 'Shift ပိတ်လိုက်ပါပြီ။',

@@ -302,7 +302,7 @@ class PosSaleController extends Controller
         $store = $context->getStore();
 
         try {
-            $this->sales->resumeHeld($store, $sale);
+            $this->sales->resumeHeld($store, $sale, $request->user());
         } catch (InventoryException $e) {
             return $this->jsonOrRedirect($request, $store, null, $e->getMessage());
         }

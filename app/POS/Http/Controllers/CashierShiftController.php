@@ -55,18 +55,11 @@ class CashierShiftController extends Controller
 
         $cart = $this->sales->cartResolved($store);
         $cartTotals = $this->sales->cartTotals($store);
-        $heldSales = \App\POS\Models\PosSale::query()
-            ->with('items')
-            ->where('store_id', $store->id)
-            ->where('status', 'held')
-            ->latest()
-            ->limit(10)
-            ->get();
         $todaySales = $this->sales->todaySales($store);
         $outstanding = $this->debts->outstandingCustomers($store);
         $outstandingTotal = array_reduce($outstanding, fn ($carry, $c) => bcadd($carry, $c['balance'], 2), '0');
 
-        return view('pos.index', compact('store', 'openShift', 'occupiedRegisters', 'summary', 'cart', 'cartTotals', 'heldSales', 'todaySales', 'outstanding', 'outstandingTotal'));
+        return view('pos.index', compact('store', 'openShift', 'occupiedRegisters', 'summary', 'cart', 'cartTotals', 'todaySales', 'outstanding', 'outstandingTotal'));
     }
 
     public function open(Request $request, StoreContext $context): RedirectResponse
