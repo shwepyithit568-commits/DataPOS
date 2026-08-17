@@ -382,4 +382,110 @@ class PosUiEndpointsTest extends TestCase
             'name' => 'No Phone', 'phone' => '12',
         ])->assertStatus(422)->assertJsonPath('error', __('messages.pos_customer_invalid_phone'));
     }
+
+    /* ------------------------------------------------------------------ */
+    /*  Customer tier (retail / wholesale) — quick-add type + attach       */
+    /* ------------------------------------------------------------------ */
+
+    public function test_quick_add_wholesale_customer_sets_tier_and_prices_cart(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+        $product = $this->makeProduct($store, ['retail_price' => 10000, 'wholesale_price' => 9000]);
+        $this->seedStock($store, $product);
+
+        $response = $this->postJson("/store/{$store->slug}/pos/customers", [
+            'name' => 'U Ko', 'phone' => '09111222333', 'type' => 'wholesale_customer',
+        ])->assertOk();
+
+        $this->assertSame('wholesale_customer', $response->json('customer.role'));
+        $this->assertSame('wholesale_customer', $response->json('cart.customer.role'));
+        $user = User::where('id', $response->json('customer.id'))->first();
+        $this->assertTrue($user->hasStoreRole($store->id, 'wholesale_customer'));
+
+        // The attached wholesale tier prices the cart at wholesale immediately.
+        $this->postJson("/store/{$store->slug}/pos/cart", ['product_id' => $product->id, 'quantity' => '1'])->assertOk();
+        $cart = $this->getJson("/store/{$store->slug}/pos/cart-state")->json('cart');
+        $this->assertSame('9000.00', $cart['lines'][0]['unit_price']);
+        $this->assertSame('9000.00', $cart['totals']['total']);
+    }
+
+    public function test_quick_add_retail_customer_keeps_retail_pricing(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+        $product = $this->makeProduct($store, ['retail_price' => 10000, 'wholesale_price' => 9000]);
+        $this->seedStock($store, $product);
+
+        $this->postJson("/store/{$store->slug}/pos/customers", [
+            'name' => 'Daw Nyo', 'phone' => '09111222334', 'type' => 'retail_customer',
+        ])->assertOk()->assertJsonPath('cart.customer.role', 'retail_customer');
+
+        $this->postJson("/store/{$store->slug}/pos/cart", ['product_id' => $product->id, 'quantity' => '1'])->assertOk();
+        $cart = $this->getJson("/store/{$store->slug}/pos/cart-state")->json('cart');
+        $this->assertSame('10000.00', $cart['lines'][0]['unit_price']);
+    }
+
+    public function test_attach_and_detach_endpoints_control_cart_customer(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $this->actingAs($cashier);
+        $customer = $this->postJson("/store/{$store->slug}/pos/customers", [
+            'name' => 'Ma Cho', 'phone' => '09777888777',
+        ])->json('customer');
+
+        // Quick-add auto-attaches; detach to start from walk-in.
+        $this->postJson("/store/{$store->slug}/pos/customers/detach")->assertOk();
+        $this->assertNull($this->getJson("/store/{$store->slug}/pos/cart-state")->json('cart.customer'));
+
+        $this->postJson("/store/{$store->slug}/pos/customers/{$customer['id']}/attach")->assertOk();
+        $cart = $this->getJson("/store/{$store->slug}/pos/cart-state")->json('cart');
+        $this->assertSame($customer['id'], $cart['customer']['id']);
+        $this->assertSame('retail_customer', $cart['customer']['role']);
+    }
+
+    public function test_attach_cross_store_customer_is_rejected(): void
+    {
+        $storeA = $this->makeStore('shop-a');
+        $storeB = $this->makeStore('shop-b');
+        $this->actingAs($this->staff($storeA));
+        $customer = $this->postJson("/store/{$storeA->slug}/pos/customers", [
+            'name' => 'Ma Cho', 'phone' => '09777888778',
+        ])->json('customer');
+
+        $this->actingAs($this->staff($storeB));
+        $this->postJson("/store/{$storeB->slug}/pos/customers/{$customer['id']}/attach")
+            ->assertStatus(422);
+    }
+
+    public function test_product_grid_shows_wholesale_prices_for_attached_wholesale_customer(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+        $product = $this->makeProduct($store, ['retail_price' => 10000, 'wholesale_price' => 9000]);
+        $this->seedStock($store, $product);
+
+        $grid = $this->getJson("/store/{$store->slug}/pos/products-grid")->json('products');
+        $this->assertSame('10000.00', $grid[0]['price']);
+
+        $this->postJson("/store/{$store->slug}/pos/customers", [
+            'name' => 'U Mya', 'phone' => '09777444555', 'type' => 'wholesale_customer',
+        ])->assertOk();
+
+        $grid = $this->getJson("/store/{$store->slug}/pos/products-grid")->json('products');
+        $this->assertSame('9000.00', $grid[0]['price']);
+    }
+
+    public function test_customers_search_returns_role_for_tier_badge(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+        $this->postJson("/store/{$store->slug}/pos/customers", [
+            'name' => 'Daw Yee', 'phone' => '09777222333', 'type' => 'wholesale_customer',
+        ])->assertOk();
+
+        $customers = $this->getJson("/store/{$store->slug}/pos/customers?q=yee")->json('customers');
+        $this->assertSame('wholesale_customer', $customers[0]['role']);
+    }
 }

@@ -580,6 +580,8 @@ Route::prefix('store/{store_slug}')
             // POS customer credit/debt (SoT §17) — search, quick-add, collect debt.
             Route::get('/customers', [\App\POS\Http\Controllers\PosSaleController::class, 'customers'])->name('pos.customers.search');
             Route::post('/customers', [\App\POS\Http\Controllers\PosSaleController::class, 'addCustomer'])->name('pos.customers.add');
+            Route::post('/customers/{customer}/attach', [\App\POS\Http\Controllers\PosSaleController::class, 'attachCustomer'])->name('pos.customers.attach');
+            Route::post('/customers/detach', [\App\POS\Http\Controllers\PosSaleController::class, 'detachCustomer'])->name('pos.customers.detach');
             Route::post('/customers/{customer}/collect', [\App\POS\Http\Controllers\PosSaleController::class, 'collect'])->name('pos.customers.collect');
             Route::post('/cart', [\App\POS\Http\Controllers\PosSaleController::class, 'addItem'])->name('pos.cart.add');
             // /cart/clear must be registered before /cart/{line} (route order).

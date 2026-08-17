@@ -49,7 +49,7 @@ class PosSaleController extends Controller
         ]);
 
         return response()->json([
-            'results' => $this->sales->searchProducts($store, $data['q']),
+            'results' => $this->sales->searchProducts($store, $data['q'], $this->sales->cartCustomer($store)),
         ]);
     }
 
@@ -77,6 +77,7 @@ class PosSaleController extends Controller
                 isset($data['category_id']) ? (int) $data['category_id'] : null,
                 isset($data['brand_id']) ? (int) $data['brand_id'] : null,
                 $data['q'] ?? '',
+                $this->sales->cartCustomer($store),
             ),
             'categories' => Category::query()->where('store_id', $store->id)->orderBy('name')->get(['id', 'name']),
             'brands' => Brand::query()->where('store_id', $store->id)->orderBy('name')->get(['id', 'name']),
@@ -132,11 +133,41 @@ class PosSaleController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'phone' => $user->phone,
+                'role' => $user->getStoreRole($store->id),
                 'balance' => $this->debts->balanceFor($store->id, $user->id),
             ];
         });
 
         return response()->json(['customers' => $customers]);
+    }
+
+    /**
+     * Attach a store customer to the cart (server-side) so the whole POS
+     * prices at their tier — wholesale members see wholesale prices in the
+     * grid, cart and posted sale; walk-in (detach) resets to retail.
+     */
+    public function attachCustomer(Request $request, string $store_slug, StoreContext $context, User $customer): JsonResponse|RedirectResponse
+    {
+        $store = $context->getStore();
+
+        try {
+            $this->sales->attachCartCustomer($store, $customer);
+        } catch (InventoryException $e) {
+            return $this->jsonOrRedirect($request, $store, null, $e->getMessage());
+        }
+
+        return $this->jsonOrRedirect($request, $store, __('messages.pos_customer_attached') . ' — ' . $customer->name);
+    }
+
+    /**
+     * Detach — back to walk-in (retail) pricing for the cart.
+     */
+    public function detachCustomer(Request $request, StoreContext $context): JsonResponse|RedirectResponse
+    {
+        $store = $context->getStore();
+        $this->sales->attachCartCustomer($store, null);
+
+        return $this->jsonOrRedirect($request, $store, __('messages.pos_customer_detached'));
     }
 
     /**
@@ -160,9 +191,11 @@ class PosSaleController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20'],
+            'type' => ['nullable', 'string', 'in:retail_customer,wholesale_customer'],
         ]);
 
         $name = trim($data['name']);
+        $role = $data['type'] ?? 'retail_customer';
         $phone = User::normalizePhone($data['phone']);
 
         if ($phone === '' || strlen($phone) < 7 || strlen($phone) > 15 || !preg_match('/^\d+$/', $phone)) {
@@ -187,7 +220,7 @@ class PosSaleController extends Controller
             } else {
                 // Same person, new store — attach a membership here only.
                 $user->stores()->attach($store->id, [
-                    'role' => 'retail_customer',
+                    'role' => $role,
                     'status' => 'active',
                 ]);
             }
@@ -202,15 +235,21 @@ class PosSaleController extends Controller
             ]);
 
             $user->stores()->attach($store->id, [
-                'role' => 'retail_customer',
+                'role' => $role,
                 'status' => 'active',
             ]);
         }
+
+        // Select the new customer in the cart right away — the cashier added
+        // them because they are about to sell to them (credit sale or tiered
+        // pricing), so re-selecting is a wasted step.
+        $this->sales->attachCartCustomer($store, $user);
 
         $customer = [
             'id' => $user->id,
             'name' => $user->name,
             'phone' => $user->phone,
+            'role' => $role,
             'balance' => $this->debts->balanceFor($store->id, $user->id),
         ];
 

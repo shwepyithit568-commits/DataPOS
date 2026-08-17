@@ -565,6 +565,114 @@ class PosSaleTest extends TestCase
     }
 
     /* ------------------------------------------------------------------ */
+    /*  Customer tier pricing (retail vs wholesale)                        */
+    /* ------------------------------------------------------------------ */
+
+    private function customer(Store $store, string $role = 'retail_customer', string $phone = '09999990001'): User
+    {
+        $user = User::create([
+            'name' => 'Customer ' . Str::random(3),
+            'phone' => $phone,
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $user->stores()->attach($store->id, ['role' => $role, 'status' => 'active']);
+
+        return $user;
+    }
+
+    public function test_walk_in_and_retail_customer_pay_retail_price(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, ['retail_price' => 10000, 'wholesale_price' => 9000]);
+        $this->seedStock($store, $product);
+        $shift = $this->openShift($store, $cashier);
+        $retail = $this->customer($store, 'retail_customer');
+
+        $this->sales->addToCart($store, $product->id, null, '1');
+        $this->assertSame('10000.00', $this->sales->cartResolved($store)[0]['unit_price']); // walk-in
+
+        $this->sales->attachCartCustomer($store, $retail);
+        $this->assertSame('10000.00', $this->sales->cartResolved($store)[0]['unit_price']); // retail tier
+        $this->assertSame('10000.00', $this->sales->cartTotals($store)['total']);
+
+        $sale = $this->sales->post(
+            $store,
+            $this->sales->cartLines($store),
+            [['method' => 'cash', 'amount' => '10000']],
+            $cashier,
+            $shift,
+        );
+
+        $this->assertSame('10000.00', (string) $sale->total);
+        $this->assertSame('10000.00', (string) $sale->items->first()->unit_price);
+        $this->assertSame($retail->id, (int) $sale->customer_id);
+    }
+
+    public function test_wholesale_customer_cart_and_post_use_wholesale_price(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, ['retail_price' => 10000, 'wholesale_price' => 9000]);
+        $this->seedStock($store, $product);
+        $shift = $this->openShift($store, $cashier);
+        $wholesale = $this->customer($store, 'wholesale_customer');
+
+        $this->sales->addToCart($store, $product->id, null, '1');
+        $this->assertSame('10000.00', $this->sales->cartResolved($store)[0]['unit_price']); // walk-in first
+
+        $this->sales->attachCartCustomer($store, $wholesale);
+        $this->assertSame('9000.00', $this->sales->cartResolved($store)[0]['unit_price']); // wholesale tier
+        $this->assertSame('9000.00', $this->sales->cartTotals($store)['total']);
+
+        // Detaching returns the cart to walk-in retail pricing…
+        $this->sales->attachCartCustomer($store, null);
+        $this->assertSame('10000.00', $this->sales->cartResolved($store)[0]['unit_price']);
+
+        // …and re-attaching re-prices it wholesale before posting.
+        $this->sales->attachCartCustomer($store, $wholesale);
+        $sale = $this->sales->post(
+            $store,
+            $this->sales->cartLines($store),
+            [['method' => 'cash', 'amount' => '9000']],
+            $cashier,
+            $shift,
+        );
+
+        $this->assertSame('9000.00', (string) $sale->total);
+        $this->assertSame('9000.00', (string) $sale->items->first()->unit_price);
+        $this->assertSame($wholesale->id, (int) $sale->customer_id);
+    }
+
+    public function test_wholesale_price_falls_back_to_retail_when_unset(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        // No wholesale price on this product — wholesale tier pays retail.
+        $product = $this->makeProduct($store, ['retail_price' => 10000, 'wholesale_price' => 0]);
+        $this->seedStock($store, $product);
+        $wholesale = $this->customer($store, 'wholesale_customer');
+
+        $this->sales->addToCart($store, $product->id, null, '1');
+        $this->sales->attachCartCustomer($store, $wholesale);
+
+        $this->assertSame('10000.00', $this->sales->cartResolved($store)[0]['unit_price']);
+    }
+
+    public function test_attach_rejects_cross_store_customer(): void
+    {
+        $storeA = $this->makeStore('shop-a');
+        $storeB = $this->makeStore('shop-b');
+        $customerA = $this->customer($storeA, 'wholesale_customer');
+
+        $this->expectException(InventoryException::class);
+        $this->expectExceptionMessage('does not belong');
+
+        $this->sales->attachCartCustomer($storeB, $customerA);
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  Receipt (print / reprint audit)                                    */
     /* ------------------------------------------------------------------ */
 

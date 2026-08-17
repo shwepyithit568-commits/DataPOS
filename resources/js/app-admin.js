@@ -128,7 +128,7 @@ Alpine.data('posApp', (opts = {}) => ({
     cash: '0',
     kpay: 0, wavepay: 0, cbpay: 0, mmqr: 0, credit: 0,
     cq: '', cresults: [], copen: false,
-    quickAddOpen: false, quickBusy: false, qname: '', qphone: '',
+    quickAddOpen: false, quickBusy: false, qname: '', qphone: '', qtype: 'retail_customer',
     notice: '', noticeType: '', noticeTimer: null,
 
     /* ---- init ---- */
@@ -215,9 +215,14 @@ Alpine.data('posApp', (opts = {}) => ({
     },
 
     // Apply a cart snapshot from the server and return how many stale holds
-    // were auto-expired on this read (so callers can surface a notice).
+    // were auto-expired on this read (so callers can surface a notice). The
+    // server is the source of truth for the attached customer too (it drives
+    // tiered pricing), so the local mirror is synced from cart.customer.
     applyCart(data) {
-        if (data.cart) this.cart = data.cart;
+        if (data.cart) {
+            this.cart = data.cart;
+            this.customer = data.cart.customer || null;
+        }
         return data.cart ? (data.cart.expired_count || 0) : 0;
     },
 
@@ -313,15 +318,36 @@ Alpine.data('posApp', (opts = {}) => ({
         } catch (e) { this.cresults = []; }
     },
 
-    attach(c) {
-        this.customer = c;
-        this.cq = c.name;
+    // Attach a customer server-side: the whole cart re-prices at their tier
+    // (wholesale → wholesale prices in grid + cart) and the returned snapshot
+    // holds the authoritative customer record + balance.
+    async attach(c) {
         this.cresults = [];
         this.copen = false;
-        if (this.remaining > 0 && this.credit === 0) this.credit = Math.max(0, Math.round(this.remaining / 100) * 100);
+        try {
+            const data = await this.fetchJson('/customers/' + c.id + '/attach', { method: 'POST', body: new URLSearchParams({}) });
+            this.applyCart(data);
+            this.cq = c.name;
+            if (this.remaining > 0 && this.credit === 0) this.credit = Math.max(0, Math.round(this.remaining / 100) * 100);
+            this.loadGrid(); // grid prices follow the attached tier
+            this.flash(data.success || this.labels.pos_customer_attached || 'Customer attached', 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        }
     },
 
-    clearCustomer() { this.customer = null; this.cq = ''; this.credit = 0; },
+    async clearCustomer() {
+        this.cq = '';
+        this.credit = 0;
+        try {
+            const data = await this.fetchJson('/customers/detach', { method: 'POST', body: new URLSearchParams({}) });
+            this.applyCart(data);
+            this.loadGrid();
+            this.flash(data.success || this.labels.pos_customer_detached || 'Customer removed', 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        }
+    },
 
     openQuickAdd(name = '') {
         this.qname = name || '';
@@ -331,19 +357,21 @@ Alpine.data('posApp', (opts = {}) => ({
     },
 
     // Quick-add a customer: POST /pos/customers creates the user + this
-    // store's retail_customer membership (shared users table, phone dedup and
-    // staff-phone guard all live server-side). The returned customer is
-    // attached to the cart like a search hit.
+    // store's retail/wholesale membership (shared users table, phone dedup and
+    // staff-phone guard all live server-side). The server attaches the new
+    // customer to the cart immediately, so the cart + grid re-price at their
+    // tier right away.
     async quickAdd() {
         if (!this.qname.trim() || !this.qphone.trim() || this.quickBusy) return;
         this.quickBusy = true;
         try {
-            const data = await this.fetchJson('/customers', { method: 'POST', body: new URLSearchParams({ name: this.qname.trim(), phone: this.qphone.trim() }) });
+            const data = await this.fetchJson('/customers', { method: 'POST', body: new URLSearchParams({ name: this.qname.trim(), phone: this.qphone.trim(), type: this.qtype }) });
             this.quickAddOpen = false;
             this.cresults = [];
             this.copen = false;
-            this.cq = '';
-            this.attach(data.customer);
+            this.cq = data.customer.name;
+            this.applyCart(data);
+            this.loadGrid();
             this.flash(data.success || this.labels.pos_customer_added, 'success');
         } catch (e) {
             this.flash(e.message, 'error');

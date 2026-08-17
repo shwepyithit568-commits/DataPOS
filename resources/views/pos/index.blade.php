@@ -25,6 +25,8 @@
             'pos_customer_invalid_phone' => __('messages.pos_customer_invalid_phone'),
             'pos_customer_staff_phone' => __('messages.pos_customer_staff_phone'),
             'pos_customer_not_found_add' => __('messages.pos_customer_not_found_add'),
+            'pos_customer_attached' => __('messages.pos_customer_attached'),
+            'pos_customer_detached' => __('messages.pos_customer_detached'),
         ];
     @endphp
 
@@ -66,6 +68,18 @@
                     <input type="tel" x-model="qphone" @keydown.enter="quickAdd()"
                            class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
                            placeholder="09 123 456 789">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">{{ __('messages.pos_customer_type') }}</label>
+                    <div class="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
+                        <button type="button" @click="qtype = 'retail_customer'"
+                                :class="qtype === 'retail_customer' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow' : 'text-slate-500 dark:text-slate-400'"
+                                class="rounded-lg px-3 py-2 text-sm font-bold transition">{{ __('messages.pos_customer_retail') }}</button>
+                        <button type="button" @click="qtype = 'wholesale_customer'"
+                                :class="qtype === 'wholesale_customer' ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow' : 'text-slate-500 dark:text-slate-400'"
+                                class="rounded-lg px-3 py-2 text-sm font-bold transition">{{ __('messages.pos_customer_wholesale') }}</button>
+                    </div>
+                    <p class="mt-1 text-[11px] text-slate-400" x-show="qtype === 'wholesale_customer'" x-cloak>🏷️ {{ __('messages.pos_wholesale_type_hint') }}</p>
                 </div>
                 <div class="flex gap-2">
                     <button type="button" @click="quickAddOpen = false"
@@ -396,8 +410,13 @@
                                         <span class="block text-sm font-semibold truncate" x-text="c.name"></span>
                                         <span class="block text-[11px] text-slate-500 font-mono" x-text="c.phone || ''"></span>
                                     </span>
-                                    <span class="shrink-0 text-[11px] font-bold" :class="parseFloat(c.balance) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'"
-                                          x-text="parseFloat(c.balance) > 0 ? '{{ __('messages.debt') }} ' + Number(c.balance).toLocaleString() : ''"></span>
+                                    <span class="shrink-0 flex items-center gap-1.5">
+                                        <span class="text-[11px] font-bold px-1.5 py-0.5 rounded"
+                                              :class="c.role === 'wholesale_customer' ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300' : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'"
+                                              x-text="c.role === 'wholesale_customer' ? '{{ __('messages.pos_customer_wholesale') }}' : '{{ __('messages.pos_customer_retail') }}'"></span>
+                                        <span class="text-[11px] font-bold" :class="parseFloat(c.balance) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'"
+                                              x-text="parseFloat(c.balance) > 0 ? '{{ __('messages.debt') }} ' + Number(c.balance).toLocaleString() : ''"></span>
+                                    </span>
                                 </button>
                             </template>
                         </div>
@@ -413,8 +432,10 @@
 
                     <template x-if="customer">
                         <div class="mt-2 flex items-center justify-between gap-2">
-                            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold"
+                                  :class="customer.role === 'wholesale_customer' ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300' : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'">
                                 👤 <span x-text="customer.name"></span>
+                                <span x-show="customer.role === 'wholesale_customer'" x-text="' · ' + '{{ __('messages.pos_customer_wholesale') }}'"></span>
                                 <span x-show="parseFloat(customer.balance) > 0" x-text="' · ' + '{{ __('messages.debt') }}' + ' ' + Number(customer.balance).toLocaleString()"></span>
                             </span>
                             <button type="button" @click="clearCustomer()" class="text-rose-500 hover:text-rose-700 font-black text-xs">✕ {{ __('messages.customer') }}</button>

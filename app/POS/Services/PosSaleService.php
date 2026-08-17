@@ -45,7 +45,7 @@ class PosSaleService
      *
      * @return array<int, array{type:string, id:int, name:string, sku:?string, price:string, balance:string, variant_of:?string}>
      */
-    public function searchProducts(Store $store, string $query, int $limit = 12): array
+    public function searchProducts(Store $store, string $query, ?User $customer = null, int $limit = 12): array
     {
         $q = trim($query);
         if ($q === '') {
@@ -59,14 +59,14 @@ class PosSaleService
             ->where(fn ($w) => $w->where('sku', 'like', "%{$q}%")->orWhere('name', 'like', "%{$q}%"))
             ->limit($limit)
             ->get()
-            ->each(function (Product $p) use (&$results) {
+            ->each(function (Product $p) use (&$results, $customer) {
                 $results[] = [
                     'type' => 'product',
                     'id' => $p->id,
                     'product_id' => $p->id,
                     'name' => $p->name,
                     'sku' => $p->sku,
-                    'price' => (string) $p->retail_price,
+                    'price' => $this->priceFor($customer, $p),
                     'balance' => $this->inventory->totalOnHand($p->store_id, $p->id),
                     'variant_of' => null,
                 ];
@@ -78,14 +78,14 @@ class PosSaleService
             ->with('product')
             ->limit($limit)
             ->get()
-            ->each(function (ProductVariant $v) use (&$results) {
+            ->each(function (ProductVariant $v) use (&$results, $customer) {
                 $results[] = [
                     'type' => 'variant',
                     'id' => $v->id,
                     'product_id' => $v->product_id,
                     'name' => $v->product->name . ' — ' . $v->name,
                     'sku' => $v->sku,
-                    'price' => (string) ($v->retail_price ?? $v->product->retail_price),
+                    'price' => $this->priceFor($customer, $v->product, $v),
                     'balance' => $this->inventory->totalOnHand($v->product->store_id, $v->product_id, $v->id),
                     'variant_of' => $v->product->name,
                 ];
@@ -104,7 +104,7 @@ class PosSaleService
      *
      * @return array<int, array{id:int, name:string, sku:?string, price:string, balance:string, category_id:?int, category:?string, brand:?string, variants:array<int, array{id:int, name:string, sku:?string, price:string, balance:string}>}>
      */
-    public function gridProducts(Store $store, ?int $categoryId = null, ?int $brandId = null, string $query = '', int $limit = 120): array
+    public function gridProducts(Store $store, ?int $categoryId = null, ?int $brandId = null, string $query = '', ?User $customer = null, int $limit = 120): array
     {
         $q = trim($query);
 
@@ -113,18 +113,18 @@ class PosSaleService
             ->when($categoryId, fn ($w) => $w->where('category_id', $categoryId))
             ->when($brandId, fn ($w) => $w->where('brand_id', $brandId))
             ->when($q !== '', fn ($w) => $w->where(fn ($w2) => $w2->where('sku', 'like', "%{$q}%")->orWhere('name', 'like', "%{$q}%")))
-            ->with(['category:id,name', 'brand:id,name', 'variants:id,product_id,name,sku,retail_price,is_default'])
+            ->with(['category:id,name', 'brand:id,name', 'variants:id,product_id,name,sku,retail_price,wholesale_price,is_default'])
             ->orderBy('name')
             ->orderBy('id')
             ->limit($limit)
             ->get();
 
-        return $products->map(function (Product $p) use ($store) {
+        return $products->map(function (Product $p) use ($store, $customer) {
             return [
                 'id' => $p->id,
                 'name' => $p->name,
                 'sku' => $p->sku,
-                'price' => (string) $p->retail_price,
+                'price' => $this->priceFor($customer, $p),
                 'old_price' => $p->old_price !== null ? (string) $p->old_price : null,
                 'image' => $p->image_path ? asset('storage/' . $p->image_path) : null,
                 'balance' => $this->inventory->totalOnHand($store->id, $p->id),
@@ -135,7 +135,7 @@ class PosSaleService
                     'id' => $v->id,
                     'name' => $v->name,
                     'sku' => $v->sku,
-                    'price' => (string) ($v->retail_price ?? $p->retail_price),
+                    'price' => $this->priceFor($customer, $p, $v),
                     'balance' => $this->inventory->totalOnHand($store->id, $p->id, $v->id),
                 ])->values()->all(),
             ];
@@ -149,6 +149,70 @@ class PosSaleService
     private function cartKey(Store $store): string
     {
         return 'pos.cart.' . $store->id;
+    }
+
+    private function cartCustomerKey(Store $store): string
+    {
+        return 'pos.cart_customer.' . $store->id;
+    }
+
+    /**
+     * True when the user is an active retail/wholesale customer of this store
+     * (the same membership rule post() enforces — never cross-store).
+     */
+    private function isStoreCustomer(Store $store, User $user): bool
+    {
+        return $user->stores()
+            ->where('stores.id', $store->id)
+            ->whereIn('store_user.role', ['retail_customer', 'wholesale_customer'])
+            ->where('store_user.status', 'active')
+            ->exists();
+    }
+
+    /**
+     * Tiered unit price for a product/variant. Wholesale customers pay the
+     * wholesale price when one is set (> 0); everyone else (walk-in, retail
+     * customers) pays retail. Mirrors the storefront wholesale rule.
+     */
+    public function priceFor(?User $customer, Product $product, ?ProductVariant $variant = null): string
+    {
+        if ($customer !== null && $customer->getStoreRole($product->store_id) === 'wholesale_customer') {
+            $wholesale = $variant?->wholesale_price ?? $product->wholesale_price;
+            if ($wholesale !== null && bccomp((string) $wholesale, '0', 2) > 0) {
+                return (string) $wholesale;
+            }
+        }
+
+        return (string) ($variant?->retail_price ?? $product->retail_price);
+    }
+
+    /**
+     * Attach a customer to the cart (server-side) so the whole POS prices at
+     * their tier — walk-in (null) resets to retail pricing.
+     */
+    public function attachCartCustomer(Store $store, ?User $customer): void
+    {
+        if ($customer !== null && ! $this->isStoreCustomer($store, $customer)) {
+            throw new InventoryException('The selected customer does not belong to this store.');
+        }
+
+        session([$this->cartCustomerKey($store) => $customer?->id]);
+    }
+
+    /**
+     * The customer currently attached to the cart, or null (walk-in → retail).
+     * Stale ids (customer removed/deactivated) resolve to null.
+     */
+    public function cartCustomer(Store $store): ?User
+    {
+        $id = session()->get($this->cartCustomerKey($store));
+        if (! $id) {
+            return null;
+        }
+
+        $user = User::find($id);
+
+        return ($user !== null && $this->isStoreCustomer($store, $user)) ? $user : null;
     }
 
     /**
@@ -221,6 +285,7 @@ class PosSaleService
     public function clearCart(Store $store): void
     {
         session()->forget($this->cartKey($store));
+        session()->forget($this->cartCustomerKey($store));
     }
 
     /**
@@ -230,6 +295,7 @@ class PosSaleService
      */
     public function cartResolved(Store $store): array
     {
+        $customer = $this->cartCustomer($store);
         $out = [];
         foreach ($this->cartLines($store) as $i => $line) {
             $product = Product::find($line['product_id']);
@@ -239,7 +305,7 @@ class PosSaleService
 
             $variant = $line['product_variant_id'] ? ProductVariant::find($line['product_variant_id']) : null;
             $name = $variant ? $product->name . ' — ' . $variant->name : $product->name;
-            $price = $variant?->retail_price ?? $product->retail_price;
+            $price = $this->priceFor($customer, $product, $variant);
             $quantity = $line['quantity'];
 
             $out[] = [
@@ -319,6 +385,8 @@ class PosSaleService
             $soonCount = $held->filter(fn (PosSale $sale) => $sale->created_at?->lt($soonCutoff))->count();
         }
 
+        $customer = $this->cartCustomer($store);
+
         return [
             'shift_open' => (bool) $this->shifts->openShiftFor($store, $actor),
             'lines' => array_values($lines),
@@ -336,6 +404,13 @@ class PosSaleService
                 'oldest_held_at' => $oldest?->created_at?->toIso8601String(),
                 'soon_count' => $soonCount,
             ],
+            'customer' => $customer ? [
+                'id' => (int) $customer->id,
+                'name' => $customer->name,
+                'phone' => $customer->phone,
+                'role' => $customer->getStoreRole($store->id),
+                'balance' => (string) $this->debts->balanceFor($store->id, $customer->id),
+            ] : null,
         ];
     }
 
@@ -496,23 +571,29 @@ class PosSaleService
         }
 
         $usesCredit = collect($payments)->contains(fn ($p) => ($p['method'] ?? '') === 'credit');
-        if ($usesCredit && ! $customerId) {
+
+        // The cart's attached customer is the source of truth for pricing and
+        // receivables; a form-posted customer_id must agree with it. This also
+        // keeps direct service calls (tests) working with either source.
+        $sessionCustomer = $this->cartCustomer($store);
+        $customer = $customerId ? User::find($customerId) : $sessionCustomer;
+
+        if ($customerId && $sessionCustomer && (int) $sessionCustomer->id !== (int) $customerId) {
+            throw new InventoryException('The customer changed during checkout — please review the cart.');
+        }
+
+        // Persist the resolved customer on the sale record (the cart-attached
+        // customer when none was posted explicitly).
+        $customerId = $customer?->id;
+
+        if ($usesCredit && ! $customer) {
             throw new InventoryException('A customer must be attached to the sale to use credit (debt) payment.');
         }
 
         // The attached customer must belong to this store (retail/wholesale
         // customer membership) — never allow cross-store receivable posting.
-        if ($customerId) {
-            $customer = User::find($customerId);
-            $isCustomer = $customer?->stores()
-                ->where('stores.id', $store->id)
-                ->whereIn('store_user.role', ['retail_customer', 'wholesale_customer'])
-                ->where('store_user.status', 'active')
-                ->exists();
-
-            if (! $isCustomer) {
-                throw new InventoryException('The selected customer does not belong to this store.');
-            }
+        if ($customer && ! $this->isStoreCustomer($store, $customer)) {
+            throw new InventoryException('The selected customer does not belong to this store.');
         }
 
         $warehouseId = $this->inventory->defaultWarehouseId($store->id);
@@ -536,7 +617,7 @@ class PosSaleService
                 throw new InventoryException("Quantity for '{$product->name}' must be positive.");
             }
 
-            $price = (string) ($variant?->retail_price ?? $product->retail_price);
+            $price = $this->priceFor($customer, $product, $variant);
             $balance = $this->inventory->balanceFor($store->id, $product->id, $variant?->id, $warehouseId);
 
             if (! $balance || bccomp((string) $balance->quantity_on_hand, $quantity, 3) < 0) {
