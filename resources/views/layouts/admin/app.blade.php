@@ -350,14 +350,6 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    @php $isPosReceiving = request()->is('store/*/pos/receiving*'); @endphp
-                    <x-admin.nav-link :href="route('pos.receiving.index', $storeRouteParams)" route-name="pos.receiving.index" :active="$isPosReceiving" :label="__('messages.receiving_title')">
-                        <x-slot:icon>
-                            {{-- Box-in icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.5 12 3 3 8.5V16l9 5.5 9-5.5V8.5ZM3 8.5l9 5.5m0 0 9-5.5M12 14v7.5"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
-
                     @php $isPosOpeningStock = request()->is('store/*/pos/opening-stock*'); @endphp
                     <x-admin.nav-link :href="route('pos.opening-stock.index', $storeRouteParams)" route-name="pos.opening-stock.index" :active="$isPosOpeningStock" :label="__('messages.opening_stock_title')">
                         <x-slot:icon>
@@ -400,6 +392,14 @@
                         <x-slot:icon>
                             {{-- Shopping-bag icon --}}
                             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 8h12l-1 12H7L6 8Zm3 0a3 3 0 0 1 6 0"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
+                    @php $isPosReceiving = request()->is('store/*/pos/receiving*'); @endphp
+                    <x-admin.nav-link :href="route('pos.receiving.index', $storeRouteParams)" route-name="pos.receiving.index" :active="$isPosReceiving" :label="__('messages.receiving_title')">
+                        <x-slot:icon>
+                            {{-- Box-in icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.5 12 3 3 8.5V16l9 5.5 9-5.5V8.5ZM3 8.5l9 5.5m0 0 9-5.5M12 14v7.5"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
 
