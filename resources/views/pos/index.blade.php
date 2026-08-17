@@ -194,6 +194,7 @@
                     ['pos/reports/sales', 'reports_title', '📊'],
                     ['pos/receiving', 'receiving_title', '📦'],
                     ['pos/opening-stock', 'opening_stock_title', '🏷️'],
+                    ['pos/reconciliation', 'reconciliation_title', '⚖️'],
                     ['pos/adjustments', 'adjustment_title', '🔧'],
                 ] as [$path, $label, $icon])
                     <a href="{{ url('/store/' . $store->slug . '/' . $path) }}"

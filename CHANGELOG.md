@@ -2678,3 +2678,27 @@ Confirm Import လုပ်တဲ့အခါ 500 မတက်တော့ဘူ
 - The drag uses window-level listeners with no pointer capture, and only
   engages after the pointer moves past a threshold — so a plain click on a
   chip still fires normally (a capture-based first pass broke chip clicks).
+
+### 2026-08-17 — POS: opening-stock reconciliation (Phase 2.5)
+
+- New `/store/{slug}/pos/reconciliation` page: per product/variant, compares the
+  IMPORTED opening stock (quantities in APPROVED opening-stock requests — what
+  the store counted at cutover) against the RECORDED opening position in the
+  inventory ledger (opening_balance movements + their reversals + previous
+  reconciliation corrections), with the difference and current on-hand for
+  context. Rows with a non-zero diff are highlighted; an "only differences"
+  filter and summary cards (products / with diff / total diff) help review.
+- Manager-only "Approve & Post Corrections" (route middleware + audit log):
+  posts adjustment_in/out correction movements (source_type =
+  inventory_reconciliation) so the ledger's opening position converges to the
+  imported opening stock, and snapshots the report into a new
+  `inventory_reconciliations` record (REC-YYYYMMDD-####) + per-line
+  `inventory_reconciliation_items` for the pilot audit trail. Insufficient
+  stock blocks an out-correction with a full rollback; the whole post is
+  idempotent via client_transaction_id.
+- After approval the report converges to diff = 0 — the Phase 2.5 pilot exit
+  criterion ("reconciliation diff = 0"). POS home toolbar gains a ⚖️
+  Reconciliation link; lang keys en/my/zh_CN.
+- Tests: 7 new (report clean vs flagged, approve posts + converges, second
+  approval safe, insufficient-stock rollback, staff view / manager approve /
+  outsider + cross-store blocked).

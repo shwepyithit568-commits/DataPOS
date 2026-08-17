@@ -622,6 +622,11 @@ Route::prefix('store/{store_slug}')
             Route::post('/opening-stock/{openingStockRequest}/reject', [\App\POS\Http\Controllers\OpeningStockController::class, 'reject'])->name('pos.opening-stock.reject')
                 ->middleware(EnsureStoreAccess::class . ':store_manager');
 
+            // Opening-stock reconciliation (Phase 2.5) — imported opening stock vs the ledger; manager approves → correction adjustments.
+            Route::get('/reconciliation', [\App\POS\Http\Controllers\InventoryReconciliationController::class, 'index'])->name('pos.reconciliation.index');
+            Route::post('/reconciliation/approve', [\App\POS\Http\Controllers\InventoryReconciliationController::class, 'approve'])->name('pos.reconciliation.approve')
+                ->middleware(EnsureStoreAccess::class . ':store_manager');
+
             // Inventory adjustments (MVP Phase 2, final) — staff submits, manager approves → adjustment_in/out ledger.
             Route::get('/adjustments', [\App\POS\Http\Controllers\InventoryAdjustmentController::class, 'index'])->name('pos.adjustments.index');
             Route::post('/adjustments', [\App\POS\Http\Controllers\InventoryAdjustmentController::class, 'store'])->name('pos.adjustments.store');
