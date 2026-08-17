@@ -2546,3 +2546,56 @@ Confirm Import လုပ်တဲ့အခါ 500 မတက်တော့ဘူ
 - **Build ပြီးတိုင်း** POS/Alpine class အသစ်တွေ ရှိရင် `npm run build` ပြန်လုပ်ပါ (Tailwind
   `@source` က pos views + components ပါပြီးသားပေမယ့် class အသစ်က compile ဖြစ်ဖို့ build လို)။
 
+## 2026-08-17 — Customer model: shared ecommerce + POS list (multi-store ready)
+
+### ၁. Ecommerce registration ကို store-scoped လုပ်ပြီး POS နဲ့ မျှဝေခဲ့သည်
+
+- `/register` + `/login` routes တွေမှာ `ResolveStoreContext` middleware ထည့်ပြီး
+  ဘယ် store မှာ register လုပ်နေလဲ ဆိုတာ resolve လုပ်တယ် (primary store default,
+  `?store_slug=` / `X-Store-Slug` override)။
+- `RegisterController::store()` — user ဖန်တီးပြီး `store_user` pivot
+  (`retail_customer`, `active`) ကို **ချက်ချင်း attach** — ဒါကြောင့် ecommerce ကနေ
+  register လုပ်တဲ့ customer က အဲဒီ store ရဲ့ POS customer list မှာ ပေါ်လာပြီ။
+  (အရင်က pivot မထည့်လို့ POS မှာ လုံးဝ မပေါ်ခဲ့ဘူး — bug fix)
+- **Merge logic** — POS quick-add နဲ့ အရင် ဖန်တီးထားတဲ့ account (password မရှိ) ကို
+  နောက် online register လုပ်ရင် **duplicate မဖန်တီးဘဲ** password ထည့်ပြီး merge —
+  user record တစ်ခုတည်း ဆက်ထားတယ်။ Staff/manager/owner ဖုန်းနံပါတ်ကိုတော့
+  ဘယ်တော့မှ claim လို့ မရဘူး (error)။
+- Login/Register view တွေက resolved store ရဲ့ branding/setting ကို သုံးတယ်။
+
+### ၂. POS customer quick-add — "+ ဖောက်သည်" အလုပ်လုပ်ပြီ
+
+- **Endpoint:** `POST /store/{slug}/pos/customers` — name + phone လက်ခံပြီး user +
+  ဒီ store ရဲ့ `retail_customer` membership ဖန်တီး (shared `users` + `store_user` pivot)။
+- **Phone dedup (format အမျိုးမျိုး ရှာဖွေ):** `User::normalizePhone()` +
+  `findByNormalizedPhone()` — "09 123 456 789" / "09123456789" / "+95 912 345 6789"
+  အကုန် တစ်ယောက်တည်းအဖြစ် မှတ်တယ် (import service နဲ့ စည်းမျဉ်းတူ)။
+- **Store-scoped rule:** user ရှိပြီးသား ဒါပေမယ့် ဒီ store မှာ membership မရှိရင်
+  **ဒီ store ကိုပဲ attach** — user record တစ်ခုတည်း, pivot ၂ ခု (store A list က
+  store B ကို auto မပေါက် — cashier က quick-add လုပ်မှ ဝင်)။
+- **Staff guard:** staff/manager/owner ရဲ့ ဖုန်းနံပါတ်နဲ့ ထည့်ဖို့ ကြိုးစားရင် 422
+  error (account ကို ဘယ်တော့မှ မသိမ်းနိုင်)။
+- **UI:** cart ထဲက "+" ခလုတ်က modal ဖွင့်တယ် (name + phone)၊ search မှာ မတွေ့ရင်
+  "+ Add 'name' as new customer" fallback — ထည့်ပြီးတာနဲ့ ချက်ချင်း cart မှာ attach
+  ဖြစ်ပြီး toast ပြတယ်။
+
+### ၃. Lang + Tests
+
+- en/my/zh_CN — quick-add + register error keys အသစ် ၁၁ ခု (parity ✓)
+- Tests: AuthenticationTest (enroll + merge + staff guard) + PosUiEndpointsTest
+  (create / dedup / cross-store attach / staff reject / phone validate) — ၅ ခု အသစ်
+
+### စစ်ဆေးပြီးသား (Verification)
+
+- `php artisan test tests/Feature/POS tests/Feature/AuthenticationTest.php
+  tests/Feature/LocalizationKeysParityTest.php tests/Feature/StoreScopedRouteSignatureTest.php
+  tests/Feature/StorefrontNavigationContextTest.php tests/Feature/LoginBrandingAndSecurityTest.php
+  tests/Feature/StoreContextResolverTest.php` → **215 passed (853 assertions)**
+- Live (preview): quick-add modal → customer ဖန်တီး → cart attach ✓
+
+### ⚠️ သတိထားရန်
+
+- **Phone format ရောထွေးနေတုန်းပဲ** (import = digits-no-0, legacy/seeded = "09...",
+  quick-add/register = ရိုက်ထည့်တဲ့အတိုင်း) — ရှာတဲ့အခါ `findByNormalizedPhone()` က
+  format မခွဲခြားဘဲ မှန်ကန်အောင် ရှာပေးတယ်။ နောက်ပိုင်း ဖြည်းဖြည်းချင်း normalized
+  format တစ်ခုတည်းကို ပြောင်းနိုင်တယ် (data migration + login normalize နဲ့)။

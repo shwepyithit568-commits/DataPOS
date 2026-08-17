@@ -16,6 +16,8 @@ use App\Services\StoreContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
@@ -135,6 +137,88 @@ class PosSaleController extends Controller
         });
 
         return response()->json(['customers' => $customers]);
+    }
+
+    /**
+     * Quick-add a customer from the POS (the "+ ဖောက်သည်" button or the
+     * "not found — add new" fallback). Identity is the normalized phone:
+     *
+     *   - No user with that phone  → create a shopper account (no login yet)
+     *   - User exists, not yet a member of this store → attach as
+     *     retail_customer (same person record, per-store membership — this is
+     *     how the same person shops at several stores without duplication)
+     *   - Already a customer of this store → idempotent, refresh the name
+     *   - Staff / manager / owner phone → rejected (never claimable)
+     *
+     * The membership is created immediately, so the customer is shared with
+     * this store's ecommerce list and can log in later via register/forgot.
+     */
+    public function addCustomer(Request $request, StoreContext $context): JsonResponse|RedirectResponse
+    {
+        $store = $context->getStore();
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:20'],
+        ]);
+
+        $name = trim($data['name']);
+        $phone = User::normalizePhone($data['phone']);
+
+        if ($phone === '' || strlen($phone) < 7 || strlen($phone) > 15 || !preg_match('/^\d+$/', $phone)) {
+            return $this->jsonOrRedirect($request, $store, null, __('messages.pos_customer_invalid_phone'));
+        }
+
+        $user = User::findByNormalizedPhone($data['phone']);
+
+        if ($user !== null) {
+            $isStaffAccount = $user->isPlatformOwner()
+                || $user->stores()->wherePivotIn('role', ['store_manager', 'staff'])->exists();
+
+            if ($isStaffAccount) {
+                return $this->jsonOrRedirect($request, $store, null, __('messages.pos_customer_staff_phone'));
+            }
+
+            $hasMembership = $user->stores()->wherePivot('store_id', $store->id)->exists();
+
+            if ($hasMembership) {
+                // Idempotent — already a customer of this store; refresh name.
+                $user->update(['name' => $name]);
+            } else {
+                // Same person, new store — attach a membership here only.
+                $user->stores()->attach($store->id, [
+                    'role' => 'retail_customer',
+                    'status' => 'active',
+                ]);
+            }
+        } else {
+            // Debt shoppers don't need login credentials; a random password
+            // keeps the account locked until they register / reset it online.
+            $user = User::create([
+                'name' => $name,
+                'phone' => $data['phone'],
+                'password' => Hash::make(Str::random(24)),
+                'role' => 'customer',
+            ]);
+
+            $user->stores()->attach($store->id, [
+                'role' => 'retail_customer',
+                'status' => 'active',
+            ]);
+        }
+
+        $customer = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'phone' => $user->phone,
+            'balance' => $this->debts->balanceFor($store->id, $user->id),
+        ];
+
+        if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json(['success' => __('messages.pos_customer_added'), 'customer' => $customer, 'cart' => $this->sales->cartState($store, $request->user())]);
+        }
+
+        return back()->with('success', __('messages.pos_customer_added') . ' — ' . $user->name);
     }
 
     /* ------------------------------------------------------------------ */

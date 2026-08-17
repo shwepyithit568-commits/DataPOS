@@ -21,6 +21,10 @@
             'oldest_hold' => __('messages.oldest_hold'),
             'soon_to_expire' => __('messages.soon_to_expire'),
             'expiry_off' => __('messages.expiry_off'),
+            'pos_customer_added' => __('messages.pos_customer_added'),
+            'pos_customer_invalid_phone' => __('messages.pos_customer_invalid_phone'),
+            'pos_customer_staff_phone' => __('messages.pos_customer_staff_phone'),
+            'pos_customer_not_found_add' => __('messages.pos_customer_not_found_add'),
         ];
     @endphp
 
@@ -38,6 +42,38 @@
              :class="noticeType === 'error' ? 'bg-rose-600 text-white border-rose-500' : 'bg-emerald-600 text-white border-emerald-500'"
              role="status">
             <span x-text="notice"></span>
+        </div>
+
+        {{-- Quick-add customer modal — creates a store-scoped retail customer
+             (shared users table + store_user pivot, phone dedup server-side). --}}
+        <div x-show="quickAddOpen" x-cloak class="fixed inset-0 z-[95] grid place-items-center p-4"
+             @keydown.escape.window="quickAddOpen = false">
+            <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="quickAddOpen = false"></div>
+            <div class="relative w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-2xl space-y-4">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-sm font-black">➕ {{ __('messages.pos_customer_quick_add_title') }}</p>
+                    <button type="button" @click="quickAddOpen = false"
+                            class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition">✕</button>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">{{ __('messages.pos_customer_name') }}</label>
+                    <input type="text" x-model="qname" x-ref="quickName"
+                           class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
+                           placeholder="{{ __('messages.pos_customer_name') }}">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">{{ __('messages.pos_customer_phone') }}</label>
+                    <input type="tel" x-model="qphone" @keydown.enter="quickAdd()"
+                           class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
+                           placeholder="09 123 456 789">
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" @click="quickAddOpen = false"
+                            class="flex-1 rounded-xl px-4 py-2.5 text-sm font-black bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.cancel') }}</button>
+                    <button type="button" @click="quickAdd()" :disabled="quickBusy || !qname.trim() || !qphone.trim()"
+                            class="flex-1 rounded-xl px-4 py-2.5 text-sm font-black bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 transition">+ {{ __('messages.pos_customer_add') }}</button>
+                </div>
+            </div>
         </div>
 
         {{-- Flash messages --}}
@@ -339,7 +375,7 @@
                             <p class="text-sm font-black truncate" x-text="customer ? customer.name : '{{ __('messages.walk_in_customer') }}'"></p>
                             <p class="text-xs text-slate-400" x-text="customer ? '{{ __('messages.customer') }}' : '{{ __('messages.select_customer') }}'"></p>
                         </div>
-                        <button type="button" @click="$refs.customerInput.focus()"
+                        <button type="button" @click="openQuickAdd()"
                                 class="shrink-0 w-10 h-10 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 transition grid place-items-center"
                                 title="{{ __('messages.pos_quick_add_customer') }}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
@@ -366,8 +402,12 @@
                             </template>
                         </div>
                         <div x-show="copen && cq.trim() !== '' && !cresults.length" x-cloak
-                             class="absolute z-30 inset-x-0 top-full mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl px-3 py-2 text-sm text-slate-500">
-                            {{ __('messages.no_customers_found') }}
+                             class="absolute z-30 inset-x-0 top-full mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl px-3 py-2 text-sm">
+                            <p class="text-slate-500">{{ __('messages.no_customers_found') }}</p>
+                            <button type="button" @click="openQuickAdd(cq.trim())"
+                                    class="mt-1 w-full text-left px-3 py-2 rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 text-sm font-bold transition">
+                                <span x-text="labels.pos_customer_not_found_add.replace(':name', cq.trim())"></span>
+                            </button>
                         </div>
                     </div>
 

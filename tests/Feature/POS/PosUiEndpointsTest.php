@@ -290,4 +290,96 @@ class PosUiEndpointsTest extends TestCase
         $this->assertSame('posted', $sale->refresh()->status);
         $this->assertSame('4.000', $this->inventory->totalOnHand($store->id, $product->id));
     }
+
+    /* ------------------------------------------------------------------ */
+    /*  Customer quick-add (shared users + per-store membership)           */
+    /* ------------------------------------------------------------------ */
+
+    public function test_quick_add_customer_creates_user_and_store_membership(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+
+        $response = $this->postJson("/store/{$store->slug}/pos/customers", [
+            'name' => 'Daw Phyu',
+            'phone' => '09 123 456 789',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('customer.name', 'Daw Phyu');
+        $response->assertJsonPath('customer.phone', '09 123 456 789');
+
+        $user = User::where('phone', '09 123 456 789')->first();
+        $this->assertNotNull($user);
+        $this->assertSame('customer', $user->role); // role tampering impossible
+        $this->assertTrue($user->hasStoreRole($store->id, 'retail_customer'));
+    }
+
+    public function test_quick_add_customer_dedups_by_normalized_phone(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+
+        // Same person, different phone spellings — one user record only.
+        $first = $this->postJson("/store/{$store->slug}/pos/customers", [
+            'name' => 'U Ba', 'phone' => '09 123 456 789',
+        ])->assertOk();
+        $second = $this->postJson("/store/{$store->slug}/pos/customers", [
+            'name' => 'U Ba', 'phone' => '09123456789',
+        ])->assertOk();
+
+        $this->assertSame($first->json('customer.id'), $second->json('customer.id'));
+        $this->assertSame(1, User::all()->filter(fn (User $u) => User::normalizePhone($u->phone) === '9123456789')->count());
+        $this->assertArrayHasKey('cart', $second->json()); // live cart snapshot included
+    }
+
+    public function test_quick_add_customer_attaches_existing_user_from_other_store(): void
+    {
+        $storeA = $this->makeStore('shop-a');
+        $storeB = $this->makeStore('shop-b');
+        $staffA = $this->staff($storeA);
+        $staffB = $this->staff($storeB);
+
+        // A customer already enrolled at store A (by store A's own staff).
+        $this->actingAs($staffA);
+        $existing = $this->postJson("/store/{$storeA->slug}/pos/customers", [
+            'name' => 'Ma Hla', 'phone' => '09777123456',
+        ])->assertOk();
+
+        // The same person walks into store B — attaching keeps ONE user record
+        // and adds a second per-store membership (no cross-store list leak).
+        $this->actingAs($staffB);
+        $attached = $this->postJson("/store/{$storeB->slug}/pos/customers", [
+            'name' => 'Ma Hla', 'phone' => '09777123456',
+        ])->assertOk();
+
+        $this->assertSame($existing->json('customer.id'), $attached->json('customer.id'));
+        $this->assertSame(1, User::all()->filter(fn (User $u) => User::normalizePhone($u->phone) === '9777123456')->count());
+        $this->assertTrue($attached->json('customer')['id'] != null);
+        $user = User::where('id', $attached->json('customer.id'))->first();
+        $this->assertTrue($user->hasStoreRole($storeA->id, 'retail_customer'));
+        $this->assertTrue($user->hasStoreRole($storeB->id, 'retail_customer'));
+    }
+
+    public function test_quick_add_customer_rejects_staff_phone(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $this->actingAs($cashier);
+
+        // A staff account can never be claimed as a customer.
+        $this->postJson("/store/{$store->slug}/pos/customers", [
+            'name' => 'Hacker', 'phone' => $cashier->phone,
+        ])->assertStatus(422)->assertJsonPath('error', __('messages.pos_customer_staff_phone'));
+    }
+
+    public function test_quick_add_customer_validates_phone(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+
+        $this->postJson("/store/{$store->slug}/pos/customers", [
+            'name' => 'No Phone', 'phone' => '12',
+        ])->assertStatus(422)->assertJsonPath('error', __('messages.pos_customer_invalid_phone'));
+    }
 }

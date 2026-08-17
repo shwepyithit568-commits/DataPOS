@@ -2007,3 +2007,57 @@ Code များများရေးနိုင်ခြင်းကို �
 | 151 | StorefrontBrowseTest: 4 new tests (browse page + list view + hairline) |
 | 152 | Full suite: 380 tests / 1910 assertions / 0 failures |
 | 153 | Preview live checks: 390/768/1280 no overflow, console 0, localStorage ✓ |
+
+---
+
+# Design Decision — Customer Model: ecommerce + POS အတူတူ list (2026-08-17)
+
+**ဆုံးဖြတ်ချက် (အတည်ပြုပြီး):** ဖောက်သည်တစ်ယောက်ကို ဖုန်းနံပါတ်တစ်ခုတည်းနဲ့
+မှတ်ပြီး **store အလိုက် membership** နဲ့ ကိုင်တယ် — store တစ်ခုချင်းစီ
+သီးသန့် database မထားဘူး၊ POS နဲ့ ecommerce အတွက် သီးသန့် customer table
+လည်း မထားဘူး။
+
+## Model
+
+```
+users (လူတစ်ယောက် = record တစ်ခု; phone က identity key)
+  └─ store_user pivot (store_id, user_id, role, status)
+       ├─ retail_customer / wholesale_customer → အဲဒီ store ရဲ့ POS မှာ ပေါ်
+       └─ store_manager / staff → ဘယ်တော့မှ customer အဖြစ် claim လို့မရ
+       └─ customer_ledger_entries (store_id + customer_id) → store အလိုက် အကြွေး
+       └─ pos_sales / orders (store_id) → store အလိုက် မှတ်တမ်း
+```
+
+## စည်းမျဉ်းများ (အကောင်အထည်ဖော်ပြီးပြီ)
+
+1. **Ecommerce registration** (`/register`) က store ကို resolve ပြီး
+   `retail_customer, active` membership attach — online ကနေ register လုပ်တဲ့
+   ဖောက်သည်က အဲဒီ store ရဲ့ POS list မှာ ချက်ချင်း ပေါ်တယ်။
+   (အရင်က pivot မရှိလို့ လုံးဝ မပေါ်ခဲ့ဘူး)
+2. **POS quick-add** (`POST /store/{slug}/pos/customers`) က user ဖန်တီး (သို့)
+   ရှိပြီးသား normalized phone နဲ့ ပြန်သုံးပြီး **အဲဒီ store တစ်ခုတည်းအတွက်**
+   membership attach လုပ်တယ်။
+3. **Phone dedup က normalized**: `09 123 456 789` / `09123456789` /
+   `+95 912 345 6789` → တစ်ယောက်တည်း (`User::normalizePhone()` +
+   `findByNormalizedPhone()`) — user record တစ်ခုတည်း, store membership အများကြီး။
+4. **Store တစ်ခုရဲ့ list က နောက် store ကို auto မပေါက်**: store B ရဲ့ POS က
+   store B ရဲ့ members တွေပဲ ပြတယ်။ store A ရဲ့ ဖောက်သည်ကို store B မှာ
+   ထည့်ချင်ရင် store B ရဲ့ cashier က quick-add လုပ်မှ ဝင်တယ် (user အတူတူ,
+   pivot အသစ်)။
+5. **Register မှာ merge**: POS quick-add နဲ့ အရင်ဖန်တီးထားတဲ့ account
+   (random password) ကို online register လုပ်တဲ့အခါ password ထည့်ပြီး claim —
+   record တစ်ခုတည်း ဆက်တယ်။
+6. **Staff guard**: staff / manager / owner ရဲ့ ဖုန်းနံပါတ်ကို customer အဖြစ်
+   ဘယ်တော့မှ မသိမ်းနိုင်ဘူး (422 / validation error)။
+
+## သီးသန့် database မထားတဲ့ အကြောင်းရင်း
+
+- Store တစ်ခုချင်းစီ သီးသန့်ဖြစ်တာက `store_user` pivot နဲ့ ပြီးပြီ — store
+  တစ်ခုချင်းစီက ကိုယ့် list ပဲ မြင်တယ်, platform ကတော့ လူတစ်ယောက်ကို
+  record တစ်ခုတည်းနဲ့ ထားတယ်။
+- အကြွေး / ရောင်းမှတ်တမ်းတွေက store အလိုက် (`store_id`) ဖြစ်ပြီးသား — store A
+  ရဲ့ အကြွေးက store B မှာ မပေါ်ဘူး။
+- Store တစ်ခုချင်းစီ DB ခွဲရင် auth + shared users table + ledger joins အကုန်
+  ပြန်ရေးရမယ်၊ cross-store analytics/loyalty မလုပ်နိုင်တော့ဘူး။
+- ချွင်းချက်: franchise စာချုပ်အရ absolute data isolation ကို ဥပဒေအရ
+  လိုအပ်မှသာ — ဒီ project အတွက် မလို။

@@ -154,6 +154,8 @@ class ProductionBootstrapTest extends TestCase
         $user = User::where('phone', '09977777777')->firstOrFail();
 
         $this->assertSame('customer', $user->role);
-        $this->assertNull($user->getStoreRole(1));
+        // Role tampering is still blocked — the shopper is enrolled only as a
+        // retail_customer (shared ecommerce + POS list), never store_manager.
+        $this->assertSame('retail_customer', $user->getStoreRole(1));
     }
 }

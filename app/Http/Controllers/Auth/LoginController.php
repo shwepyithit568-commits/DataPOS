@@ -12,7 +12,8 @@ class LoginController extends Controller
 {
     public function create(): View
     {
-        $setting = \App\Models\StorefrontSetting::first();
+        $store = app(\App\Services\StoreContext::class)->getStore();
+        $setting = $store?->setting ?? \App\Models\StorefrontSetting::first();
 
         return view('auth.login', compact('setting'));
     }

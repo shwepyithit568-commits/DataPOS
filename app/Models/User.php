@@ -42,6 +42,47 @@ class User extends Authenticatable
     }
 
     /**
+     * Normalize a Myanmar phone cell for identity matching: strip every
+     * non-digit and a leading "09" → "9..." ("09 123 456 789" /
+     * "09123456789" / "+95 9123456789" → "9123456789"). Same rule as
+     * CustomerImportService, so POS, ecommerce and imports agree on who
+     * a phone number belongs to.
+     */
+    public static function normalizePhone(mixed $value): string
+    {
+        $digits = preg_replace('/[^0-9]/', '', (string) $value);
+
+        return $digits === null ? '' : ltrim($digits, '0');
+    }
+
+    /**
+     * Find the single user a phone number belongs to, regardless of how the
+     * stored value was formatted over the app's history (imports store digits
+     * without the leading 0, seeded/legacy rows keep "09...", POS and register
+     * store what was typed). Comparison is on the normalized form.
+     */
+    public static function findByNormalizedPhone(mixed $phone): ?self
+    {
+        $normalized = static::normalizePhone($phone);
+        if ($normalized === '') {
+            return null;
+        }
+
+        // Narrow by the trailing 3 digits — the one group that stays
+        // contiguous in every Myanmar phone spelling ("09 123 456 789",
+        // "09123456789", "+95 912 345 6789" all end in "789") — then
+        // exact-match on the normalized form so every legacy spelling is
+        // found exactly once. The LIKE is over a customers-sized table, so
+        // the few trailing-digit collisions are cheap to filter in PHP.
+        $tail = substr($normalized, -3);
+
+        return static::query()
+            ->where('phone', 'like', '%' . $tail)
+            ->get()
+            ->first(fn (self $u) => static::normalizePhone($u->phone) === $normalized);
+    }
+
+    /**
      * Web push subscriptions registered by this user's browser(s).
      */
     public function pushSubscriptions(): HasMany

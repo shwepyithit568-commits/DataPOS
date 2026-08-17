@@ -288,8 +288,10 @@ Route::prefix('store/{store_slug}')
         Route::post('/wholesale/apply', [WholesaleController::class, 'store'])->middleware('throttle:5,1');
     });
 
-// Authentication Routes (Guest)
-Route::middleware(['guest', SetLocale::class])->group(function () {
+// Authentication Routes (Guest) — store context resolved so registration
+// enrolls the shopper in the store they are signing up at (primary store by
+// default; ?store_slug=… or an X-Store-Slug header overrides for multi-store).
+Route::middleware(['guest', ResolveStoreContext::class, SetLocale::class])->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:login');
 
@@ -575,8 +577,9 @@ Route::prefix('store/{store_slug}')
             Route::get('/products-grid', [\App\POS\Http\Controllers\PosSaleController::class, 'grid'])->name('pos.products.grid');
             Route::get('/cart-state', [\App\POS\Http\Controllers\PosSaleController::class, 'cartState'])->name('pos.cart-state');
 
-            // POS customer credit/debt (SoT §17) — attach customer, collect debt.
+            // POS customer credit/debt (SoT §17) — search, quick-add, collect debt.
             Route::get('/customers', [\App\POS\Http\Controllers\PosSaleController::class, 'customers'])->name('pos.customers.search');
+            Route::post('/customers', [\App\POS\Http\Controllers\PosSaleController::class, 'addCustomer'])->name('pos.customers.add');
             Route::post('/customers/{customer}/collect', [\App\POS\Http\Controllers\PosSaleController::class, 'collect'])->name('pos.customers.collect');
             Route::post('/cart', [\App\POS\Http\Controllers\PosSaleController::class, 'addItem'])->name('pos.cart.add');
             // /cart/clear must be registered before /cart/{line} (route order).

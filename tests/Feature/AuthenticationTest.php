@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -17,8 +18,12 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_customer_can_register_and_is_assigned_customer_role(): void
+    public function test_customer_can_register_and_is_enrolled_in_store(): void
     {
+        // A single active store — registration resolves it and enrolls the
+        // shopper, so ecommerce customers appear in that store's POS list.
+        $store = Store::create(['name' => 'Shop A', 'slug' => 'shop-a', 'is_active' => true]);
+
         $response = $this->post('/register', [
             'name' => 'New Customer',
             'phone' => '09123456789',
@@ -34,6 +39,56 @@ class AuthenticationTest extends TestCase
         $this->assertNotNull($user);
         // Security check: Client role payload is ignored and role is forced to 'customer'
         $this->assertEquals('customer', $user->role);
+        // Store-scoped enrollment: ecommerce + POS share one customer list.
+        $this->assertTrue($user->hasStoreRole($store->id, 'retail_customer'));
+    }
+
+    public function test_registration_merges_existing_quick_added_account(): void
+    {
+        $store = Store::create(['name' => 'Shop A', 'slug' => 'shop-a', 'is_active' => true]);
+
+        // A POS quick-add created the account first (random password, no login).
+        $quickAdded = User::create([
+            'name' => 'Daw Phyu',
+            'phone' => '09123456789',
+            'password' => bcrypt(\Illuminate\Support\Str::random(24)),
+            'role' => 'customer',
+        ]);
+        $quickAdded->stores()->attach($store->id, ['role' => 'retail_customer', 'status' => 'active']);
+
+        // The same person registers online with the same phone — merge, not
+        // duplicate: the account gets a real password and stays one record.
+        $response = $this->post('/register', [
+            'name' => 'Daw Phyu',
+            'phone' => '09123456789',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertRedirect('/');
+        $this->assertAuthenticatedAs($quickAdded);
+        $this->assertSame(1, User::where('phone', '09123456789')->count());
+        $this->assertTrue(Hash::check('password123', $quickAdded->fresh()->password));
+    }
+
+    public function test_registration_rejects_staff_phone(): void
+    {
+        Store::create(['name' => 'Shop A', 'slug' => 'shop-a', 'is_active' => true]);
+
+        $staff = User::create([
+            'name' => 'Staff One',
+            'phone' => '09123456789',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $staff->stores()->attach(Store::first()->id, ['role' => 'staff', 'status' => 'active']);
+
+        $this->post('/register', [
+            'name' => 'Impostor',
+            'phone' => '09123456789',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ])->assertSessionHasErrors('phone');
     }
 
     public function test_customer_can_login_with_valid_credentials(): void

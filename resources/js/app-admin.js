@@ -128,6 +128,7 @@ Alpine.data('posApp', (opts = {}) => ({
     cash: '0',
     kpay: 0, wavepay: 0, cbpay: 0, mmqr: 0, credit: 0,
     cq: '', cresults: [], copen: false,
+    quickAddOpen: false, quickBusy: false, qname: '', qphone: '',
     notice: '', noticeType: '', noticeTimer: null,
 
     /* ---- init ---- */
@@ -321,6 +322,35 @@ Alpine.data('posApp', (opts = {}) => ({
     },
 
     clearCustomer() { this.customer = null; this.cq = ''; this.credit = 0; },
+
+    openQuickAdd(name = '') {
+        this.qname = name || '';
+        this.qphone = '';
+        this.quickAddOpen = true;
+        this.$nextTick(() => this.$refs.quickName?.focus());
+    },
+
+    // Quick-add a customer: POST /pos/customers creates the user + this
+    // store's retail_customer membership (shared users table, phone dedup and
+    // staff-phone guard all live server-side). The returned customer is
+    // attached to the cart like a search hit.
+    async quickAdd() {
+        if (!this.qname.trim() || !this.qphone.trim() || this.quickBusy) return;
+        this.quickBusy = true;
+        try {
+            const data = await this.fetchJson('/customers', { method: 'POST', body: new URLSearchParams({ name: this.qname.trim(), phone: this.qphone.trim() }) });
+            this.quickAddOpen = false;
+            this.cresults = [];
+            this.copen = false;
+            this.cq = '';
+            this.attach(data.customer);
+            this.flash(data.success || this.labels.pos_customer_added, 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        } finally {
+            this.quickBusy = false;
+        }
+    },
 
     /* ---- payment math ---- */
     get paid() {

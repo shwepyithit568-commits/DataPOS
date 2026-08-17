@@ -942,3 +942,51 @@ The audit Agent must not implement the full POS, rewrite Ecommerce, or modify pr
 | 1.2 | 2026-08-08 | Performance + admin redesign shipped: fonts→WOFF2 subsets (793KB→180KB), favicon 207KB→11KB + iOS PNG, admin CSS bundle split (226KB→112KB), admin clean/full-width/borderless redesign (33 pages), admin font-size 12px+, post-deploy stale-asset cleanup in deploy-datapos.sh, live deploy to datapos.com verified (HTTP 200, new assets live) | Project Owner |
 | 1.3 | 2026-08-08 | Admin UI refactor shipped + live: shell breakpoint md→lg (tablet drawer, desktop visible sidebar + collapse), mobile header overflow → "More actions" menu, 44×44px touch targets, safe-area insets, drawer :inert/Escape/backdrop, dashboard grouped KPI hierarchy (Primary/Order Status/Inventory/Business) with hairline-divided grids, compact empty chart state, calm quick actions (1 violet primary), recent-activity natural heights, quiet dividers, toolbar 44px controls, admin design system classes (admin-hairline-*, admin-stat-*, admin-empty-*, admin-primary/secondary-btn, admin-section-*); tests 268 pass (3 pre-existing storefront failures); deploy #2 DEPLOY_OK with manifest hash match + cleanup verified | Project Owner |
 
+
+---
+
+# Design Decision — Customer Model: shared ecommerce + POS list (2026-08-17)
+
+**Decision (confirmed):** One shared customer identity per phone number, with
+**per-store membership** — NOT a separate database per store, and NOT a separate
+customer table for POS vs ecommerce.
+
+## Model
+
+```
+users (one person = one record; phone is the identity key)
+  └─ store_user pivot (store_id, user_id, role, status)
+       ├─ retail_customer / wholesale_customer → visible in that store's POS
+       └─ store_manager / staff → never claimable as a customer
+       └─ customer_ledger_entries (store_id + customer_id) → per-store debt
+       └─ pos_sales / orders (store_id) → per-store history
+```
+
+## Rules (implemented)
+
+1. **Ecommerce registration** (`/register`) resolves the store and attaches a
+   `retail_customer, active` membership — an online shopper immediately appears
+   in that store's POS customer list (previously invisible: no pivot was created).
+2. **POS quick-add** (`POST /store/{slug}/pos/customers`) creates the user (or
+   reuses by normalized phone) and attaches a membership for **that store only**.
+3. **Phone dedup is normalized**: `09 123 456 789` / `09123456789` /
+   `+95 912 345 6789` → the same person (`User::normalizePhone()` +
+   `findByNormalizedPhone()`). One user record, multiple per-store memberships.
+4. **No cross-store list leak**: store B's POS only shows store B members; a
+   store-A customer becomes a store-B customer only when store B's cashier
+   quick-adds them (same user, new pivot).
+5. **Merge on register**: an account first created by a POS quick-add (random
+   password) is claimed on online registration — password set, still one record.
+6. **Staff guard**: staff / manager / owner phone numbers are never claimable as
+   customers (422 / validation error).
+
+## Why not separate databases
+
+- Per-store isolation is already achieved by the `store_user` pivot — each store
+  sees only its own list, while the platform keeps one identity per person.
+- Debt and sales ledgers are already per-store (`store_id`), so cross-store
+  money is never mixed; a store-A receivable is not visible at store B.
+- A separate DB per store would force rebuilding auth, the shared users table
+  and every ledger join, and would make cross-store analytics/loyalty impossible.
+- Exception that WOULD justify separate DBs: franchise contracts legally
+  requiring absolute data isolation — not the case for this project.
