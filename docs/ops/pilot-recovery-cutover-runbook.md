@@ -2,7 +2,7 @@
 
 > **ရည်ရွယ်ချက်:** Phase 2.5 (AlinnThit production pilot) အတွက် backup → restore → rollback → failover → cutover အကုန် ဘယ်လို လုပ်ရမယ်ဆိုတဲ့ လက်တွေ့ လုပ်ထုံးလုပ်နည်း။ Pilot မတည်မငြိမ်ခင် **ပြင်ပဖောက်သည်ကို မရောင်းရ** ဆိုတဲ့ စည်းကမ်း (ROADMAP.md Phase 2.5 exit criteria) ရဲ့ အခြေခံ။
 >
-> **အခြေအနေ:** Phase 2 (Online POS MVP, items 261–270) ပြီးပြီ · Phase 2.5 part 1 (pilot data import hub, item 271) ပြီးပြီ · ဒီ runbook က Phase 2.5 ရဲ့ ကျန် "Backup & restore test" + "Written recovery/cutover runbook" items အတွက်။
+> **အခြေအနေ:** Phase 2 (Online POS MVP, items 261–270) ပြီးပြီ · Phase 2.5 part 1 (pilot data import hub, item 271) ပြီးပြီ · **2026-08-17:** opening-stock reconciliation ✅ (`8c504ba`) + debt opening balances import ✅ (`7b354c2`) — အောက်က ၃.၁ စာရင်းတွင် မှတ်ပြီး · ဒီ runbook က Phase 2.5 ရဲ့ ကျန် "Backup & restore test" + "Written recovery/cutover runbook" items အတွက်။
 >
 > **သက်ဆိုင်သူ:** Project Owner (ဆရာကြီး) — မလုပ်ခင် ဒီဖိုင်ကို သေချာ ဖတ်ပြီး အတည်ပြုပါ။
 
@@ -561,10 +561,10 @@ Cutover ဆိုတာ နှစ်စနစ် (အဟောင်း AppSheet
 | # | အလုပ် | ဘယ်သူ | Done |
 |---|---|---|---|
 | 1 | Product / customer / supplier data import (item 271 hub) ပြီး · duplicate 0 · count ကိုက် | Owner | ☐ |
-| 2 | Opening-stock reconciliation — ledger balance vs လက်ရှိ stock (AppSheet) diff = 0 | Owner | ☐ |
-| 3 | Debt opening balances import ပြီး · receivables total ကိုက် | Owner | ☐ |
+| 2 | Opening-stock reconciliation — ledger balance vs လက်ရှိ stock (AppSheet) diff = 0 | Owner | ✅ 2026-08-17 — `/store/{slug}/pos/reconciliation` report + manager approve → diff 0 (commit `8c504ba`) — **real-data diff = 0 က cutover မှာ ပြန်စစ်ရမယ်** |
+| 3 | Debt opening balances import ပြီး · receivables total ကိုက် | Owner | ✅ 2026-08-17 — import hub **Debt tab** (commit `7b354c2`) — live: Ks 350,000 posted + collection 50,000 ✓ — **real-data import က cutover မှာ Owner လုပ်ရမယ်** |
 | 4 | Backup & restore drill ၂ ကြိမ် (၂.၄) အောင်မြင် | Owner | Drill #1 (SQLite) ✅ · Drill #2 localhost rehearsal (MySQL round-trip) ✅ 2026-08-13 (§2.6) · **production run ကျန် — deploy ပြီးမှ** |
-| 5 | Performance + store-isolation test pass (cross-store leak 0) | Owner | ✅ code-side verified 2026-08-13 — full suite **821 pass (3671 assertions)** · store-isolation batch (StoreAuthorization/StoreContextResolver/AdminStoreManagement/CustomerDebt/PosSale/PosReturn/DailyClosing/AdminUserManagement/PilotImport) **116 pass (443 assertions) — cross-store leak 0** · load testing N/A until production is live |
+| 5 | Performance + store-isolation test pass (cross-store leak 0) | Owner | ✅ code-side verified — full suite **884 pass / 4049 assertions (2026-08-17)** · store-isolation batch (StoreAuthorization/StoreContextResolver/AdminStoreManagement/CustomerDebt/PosSale/PosReturn/DailyClosing/AdminUserManagement/PilotImport/DebtOpeningImport) **cross-store leak 0** · load testing N/A until production is live |
 | 6 | ဒီ runbook ကို Owner ဖတ်ပြီး အတည်ပြု | Owner | ☐ |
 | 7 | Real cashier workflow (returns, debt, daily closing) ၁ ပတ် အသုံးပြု — issue 0 | Owner/Staff | ☐ |
 

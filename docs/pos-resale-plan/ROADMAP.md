@@ -4,7 +4,7 @@
 >
 > **ဖတ်ရမယ့်သူ:** Project Owner (ဆရာကြီး) — နားလည်ပြီး ဆွေးနွေးဖို့အတွက်
 >
-> **ရက်စွဲ:** 2026-08-10 (Revision 2) · **2026-08-13:** `03-sales-market-model.md` ကို ဒီဖိုင်ထဲ ပေါင်းထည့်ပြီးပါပြီ (အောက်က "Sales & Market Model" section) · **2026-08-17:** POS cashier session (13 commits) အခြေအနေ ထည့်သွင်းပြီး (§1.2)
+> **ရက်စွဲ:** 2026-08-10 (Revision 2) · **2026-08-13:** `03-sales-market-model.md` ကို ဒီဖိုင်ထဲ ပေါင်းထည့်ပြီးပါပြီ (အောက်က "Sales & Market Model" section) · **2026-08-17:** POS cashier session (13 commits) အခြေအနေ ထည့်သွင်းပြီး (§1.2) · **2026-08-17 (pm):** Phase 2.5 cutover features (opening-stock reconciliation + debt opening balances import) — ဒီနေ့ 17 commits (§1.2)
 
 ---
 
@@ -12,7 +12,7 @@
 
 | ဖိုင် | အကြောင်းအရာ | ဘာတွေသိရမလဲ |
 |---|---|---|
-| `ROADMAP.md` | **ခြုံငုံ အစီအစဉ် (လုပ်ပြီးသား + ဆက်ဆောက်မယ့်ဟာ)** | လက်ရှိ အခြေအနေ (Ecommerce, multi-store, PWA, POS Phase 1–2.5p1 + **Cashier Home UI + cashier session (register-lock UX, held-sale expiry, shared customers, tiered pricing, price override, manager PIN, drag-to-scroll)** — **867 tests pass 2026-08-17**) + Implementation Phases: Phase 0 (Decisions) → 1 (Foundation) → 2 (Online POS MVP) → 2.5 (AlinnThit Pilot) → 3 (Cloud PWA offline) → 4 (Operations) → 5 (Local + Resale) → 6 (Industry packs) |
+| `ROADMAP.md` | **ခြုံငုံ အစီအစဉ် (လုပ်ပြီးသား + ဆက်ဆောက်မယ့်ဟာ)** | လက်ရှိ အခြေအနေ (Ecommerce, multi-store, PWA, POS Phase 1–2.5 + **Cashier Home UI + cashier session (register-lock UX, held-sale expiry, shared customers, tiered pricing, price override, manager PIN, drag-to-scroll)** + **Phase 2.5 cutover (opening-stock reconciliation, debt opening balances)** — **884 tests pass 2026-08-17**) + Implementation Phases: Phase 0 (Decisions) → 1 (Foundation) → 2 (Online POS MVP) → 2.5 (AlinnThit Pilot) → 3 (Cloud PWA offline) → 4 (Operations) → 5 (Local + Resale) → 6 (Industry packs) |
 | `02-target-design.md` | **လိုချင်တဲ့ ပုံစံ** | Architecture — တစ်ခုတည်းသော codebase, deployment model ၂ မျိုး (Cloud SaaS / Local install), shared inventory ledger, money/rounding policy, POS sale state machine, cashier shift |
 | ~~`03-sales-market-model.md`~~ | ~~စျေးကွက်အလိုက် ရောင်းချ/ထိန်းချုပ်ပုံ~~ | **2026-08-13: ဒီ `ROADMAP.md` ထဲ ပေါင်းပြီး** — အောက်က "Sales & Market Model" section ကြည့်ပါ |
 
@@ -195,9 +195,9 @@
 | Frontend | Blade + **Alpine.js** + **Tailwind CSS v4** (CSS-based `@theme`) |
 | Assets | Vite — `app.css`/`app.js` (storefront) + `admin.css`/`app-admin.js` (admin) သီးခြား |
 | Deploy | `deploy-datapos.sh` — **⚠️ အရင် project ရဲ့ live ကို သွားတဲ့ script — DataPOS အတွက် မသုံးရသေး** (README ကြည့်ပါ) |
-| Testing | **867 tests pass / 3939 assertions** — PHPUnit, SQLite local (2026-08-17 run ပြီး) |
+| Testing | **884 tests pass / 4049 assertions** — PHPUnit, SQLite local (2026-08-17 run ပြီး) |
 | Dev server | `php artisan serve --port=8501` (README/.env အတိုင်း) |
-| Git | main · remote `github.com/shwepyithit568-commits/DataPOS.git` · **local = origin/main (in sync, 2026-08-17 — cashier session 13 commits push ပြီး, HEAD `ae70fde`)** |
+| Git | main · remote `github.com/shwepyithit568-commits/DataPOS.git` · **local = origin/main (in sync, 2026-08-17 — ဒီနေ့ 17 commits push ပြီး, HEAD `7b354c2`)** |
 
 ---
 
@@ -248,13 +248,19 @@
 - **Manager PIN approval** — per-store threshold (%) ထက် ပိုလျှော့တဲ့ override ကို manager/owner PIN နဲ့သာ (`users.pos_pin`, hashed) — approver က `pos_sale_items.approved_by` အထိ audit
 - **Mouse drag-to-scroll** — horizontal chip rows (module/category/brand) ကို desktop မှာ မောက်နဲ့ ဆွဲလို့ရ (chip click တွေ မကျိုး)
 
+### Phase 2.5 cutover — reconciliation + debt import (2026-08-17 pm, commits `8c504ba` + `7b354c2`)
+
+- **Opening-stock reconciliation** — `/store/{slug}/pos/reconciliation`: imported (approved OSR) vs ledger opening position per product → diff report (summary cards + "ကွာခြားချက်များသာ" filter, staff view / manager approve) → manager approves → `adjustment_in/out` corrections converge diff → 0 · `REC-YYYYMMDD-####` + per-line snapshot (`inventory_reconciliation_items`) + audit · insufficient-stock rollback
+- **Debt opening balances** — pilot import hub **Debt tab** (`/admin/pilot-import/debt`): CSV/XLSX `phone, amount[, notes]` → dry-run preview (customer + current balance per row) → confirm posts **immutable `opening_balance` ledger entries** (SoT §17, source `manual`) · idempotent (client_transaction_id) + cross-store guard + audit `debt_opening_imported` + ImportHistory + error reports · no migration needed
+- **Live verified (preview)** — reconciliation converged diff = 0 (`REC-20260817-0001`, Mg Hla approve) · debt import Ks 350,000 posted (Ma Su 150,000 + Daw Phyu 200,000) → collection 50,000 → receivables **350,000 → 300,000** ✓
+
 ---
 
 ## ၁.၃ မရှိသေးတဲ့အရာများ (ဆက်ဆောက်ရမယ့်ဟာ) ❌
 
 | အပိုင်း | ဘယ် Phase | မှတ်ချက် |
 |---|---|---|
-| Pilot data import — opening-stock reconciliation, debt opening balances | Phase 2.5 | import hub (part 1) ပြီးပြီ — ကျန် |
+| ~~Pilot data import — opening-stock reconciliation, debt opening balances~~ | Phase 2.5 | ✅ **2026-08-17 အကုန်ပြီး** — import hub part 1 (item 271) + reconciliation (`8c504ba`) + Debt tab (`7b354c2`) — §1.2 |
 | AppSheet/Google Sheets parallel validation + real cashier usage + stabilization | Phase 2.5 | pilot ကာလ အလုပ် |
 | Backup & restore test (versioned workflow) | Phase 2.5 | runbook (`docs/ops/pilot-recovery-cutover-runbook.md`) — Drill #1 (SQLite) ✅ · §2.5A local MySQL ✅ · Drill #2 localhost rehearsal ✅ (2026-08-13, runbook §2.6) · **production drill ကျန် — deploy ပြီးမှ** |
 | `/pos` PWA offline queue — IndexedDB, idempotent sync API, device registration | Phase 3 | storefront SW နဲ့ မရော |
@@ -285,8 +291,9 @@ Final Burmese/English/Chinese terminology
 
 1. ~~**Git sync**~~ — ✅ ပြီးပြီ (2026-08-13): docs consolidation `19222c1` + fix ၂ ခု `8fe8228` / `adb155a` (CashierShiftController အပါအဝင်) — origin/main နဲ့ in sync
 2. ~~**POS cashier session (2026-08-17)**~~ — ✅ ပြီးပြီ: 13 commits (register-lock UX → held-sale expiry → shared customer model → tiered pricing → price override + manager PIN → drag-to-scroll) — §1.2 "POS cashier session" + CHANGELOG.md
-3. **Phase 2.5 ကျန်** — opening-stock reconciliation → debt opening balances → backup/restore drill →
-   real cashier usage (ဆိုင်မှာ တကယ်သုံး) → parallel validation → stabilization (ဒီဖိုင် Phase 2.5 exit criteria)
+3. **Phase 2.5 ကျန်** — ~~opening-stock reconciliation~~ ✅ (`8c504ba`) → ~~debt opening balances~~ ✅ (`7b354c2`) →
+   backup/restore **production drill** (deploy ပြီးမှ) → real cashier usage (ဆိုင်မှာ တကယ်သုံး) →
+   parallel validation → stabilization (ဒီဖိုင် Phase 2.5 exit criteria)
 4. **Phase 3 — Cloud PWA Offline Queue** — `/pos/sw.js` + IndexedDB + idempotent sync API + device registration
 5. **Phase 4 — Operations Modules** (purchasing, transfers, service, expenses, reports, period closing)
 6. **Phase 5 — Local LAN/SQLite Edition + Resale Readiness**
@@ -300,7 +307,7 @@ Final Burmese/English/Chinese terminology
 2. **Ledger/sales/shifts/closings immutable** — မှားရင် reversal/correction document နဲ့သာ ပြင်ရမယ် (SoT §15.1)
 3. **Service worker scope** — POS အတွက် `/pos/sw.js` သီးခြား — storefront SW (web push) မထိရ (SoT §4.3)
 4. **ဖိုင်နာမည်တွေ** — `CHANGELOG.md` က history (items 1–271) · အသစ်တွေ → `CHANGELOG.md`
-5. **GitHub က local နဲ့ in sync (2026-08-17)** — POS cashier session 13 commits အကုန် origin/main ကို push ပြီး · working tree clean · HEAD = `ae70fde`
+5. **GitHub က local နဲ့ in sync (2026-08-17)** — ဒီနေ့ commit 17 ခု အကုန် origin/main ကို push ပြီး (cashier session + Phase 2.5 cutover features) · working tree clean · HEAD = `7b354c2`
 6. **Port** — ဒီ project = **8501** (အရင် docs ရဲ့ 8500/8577 နဲ့ မရော)
 7. **Deploy-datapos.sh က DataPOS live ကို မသွားရသေးဘူး** — pilot/resale အဆင့် ရောက်မှ deploy script အသစ် ရေးရမယ်
 
@@ -415,8 +422,8 @@ Final Burmese/English/Chinese terminology
 | အလုပ် | အသေးစိတ် |
 |---|---|
 | Clean product/customer/supplier data | ✅ item 271 — `/admin/pilot-import` hub (Products/Customers/Suppliers tabs): CSV/XLSX upload → **dry-run preview** (validation + duplicate detection: SKU / phone / phone-then-name) → confirm → ImportHistory + error reports · `suppliers` master table · templates |
-| Opening-stock reconciliation | Ledger vs လက်ရှိ |
-| Debt opening balances | Receivables import |
+| Opening-stock reconciliation | ✅ **2026-08-17** — `/pos/reconciliation`: imported (approved OSR) vs ledger opening position → diff report → manager approve → adjustment corrections converge diff = 0 · REC numbers + per-line snapshot + audit (§1.2, commit `8c504ba`) |
+| Debt opening balances | ✅ **2026-08-17** — import hub **Debt tab**: CSV `phone, amount` → dry-run preview → confirm posts `opening_balance` ledger entries (SoT §17) · idempotent + audit + error reports (§1.2, commit `7b354c2`) |
 | AppSheet/Google Sheets parallel validation | နှစ်စနစ် တွဲပြေး → ကိုက်ကြောင်း စစ် |
 | Real cashier workflow | တကယ့် ဆိုင်မှာ သုံး |
 | Returns/refunds + customer debt + daily closing | MVP features တွေ real usage |
