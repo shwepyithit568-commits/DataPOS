@@ -119,12 +119,19 @@ class PosSaleService
             ->limit($limit)
             ->get();
 
-        return $products->map(function (Product $p) use ($store, $customer) {
+        // Resolve the tier once — the card shows the retail-vs-tier discount
+        // when a wholesale customer is attached (gridProducts is the only
+        // caller that needs the comparison; search keeps the plain price).
+        $isWholesale = $this->customerTier($store->id, $customer);
+
+        return $products->map(function (Product $p) use ($store, $customer, $isWholesale) {
             return [
                 'id' => $p->id,
                 'name' => $p->name,
                 'sku' => $p->sku,
                 'price' => $this->priceFor($customer, $p),
+                'retail_price' => (string) $p->retail_price,
+                'tier' => $isWholesale ? 'wholesale' : 'retail',
                 'old_price' => $p->old_price !== null ? (string) $p->old_price : null,
                 'image' => $p->image_path ? asset('storage/' . $p->image_path) : null,
                 'balance' => $this->inventory->totalOnHand($store->id, $p->id),
@@ -136,6 +143,7 @@ class PosSaleService
                     'name' => $v->name,
                     'sku' => $v->sku,
                     'price' => $this->priceFor($customer, $p, $v),
+                    'retail_price' => (string) ($v->retail_price ?? $p->retail_price),
                     'balance' => $this->inventory->totalOnHand($store->id, $p->id, $v->id),
                 ])->values()->all(),
             ];
@@ -170,13 +178,31 @@ class PosSaleService
     }
 
     /**
+     * True when the customer is a wholesale member of the store. The memberships
+     * relation is loaded once per user and then cached on the model instance
+     * (fresh per request / test), so grid/search loops over many products don't
+     * re-query the pivot for every row.
+     */
+    private function customerTier(int $storeId, ?User $customer): bool
+    {
+        if ($customer === null) {
+            return false;
+        }
+
+        $customer->loadMissing('stores');
+        $membership = $customer->stores->firstWhere('id', $storeId)?->pivot;
+
+        return $membership?->status === 'active' && $membership->role === 'wholesale_customer';
+    }
+
+    /**
      * Tiered unit price for a product/variant. Wholesale customers pay the
      * wholesale price when one is set (> 0); everyone else (walk-in, retail
      * customers) pays retail. Mirrors the storefront wholesale rule.
      */
     public function priceFor(?User $customer, Product $product, ?ProductVariant $variant = null): string
     {
-        if ($customer !== null && $customer->getStoreRole($product->store_id) === 'wholesale_customer') {
+        if ($this->customerTier($product->store_id, $customer)) {
             $wholesale = $variant?->wholesale_price ?? $product->wholesale_price;
             if ($wholesale !== null && bccomp((string) $wholesale, '0', 2) > 0) {
                 return (string) $wholesale;
@@ -327,6 +353,7 @@ class PosSaleService
             $price = $this->priceFor($customer, $product, $variant);
             $quantity = $line['quantity'];
 
+            $retailPrice = (string) ($variant?->retail_price ?? $product->retail_price);
             $out[] = [
                 'index' => $i,
                 'product_id' => $product->id,
@@ -335,7 +362,9 @@ class PosSaleService
                 'name' => $name,
                 'sku' => $variant?->sku ?? $product->sku,
                 'unit_price' => (string) $price,
+                'retail_unit_price' => $retailPrice,
                 'line_total' => bcmul((string) $price, $quantity, 2),
+                'line_retail_total' => bcmul($retailPrice, $quantity, 2),
                 'balance' => $this->inventory->totalOnHand($store->id, $product->id, $variant?->id),
                 'product' => $product,
             ];
@@ -345,17 +374,20 @@ class PosSaleService
     }
 
     /**
-     * @return array{subtotal:string, discount:string, total:string}
+     * @return array{subtotal:string, retail_subtotal:string, discount:string, total:string}
      */
     public function cartTotals(Store $store): array
     {
         $subtotal = '0';
+        $retailSubtotal = '0';
         foreach ($this->cartResolved($store) as $line) {
             $subtotal = bcadd($subtotal, $line['line_total'], 2);
+            $retailSubtotal = bcadd($retailSubtotal, $line['line_retail_total'], 2);
         }
 
         return [
             'subtotal' => $subtotal,
+            'retail_subtotal' => $retailSubtotal,
             'discount' => '0',
             'total' => $subtotal,
         ];
@@ -382,7 +414,9 @@ class PosSaleService
                 'sku' => $line['sku'],
                 'quantity' => $line['quantity'],
                 'unit_price' => $line['unit_price'],
+                'retail_unit_price' => $line['retail_unit_price'],
                 'line_total' => $line['line_total'],
+                'line_retail_total' => $line['line_retail_total'],
                 'balance' => $line['balance'],
             ];
         }, $this->cartResolved($store));

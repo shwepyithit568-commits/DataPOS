@@ -955,6 +955,7 @@ return [
     'pos_customer_attached' => 'ဖောက်သည် ရွေးပြီးပါပြီ',
     'pos_customer_detached' => 'ဖောက်သည်ကို ဖယ်ပြီးပါပြီ — walk-in',
     'pos_wholesale_type_hint' => 'ဒီဖောက်သည်ကို လက်ကားဈေးဖြင့် ရောင်းချမည်။',
+    'pos_tier_total_savings' => 'လက်ကား သက်သာငွေ',
     'phone_invalid' => 'ဖုန်းနံပါတ် မမှန်ကန်ပါ — ဂဏန်း ၇-၁၅ လုံး သုံးပါ။',
     'phone_already_registered' => 'ဒီဖုန်းနံပါတ်ကို ဝန်ထမ်းအဖြစ် မှတ်ပုံတင်ပြီးသားပါ။',
     'pos_recall_order' => 'သိမ်းထားသော အမှာစာများ',

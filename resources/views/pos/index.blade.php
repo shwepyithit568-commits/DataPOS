@@ -277,8 +277,14 @@
                                 <p class="text-sm font-bold leading-snug line-clamp-2 min-h-[2.5em]" x-text="p.name"></p>
                                 <div class="mt-2 flex items-end justify-between gap-2">
                                     <div class="min-w-0">
-                                        <p class="text-[11px] text-rose-500 font-bold line-through" x-show="p.old_price && parseFloat(p.old_price) > parseFloat(p.price)" x-text="'Ks ' + Number(p.old_price).toLocaleString()"></p>
+                                        {{-- Retail/walk-in: show the sale (old) price struck through --}}
+                                        <p class="text-[11px] text-rose-500 font-bold line-through" x-show="p.tier !== 'wholesale' && p.old_price && parseFloat(p.old_price) > parseFloat(p.price)" x-text="'Ks ' + Number(p.old_price).toLocaleString()"></p>
+                                        {{-- Wholesale tier: strike the retail price the shopper is NOT paying --}}
+                                        <p class="text-[11px] text-rose-500 font-bold line-through" x-show="p.tier === 'wholesale' && parseFloat(p.retail_price) > parseFloat(p.price)" x-text="'Ks ' + Number(p.retail_price).toLocaleString()"></p>
                                         <p class="text-base font-extrabold text-blue-600 dark:text-blue-400 leading-none" x-text="'Ks ' + Number(p.price).toLocaleString()"></p>
+                                        <p class="text-[10px] font-black text-amber-600 dark:text-amber-400"
+                                           x-show="p.tier === 'wholesale' && parseFloat(p.retail_price) > parseFloat(p.price)"
+                                           x-text="'−Ks ' + (parseFloat(p.retail_price) - parseFloat(p.price)).toLocaleString()"></p>
                                     </div>
                                     <button type="button" @click="addProduct(p)" :disabled="parseFloat(p.balance) <= 0"
                                             class="shrink-0 w-10 h-10 rounded-xl bg-blue-600 text-white grid place-items-center shadow-lg shadow-blue-600/30 hover:bg-blue-500 active:scale-90 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
@@ -459,7 +465,9 @@
                             <div class="flex items-start justify-between gap-2">
                                 <div class="min-w-0">
                                     <p class="text-sm font-bold leading-snug truncate" x-text="line.name"></p>
-                                    <p class="text-xs text-slate-400 font-mono mt-0.5" x-text="'Ks ' + Number(line.unit_price).toLocaleString()"></p>
+                                    <p class="text-[10px] text-rose-500 font-bold line-through mt-0.5" x-show="parseFloat(line.retail_unit_price) > parseFloat(line.unit_price)" x-text="'Ks ' + Number(line.retail_unit_price).toLocaleString()"></p>
+                                    <p class="text-xs font-mono mt-0.5" :class="parseFloat(line.retail_unit_price) > parseFloat(line.unit_price) ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-400'" x-text="'Ks ' + Number(line.unit_price).toLocaleString()"></p>
+                                    <p class="text-[10px] font-black text-amber-600 dark:text-amber-400" x-show="parseFloat(line.retail_unit_price) > parseFloat(line.unit_price)" x-text="'−Ks ' + (parseFloat(line.retail_unit_price) - parseFloat(line.unit_price)).toLocaleString()"></p>
                                 </div>
                                 <button type="button" @click="removeLine(line)"
                                         class="shrink-0 w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 grid place-items-center transition">
@@ -488,6 +496,10 @@
                     <p class="flex justify-between text-sm text-slate-500 dark:text-slate-400 mb-1">
                         <span>{{ __('messages.subtotal') }}</span>
                         <span class="font-bold text-slate-700 dark:text-slate-200" x-text="'Ks ' + Number(cart.totals.subtotal).toLocaleString()"></span>
+                    </p>
+                    <p class="flex justify-between text-sm text-amber-600 dark:text-amber-400 mb-1" x-show="Number(cart.totals.retail_subtotal) > Number(cart.totals.total)">
+                        <span>🏷️ {{ __('messages.pos_tier_total_savings') }}</span>
+                        <span class="font-bold" x-text="'−Ks ' + (Number(cart.totals.retail_subtotal) - Number(cart.totals.total)).toLocaleString()"></span>
                     </p>
                     <div class="border-t border-dashed border-slate-200 dark:border-slate-700 my-2.5"></div>
                     <p class="flex justify-between items-center mb-4">
@@ -556,6 +568,7 @@
                                 <span class="block text-[11px] text-slate-500 font-mono" x-text="v.sku || ''"></span>
                             </span>
                             <span class="shrink-0 text-right">
+                                <span class="block text-[10px] text-rose-500 font-bold line-through" x-show="variantProduct.tier === 'wholesale' && parseFloat(v.retail_price) > parseFloat(v.price)" x-text="'Ks ' + Number(v.retail_price).toLocaleString()"></span>
                                 <span class="block text-sm font-black text-blue-600 dark:text-blue-400" x-text="'Ks ' + Number(v.price).toLocaleString()"></span>
                                 <span class="block text-[10px] font-bold" :class="parseFloat(v.balance) > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'"
                                       x-text="parseFloat(v.balance) > 0 ? ('×' + v.balance) : labels.out_of_stock"></span>
@@ -594,6 +607,10 @@
                     @endforeach
 
                     <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 text-sm space-y-1">
+                        <p class="flex justify-between" x-show="Number(cart.totals.retail_subtotal) > Number(cart.totals.total)">
+                            <span class="text-amber-600 dark:text-amber-400">🏷️ {{ __('messages.pos_tier_total_savings') }}</span>
+                            <span class="font-black text-amber-600 dark:text-amber-400" x-text="'−Ks ' + (Number(cart.totals.retail_subtotal) - Number(cart.totals.total)).toLocaleString()"></span>
+                        </p>
                         <p class="flex justify-between"><span class="text-slate-500">{{ __('messages.total') }}</span><span class="font-black" x-text="'Ks ' + Number(cart.totals.total).toLocaleString()"></span></p>
                         <p class="flex justify-between" x-show="remaining !== 0">
                             <span class="text-slate-500">{{ __('messages.subtotal') }} (ကျန်)</span>

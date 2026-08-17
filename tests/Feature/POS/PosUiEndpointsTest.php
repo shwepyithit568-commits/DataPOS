@@ -408,6 +408,12 @@ class PosUiEndpointsTest extends TestCase
         $cart = $this->getJson("/store/{$store->slug}/pos/cart-state")->json('cart');
         $this->assertSame('9000.00', $cart['lines'][0]['unit_price']);
         $this->assertSame('9000.00', $cart['totals']['total']);
+
+        // The line + totals carry the retail comparison so the cashier sees
+        // the discount being applied (Ks 10,000 retail → Ks 9,000 wholesale).
+        $this->assertSame('10000.00', $cart['lines'][0]['retail_unit_price']);
+        $this->assertSame('10000.00', $cart['lines'][0]['line_retail_total']);
+        $this->assertSame('10000.00', $cart['totals']['retail_subtotal']);
     }
 
     public function test_quick_add_retail_customer_keeps_retail_pricing(): void
@@ -468,6 +474,8 @@ class PosUiEndpointsTest extends TestCase
 
         $grid = $this->getJson("/store/{$store->slug}/pos/products-grid")->json('products');
         $this->assertSame('10000.00', $grid[0]['price']);
+        $this->assertSame('retail', $grid[0]['tier']);
+        $this->assertSame('10000.00', $grid[0]['retail_price']);
 
         $this->postJson("/store/{$store->slug}/pos/customers", [
             'name' => 'U Mya', 'phone' => '09777444555', 'type' => 'wholesale_customer',
@@ -475,6 +483,9 @@ class PosUiEndpointsTest extends TestCase
 
         $grid = $this->getJson("/store/{$store->slug}/pos/products-grid")->json('products');
         $this->assertSame('9000.00', $grid[0]['price']);
+        $this->assertSame('wholesale', $grid[0]['tier']);
+        // The card shows the retail comparison so the cashier sees the discount.
+        $this->assertSame('10000.00', $grid[0]['retail_price']);
     }
 
     public function test_customers_search_returns_role_for_tier_badge(): void

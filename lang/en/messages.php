@@ -955,6 +955,7 @@ return [
     'pos_customer_attached' => 'Customer attached',
     'pos_customer_detached' => 'Customer removed — walk-in',
     'pos_wholesale_type_hint' => 'This customer will be charged wholesale prices.',
+    'pos_tier_total_savings' => 'Wholesale savings',
     'phone_invalid' => 'Invalid phone number — use 7-15 digits.',
     'phone_already_registered' => 'This phone is already registered as staff.',
     'pos_recall_order' => 'Held orders',

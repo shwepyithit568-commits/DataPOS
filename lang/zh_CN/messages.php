@@ -955,6 +955,7 @@ return [
     'pos_customer_attached' => '已选择客户',
     'pos_customer_detached' => '已移除客户 — 散客',
     'pos_wholesale_type_hint' => '此客户将按批发价收费。',
+    'pos_tier_total_savings' => '批发节省',
     'phone_invalid' => '电话号码无效 — 请输入 7-15 位数字。',
     'phone_already_registered' => '此号码已注册为员工。',
     'pos_recall_order' => '挂单记录',

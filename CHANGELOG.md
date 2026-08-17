@@ -2615,3 +2615,22 @@ Confirm Import လုပ်တဲ့အခါ 500 မတက်တော့ဘူ
   and a posted sale records the resolved customer id + tier unit prices.
 - Tests: 5 new (logged-in wholesale resolution, explicit walk-in/attach
   override, staff stays walk-in, posted sale records the logged-in customer).
+
+### 2026-08-17 — POS: wholesale discount shown on product cards
+
+- `gridProducts` now returns `tier` (`wholesale`/`retail`) + `retail_price`
+  (products and variants) so the cashier sees the retail-vs-wholesale gap.
+- Product cards (and the variant picker) strike the retail price and show a
+  amber `−Ks X` savings line when a wholesale customer is attached; the sale
+  (old) price strikethrough stays for retail/walk-in only.
+- Tier lookup memoized via the loaded `stores` relation (no per-row pivot
+  queries in the grid loop).
+
+### 2026-08-17 — POS: wholesale savings on cart lines + payment screen
+
+- `cartResolved` lines now carry `retail_unit_price` + `line_retail_total`, and
+  `cartTotals` adds `retail_subtotal` — the retail-vs-wholesale gap flows to
+  the UI with no extra queries (same cart, two price columns).
+- Cart line items strike the retail price, show the wholesale price and an
+  amber `−Ks X` per-line savings; the cart summary and payment modal show the
+  total `လက်ကား သက်သာငွေ` (wholesale savings) before posting.
