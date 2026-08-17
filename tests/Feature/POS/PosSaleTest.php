@@ -673,6 +673,107 @@ class PosSaleTest extends TestCase
     }
 
     /* ------------------------------------------------------------------ */
+    /*  Logged-in customer resolution (storefront session → register)      */
+    /* ------------------------------------------------------------------ */
+
+    public function test_cart_customer_resolves_from_logged_in_wholesale_customer(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, ['retail_price' => 10000, 'wholesale_price' => 9000]);
+        $this->seedStock($store, $product);
+        $wholesale = $this->customer($store, 'wholesale_customer');
+
+        // The wholesale shopper is the authenticated session (they logged into
+        // the storefront); the register prices their cart at their tier with
+        // no explicit attach.
+        $this->actingAs($wholesale);
+        $this->sales->addToCart($store, $product->id, null, '1');
+
+        $this->assertSame($wholesale->id, $this->sales->cartCustomer($store)?->id);
+        $this->assertSame('9000.00', $this->sales->cartResolved($store)[0]['unit_price']);
+        $this->assertSame('9000.00', $this->sales->cartTotals($store)['total']);
+
+        $state = $this->sales->cartState($store, $cashier);
+        $this->assertSame($wholesale->id, $state['customer']['id']);
+        $this->assertSame('wholesale_customer', $state['customer']['role']);
+    }
+
+    public function test_explicit_walk_in_overrides_logged_in_customer(): void
+    {
+        $store = $this->makeStore();
+        $product = $this->makeProduct($store, ['retail_price' => 10000, 'wholesale_price' => 9000]);
+        $this->seedStock($store, $product);
+        $wholesale = $this->customer($store, 'wholesale_customer');
+
+        $this->actingAs($wholesale);
+        $this->sales->addToCart($store, $product->id, null, '1');
+
+        // The cashier deliberately drops to walk-in — retail pricing despite
+        // the logged-in wholesale shopper.
+        $this->sales->attachCartCustomer($store, null);
+        $this->assertNull($this->sales->cartCustomer($store));
+        $this->assertSame('10000.00', $this->sales->cartResolved($store)[0]['unit_price']);
+    }
+
+    public function test_explicit_attach_overrides_logged_in_customer(): void
+    {
+        $store = $this->makeStore();
+        $product = $this->makeProduct($store, ['retail_price' => 10000, 'wholesale_price' => 9000]);
+        $this->seedStock($store, $product);
+        $wholesale = $this->customer($store, 'wholesale_customer');
+        $retail = $this->customer($store, 'retail_customer', '09999990002');
+
+        $this->actingAs($wholesale);
+        $this->sales->addToCart($store, $product->id, null, '1');
+
+        // The cashier picks a different customer from search — their tier wins.
+        $this->sales->attachCartCustomer($store, $retail);
+        $this->assertSame($retail->id, $this->sales->cartCustomer($store)?->id);
+        $this->assertSame('10000.00', $this->sales->cartResolved($store)[0]['unit_price']);
+    }
+
+    public function test_logged_in_staff_is_not_auto_attached(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, ['retail_price' => 10000, 'wholesale_price' => 9000]);
+        $this->seedStock($store, $product);
+
+        $this->actingAs($cashier);
+        $this->sales->addToCart($store, $product->id, null, '1');
+
+        // Staff have no customer membership — the register stays walk-in.
+        $this->assertNull($this->sales->cartCustomer($store));
+        $this->assertSame('10000.00', $this->sales->cartResolved($store)[0]['unit_price']);
+    }
+
+    public function test_posted_sale_records_logged_in_customer_and_tier(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, ['retail_price' => 10000, 'wholesale_price' => 9000]);
+        $this->seedStock($store, $product);
+        $shift = $this->openShift($store, $cashier);
+        $wholesale = $this->customer($store, 'wholesale_customer');
+
+        $this->actingAs($wholesale);
+        $this->sales->addToCart($store, $product->id, null, '1');
+
+        $sale = $this->sales->post(
+            $store,
+            $this->sales->cartLines($store),
+            [['method' => 'cash', 'amount' => '9000']],
+            $cashier,
+            $shift,
+        );
+
+        $this->assertSame('9000.00', (string) $sale->total);
+        $this->assertSame('9000.00', (string) $sale->items->first()->unit_price);
+        $this->assertSame($wholesale->id, (int) $sale->customer_id);
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  Receipt (print / reprint audit)                                    */
     /* ------------------------------------------------------------------ */
 

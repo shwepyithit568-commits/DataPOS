@@ -990,3 +990,23 @@ users (one person = one record; phone is the identity key)
   and every ledger join, and would make cross-store analytics/loyalty impossible.
 - Exception that WOULD justify separate DBs: franchise contracts legally
   requiring absolute data isolation — not the case for this project.
+
+---
+
+## Design Decision — POS cart customer resolution (logged-in shopper tier)
+
+The POS cart customer resolves in this order:
+
+1. **Explicit cashier choice always wins** — attach (search hit / quick-add)
+   uses that customer's tier; detach stores an explicit *walk-in* sentinel so
+   it survives the fallback below.
+2. **Logged-in customer fallback** — when nothing is explicitly set, the cart
+   customer is the authenticated user **if they are an active retail/wholesale
+   customer of this store**. A wholesale shopper who logged into the storefront
+   therefore keeps their **wholesale tier** at the register without the cashier
+   re-selecting them (grid, variant picker, cart, and posted sale all price at
+   the tier; the posted sale records the resolved `customer_id`).
+
+Staff / managers / the platform owner are never auto-attached — they have no
+customer membership, so the register stays walk-in (retail) as before. Rule #6
+(staff phone never claimable) is unaffected.

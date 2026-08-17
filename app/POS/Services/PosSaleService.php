@@ -188,7 +188,9 @@ class PosSaleService
 
     /**
      * Attach a customer to the cart (server-side) so the whole POS prices at
-     * their tier — walk-in (null) resets to retail pricing.
+     * their tier — walk-in (null) resets to retail pricing. An explicit
+     * walk-in is stored as a sentinel (0) so it overrides the logged-in
+     * customer fallback: a cashier can deliberately drop the tier mid-sale.
      */
     public function attachCartCustomer(Store $store, ?User $customer): void
     {
@@ -196,18 +198,35 @@ class PosSaleService
             throw new InventoryException('The selected customer does not belong to this store.');
         }
 
-        session([$this->cartCustomerKey($store) => $customer?->id]);
+        session([$this->cartCustomerKey($store) => $customer?->id ?? 0]);
     }
 
     /**
      * The customer currently attached to the cart, or null (walk-in → retail).
+     *
+     * Resolution order:
+     *   1. The cashier's explicit choice (attach / quick-add / detach) always
+     *      wins — including an explicit walk-in.
+     *   2. Otherwise the authenticated user, when they are an active
+     *      retail/wholesale customer of this store — so a customer who logged
+     *      into the storefront keeps their tier (wholesale pricing) at the
+     *      register without the cashier re-selecting them.
+     *
      * Stale ids (customer removed/deactivated) resolve to null.
      */
     public function cartCustomer(Store $store): ?User
     {
-        $id = session()->get($this->cartCustomerKey($store));
+        $key = $this->cartCustomerKey($store);
+        $id = session()->get($key, 'unset');
+
+        if ($id === 'unset') {
+            $user = auth()->user();
+
+            return ($user !== null && $this->isStoreCustomer($store, $user)) ? $user : null;
+        }
+
         if (! $id) {
-            return null;
+            return null; // explicit walk-in
         }
 
         $user = User::find($id);

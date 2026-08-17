@@ -222,6 +222,9 @@ Alpine.data('posApp', (opts = {}) => ({
         if (data.cart) {
             this.cart = data.cart;
             this.customer = data.cart.customer || null;
+            // Auto-resolved customer (logged-in storefront shopper): reflect
+            // the name in the search box too, so the panel reads naturally.
+            if (this.customer && !this.cq) this.cq = this.customer.name;
         }
         return data.cart ? (data.cart.expired_count || 0) : 0;
     },

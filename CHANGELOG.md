@@ -2599,3 +2599,19 @@ Confirm Import လုပ်တဲ့အခါ 500 မတက်တော့ဘူ
   quick-add/register = ရိုက်ထည့်တဲ့အတိုင်း) — ရှာတဲ့အခါ `findByNormalizedPhone()` က
   format မခွဲခြားဘဲ မှန်ကန်အောင် ရှာပေးတယ်။ နောက်ပိုင်း ဖြည်းဖြည်းချင်း normalized
   format တစ်ခုတည်းကို ပြောင်းနိုင်တယ် (data migration + login normalize နဲ့)။
+
+---
+
+## 2026-08-17 — POS: logged-in customer resolves the cart tier
+
+- **Cart customer auto-resolution** (`PosSaleService::cartCustomer`): when no
+  cashier has explicitly attached/detached a customer, the POS cart falls back
+  to the **authenticated user** if they are an active retail/wholesale customer
+  of the store — so a wholesale shopper who logged into the storefront keeps
+  their **wholesale tier** at the register without re-selection.
+- Explicit cashier choice always wins: attach → that customer's tier;
+  detach → walk-in (retail), stored as a sentinel so it survives the fallback.
+- `cartState` payload + grid/search pricing already flow from this resolution,
+  and a posted sale records the resolved customer id + tier unit prices.
+- Tests: 5 new (logged-in wholesale resolution, explicit walk-in/attach
+  override, staff stays walk-in, posted sale records the logged-in customer).

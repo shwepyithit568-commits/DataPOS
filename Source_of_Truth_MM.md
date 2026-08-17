@@ -2061,3 +2061,22 @@ users (လူတစ်ယောက် = record တစ်ခု; phone က identi
   ပြန်ရေးရမယ်၊ cross-store analytics/loyalty မလုပ်နိုင်တော့ဘူး။
 - ချွင်းချက်: franchise စာချုပ်အရ absolute data isolation ကို ဥပဒေအရ
   လိုအပ်မှသာ — ဒီ project အတွက် မလို။
+
+---
+
+## Design Decision — POS cart customer ရှာဖွေမှု (logged-in shopper tier)
+
+POS cart ရဲ့ ဖောက်သည် ကို ဒီလို အစဉ်လိုက် ဆုံးဖြတ်တယ်:
+
+1. **Cashier ရဲ့ တိုက်ရိုက်ရွေးချယ်မှု က အမြဲ အနိုင်ရတယ်** — attach (search/
+   quick-add) လုပ်ရင် အဲဒီဖောက်သည်ရဲ့ ဈေးနှုန်း၊ detach လုပ်ရင် *walk-in*
+   sentinel သိမ်းပြီး အောက်က fallback ကို မသုံးတော့ဘူး။
+2. **Logged-in ဖောက်သည် fallback** — တိုက်ရိုက်ရွေးထားတာ မရှိရင် cart
+   customer က authenticated user ဖြစ်ပြီး **ဒီ store ရဲ့ active
+   retail/wholesale customer ဖြစ်ရင်** အဲဒီသူပဲ။ ဆိုတော့ storefront မှာ
+   ဝင်ထားတဲ့ လက်ကားဝယ်သူက ဆိုင်မှာ လာဝယ်ရင် cashier က ပြန်ရှာစရာမလိုဘဲ
+   **လက်ကားဈေး** ရတယ် (grid, variant picker, cart, posted sale အကုန် —
+   posted sale မှာ resolved `customer_id` ပါ မှတ်တမ်းဝင်တယ်)။
+
+Staff / manager / platform owner ကတော့ ဘယ်တော့မှ auto-attach မဖြစ်ဘူး —
+customer membership မရှိလို့ register က walk-in (retail) အတိုင်းပဲ။
