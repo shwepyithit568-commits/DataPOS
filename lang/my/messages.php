@@ -117,6 +117,7 @@ return [
     'settings_view_storefront' => 'Storefront ကြည့်ရန်',
     'settings_footer' => 'Footer',
     'settings_footer_page' => 'Footer အစမ်းကြည့်ရန်',
+    'settings_pos' => 'POS',
     'settings_footer_preview_hint' => 'Storefront footer တစ်ခုလုံး၏ စုစည်း live preview — customer တွေ မြင်ရတဲ့ပုံ အတိအကျ။',
     'settings_footer_live_preview' => 'Footer Live အစမ်းကြည့်ရန်',
     'settings_footer_sources' => 'ပြင်ရန် နေရာများ',

@@ -117,6 +117,7 @@ return [
     'settings_view_storefront' => '查看商店前台',
     'settings_footer' => '页脚',
     'settings_footer_page' => '页脚预览',
+    'settings_pos' => 'POS',
     'settings_footer_preview_hint' => '整个商店前台页脚的实时预览 — 与顾客所见完全一致。',
     'settings_footer_live_preview' => '页脚实时预览',
     'settings_footer_sources' => '编辑位置',

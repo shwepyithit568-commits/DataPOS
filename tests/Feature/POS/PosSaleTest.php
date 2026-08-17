@@ -424,6 +424,39 @@ class PosSaleTest extends TestCase
         $this->assertMatchesRegularExpression('/^\d{2}:\d{2}$/', $state['held'][0]['held_at']);
     }
 
+    public function test_hold_expiry_window_is_per_store_and_can_be_disabled(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, ['retail_price' => 25000]);
+        $this->seedStock($store, $product, '5');
+        $shift = $this->openShift($store, $cashier);
+
+        // Custom 2-hour window for this store.
+        $setting = $store->setting()->create(['store_name' => $store->name, 'pos_hold_expiry_hours' => 2]);
+
+        $this->sales->addToCart($store, $product->id, null, '1');
+        $old = $this->sales->holdCart($store, $cashier, $shift);
+        $old->forceFill(['created_at' => now()->subHours(3)])->save();
+
+        $this->sales->addToCart($store, $product->id, null, '1');
+        $recent = $this->sales->holdCart($store, $cashier, $shift);
+        $recent->forceFill(['created_at' => now()->subHour()])->save();
+
+        $this->assertSame(1, $this->sales->expireStaleHolds($store));
+        $this->assertSame('voided', $old->refresh()->status);
+        $this->assertSame('held', $recent->refresh()->status);
+
+        // Setting the window to 0 disables auto-expiry entirely.
+        $setting->update(['pos_hold_expiry_hours' => 0]);
+        $store->unsetRelation('setting'); // drop the cached relation so the new value is read
+        $this->sales->addToCart($store, $product->id, null, '1');
+        $kept = $this->sales->holdCart($store, $cashier, $shift);
+        $kept->forceFill(['created_at' => now()->subDays(3)])->save();
+        $this->assertSame(0, $this->sales->expireStaleHolds($store));
+        $this->assertSame('held', $kept->refresh()->status);
+    }
+
     public function test_void_held_sale_marks_voided_without_stock_impact(): void
     {
         $store = $this->makeStore();

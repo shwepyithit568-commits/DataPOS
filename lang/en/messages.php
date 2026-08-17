@@ -117,6 +117,7 @@ return [
     'settings_view_storefront' => 'View Storefront',
     'settings_footer' => 'Footer',
     'settings_footer_page' => 'Footer Preview',
+    'settings_pos' => 'POS',
     'settings_footer_preview_hint' => 'Combined live preview of the whole storefront footer — exactly what customers see.',
     'settings_footer_live_preview' => 'Live footer preview',
     'settings_footer_sources' => 'Edit sources',

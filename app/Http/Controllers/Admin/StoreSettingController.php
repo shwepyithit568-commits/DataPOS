@@ -25,8 +25,9 @@ class StoreSettingController extends Controller
      *   delivery      — delivery info, payment info, footer ad text
      *   how-to-order  — "How to Order" page content (intro, steps, videos)
      *   footer        — combined live preview of the storefront footer (read-only)
+     *   pos           — POS behaviour (held-sale auto-expiry window)
      */
-    private const SECTIONS = ['general', 'contact', 'delivery', 'how-to-order', 'footer'];
+    private const SECTIONS = ['general', 'contact', 'delivery', 'how-to-order', 'footer', 'pos'];
 
     public function edit(Request $request, StoreContext $context): View
     {
@@ -88,6 +89,10 @@ class StoreSettingController extends Controller
                 'how_to_videos' => ['nullable', 'array', 'max:8'],
                 'how_to_videos.*.title' => ['nullable', 'string', 'max:255'],
                 'how_to_videos.*.url' => ['nullable', 'string', 'max:500'],
+            ]),
+            'pos' => $request->validate([
+                // Hours before a held sale is auto-voided; blank = 24h default, 0 = disabled.
+                'pos_hold_expiry_hours' => ['nullable', 'integer', 'min:0', 'max:720'],
             ]),
             default => $request->validate([
                 'store_name' => ['required', 'string', 'max:255'],

@@ -13,6 +13,7 @@
         'delivery'     => ['label' => __('messages.settings_delivery'),       'icon' => 'delivery', 'url' => $settingsBase . '/delivery'],
         'how-to-order' => ['label' => __('messages.settings_how_to_order'),   'icon' => 'guide',    'url' => $settingsBase . '/how-to-order'],
         'footer'       => ['label' => __('messages.settings_footer'),         'icon' => 'footer',   'url' => $settingsBase . '/footer'],
+        'pos'          => ['label' => __('messages.settings_pos'),            'icon' => 'pos',      'url' => $settingsBase . '/pos'],
     ];
 
     $sectionTitles = [
@@ -21,6 +22,7 @@
         'delivery'     => __('messages.settings_delivery'),
         'how-to-order' => __('messages.settings_how_to_order_page'),
         'footer'       => __('messages.settings_footer_page'),
+        'pos'          => __('messages.settings_pos'),
     ];
 
     // Blade partial names cannot contain hyphens — map the route segment.
@@ -32,6 +34,7 @@
         'delivery'     => 'Storefront footer တွင်ပြမည့် delivery area, payment method, ကြော်ညာ စာသားများ။',
         'how-to-order' => 'Storefront ရဲ့ "မှာယူနည်း" စာမျက်နှာမှာ ပြမည့် မိတ်ဆက်စာသား၊ အဆင့်တွေနဲ့ ဗီဒီယိုလင့်များ။',
         'footer'       => 'Storefront footer တစ်ခုလုံးကို စုစည်း preview — customer တွေ မြင်ရတဲ့ပုံ အတိအကျ။',
+        'pos'          => 'POS ဆိုင် cashier အတွေ့အကြုံ — held sale တွေကို ဘယ်နှစ်နာရီကြာရင် အလိုအလျောက် သက်တမ်းကုန်မလဲ။',
     ];
 @endphp
 
@@ -85,6 +88,9 @@
                                     @break
                                 @case('footer')
                                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v9H4V4Zm0 11h16v5H4v-5ZM7 7.5h2m-2 2.5h2m6-2.5h2m-2 2.5h2"/></svg>
+                                    @break
+                                @case('pos')
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h18v12H3V5Zm2 3h14v6H5V8Zm3 9v2m8-2v2"/></svg>
                                     @break
                                 @default
                                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M7 7v10M12 7v10M17 7v10M4 17h16"/></svg>

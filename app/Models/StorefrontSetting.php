@@ -43,6 +43,7 @@ class StorefrontSetting extends Model
         'payment_info',
         'footer_ad_text',
         'default_language',
+        'pos_hold_expiry_hours',
         'how_to_intro',
         'how_to_steps',
         'how_to_videos',
@@ -56,7 +57,19 @@ class StorefrontSetting extends Model
         'map_embed_enabled' => 'boolean',
         'map_latitude' => 'float',
         'map_longitude' => 'float',
+        'pos_hold_expiry_hours' => 'integer',
     ];
+
+    /**
+     * POS held-sale auto-expiry window in hours for this store. Falls back
+     * to the global 24h default when unset; 0 disables auto-expiry.
+     */
+    public function posHoldExpiryHours(): int
+    {
+        $hours = $this->pos_hold_expiry_hours;
+
+        return $hours === null ? 24 : (int) $hours;
+    }
 
     /**
      * Exact map link — the configured Google Maps URL, or the legacy

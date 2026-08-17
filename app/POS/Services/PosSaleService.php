@@ -323,13 +323,18 @@ class PosSaleService
     }
 
     /**
-     * Auto-expire holds older than a day (lazy, runs on every cart-state read
-     * so a stale hold leaves the list within a day of use — no cron needed).
+     * Auto-expire holds older than the store's configured window (lazy, runs
+     * on every cart-state read so a stale hold leaves the list without a cron).
      * They are marked 'voided' with a note so the audit trail is kept and they
-     * cannot be recalled anymore.
+     * cannot be recalled anymore. A store window of 0 disables auto-expiry.
      */
-    public function expireStaleHolds(Store $store, int $olderThanHours = 24): int
+    public function expireStaleHolds(Store $store, ?int $olderThanHours = null): int
     {
+        $olderThanHours ??= $store->setting?->posHoldExpiryHours() ?? 24;
+        if ($olderThanHours <= 0) {
+            return 0;
+        }
+
         $cutoff = now()->subHours($olderThanHours);
 
         $stale = PosSale::query()
