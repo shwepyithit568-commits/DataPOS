@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminReviewController;
 use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ComingSoonController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\GlassFinderAdminController;
 use App\Http\Controllers\Admin\HomeBannerController;
@@ -13,8 +14,10 @@ use App\Http\Controllers\Admin\ImportHistoryController;
 use App\Http\Controllers\Admin\OrderAdminController;
 use App\Http\Controllers\Admin\PilotImportController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ProductMasterDataController;
 use App\Http\Controllers\Admin\StoreManagementController;
 use App\Http\Controllers\Admin\StoreSettingController;
+use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\VariantPresetController;
 use App\Http\Controllers\Admin\WholesaleAdminController;
@@ -42,8 +45,14 @@ Route::get('/', function (StoreContext $context) {
     $store = $context->getStore();
     $setting = $store?->setting;
     $banners = $store?->homeBanners()->where('page', 'home')->where('is_active', true)->get() ?? collect();
-    // Only categories with products show on the storefront (empty ones are hidden).
-    $allCategories = $store ? \App\Models\Category::where('store_id', $store->id)->withCount('products')->get() : collect();
+    // Only categories with products show on the storefront (empty ones are
+    // hidden). The counts count ONLINE products only — counter-only items
+    // (is_ecommerce=false) do not advertise a category on the storefront.
+    $allCategories = $store
+        ? \App\Models\Category::where('store_id', $store->id)
+            ->withCount(['products' => fn ($q) => $q->where('is_ecommerce', true)])
+            ->get()
+        : collect();
     $categories = $allCategories->filter(fn ($category) => $category->products_count > 0)->values();
     // Main → Sub tree for the homepage "Most Popular Category" strip: a main is
     // listed when it (or any sub) has products; children = subs with products.
@@ -52,6 +61,7 @@ Route::get('/', function (StoreContext $context) {
     // latest) product's image — product image, else its default variant's image.
     $coverByCategory = $mainCategoryIds->isNotEmpty()
         ? \App\Models\Product::whereIn('category_id', $mainCategoryIds)
+            ->where('is_ecommerce', true)
             ->select('id', 'category_id', 'image_path')
             ->with(['variants' => fn ($v) => $v->whereNotNull('image_path')->where('image_path', '!=', '')])
             ->where(fn ($q) => $q->whereNotNull('image_path')->where('image_path', '!=', '')
@@ -82,6 +92,7 @@ Route::get('/', function (StoreContext $context) {
         ->values();
     $featuredProducts = $store
         ? \App\Models\Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
             ->where('is_featured', true)
             ->where('stock_status', 'in_stock')
             ->with(['category', 'brand', 'variants'])
@@ -90,6 +101,7 @@ Route::get('/', function (StoreContext $context) {
         : collect();
     $newArrivals = $store
         ? \App\Models\Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
             ->where('stock_status', 'in_stock')
             ->with(['category', 'brand', 'variants'])
             ->latest()
@@ -102,6 +114,7 @@ Route::get('/', function (StoreContext $context) {
     $now = now();
     $flashSales = $store
         ? \App\Models\Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
             ->whereNotNull('old_price')
             ->whereColumn('old_price', '>', 'retail_price')
             ->where('stock_status', 'in_stock')
@@ -114,6 +127,7 @@ Route::get('/', function (StoreContext $context) {
         : collect();
     $upcomingSales = $store
         ? \App\Models\Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
             ->whereNotNull('old_price')
             ->whereColumn('old_price', '>', 'retail_price')
             ->where('stock_status', 'in_stock')
@@ -143,8 +157,14 @@ Route::get('/store/{store_slug}', function (StoreContext $context) {
     $store = $context->getStore();
     $setting = $store?->setting;
     $banners = $store?->homeBanners()->where('page', 'home')->where('is_active', true)->get() ?? collect();
-    // Only categories with products show on the storefront (empty ones are hidden).
-    $allCategories = $store ? \App\Models\Category::where('store_id', $store->id)->withCount('products')->get() : collect();
+    // Only categories with products show on the storefront (empty ones are
+    // hidden). The counts count ONLINE products only — counter-only items
+    // (is_ecommerce=false) do not advertise a category on the storefront.
+    $allCategories = $store
+        ? \App\Models\Category::where('store_id', $store->id)
+            ->withCount(['products' => fn ($q) => $q->where('is_ecommerce', true)])
+            ->get()
+        : collect();
     $categories = $allCategories->filter(fn ($category) => $category->products_count > 0)->values();
     // Main → Sub tree for the homepage "Most Popular Category" strip: a main is
     // listed when it (or any sub) has products; children = subs with products.
@@ -153,6 +173,7 @@ Route::get('/store/{store_slug}', function (StoreContext $context) {
     // latest) product's image — product image, else its default variant's image.
     $coverByCategory = $mainCategoryIds->isNotEmpty()
         ? \App\Models\Product::whereIn('category_id', $mainCategoryIds)
+            ->where('is_ecommerce', true)
             ->select('id', 'category_id', 'image_path')
             ->with(['variants' => fn ($v) => $v->whereNotNull('image_path')->where('image_path', '!=', '')])
             ->where(fn ($q) => $q->whereNotNull('image_path')->where('image_path', '!=', '')
@@ -183,6 +204,7 @@ Route::get('/store/{store_slug}', function (StoreContext $context) {
         ->values();
     $featuredProducts = $store
         ? \App\Models\Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
             ->where('is_featured', true)
             ->where('stock_status', 'in_stock')
             ->with(['category', 'brand', 'variants'])
@@ -191,6 +213,7 @@ Route::get('/store/{store_slug}', function (StoreContext $context) {
         : collect();
     $newArrivals = $store
         ? \App\Models\Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
             ->where('stock_status', 'in_stock')
             ->with(['category', 'brand', 'variants'])
             ->latest()
@@ -203,6 +226,7 @@ Route::get('/store/{store_slug}', function (StoreContext $context) {
     $now = now();
     $flashSales = $store
         ? \App\Models\Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
             ->whereNotNull('old_price')
             ->whereColumn('old_price', '>', 'retail_price')
             ->where('stock_status', 'in_stock')
@@ -215,6 +239,7 @@ Route::get('/store/{store_slug}', function (StoreContext $context) {
         : collect();
     $upcomingSales = $store
         ? \App\Models\Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
             ->whereNotNull('old_price')
             ->whereColumn('old_price', '>', 'retail_price')
             ->where('stock_status', 'in_stock')
@@ -494,6 +519,16 @@ Route::prefix('store/{store_slug}')
 
         // Admin Products CRUD & Bulk Actions
         Route::get('/admin/products', [ProductController::class, 'index'])->name('store.admin.products.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        // Products Master Data hub — horizontal scroll tabs (categories /
+        // brands / variant settings). The tab lives in ?tab= and each tab
+        // embeds the same content partial as the standalone index page.
+        Route::get('/admin/products/master-data', [ProductMasterDataController::class, 'index'])
+            ->name('store.admin.products.master-data')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        // Supplier quick-add (product form "Supplier & Purchase" section).
+        Route::post('/admin/suppliers/quick-store', [SupplierController::class, 'quickStore'])
+            ->name('store.admin.suppliers.quick-store')
+            ->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:60,1']);
         Route::get('/admin/products/create', [ProductController::class, 'create'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/products', [ProductController::class, 'store'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/products/bulk-stock', [ProductController::class, 'bulkStock'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -503,6 +538,9 @@ Route::prefix('store/{store_slug}')
         Route::put('/admin/products/{product}', [ProductController::class, 'update'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::delete('/admin/products/{product}', [ProductController::class, 'destroy'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/products/{product}/toggle-featured', [ProductController::class, 'toggleFeatured'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        // Per-row + bulk "Sell Online" toggles (is_ecommerce).
+        Route::post('/admin/products/{product}/toggle-ecommerce', [ProductController::class, 'toggleEcommerce'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/products/bulk-ecommerce', [ProductController::class, 'bulkSetEcommerce'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/products/{product}/duplicate', [ProductController::class, 'duplicate'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Admin Product Multiple Image Gallery
@@ -523,6 +561,13 @@ Route::prefix('store/{store_slug}')
         Route::post('/admin/pilot-import/{tab}', [PilotImportController::class, 'import'])->name('store.admin.pilot-import.import')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports'])->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
         Route::post('/admin/pilot-import/{tab}/confirm', [PilotImportController::class, 'confirmImport'])->name('store.admin.pilot-import.confirm')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports'])->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
         Route::get('/admin/pilot-import/{tab}/template', [PilotImportController::class, 'downloadTemplate'])->name('store.admin.pilot-import.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
+
+        // Roadmap placeholder page — one route for every not-yet-built module
+        // (sidebar "coming soon" links). The module registry (slug → label +
+        // phase) lives in ComingSoonController; unknown slugs 404.
+        Route::get('/admin/coming-soon/{module}', [ComingSoonController::class, 'index'])
+            ->name('store.admin.coming-soon')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Admin Import History
         Route::get('/admin/import-history', [ImportHistoryController::class, 'index'])->name('store.admin.import-history.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');

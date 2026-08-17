@@ -56,7 +56,7 @@ class AdminSidebarNavigationUXTest extends TestCase
         }
     }
 
-    public function test_sidebar_has_no_unavailable_placeholder_links(): void
+    public function test_sidebar_placeholder_links_point_at_coming_soon_page(): void
     {
         $response = $this->actingAs($this->manager1)
             ->get("/store/{$this->store1->slug}/admin/dashboard");
@@ -64,8 +64,10 @@ class AdminSidebarNavigationUXTest extends TestCase
         $response->assertStatus(200);
         $response->assertDontSee('href="#"', false);
         $response->assertDontSee('javascript:void', false);
-        $response->assertDontSeeText('Customers');
-        $response->assertDontSeeText('Activity Logs');
+        // Roadmap placeholders render as links to the single coming-soon page
+        // (one route + a whitelisted module registry), never as dead href="#" items.
+        $response->assertSee('/admin/coming-soon/', false);
+        $response->assertSeeText('Soon');
     }
 
     public function test_product_sidebar_import_and_real_toolbar_export(): void
@@ -199,14 +201,25 @@ class AdminSidebarNavigationUXTest extends TestCase
             ->get("/store/{$this->store1->slug}/admin/dashboard");
 
         $response->assertStatus(200);
-        foreach (['Catalog', 'Sales', 'Wholesale', 'Tools', 'Settings'] as $group) {
+        foreach ([
+            'POS & In-store Sales',
+            'Inventory & Products',
+            'Purchasing & Transfers',
+            'Ecommerce Storefront',
+            'Customers & CRM',
+            'Repairs & Service',
+            'Finance & Accounts',
+            'Reports & Analytics',
+            'Business Setup',
+            'Security & Access',
+            'System Maintenance',
+        ] as $group) {
             $response->assertSeeText($group);
         }
         foreach ([
             'store.admin.dashboard',
             'store.admin.products.index',
-            'store.admin.categories.index',
-            'store.admin.brands.index',
+            'store.admin.products.master-data',
             'store.admin.products.import',
             'store.admin.orders.index',
             'store.admin.wholesale.applications.index',
@@ -214,9 +227,23 @@ class AdminSidebarNavigationUXTest extends TestCase
             'store.admin.import-history.index',
             'store.admin.settings.edit',
             'store.admin.banners.index',
+            'pos.index',
+            'pos.closing.index',
+            'pos.receiving.index',
+            'pos.opening-stock.index',
+            'pos.adjustments.index',
+            'pos.reconciliation.index',
+            'pos.reports.sales',
+            'store.admin.backups.index',
         ] as $routeName) {
             $response->assertSee('data-route-name="' . $routeName . '"', false);
         }
+
+        // Categories / Brands / Variant Settings live inside the Master Data
+        // tabs now — they must NOT appear as standalone sidebar links.
+        $response->assertDontSee('data-route-name="store.admin.categories.index"', false);
+        $response->assertDontSee('data-route-name="store.admin.brands.index"', false);
+        $response->assertDontSee('data-route-name="store.admin.variant-presets.index"', false);
 
         // The users link (platform owner only) renders for the platform owner.
         $ownerResponse = $this->actingAs($this->platformOwner)
@@ -254,18 +281,18 @@ class AdminSidebarNavigationUXTest extends TestCase
         $dashboard->assertStatus(200);
         // Alpine binds aria-expanded declaratively; every group button declares the binding.
         $this->assertGreaterThanOrEqual(
-            5,
+            11,
             substr_count($dashboard->getContent(), ':aria-expanded="'),
-            'All five accordion groups must declare an aria-expanded binding.'
+            'All eleven accordion groups must declare an aria-expanded binding.'
         );
-        // Dashboard is not a catalog path, so the Catalog group starts closed.
-        $dashboard->assertSee('catalogOpen: false', false);
+        // Dashboard is not an inventory path, so the Inventory group starts closed.
+        $dashboard->assertSee('inventoryOpen: false', false);
 
-        // On the products page the Catalog group initializes open.
+        // On the products page the Inventory group initializes open.
         $products = $this->actingAs($this->manager1)
             ->get("/store/{$this->store1->slug}/admin/products");
         $products->assertStatus(200);
-        $products->assertSee('catalogOpen: true', false);
+        $products->assertSee('inventoryOpen: true', false);
     }
 
     /** Batch 4: mobile open/close controls and backdrop remain wired to sidebarOpen. */
@@ -417,7 +444,8 @@ class AdminSidebarNavigationUXTest extends TestCase
      * links, accordion group labels, and submenu containers. Regression test
      * for the Home Banners link whose label was the only one without the
      * collapsed-hiding binding (it left a clipped Burmese fragment beside the
-     * icon in the 80px rail).
+     * icon in the 80px rail). Banners now lives inside a group, so its label
+     * hides via the submenu container binding instead.
      */
     public function test_collapsed_desktop_hides_every_nav_label(): void
     {
@@ -428,17 +456,17 @@ class AdminSidebarNavigationUXTest extends TestCase
         $content = $response->getContent();
         $nav = $this->extractUntil($content, '<nav class=', '</nav>');
 
-        // Inside <nav>: Dashboard + Home Banners labels (2), the six group
-        // labels (6) and the six submenu containers (6) = 14 bindings.
+        // Inside <nav>: Dashboard label (1) + eleven group labels (11) and
+        // their eleven submenu containers (11) = 23 bindings.
         $this->assertGreaterThanOrEqual(
-            14,
+            23,
             substr_count($nav, ":class=\"sidebarCollapsed ? 'lg:hidden' : ''\""),
             'Collapsed-hiding binding must be applied to every label and submenu container.'
         );
 
         // Every group label AND its submenu container must carry the binding
         // (a total count can mask one missing binding when another is added).
-        foreach (['catalog', 'sales', 'wholesale', 'content', 'tools', 'settings'] as $group) {
+        foreach (['pos', 'inventory', 'purchasing', 'ecommerce', 'customers', 'service', 'finance', 'reports', 'setup', 'security', 'maintenance'] as $group) {
             $this->assertStringContainsString(
                 "@click=\"toggleGroup('{$group}')\"",
                 $nav,
@@ -451,18 +479,6 @@ class AdminSidebarNavigationUXTest extends TestCase
                 "Submenu container [{$group}] must hide its labels when collapsed."
             );
         }
-
-        // The Home Banners label must be fully hidden too (not just truncated).
-        $bannerLink = $this->extractUntil($content, 'data-route-name="store.admin.banners.index"', '</a>');
-        $this->assertStringContainsString(
-            ":class=\"sidebarCollapsed ? 'lg:hidden' : ''\"",
-            $bannerLink,
-            'Home Banners label must hide completely when the sidebar is collapsed.'
-        );
-        // Its icon remains, so the accessible name comes from aria-label while
-        // a desktop tooltip appears only in collapsed mode.
-        $this->assertStringContainsString('aria-label=', $bannerLink);
-        $this->assertStringContainsString(':title="sidebarCollapsed ?', $bannerLink);
     }
 
     /**
@@ -478,19 +494,11 @@ class AdminSidebarNavigationUXTest extends TestCase
         $response->assertStatus(200);
         $content = $response->getContent();
 
-        // Dashboard link, Home Banners link and the six group buttons.
+        // Dashboard direct link + the eleven group buttons.
         $this->assertGreaterThanOrEqual(
-            8,
+            12,
             substr_count($content, ":class=\"sidebarCollapsed ? 'lg:justify-center' : ''\""),
             'Every direct link and group button must center its icon in collapsed mode.'
-        );
-
-        // The Home Banners link itself must carry the centering binding.
-        $bannerLink = $this->extractUntil($content, 'data-route-name="store.admin.banners.index"', '</a>');
-        $this->assertStringContainsString(
-            ":class=\"sidebarCollapsed ? 'lg:justify-center' : ''\"",
-            $bannerLink,
-            'Home Banners icon must be centered when collapsed.'
         );
     }
 
@@ -558,7 +566,7 @@ class AdminSidebarNavigationUXTest extends TestCase
         $this->assertStringContainsString('this.closeGroups();', $content);
 
         // Every group button routes through the toggle and links its panel.
-        foreach (['catalog', 'sales', 'wholesale', 'content', 'tools', 'settings'] as $group) {
+        foreach (['pos', 'inventory', 'purchasing', 'ecommerce', 'customers', 'service', 'finance', 'reports', 'setup', 'security', 'maintenance'] as $group) {
             $this->assertStringContainsString("@click=\"toggleGroup('{$group}')\"", $content);
             $this->assertStringContainsString("aria-controls=\"sidebar-sub-{$group}\"", $content);
             $this->assertStringContainsString("id=\"sidebar-sub-{$group}\"", $content);
@@ -566,7 +574,7 @@ class AdminSidebarNavigationUXTest extends TestCase
         }
 
         // Route-aware initial open state is preserved (dashboard = none open).
-        $response->assertSee('catalogOpen: false', false);
+        $response->assertSee('inventoryOpen: false', false);
     }
 
     /**

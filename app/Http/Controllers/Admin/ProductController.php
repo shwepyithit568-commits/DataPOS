@@ -12,6 +12,8 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Models\VariantPreset;
+use App\POS\Enums\InventoryMovementType;
+use App\POS\Services\InventoryService;
 use App\Services\ProductImportService;
 use App\Services\StoreContext;
 use Illuminate\Http\RedirectResponse;
@@ -56,6 +58,11 @@ class ProductController extends Controller
         // Filter by stock status
         if ($request->filled('stock_status')) {
             $query->where('stock_status', $request->stock_status);
+        }
+
+        // Filter by online visibility (is_ecommerce = "Sell Online" toggle)
+        if ($request->filled('is_ecommerce')) {
+            $query->where('is_ecommerce', $request->is_ecommerce === 'online');
         }
 
         // Load category hierarchy (Main → Sub) for the filter dropdown + parent expansion
@@ -281,6 +288,7 @@ class ProductController extends Controller
         $store = $context->getStore();
         $categories = Category::where('store_id', $store->id)->with('parent')->get();
         $brands = Brand::where('store_id', $store->id)->get();
+        $suppliers = \App\Models\Supplier::where('store_id', $store->id)->orderBy('name')->get(['id', 'name']);
         $variantPresets = $this->variantPresets($store->id);
 
         $imageMaxMb = self::IMAGE_MAX_KB / 1024;
@@ -288,7 +296,7 @@ class ProductController extends Controller
 
         $returnTo = AdminListReturn::peek('admin_products_return', '/store/' . $store->slug . '/admin/products');
 
-        return view('admin.products.create', compact('store', 'categories', 'brands', 'variantPresets', 'imageMaxMb', 'product', 'returnTo'));
+        return view('admin.products.create', compact('store', 'categories', 'brands', 'suppliers', 'variantPresets', 'imageMaxMb', 'product', 'returnTo'));
     }
 
     public function store(Request $request, StoreContext $context): RedirectResponse
@@ -297,7 +305,8 @@ class ProductController extends Controller
 
         $validated = $request->validate([
             'name'            => ['required', 'string', 'max:255'],
-            'sku'             => ['required', 'string', 'max:100'],
+            // SKU is optional on create — the Auto-SKU toggle generates one.
+            'sku'             => ['nullable', 'string', 'max:100'],
             'category_id'     => ['nullable', 'exists:categories,id'],
             'brand_id'        => ['nullable', 'exists:brands,id'],
             'retail_price'    => ['required', 'numeric', 'min:0'],
@@ -306,6 +315,12 @@ class ProductController extends Controller
             'sale_ends_at'    => ['nullable', 'date', 'after_or_equal:sale_starts_at'],
             'wholesale_price' => ['required', 'numeric', 'min:0'],
             'stock_status'    => ['required', 'in:in_stock,out_of_stock'],
+            'auto_sku'        => ['nullable', 'boolean'],
+            'reorder_level'   => ['nullable', 'numeric', 'min:0'],
+            'supplier_id'     => ['nullable', 'exists:suppliers,id'],
+            'purchase_cost'   => ['nullable', 'numeric', 'min:0'],
+            'initial_stock'   => ['nullable', 'numeric', 'min:0'],
+            'is_ecommerce'    => ['nullable', 'boolean'],
             'image'           => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
             'gallery_images'  => ['nullable', 'array', 'max:' . self::MAX_GALLERY_IMAGES],
             'gallery_images.*'=> ['image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
@@ -328,14 +343,25 @@ class ProductController extends Controller
             'variants.*.remove_image'   => ['nullable', 'boolean'],
         ]);
 
+        // Auto-SKU: generate a store-unique code when the toggle is on or no
+        // SKU was typed (the create form disables the field in auto mode).
+        $sku = trim((string) ($validated['sku'] ?? ''));
+        if ($request->boolean('auto_sku') || $sku === '') {
+            do {
+                $sku = 'SKU-' . strtoupper(Str::random(8));
+            } while (Product::where('store_id', $store->id)
+                ->whereRaw('LOWER(sku) = ?', [mb_strtolower($sku)])
+                ->exists());
+        }
+
         // Duplicate SKU check within store (case-insensitive)
         if (Product::where('store_id', $store->id)
-            ->whereRaw('LOWER(sku) = ?', [mb_strtolower($validated['sku'])])
+            ->whereRaw('LOWER(sku) = ?', [mb_strtolower($sku)])
             ->exists()) {
             return back()->withErrors(['sku' => 'A product with this SKU already exists in this store.'])->withInput();
         }
 
-        if ($error = $this->variantSkuError($store, $validated['variants'] ?? [], $validated['sku'])) {
+        if ($error = $this->variantSkuError($store, $validated['variants'] ?? [], $sku)) {
             return back()->withErrors(['variants' => $error])->withInput();
         }
 
@@ -351,7 +377,7 @@ class ProductController extends Controller
             'store_id'        => $store->id,
             'category_id'     => $validated['category_id'] ?? null,
             'brand_id'        => $validated['brand_id'] ?? null,
-            'sku'             => $validated['sku'],
+            'sku'             => $sku,
             'name'            => $validated['name'],
             'slug'            => Str::slug($validated['name'] . '-' . Str::random(5)),
             'description'     => $validated['description'] ?? null,
@@ -366,10 +392,33 @@ class ProductController extends Controller
             'warranty'        => $validated['warranty'] ?? null,
             'return_policy'   => $validated['return_policy'] ?? null,
             'is_featured'     => $request->boolean('is_featured', false),
+            'reorder_level'   => $validated['reorder_level'] ?? null,
+            'supplier_id'     => $validated['supplier_id'] ?? null,
+            'purchase_cost'   => $validated['purchase_cost'] ?? null,
+            // Hidden 0-input + checkbox: boolean() reflects the checkbox state.
+            'is_ecommerce'    => $request->boolean('is_ecommerce', true),
         ]);
 
         $this->storeGalleryImages($product, $request->file('gallery_images', []));
         $this->syncVariants($product, $validated['variants'] ?? null, $request->file('variants', []));
+
+        // Initial stock on create → one opening_balance ledger movement so the
+        // product starts with real stock (valued at the purchase cost when set).
+        if (isset($validated['initial_stock']) && (float) $validated['initial_stock'] > 0) {
+            app(InventoryService::class)->postMovement([
+                'store_id' => $store->id,
+                'product_id' => $product->id,
+                'product_variant_id' => null,
+                'movement_type' => InventoryMovementType::OpeningBalance->value,
+                'quantity_delta' => (string) $validated['initial_stock'],
+                'unit_cost' => $validated['purchase_cost'] ?? null,
+                'source_type' => 'product_create',
+                'source_id' => $product->id,
+                'client_transaction_id' => 'product-create:' . $product->id . ':initial',
+                'occurred_at' => now(),
+                'posted_by' => $request->user()?->id,
+            ]);
+        }
 
         return redirect(AdminListReturn::resolve('admin_products_return', '/store/' . $store->slug . '/admin/products'))
             ->with('success', 'Product created successfully.');
@@ -385,6 +434,7 @@ class ProductController extends Controller
 
         $categories = Category::where('store_id', $store->id)->with('parent')->get();
         $brands = Brand::where('store_id', $store->id)->get();
+        $suppliers = \App\Models\Supplier::where('store_id', $store->id)->orderBy('name')->get(['id', 'name']);
         $variantPresets = $this->variantPresets($store->id);
         $images = $product->images;
         $variants = $product->variants;
@@ -394,7 +444,7 @@ class ProductController extends Controller
 
         $returnTo = AdminListReturn::peek('admin_products_return', '/store/' . $store->slug . '/admin/products');
 
-        return view('admin.products.edit', compact('store', 'product', 'categories', 'brands', 'variantPresets', 'images', 'variants', 'imageMaxMb', 'maxGalleryImages', 'remainingGallerySlots', 'returnTo'));
+        return view('admin.products.edit', compact('store', 'product', 'categories', 'brands', 'suppliers', 'variantPresets', 'images', 'variants', 'imageMaxMb', 'maxGalleryImages', 'remainingGallerySlots', 'returnTo'));
     }
 
     public function update(Request $request, string $store_slug, Product $product, StoreContext $context): RedirectResponse
@@ -416,6 +466,10 @@ class ProductController extends Controller
             'sale_ends_at'    => ['nullable', 'date', 'after_or_equal:sale_starts_at'],
             'wholesale_price' => ['required', 'numeric', 'min:0'],
             'stock_status'    => ['required', 'in:in_stock,out_of_stock'],
+            'reorder_level'   => ['nullable', 'numeric', 'min:0'],
+            'supplier_id'     => ['nullable', 'exists:suppliers,id'],
+            'purchase_cost'   => ['nullable', 'numeric', 'min:0'],
+            'is_ecommerce'    => ['nullable', 'boolean'],
             'image'           => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
             'gallery_images'  => ['nullable', 'array', 'max:' . self::MAX_GALLERY_IMAGES],
             'gallery_images.*'=> ['image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
@@ -490,6 +544,10 @@ class ProductController extends Controller
             'warranty'        => $request->has('warranty') ? ($validated['warranty'] ?? null) : $product->warranty,
             'return_policy'   => $request->has('return_policy') ? ($validated['return_policy'] ?? null) : $product->return_policy,
             'is_featured'     => $request->boolean('is_featured', false),
+            'reorder_level'   => $request->has('reorder_level') ? ($validated['reorder_level'] ?? null) : $product->reorder_level,
+            'supplier_id'     => $request->has('supplier_id') ? ($validated['supplier_id'] ?? null) : $product->supplier_id,
+            'purchase_cost'   => $request->has('purchase_cost') ? ($validated['purchase_cost'] ?? null) : $product->purchase_cost,
+            'is_ecommerce'    => $request->has('is_ecommerce') ? $request->boolean('is_ecommerce') : $product->is_ecommerce,
         ]);
 
         if ($galleryFiles !== []) {
@@ -1129,6 +1187,48 @@ class ProductController extends Controller
         $status = $product->fresh()->is_featured ? 'featured' : 'unfeatured';
 
         return back()->with('success', "Product {$product->name} marked as {$status}.");
+    }
+
+    /**
+     * Per-row "Sell Online" toggle (is_ecommerce) — the storefront only shows
+     * products with the flag on; POS and admin always see everything.
+     */
+    public function toggleEcommerce(string $store_slug, Product $product, StoreContext $context): RedirectResponse
+    {
+        $store = $context->getStore();
+
+        if ($product->store_id !== $store->id) {
+            abort(403, 'Unauthorized product access.');
+        }
+
+        $product->update([
+            'is_ecommerce' => ! $product->is_ecommerce,
+        ]);
+
+        $status = $product->fresh()->is_ecommerce ? 'online' : 'counter only';
+
+        return back()->with('success', "Product {$product->name} is now {$status}.");
+    }
+
+    /**
+     * Bulk "Sell Online / Counter only" — updates only the selected products
+     * that belong to this store.
+     */
+    public function bulkSetEcommerce(Request $request, StoreContext $context): RedirectResponse
+    {
+        $store = $context->getStore();
+
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:500'],
+            'ids.*' => ['integer'],
+            'is_ecommerce' => ['required', 'boolean'],
+        ]);
+
+        $count = Product::where('store_id', $store->id)
+            ->whereIn('id', $validated['ids'])
+            ->update(['is_ecommerce' => $request->boolean('is_ecommerce')]);
+
+        return back()->with('success', "{$count} products updated.");
     }
 
     /**

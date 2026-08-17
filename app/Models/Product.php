@@ -29,6 +29,10 @@ class Product extends Model
         'warranty',
         'return_policy',
         'is_featured',
+        'reorder_level',
+        'supplier_id',
+        'purchase_cost',
+        'is_ecommerce',
     ];
 
     protected $casts = [
@@ -38,7 +42,20 @@ class Product extends Model
         'sale_ends_at' => 'datetime',
         'wholesale_price' => 'decimal:2',
         'is_featured' => 'boolean',
+        'reorder_level' => 'decimal:3',
+        'purchase_cost' => 'decimal:4',
+        'is_ecommerce' => 'boolean',
     ];
+
+    /** Matches the DB default — products are online until marked counter-only. */
+    protected $attributes = [
+        'is_ecommerce' => true,
+    ];
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
 
     public function store(): BelongsTo
     {

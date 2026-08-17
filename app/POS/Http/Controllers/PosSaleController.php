@@ -11,6 +11,7 @@ use App\POS\Exceptions\InventoryException;
 use App\POS\Models\PosSale;
 use App\POS\Services\CashierShiftService;
 use App\POS\Services\CustomerDebtService;
+use App\POS\Services\PosPinVerifier;
 use App\POS\Services\PosSaleService;
 use App\Services\StoreContext;
 use Illuminate\Http\JsonResponse;
@@ -410,13 +411,41 @@ class PosSaleController extends Controller
 
                 if (bccomp($discountPct, (string) $threshold, 2) > 0) {
                     $pin = trim((string) ($data['manager_pin'] ?? ''));
-                    $approver = $pin !== '' ? $this->resolveManagerByPin($store, $pin) : null;
+                    $verifier = app(PosPinVerifier::class);
+                    $wantsJson = $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+
+                    // Lockout first — a brute-forcing cashier must not even
+                    // get a fresh PIN prompt until the window expires.
+                    if ($verifier->isLocked($request->user())) {
+                        $message = __('messages.pos_price_pin_locked', ['minutes' => $verifier->remainingLockoutMinutes($request->user())]);
+
+                        return $wantsJson
+                            ? response()->json(['error' => $message], 422)
+                            : back()->withErrors(['manager_pin' => $message]);
+                    }
+
+                    if ($pin === '') {
+                        $message = __('messages.pos_price_pin_required');
+
+                        return $wantsJson
+                            ? response()->json(['error' => $message, 'pin_required' => true], 422)
+                            : back()->withErrors(['manager_pin' => $message]);
+                    }
+
+                    $approver = $verifier->verify($store, $request->user(), $pin);
 
                     if ($approver === null) {
-                        $wantsJson = $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
-                        $message = $pin === ''
-                            ? __('messages.pos_price_pin_required')
-                            : __('messages.pos_price_pin_invalid');
+                        // The attempt that trips the limit reports the lockout
+                        // right away, without a fresh PIN prompt.
+                        if ($verifier->isLocked($request->user())) {
+                            $message = __('messages.pos_price_pin_locked', ['minutes' => $verifier->remainingLockoutMinutes($request->user())]);
+
+                            return $wantsJson
+                                ? response()->json(['error' => $message], 422)
+                                : back()->withErrors(['manager_pin' => $message]);
+                        }
+
+                        $message = __('messages.pos_price_pin_invalid');
 
                         return $wantsJson
                             ? response()->json(['error' => $message, 'pin_required' => true], 422)
@@ -442,16 +471,6 @@ class PosSaleController extends Controller
     /**
      * Find an active store manager/owner of this store whose POS PIN matches.
      */
-    private function resolveManagerByPin(\App\Models\Store $store, string $pin): ?\App\Models\User
-    {
-        return \App\Models\User::whereHas('stores', function ($q) use ($store) {
-            $q->where('store_id', $store->id)
-                ->whereIn('role', ['store_manager', 'store_owner'])
-                ->where('status', 'active');
-        })->get()
-            ->first(fn (\App\Models\User $user) => $user->posPinMatches($pin));
-    }
-
     /**
      * Drop the whole session cart (F4 clear-cart shortcut).
      */

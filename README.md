@@ -7,14 +7,17 @@
 
 ---
 
-## 📌 လက်ရှိ အခြေအနေ (2026-08-17)
+## 📌 လက်ရှိ အခြေအနေ (2026-08-18)
 
 | အပိုင်း | အခြေအနေ |
 |---|---|
 | **Online POS MVP Phase 1 + 2** | ✅ **ပြီးစီး** (changelog items 257–270) |
 | **Phase 2.5 — Pilot data import hub (part 1)** | ✅ ပြီးစီး (item 271) — products / customers / suppliers CSV-XLSX import |
 | **POS cashier session (2026-08-17)** | ✅ 13 commits — register-lock UX · held-sale expiry (age badge / auto-expiry / per-store window / notice / stats) · shared customer model · retail/wholesale tiered pricing + discount visibility · price override + manager PIN · drag-to-scroll |
-| **Test suite** | ✅ **867 passed / 3939 assertions** (`php artisan test`) |
+| **Admin sidebar restructure (2026-08-18)** | ✅ 11 groups (alinthit_pos layout) — inventory ops ကို Inventory group ထဲ ရွှေ့ · Reconciliation link ထည့် · Phase 4 module ၃၈ ခု → coming-soon placeholder (single route + whitelist) |
+| **Products Master Data hub (2026-08-18)** | ✅ `/admin/products/master-data` — horizontal scroll tabs (Categories · Brands · Variant Settings) · same partials as the standalone pages (zero drift) · edit/create round-trip က tab ပြန်ရောက် |
+| **Product form Inventory & Purchase (2026-08-18)** | ✅ alinthit_pos ပုံစံ — Initial stock (opening_balance auto-post) · Auto-SKU · Reorder level · Supplier quick-add · Purchase cost · colored section headers |
+| **Test suite** | ✅ **915 passed / 4208 assertions** (`php artisan test`) |
 | **DB** | SQLite (`database/database.sqlite`) — migrations အားလုံး run ပြီး |
 | **Git** | main branch · remote `github.com/shwepyithit568-commits/DataPOS.git` · local = origin/main (in sync, 2026-08-17 — cashier session 13 commits push ပြီး, HEAD `ae70fde`) |
 | **Deploy** | **မလုပ်ရသေးဘူး — local development သာ** (အောက်က ⚠️ ကြည့်ပါ) |
@@ -104,6 +107,7 @@ git history ထဲ ရောက်နေပါသည် — ဖိုင်က�
 ## 🗂️ နောက်ဆက်လုပ်ရမှာများ (Next Steps)
 
 - ✅ **2026-08-17 — POS cashier session ပြီးပြီ** (13 commits): register-lock UX → held-sale expiry system → shared customer model → tiered pricing → price override + manager PIN → drag-to-scroll (အသေးစိတ်: အပေါ်က "လက်ရှိ အခြေအနေ" + `CHANGELOG.md`)
+- ✅ **2026-08-18 — Admin sidebar ကို အဟောင်း project (alinthit_pos) အုပ်စုဖွဲ့မှုနဲ့ ပြန်တည်ဆောက်ပြီး** (11 groups): inventory ops တွေ Inventory & Products group ထဲ ရွှေ့ · Reconciliation link ထည့် · Phase 4 module ၃၈ ခုကို coming-soon placeholder (single route + whitelist) နဲ့ ပြထား — နောက်မှ တစ်ခုချင်းစီ ဆက်ဆောက်ရမယ် (အသေးစိတ်: `CHANGELOG.md`)
 
 1. **Phase 2.5 ကျန်တဲ့အပိုင်း** — opening-stock reconciliation · debt opening balances ·
    AppSheet/Google Sheets parallel validation · real cashier workflow · backup & restore test ·

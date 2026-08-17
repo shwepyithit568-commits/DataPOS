@@ -120,6 +120,10 @@
                 'label' => 'Stock Status',
                 'options' => ['in_stock' => 'In Stock', 'out_of_stock' => 'Out of Stock']
             ],
+            'is_ecommerce' => [
+                'label' => 'Online Visibility',
+                'options' => ['online' => 'Online', 'counter_only' => 'Counter only']
+            ],
             'category_id' => [
                 'label' => 'Category',
                 'options' => $categories,
@@ -168,6 +172,24 @@
                     </template>
                     <input type="hidden" name="stock_status" value="out_of_stock" />
                     <button type="submit" class="px-2.5 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs font-semibold shadow">Set Out of Stock</button>
+                </form>
+
+                <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/bulk-ecommerce') }}" class="flex items-center space-x-1">
+                    @csrf
+                    <template x-for="id in selectedIds" :key="id">
+                        <input type="hidden" name="ids[]" :value="id" />
+                    </template>
+                    <input type="hidden" name="is_ecommerce" value="1" />
+                    <button type="submit" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 rounded text-xs font-semibold shadow">🛒 Sell Online</button>
+                </form>
+
+                <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/bulk-ecommerce') }}" class="flex items-center space-x-1">
+                    @csrf
+                    <template x-for="id in selectedIds" :key="id">
+                        <input type="hidden" name="ids[]" :value="id" />
+                    </template>
+                    <input type="hidden" name="is_ecommerce" value="0" />
+                    <button type="submit" class="px-2.5 py-1 bg-gray-600 hover:bg-gray-700 rounded text-xs font-semibold shadow">🚫 Counter only</button>
                 </form>
 
                 <button type="button" @click="priceFormOpen = !priceFormOpen"
@@ -277,6 +299,12 @@
                                 @csrf
                                 <button type="submit" class="px-2 py-0.5 text-xs rounded font-semibold {{ $product->is_featured ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 hover:bg-yellow-200' : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 hover:bg-gray-200' }}">
                                     {{ $product->is_featured ? '⭐ Featured' : '☆ Feature' }}
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id . '/toggle-ecommerce') }}" class="inline">
+                                @csrf
+                                <button type="submit" class="px-2 py-0.5 text-xs rounded font-semibold {{ $product->is_ecommerce ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200' : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 hover:bg-gray-200' }}">
+                                    {{ $product->is_ecommerce ? '🛒 Online' : '🚫 Counter only' }}
                                 </button>
                             </form>
                         </td>

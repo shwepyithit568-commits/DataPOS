@@ -16,11 +16,22 @@ class FlashSaleHomeSectionTest extends TestCase
 
     private function makeStore(string $slug = 'flash-sale-store'): Store
     {
-        return Store::create([
+        $store = Store::create([
             'name' => 'Flash Sale Store',
             'slug' => $slug,
             'is_active' => true,
         ]);
+        // Pin the locale to English — the test slices the DOM on the literal
+        // "Most Popular Category" header, so a Burmese rendering (session or
+        // default-language fallback) would break the extraction. The store
+        // name must not contain "Flash Sale" — test 3 asserts the section
+        // text is absent from the whole page.
+        $store->setting()->create([
+            'store_name' => 'Deal Store',
+            'default_language' => 'en',
+        ]);
+
+        return $store;
     }
 
     private function makeProduct(Store $store, array $overrides = []): Product

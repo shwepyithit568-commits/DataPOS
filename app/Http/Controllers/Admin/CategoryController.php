@@ -21,7 +21,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CategoryController extends Controller
 {
-    private const IMAGE_MAX_KB = 10240;
+    public const IMAGE_MAX_KB = 10240;
 
     public function index(Request $request, StoreContext $context): View
     {
@@ -434,19 +434,39 @@ class CategoryController extends Controller
         $store = $context->getStore();
 
         $validated = $request->validate([
-            'name' => ['bail', 'required', 'string', 'max:255', $this->uniqueNameRule($store->id)],
+            'name'      => ['bail', 'required', 'string', 'max:255', $this->uniqueNameRule($store->id)],
+            'parent_id' => ['nullable', 'integer'],
         ]);
 
+        // Parent (when given) must be a MAIN category of THIS store — sub-of-sub
+        // is not allowed (same rule as the Master Data page).
+        $parent = null;
+        if ($validated['parent_id'] ?? null) {
+            $parent = Category::where('store_id', $store->id)
+                ->whereNull('parent_id')
+                ->find((int) $validated['parent_id']);
+
+            if (! $parent) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Parent category not found in this store.',
+                ], 422);
+            }
+        }
+
         $category = Category::create([
-            'store_id' => $store->id,
-            'name'     => trim($validated['name']),
-            'slug'     => $this->uniqueSlug($store->id, Str::slug($validated['name'])),
+            'store_id'  => $store->id,
+            'name'      => trim($validated['name']),
+            'slug'      => $this->uniqueSlug($store->id, Str::slug($validated['name'])),
+            'parent_id' => $parent?->id,
         ]);
 
         return response()->json([
-            'success'  => true,
-            'id'       => $category->id,
-            'name'     => $category->name,
+            'success'   => true,
+            'id'        => $category->id,
+            'name'      => $category->name,
+            'parent_id' => $category->parent_id,
+            'parent'    => $parent?->name,
         ]);
     }
 

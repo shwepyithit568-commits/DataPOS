@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\VariantPreset;
 use App\Services\StoreContext;
+use App\Support\AdminListReturn;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -33,7 +34,7 @@ class VariantPresetController extends Controller
             'sort_order' => $validated['sort_order'] ?? 0,
         ]);
 
-        return redirect('/store/' . $store->slug . '/admin/variant-presets')
+        return redirect(AdminListReturn::resolve('admin_variant_presets_return', '/store/' . $store->slug . '/admin/variant-presets'))
             ->with('success', 'Variant preset created successfully.');
     }
 
@@ -65,7 +66,7 @@ class VariantPresetController extends Controller
             'sort_order' => $validated['sort_order'] ?? 0,
         ]);
 
-        return redirect('/store/' . $store->slug . '/admin/variant-presets')
+        return redirect(AdminListReturn::resolve('admin_variant_presets_return', '/store/' . $store->slug . '/admin/variant-presets'))
             ->with('success', 'Variant preset updated successfully.');
     }
 
@@ -76,7 +77,7 @@ class VariantPresetController extends Controller
 
         $variantPreset->delete();
 
-        return redirect('/store/' . $store->slug . '/admin/variant-presets')
+        return redirect(AdminListReturn::resolve('admin_variant_presets_return', '/store/' . $store->slug . '/admin/variant-presets'))
             ->with('success', 'Variant preset deleted successfully.');
     }
 
@@ -121,7 +122,7 @@ class VariantPresetController extends Controller
             $neighbor->update(['sort_order' => $currentSort]);
         }
 
-        return redirect('/store/' . $store->slug . '/admin/variant-presets')
+        return redirect(AdminListReturn::resolve('admin_variant_presets_return', '/store/' . $store->slug . '/admin/variant-presets'))
             ->with('success', 'Variant preset order updated.');
     }
 

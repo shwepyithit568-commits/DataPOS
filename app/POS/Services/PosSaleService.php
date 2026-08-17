@@ -54,42 +54,51 @@ class PosSaleService
 
         $results = [];
 
-        Product::query()
+        $products = Product::query()
             ->where('store_id', $store->id)
             ->where(fn ($w) => $w->where('sku', 'like', "%{$q}%")->orWhere('name', 'like', "%{$q}%"))
             ->limit($limit)
-            ->get()
-            ->each(function (Product $p) use (&$results, $customer) {
-                $results[] = [
-                    'type' => 'product',
-                    'id' => $p->id,
-                    'product_id' => $p->id,
-                    'name' => $p->name,
-                    'sku' => $p->sku,
-                    'price' => $this->priceFor($customer, $p),
-                    'balance' => $this->inventory->totalOnHand($p->store_id, $p->id),
-                    'variant_of' => null,
-                ];
-            });
+            ->get();
 
-        ProductVariant::query()
+        $variants = ProductVariant::query()
             ->whereHas('product', fn ($q2) => $q2->where('store_id', $store->id))
             ->where(fn ($w) => $w->where('sku', 'like', "%{$q}%")->orWhere('name', 'like', "%{$q}%"))
             ->with('product')
             ->limit($limit)
-            ->get()
-            ->each(function (ProductVariant $v) use (&$results, $customer) {
-                $results[] = [
-                    'type' => 'variant',
-                    'id' => $v->id,
-                    'product_id' => $v->product_id,
-                    'name' => $v->product->name . ' — ' . $v->name,
-                    'sku' => $v->sku,
-                    'price' => $this->priceFor($customer, $v->product, $v),
-                    'balance' => $this->inventory->totalOnHand($v->product->store_id, $v->product_id, $v->id),
-                    'variant_of' => $v->product->name,
-                ];
-            });
+            ->get();
+
+        // One grouped balance query for every hit (product + variant rows) —
+        // the pre-fix code ran a SUM query per product AND per variant.
+        $balances = $this->inventory->balancesForProducts(
+            $store->id,
+            $products->pluck('id')->merge($variants->pluck('product_id'))->all(),
+        );
+
+        $products->each(function (Product $p) use (&$results, $customer, $balances) {
+            $results[] = [
+                'type' => 'product',
+                'id' => $p->id,
+                'product_id' => $p->id,
+                'name' => $p->name,
+                'sku' => $p->sku,
+                'price' => $this->priceFor($customer, $p),
+                'balance' => $this->balanceFromMap($balances, $p->id),
+                'variant_of' => null,
+            ];
+        });
+
+        $variants->each(function (ProductVariant $v) use (&$results, $customer, $balances) {
+            $results[] = [
+                'type' => 'variant',
+                'id' => $v->id,
+                'product_id' => $v->product_id,
+                'name' => $v->product->name . ' — ' . $v->name,
+                'sku' => $v->sku,
+                'price' => $this->priceFor($customer, $v->product, $v),
+                'balance' => $this->balanceFromMap($balances, $v->product_id, $v->id),
+                'variant_of' => $v->product->name,
+            ];
+        });
 
         return array_slice($results, 0, $limit);
     }
@@ -119,12 +128,17 @@ class PosSaleService
             ->limit($limit)
             ->get();
 
+        // One grouped balance query for the whole grid (product + every
+        // variant) instead of a SUM query per row — the pre-fix grid issued
+        // ~1 + variants-count queries per product.
+        $balances = $this->inventory->balancesForProducts($store->id, $products->pluck('id')->all());
+
         // Resolve the tier once — the card shows the retail-vs-tier discount
         // when a wholesale customer is attached (gridProducts is the only
         // caller that needs the comparison; search keeps the plain price).
         $isWholesale = $this->customerTier($store->id, $customer);
 
-        return $products->map(function (Product $p) use ($store, $customer, $isWholesale) {
+        return $products->map(function (Product $p) use ($store, $customer, $isWholesale, $balances) {
             return [
                 'id' => $p->id,
                 'name' => $p->name,
@@ -134,7 +148,7 @@ class PosSaleService
                 'tier' => $isWholesale ? 'wholesale' : 'retail',
                 'old_price' => $p->old_price !== null ? (string) $p->old_price : null,
                 'image' => $p->image_path ? asset('storage/' . $p->image_path) : null,
-                'balance' => $this->inventory->totalOnHand($store->id, $p->id),
+                'balance' => $this->balanceFromMap($balances, $p->id),
                 'category_id' => $p->category_id,
                 'category' => $p->category?->name,
                 'brand' => $p->brand?->name,
@@ -144,10 +158,29 @@ class PosSaleService
                     'sku' => $v->sku,
                     'price' => $this->priceFor($customer, $p, $v),
                     'retail_price' => (string) ($v->retail_price ?? $p->retail_price),
-                    'balance' => $this->inventory->totalOnHand($store->id, $p->id, $v->id),
+                    'balance' => $this->balanceFromMap($balances, $p->id, $v->id),
                 ])->values()->all(),
             ];
         })->values()->all();
+    }
+
+    /**
+     * Read a balance from a balancesForProducts() map with the same
+     * 3-decimal string semantics as totalOnHand().
+     */
+    private function balanceFromMap(array $balances, int $productId, ?int $variantId = null): string
+    {
+        $entry = $balances[$productId] ?? null;
+
+        if ($entry === null) {
+            return '0.000';
+        }
+
+        if ($variantId !== null) {
+            return (string) ($entry['variants'][$variantId] ?? '0.000');
+        }
+
+        return (string) ($entry['total'] ?? '0.000');
     }
 
     /* ------------------------------------------------------------------ */

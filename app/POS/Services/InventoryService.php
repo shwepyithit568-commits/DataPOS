@@ -236,6 +236,64 @@ class InventoryService
     }
 
     /**
+     * One grouped balance lookup for many products — the POS grid/search hot
+     * path. Returns [productId => ['total' => string, 'variants' => [variantId => string]]]
+     * with 3-decimal normalized strings, so callers never run a SUM query per
+     * product AND per variant (the pre-fix grid issued ~N+1 queries per page).
+     *
+     * `total` matches totalOnHand(): the sum of ALL balance rows for the
+     * product (product-level + every variant). `variants` maps each
+     * variant id to its own total.
+     *
+     * @param  array<int, int>  $productIds
+     * @return array<int, array{total:string, variants:array<int, string>}>
+     */
+    public function balancesForProducts(int $storeId, array $productIds): array
+    {
+        $productIds = array_values(array_unique(array_map('intval', $productIds)));
+        if ($productIds === []) {
+            return [];
+        }
+
+        $rows = DB::table('inventory_balances')
+            ->where('store_id', $storeId)
+            ->whereIn('product_id', $productIds)
+            ->selectRaw('product_id, product_variant_id, SUM(quantity_on_hand) as total')
+            ->groupBy('product_id', 'product_variant_id')
+            ->get();
+
+        $balances = [];
+        foreach ($rows as $row) {
+            $productId = (int) $row->product_id;
+            $variantId = $row->product_variant_id !== null ? (int) $row->product_variant_id : null;
+            $amount = (float) $row->total;
+
+            $balances[$productId]['total'] = ($balances[$productId]['total'] ?? 0) + $amount;
+            if ($variantId !== null) {
+                $balances[$productId]['variants'][$variantId] = ($balances[$productId]['variants'][$variantId] ?? 0) + $amount;
+            }
+        }
+
+        foreach ($balances as $productId => &$entry) {
+            $entry['total'] = number_format((float) ($entry['total'] ?? 0), 3, '.', '');
+            // NOTE: iterate the array directly — `($entry['variants'] ?? [])`
+            // wraps it in a temporary and foreach-by-reference then writes to
+            // the copy, silently dropping the formatting.
+            if (isset($entry['variants'])) {
+                foreach ($entry['variants'] as $variantId => &$variantTotal) {
+                    $variantTotal = number_format((float) $variantTotal, 3, '.', '');
+                }
+                unset($variantTotal);
+            } else {
+                $entry['variants'] = [];
+            }
+        }
+        unset($entry);
+
+        return $balances;
+    }
+
+    /**
      * Rebuild the entire balance cache from the movement ledger.
      *
      * @return int number of balance rows written

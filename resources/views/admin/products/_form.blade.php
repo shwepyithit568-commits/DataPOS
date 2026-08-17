@@ -11,10 +11,14 @@
 
 <div class="space-y-5">
     <section class="{{ $section }}">
-        <div class="mb-4">
-            <h2 class="{{ $sectionTitle }}">{{ __('messages.product_form_core_section') }}</h2>
-            <p class="{{ $sectionHint }}">{{ __('messages.product_form_core_section_hint') }}</p>
-        </div>
+        <x-admin.section-header
+            color="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+            :title="__('messages.product_form_core_section')"
+            :subtitle="__('messages.product_form_core_section_hint')">
+            <x-slot:icon>
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 12v4"/></svg>
+            </x-slot:icon>
+        </x-admin.section-header>
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
@@ -24,15 +28,24 @@
             </div>
 
             <div>
-                <label class="{{ $label }}">{{ __('messages.product_form_sku') }} <span class="text-rose-500">*</span></label>
-                <input type="text" name="sku" x-model="productSku" value="{{ old('sku', $product->sku) }}" required class="{{ $input }}" placeholder="{{ __('messages.product_form_sku_placeholder') }}" />
+                <div class="flex items-center justify-between gap-3">
+                    <label class="{{ $label }}">{{ __('messages.product_form_sku') }} <span class="text-rose-500" x-show="!autoSku">*</span></label>
+                    @if (!$isEdit)
+                        <label class="inline-flex cursor-pointer select-none items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
+                            <input type="checkbox" name="auto_sku" value="1" x-model="autoSku" class="rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
+                            {{ __('messages.product_form_auto_sku') }}
+                        </label>
+                    @endif
+                </div>
+                <input type="text" name="sku" x-model="productSku" value="{{ old('sku', $product->sku) }}" :disabled="autoSku" :required="!autoSku" class="{{ $input }} disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-slate-800 disabled:text-gray-400 dark:disabled:text-slate-500" placeholder="{{ __('messages.product_form_sku_placeholder') }}" />
+                <p class="{{ $hint }}" x-show="autoSku" x-cloak>{{ __('messages.product_form_auto_sku_hint') }}</p>
                 @error('sku')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
             </div>
 
             <div>
                 <div class="flex items-center justify-between gap-3">
                     <label class="{{ $label }}">{{ __('messages.product_form_main_category') }}</label>
-                    <button type="button" @click="categoryModalOpen = true" class="text-xs font-bold text-violet-600 hover:underline dark:text-violet-400">{{ __('messages.product_form_quick_category') }}</button>
+                    <button type="button" @click="newCategoryParent = ''; categoryModalOpen = true" class="text-xs font-bold text-violet-600 hover:underline dark:text-violet-400">{{ __('messages.product_form_quick_category') }}</button>
                 </div>
                 <select x-model="selectedMainCategory" @change="onMainCategoryChange()" x-init="$nextTick(() => $el.value = selectedMainCategory)" class="{{ $input }} cursor-pointer">
                     <option value="">{{ __('messages.product_form_main_category_none') }}</option>
@@ -43,7 +56,10 @@
             </div>
 
             <div>
-                <label class="{{ $label }}">{{ __('messages.product_form_sub_category') }}</label>
+                <div class="flex items-center justify-between gap-3">
+                    <label class="{{ $label }}">{{ __('messages.product_form_sub_category') }}</label>
+                    <button type="button" @click="newCategoryParent = selectedMainCategory; categoryModalOpen = true" :disabled="!selectedMainCategory" class="text-xs font-bold text-violet-600 hover:underline disabled:cursor-not-allowed disabled:opacity-40 dark:text-violet-400">{{ __('messages.product_form_quick_category') }}</button>
+                </div>
                 <select x-model="selectedSubCategory" :disabled="!selectedMainCategory" x-init="$nextTick(() => $el.value = selectedSubCategory)" class="{{ $input }} cursor-pointer disabled:cursor-not-allowed disabled:opacity-60">
                     <option value="" x-text="!selectedMainCategory ? '{{ __('messages.product_form_sub_category_choose_first') }}' : (subCategories.length ? '{{ __('messages.product_form_sub_category_none') }}' : '{{ __('messages.product_form_no_sub_categories') }}')"></option>
                     <template x-for="cat in subCategories" :key="cat.id">
@@ -83,10 +99,14 @@
 
     <section class="{{ $section }}">
         <div class="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-            <div>
-                <h2 class="{{ $sectionTitle }}">{{ __('messages.product_form_pricing_section') }}</h2>
-                <p class="{{ $sectionHint }}">{{ __('messages.product_form_pricing_section_hint') }}</p>
-            </div>
+            <x-admin.section-header
+                color="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300"
+                :title="__('messages.product_form_pricing_section')"
+                :subtitle="__('messages.product_form_pricing_section_hint')">
+                <x-slot:icon>
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M20 13 11 4H4v7l9 9 7-7ZM7.5 7.5h.01"/></svg>
+                </x-slot:icon>
+            </x-admin.section-header>
             <div class="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
                 {{ __('messages.product_form_margin') }}:
                 <span :class="marginPercent >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-400'" x-text="marginPercent + '%'">0%</span>
@@ -130,11 +150,70 @@
         </div>
     </section>
 
+    {{-- Inventory & Purchase (alinthit_pos style) --}}
     <section class="{{ $section }}">
-        <div class="mb-4">
-            <h2 class="{{ $sectionTitle }}">{{ __('messages.product_form_media_section') }}</h2>
-            <p class="{{ $sectionHint }}">{{ __('messages.product_form_media_section_hint') }}</p>
+        <x-admin.section-header
+            color="bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300"
+            :title="__('messages.product_form_inventory_section')"
+            :subtitle="__('messages.product_form_inventory_section_hint')">
+            <x-slot:icon>
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M21 8.5 12 3 3 8.5V16l9 5.5 9-5.5V8.5ZM3 8.5l9 5.5m0 0 9-5.5M12 14v7.5"/></svg>
+            </x-slot:icon>
+        </x-admin.section-header>
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+                <label class="{{ $label }}">{{ __('messages.product_form_reorder_level') }}</label>
+                <input type="number" step="0.001" min="0" name="reorder_level" value="{{ old('reorder_level', $product->reorder_level) }}" class="{{ $input }}" placeholder="10" />
+                <p class="{{ $hint }}">{{ __('messages.product_form_reorder_level_hint') }}</p>
+                @error('reorder_level')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+            </div>
+
+            @if (!$isEdit)
+            <div>
+                <label class="{{ $label }}">{{ __('messages.product_form_initial_stock') }}</label>
+                <input type="number" step="0.001" min="0" name="initial_stock" value="{{ old('initial_stock') }}" class="{{ $input }}" placeholder="0" />
+                <p class="{{ $hint }}">{{ __('messages.product_form_initial_stock_hint') }}</p>
+                @error('initial_stock')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+            </div>
+            @else
+            <div>
+                <label class="{{ $label }}">{{ __('messages.product_form_initial_stock') }}</label>
+                <p class="mt-2 rounded-xl bg-gray-50 px-3 py-2.5 text-xs leading-5 text-gray-500 dark:bg-slate-800/60 dark:text-slate-400">{{ __('messages.product_form_initial_stock_edit_note') }}</p>
+            </div>
+            @endif
+
+            <div>
+                <div class="flex items-center justify-between gap-3">
+                    <label class="{{ $label }}">{{ __('messages.product_form_supplier') }}</label>
+                    <button type="button" @click="supplierModalOpen = true" class="text-xs font-bold text-violet-600 hover:underline dark:text-violet-400">{{ __('messages.product_form_quick_supplier') }}</button>
+                </div>
+                <select name="supplier_id" x-model="selectedSupplier" x-init="$nextTick(() => $el.value = selectedSupplier)" class="{{ $input }} cursor-pointer">
+                    <option value="">{{ __('messages.product_form_none') }}</option>
+                    <template x-for="s in suppliers" :key="s.id">
+                        <option :value="s.id" x-text="s.name"></option>
+                    </template>
+                </select>
+            </div>
+
+            <div>
+                <label class="{{ $label }}">{{ __('messages.product_form_purchase_cost') }}</label>
+                <input type="number" step="0.01" min="0" name="purchase_cost" value="{{ old('purchase_cost', $product->purchase_cost) }}" class="{{ $input }}" placeholder="1500000" />
+                <p class="{{ $hint }}">{{ __('messages.product_form_purchase_cost_hint') }}</p>
+                @error('purchase_cost')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+            </div>
         </div>
+    </section>
+
+    <section class="{{ $section }}">
+        <x-admin.section-header
+            color="bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+            :title="__('messages.product_form_media_section')"
+            :subtitle="__('messages.product_form_media_section_hint')">
+            <x-slot:icon>
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m21 15-5-5-9 9"/></svg>
+            </x-slot:icon>
+        </x-admin.section-header>
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
@@ -170,10 +249,14 @@
     </section>
 
     <section class="{{ $section }}">
-        <div class="mb-4">
-            <h2 class="{{ $sectionTitle }}">{{ __('messages.product_form_policy_section') }}</h2>
-            <p class="{{ $sectionHint }}">{{ __('messages.product_form_policy_section_hint') }}</p>
-        </div>
+        <x-admin.section-header
+            color="bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300"
+            :title="__('messages.product_form_policy_section')"
+            :subtitle="__('messages.product_form_policy_section_hint')">
+            <x-slot:icon>
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6l8-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+            </x-slot:icon>
+        </x-admin.section-header>
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
@@ -215,10 +298,14 @@
     {{-- Storefront previews: Description + auto-generated Specifications.
          Read-only — no new database fields. Mirrors app/Support/ProductSpecifications.php. --}}
     <section class="{{ $section }}">
-        <div class="mb-4">
-            <h2 class="{{ $sectionTitle }}">{{ __('messages.product_form_preview_section') }}</h2>
-            <p class="{{ $sectionHint }}">{{ __('messages.product_form_specs_preview_hint') }}</p>
-        </div>
+        <x-admin.section-header
+            color="bg-cyan-100 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300"
+            :title="__('messages.product_form_preview_section')"
+            :subtitle="__('messages.product_form_specs_preview_hint')">
+            <x-slot:icon>
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </x-slot:icon>
+        </x-admin.section-header>
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div class="min-w-0">
@@ -266,12 +353,19 @@
     </section>
 
     <section class="{{ $section }}">
-        <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-            <div>
-                <h2 class="{{ $sectionTitle }}">{{ __('messages.product_form_variants_section') }} <span class="text-sm font-semibold text-gray-400">({{ __('messages.product_form_variants_optional') }})</span></h2>
-                <p class="{{ $sectionHint }}">{{ __('messages.product_form_variants_hint') }}</p>
-                @error('variants')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
-            </div>
+        <div class="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+            <x-admin.section-header
+                color="bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+                :title="__('messages.product_form_variants_section')"
+                :subtitle="__('messages.product_form_variants_hint')">
+                <x-slot:icon>
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 3l9 5-9 5-9-5 9-5Zm-9 10 9 5 9-5M3 17l9 5 9-5"/></svg>
+                </x-slot:icon>
+                <x-slot:badge>
+                    <span class="text-sm font-semibold text-gray-400">({{ __('messages.product_form_variants_optional') }})</span>
+                </x-slot:badge>
+            </x-admin.section-header>
+            @error('variants')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
             <button type="button" @click="addVariant()" class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-violet-300 bg-violet-50 px-4 py-2 text-xs font-black text-violet-700 hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
                 {{ __('messages.product_form_add_variant') }}
             </button>
@@ -411,6 +505,13 @@
             <label class="inline-flex cursor-pointer select-none items-center gap-2.5">
                 <input type="checkbox" name="is_featured" value="1" id="is_featured" {{ old('is_featured', $product->is_featured) ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
                 <span class="text-sm font-bold text-gray-800 dark:text-slate-200">{{ __('messages.product_form_featured') }}</span>
+            </label>
+
+            <label class="inline-flex cursor-pointer select-none items-center gap-2.5" title="{{ __('messages.product_form_sell_online_hint') }}">
+                {{-- Hidden 0-input so an unchecked box stores false (not "absent"). --}}
+                <input type="hidden" name="is_ecommerce" value="0" />
+                <input type="checkbox" name="is_ecommerce" value="1" id="is_ecommerce" {{ old('is_ecommerce', $product->is_ecommerce ?? true) ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
+                <span class="text-sm font-bold text-gray-800 dark:text-slate-200">{{ __('messages.product_form_sell_online') }}</span>
             </label>
 
             <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-violet-600 px-6 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700">

@@ -3,12 +3,13 @@
     'routeName' => null,
     'active' => false,
     'label' => '',
-    'variant' => 'sub', // 'main' (Dashboard) | 'direct' (standalone collapsed-aware link) | 'sub' (inside a group)
+    'variant' => 'sub', // 'main' (Dashboard) | 'direct' (standalone collapsed-aware link) | 'sub' (inside a group) | 'placeholder' (roadmap link to the coming-soon page)
 ])
 
 @php
     $isMain = $variant === 'main';
     $isDirect = $variant === 'direct';
+    $isPlaceholder = $variant === 'placeholder';
     $standalone = $isMain || $isDirect;
 
     $linkClasses = $isMain
@@ -19,7 +20,9 @@
         : 'flex items-center justify-between gap-2 px-3 py-2.5 min-h-11 rounded-md text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-violet-500 '
           . ($active
                 ? 'bg-violet-600 text-white shadow-md'
-                : 'text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800/80');
+                : ($isPlaceholder
+                    ? 'text-slate-400 dark:text-slate-500 hover:text-violet-500 dark:hover:text-violet-300'
+                    : 'text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800/80'));
 
     $iconWrapClasses = $isMain
         ? ($active ? 'bg-white/15' : 'bg-gray-100 dark:bg-slate-800 group-hover:bg-white dark:group-hover:bg-slate-700')
@@ -45,4 +48,7 @@
         <span class="{{ $isMain ? '' : 'truncate' }}" @if ($standalone) :class="sidebarCollapsed ? 'lg:hidden' : ''" @endif>{{ $label }}</span>
     </span>
     {{ $badge ?? '' }}
+    @if ($isPlaceholder)
+        <span class="shrink-0 rounded-full border border-violet-300/70 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-500 dark:border-violet-500/30 dark:text-violet-300">{{ __('messages.coming_soon_short') }}</span>
+    @endif
 </a>

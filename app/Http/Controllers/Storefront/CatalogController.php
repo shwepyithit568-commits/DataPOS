@@ -55,6 +55,7 @@ class CatalogController extends Controller
             ->values();
 
         $query = Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
             ->with(['category', 'brand', 'images', 'variants']);
 
         // Search by keyword or SKU
@@ -128,7 +129,7 @@ class CatalogController extends Controller
         $products = $query->paginate($perPage)->withQueryString();
 
         // Overall product count for the store (used by the "All Categories" sidebar row)
-        $totalProducts = Product::where('store_id', $store->id)->count();
+        $totalProducts = Product::where('store_id', $store->id)->where('is_ecommerce', true)->count();
         $user = auth()->user();
 
         // Check if current user is an approved wholesale customer for this active store
@@ -251,6 +252,7 @@ class CatalogController extends Controller
             ->get(['id', 'name', 'slug']);
 
         $products = Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
             ->where(function ($q) use ($search) {
                 $q->whereLike('name', '%' . $search . '%')
                   ->orWhereLike('sku', '%' . $search . '%');
@@ -320,6 +322,7 @@ class CatalogController extends Controller
 
         // Related products: same category or brand, excluding the current one.
         $related = Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
             ->where('id', '!=', $product->id)
             ->where(fn ($q) => $q->where('category_id', $product->category_id)->orWhere('brand_id', $product->brand_id))
             ->latest()

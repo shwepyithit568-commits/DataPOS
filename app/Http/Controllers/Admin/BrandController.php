@@ -21,10 +21,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BrandController extends Controller
 {
-    private const IMAGE_MAX_KB = 10240;
+    public const IMAGE_MAX_KB = 10240;
 
     /** Whitelist of allowed per-page values — never map 'all' to an unbounded fetch. */
-    private const ALLOWED_PER_PAGE = [25, 50, 100];
+    public const ALLOWED_PER_PAGE = [25, 50, 100];
 
     public function index(Request $request, StoreContext $context): View
     {

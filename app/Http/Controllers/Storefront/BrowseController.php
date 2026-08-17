@@ -28,9 +28,11 @@ class BrowseController extends Controller
         abort_unless($store, 404, 'Store not found.');
 
         // Only categories that actually have products are shown in the
-        // storefront — empty ones clutter the browser for customers.
+        // storefront — empty ones clutter the browser for customers. The
+        // counts count ONLINE products only (counter-only items do not
+        // advertise a category).
         $allCategories = Category::where('store_id', $store->id)
-            ->withCount('products')
+            ->withCount(['products' => fn ($q) => $q->where('is_ecommerce', true)])
             ->get();
         $withProducts = $allCategories
             ->filter(fn (Category $category) => $category->products_count > 0)
@@ -41,6 +43,7 @@ class BrowseController extends Controller
         // Wrap in a base collection: Eloquent's Collection::only() treats keys as
         // model keys, which breaks on grouped (non-model) items.
         $categoryBrands = collect(Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
             ->whereNotNull('brand_id')
             ->whereNotNull('category_id')
             ->select(['id', 'brand_id', 'category_id'])
@@ -80,6 +83,6 @@ class BrowseController extends Controller
             ->sortByDesc('total')
             ->values();
 
-        return view('storefront.browse.index', compact('store', 'browseRows'));
+        return view("storefront.browse.index", compact("store", "browseRows"));
     }
 }

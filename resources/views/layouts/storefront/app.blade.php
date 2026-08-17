@@ -118,9 +118,11 @@
 
     // Header category menu — categories with products, sorted by product count (Shopwise style).
     // Grouped Main → Sub: mains are listed when they (or their subs) have products.
+    // Counts + flyouts cover ONLINE products only — counter-only items
+    // (is_ecommerce=false) do not advertise categories on the storefront.
     $navAllCategories = $activeStoreContext
         ? \App\Models\Category::where('store_id', $activeStoreContext->id)
-            ->withCount('products')
+            ->withCount(['products' => fn ($q) => $q->where('is_ecommerce', true)])
             ->get()
         : collect();
     $navCategories = $navAllCategories
@@ -147,6 +149,7 @@
     // Brands per category (for the hover flyout in the header category menu).
     $navBrandsByCategory = $activeStoreContext
         ? \App\Models\Product::where('store_id', $activeStoreContext->id)
+            ->where('is_ecommerce', true)
             ->whereNotNull('brand_id')
             ->whereNotNull('category_id')
             ->with('brand')

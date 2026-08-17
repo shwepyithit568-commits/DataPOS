@@ -5,6 +5,7 @@ namespace Tests\Feature\POS;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Models\User;
 use App\POS\Models\PosSale;
@@ -12,6 +13,7 @@ use App\POS\Services\CashierShiftService;
 use App\POS\Services\InventoryService;
 use App\POS\Services\PosSaleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -143,6 +145,65 @@ class PosUiEndpointsTest extends TestCase
         $searched->assertOk();
         $searched->assertJsonCount(1, 'products');
         $searched->assertJsonPath('products.0.id', $case->id);
+    }
+
+    /**
+     * Regression guard for the N+1 balance lookups: the grid used to run one
+     * SUM query per product AND per variant (~100+ queries for 25×3). The
+     * grouped balancesForProducts() lookup must keep the request far below
+     * one-query-per-row.
+     */
+    public function test_product_grid_uses_grouped_balance_queries(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+
+        for ($i = 0; $i < 25; $i++) {
+            $product = $this->makeProduct($store);
+            $this->seedStock($store, $product, '10');
+            foreach (['Black', 'Blue', 'White'] as $vName) {
+                $variant = ProductVariant::create([
+                    'product_id' => $product->id,
+                    'name' => $vName,
+                    'sku' => $product->sku . '-' . strtoupper(substr($vName, 0, 2)),
+                    'retail_price' => 9000,
+                    'wholesale_price' => 8000,
+                    'stock_status' => 'in_stock',
+                ]);
+                $this->inventory->postMovement([
+                    'store_id' => $store->id,
+                    'product_id' => $product->id,
+                    'product_variant_id' => $variant->id,
+                    'movement_type' => 'opening_balance',
+                    'quantity_delta' => '3',
+                    'unit_cost' => 7000,
+                    'source_type' => 'opening_balance',
+                    'client_transaction_id' => 'seed-v:' . Str::uuid(),
+                    'occurred_at' => now(),
+                ]);
+            }
+        }
+
+        $queries = 0;
+        DB::listen(function () use (&$queries) {
+            $queries++;
+        });
+
+        $response = $this->getJson("/store/{$store->slug}/pos/products-grid");
+        $response->assertOk();
+        $response->assertJsonCount(25, 'products');
+        // Spot-check balances from the grouped map (product = sum of product
+        // + variant rows, variants = their own totals).
+        $firstProduct = $response->json('products.0');
+        $this->assertSame('19.000', $firstProduct['balance']);
+        $this->assertCount(3, $firstProduct['variants']);
+        $this->assertSame('3.000', $firstProduct['variants'][0]['balance']);
+
+        $this->assertLessThan(
+            40,
+            $queries,
+            "Grid issued {$queries} queries — the grouped balance lookup should keep it far below one-per-row."
+        );
     }
 
     public function test_product_grid_is_store_scoped(): void

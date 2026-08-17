@@ -10,10 +10,17 @@
     x-data="{
         categoryModalOpen: false,
         brandModalOpen: false,
+        supplierModalOpen: false,
         newCategoryName: '',
+        newCategoryParent: '',
         newBrandName: '',
+        newSupplierName: '',
+        newSupplierPhone: '',
+        autoSku: false,
         categories: {{ json_encode($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name, 'parent' => $c->parent?->name, 'parent_id' => $c->parent_id])) }},
         brands: {{ json_encode($brands->map(fn($b) => ['id' => $b->id, 'name' => $b->name])) }},
+        suppliers: {{ json_encode($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])) }},
+        selectedSupplier: '{{ old('supplier_id') }}',
         variantPresets: @js($variantPresets),
         selectedVariantPresetId: '',
         selectedVariantPresetIdTwo: '',
@@ -220,15 +227,25 @@
             const res = await fetch('{{ url('/store/' . $store->slug . '/admin/categories/quick-store') }}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                body: JSON.stringify({ name: this.newCategoryName })
+                body: JSON.stringify({ name: this.newCategoryName, parent_id: this.newCategoryParent || null })
             });
             const data = await res.json();
             if (data.success) {
-                this.categories.push({ id: data.id, name: data.name, parent: null, parent_id: null });
-                this.selectedMainCategory = String(data.id);
-                this.selectedSubCategory = '';
+                // Same categories table the Master Data page manages — the new
+                // row is immediately available in this form's dropdowns.
+                const parentName = data.parent_id
+                    ? (this.categories.find((c) => String(c.id) === String(data.parent_id))?.name ?? null)
+                    : null;
+                this.categories.push({ id: data.id, name: data.name, parent: parentName, parent_id: data.parent_id });
+                if (data.parent_id) {
+                    this.selectedSubCategory = String(data.id);
+                } else {
+                    this.selectedMainCategory = String(data.id);
+                    this.selectedSubCategory = '';
+                }
                 this.normalizeVariantPresetSelection();
                 this.newCategoryName = '';
+                this.newCategoryParent = '';
                 this.categoryModalOpen = false;
             }
         },
@@ -245,6 +262,22 @@
                 this.selectedBrand = data.id;
                 this.newBrandName = '';
                 this.brandModalOpen = false;
+            }
+        },
+        async createSupplier() {
+            if (!this.newSupplierName.trim()) return;
+            const res = await fetch('{{ url('/store/' . $store->slug . '/admin/suppliers/quick-store') }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                body: JSON.stringify({ name: this.newSupplierName, phone: this.newSupplierPhone })
+            });
+            const data = await res.json();
+            if (data.success) {
+                this.suppliers.push({ id: data.id, name: data.name });
+                this.selectedSupplier = String(data.id);
+                this.newSupplierName = '';
+                this.newSupplierPhone = '';
+                this.supplierModalOpen = false;
             }
         }
     }" @richtext-sync.window="onRichTextSync($event)">
@@ -275,13 +308,25 @@
         @include('admin.products._form', ['isEdit' => false])
     </form>
 
-    {{-- Quick Create Category Modal --}}
+    {{-- Quick Create Category Modal (Main or Sub — connected to Master Data) --}}
     <div x-show="categoryModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
         <div class="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-sm w-full space-y-4 shadow-xl">
             <h3 class="text-lg font-bold text-gray-900 dark:text-slate-100">{{ __('messages.product_form_quick_category_title') }}</h3>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ __('messages.product_form_category_name') }}</label>
                 <input type="text" x-model="newCategoryName" @keydown.enter.prevent="createCategory()" class="w-full rounded-xl border dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="{{ __('messages.product_form_category_name_placeholder') }}" />
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ __('messages.product_form_quick_category_type') }}</label>
+                <select x-model="newCategoryParent" class="w-full rounded-xl border dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 cursor-pointer">
+                    <option value="">{{ __('messages.product_form_quick_category_main') }}</option>
+                    <template x-for="m in mainCategories" :key="m.id">
+                        <option :value="m.id" x-text="'{{ __('messages.product_form_quick_category_sub_of') }}: ' + m.name"></option>
+                    </template>
+                </select>
+                <p class="mt-1 text-xs text-gray-500 dark:text-slate-400" x-show="newCategoryParent" x-cloak>
+                    {{ __('messages.product_form_quick_category_sub_hint') }}
+                </p>
             </div>
             <div class="flex justify-end space-x-2">
                 <button type="button" @click="categoryModalOpen = false" class="px-3 py-1.5 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-medium">{{ __('messages.close') }}</button>
@@ -301,6 +346,24 @@
             <div class="flex justify-end space-x-2">
                 <button type="button" @click="brandModalOpen = false" class="px-3 py-1.5 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-medium">{{ __('messages.close') }}</button>
                 <button type="button" @click="createBrand()" class="px-3 py-1.5 bg-violet-600 text-white rounded-xl text-sm font-medium">{{ __('messages.product_form_save_brand') }}</button>
+            </div>
+        </div>
+    </div>
+    {{-- Quick Create Supplier Modal --}}
+    <div x-show="supplierModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-sm w-full space-y-4 shadow-xl">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-slate-100">{{ __('messages.product_form_quick_supplier_title') }}</h3>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ __('messages.product_form_supplier_name') }}</label>
+                <input type="text" x-model="newSupplierName" @keydown.enter.prevent="createSupplier()" class="w-full rounded-xl border dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="{{ __('messages.product_form_supplier_name_placeholder') }}" />
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ __('messages.product_form_supplier_phone') }}</label>
+                <input type="text" x-model="newSupplierPhone" @keydown.enter.prevent="createSupplier()" class="w-full rounded-xl border dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="09xxxxxxxxx" />
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" @click="supplierModalOpen = false" class="px-3 py-1.5 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-medium">{{ __('messages.close') }}</button>
+                <button type="button" @click="createSupplier()" class="px-3 py-1.5 bg-violet-600 text-white rounded-xl text-sm font-medium">{{ __('messages.product_form_save_supplier') }}</button>
             </div>
         </div>
     </div>
