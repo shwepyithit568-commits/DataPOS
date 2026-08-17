@@ -161,6 +161,8 @@ class UatSeeder extends Seeder
                 'name'     => 'Mg Hla (Store Manager)',
                 'phone'    => '09100000002',
                 'password' => Hash::make('password'),
+                // POS override-approval PIN (demo): manager PIN for deep discounts.
+                'pos_pin'  => Hash::make('1234'),
                 'role'     => 'customer',
             ],
             [

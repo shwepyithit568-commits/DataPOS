@@ -78,6 +78,17 @@
                     <input type="password" name="password_confirmation" autocomplete="new-password" class="w-full border dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none" />
                 </div>
             </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">POS Manager PIN <span class="text-gray-400 font-normal">(4–6 digits, optional)</span></label>
+                    <input type="password" name="pos_pin" inputmode="numeric" maxlength="6" autocomplete="new-password"
+                           class="w-full border dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none" />
+                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
+                        ဈေးလျှော့မှု သတ်မှတ်ချက် (threshold) ကျော်ရင် cashier က ဒီ PIN ထည့်ပြီး အတည်ပြုရပါမယ် —
+                        manager/owner အကောင့်တွေမှာသာ ထားပေးပါ။ ဗလာထားရင် PIN ရှိပြီးသား အတိုင်းပဲ။
+                    </p>
+                </div>
+            </div>
         </div>
 
         @if ($managedUser->id === auth()->id())

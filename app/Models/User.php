@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable
 {
@@ -18,11 +19,13 @@ class User extends Authenticatable
         'phone',
         'email',
         'password',
+        'pos_pin',
         'role',
     ];
 
     protected $hidden = [
         'password',
+        'pos_pin',
         'remember_token',
     ];
 
@@ -31,6 +34,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'pos_pin' => 'hashed',
         ];
     }
 
@@ -135,6 +139,15 @@ class User extends Authenticatable
     public function getStoreMembership(int $storeId): ?object
     {
         return $this->stores()->where('store_id', $storeId)->first()?->pivot;
+    }
+
+    /**
+     * Whether this user's POS PIN (hashed in `pos_pin`) matches the given
+     * plaintext PIN — used for manager approval of deep price overrides.
+     */
+    public function posPinMatches(string $pin): bool
+    {
+        return $this->pos_pin !== null && Hash::check($pin, $this->pos_pin);
     }
 
     public function getStoreRole(int $storeId): ?string

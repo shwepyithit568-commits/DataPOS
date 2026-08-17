@@ -368,6 +368,91 @@ class PosSaleController extends Controller
     }
 
     /**
+     * Negotiated per-line price override (cashier discount). An empty value
+     * clears the override and the line returns to the customer-tier price;
+     * any non-negative decimal sets the price until cleared.
+     *
+     * When the store's `pos_override_pin_threshold` is set and the discount
+     * exceeds it, a store manager/owner POS PIN is required (and the approver
+     * is recorded on the line for the audit trail).
+     */
+    public function setLinePrice(Request $request, string $store_slug, StoreContext $context, int $line): JsonResponse|RedirectResponse
+    {
+        $store = $context->getStore();
+
+        $data = $request->validate([
+            'unit_price' => ['nullable', 'string', 'max:20'],
+            'manager_pin' => ['nullable', 'string', 'max:10'],
+        ]);
+
+        $raw = trim((string) ($data['unit_price'] ?? ''));
+        $unitPrice = $raw === '' ? null : $raw;
+
+        if ($unitPrice !== null && (! is_numeric($unitPrice) || bccomp($unitPrice, '0', 2) < 0)) {
+            return $this->jsonOrRedirect($request, $store, null, __('messages.pos_price_invalid'));
+        }
+
+        // Only overrides that are a discount against the tier price can trip
+        // the manager-PIN threshold; raises and clears never need approval.
+        $approver = null;
+        $threshold = $unitPrice !== null ? $store->setting?->posOverridePinThreshold() : null;
+        if ($threshold !== null) {
+            try {
+                $tierPrice = $this->sales->tierPriceForCartLine($store, $line);
+            } catch (InventoryException $e) {
+                return $this->jsonOrRedirect($request, $store, null, $e->getMessage());
+            }
+
+            if (bccomp($tierPrice, $unitPrice, 2) > 0) {
+                $discountPct = bccomp($tierPrice, '0', 2) > 0
+                    ? bcmul(bcdiv(bcsub($tierPrice, $unitPrice, 4), $tierPrice, 6), '100', 4)
+                    : '0';
+
+                if (bccomp($discountPct, (string) $threshold, 2) > 0) {
+                    $pin = trim((string) ($data['manager_pin'] ?? ''));
+                    $approver = $pin !== '' ? $this->resolveManagerByPin($store, $pin) : null;
+
+                    if ($approver === null) {
+                        $wantsJson = $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+                        $message = $pin === ''
+                            ? __('messages.pos_price_pin_required')
+                            : __('messages.pos_price_pin_invalid');
+
+                        return $wantsJson
+                            ? response()->json(['error' => $message, 'pin_required' => true], 422)
+                            : back()->withErrors(['manager_pin' => $message]);
+                    }
+                }
+            }
+        }
+
+        try {
+            $this->sales->setCartLinePrice($store, $line, $unitPrice, $approver);
+        } catch (InventoryException $e) {
+            return $this->jsonOrRedirect($request, $store, null, $e->getMessage());
+        }
+
+        return $this->jsonOrRedirect(
+            $request,
+            $store,
+            $unitPrice === null ? __('messages.pos_price_cleared') : __('messages.pos_price_set'),
+        );
+    }
+
+    /**
+     * Find an active store manager/owner of this store whose POS PIN matches.
+     */
+    private function resolveManagerByPin(\App\Models\Store $store, string $pin): ?\App\Models\User
+    {
+        return \App\Models\User::whereHas('stores', function ($q) use ($store) {
+            $q->where('store_id', $store->id)
+                ->whereIn('role', ['store_manager', 'store_owner'])
+                ->where('status', 'active');
+        })->get()
+            ->first(fn (\App\Models\User $user) => $user->posPinMatches($pin));
+    }
+
+    /**
      * Drop the whole session cart (F4 clear-cart shortcut).
      */
     public function clearCart(Request $request, StoreContext $context): JsonResponse|RedirectResponse
@@ -474,6 +559,8 @@ class PosSaleController extends Controller
                     'product_id' => $item->product_id,
                     'product_variant_id' => $item->product_variant_id,
                     'quantity' => (string) $item->quantity,
+                    // Re-apply a negotiated price carried on the held sale.
+                    'unit_price' => $item->original_unit_price !== null ? (string) $item->unit_price : null,
                 ])->all();
             } else {
                 $lines = $this->sales->cartLines($store);

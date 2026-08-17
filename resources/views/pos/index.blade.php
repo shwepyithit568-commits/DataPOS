@@ -27,6 +27,13 @@
             'pos_customer_not_found_add' => __('messages.pos_customer_not_found_add'),
             'pos_customer_attached' => __('messages.pos_customer_attached'),
             'pos_customer_detached' => __('messages.pos_customer_detached'),
+            'pos_price_edit' => __('messages.pos_price_edit'),
+            'pos_price_invalid' => __('messages.pos_price_invalid'),
+            'pos_price_set' => __('messages.pos_price_set'),
+            'pos_price_cleared' => __('messages.pos_price_cleared'),
+            'pos_price_pin_required' => __('messages.pos_price_pin_required'),
+            'pos_price_pin_invalid' => __('messages.pos_price_pin_invalid'),
+            'pos_price_pin_label' => __('messages.pos_price_pin_label'),
         ];
     @endphp
 
@@ -465,9 +472,16 @@
                             <div class="flex items-start justify-between gap-2">
                                 <div class="min-w-0">
                                     <p class="text-sm font-bold leading-snug truncate" x-text="line.name"></p>
-                                    <p class="text-[10px] text-rose-500 font-bold line-through mt-0.5" x-show="parseFloat(line.retail_unit_price) > parseFloat(line.unit_price)" x-text="'Ks ' + Number(line.retail_unit_price).toLocaleString()"></p>
-                                    <p class="text-xs font-mono mt-0.5" :class="parseFloat(line.retail_unit_price) > parseFloat(line.unit_price) ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-400'" x-text="'Ks ' + Number(line.unit_price).toLocaleString()"></p>
-                                    <p class="text-[10px] font-black text-amber-600 dark:text-amber-400" x-show="parseFloat(line.retail_unit_price) > parseFloat(line.unit_price)" x-text="'−Ks ' + (parseFloat(line.retail_unit_price) - parseFloat(line.unit_price)).toLocaleString()"></p>
+                                    {{-- Negotiated override: strike the tier price it replaced --}}
+                                    <p class="text-[10px] text-rose-500 font-bold line-through mt-0.5" x-show="line.original_unit_price !== null && parseFloat(line.original_unit_price) > parseFloat(line.unit_price)" x-text="'Ks ' + Number(line.original_unit_price).toLocaleString()"></p>
+                                    <p class="text-xs font-mono mt-0.5" :class="(line.original_unit_price !== null && parseFloat(line.original_unit_price) > parseFloat(line.unit_price)) || parseFloat(line.retail_unit_price) > parseFloat(line.unit_price) ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-400'" x-text="'Ks ' + Number(line.unit_price).toLocaleString()"></p>
+                                    {{-- Override savings (amber) takes precedence over the wholesale comparison --}}
+                                    <p class="text-[10px] font-black text-amber-600 dark:text-amber-400" x-show="line.original_unit_price !== null && parseFloat(line.original_unit_price) > parseFloat(line.unit_price)" x-text="'−Ks ' + (parseFloat(line.original_unit_price) - parseFloat(line.unit_price)).toLocaleString() + ' ✏️'"></p>
+                                    <p class="text-[10px] font-black text-amber-600 dark:text-amber-400" x-show="(line.original_unit_price === null || parseFloat(line.original_unit_price) <= parseFloat(line.unit_price)) && parseFloat(line.retail_unit_price) > parseFloat(line.unit_price)" x-text="'−Ks ' + (parseFloat(line.retail_unit_price) - parseFloat(line.unit_price)).toLocaleString()"></p>
+                                    {{-- Manager-approved deep override (audit badge) --}}
+                                    <p class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5" x-show="line.approved_by">
+                                        🔓 {{ __('messages.pos_price_manager_approved') }}<span x-show="line.approved_by_name" x-text="' · ' + line.approved_by_name"></span>
+                                    </p>
                                 </div>
                                 <button type="button" @click="removeLine(line)"
                                         class="shrink-0 w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 grid place-items-center transition">
@@ -480,7 +494,24 @@
                                     <span class="w-9 text-center text-sm font-black" x-text="line.quantity"></span>
                                     <button type="button" @click="changeQty(line, 1)" class="w-9 h-9 text-blue-600 dark:text-blue-400 font-black hover:bg-slate-100 dark:hover:bg-slate-800 transition">+</button>
                                 </div>
-                                <p class="text-sm font-extrabold text-blue-600 dark:text-blue-400" x-text="'Ks ' + Number(line.line_total).toLocaleString()"></p>
+                                <div class="flex items-center gap-1.5">
+                                    <input x-show="priceEditIndex === line.index" x-model="priceEditValue" type="number" min="0" step="100"
+                                           @keydown.enter="saveLinePrice(line)" @keydown.escape="priceEditIndex = null"
+                                           class="w-24 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-2 py-1 text-right text-sm font-semibold focus:ring-2 focus:ring-amber-500 outline-none">
+                                    <input x-show="priceEditIndex === line.index && pricePinIndex === line.index" x-model="pricePinValue" type="password" inputmode="numeric" maxlength="6"
+                                           @keydown.enter="saveLinePrice(line)" @keydown.escape="pricePinIndex = null"
+                                           :placeholder="labels.pos_price_pin_label"
+                                           class="w-20 rounded-lg border border-rose-300 dark:border-rose-700 bg-white dark:bg-slate-900 px-2 py-1 text-center text-sm font-bold tracking-widest focus:ring-2 focus:ring-rose-500 outline-none"
+                                           :title="labels.pos_price_pin_label">
+                                    <button x-show="priceEditIndex === line.index" type="button" @click="saveLinePrice(line)"
+                                            class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 grid place-items-center transition font-black">✓</button>
+                                    <button x-show="priceEditIndex === line.index" type="button" @click="priceEditIndex = null; pricePinIndex = null; pricePinValue = ''"
+                                            class="w-8 h-8 rounded-lg bg-slate-500/10 text-slate-500 hover:bg-slate-500/20 grid place-items-center transition font-black">✕</button>
+                                    <button x-show="priceEditIndex !== line.index" type="button" @click="startPriceEdit(line)"
+                                            class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 grid place-items-center transition"
+                                            :title="labels.pos_price_edit">✏️</button>
+                                    <p class="text-sm font-extrabold text-blue-600 dark:text-blue-400" x-text="'Ks ' + Number(line.line_total).toLocaleString()"></p>
+                                </div>
                             </div>
                         </div>
                     </template>

@@ -56,6 +56,28 @@ class PosUiEndpointsTest extends TestCase
         return $user;
     }
 
+    private function manager(Store $store, string $pin = '1234'): User
+    {
+        $user = User::create([
+            'name' => 'Manager ' . Str::random(4),
+            'phone' => '09' . rand(10000000, 99999999),
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+            'pos_pin' => $pin,
+        ]);
+        $user->stores()->attach($store->id, ['role' => 'store_manager', 'status' => 'active']);
+
+        return $user;
+    }
+
+    private function setOverridePinThreshold(Store $store, ?int $percent): void
+    {
+        \App\Models\StorefrontSetting::updateOrCreate(
+            ['store_id' => $store->id],
+            ['store_name' => $store->name, 'pos_override_pin_threshold' => $percent],
+        );
+    }
+
     private function makeProduct(Store $store, array $overrides = []): Product
     {
         $name = $overrides['name'] ?? 'Phone ' . Str::random(3);
@@ -498,5 +520,145 @@ class PosUiEndpointsTest extends TestCase
 
         $customers = $this->getJson("/store/{$store->slug}/pos/customers?q=yee")->json('customers');
         $this->assertSame('wholesale_customer', $customers[0]['role']);
+    }
+
+    public function test_line_price_override_endpoint(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+        $product = $this->makeProduct($store, ['retail_price' => 10000]);
+        $this->seedStock($store, $product, '10');
+
+        $this->postJson("/store/{$store->slug}/pos/cart", [
+            'product_id' => $product->id,
+            'quantity' => '2',
+        ])->assertOk();
+
+        // Set a negotiated price via the endpoint.
+        $overridden = $this->postJson("/store/{$store->slug}/pos/cart/0/price", ['unit_price' => '8500']);
+        $overridden->assertOk();
+        $overridden->assertJsonPath('cart.lines.0.unit_price', '8500.00');
+        $overridden->assertJsonPath('cart.lines.0.original_unit_price', '10000.00');
+        $overridden->assertJsonPath('cart.totals.total', '17000.00');
+
+        // Empty value clears the override back to the tier price.
+        $cleared = $this->postJson("/store/{$store->slug}/pos/cart/0/price", ['unit_price' => '']);
+        $cleared->assertOk();
+        $cleared->assertJsonPath('cart.lines.0.unit_price', '10000.00');
+        $cleared->assertJsonPath('cart.lines.0.original_unit_price', null);
+        $cleared->assertJsonPath('cart.totals.total', '20000.00');
+
+        // Negative price is rejected.
+        $this->postJson("/store/{$store->slug}/pos/cart/0/price", ['unit_price' => '-5'])
+            ->assertStatus(422);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Manager-PIN approval for deep price overrides                       */
+    /* ------------------------------------------------------------------ */
+
+    public function test_price_override_below_threshold_needs_no_pin(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+        $this->setOverridePinThreshold($store, 50);
+        $product = $this->makeProduct($store, ['retail_price' => 10000]);
+        $this->seedStock($store, $product);
+        $this->postJson("/store/{$store->slug}/pos/cart", ['product_id' => $product->id, 'quantity' => '1'])->assertOk();
+
+        // 20% discount (8000 vs 10000) is under the 50% threshold — no PIN.
+        $response = $this->postJson("/store/{$store->slug}/pos/cart/0/price", ['unit_price' => '8000']);
+        $response->assertOk();
+        $response->assertJsonPath('cart.lines.0.unit_price', '8000.00');
+        $response->assertJsonPath('cart.lines.0.approved_by', null);
+    }
+
+    public function test_price_override_above_threshold_requires_manager_pin(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+        $this->setOverridePinThreshold($store, 10);
+        $product = $this->makeProduct($store, ['retail_price' => 10000]);
+        $this->seedStock($store, $product);
+        $this->postJson("/store/{$store->slug}/pos/cart", ['product_id' => $product->id, 'quantity' => '1'])->assertOk();
+
+        // 20% discount exceeds 10% — 422 with the pin_required flag.
+        $response = $this->postJson("/store/{$store->slug}/pos/cart/0/price", ['unit_price' => '8000']);
+        $response->assertStatus(422);
+        $response->assertJsonPath('pin_required', true);
+        $response->assertJsonPath('error', __('messages.pos_price_pin_required'));
+
+        // The line is untouched — still the tier price.
+        $this->getJson("/store/{$store->slug}/pos/cart-state")
+            ->assertJsonPath('cart.lines.0.unit_price', '10000.00');
+    }
+
+    public function test_price_override_wrong_manager_pin_is_rejected(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+        $this->setOverridePinThreshold($store, 10);
+        $this->manager($store, '1234');
+        $product = $this->makeProduct($store, ['retail_price' => 10000]);
+        $this->seedStock($store, $product);
+        $this->postJson("/store/{$store->slug}/pos/cart", ['product_id' => $product->id, 'quantity' => '1'])->assertOk();
+
+        $response = $this->postJson("/store/{$store->slug}/pos/cart/0/price", [
+            'unit_price' => '8000',
+            'manager_pin' => '9999',
+        ]);
+        $response->assertStatus(422);
+        $response->assertJsonPath('pin_required', true);
+        $response->assertJsonPath('error', __('messages.pos_price_pin_invalid'));
+    }
+
+    public function test_price_override_with_correct_manager_pin_succeeds_and_records_approver(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $this->actingAs($cashier);
+        $this->setOverridePinThreshold($store, 10);
+        $manager = $this->manager($store, '1234');
+        $product = $this->makeProduct($store, ['retail_price' => 10000]);
+        $this->seedStock($store, $product, '5');
+        $this->shifts->openShift($store, ['register_name' => 'REG-1', 'opening_cash' => 0], $cashier);
+        $this->postJson("/store/{$store->slug}/pos/cart", ['product_id' => $product->id, 'quantity' => '2'])->assertOk();
+
+        // With the manager PIN the deep override goes through and is attributed.
+        $response = $this->postJson("/store/{$store->slug}/pos/cart/0/price", [
+            'unit_price' => '8000',
+            'manager_pin' => '1234',
+        ]);
+        $response->assertOk();
+        $response->assertJsonPath('cart.lines.0.unit_price', '8000.00');
+        $response->assertJsonPath('cart.lines.0.approved_by', $manager->id);
+        $response->assertJsonPath('cart.lines.0.approved_by_name', $manager->name);
+
+        // The approver survives posting onto the sale item (audit trail).
+        $posted = $this->post("/store/{$store->slug}/pos/post", [
+            'payments' => [['method' => 'cash', 'amount' => '16000']],
+            'customer_id' => null,
+        ]);
+        $posted->assertRedirect();
+
+        $item = \App\POS\Models\PosSaleItem::where('unit_price', '8000.00')->latest('id')->first();
+        $this->assertNotNull($item);
+        $this->assertSame((int) $manager->id, (int) $item->approved_by);
+        $this->assertSame('10000.00', (string) $item->original_unit_price);
+    }
+
+    public function test_price_override_threshold_disabled_needs_no_pin(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+        // No settings row / threshold null → PIN enforcement off.
+        $product = $this->makeProduct($store, ['retail_price' => 10000]);
+        $this->seedStock($store, $product);
+        $this->postJson("/store/{$store->slug}/pos/cart", ['product_id' => $product->id, 'quantity' => '1'])->assertOk();
+
+        $response = $this->postJson("/store/{$store->slug}/pos/cart/0/price", ['unit_price' => '5000']);
+        $response->assertOk();
+        $response->assertJsonPath('cart.lines.0.unit_price', '5000.00');
+        $response->assertJsonPath('cart.lines.0.approved_by', null);
     }
 }

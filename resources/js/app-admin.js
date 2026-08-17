@@ -124,6 +124,10 @@ Alpine.data('posApp', (opts = {}) => ({
     cartBusy: false,
     variantProduct: null,
     showPayment: false,
+    priceEditIndex: null,
+    priceEditValue: '',
+    pricePinIndex: null,   // line whose override needs a manager PIN
+    pricePinValue: '',
     customer: null,
     cash: '0',
     kpay: 0, wavepay: 0, cbpay: 0, mmqr: 0, credit: 0,
@@ -148,7 +152,11 @@ Alpine.data('posApp', (opts = {}) => ({
         const res = await fetch(this.url(path), { ...options, headers, credentials: 'same-origin' });
         let data = {};
         try { data = await res.json(); } catch (e) { /* empty body */ }
-        if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+        if (!res.ok) {
+            const err = new Error(data.error || ('HTTP ' + res.status));
+            err.pinRequired = !!data.pin_required;
+            throw err;
+        }
         return data;
     },
 
@@ -212,6 +220,53 @@ Alpine.data('posApp', (opts = {}) => ({
     async clearCart() {
         if (!this.cart.lines.length) return;
         await this.mutate('/cart/clear', {});
+    },
+
+    // Per-line price override (negotiation): empty value clears the override
+    // and the line returns to the customer-tier price.
+    startPriceEdit(line) {
+        this.priceEditIndex = line.index;
+        this.priceEditValue = line.unit_price;
+    },
+
+    async saveLinePrice(line) {
+        if (this.cartBusy) return;
+        const raw = String(this.priceEditValue ?? '').trim();
+        if (raw !== '' && (isNaN(parseFloat(raw)) || parseFloat(raw) < 0)) {
+            this.flash(this.labels.pos_price_invalid || 'Invalid price', 'error');
+            return;
+        }
+        const pinMode = this.pricePinIndex === line.index;
+        const pin = pinMode ? String(this.pricePinValue ?? '').trim() : '';
+        if (pinMode && !pin) {
+            this.flash(this.labels.pos_price_pin_required || 'Manager PIN required', 'error');
+            return;
+        }
+        this.priceEditIndex = null;
+        this.cartBusy = true;
+        try {
+            const body = new URLSearchParams({ unit_price: raw });
+            if (pin) body.set('manager_pin', pin);
+            const data = await this.fetchJson('/cart/' + line.index + '/price', { method: 'POST', body });
+            this.pricePinIndex = null;
+            this.pricePinValue = '';
+            const expired = this.applyCart(data);
+            this.flash(expired > 0 ? this.expiredNotice(expired) : (data.success || (raw === '' ? (this.labels.pos_price_cleared || 'Price cleared') : (this.labels.pos_price_set || 'Price updated'))), expired > 0 ? 'error' : 'success');
+        } catch (e) {
+            if (e.pinRequired) {
+                // Deep discount — switch the editor to manager-PIN mode.
+                this.pricePinIndex = line.index;
+                this.pricePinValue = '';
+                this.priceEditIndex = line.index;
+                this.flash(e.message, 'error');
+            } else {
+                this.pricePinIndex = null;
+                this.pricePinValue = '';
+                this.flash(e.message, 'error');
+            }
+        } finally {
+            this.cartBusy = false;
+        }
     },
 
     // Apply a cart snapshot from the server and return how many stale holds

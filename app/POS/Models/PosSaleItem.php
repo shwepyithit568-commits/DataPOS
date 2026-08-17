@@ -18,6 +18,8 @@ class PosSaleItem extends Model
         'product_name',
         'sku',
         'unit_price',
+        'original_unit_price',
+        'approved_by',
         'quantity',
         'unit_cost',
         'line_total',
@@ -25,6 +27,8 @@ class PosSaleItem extends Model
 
     protected $casts = [
         'unit_price' => 'decimal:2',
+        'original_unit_price' => 'decimal:2',
+        'approved_by' => 'integer',
         'quantity' => 'decimal:3',
         'unit_cost' => 'decimal:4',
         'line_total' => 'decimal:2',

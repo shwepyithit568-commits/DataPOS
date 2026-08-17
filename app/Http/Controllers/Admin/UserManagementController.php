@@ -80,6 +80,7 @@ class UserManagementController extends Controller
                 'email' => $validated['email'] ?? null,
                 'password' => Hash::make($validated['password']),
                 'role' => $validated['role'] === 'platform_owner' ? 'platform_owner' : 'customer',
+                'pos_pin' => $validated['pos_pin'] ?? null,
             ]);
 
             if ($validated['role'] !== 'platform_owner') {
@@ -129,6 +130,13 @@ class UserManagementController extends Controller
 
             if (! empty($validated['password'])) {
                 $user->password = Hash::make($validated['password']);
+            }
+
+            if (array_key_exists('pos_pin', $validated)) {
+                // Empty clears the PIN; otherwise stored hashed (cast).
+                $user->pos_pin = $validated['pos_pin'] !== null && $validated['pos_pin'] !== ''
+                    ? $validated['pos_pin']
+                    : null;
             }
 
             $user->save();
@@ -208,6 +216,7 @@ class UserManagementController extends Controller
                 'confirmed',
                 ...$passwordRules,
             ],
+            'pos_pin' => ['nullable', 'string', 'regex:/^[0-9]{4,6}$/'],
         ]);
     }
 

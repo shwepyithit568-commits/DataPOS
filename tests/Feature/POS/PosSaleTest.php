@@ -881,4 +881,96 @@ class PosSaleTest extends TestCase
             ->get("/store/{$store->slug}/pos/sales/{$held->id}/receipt")
             ->assertNotFound();
     }
+
+    /* ------------------------------------------------------------------ */
+    /*  Per-line price override (negotiation)                              */
+    /* ------------------------------------------------------------------ */
+
+    public function test_line_price_override_prices_cart_and_persists_on_post(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, ['retail_price' => 10000, 'wholesale_price' => 9000]);
+        $this->seedStock($store, $product);
+        $shift = $this->openShift($store, $cashier);
+        $wholesale = $this->customer($store, 'wholesale_customer');
+
+        $this->sales->addToCart($store, $product->id, null, '2');
+        $this->sales->attachCartCustomer($store, $wholesale);
+        $this->assertSame('9000.00', $this->sales->cartResolved($store)[0]['unit_price']);
+
+        // Cashier negotiates the line down to 8000.
+        $this->sales->setCartLinePrice($store, 0, '8000');
+        $line = $this->sales->cartResolved($store)[0];
+        $this->assertSame('8000.00', $line['unit_price']);
+        $this->assertSame('9000.00', $line['original_unit_price']); // tier price it replaced
+        $this->assertSame('16000.00', $line['line_total']);
+        $this->assertSame('16000.00', $this->sales->cartTotals($store)['total']);
+
+        $sale = $this->sales->post(
+            $store,
+            $this->sales->cartLines($store),
+            [['method' => 'cash', 'amount' => '16000']],
+            $cashier,
+            $shift,
+        );
+
+        $this->assertSame('16000.00', (string) $sale->total);
+        $item = $sale->items->first();
+        $this->assertSame('8000.00', (string) $item->unit_price);
+        $this->assertSame('9000.00', (string) $item->original_unit_price);
+    }
+
+    public function test_line_price_override_clears_back_to_tier(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, ['retail_price' => 10000, 'wholesale_price' => 9000]);
+        $this->seedStock($store, $product);
+        $wholesale = $this->customer($store, 'wholesale_customer');
+
+        $this->sales->addToCart($store, $product->id, null, '1');
+        $this->sales->attachCartCustomer($store, $wholesale);
+        $this->sales->setCartLinePrice($store, 0, '8000');
+        $this->assertSame('8000.00', $this->sales->cartResolved($store)[0]['unit_price']);
+
+        // Clearing the override (null) returns the line to the tier price.
+        $this->sales->setCartLinePrice($store, 0, null);
+        $line = $this->sales->cartResolved($store)[0];
+        $this->assertSame('9000.00', $line['unit_price']);
+        $this->assertNull($line['original_unit_price']);
+    }
+
+    public function test_line_price_override_survives_hold_and_resume(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, ['retail_price' => 10000]);
+        $this->seedStock($store, $product, '5');
+        $shift = $this->openShift($store, $cashier);
+
+        $this->sales->addToCart($store, $product->id, null, '1');
+        $this->sales->setCartLinePrice($store, 0, '7500');
+        $held = $this->sales->holdCart($store, $cashier, $shift);
+        $this->assertSame('7500.00', (string) $held->total);
+        $this->assertSame('7500.00', (string) $held->items->first()->unit_price);
+        $this->assertSame('10000.00', (string) $held->items->first()->original_unit_price);
+
+        $this->sales->resumeHeld($store, $held);
+        $line = $this->sales->cartResolved($store)[0];
+        $this->assertSame('7500.00', $line['unit_price']);
+        $this->assertSame('10000.00', $line['original_unit_price']);
+
+        // Posting the resumed sale keeps the negotiated price.
+        $posted = $this->sales->post(
+            $store,
+            $this->sales->cartLines($store),
+            [['method' => 'cash', 'amount' => '7500']],
+            $cashier,
+            $shift,
+            $held,
+        );
+        $this->assertSame('7500.00', (string) $posted->items->first()->unit_price);
+        $this->assertSame('10000.00', (string) $posted->items->first()->original_unit_price);
+    }
 }

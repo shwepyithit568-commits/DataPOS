@@ -18,5 +18,17 @@
             </p>
             @error('pos_hold_expiry_hours')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
+
+        <div>
+            <label for="pos_override_pin_threshold" class="{{ $labelClass }}">Price Override Manager PIN Threshold (%)</label>
+            <input id="pos_override_pin_threshold" type="number" name="pos_override_pin_threshold" min="0" max="100" step="1"
+                   value="{{ old('pos_override_pin_threshold', $setting->pos_override_pin_threshold ?? '') }}"
+                   placeholder="Disabled" class="{{ $inputClass }}" />
+            <p class="{{ $helpClass }}">
+                Cashier က လိုင်းဈေးကို tier ဈေးထက် ဒီ % ထက် ပိုလျှော့ရင် (discount) **Manager PIN** ထည့်ရပါမယ်။
+                ဗလာ/0 ထားရင် PIN မလိုပါ။ Manager/owner တွေရဲ့ PIN ကို <b>Users → Edit</b> မှာ သတ်မှတ်ပေးပါ။
+            </p>
+            @error('pos_override_pin_threshold')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+        </div>
     </div>
 </div>

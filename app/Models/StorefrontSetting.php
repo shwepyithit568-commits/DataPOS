@@ -44,6 +44,7 @@ class StorefrontSetting extends Model
         'footer_ad_text',
         'default_language',
         'pos_hold_expiry_hours',
+        'pos_override_pin_threshold',
         'how_to_intro',
         'how_to_steps',
         'how_to_videos',
@@ -58,6 +59,7 @@ class StorefrontSetting extends Model
         'map_latitude' => 'float',
         'map_longitude' => 'float',
         'pos_hold_expiry_hours' => 'integer',
+        'pos_override_pin_threshold' => 'integer',
     ];
 
     /**
@@ -69,6 +71,18 @@ class StorefrontSetting extends Model
         $hours = $this->pos_hold_expiry_hours;
 
         return $hours === null ? 24 : (int) $hours;
+    }
+
+    /**
+     * Max price-override discount (percent of the tier price) a cashier may
+     * apply without manager approval. null/0 = no PIN required. When set, an
+     * override deeper than this needs a store manager/owner POS PIN.
+     */
+    public function posOverridePinThreshold(): ?int
+    {
+        $threshold = $this->pos_override_pin_threshold;
+
+        return ($threshold === null || (int) $threshold <= 0) ? null : (int) $threshold;
     }
 
     /**

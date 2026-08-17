@@ -2634,3 +2634,37 @@ Confirm Import လုပ်တဲ့အခါ 500 မတက်တော့ဘူ
 - Cart line items strike the retail price, show the wholesale price and an
   amber `−Ks X` per-line savings; the cart summary and payment modal show the
   total `လက်ကား သက်သာငွေ` (wholesale savings) before posting.
+
+### 2026-08-17 — POS: per-line price override (negotiation)
+
+- Cashiers can tap ✏️ on any cart line, enter a negotiated unit price, and save
+  — the override wins over the customer-tier price until cleared (empty value
+  restores the tier price). The override survives adding the same product again
+  and hold/resume.
+- Cart lines strike the price the override replaced (`original_unit_price`) and
+  show a `−Ks X ✏️` savings line; the cart total and payment screen reflect the
+  negotiated amount before posting.
+- Posted sale items snapshot `original_unit_price` (new column), so the receipt
+  shows `1 × ~~Ks 2,350,000~~ Ks 2,200,000 ✏️` for the audit trail.
+- New endpoint `POST /store/{slug}/pos/cart/{line}/price`; negative prices are
+  rejected. Lang keys en/my/zh_CN.
+- Tests: 4 new (override cart+post persistence, clear-to-tier, hold/resume
+  survival, endpoint incl. rejection).
+
+### 2026-08-17 — POS: manager PIN for deep price overrides
+
+- Per-store setting `pos_override_pin_threshold` (% of the tier price): when a
+  cashier's line override discounts deeper than this, the price endpoint
+  requires a **manager PIN** before applying it. Blank/0 = enforcement off.
+- Managers/owners set a 4-6 digit POS PIN in **Users → Edit** (`users.pos_pin`,
+  hashed, hidden from serialization). `POST /cart/{line}/price` validates the
+  PIN against active store managers/owners and returns `pin_required: true`
+  (422) when one is needed or the PIN is wrong.
+- The cart editor switches to a 🔒 PIN input on rejection; a successful deep
+  override shows a 🔓 Manager-approved badge with the approver's name.
+- The approver is recorded on the cart line, survives hold/resume, and is
+  snapshotted onto `pos_sale_items.approved_by` when the sale posts (audit
+  trail).
+- Demo seed: Mg Hla (Store Manager, 09100000002) has PIN `1234`.
+- Tests: 5 new (below/above threshold, wrong PIN, correct PIN + approver
+  persisted on the posted item, enforcement off).

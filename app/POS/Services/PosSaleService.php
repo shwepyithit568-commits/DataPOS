@@ -317,7 +317,56 @@ class PosSaleService
             return;
         }
         $lines[$index]['quantity'] = $quantity;
+
         session([$this->cartKey($store) => $lines]);
+    }
+
+    /**
+     * Negotiated per-line price override. null clears it and the line returns
+     * to the customer-tier price; any non-negative decimal wins until cleared.
+     * The override is kept when the same product is added again (the cashier
+     * set it deliberately) and survives hold/resume.
+     */
+    public function setCartLinePrice(Store $store, int $index, ?string $unitPrice, ?User $approver = null): void
+    {
+        $lines = $this->cartLines($store);
+        if (! isset($lines[$index])) {
+            throw new InventoryException('Cart line not found.');
+        }
+
+        if ($unitPrice === null) {
+            unset($lines[$index]['unit_price'], $lines[$index]['approved_by']);
+        } else {
+            // Canonical 2-decimal form, so the cart snapshot is consistent
+            // with the tier prices (decimal columns) it replaces.
+            $lines[$index]['unit_price'] = bcadd($unitPrice, '0', 2);
+            if ($approver !== null) {
+                $lines[$index]['approved_by'] = $approver->id;
+            }
+        }
+
+        session([$this->cartKey($store) => $lines]);
+    }
+
+    /**
+     * The customer-tier unit price for a cart line (ignoring any override) —
+     * the baseline the controller compares an override discount against.
+     */
+    public function tierPriceForCartLine(Store $store, int $index): string
+    {
+        $line = $this->cartLines($store)[$index] ?? null;
+        if ($line === null) {
+            throw new InventoryException('Cart line not found.');
+        }
+
+        $product = Product::find($line['product_id']);
+        if (! $product || (int) $product->store_id !== (int) $store->id) {
+            throw new InventoryException('Cart line references a product outside this store.');
+        }
+
+        $variant = $line['product_variant_id'] ? ProductVariant::find($line['product_variant_id']) : null;
+
+        return $this->priceFor($this->cartCustomer($store), $product, $variant);
     }
 
     public function removeCartLine(Store $store, int $index): void
@@ -350,7 +399,9 @@ class PosSaleService
 
             $variant = $line['product_variant_id'] ? ProductVariant::find($line['product_variant_id']) : null;
             $name = $variant ? $product->name . ' — ' . $variant->name : $product->name;
-            $price = $this->priceFor($customer, $product, $variant);
+            $tierPrice = $this->priceFor($customer, $product, $variant);
+            $override = (isset($line['unit_price']) && (string) $line['unit_price'] !== '') ? (string) $line['unit_price'] : null;
+            $price = $override ?? $tierPrice;
             $quantity = $line['quantity'];
 
             $retailPrice = (string) ($variant?->retail_price ?? $product->retail_price);
@@ -362,13 +413,27 @@ class PosSaleService
                 'name' => $name,
                 'sku' => $variant?->sku ?? $product->sku,
                 'unit_price' => (string) $price,
+                'original_unit_price' => $override !== null ? (string) $tierPrice : null,
                 'retail_unit_price' => $retailPrice,
                 'line_total' => bcmul((string) $price, $quantity, 2),
                 'line_retail_total' => bcmul($retailPrice, $quantity, 2),
+                'approved_by' => isset($line['approved_by']) ? (int) $line['approved_by'] : null,
                 'balance' => $this->inventory->totalOnHand($store->id, $product->id, $variant?->id),
                 'product' => $product,
             ];
         }
+
+        // Attach the approver's name once for the whole cart (no per-row query).
+        $approverIds = array_values(array_filter(array_column($out, 'approved_by')));
+        $approverNames = $approverIds
+            ? \App\Models\User::whereIn('id', $approverIds)->pluck('name', 'id')->all()
+            : [];
+        foreach ($out as &$line) {
+            $line['approved_by_name'] = $line['approved_by'] !== null
+                ? ($approverNames[$line['approved_by']] ?? null)
+                : null;
+        }
+        unset($line);
 
         return $out;
     }
@@ -414,9 +479,12 @@ class PosSaleService
                 'sku' => $line['sku'],
                 'quantity' => $line['quantity'],
                 'unit_price' => $line['unit_price'],
+                'original_unit_price' => $line['original_unit_price'],
                 'retail_unit_price' => $line['retail_unit_price'],
                 'line_total' => $line['line_total'],
                 'line_retail_total' => $line['line_retail_total'],
+                'approved_by' => $line['approved_by'],
+                'approved_by_name' => $line['approved_by_name'],
                 'balance' => $line['balance'],
             ];
         }, $this->cartResolved($store));
@@ -536,6 +604,10 @@ class PosSaleService
                     'product_name' => $line['name'],
                     'sku' => $line['sku'],
                     'unit_price' => $line['unit_price'],
+                    // A negotiated override is snapshotted so the held sale
+                    // (and its receipt after posting) shows what it replaced.
+                    'original_unit_price' => $line['original_unit_price'] ?? null,
+                    'approved_by' => $line['approved_by'] ?? null,
                     'quantity' => $line['quantity'],
                     'line_total' => $line['line_total'],
                 ]);
@@ -559,6 +631,10 @@ class PosSaleService
                 'product_id' => $item->product_id,
                 'product_variant_id' => $item->product_variant_id,
                 'quantity' => (string) $item->quantity,
+                // A negotiated price survives hold/resume (original_unit_price
+                // marks the override); other lines re-price at the current tier.
+                'unit_price' => $item->original_unit_price !== null ? (string) $item->unit_price : null,
+                'approved_by' => $item->approved_by,
             ];
         }
 
@@ -670,7 +746,9 @@ class PosSaleService
                 throw new InventoryException("Quantity for '{$product->name}' must be positive.");
             }
 
-            $price = $this->priceFor($customer, $product, $variant);
+            $tierPrice = $this->priceFor($customer, $product, $variant);
+            $override = (isset($line['unit_price']) && (string) $line['unit_price'] !== '') ? (string) $line['unit_price'] : null;
+            $price = $override ?? $tierPrice;
             $balance = $this->inventory->balanceFor($store->id, $product->id, $variant?->id, $warehouseId);
 
             if (! $balance || bccomp((string) $balance->quantity_on_hand, $quantity, 3) < 0) {
@@ -687,6 +765,8 @@ class PosSaleService
                 'variant' => $variant,
                 'quantity' => $quantity,
                 'unit_price' => $price,
+                'original_unit_price' => $override !== null ? (string) $tierPrice : null,
+                'approved_by' => isset($line['approved_by']) ? (int) $line['approved_by'] : null,
                 'line_total' => $lineTotal,
                 'name' => $variant ? $product->name . ' — ' . $variant->name : $product->name,
                 'sku' => $variant?->sku ?? $product->sku,
@@ -825,6 +905,8 @@ class PosSaleService
                     'product_name' => $line['name'],
                     'sku' => $line['sku'],
                     'unit_price' => $line['unit_price'],
+                    'original_unit_price' => $line['original_unit_price'],
+                    'approved_by' => $line['approved_by'] ?? null,
                     'quantity' => $line['quantity'],
                     'unit_cost' => $unitCost,
                     'line_total' => $line['line_total'],

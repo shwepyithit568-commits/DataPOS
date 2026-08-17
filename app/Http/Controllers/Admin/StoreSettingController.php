@@ -93,6 +93,8 @@ class StoreSettingController extends Controller
             'pos' => $request->validate([
                 // Hours before a held sale is auto-voided; blank = 24h default, 0 = disabled.
                 'pos_hold_expiry_hours' => ['nullable', 'integer', 'min:0', 'max:720'],
+                // Price-override discount % that needs a manager PIN; blank/0 = off.
+                'pos_override_pin_threshold' => ['nullable', 'integer', 'min:0', 'max:100'],
             ]),
             default => $request->validate([
                 'store_name' => ['required', 'string', 'max:255'],

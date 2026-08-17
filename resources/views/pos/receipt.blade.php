@@ -129,7 +129,11 @@
                     <tr>
                         <td>
                             {{ $item->product_name }}
-                            <div class="qty-price">{{ rtrim(rtrim($item->quantity, '0'), '.') }} × Ks {{ number_format((float) $item->unit_price) }}</div>
+                            @if ($item->original_unit_price !== null && (float) $item->original_unit_price != (float) $item->unit_price)
+                                <div class="qty-price">{{ rtrim(rtrim($item->quantity, '0'), '.') }} × <s>Ks {{ number_format((float) $item->original_unit_price) }}</s> Ks {{ number_format((float) $item->unit_price )}} ✏️</div>
+                            @else
+                                <div class="qty-price">{{ rtrim(rtrim($item->quantity, '0'), '.') }} × Ks {{ number_format((float) $item->unit_price) }}</div>
+                            @endif
                         </td>
                         <td class="amt">Ks {{ number_format((float) $item->line_total) }}</td>
                     </tr>
