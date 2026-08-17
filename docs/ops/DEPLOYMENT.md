@@ -68,6 +68,10 @@ LOG_LEVEL=info
 
 ## 3. Production Deployment Checklist Commands
 
+> **Execution checklist:** Hostinger ပေါ် migrate + seed + verify အဆုံး အတိအကျ အဆင့်တွေကို
+> [`docs/ops/hostinger-deploy-checklist.md`](hostinger-deploy-checklist.md) မှာ ကြည့်ပါ
+> (deploy script + hPanel DB setup + production-safe seeder + bootstrap tinker + post-deploy verification battery).
+
 Run the following commands in sequence during deployment:
 
 ```bash
