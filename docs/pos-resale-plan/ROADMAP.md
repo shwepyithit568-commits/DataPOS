@@ -4,7 +4,7 @@
 >
 > **ဖတ်ရမယ့်သူ:** Project Owner (ဆရာကြီး) — နားလည်ပြီး ဆွေးနွေးဖို့အတွက်
 >
-> **ရက်စွဲ:** 2026-08-10 (Revision 2) · **2026-08-13:** `03-sales-market-model.md` ကို ဒီဖိုင်ထဲ ပေါင်းထည့်ပြီးပါပြီ (အောက်က "Sales & Market Model" section)
+> **ရက်စွဲ:** 2026-08-10 (Revision 2) · **2026-08-13:** `03-sales-market-model.md` ကို ဒီဖိုင်ထဲ ပေါင်းထည့်ပြီးပါပြီ (အောက်က "Sales & Market Model" section) · **2026-08-17:** POS cashier session (13 commits) အခြေအနေ ထည့်သွင်းပြီး (§1.2)
 
 ---
 
@@ -12,7 +12,7 @@
 
 | ဖိုင် | အကြောင်းအရာ | ဘာတွေသိရမလဲ |
 |---|---|---|
-| `ROADMAP.md` | **ခြုံငုံ အစီအစဉ် (လုပ်ပြီးသား + ဆက်ဆောက်မယ့်ဟာ)** | လက်ရှိ အခြေအနေ (Ecommerce, multi-store, PWA, POS Phase 1–2.5p1 + **Cashier Home UI (desktop 2-pane / mobile bottom-sheet drawer)** — **831 tests pass 2026-08-17**) + Implementation Phases: Phase 0 (Decisions) → 1 (Foundation) → 2 (Online POS MVP) → 2.5 (AlinnThit Pilot) → 3 (Cloud PWA offline) → 4 (Operations) → 5 (Local + Resale) → 6 (Industry packs) |
+| `ROADMAP.md` | **ခြုံငုံ အစီအစဉ် (လုပ်ပြီးသား + ဆက်ဆောက်မယ့်ဟာ)** | လက်ရှိ အခြေအနေ (Ecommerce, multi-store, PWA, POS Phase 1–2.5p1 + **Cashier Home UI + cashier session (register-lock UX, held-sale expiry, shared customers, tiered pricing, price override, manager PIN, drag-to-scroll)** — **867 tests pass 2026-08-17**) + Implementation Phases: Phase 0 (Decisions) → 1 (Foundation) → 2 (Online POS MVP) → 2.5 (AlinnThit Pilot) → 3 (Cloud PWA offline) → 4 (Operations) → 5 (Local + Resale) → 6 (Industry packs) |
 | `02-target-design.md` | **လိုချင်တဲ့ ပုံစံ** | Architecture — တစ်ခုတည်းသော codebase, deployment model ၂ မျိုး (Cloud SaaS / Local install), shared inventory ledger, money/rounding policy, POS sale state machine, cashier shift |
 | ~~`03-sales-market-model.md`~~ | ~~စျေးကွက်အလိုက် ရောင်းချ/ထိန်းချုပ်ပုံ~~ | **2026-08-13: ဒီ `ROADMAP.md` ထဲ ပေါင်းပြီး** — အောက်က "Sales & Market Model" section ကြည့်ပါ |
 
@@ -195,9 +195,9 @@
 | Frontend | Blade + **Alpine.js** + **Tailwind CSS v4** (CSS-based `@theme`) |
 | Assets | Vite — `app.css`/`app.js` (storefront) + `admin.css`/`app-admin.js` (admin) သီးခြား |
 | Deploy | `deploy-datapos.sh` — **⚠️ အရင် project ရဲ့ live ကို သွားတဲ့ script — DataPOS အတွက် မသုံးရသေး** (README ကြည့်ပါ) |
-| Testing | **831 tests pass / 3746 assertions** — PHPUnit, SQLite local (2026-08-17 run ပြီး) |
+| Testing | **867 tests pass / 3939 assertions** — PHPUnit, SQLite local (2026-08-17 run ပြီး) |
 | Dev server | `php artisan serve --port=8501` (README/.env အတိုင်း) |
-| Git | main · remote `github.com/shwepyithit568-commits/DataPOS.git` · **local = origin/main (in sync, 2026-08-13)** |
+| Git | main · remote `github.com/shwepyithit568-commits/DataPOS.git` · **local = origin/main (in sync, 2026-08-17 — cashier session 13 commits push ပြီး, HEAD `ae70fde`)** |
 
 ---
 
@@ -238,6 +238,16 @@
 - **HTML caching:** private → `no-store` · public storefront → ETag + `max-age=60` + 304 · build assets → immutable (project `server.php` + `.htaccess`) · SW v5 network-first navigations
 - Admin dashboard POS quick-action bar (shift status + jump to sale) · Store Settings quick-action render fix · `AdminDashboardTest` time-of-day fix
 
+### POS cashier session (2026-08-17) — 13 commits (selling workflow အပြည့်)
+
+- **Register-lock UX** — register ကို တစ်ခြားသူရဲ့ shift က ယူထားရင် "shift မဖွင့်ရသေးဘူး" အစား **occupied state** + shift-open rejection error ပြ · occupied register banner မှာ shift အသေးစိတ် (opening cash, cash sales) ပြ
+- **Held sales (hold/recall)** — live recall fix · **age badge** (held since HH:mm) + **auto-expiry** (default 24h → **per-store setting** `pos_hold_expiry_hours`) · auto-expired ရင် cashier ကို **one-time notice** ပြ · POS home မှာ **expiry stats** (count / oldest / soon-to-expire)
+- **Shared customer model** — ecommerce + POS အတူတူ (multi-store) — register enrollment + POS quick-add + phone/name dedup · POS quick-add မှာ **retail/wholesale customer type** ရွေးလို့ရ
+- **Tiered pricing** — ဖောက်သည်တွဲရင် retail/wholesale tier ဈေး သက်ရောက် · **logged-in storefront shopper → POS cart** မှာ tier ဆက်ထိန်း · grid / cart lines / payment screen မှာ retail-vs-wholesale **discount visibility** (`retail_unit_price` / `line_retail_total` / `retail_subtotal`)
+- **Per-line price override** — ✏️ editor · override က tier ဈေးကို အနိုင်ရ · hold/resume မှာ မပျက် · receipt မှာ original ဈေး အစင်း (`original_unit_price`)
+- **Manager PIN approval** — per-store threshold (%) ထက် ပိုလျှော့တဲ့ override ကို manager/owner PIN နဲ့သာ (`users.pos_pin`, hashed) — approver က `pos_sale_items.approved_by` အထိ audit
+- **Mouse drag-to-scroll** — horizontal chip rows (module/category/brand) ကို desktop မှာ မောက်နဲ့ ဆွဲလို့ရ (chip click တွေ မကျိုး)
+
 ---
 
 ## ၁.၃ မရှိသေးတဲ့အရာများ (ဆက်ဆောက်ရမယ့်ဟာ) ❌
@@ -274,12 +284,13 @@ Final Burmese/English/Chinese terminology
 ## ၁.၅ နောက်ဆက်လုပ်ရမှာများ (Next Steps — အစီအစဉ်)
 
 1. ~~**Git sync**~~ — ✅ ပြီးပြီ (2026-08-13): docs consolidation `19222c1` + fix ၂ ခု `8fe8228` / `adb155a` (CashierShiftController အပါအဝင်) — origin/main နဲ့ in sync
-2. **Phase 2.5 ကျန်** — opening-stock reconciliation → debt opening balances → backup/restore drill →
+2. ~~**POS cashier session (2026-08-17)**~~ — ✅ ပြီးပြီ: 13 commits (register-lock UX → held-sale expiry → shared customer model → tiered pricing → price override + manager PIN → drag-to-scroll) — §1.2 "POS cashier session" + CHANGELOG.md
+3. **Phase 2.5 ကျန်** — opening-stock reconciliation → debt opening balances → backup/restore drill →
    real cashier usage (ဆိုင်မှာ တကယ်သုံး) → parallel validation → stabilization (ဒီဖိုင် Phase 2.5 exit criteria)
-3. **Phase 3 — Cloud PWA Offline Queue** — `/pos/sw.js` + IndexedDB + idempotent sync API + device registration
-4. **Phase 4 — Operations Modules** (purchasing, transfers, service, expenses, reports, period closing)
-5. **Phase 5 — Local LAN/SQLite Edition + Resale Readiness**
-6. Owner open decisions တွေ အချိန်တန်ရင် ဖြေရှင်း
+4. **Phase 3 — Cloud PWA Offline Queue** — `/pos/sw.js` + IndexedDB + idempotent sync API + device registration
+5. **Phase 4 — Operations Modules** (purchasing, transfers, service, expenses, reports, period closing)
+6. **Phase 5 — Local LAN/SQLite Edition + Resale Readiness**
+7. Owner open decisions တွေ အချိန်တန်ရင် ဖြေရှင်း
 
 ---
 
@@ -289,7 +300,7 @@ Final Burmese/English/Chinese terminology
 2. **Ledger/sales/shifts/closings immutable** — မှားရင် reversal/correction document နဲ့သာ ပြင်ရမယ် (SoT §15.1)
 3. **Service worker scope** — POS အတွက် `/pos/sw.js` သီးခြား — storefront SW (web push) မထိရ (SoT §4.3)
 4. **ဖိုင်နာမည်တွေ** — `CHANGELOG.md` က history (items 1–271) · အသစ်တွေ → `CHANGELOG.md`
-5. **GitHub က local ထက် နောက်ကျ** — commit 1 ခု unpushed + working tree မှာ 08-13 fix 4 ဖိုင် + WIP ၁ ဖိုင် ရှိ
+5. **GitHub က local နဲ့ in sync (2026-08-17)** — POS cashier session 13 commits အကုန် origin/main ကို push ပြီး · working tree clean · HEAD = `ae70fde`
 6. **Port** — ဒီ project = **8501** (အရင် docs ရဲ့ 8500/8577 နဲ့ မရော)
 7. **Deploy-datapos.sh က DataPOS live ကို မသွားရသေးဘူး** — pilot/resale အဆင့် ရောက်မှ deploy script အသစ် ရေးရမယ်
 

@@ -7,15 +7,16 @@
 
 ---
 
-## 📌 လက်ရှိ အခြေအနေ (2026-08-13)
+## 📌 လက်ရှိ အခြေအနေ (2026-08-17)
 
 | အပိုင်း | အခြေအနေ |
 |---|---|
 | **Online POS MVP Phase 1 + 2** | ✅ **ပြီးစီး** (changelog items 257–270) |
 | **Phase 2.5 — Pilot data import hub (part 1)** | ✅ ပြီးစီး (item 271) — products / customers / suppliers CSV-XLSX import |
-| **Test suite** | ✅ **821 passed / 3671 assertions** (`php artisan test`) |
+| **POS cashier session (2026-08-17)** | ✅ 13 commits — register-lock UX · held-sale expiry (age badge / auto-expiry / per-store window / notice / stats) · shared customer model · retail/wholesale tiered pricing + discount visibility · price override + manager PIN · drag-to-scroll |
+| **Test suite** | ✅ **867 passed / 3939 assertions** (`php artisan test`) |
 | **DB** | SQLite (`database/database.sqlite`) — migrations အားလုံး run ပြီး |
-| **Git** | main branch · remote `github.com/shwepyithit568-commits/DataPOS.git` · local = origin/main (in sync, 2026-08-13) |
+| **Git** | main branch · remote `github.com/shwepyithit568-commits/DataPOS.git` · local = origin/main (in sync, 2026-08-17 — cashier session 13 commits push ပြီး, HEAD `ae70fde`) |
 | **Deploy** | **မလုပ်ရသေးဘူး — local development သာ** (အောက်က ⚠️ ကြည့်ပါ) |
 
 ### POS Module မှာ ပါပြီးသား အရာတွေ (`/pos` routes — web.php:567+)
@@ -27,6 +28,7 @@
   daily closing (branch) · minimal reports (sales/cash/stock) · stock receiving (goods receipt) ·
   opening stock (manager review) · inventory adjustments (manager approval)
 - **Phase 2.5 part 1:** pilot data-import hub (`/admin/pilot-import`) — dry-run preview → confirm → history + error reports
+- **Cashier session (2026-08-17):** register-lock occupied state + shift details · held-sale age badge + auto-expiry (per-store) + one-time expiry notice + home expiry stats · shared ecommerce/POS customers (dedup, retail/wholesale) · tiered pricing + logged-in tier resolution + discount visibility · per-line price override (receipt struck original) · manager PIN for deep overrides · mouse drag-to-scroll
 
 အသေးစိတ်: `CHANGELOG.md` (items 257–271) · စည်းမျဉ်း: `DataPOS_Mobile_Offline_POS_Project_Source_of_Truth.md`
 
@@ -61,7 +63,7 @@ Coding မစမီ သက်ဆိုင်ရာ documentation ကို ဒ�
 | `README.md` | Project ခြုံငုံ မိတ်ဆက် + run နည်း + **လက်ရှိအခြေအနေ + Next steps** — entry point |
 | `Source_of_Truth_MM.md` | **Business Rules + Architecture Rules** — business/architecture ပြောင်းမှသာ update |
 | `DataPOS_Mobile_Offline_POS_Project_Source_of_Truth.md` | **POS စနစ် စည်းမျဉ်းစာချုပ် (MUST READ)** — POS module အတွက် |
-| `CHANGELOG.md` | **Change Log (တစ်ခုတည်း)** — items 1–271 (history, 08-11 အထိ) + 08-13 fixes · အသစ်တိုင်း ဒီဖိုင်အဆုံးမှာ ထည့်ရမည် |
+| `CHANGELOG.md` | **Change Log (တစ်ခုတည်း)** — items 1–271 (history) + 08-13 fixes + 08-17 cashier session · အသစ်တိုင်း ဒီဖိုင်အဆုံးမှာ ထည့်ရမည် |
 | `Testing_check.md` | Testing / known issues အခြေအနေ (UAT section ပါ ပေါင်းထည့်ထား) |
 
 ## 📂 docs/ — Reference documentation
@@ -100,6 +102,8 @@ git history ထဲ ရောက်နေပါသည် — ဖိုင်က�
 ---
 
 ## 🗂️ နောက်ဆက်လုပ်ရမှာများ (Next Steps)
+
+- ✅ **2026-08-17 — POS cashier session ပြီးပြီ** (13 commits): register-lock UX → held-sale expiry system → shared customer model → tiered pricing → price override + manager PIN → drag-to-scroll (အသေးစိတ်: အပေါ်က "လက်ရှိ အခြေအနေ" + `CHANGELOG.md`)
 
 1. **Phase 2.5 ကျန်တဲ့အပိုင်း** — opening-stock reconciliation · debt opening balances ·
    AppSheet/Google Sheets parallel validation · real cashier workflow · backup & restore test ·
