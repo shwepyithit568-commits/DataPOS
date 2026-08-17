@@ -43,7 +43,11 @@ class CashierShiftService
             ->first();
 
         if ($existing) {
-            throw new InventoryException("Register '{$registerName}' already has an open shift (#{$existing->id}).");
+            $owner = $existing->cashier?->name ?? 'Unknown'; // app locale-independent fallback
+            $since = $existing->opened_at?->format('H:i') ?? '—';
+            throw new InventoryException(
+                "Register '{$registerName}' already has an open shift (#{$existing->id}) by {$owner} since {$since}."
+            );
         }
 
         return DB::transaction(function () use ($store, $data, $registerName, $actor) {

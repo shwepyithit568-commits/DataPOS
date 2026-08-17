@@ -701,6 +701,27 @@
                         </form>
                     </div>
                 @else
+                    @if ($errors->has('shift'))
+                        <div class="mb-4 rounded-xl border border-rose-300 dark:border-rose-700 bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-300 px-4 py-3 text-sm font-semibold">
+                            ⚠️ {{ $errors->first('shift') }}
+                        </div>
+                    @endif
+
+                    @if ($occupiedRegisters->isNotEmpty())
+                        <div class="mb-4 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 px-4 py-3 text-sm">
+                            <p class="font-bold mb-2">🔒 {{ __('messages.registers_in_use') }}</p>
+                            <ul class="space-y-1.5 text-xs">
+                                @foreach ($occupiedRegisters as $busy)
+                                    <li>
+                                        <span class="font-bold">{{ $busy->register_name }}</span> —
+                                        {{ __('messages.register_occupied_by', ['cashier' => $busy->cashier?->name ?? '—', 'time' => $busy->opened_at?->format('H:i') ?? '—']) }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                            <p class="mt-2 text-xs opacity-80">{{ __('messages.pick_another_register') }}</p>
+                        </div>
+                    @endif
+
                     <p class="text-xs font-bold uppercase tracking-wide text-slate-400 mb-4">{{ __('messages.no_open_shift') }}</p>
                     <h2 class="text-lg font-black mb-4">{{ __('messages.open_new_shift') }}</h2>
                     <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/shifts') }}" class="grid gap-3">

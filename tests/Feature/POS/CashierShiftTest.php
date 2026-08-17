@@ -82,6 +82,52 @@ class CashierShiftTest extends TestCase
         $this->service->openShift($store, ['register_name' => 'R1', 'opening_cash' => 2000], $cashier);
     }
 
+    public function test_occupied_register_error_names_the_owner(): void
+    {
+        $store = $this->makeStore();
+        $cashierA = $this->staff($store);
+        $cashierB = $this->staff($store);
+
+        $this->service->openShift($store, ['register_name' => 'R1', 'opening_cash' => 1000], $cashierA);
+
+        try {
+            $this->service->openShift($store, ['register_name' => 'R1', 'opening_cash' => 2000], $cashierB);
+            $this->fail('Expected InventoryException for occupied register.');
+        } catch (InventoryException $e) {
+            $this->assertStringContainsString('already has an open shift', $e->getMessage());
+            $this->assertStringContainsString($cashierA->name, $e->getMessage());
+            $this->assertStringContainsString('R1', $e->getMessage());
+        }
+    }
+
+    public function test_pos_page_surfaces_occupied_registers_to_other_cashiers(): void
+    {
+        $store = $this->makeStore();
+        $cashierA = $this->staff($store);
+        $cashierB = $this->staff($store);
+
+        $this->service->openShift($store, ['register_name' => 'R1', 'opening_cash' => 1000], $cashierA);
+
+        // Cashier B has no own shift, but Register 1 is occupied by A.
+        $this->actingAs($cashierB)->get("/store/{$store->slug}/pos")
+            ->assertStatus(200)
+            ->assertSee(__('messages.registers_in_use'))
+            ->assertSee('R1')
+            ->assertSee($cashierA->name);
+    }
+
+    public function test_pos_page_does_not_flag_own_shift_as_occupied(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+
+        $this->service->openShift($store, ['register_name' => 'R1', 'opening_cash' => 1000], $cashier);
+
+        $this->actingAs($cashier)->get("/store/{$store->slug}/pos")
+            ->assertStatus(200)
+            ->assertDontSee(__('messages.registers_in_use'));
+    }
+
     public function test_different_registers_can_be_open_simultaneously(): void
     {
         $store = $this->makeStore();

@@ -41,6 +41,16 @@ class CashierShiftController extends Controller
         // an own shift via openShiftFor().
         $openShift = $this->shifts->openShiftFor($store, $user);
 
+        // Open shifts held by OTHER cashiers — surfaced so the page can say
+        // "Register X is in use" instead of a silent "no shift" + rejection.
+        $occupiedRegisters = CashierShift::query()
+            ->with('cashier')
+            ->where('store_id', $store->id)
+            ->where('status', 'open')
+            ->when($openShift, fn ($q) => $q->where('id', '!=', $openShift->id))
+            ->orderBy('register_name')
+            ->get();
+
         $summary = $this->shifts->dailySummary($store, now());
 
         $cart = $this->sales->cartResolved($store);
@@ -56,7 +66,7 @@ class CashierShiftController extends Controller
         $outstanding = $this->debts->outstandingCustomers($store);
         $outstandingTotal = array_reduce($outstanding, fn ($carry, $c) => bcadd($carry, $c['balance'], 2), '0');
 
-        return view('pos.index', compact('store', 'openShift', 'summary', 'cart', 'cartTotals', 'heldSales', 'todaySales', 'outstanding', 'outstandingTotal'));
+        return view('pos.index', compact('store', 'openShift', 'occupiedRegisters', 'summary', 'cart', 'cartTotals', 'heldSales', 'todaySales', 'outstanding', 'outstandingTotal'));
     }
 
     public function open(Request $request, StoreContext $context): RedirectResponse
