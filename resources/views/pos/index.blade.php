@@ -17,6 +17,7 @@
             'resumed' => __('messages.sale_resumed'),
             'voided' => __('messages.sale_voided'),
             'held_since' => __('messages.held_since'),
+            'holds_expired' => __('messages.holds_expired'),
         ];
     @endphp
 

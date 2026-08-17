@@ -416,12 +416,14 @@ class PosSaleTest extends TestCase
         $this->assertStringContainsString('Expired', $stale->notes);
         $this->assertSame('held', $fresh->refresh()->status);
 
-        // cart-state surfaces only the fresh hold, with a held-since time.
+        // cart-state surfaces only the fresh hold, with a held-since time, and
+        // reports the auto-expiry count so the UI can flash a notice.
         $state = $this->sales->cartState($store, $cashier);
         $this->assertSame(1, $state['held_count']);
         $this->assertCount(1, $state['held']);
         $this->assertSame($fresh->id, $state['held'][0]['id']);
         $this->assertMatchesRegularExpression('/^\d{2}:\d{2}$/', $state['held'][0]['held_at']);
+        $this->assertSame(0, $state['expired_count']);
     }
 
     public function test_hold_expiry_window_is_per_store_and_can_be_disabled(): void
@@ -443,9 +445,14 @@ class PosSaleTest extends TestCase
         $recent = $this->sales->holdCart($store, $cashier, $shift);
         $recent->forceFill(['created_at' => now()->subHour()])->save();
 
-        $this->assertSame(1, $this->sales->expireStaleHolds($store));
+        // A cart-state read auto-expires the 3h-old hold and reports the count.
+        $state = $this->sales->cartState($store, $cashier);
+        $this->assertSame(1, $state['expired_count']);
+        $this->assertSame(1, $state['held_count']);
+        $this->assertSame($recent->id, $state['held'][0]['id']);
         $this->assertSame('voided', $old->refresh()->status);
         $this->assertSame('held', $recent->refresh()->status);
+        $this->assertSame(0, $this->sales->expireStaleHolds($store)); // nothing left
 
         // Setting the window to 0 disables auto-expiry entirely.
         $setting->update(['pos_hold_expiry_hours' => 0]);
@@ -454,6 +461,7 @@ class PosSaleTest extends TestCase
         $kept = $this->sales->holdCart($store, $cashier, $shift);
         $kept->forceFill(['created_at' => now()->subDays(3)])->save();
         $this->assertSame(0, $this->sales->expireStaleHolds($store));
+        $this->assertSame(0, $this->sales->cartState($store, $cashier)['expired_count']);
         $this->assertSame('held', $kept->refresh()->status);
     }
 

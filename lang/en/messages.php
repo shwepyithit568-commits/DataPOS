@@ -244,6 +244,7 @@ return [
     'register_drawer_state' => 'Opening Ks :opening · Sales Ks :sales',
     'pick_another_register' => 'Pick another register name to open your shift.',
     'held_since' => 'Held since :time',
+    'holds_expired' => ':count stale held sale(s) auto-expired and voided.',
     'shift_open' => 'Shift Open',
     'shift_closed' => 'Shift closed.',
     'shift_opened' => 'Shift opened.',

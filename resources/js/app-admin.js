@@ -213,12 +213,23 @@ Alpine.data('posApp', (opts = {}) => ({
         await this.mutate('/cart/clear', {});
     },
 
+    // Apply a cart snapshot from the server and return how many stale holds
+    // were auto-expired on this read (so callers can surface a notice).
+    applyCart(data) {
+        if (data.cart) this.cart = data.cart;
+        return data.cart ? (data.cart.expired_count || 0) : 0;
+    },
+
+    expiredNotice(count) {
+        return (this.labels.holds_expired || ':count stale held sale(s) auto-expired and voided.').replace(':count', count);
+    },
+
     async hold() {
         if (!this.cart.lines.length) return;
         try {
             const data = await this.fetchJson('/hold', { method: 'POST', body: new URLSearchParams({}) });
-            if (data.cart) this.cart = data.cart;
-            this.flash(this.labels.held || 'Sale held', 'success');
+            const expired = this.applyCart(data);
+            this.flash(expired > 0 ? this.expiredNotice(expired) : (this.labels.held || 'Sale held'), expired > 0 ? 'error' : 'success');
         } catch (e) {
             this.flash(e.message, 'error');
         }
@@ -229,8 +240,8 @@ Alpine.data('posApp', (opts = {}) => ({
         this.cartBusy = true;
         try {
             const data = await this.fetchJson('/resume/' + id, { method: 'POST', body: new URLSearchParams({}) });
-            if (data.cart) this.cart = data.cart;
-            this.flash(this.labels.resumed || 'Sale resumed', 'success');
+            const expired = this.applyCart(data);
+            this.flash(expired > 0 ? this.expiredNotice(expired) : (this.labels.resumed || 'Sale resumed'), expired > 0 ? 'error' : 'success');
         } catch (e) {
             this.flash(e.message, 'error');
         } finally {
@@ -244,8 +255,8 @@ Alpine.data('posApp', (opts = {}) => ({
         this.cartBusy = true;
         try {
             const data = await this.fetchJson('/void/' + id, { method: 'POST', body: new URLSearchParams({}) });
-            if (data.cart) this.cart = data.cart;
-            this.flash(this.labels.voided || 'Sale voided', 'success');
+            const expired = this.applyCart(data);
+            this.flash(expired > 0 ? this.expiredNotice(expired) : (this.labels.voided || 'Sale voided'), expired > 0 ? 'error' : 'success');
         } catch (e) {
             this.flash(e.message, 'error');
         } finally {
@@ -258,8 +269,8 @@ Alpine.data('posApp', (opts = {}) => ({
         this.cartBusy = true;
         try {
             const data = await this.fetchJson(path, { method: options.method || 'POST', body: new URLSearchParams(body) });
-            if (data.cart) this.cart = data.cart;
-            this.flash(this.labels.added || 'OK', 'success');
+            const expired = this.applyCart(data);
+            this.flash(expired > 0 ? this.expiredNotice(expired) : (this.labels.added || 'OK'), expired > 0 ? 'error' : 'success');
         } catch (e) {
             this.flash(e.message, 'error');
         } finally {
@@ -270,7 +281,8 @@ Alpine.data('posApp', (opts = {}) => ({
     async refreshCart() {
         try {
             const data = await this.fetchJson('/cart-state');
-            this.cart = data;
+            const expired = this.applyCart(data);
+            if (expired > 0) this.flash(this.expiredNotice(expired), 'error');
         } catch (e) { /* cart refresh is best-effort */ }
     },
 

@@ -148,11 +148,12 @@ class PosUiEndpointsTest extends TestCase
         $product = $this->makeProduct($store, ['retail_price' => 10000]);
         $this->seedStock($store, $product, '10');
 
-        // Empty snapshot.
+        // Empty snapshot (same 'cart' wrapper as every AJAX mutation response).
         $empty = $this->getJson("/store/{$store->slug}/pos/cart-state");
         $empty->assertOk();
-        $empty->assertJsonCount(0, 'lines');
-        $empty->assertJsonPath('shift_open', false);
+        $empty->assertJsonCount(0, 'cart.lines');
+        $empty->assertJsonPath('cart.shift_open', false);
+        $empty->assertJsonPath('cart.expired_count', 0);
 
         // Add (JSON).
         $added = $this->postJson("/store/{$store->slug}/pos/cart", [
@@ -209,7 +210,7 @@ class PosUiEndpointsTest extends TestCase
 
         $state = $this->getJson("/store/{$store->slug}/pos/cart-state");
         $state->assertOk();
-        $state->assertJsonPath('shift_open', true);
+        $state->assertJsonPath('cart.shift_open', true);
     }
 
     /* ------------------------------------------------------------------ */

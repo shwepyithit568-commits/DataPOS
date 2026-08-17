@@ -244,6 +244,7 @@ return [
     'register_drawer_state' => '期初 Ks :opening · 销售 Ks :sales',
     'pick_another_register' => '请选择其他收银台名称来开启班次。',
     'held_since' => '自 :time 保存',
+    'holds_expired' => '有 :count 个过期挂单已被自动作废。',
     'shift_open' => '班次进行中',
     'shift_closed' => '班次已关闭。',
     'shift_opened' => '班次已开启。',

@@ -88,7 +88,10 @@ class PosSaleController extends Controller
     {
         $store = $context->getStore();
 
-        return response()->json($this->sales->cartState($store, $request->user()));
+        // Wrapped in 'cart' — identical shape to every AJAX mutation response,
+        // so the client applies the snapshot uniformly (and can read
+        // expired_count for the auto-expiry notice).
+        return response()->json(['cart' => $this->sales->cartState($store, $request->user())]);
     }
 
     /* ------------------------------------------------------------------ */

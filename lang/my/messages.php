@@ -244,6 +244,7 @@ return [
     'register_drawer_state' => 'အဖွင့် Ks :opening · ရောင်းရ Ks :sales',
     'pick_another_register' => 'သင့် shift ဖွင့်ရန် အခြား register အမည်ကို ရွေးပါ။',
     'held_since' => ':time ကတည်းက ထားထားသည်',
+    'holds_expired' => 'သက်တမ်းကုန် held sale :count ခုကို အလိုအလျောက် ပယ်ဖျက်လိုက်ပါပြီ။',
     'shift_open' => 'Shift ဖွင့်ထားသည်',
     'shift_closed' => 'Shift ပိတ်လိုက်ပါပြီ။',
     'shift_opened' => 'Shift ဖွင့်လိုက်ပါပြီ။',

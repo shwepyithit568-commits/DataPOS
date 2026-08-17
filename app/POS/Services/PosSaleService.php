@@ -281,11 +281,11 @@ class PosSaleService
      * cart-state endpoint and echoed back after every AJAX cart mutation so
      * the product grid + cart panel stay in sync without a page reload.
      *
-     * @return array{shift_open:bool, lines:array<int, array{index:int, product_id:int, product_variant_id:?int, name:string, sku:?string, quantity:string, unit_price:string, line_total:string, balance:string}>, totals:array{subtotal:string, discount:string, total:string}, held_count:int, held:array<int, array{id:int, total:string, items_count:int, held_at:string}>}
+     * @return array{shift_open:bool, lines:array<int, array{index:int, product_id:int, product_variant_id:?int, name:string, sku:?string, quantity:string, unit_price:string, line_total:string, balance:string}>, totals:array{subtotal:string, discount:string, total:string}, held_count:int, held:array<int, array{id:int, total:string, items_count:int, held_at:string}>, expired_count:int}
      */
     public function cartState(Store $store, ?User $actor): array
     {
-        $this->expireStaleHolds($store);
+        $expiredCount = $this->expireStaleHolds($store);
 
         $lines = array_map(function (array $line) {
             return [
@@ -319,6 +319,7 @@ class PosSaleService
                 'items_count' => (int) $sale->items_count,
                 'held_at' => $sale->created_at?->format('H:i') ?? '—',
             ])->values()->all(),
+            'expired_count' => $expiredCount,
         ];
     }
 
