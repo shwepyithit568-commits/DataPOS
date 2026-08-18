@@ -655,10 +655,6 @@ Route::prefix('store/{store_slug}')
             Route::get('/reports/cash', [\App\POS\Http\Controllers\PosReportController::class, 'cash'])->name('pos.reports.cash');
             Route::get('/reports/stock', [\App\POS\Http\Controllers\PosReportController::class, 'stock'])->name('pos.reports.stock');
 
-            // Simple stock receiving (MVP Phase 2) — goods receipt → purchase_received ledger.
-            Route::get('/receiving', [\App\POS\Http\Controllers\GoodsReceiptController::class, 'index'])->name('pos.receiving.index');
-            Route::post('/receiving', [\App\POS\Http\Controllers\GoodsReceiptController::class, 'store'])->name('pos.receiving.store');
-
             // Purchase order lifecycle (alinthit_pos style) — pending → ordered → received | cancelled.
             Route::get('/purchases', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'index'])->name('pos.purchases.index');
             Route::get('/purchases/create', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'create'])->name('pos.purchases.create');

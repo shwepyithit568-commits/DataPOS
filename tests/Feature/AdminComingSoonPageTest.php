@@ -110,7 +110,7 @@ class AdminComingSoonPageTest extends TestCase
             $this->manager->stores()->attach($store->id, ['role' => 'store_manager', 'status' => 'active']);
 
             $response = $this->actingAs($this->manager)
-                ->get("/store/store-{$code}/admin/coming-soon/purchases");
+                ->get("/store/store-{$code}/admin/coming-soon/transfers");
 
             $response->assertStatus(200);
             // No raw translation key leaks into the page.

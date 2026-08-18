@@ -192,7 +192,7 @@
                 @foreach ([
                     ['pos/closing', 'closing_title', '📋'],
                     ['pos/reports/sales', 'reports_title', '📊'],
-                    ['pos/receiving', 'receiving_title', '📦'],
+                    ['pos/purchases', 'sidebar_purchases', '🛒'],
                     ['pos/opening-stock', 'opening_stock_title', '🏷️'],
                     ['pos/reconciliation', 'reconciliation_title', '⚖️'],
                     ['pos/adjustments', 'adjustment_title', '🔧'],

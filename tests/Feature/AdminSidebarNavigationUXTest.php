@@ -229,7 +229,7 @@ class AdminSidebarNavigationUXTest extends TestCase
             'store.admin.banners.index',
             'pos.index',
             'pos.closing.index',
-            'pos.receiving.index',
+            'pos.purchases.index',
             'pos.opening-stock.index',
             'pos.adjustments.index',
             'pos.reconciliation.index',
