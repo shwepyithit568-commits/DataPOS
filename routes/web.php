@@ -659,6 +659,15 @@ Route::prefix('store/{store_slug}')
             Route::get('/receiving', [\App\POS\Http\Controllers\GoodsReceiptController::class, 'index'])->name('pos.receiving.index');
             Route::post('/receiving', [\App\POS\Http\Controllers\GoodsReceiptController::class, 'store'])->name('pos.receiving.store');
 
+            // Purchase order lifecycle (alinthit_pos style) — pending → ordered → received | cancelled.
+            Route::get('/purchases', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'index'])->name('pos.purchases.index');
+            Route::get('/purchases/create', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'create'])->name('pos.purchases.create');
+            Route::post('/purchases', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'store'])->name('pos.purchases.store');
+            Route::get('/purchases/{purchaseOrder}', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'show'])->name('pos.purchases.show');
+            Route::post('/purchases/{purchaseOrder}/order', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'order'])->name('pos.purchases.order');
+            Route::post('/purchases/{purchaseOrder}/receive', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('pos.purchases.receive');
+            Route::post('/purchases/{purchaseOrder}/cancel', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'cancel'])->name('pos.purchases.cancel');
+
             // Opening stock (MVP Phase 2) — staff submits, manager approves → opening_balance ledger.
             Route::get('/opening-stock', [\App\POS\Http\Controllers\OpeningStockController::class, 'index'])->name('pos.opening-stock.index');
             Route::post('/opening-stock', [\App\POS\Http\Controllers\OpeningStockController::class, 'store'])->name('pos.opening-stock.store');

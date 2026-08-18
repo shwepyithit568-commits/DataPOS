@@ -404,7 +404,12 @@
                     </x-admin.nav-link>
 
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'suppliers'])" :label="__('messages.sidebar_suppliers')" />
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'purchases'])" :label="__('messages.sidebar_purchases')" />
+                    @php $isPurchases = request()->is('store/*/admin/purchases*') || request()->is('store/*/pos/purchases*'); @endphp
+                    <x-admin.nav-link :href="route('pos.purchases.index', $storeRouteParams)" route-name="pos.purchases.index" :active="$isPurchases" :label="__('messages.sidebar_purchases')">
+                        <x-slot:icon>
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'transfers'])" :label="__('messages.sidebar_transfers')" />
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'warehouses'])" :label="__('messages.sidebar_warehouses')" />
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'buy-back'])" :label="__('messages.sidebar_buy_back')" />

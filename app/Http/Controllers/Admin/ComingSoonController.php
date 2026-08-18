@@ -26,7 +26,6 @@ class ComingSoonController extends Controller
         'barcode'             => ['sidebar_barcode', 'Phase 4'],
         'warranty'            => ['sidebar_warranty', 'Phase 4'],
         'suppliers'           => ['sidebar_suppliers', 'Phase 4'],
-        'purchases'           => ['sidebar_purchases', 'Phase 4'],
         'transfers'           => ['sidebar_transfers', 'Phase 4'],
         'warehouses'          => ['sidebar_warehouses', 'Phase 4'],
         'buy-back'            => ['sidebar_buy_back', 'Phase 4'],
