@@ -32,7 +32,7 @@
                     <label class="{{ $label }}">{{ __('messages.product_form_sku') }} <span class="text-rose-500" x-show="!autoSku">*</span></label>
                     @if (!$isEdit)
                         <label class="inline-flex cursor-pointer select-none items-center gap-1.5 text-xs font-bold text-violet-600 dark:text-violet-400">
-                            <input type="checkbox" name="auto_sku" value="1" x-model="autoSku" class="rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
+                            <input type="checkbox" name="auto_sku" value="1" x-model="autoSku" {{ old('auto_sku') ? 'checked' : '' }} class="rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
                             {{ __('messages.product_form_auto_sku') }}
                         </label>
                     @endif

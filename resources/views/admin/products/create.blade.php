@@ -16,7 +16,7 @@
         newBrandName: '',
         newSupplierName: '',
         newSupplierPhone: '',
-        autoSku: false,
+        autoSku: {{ old('auto_sku') ? 'true' : 'false' }},
         categories: {{ json_encode($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name, 'parent' => $c->parent?->name, 'parent_id' => $c->parent_id])) }},
         brands: {{ json_encode($brands->map(fn($b) => ['id' => $b->id, 'name' => $b->name])) }},
         suppliers: {{ json_encode($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])) }},
