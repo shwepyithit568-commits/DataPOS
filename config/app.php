@@ -137,4 +137,16 @@ return [
 
     'allow_uat_seeding' => (bool) env('ALLOW_UAT_SEEDING', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Quick Login (DEV/TEST ONLY)
+    |--------------------------------------------------------------------------
+    |
+    | When true AND APP_ENV is local/testing/uat, the login page shows
+    | one-click buttons to sign in as any UAT user — no password needed.
+    | NEVER set this to true in production.
+    |
+     */
+    'show_quick_login' => (bool) env('SHOW_QUICK_LOGIN', false),
+
 ];

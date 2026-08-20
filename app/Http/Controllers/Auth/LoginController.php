@@ -14,8 +14,69 @@ class LoginController extends Controller
     {
         $store = app(\App\Services\StoreContext::class)->getStore();
         $setting = $store?->setting ?? \App\Models\StorefrontSetting::first();
+        $quickLoginUsers = $this->getQuickLoginUsers();
 
-        return view('auth.login', compact('setting'));
+        return view('auth.login', compact('setting', 'quickLoginUsers'));
+    }
+
+    /**
+     * Quick-login — passwordless sign-in for local/testing/uat only.
+     * Accepts a phone number, looks up the user, and logs them in.
+     * BLOCKED in production and when show_quick_login is false.
+     */
+    public function quickLogin(Request $request): RedirectResponse
+    {
+        // Hard block: never in production or staging
+        $env = config('app.env', 'production');
+        if (in_array($env, ['production', 'staging'], true)) {
+            abort(403, 'Quick login is disabled in production/staging.');
+        }
+
+        // Hard block: config must be explicitly enabled
+        if (! config('app.show_quick_login')) {
+            abort(403, 'Quick login is not enabled.');
+        }
+
+        $phone = $request->input('phone');
+        if (! $phone) {
+            return back()->withErrors(['phone' => 'Phone number required.']);
+        }
+
+        $user = \App\Models\User::where('phone', $phone)->first();
+        if (! $user) {
+            return back()->withErrors(['phone' => 'User not found.']);
+        }
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->intended($this->resolveRedirectPath($user));
+    }
+
+    /**
+     * Returns the list of users available for quick-login on the login page.
+     * Only non-empty when the feature flag is on AND env allows it.
+     */
+    private function getQuickLoginUsers(): array
+    {
+        if (! config('app.show_quick_login')) {
+            return [];
+        }
+
+        $env = config('app.env', 'production');
+        if (in_array($env, ['production', 'staging'], true)) {
+            return [];
+        }
+
+        return \App\Models\User::select('id', 'name', 'phone')
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($u) => [
+                'id'    => $u->id,
+                'name'  => $u->name,
+                'phone' => $u->phone,
+            ])
+            ->toArray();
     }
 
     public function store(Request $request): RedirectResponse

@@ -324,6 +324,11 @@ Route::middleware(['guest', ResolveStoreContext::class, SetLocale::class])->grou
     Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:register');
 });
 
+// Quick Login — passwordless dev-only route (env-gated, outside guest group)
+Route::post('/quick-login', [LoginController::class, 'quickLogin'])
+    ->middleware([ResolveStoreContext::class, SetLocale::class])
+    ->name('quick-login');
+
 // Logout Route (Auth)
 Route::post('/logout', [LoginController::class, 'destroy'])->middleware(['auth', SetLocale::class])->name('logout');
 
@@ -525,8 +530,44 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/products/master-data', [ProductMasterDataController::class, 'index'])
             ->name('store.admin.products.master-data')
             ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        // Supplier management (full CRUD).
+        Route::get('/admin/suppliers', [SupplierController::class, 'index'])
+            ->name('store.admin.suppliers.index')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/suppliers', [SupplierController::class, 'store'])
+            ->name('store.admin.suppliers.store')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/suppliers/{supplier}/edit', [SupplierController::class, 'edit'])
+            ->name('store.admin.suppliers.edit')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::put('/admin/suppliers/{supplier}', [SupplierController::class, 'update'])
+            ->name('store.admin.suppliers.update')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::delete('/admin/suppliers/{supplier}', [SupplierController::class, 'destroy'])
+            ->name('store.admin.suppliers.destroy')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
         // Supplier quick-add (product form "Supplier & Purchase" section).
-        Route::post('/admin/suppliers/quick-store', [SupplierController::class, 'quickStore'])
+        // Supplier import/export.
+        Route::get('/admin/suppliers/export', [SupplierController::class, 'export'])
+            ->name('store.admin.suppliers.export')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/suppliers/aging', [SupplierController::class, 'agingReport'])
+            ->name('store.admin.suppliers.aging')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/suppliers/import', [SupplierController::class, 'importForm'])
+            ->name('store.admin.suppliers.import')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/suppliers/import', [SupplierController::class, 'import'])
+            ->name('store.admin.suppliers.import.do')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/suppliers/import/confirm', [SupplierController::class, 'confirmImport'])
+            ->name('store.admin.suppliers.import.confirm')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/suppliers/import-template', [SupplierController::class, 'downloadImportTemplate'])
+            ->name('store.admin.suppliers.import.template')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+                Route::post('/admin/suppliers/quick-store', [SupplierController::class, 'quickStore'])
             ->name('store.admin.suppliers.quick-store')
             ->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:60,1']);
         Route::get('/admin/products/create', [ProductController::class, 'create'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -655,14 +696,26 @@ Route::prefix('store/{store_slug}')
             Route::get('/reports/cash', [\App\POS\Http\Controllers\PosReportController::class, 'cash'])->name('pos.reports.cash');
             Route::get('/reports/stock', [\App\POS\Http\Controllers\PosReportController::class, 'stock'])->name('pos.reports.stock');
 
+            // POS product search (used by PO create form)
+            Route::get('/purchases/products', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'productSearch'])->name('pos.purchases.product-search');
+
+            // Specific purchase routes — MUST come before {purchaseOrder} wildcard
+            Route::get('/purchases/payables', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'payablesIndex'])->name('pos.purchases.payables');
+            Route::get('/purchases/payables/{supplier}', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'payablesShow'])->name('pos.purchases.payables.show');
+            Route::post('/purchases/payables/{supplier}/pay', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'payablesPay'])->name('pos.purchases.payables.pay');
+            Route::get('/purchases/export', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'export'])->name('pos.purchases.export');
+
             // Purchase order lifecycle (alinthit_pos style) — pending → ordered → received | cancelled.
             Route::get('/purchases', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'index'])->name('pos.purchases.index');
             Route::get('/purchases/create', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'create'])->name('pos.purchases.create');
             Route::post('/purchases', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'store'])->name('pos.purchases.store');
+            Route::get('/purchases/returns', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'returnsIndex'])->name('pos.purchases.returns');
             Route::get('/purchases/{purchaseOrder}', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'show'])->name('pos.purchases.show');
             Route::post('/purchases/{purchaseOrder}/order', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'order'])->name('pos.purchases.order');
             Route::post('/purchases/{purchaseOrder}/receive', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('pos.purchases.receive');
             Route::post('/purchases/{purchaseOrder}/cancel', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'cancel'])->name('pos.purchases.cancel');
+            Route::post('/purchases/{purchaseOrder}/return', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'returnItems'])->name('pos.purchases.return');
+            Route::post('/purchases/{purchaseOrder}/pay', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'pay'])->name('pos.purchases.pay');
 
             // Opening stock (MVP Phase 2) — staff submits, manager approves → opening_balance ledger.
             Route::get('/opening-stock', [\App\POS\Http\Controllers\OpeningStockController::class, 'index'])->name('pos.opening-stock.index');

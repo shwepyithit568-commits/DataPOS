@@ -97,6 +97,58 @@
         </div>
     </section>
 
+    {{-- OVERDUE SUPPLIER PAYABLES --}}
+    @if ($overdueData['overdue_count'] > 0)
+        <section aria-label="Overdue payables">
+            <div class="admin-section-head">
+                <h2 class="admin-section-title flex items-center gap-2">
+                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 text-xs font-bold">{{ $overdueData['overdue_count'] }}</span>
+                    {{ __('messages.overdue_payables_title') }}
+                </h2>
+                <a href="{{ url('/store/' . $store->slug . '/admin/suppliers/aging') }}" class="text-sm font-semibold text-violet-600 dark:text-violet-400 hover:underline">{{ __('messages.aging_report_title') }} →</a>
+            </div>
+            <div class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-red-200 dark:border-red-900/40">
+                <div class="px-4 py-3 bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-900/40 flex items-center justify-between">
+                    <span class="text-sm font-semibold text-red-700 dark:text-red-300">{{ __('messages.overdue_total') }}: Ks {{ number_format($overdueData['total_overdue'], 0) }}</span>
+                    <span class="text-xs text-red-500 dark:text-red-400">{{ __('messages.overdue_30_days') }}</span>
+                </div>
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-gray-50 dark:bg-slate-900/50 border-b dark:border-slate-700">
+                        <tr>
+                            <th class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-slate-400">{{ __('messages.supplier_col_name') }}</th>
+                            <th class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-slate-400 text-right">{{ __('messages.aging_total_outstanding') }}</th>
+                            <th class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-slate-400 text-right">{{ __('messages.aging_days') }}</th>
+                            <th class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-slate-400 text-right"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+                        @foreach ($overdueData['overdue_suppliers'] as $row)
+                            <tr class="hover:bg-gray-50/60 dark:hover:bg-slate-700/40 transition">
+                                <td class="px-4 py-3">
+                                    <div class="font-bold text-gray-900 dark:text-slate-100">{{ $row['name'] }}</div>
+                                    <div class="text-xs text-gray-400 dark:text-slate-500">{{ $row['po_count'] }} {{ __('messages.aging_pos') }}</div>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <span class="inline-block px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 text-xs font-bold">Ks {{ number_format($row['amount'], 0) }}</span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <span class="text-xs font-semibold text-red-600 dark:text-red-400">{{ $row['age_days'] }} {{ __('messages.aging_days') }}</span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <a href="{{ url('/store/' . $store->slug . '/pos/purchases/payables/' . $row['id']) }}"
+                                        class="min-h-11 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition shadow">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                        {{ __('messages.overdue_pay_now') }}
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    @endif
+
     {{-- SECONDARY: Order status --}}
     <section aria-label="Order status">
         <div class="admin-section-head">

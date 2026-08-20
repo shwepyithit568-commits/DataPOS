@@ -21,13 +21,72 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/purchases') }}"
-              class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-5"
-              x-data="{
+        <div x-data="{
                   rows: [{ q: '', results: [], open: false, product_id: '', product_variant_id: '', name: '', sku: '', quantity: '', unit_cost: '' }],
+                  filterBrand: '',
+                  filterCategory: '',
+                  resetRowResults() {
+                      this.rows.forEach(r => { r.results = []; r.open = false; });
+                  },
                   async search(r) {
-                      if (r.q.trim() === '') { r.results = []; r.open = false; return; }
-                      const res = await fetch('{{ url('/store/' . $store->slug . '/pos/products') }}?q=' + encodeURIComponent(r.q), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                      if (r.q.trim() === '' && !this.filterBrand && !this.filterCategory) { r.results = []; r.open = false; return; }
+                      const params = new URLSearchParams();
+                      if (r.q.trim() !== '') params.set('q', r.q.trim());
+                      if (this.filterBrand) params.set('brand_id', this.filterBrand);
+                      if (this.filterCategory) params.set('category_id', this.filterCategory);
+                      const res = await fetch('{{ url("/store/" . $store->slug . "/pos/purchases/products") }}?' + params.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                      const json = await res.json();
+                      r.results = (json.results || []).slice(0, 8);
+                      r.open = true;
+                  },
+                  pick(r, p) {
+                      r.product_id = p.product_id;
+                      r.product_variant_id = p.type === 'variant' ? p.id : null;
+                      r.name = p.name;
+                      r.sku = p.sku;
+                      r.q = p.name;
+                      r.quantity = '1';
+                      r.unit_cost = p.cost || '';
+                      r.results = []; r.open = false;
+                  },
+                  addRow() { this.rows.push({ q: '', results: [], open: false, product_id: '', product_variant_id: '', name: '', sku: '', quantity: '', unit_cost: '' }); },
+                  removeRow(i) { if (this.rows.length > 1) this.rows.splice(i, 1); },
+                  get totalQty() { return this.rows.reduce((s, r) => s + (parseFloat(r.quantity) || 0), 0); },
+                  get totalCost() { return this.rows.reduce((s, r) => s + (parseFloat(r.quantity) || 0) * (parseFloat(r.unit_cost) || 0), 0); },
+                  get valid() { return this.rows.some(r => r.product_id && (parseFloat(r.quantity) || 0) > 0 && (parseFloat(r.unit_cost) || 0) > 0); }
+              }">
+        {{-- Brand & Category filter --}}
+        <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">{{ __('messages.filter_brand') }}</label>
+                    <select x-model="filterBrand" @change="resetRowResults()" class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 outline-none">
+                        <option value="">{{ __('messages.filter_all_brands') }}</option>
+                        @foreach ($brands as $b)
+                            <option value="{{ $b->id }}">{{ $b->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">{{ __('messages.filter_category') }}</label>
+                    <select x-model="filterCategory" @change="resetRowResults()" class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 outline-none">
+                        <option value="">{{ __('messages.filter_all_categories') }}</option>
+                        @foreach ($categories as $c)
+                            <option value="{{ $c->id }}">{{ $c->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/purchases') }}"
+              class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-5">
+                      if (r.q.trim() === '' && !this.filterBrand && !this.filterCategory) { r.results = []; r.open = false; return; }
+                      const params = new URLSearchParams();
+                      if (r.q.trim() !== '') params.set('q', r.q.trim());
+                      if (this.filterBrand) params.set('brand_id', this.filterBrand);
+                      if (this.filterCategory) params.set('category_id', this.filterCategory);
+                      const res = await fetch('{{ url('/store/' . $store->slug . '/pos/purchases/products') }}?' + params.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                       const json = await res.json();
                       r.results = (json.results || []).slice(0, 8);
                       r.open = true;
@@ -138,5 +197,6 @@
                 📋 {{ __('messages.po_save_pending') }}
             </button>
         </form>
+        </div>
     </div>
 @endsection

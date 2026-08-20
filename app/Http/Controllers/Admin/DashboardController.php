@@ -119,6 +119,9 @@ class DashboardController extends Controller
         $recentWholesale = WholesaleApplication::where('store_id', $storeId)->with('user')->latest()->take(5)->get();
         $recentProducts = Product::where('store_id', $storeId)->with(['category', 'brand'])->latest()->take(5)->get();
 
+        // ── Overdue supplier payables ──────────────────────────────────────
+        $overdueData = $this->overduePayables($storeId);
+
         // Staff-tool access + open cashier shift for the current user — powers
         // the POS quick-action strip in the dashboard header. (Computed here
         // because layout-composer vars don't reach the child dashboard view.)
@@ -134,7 +137,8 @@ class DashboardController extends Controller
             'recentProducts',
             'openShift',
             'canAccessStaffTools',
-            'canManageSettings'
+            'canManageSettings',
+            'overdueData'
         ) + $stats);
     }
 
@@ -151,5 +155,58 @@ class DashboardController extends Controller
             ->where('created_at', '>=', $since)
             ->selectRaw('COALESCE(SUM(COALESCE(agreed_amount, total_amount)), 0) as revenue')
             ->value('revenue');
+    }
+
+    /**
+     * Compute overdue supplier payables summary for the dashboard.
+     */
+    private function overduePayables(int $storeId): array
+    {
+        $today = now()->startOfDay();
+
+        $suppliers = \App\Models\Supplier::where('store_id', $storeId)
+            ->whereRaw('total_credit - total_repaid > 0')
+            ->get();
+
+        $overdueSuppliers = [];
+        $totalOverdue = 0;
+        $overdueCount = 0;
+
+        foreach ($suppliers as $supplier) {
+            $unpaidPos = \App\POS\Models\PurchaseOrder::where('supplier_id', $supplier->id)
+                ->where('status', 'received')
+                ->whereRaw('remaining_balance > 0')
+                ->get();
+
+            $totalOutstanding = 0;
+            $maxAgeDays = 0;
+
+            foreach ($unpaidPos as $po) {
+                $age = (int) $po->received_at->diffInDays($today);
+                $amount = (float) $po->remaining_balance;
+                $totalOutstanding += $amount;
+                $maxAgeDays = max($maxAgeDays, $age);
+            }
+
+            if ($totalOutstanding > 0 && $maxAgeDays > 30) {
+                $overdueSuppliers[] = [
+                    'id'       => $supplier->id,
+                    'name'     => $supplier->name,
+                    'amount'   => $totalOutstanding,
+                    'age_days' => $maxAgeDays,
+                    'po_count' => $unpaidPos->count(),
+                ];
+                $totalOverdue += $totalOutstanding;
+                $overdueCount++;
+            }
+        }
+
+        usort($overdueSuppliers, fn($a, $b) => $b['age_days'] <=> $a['age_days']);
+
+        return [
+            'total_overdue'     => $totalOverdue,
+            'overdue_count'     => $overdueCount,
+            'overdue_suppliers' => array_slice($overdueSuppliers, 0, 5),
+        ];
     }
 }

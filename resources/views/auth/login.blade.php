@@ -130,6 +130,35 @@
             </template>
         </button>
 
+        {{-- Quick Login (DEV/TEST ONLY) --}}
+        @if (!empty($quickLoginUsers))
+            <div class="pt-2 space-y-2">
+                <div class="flex items-center space-x-2">
+                    <div class="flex-1 h-px bg-slate-200 dark:bg-slate-700"></div>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Quick Login</span>
+                    <div class="flex-1 h-px bg-slate-200 dark:bg-slate-700"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5">
+                    @foreach ($quickLoginUsers as $ql)
+                        <form method="POST" action="{{ route('quick-login') }}">
+                            @csrf
+                            <input type="hidden" name="phone" value="{{ $ql['phone'] }}" />
+                            <button type="submit"
+                                class="w-full text-left px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/40 hover:border-sky-300 dark:hover:border-sky-700 transition text-xs group"
+                            >
+                                <span class="font-bold text-slate-700 dark:text-slate-300 group-hover:text-sky-700 dark:group-hover:text-sky-300 block truncate">
+                                    {{ $ql['name'] }}
+                                </span>
+                                <span class="font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                                    {{ $ql['phone'] }}
+                                </span>
+                            </button>
+                        </form>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         {{-- Register Link --}}
         <div class="text-center pt-1 space-y-2">
             <div class="text-sm font-bold text-slate-600 dark:text-slate-400 font-myanmar">
