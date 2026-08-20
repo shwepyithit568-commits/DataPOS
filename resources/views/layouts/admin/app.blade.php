@@ -420,9 +420,24 @@
                             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 7h20M2 7v10a2 2 0 002 2h16a2 2 0 002-2V7M10 11h4M10 15h2"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'transfers'])" :label="__('messages.sidebar_transfers')" />
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'warehouses'])" :label="__('messages.sidebar_warehouses')" />
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'buy-back'])" :label="__('messages.sidebar_buy_back')" />
+                    @php $isTransfers = request()->is('store/*/pos/transfers*'); @endphp
+                    <x-admin.nav-link :href="route('pos.transfers.index', $storeRouteParams)" route-name="pos.transfers.index" :active="$isTransfers" :label="__('messages.sidebar_transfers')">
+                        <x-slot:icon>
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+                    @php $isWarehouses = request()->is('store/*/admin/warehouses*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.warehouses.index', $storeRouteParams)" route-name="store.admin.warehouses.index" :active="$isWarehouses" :label="__('messages.sidebar_warehouses')">
+                        <x-slot:icon>
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+                    @php $isBuyBack = request()->is('store/*/pos/buy-back*'); @endphp
+                    <x-admin.nav-link :href="route('pos.buyback.index', $storeRouteParams)" route-name="pos.buyback.index" :active="$isBuyBack" :label="__('messages.sidebar_buy_back')">
+                        <x-slot:icon>
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12a9 9 0 109-9m-9 9h9m0 0V3"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
                 </x-admin.nav-group>
 
                 <x-admin.nav-group name="ecommerce" :label="__('messages.sidebar_ecommerce')" icon-class="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">

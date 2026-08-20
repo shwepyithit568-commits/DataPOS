@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\ProductMasterDataController;
 use App\Http\Controllers\Admin\StoreManagementController;
 use App\Http\Controllers\Admin\StoreSettingController;
 use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\WarehouseController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\VariantPresetController;
 use App\Http\Controllers\Admin\WholesaleAdminController;
@@ -555,6 +556,14 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/suppliers/aging', [SupplierController::class, 'agingReport'])
             ->name('store.admin.suppliers.aging')
             ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Warehouses
+        Route::get('/admin/warehouses', [WarehouseController::class, 'index'])->name('store.admin.warehouses.index');
+        Route::post('/admin/warehouses', [WarehouseController::class, 'store'])->name('store.admin.warehouses.store');
+        Route::put('/admin/warehouses/{warehouse}', [WarehouseController::class, 'update'])->name('store.admin.warehouses.update');
+        Route::delete('/admin/warehouses/{warehouse}', [WarehouseController::class, 'destroy'])
+            ->name('store.admin.warehouses.destroy')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/suppliers/import', [SupplierController::class, 'importForm'])
             ->name('store.admin.suppliers.import')
             ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -716,6 +725,23 @@ Route::prefix('store/{store_slug}')
             Route::post('/purchases/{purchaseOrder}/cancel', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'cancel'])->name('pos.purchases.cancel');
             Route::post('/purchases/{purchaseOrder}/return', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'returnItems'])->name('pos.purchases.return');
             Route::post('/purchases/{purchaseOrder}/pay', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'pay'])->name('pos.purchases.pay');
+
+            // ── Stock Transfers
+            Route::get('/transfers', [\App\Http\Controllers\POS\TransferController::class, 'index'])->name('pos.transfers.index');
+            Route::get('/transfers/create', [\App\Http\Controllers\POS\TransferController::class, 'create'])->name('pos.transfers.create');
+            Route::post('/transfers', [\App\Http\Controllers\POS\TransferController::class, 'store'])->name('pos.transfers.store');
+            Route::get('/transfers/{transfer}', [\App\Http\Controllers\POS\TransferController::class, 'show'])->name('pos.transfers.show');
+            Route::post('/transfers/{transfer}/ship', [\App\Http\Controllers\POS\TransferController::class, 'ship'])->name('pos.transfers.ship');
+            Route::post('/transfers/{transfer}/receive', [\App\Http\Controllers\POS\TransferController::class, 'receive'])->name('pos.transfers.receive');
+            Route::post('/transfers/{transfer}/cancel', [\App\Http\Controllers\POS\TransferController::class, 'cancel'])->name('pos.transfers.cancel');
+
+            // ── Buy Back (Customer Returns)
+            Route::get('/buy-back', [\App\Http\Controllers\POS\BuyBackController::class, 'index'])->name('pos.buyback.index');
+            Route::get('/buy-back/create', [\App\Http\Controllers\POS\BuyBackController::class, 'create'])->name('pos.buyback.create');
+            Route::post('/buy-back', [\App\Http\Controllers\POS\BuyBackController::class, 'store'])->name('pos.buyback.store');
+            Route::get('/buy-back/{buyback}', [\App\Http\Controllers\POS\BuyBackController::class, 'show'])->name('pos.buybacks.show');
+            Route::post('/buy-back/{buyback}/complete', [\App\Http\Controllers\POS\BuyBackController::class, 'complete'])->name('pos.buybacks.complete');
+            Route::post('/buy-back/{buyback}/cancel', [\App\Http\Controllers\POS\BuyBackController::class, 'cancel'])->name('pos.buybacks.cancel');
 
             // Opening stock (MVP Phase 2) — staff submits, manager approves → opening_balance ledger.
             Route::get('/opening-stock', [\App\POS\Http\Controllers\OpeningStockController::class, 'index'])->name('pos.opening-stock.index');
