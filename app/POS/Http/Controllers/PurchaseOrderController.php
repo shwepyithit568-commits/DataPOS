@@ -41,10 +41,15 @@ class PurchaseOrderController extends Controller
     public function index(StoreContext $context): View
     {
         $store = $context->getStore();
-        $status = request('status');
+        $allowedStatuses = ['pending', 'ordered', 'received', 'cancelled', 'returned'];
+        $status = in_array((string) request('status'), $allowedStatuses, true) ? request('status') : null;
         $pos = $this->purchaseOrders->listForStore($store, $status);
+        $statusCounts = PurchaseOrder::where('store_id', $store->id)
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
 
-        return view('pos.purchases.index', compact('store', 'pos', 'status'));
+        return view('pos.purchases.index', compact('store', 'pos', 'status', 'statusCounts'));
     }
 
     /** Create form — empty PO builder. */
@@ -83,25 +88,26 @@ class PurchaseOrderController extends Controller
             ->with(['brand', 'category'])
             ->orderBy('name')
             ->limit(15)
-            ->get()
-            ->map(function ($p) {
-                $balance = \App\POS\Models\InventoryBalance::where('store_id', $p->store_id)
-                    ->where('product_id', $p->id)
-                    ->sum('quantity');
-                return [
-                    'id' => $p->id,
-                    'product_id' => $p->id,
-                    'name' => $p->name,
-                    'sku' => $p->sku,
-                    'price' => (float) $p->price,
-                    'cost' => (float) $p->cost,
-                    'balance' => (float) $balance,
-                    'brand' => $p->brand?->name,
-                    'category' => $p->category?->name,
-                ];
-            });
+            ->get();
 
-        return response()->json(['results' => $products]);
+        // Batch on-hand totals in a single query (avoid N+1).
+        $balances = \App\POS\Models\InventoryBalance::where('store_id', $store->id)
+            ->whereIn('product_id', $products->pluck('id'))
+            ->groupBy('product_id')
+            ->selectRaw('product_id, SUM(quantity) as total')
+            ->pluck('total', 'product_id');
+
+        return response()->json(['results' => $products->map(fn ($p) => [
+            'id' => $p->id,
+            'product_id' => $p->id,
+            'name' => $p->name,
+            'sku' => $p->sku,
+            'price' => (float) $p->price,
+            'cost' => (float) $p->cost,
+            'balance' => (float) ($balances[$p->id] ?? 0),
+            'brand' => $p->brand?->name,
+            'category' => $p->category?->name,
+        ])]);
     }
 
     /** Save a new PO as pending. */
