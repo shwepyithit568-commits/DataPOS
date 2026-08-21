@@ -124,6 +124,52 @@ Alpine.data('posApp', (opts = {}) => ({
     cartBusy: false,
     variantProduct: null,
     showPayment: false,
+    // Reporting tabs below the cashier panels (today / registers / debt)
+    activeTab: 'today',
+    switchTab(name) {
+        this.activeTab = name;
+    },
+    // Web order import (fulfil an online order at the counter)
+    webOrdersOpen: false,
+    webOrderQ: '',
+    webOrderResults: [],
+    webOrderLoading: false,
+    pendingWebOrderId: null,
+    async openWebOrders() {
+        this.webOrdersOpen = true;
+        await this.loadWebOrders();
+    },
+    async loadWebOrders() {
+        this.webOrderLoading = true;
+        try {
+            const data = await this.fetchJson('/web-orders?q=' + encodeURIComponent(this.webOrderQ));
+            this.webOrderResults = data.orders || [];
+        } catch (e) {
+            this.flash(e.message, 'error');
+        } finally {
+            this.webOrderLoading = false;
+        }
+    },
+    async importWebOrder(order) {
+        this.webOrdersOpen = false;
+        try {
+            for (const item of order.items) {
+                if (!item.product_id) continue;
+                const body = { product_id: item.product_id, quantity: String(item.quantity) };
+                if (item.product_variant_id) body.product_variant_id = item.product_variant_id;
+                const data = await this.fetchJson('/cart', { method: 'POST', body: new URLSearchParams(body) });
+                this.applyCart(data);
+            }
+            this.pendingWebOrderId = order.id;
+            if (order.user_id) {
+                this.cq = order.customer_name || '';
+                await this.attach({ id: order.user_id });
+            }
+            this.flash(this.labels.web_order_imported || 'Web order loaded into cart', 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        }
+    },
     priceEditIndex: null,
     priceEditValue: '',
     pricePinIndex: null,   // line whose override needs a manager PIN
@@ -140,6 +186,10 @@ Alpine.data('posApp', (opts = {}) => ({
         await this.loadGrid();
         await this.refreshCart();
         window.addEventListener('keydown', (e) => this.shortcut(e));
+        // Desktop: focus the search box so a cashier can type / scan immediately.
+        if (window.innerWidth >= 1024 && this.$refs && this.$refs.searchInput) {
+            this.$nextTick(() => this.$refs.searchInput.focus());
+        }
     },
 
     url(path) {
@@ -219,6 +269,7 @@ Alpine.data('posApp', (opts = {}) => ({
 
     async clearCart() {
         if (!this.cart.lines.length) return;
+        this.pendingWebOrderId = null; // a cleared cart is no longer fulfilling an order
         await this.mutate('/cart/clear', {});
     },
 

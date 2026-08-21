@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Order;
+use App\Models\Store;
 use App\Models\User;
 use App\POS\Exceptions\InventoryException;
+use App\POS\Integrations\OrderInventoryAdapter;
 use App\POS\Models\PosSale;
 use App\POS\Services\CashierShiftService;
 use App\POS\Services\CustomerDebtService;
@@ -554,6 +557,79 @@ class PosSaleController extends Controller
     }
 
     /* ------------------------------------------------------------------ */
+    /*  Web order import (fulfil an online order at the counter)           */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * JSON list of importable web orders (pending_contact / confirmed — not
+     * yet delivered or cancelled). Each order carries its catalog line items
+     * so the cashier can load it straight into the POS cart.
+     */
+    public function webOrders(Request $request, StoreContext $context): JsonResponse
+    {
+        $store = $context->getStore();
+        $q = trim((string) $request->input('q', ''));
+
+        $query = Order::where('store_id', $store->id)
+            ->whereIn('status', ['pending_contact', 'confirmed'])
+            ->with(['items', 'user']);
+
+        if ($q !== '') {
+            $query->where(function ($sq) use ($q) {
+                $sq->where('order_number', 'like', "%{$q}%")
+                    ->orWhere('customer_name', 'like', "%{$q}%")
+                    ->orWhere('customer_phone', 'like', "%{$q}%");
+            });
+        }
+
+        $orders = $query->latest()->limit(30)->get()->map(fn (Order $order) => [
+            'id' => $order->id,
+            'order_number' => $order->order_number,
+            'status' => $order->status,
+            'status_label' => __('messages.' . ($order->status === 'confirmed' ? 'order_status_confirmed' : 'order_status_pending_contact')),
+            'customer_name' => $order->user?->name ?? $order->customer_name,
+            'customer_phone' => $order->user?->phone ?? $order->customer_phone,
+            'user_id' => $order->user_id,
+            'total' => (float) $order->effectiveAmount(),
+            'items' => $order->items->map(fn ($item) => [
+                'product_id' => $item->product_id,
+                'product_variant_id' => $item->product_variant_id,
+                'name' => $item->product_name . ($item->variant_name ? ' · ' . $item->variant_name : ''),
+                'quantity' => (float) $item->quantity,
+                'unit_price' => (float) $item->unit_price,
+            ])->values(),
+        ])->values();
+
+        return response()->json(['orders' => $orders]);
+    }
+
+    /**
+     * Mark a web order as fulfilled from the counter. The POS sale already
+     * deducted stock (pos_sale), so any earlier reservation (confirmed order)
+     * is released first — this keeps the ledger at exactly one deduction.
+     */
+    private function fulfillWebOrder(Store $store, int $orderId, User $actor, string $receiptNumber): void
+    {
+        $order = Order::where('store_id', $store->id)->find($orderId);
+
+        if (! $order || in_array($order->status, ['delivered', 'cancelled'], true)) {
+            return; // nothing to fulfil / already handled
+        }
+
+        app(OrderInventoryAdapter::class)->release($order);
+        $order->update(['status' => 'delivered']);
+
+        AuditLog::write(
+            storeId: $store->id,
+            action: 'pos_web_order_fulfilled',
+            entityType: 'order',
+            entityId: $order->id,
+            metadata: ['order_number' => $order->order_number, 'sale_receipt' => $receiptNumber],
+            actorId: $actor->id,
+        );
+    }
+
+    /* ------------------------------------------------------------------ */
     /*  Post (atomic)                                                      */
     /* ------------------------------------------------------------------ */
 
@@ -568,6 +644,7 @@ class PosSaleController extends Controller
             'payments.*.amount' => ['nullable', 'numeric', 'min:0'], // empty = unused method, dropped in the service
             'customer_id' => ['nullable', 'integer', 'exists:users,id'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'web_order_id' => ['nullable', 'integer', 'exists:orders,id'],
         ]);
 
         $shift = $this->shifts->openShiftFor($store, $user);
@@ -597,6 +674,12 @@ class PosSaleController extends Controller
             );
         } catch (InventoryException $e) {
             return back()->with('error', $e->getMessage());
+        }
+
+        // A web order fulfilled at the counter: mark it delivered. The POS
+        // sale is the single stock deduction, so any reservation is released.
+        if (! empty($data['web_order_id'])) {
+            $this->fulfillWebOrder($store, (int) $data['web_order_id'], $user, $posted->receipt_number);
         }
 
         $change = $posted->payments->firstWhere('method', 'cash')?->change_given ?? '0';

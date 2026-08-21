@@ -271,7 +271,7 @@ class CashierShiftTest extends TestCase
 
         $this->actingAs($cashier)->get("/store/{$store->slug}/pos")
             ->assertStatus(200)
-            ->assertSee(__('messages.open_new_shift'));
+            ->assertSee(__('messages.pos_open_register'));
     }
 
     public function test_non_staff_cannot_open_shift(): void

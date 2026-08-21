@@ -18,7 +18,6 @@ class ComingSoonController extends Controller
 {
     /** @var array<string, array{label:string, phase:string}> slug → lang label key + roadmap phase */
     protected const MODULES = [
-        'returns'             => ['sidebar_returns', 'Phase 2'],
         'eload'               => ['sidebar_eload', 'Phase 4'],
         'stock-count'         => ['sidebar_stock_count', 'Phase 4'],
         'stock-ledger'        => ['sidebar_stock_ledger', 'Phase 4'],
@@ -82,6 +81,9 @@ class ComingSoonController extends Controller
             'module' => $module,
             'moduleLabel' => __("messages.{$labelKey}"),
             'phase' => $phase,
+            // Full module registry so the shared view can render the roadmap
+            // grid (which modules are planned and in which phase).
+            'modules' => self::MODULES,
         ]);
     }
 }

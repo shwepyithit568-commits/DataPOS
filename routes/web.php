@@ -695,6 +695,7 @@ Route::prefix('store/{store_slug}')
             Route::post('/void/{sale}', [\App\POS\Http\Controllers\PosSaleController::class, 'void'])->name('pos.void');
             Route::post('/post/{sale?}', [\App\POS\Http\Controllers\PosSaleController::class, 'post'])->name('pos.post');
             Route::get('/sales/{sale}/receipt', [\App\POS\Http\Controllers\PosSaleController::class, 'receipt'])->name('pos.receipt');
+            Route::get('/web-orders', [\App\POS\Http\Controllers\PosSaleController::class, 'webOrders'])->name('pos.web-orders');
 
             // POS returns / refunds (target-design §2.9, SoT §15.1).
             Route::get('/sales/{sale}/refund', [\App\POS\Http\Controllers\PosReturnController::class, 'create'])->name('pos.refund.create');
@@ -748,6 +749,11 @@ Route::prefix('store/{store_slug}')
             Route::get('/buy-back/{buyback}', [\App\Http\Controllers\POS\BuyBackController::class, 'show'])->name('pos.buybacks.show');
             Route::post('/buy-back/{buyback}/complete', [\App\Http\Controllers\POS\BuyBackController::class, 'complete'])->name('pos.buybacks.complete');
             Route::post('/buy-back/{buyback}/cancel', [\App\Http\Controllers\POS\BuyBackController::class, 'cancel'])->name('pos.buybacks.cancel');
+
+            // ── Sales Returns (roadmap Phase 2) — management layer over PosReturnService
+            Route::get('/returns', [\App\Http\Controllers\POS\ReturnsController::class, 'index'])->name('pos.returns.index');
+            Route::get('/returns/new', [\App\Http\Controllers\POS\ReturnsController::class, 'create'])->name('pos.returns.create');
+            Route::get('/returns/{return}', [\App\Http\Controllers\POS\ReturnsController::class, 'show'])->name('pos.returns.show');
 
             // Opening stock (MVP Phase 2) — staff submits, manager approves → opening_balance ledger.
             Route::get('/opening-stock', [\App\POS\Http\Controllers\OpeningStockController::class, 'index'])->name('pos.opening-stock.index');

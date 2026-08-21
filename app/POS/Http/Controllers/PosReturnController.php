@@ -89,7 +89,7 @@ class PosReturnController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return redirect()->route('pos.index', ['store_slug' => $store->slug])
+        return redirect()->route('pos.returns.show', ['store_slug' => $store->slug, 'return' => $refund->id])
             ->with('success', __('messages.refund_posted') . " {$refund->refund_number}");
     }
 }

@@ -201,7 +201,7 @@
         data-admin-alerts-url="{{ $hasStoreContext ? url('/store/' . $currentSlug . '/admin/alerts/check') : '' }}"
         data-admin-alerts-interval="30000"
         x-data="{
-            posOpen: {{ request()->is('store/*/pos') || request()->is('store/*/pos/') || request()->is('store/*/pos/closing*') || request()->is('store/*/pos/sales*') ? 'true' : 'false' }},
+            posOpen: {{ request()->is('store/*/pos') || request()->is('store/*/pos/') || request()->is('store/*/pos/closing*') || request()->is('store/*/pos/sales*') || request()->is('store/*/pos/returns*') ? 'true' : 'false' }},
             inventoryOpen: {{ Str::contains($currentPath, ['products', 'categories', 'brands', 'variant-presets', 'pos/opening-stock', 'pos/adjustments', 'pos/reconciliation']) ? 'true' : 'false' }},
             purchasingOpen: {{ Str::contains($currentPath, ['pos/purchases', 'pos/transfers', 'pos/buy-back', 'admin/suppliers', 'admin/warehouses']) ? 'true' : 'false' }},
             ecommerceOpen: {{ Str::contains($currentPath, ['orders', 'reviews', 'banners', 'blog', 'glass-finder', 'push']) ? 'true' : 'false' }},
@@ -324,7 +324,13 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'returns'])" :label="__('messages.sidebar_returns')" />
+                    @php $isSalesReturns = request()->is('store/*/pos/returns*'); @endphp
+                    <x-admin.nav-link :href="route('pos.returns.index', $storeRouteParams)" route-name="pos.returns.index" :active="$isSalesReturns" :label="__('messages.sidebar_returns')">
+                        <x-slot:icon>
+                            {{-- Return / rotate-left icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l-4-4m0 0l4-4m-4 4h11a4 4 0 010 8h-1"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'eload'])" :label="__('messages.sidebar_eload')" />
                 </x-admin.nav-group>
 
