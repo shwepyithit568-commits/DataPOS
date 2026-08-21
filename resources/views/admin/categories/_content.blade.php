@@ -22,14 +22,16 @@
         'remove_selected' => __('messages.category_image_remove_selected'),
     ];
 @endphp
-<div class="w-full space-y-6">
-    {{-- Header --}}
-    <div class="admin-page-header">
-        <div>
-            <h1 class="admin-page-title">{{ __('messages.categories') }}</h1>
-            <p class="admin-page-sub">{{ $store->name }} — {{ __('messages.category_index_sub') }}</p>
+<div class="w-full space-y-5 sm:space-y-6">
+    @unless($embedded ?? false)
+        {{-- Header (hidden when embedded inside Master Data hub) --}}
+        <div class="admin-page-header">
+            <div>
+                <h1 class="admin-page-title">{{ __('messages.categories') }}</h1>
+                <p class="admin-page-sub">{{ $store->name }} — {{ __('messages.category_index_sub') }}</p>
+            </div>
         </div>
-    </div>
+    @endunless
 
     {{-- Success Flash --}}
     @if (session('success'))

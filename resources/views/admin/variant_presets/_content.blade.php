@@ -23,12 +23,9 @@
 @endphp
 
 <div class="w-full space-y-5 sm:space-y-6">
-    <div class="admin-page-header">
-        <div>
-            <h1 class="admin-page-title">{{ __('messages.variant_preset_title') }}</h1>
-            <p class="admin-page-sub">{{ $store->name }} · {{ __('messages.variant_preset_subtitle') }}</p>
-        </div>
-        <div class="flex items-center gap-2">
+    @if($embedded ?? false)
+        {{-- Embedded inside Master Data hub: only the action CTAs are visible (no duplicate title/stats) --}}
+        <div class="flex justify-end items-center gap-2">
             <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}"
                 class="inline-flex min-h-11 items-center justify-center rounded-xl bg-violet-600 px-4 py-2 text-sm font-black text-white shadow-sm transition hover:bg-violet-700">
                 {{ __('messages.variant_preset_product_create') }}
@@ -40,7 +37,27 @@
                 </a>
             @endif
         </div>
-    </div>
+    @else
+        {{-- Standalone full page: title + CTAs + subtitle + stat grid --}}
+        <div class="admin-page-header">
+            <div>
+                <h1 class="admin-page-title">{{ __('messages.variant_preset_title') }}</h1>
+                <p class="admin-page-sub">{{ $store->name }} · {{ __('messages.variant_preset_subtitle') }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}"
+                    class="inline-flex min-h-11 items-center justify-center rounded-xl bg-violet-600 px-4 py-2 text-sm font-black text-white shadow-sm transition hover:bg-violet-700">
+                    {{ __('messages.variant_preset_product_create') }}
+                </a>
+                @if ($editingPreset)
+                    <a href="{{ route('store.admin.variant-presets.index', ['store_slug' => $store->slug]) }}"
+                        class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                        {{ __('messages.variant_preset_cancel_edit') }}
+                    </a>
+                @endif
+            </div>
+        </div>
+    @endif
 
     @if (session('success'))
         <div class="p-3.5 sm:p-4 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-700 dark:text-green-300 flex items-start gap-2">
@@ -58,24 +75,26 @@
         </div>
     @endif
 
-    <div class="admin-hairline-grid grid-cols-2 lg:grid-cols-4">
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label">{{ __('messages.variant_preset_presets') }}</div>
-            <div class="admin-stat-value">{{ number_format($presets->count()) }}</div>
+    @unless($embedded ?? false)
+        <div class="admin-hairline-grid grid-cols-2 lg:grid-cols-4">
+            <div class="admin-hairline-cell">
+                <div class="admin-stat-label">{{ __('messages.variant_preset_presets') }}</div>
+                <div class="admin-stat-value">{{ number_format($presets->count()) }}</div>
+            </div>
+            <div class="admin-hairline-cell">
+                <div class="admin-stat-label">{{ __('messages.variant_preset_total_rows') }}</div>
+                <div class="admin-stat-value">{{ number_format($totalRows) }}</div>
+            </div>
+            <div class="admin-hairline-cell">
+                <div class="admin-stat-label text-emerald-600 dark:text-emerald-400">{{ __('messages.variant_preset_in_stock_rows') }}</div>
+                <div class="admin-stat-value">{{ number_format($stockRows) }}</div>
+            </div>
+            <div class="admin-hairline-cell">
+                <div class="admin-stat-label text-rose-600 dark:text-rose-400">{{ __('messages.variant_preset_out_rows') }}</div>
+                <div class="admin-stat-value">{{ number_format($outRows) }}</div>
+            </div>
         </div>
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label">{{ __('messages.variant_preset_total_rows') }}</div>
-            <div class="admin-stat-value">{{ number_format($totalRows) }}</div>
-        </div>
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label text-emerald-600 dark:text-emerald-400">{{ __('messages.variant_preset_in_stock_rows') }}</div>
-            <div class="admin-stat-value">{{ number_format($stockRows) }}</div>
-        </div>
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label text-rose-600 dark:text-rose-400">{{ __('messages.variant_preset_out_rows') }}</div>
-            <div class="admin-stat-value">{{ number_format($outRows) }}</div>
-        </div>
-    </div>
+    @endunless
 
     <div
         x-data="{

@@ -131,7 +131,7 @@ class AdminProductDuplicateAndBulkPriceTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('value="all"', false);
-        $response->assertSee('>All</option>', false);
+        $response->assertSee('>' . __('messages.all') . '</option>', false);
     }
 
     /** Export honours the selected per-page size; "all" (or absent) exports everything. */
@@ -164,8 +164,8 @@ class AdminProductDuplicateAndBulkPriceTest extends TestCase
             ->get("/store/{$this->store->slug}/admin/products");
 
         $response->assertOk();
-        $response->assertSee('Select All', false);
-        $response->assertSee('>Cancel</button>', false);
+        $response->assertSee(__('messages.select_all'), false);
+        $response->assertSee(__('messages.cancel'), false);
         $response->assertSee('selectedIds = []', false);
     }
 

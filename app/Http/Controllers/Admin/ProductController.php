@@ -33,6 +33,7 @@ class ProductController extends Controller
     public function index(Request $request, StoreContext $context): View
     {
         $store = $context->getStore();
+        $summary = $this->summaryStats($store->id);
 
         $query = Product::where('store_id', $store->id)->with(['category', 'brand']);
 
@@ -134,7 +135,23 @@ class ProductController extends Controller
         // return the user to the exact same search/filter state.
         AdminListReturn::capture($request, 'admin_products_return');
 
-        return view('admin.products.index', compact('store', 'products', 'categories', 'categoryGroups', 'brands'));
+        return view('admin.products.index', compact('store', 'products', 'categories', 'categoryGroups', 'brands', 'summary'));
+    }
+
+    /**
+     * Lightweight aggregate counts used by the product index hero-stat cards.
+     * Runs 5 count-queries (one-shot, not N+1) across the full store catalog.
+     */
+    private function summaryStats(int $storeId): array
+    {
+        $base = Product::where('store_id', $storeId);
+        return [
+            'total'        => (clone $base)->count(),
+            'in_stock'     => (clone $base)->where('stock_status', 'in_stock')->count(),
+            'out_of_stock' => (clone $base)->where('stock_status', 'out_of_stock')->count(),
+            'featured'     => (clone $base)->where('is_featured', true)->count(),
+            'online'       => (clone $base)->where('is_ecommerce', true)->count(),
+        ];
     }
 
     /**

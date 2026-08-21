@@ -3,14 +3,16 @@
     $startTab = $errors->any() ? 'add' : 'list';
     $highlightBrand = session('highlight_brand');
 @endphp
-<div class="w-full space-y-6">
-    {{-- Header --}}
-    <div class="admin-page-header">
-        <div>
-            <h1 class="admin-page-title">{{ __('messages.brands') }}</h1>
-            <p class="admin-page-sub">{{ $store->name }} — {{ __('messages.brand_index_sub') }}</p>
+<div class="w-full space-y-5 sm:space-y-6">
+    @unless($embedded ?? false)
+        {{-- Header (hidden when embedded inside Master Data hub) --}}
+        <div class="admin-page-header">
+            <div>
+                <h1 class="admin-page-title">{{ __('messages.brands') }}</h1>
+                <p class="admin-page-sub">{{ $store->name }} — {{ __('messages.brand_index_sub') }}</p>
+            </div>
         </div>
-    </div>
+    @endunless
 
     {{-- Success Flash --}}
     @if (session('success'))

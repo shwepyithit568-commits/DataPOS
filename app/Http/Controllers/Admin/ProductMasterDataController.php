@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Product;
 use App\Models\VariantPreset;
 use App\Services\StoreContext;
 use App\Support\AdminListReturn;
@@ -31,22 +32,55 @@ class ProductMasterDataController extends Controller
     public function index(Request $request, StoreContext $context): View
     {
         $store = $context->getStore();
+        $storeId = $store->id;
 
         $activeTab = $request->query('tab', 'categories');
         if (! in_array($activeTab, self::TABS, true)) {
             $activeTab = 'categories';
         }
 
+        $summary = $this->summaryStats($storeId);
+
         $data = match ($activeTab) {
-            'brands' => $this->brandsData($request, $store->id),
-            'variant-presets' => $this->presetsData($request, $store->id),
-            default => $this->categoriesData($request, $store->id),
+            'brands' => $this->brandsData($request, $storeId),
+            'variant-presets' => $this->presetsData($request, $storeId),
+            default => $this->categoriesData($request, $storeId),
         };
 
         return view('admin.master_data.index', array_merge([
             'store' => $store,
             'activeTab' => $activeTab,
+            'summary' => $summary,
+            'embedded' => true,
         ], $data));
+    }
+
+    /**
+     * Cross-tab aggregate summary counts for the top stat cards.
+     *
+     * @param  int  $storeId
+     * @return array{categories:int, brands:int, presets:int, products:int, presets_total_rows:int}
+     */
+    private function summaryStats(int $storeId): array
+    {
+        $categoriesCount = Category::where('store_id', $storeId)->count();
+        $brandsCount = Brand::where('store_id', $storeId)->count();
+        $productsCount = Product::where('store_id', $storeId)->count();
+        $presets = VariantPreset::where('store_id', $storeId)
+            ->select('id', 'options')
+            ->get();
+        $presetsCount = $presets->count();
+        $presetsTotalRows = $presets->sum(
+            fn (VariantPreset $p) => is_countable($p->options ?? []) ? count($p->options ?? []) : 0
+        );
+
+        return [
+            'categories' => $categoriesCount,
+            'brands' => $brandsCount,
+            'presets' => $presetsCount,
+            'products' => $productsCount,
+            'presets_total_rows' => $presetsTotalRows,
+        ];
     }
 
     /**
