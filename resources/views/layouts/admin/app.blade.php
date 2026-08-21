@@ -203,7 +203,7 @@
         x-data="{
             posOpen: {{ request()->is('store/*/pos') || request()->is('store/*/pos/') || request()->is('store/*/pos/closing*') || request()->is('store/*/pos/sales*') ? 'true' : 'false' }},
             inventoryOpen: {{ Str::contains($currentPath, ['products', 'categories', 'brands', 'variant-presets', 'pos/opening-stock', 'pos/adjustments', 'pos/reconciliation']) ? 'true' : 'false' }},
-            purchasingOpen: {{ Str::contains($currentPath, ['pos/purchases']) ? 'true' : 'false' }},
+            purchasingOpen: {{ Str::contains($currentPath, ['pos/purchases', 'pos/transfers', 'pos/buy-back', 'admin/suppliers', 'admin/warehouses']) ? 'true' : 'false' }},
             ecommerceOpen: {{ Str::contains($currentPath, ['orders', 'reviews', 'banners', 'blog', 'glass-finder', 'push']) ? 'true' : 'false' }},
             customersOpen: {{ Str::contains($currentPath, ['wholesale']) ? 'true' : 'false' }},
             serviceOpen: false,
@@ -433,7 +433,7 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
                     @php $isBuyBack = request()->is('store/*/pos/buy-back*'); @endphp
-                    <x-admin.nav-link :href="route('pos.buyback.index', $storeRouteParams)" route-name="pos.buyback.index" :active="$isBuyBack" :label="__('messages.sidebar_buy_back')">
+                    <x-admin.nav-link :href="route('pos.buybacks.index', $storeRouteParams)" route-name="pos.buybacks.index" :active="$isBuyBack" :label="__('messages.sidebar_buy_back')">
                         <x-slot:icon>
                             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12a9 9 0 109-9m-9 9h9m0 0V3"/></svg>
                         </x-slot:icon>

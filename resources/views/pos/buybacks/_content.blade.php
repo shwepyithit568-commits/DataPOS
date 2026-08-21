@@ -7,22 +7,20 @@
 
 <div class="mb-4">
     <x-admin.toolbar
+        :search="$search"
+        :search-placeholder="__('messages.search_buyback_placeholder')"
+        :sort="request('sort', 'created_at')"
         :sort-options="[
-            ['value' => 'created_at', 'label' => __('messages.sort_by_date')],
-            ['value' => 'buyback_number', 'label' => __('messages.sort_by_number')],
+            'created_at' => __('messages.sort_by_date'),
+            'buyback_number' => __('messages.sort_by_number'),
         ]"
-        :current-sort="request('sort', 'created_at')"
-        :current-direction="request('direction', 'desc')"
-        :current-per-page="(int) request('per_page', 25)"
-        :search-value="$search"
-        :search-url="route('pos.buybacks.index', $storeRouteParams)"
-        search-key="search"
-        :result-count="$total"
+        :filters="[]"
+        :total-count="$total"
+        :per-page="(int) request('per_page', 25)"
+        :show-view-toggle="true"
+        :show-export-import="false"
         view-mode="table"
-        :show-filters="false"
-        :show-import="false"
-        :show-export="false"
-        :show-add="false"
+        :show-pagination="false"
     />
 </div>
 

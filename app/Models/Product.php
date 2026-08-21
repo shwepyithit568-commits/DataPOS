@@ -180,4 +180,23 @@ class Product extends Model
     {
         return $this->stock_status === 'in_stock';
     }
+
+    /**
+     * Convenience accessor: maps the legacy "price" field to retail_price
+     * so existing lookups (product search, cards) keep working without a DB
+     * column rename.
+     */
+    public function getPriceAttribute(): string
+    {
+        return (string) ($this->attributes['retail_price'] ?? '0');
+    }
+
+    /**
+     * Convenience accessor: maps the legacy "cost" field to purchase_cost
+     * so PO builder, costing, and product search can all use $product->cost.
+     */
+    public function getCostAttribute(): string
+    {
+        return (string) ($this->attributes['purchase_cost'] ?? '0');
+    }
 }

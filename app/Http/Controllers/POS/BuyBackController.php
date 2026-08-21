@@ -9,7 +9,7 @@ use App\POS\Models\BuyBack;
 use App\POS\Models\BuyBackItem;
 use App\POS\Models\Warehouse;
 use App\POS\Services\InventoryService;
-use App\POS\Services\StoreContext;
+use App\Services\StoreContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +24,7 @@ class BuyBackController extends Controller
     public function index(Request $request, StoreContext $context, string $store_slug): View
     {
         $store = $context->getStore();
+        $storeRouteParams = $context->getRouteParams();
         $search = $request->input('search', '');
         $status = $request->input('status', '');
         $sort = $request->input('sort', 'created_at');
@@ -42,17 +43,18 @@ class BuyBackController extends Controller
 
         $buybacks = $query->orderBy($sort, $direction)->paginate($perPage);
 
-        return view('pos.buybacks.index', compact('store', 'buybacks', 'search', 'status'));
+        return view('pos.buybacks.index', compact('store', 'storeRouteParams', 'buybacks', 'search', 'status'));
     }
 
     public function create(StoreContext $context, string $store_slug): View
     {
         $store = $context->getStore();
+        $storeRouteParams = $context->getRouteParams();
         $customers = Customer::where('store_id', $store->id)->orderBy('name')->get();
         $warehouse = Warehouse::where('store_id', $store->id)->where('is_default', true)->first();
         $products = Product::where('store_id', $store->id)->where('is_active', true)->orderBy('name')->get();
 
-        return view('pos.buybacks.create', compact('store', 'customers', 'products', 'warehouse'));
+        return view('pos.buybacks.create', compact('store', 'storeRouteParams', 'customers', 'products', 'warehouse'));
     }
 
     public function store(Request $request, StoreContext $context, string $store_slug): RedirectResponse
@@ -104,7 +106,7 @@ class BuyBackController extends Controller
     public function show(StoreContext $context, string $store_slug, BuyBack $buyback): View
     {
         $buyback->load(['creator', 'items.product']);
-        return view('pos.buybacks.show', ['store' => $context->getStore(), 'buyback' => $buyback]);
+        return view('pos.buybacks.show', ['store' => $context->getStore(), 'storeRouteParams' => $context->getRouteParams(), 'buyback' => $buyback]);
     }
 
     public function complete(StoreContext $context, string $store_slug, BuyBack $buyback): RedirectResponse

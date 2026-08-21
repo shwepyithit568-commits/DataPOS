@@ -2786,3 +2786,23 @@ Confirm Import လုပ်တဲ့အခါ 500 မတက်တော့ဘူ
 - **`PosSaleService::gridProducts()` + `searchProducts()`** now build the lookup map once and read balances from it — the pre-fix code ran a SUM query per product AND per variant (~100+ queries for a 25-product × 3-variant grid page; on Hostinger MySQL that was seconds of latency per grid load). New `balanceFromMap()` helper shares the same '0.000' fallback.
 - **PHP gotcha fixed along the way:** `foreach (($entry['variants'] ?? []) as … &$ref)` silently drops the reference (the `?? []` wraps the array in a temporary copy) — the map is now iterated directly, with a code comment so it doesn't regress.
 - Tests: `PosUiEndpointsTest::test_product_grid_uses_grouped_balance_queries` — 25 products × 3 variants, asserts balances (product 19.000 = 10 + 3×3, variants 3.000) and DB::listen query count < 40 (was ~100+). Full suite **937 pass / 4307 assertions**.
+
+## 2026-08-20 — Supplier management, purchase returns, payables & aging (commit `369dbf8`)
+
+- **Supplier management page** — full CRUD (`Admin\SupplierController`): search, sort, table/card view toggle; wired to `products.supplier_id` / `purchase_cost` / `reorder_level` from the 08-18 product-form work. Store-scoped.
+- **Supplier CSV/Excel import** — upload → dry-run preview with duplicate handling, template download, confirm → Import History + error reports (same pattern as pilot-import / brand-category import). Export included.
+- **Supplier payables** (`/pos/purchases/payables`) — FIFO **general payments** and **per-PO payments**, outstanding balances per supplier.
+- **Aging report** (`/admin/suppliers/aging`) — outstanding debt broken into 30/60/90+ day buckets.
+- **Dashboard overdue payables alerts** — quick-pay buttons; the admin alert endpoint now returns overdue supplier counts.
+- **Sidebar** — Payables and Aging Report links added to Finance & Purchasing groups.
+- **Route ordering fix** — purchase-return route registered before the `{purchaseOrder}` wildcard; **Symfony `StreamedResponse` import fixed for PHP 8.2 compat** (CSV export).
+- Tests: `PurchaseOrderPaymentTest` expanded (~33 new payment tests) — **full suite 994 pass / 4467 assertions**. Translations en/my/zh_CN.
+
+## 2026-08-20 — Warehouses, stock transfers & buy back (commit `7312b54`)
+
+- **Warehouses CRUD** (`/admin/warehouses`) — table/card view toggle, branch assignment, default-warehouse delete guard, store scope. All `Purchasing & Transfers` sidebar “Coming Soon” placeholders replaced with real links.
+- **Stock Transfers** (`/pos/transfers`) — multi-item transfer between warehouses via `InventoryService` with `create → ship → receive` flow (ledger `transfer_out` / `transfer_in` movements when arrived).
+- **Buy Back** (`/pos/buy-back`) — customer product returns posting stock restoration through the inventory ledger (buy-back document + items).
+- **Fixes `InventoryService` namespace** in controllers (`App\POS\Services`).
+
+> **⚠️ NOTE (2026-08-20, review follow-ups):** the two commits above initially sat unpushed on `main` (ahead 2 of `origin/main`) and are documented now. Review found two follow-ups pending: (1) the `/admin/warehouses` index/store/update routes are registered outside any `EnsureStoreAccess` group (only `auth` + `ResolveStoreContext` apply) — reachable by any logged-in user with no cross-store warehouse/branch guard — fix pending; (2) `app/Http/Controllers/Admin/SupplierController.php` contains a Windows-1252 byte (0x97) where a UTF-8 em-dash is expected, so the file is not strict UTF-8 — fix pending. Both tracked in README “Next steps / Open issues”.

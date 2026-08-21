@@ -10,12 +10,19 @@
 
 <div x-data="warehousePage()" x-init="init()">
     <x-admin.toolbar
-        :sort-options="[['value' => 'name', 'label' => __('messages.sort_by_name')], ['value' => 'code', 'label' => __('messages.sort_by_code')]]"
-        :current-sort="$sort" :current-direction="$direction"
-        :current-per-page="(int) request('per_page', 25)"
-        :search-value="$search" :search-url="route('store.admin.warehouses.index', [...$storeRouteParams])"
-        search-key="search" :result-count="$total" :view-mode="$viewMode"
-        :show-filters="false" :show-import="false" :show-export="false" :show-add="false"
+        :search="$search"
+        :search-placeholder="__('messages.search_warehouse_placeholder')"
+        :sort="$sort"
+        :sort-options="[
+            'name' => __('messages.sort_by_name'),
+            'code' => __('messages.sort_by_code'),
+        ]"
+        :filters="[]"
+        :total-count="$total"
+        :show-view-toggle="true"
+        :show-export-import="false"
+        :view-mode="$viewMode"
+        :show-pagination="false"
     />
 </div>
 

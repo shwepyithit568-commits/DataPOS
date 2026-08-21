@@ -7,7 +7,7 @@
 
 ---
 
-## 📌 လက်ရှိ အခြေအနေ (2026-08-18)
+## 📌 လက်ရှိ အခြေအနေ (2026-08-20)
 
 | အပိုင်း | အခြေအနေ |
 |---|---|
@@ -16,11 +16,19 @@
 | **POS cashier session (2026-08-17)** | ✅ 13 commits — register-lock UX · held-sale expiry (age badge / auto-expiry / per-store window / notice / stats) · shared customer model · retail/wholesale tiered pricing + discount visibility · price override + manager PIN · drag-to-scroll |
 | **Admin sidebar restructure (2026-08-18)** | ✅ 11 groups (alinthit_pos layout) — inventory ops ကို Inventory group ထဲ ရွှေ့ · Reconciliation link ထည့် · Phase 4 module ၃၈ ခု → coming-soon placeholder (single route + whitelist) |
 | **Products Master Data hub (2026-08-18)** | ✅ `/admin/products/master-data` — horizontal scroll tabs (Categories · Brands · Variant Settings) · same partials as the standalone pages (zero drift) · edit/create round-trip က tab ပြန်ရောက် |
-| **Product form Inventory & Purchase (2026-08-18)** | ✅ alinthit_pos ပုံစံ — Initial stock (opening_balance auto-post) · Auto-SKU · Reorder level · Supplier quick-add · Purchase cost · colored section headers |
-| **Test suite** | ✅ **915 passed / 4208 assertions** (`php artisan test`) |
+| **Product form Inventory & Purchase (2026-08-18)** | ✅ alinthit_pos ပုံစံ — Initial stock (opening_balance auto-post) · Auto-SKU · Reorder level · Supplier quick-add · Purchase cost · colored section headers · Sell Online toggle |
+| **Purchasing — suppliers & PO (2026-08-20)** | ✅ Supplier CRUD + import/export · purchase returns · payables (FIFO + per-PO) · aging report · dashboard alerts (commit `369dbf8` — CHANGELOG 08-20) |
+| **Purchasing — warehouses, transfers, buy back (2026-08-20)** | ✅ Warehouses CRUD · stock transfers (create → ship → receive) · buy back (stock restoration) · sidebar placeholders → real links (commit `7312b54` — CHANGELOG 08-20) |
+| **Test suite** | ✅ **994 passed / 4467 assertions** (`php artisan test`, run 2026-08-20) |
 | **DB** | SQLite (`database/database.sqlite`) — migrations အားလုံး run ပြီး |
-| **Git** | main branch · remote `github.com/shwepyithit568-commits/DataPOS.git` · local = origin/main (in sync, 2026-08-17 — cashier session 13 commits push ပြီး, HEAD `ae70fde`) |
+| **Git** | main branch · remote `github.com/shwepyithit568-commits/DataPOS.git` · **⚠️ local = origin/main (ahead 2 — 08-20 purchasing commits afternoon not yet pushed)** |
 | **Deploy** | **မလုပ်ရသေးဘူး — local development သာ** (အောက်က ⚠️ ကြည့်ပါ) |
+
+### Open issues (review 2026-08-20)
+
+1. 🛑 **`/admin/warehouses` routes missing `EnsureStoreAccess`** — index/store/update registered outside any role group (only `auth` + `ResolveStoreContext`); reachable by any logged-in user + no cross-store warehouse/branch guard on update/destroy. **Fix pending** (TODO: add `->middleware(EnsureStoreAccess::class . ':store_manager,staff')` + store-scope check in `WarehouseController`).
+2. 🧹 **`app/Http/Controllers/Admin/SupplierController.php` not strict UTF-8** — a Windows-1252 `0x97` byte where an em-dash belongs (line ~"Supplier aging report …"). Harmless to PHP but breaks strict-UTF-8 tooling. Fix pending.
+3. ⚠️ **`SHOW_QUICK_LOGIN=true`** in local `.env` — dev/test only (hard-blocked in production/staging). Remember to clear it on the production `.env` at deploy.
 
 ### POS Module မှာ ပါပြီးသား အရာတွေ (`/pos` routes — web.php:567+)
 
@@ -32,8 +40,9 @@
   opening stock (manager review) · inventory adjustments (manager approval)
 - **Phase 2.5 part 1:** pilot data-import hub (`/admin/pilot-import`) — dry-run preview → confirm → history + error reports
 - **Cashier session (2026-08-17):** register-lock occupied state + shift details · held-sale age badge + auto-expiry (per-store) + one-time expiry notice + home expiry stats · shared ecommerce/POS customers (dedup, retail/wholesale) · tiered pricing + logged-in tier resolution + discount visibility · per-line price override (receipt struck original) · manager PIN for deep overrides · mouse drag-to-scroll
+- **Purchasing (2026-08-20):** supplier CRUD + import/export · purchase returns · supplier payables (FIFO + per-PO) · aging report · dashboard overdue alerts · warehouses CRUD · stock transfers (create → ship → receive) · buy back (stock restoration)
 
-အသေးစိတ်: `CHANGELOG.md` (items 257–271) · စည်းမျဉ်း: `DataPOS_Mobile_Offline_POS_Project_Source_of_Truth.md`
+အသေးစိတ်: `CHANGELOG.md` (items 257–271 + 08-20 purchasing) · စည်းမျဉ်း: `DataPOS_Mobile_Offline_POS_Project_Source_of_Truth.md`
 
 ---
 
@@ -108,12 +117,15 @@ git history ထဲ ရောက်နေပါသည် — ဖိုင်က�
 
 - ✅ **2026-08-17 — POS cashier session ပြီးပြီ** (13 commits): register-lock UX → held-sale expiry system → shared customer model → tiered pricing → price override + manager PIN → drag-to-scroll (အသေးစိတ်: အပေါ်က "လက်ရှိ အခြေအနေ" + `CHANGELOG.md`)
 - ✅ **2026-08-18 — Admin sidebar ကို အဟောင်း project (alinthit_pos) အုပ်စုဖွဲ့မှုနဲ့ ပြန်တည်ဆောက်ပြီး** (11 groups): inventory ops တွေ Inventory & Products group ထဲ ရွှေ့ · Reconciliation link ထည့် · Phase 4 module ၃၈ ခုကို coming-soon placeholder (single route + whitelist) နဲ့ ပြထား — နောက်မှ တစ်ခုချင်းစီ ဆက်ဆောက်ရမယ် (အသေးစိတ်: `CHANGELOG.md`)
+- ✅ **2026-08-20 — Purchasing batch ပြီးပြီ**: supplier CRUD/import/export · purchase returns · payables (FIFO + per-PO) · aging report · dashboard alerts · warehouses CRUD · stock transfers · buy back (အသေးစိတ်: အပေါ်က "လက်ရှိ အခြေအနေ" + `CHANGELOG.md` 08-20)
+
+0. 🛑 **Review follow-ups (2026-08-20)** — (a) `/admin/warehouses` routes missing `EnsureStoreAccess`; (b) `SupplierController.php` not strict UTF-8; (c) remember to clear `SHOW_QUICK_LOGIN` from the production `.env`. (အပေါ်က Open issues ကြည့်ပါ)
 
 1. **Phase 2.5 ကျန်တဲ့အပိုင်း** — opening-stock reconciliation · debt opening balances ·
    AppSheet/Google Sheets parallel validation · real cashier workflow · backup & restore test ·
    performance + store-isolation test · stabilization period (အသေးစိတ်: `docs/pos-resale-plan/ROADMAP.md` §2.5)
 2. **Phase 3 — Cloud PWA Offline Queue** (offline sale → sync → idempotent, `/pos/sw.js` သီးခြား)
-3. **Phase 4 — Operations Modules** (purchasing/PO, stock transfers, service jobs, expenses, advanced reports)
+3. **Phase 4 — Operations Modules** (service jobs, expenses, advanced reports, stock counts)
 4. **Phase 5 — Local LAN/SQLite Edition + Resale Readiness** (license, provisioning, docs)
 5. **Owner Open Decisions** — `Source_of_Truth_MM.md` §38 (negative stock policy, return limits, printer model, tax, ...)
 

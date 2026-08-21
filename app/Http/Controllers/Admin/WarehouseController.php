@@ -9,6 +9,7 @@ use App\POS\Models\Warehouse;
 use App\Services\StoreContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class WarehouseController extends Controller
@@ -23,7 +24,12 @@ class WarehouseController extends Controller
 
         $branches = Branch::where('store_id', $store->id)->orderBy('name')->get();
 
-        return view('admin.warehouses.index', compact('store', 'warehouses', 'branches'));
+        // The _content partial builds store-scoped route URLs from
+        // $storeRouteParams (['store_slug' => ...]); pass it explicitly so the
+        // partial never depends on layout-scope variables leaking in.
+        $storeRouteParams = ['store_slug' => $store->slug];
+
+        return view('admin.warehouses.index', compact('store', 'warehouses', 'branches', 'storeRouteParams'));
     }
 
     public function store(Request $request, StoreContext $context): RedirectResponse
@@ -33,7 +39,7 @@ class WarehouseController extends Controller
         $validated = $request->validate([
             'name'      => ['required', 'string', 'max:100'],
             'code'      => ['nullable', 'string', 'max:32'],
-            'branch_id' => ['nullable', 'exists:branches,id'],
+            'branch_id' => ['nullable', Rule::exists('branches', 'id')->where('store_id', $store->id)],
         ]);
 
         Warehouse::create([
@@ -49,10 +55,16 @@ class WarehouseController extends Controller
 
     public function update(StoreContext $context, string $store_slug, Request $request, Warehouse $warehouse): RedirectResponse
     {
+        $store = $context->getStore();
+
+        if ($warehouse->store_id !== $store->id) {
+            abort(403, 'Unauthorized warehouse access.');
+        }
+
         $validated = $request->validate([
             'name'      => ['required', 'string', 'max:100'],
             'code'      => ['nullable', 'string', 'max:32'],
-            'branch_id' => ['nullable', 'exists:branches,id'],
+            'branch_id' => ['nullable', Rule::exists('branches', 'id')->where('store_id', $store->id)],
             'is_active' => ['boolean'],
         ]);
 
@@ -63,6 +75,12 @@ class WarehouseController extends Controller
 
     public function destroy(StoreContext $context, string $store_slug, Warehouse $warehouse): RedirectResponse
     {
+        $store = $context->getStore();
+
+        if ($warehouse->store_id !== $store->id) {
+            abort(403, 'Unauthorized warehouse access.');
+        }
+
         if ($warehouse->is_default) {
             return back()->withErrors(['warehouse' => __('messages.warehouse_delete_default')]);
         }

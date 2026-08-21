@@ -4,7 +4,7 @@
 >
 > **ဖတ်ရမယ့်သူ:** Project Owner (ဆရာကြီး) — နားလည်ပြီး ဆွေးနွေးဖို့အတွက်
 >
-> **ရက်စွဲ:** 2026-08-10 (Revision 2) · **2026-08-13:** `03-sales-market-model.md` ကို ဒီဖိုင်ထဲ ပေါင်းထည့်ပြီးပါပြီ (အောက်က "Sales & Market Model" section) · **2026-08-17:** POS cashier session (13 commits) အခြေအနေ ထည့်သွင်းပြီး (§1.2) · **2026-08-17 (pm):** Phase 2.5 cutover features (opening-stock reconciliation + debt opening balances import) — ဒီနေ့ 17 commits (§1.2)
+> **ရက်စွဲ:** 2026-08-10 (Revision 2) · **2026-08-13:** `03-sales-market-model.md` ကို ဒီဖိုင်ထဲ ပေါင်းထည့်ပြီးပါပြီ (အောက်က "Sales & Market Model" section) · **2026-08-17:** POS cashier session (13 commits) အခြေအနေ ထည့်သွင်းပြီး (§1.2) · **2026-08-17 (pm):** Phase 2.5 cutover features (opening-stock reconciliation + debt opening balances import) — ဒီနေ့ 17 commits (§1.2) · **2026-08-20:** purchasing batch (suppliers/payables/aging + warehouses/transfers/buy-back) (§1.2)
 
 ---
 
@@ -195,9 +195,9 @@
 | Frontend | Blade + **Alpine.js** + **Tailwind CSS v4** (CSS-based `@theme`) |
 | Assets | Vite — `app.css`/`app.js` (storefront) + `admin.css`/`app-admin.js` (admin) သီးခြား |
 | Deploy | `deploy-datapos.sh` — **⚠️ အရင် project ရဲ့ live ကို သွားတဲ့ script — DataPOS အတွက် မသုံးရသေး** (README ကြည့်ပါ) |
-| Testing | **884 tests pass / 4049 assertions** — PHPUnit, SQLite local (2026-08-17 run ပြီး) |
+| Testing | **994 tests pass / 4467 assertions** — PHPUnit, SQLite local (2026-08-20 run) |
 | Dev server | `php artisan serve --port=8501` (README/.env အတိုင်း) |
-| Git | main · remote `github.com/shwepyithit568-commits/DataPOS.git` · **local = origin/main (in sync, 2026-08-17 — ဒီနေ့ 17 commits push ပြီး, HEAD `7b354c2`)** |
+| Git | main · remote `github.com/shwepyithit568-commits/DataPOS.git` · **⚠️ local = origin/main (ahead 2 — 08-20 purchasing commits not yet pushed)** |
 
 ---
 
@@ -248,6 +248,17 @@
 - **Manager PIN approval** — per-store threshold (%) ထက် ပိုလျှော့တဲ့ override ကို manager/owner PIN နဲ့သာ (`users.pos_pin`, hashed) — approver က `pos_sale_items.approved_by` အထိ audit
 - **Mouse drag-to-scroll** — horizontal chip rows (module/category/brand) ကို desktop မှာ မောက်နဲ့ ဆွဲလို့ရ (chip click တွေ မကျိုး)
 
+### Purchasing batch (2026-08-20) — commits `369dbf8` + `7312b54`
+
+- **Suppliers full CRUD** (`/admin/suppliers`) + CSV/Excel import/export (dry-run preview, duplicates, template).
+- **Supplier payables** (`/pos/purchases/payables`) — FIFO general payments + per-PO payments; **aging report** (30/60/90+ day buckets); dashboard overdue alerts + quick-pay.
+- **Purchase returns** — reverse a received PO, adjust stock + supplier credit.
+- **Warehouses CRUD** (`/admin/warehouses`) — branch assignment, default-warehouse delete guard.
+- **Stock transfers** (`/pos/transfers`) — multi-item create → ship → receive via `InventoryService` ledger movements.
+- **Buy back** (`/pos/buy-back`) — customer returns posting stock restoration through the ledger.
+- Replaced all remaining "Coming Soon" placeholders in the Purchasing & Transfers sidebar group with real links.
+- ⚠️ Review follow-ups on this batch: warehouse routes missing `EnsureStoreAccess`; `SupplierController.php` not strict UTF-8 — see README Open issues.
+
 ### Phase 2.5 cutover — reconciliation + debt import (2026-08-17 pm, commits `8c504ba` + `7b354c2`)
 
 - **Opening-stock reconciliation** — `/store/{slug}/pos/reconciliation`: imported (approved OSR) vs ledger opening position per product → diff report (summary cards + "ကွာခြားချက်များသာ" filter, staff view / manager approve) → manager approves → `adjustment_in/out` corrections converge diff → 0 · `REC-YYYYMMDD-####` + per-line snapshot (`inventory_reconciliation_items`) + audit · insufficient-stock rollback
@@ -264,8 +275,9 @@
 | AppSheet/Google Sheets parallel validation + real cashier usage + stabilization | Phase 2.5 | pilot ကာလ အလုပ် |
 | Backup & restore test (versioned workflow) | Phase 2.5 | runbook (`docs/ops/pilot-recovery-cutover-runbook.md`) — Drill #1 (SQLite) ✅ · §2.5A local MySQL ✅ · Drill #2 localhost rehearsal ✅ (2026-08-13, runbook §2.6) · **production drill ကျန် — deploy ပြီးမှ** |
 | `/pos` PWA offline queue — IndexedDB, idempotent sync API, device registration | Phase 3 | storefront SW နဲ့ မရော |
-| Full purchasing + purchase returns + supplier payables | Phase 4 | MVP က receive-without-PO |
-| Stock transfers + stock counts · Service jobs (phone repair) · Expenses + finance ledger · Advanced reports · Accounting period closing | Phase 4 | |
+| ~~Supplier management + purchase returns + supplier payables + aging~~ | Phase 4 | ✅ **2026-08-20 ပြီး** (`369dbf8`) — suppliers CRUD/import-export · purchase returns · payables (FIFO + per-PO) · aging — §1.2 |
+| ~~Warehouses + stock transfers + buy back~~ | Phase 4 | ✅ **2026-08-20 ပြီး** (`7312b54`) — warehouses CRUD · transfers (create→ship→receive) · buy back — §1.2 |
+| Stock counts · Service jobs (phone repair) · Expenses + finance ledger · Advanced reports · Accounting period closing | Phase 4 | |
 | Local LAN/SQLite edition + license + provisioning + resale docs | Phase 5 | |
 | Industry packs (pharmacy/gold/grocery/restaurant...) | Phase 6 | demand ရှိမှသာ |
 | UOM / barcode (piece + decimal qty + HID scan) | Phase 2 (မပါတော့) / ops | barcode search ရှိပြီး (item 262) — UOM foundation မရှိသေး |
@@ -307,7 +319,7 @@ Final Burmese/English/Chinese terminology
 2. **Ledger/sales/shifts/closings immutable** — မှားရင် reversal/correction document နဲ့သာ ပြင်ရမယ် (SoT §15.1)
 3. **Service worker scope** — POS အတွက် `/pos/sw.js` သီးခြား — storefront SW (web push) မထိရ (SoT §4.3)
 4. **ဖိုင်နာမည်တွေ** — `CHANGELOG.md` က history (items 1–271) · အသစ်တွေ → `CHANGELOG.md`
-5. **GitHub က local နဲ့ in sync (2026-08-17)** — ဒီနေ့ commit 17 ခု အကုန် origin/main ကို push ပြီး (cashier session + Phase 2.5 cutover features) · working tree clean · HEAD = `7b354c2`
+5. **GitHub က local နဲ့ in sync (2026-08-17)** — 08-17 commit 17 ခု အကုန် origin/main ကို push ပြီး (cashier session + Phase 2.5 cutover features) · **⚠️ 08-20 purchasing commits (`369dbf8`, `7312b54`) က main ပေါ်မှာရှိပြီး origin/main ထက် ahead 2 — push မလုပ်ရသေးပါ** · working tree clean · local HEAD = `7312b54`
 6. **Port** — ဒီ project = **8501** (အရင် docs ရဲ့ 8500/8577 နဲ့ မရော)
 7. **Deploy-datapos.sh က DataPOS live ကို မသွားရသေးဘူး** — pilot/resale အဆင့် ရောက်မှ deploy script အသစ် ရေးရမယ်
 

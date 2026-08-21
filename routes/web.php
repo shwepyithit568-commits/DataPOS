@@ -557,10 +557,16 @@ Route::prefix('store/{store_slug}')
             ->name('store.admin.suppliers.aging')
             ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
-        // Warehouses
-        Route::get('/admin/warehouses', [WarehouseController::class, 'index'])->name('store.admin.warehouses.index');
-        Route::post('/admin/warehouses', [WarehouseController::class, 'store'])->name('store.admin.warehouses.store');
-        Route::put('/admin/warehouses/{warehouse}', [WarehouseController::class, 'update'])->name('store.admin.warehouses.update');
+        // Warehouses (store-scoped, manager/staff only)
+        Route::get('/admin/warehouses', [WarehouseController::class, 'index'])
+            ->name('store.admin.warehouses.index')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/warehouses', [WarehouseController::class, 'store'])
+            ->name('store.admin.warehouses.store')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::put('/admin/warehouses/{warehouse}', [WarehouseController::class, 'update'])
+            ->name('store.admin.warehouses.update')
+            ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::delete('/admin/warehouses/{warehouse}', [WarehouseController::class, 'destroy'])
             ->name('store.admin.warehouses.destroy')
             ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -736,9 +742,9 @@ Route::prefix('store/{store_slug}')
             Route::post('/transfers/{transfer}/cancel', [\App\Http\Controllers\POS\TransferController::class, 'cancel'])->name('pos.transfers.cancel');
 
             // ── Buy Back (Customer Returns)
-            Route::get('/buy-back', [\App\Http\Controllers\POS\BuyBackController::class, 'index'])->name('pos.buyback.index');
-            Route::get('/buy-back/create', [\App\Http\Controllers\POS\BuyBackController::class, 'create'])->name('pos.buyback.create');
-            Route::post('/buy-back', [\App\Http\Controllers\POS\BuyBackController::class, 'store'])->name('pos.buyback.store');
+            Route::get('/buy-back', [\App\Http\Controllers\POS\BuyBackController::class, 'index'])->name('pos.buybacks.index');
+            Route::get('/buy-back/create', [\App\Http\Controllers\POS\BuyBackController::class, 'create'])->name('pos.buybacks.create');
+            Route::post('/buy-back', [\App\Http\Controllers\POS\BuyBackController::class, 'store'])->name('pos.buybacks.store');
             Route::get('/buy-back/{buyback}', [\App\Http\Controllers\POS\BuyBackController::class, 'show'])->name('pos.buybacks.show');
             Route::post('/buy-back/{buyback}/complete', [\App\Http\Controllers\POS\BuyBackController::class, 'complete'])->name('pos.buybacks.complete');
             Route::post('/buy-back/{buyback}/cancel', [\App\Http\Controllers\POS\BuyBackController::class, 'cancel'])->name('pos.buybacks.cancel');

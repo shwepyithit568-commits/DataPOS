@@ -9,6 +9,7 @@ use App\Services\SupplierImportService;
 use App\Services\StoreContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -23,7 +24,18 @@ class SupplierController extends Controller
     {
         $store = $context->getStore();
 
-        $query = Supplier::where('store_id', $store->id);
+        $query = Supplier::where('store_id', $store->id)
+            ->withCount('purchaseOrders');
+
+        // Summary stats (whole store, unaffected by current search/filter)
+        $stats = [
+            'total' => Supplier::where('store_id', $store->id)->count(),
+            'owing' => Supplier::where('store_id', $store->id)
+                ->whereRaw('(total_credit - total_repaid) > 0')->count(),
+            'owing_amount' => Supplier::where('store_id', $store->id)
+                ->whereRaw('(total_credit - total_repaid) > 0')
+                ->sum(DB::raw('total_credit - total_repaid')),
+        ];
 
         // Search: name, phone, contact_person, email
         if ($request->filled('search')) {
@@ -58,7 +70,7 @@ class SupplierController extends Controller
         $suppliers = $query->paginate(25)->withQueryString();
         $totalCount = $suppliers->total();
 
-        return view('admin.suppliers.index', compact('store', 'suppliers', 'totalCount'));
+        return view('admin.suppliers.index', compact('store', 'suppliers', 'totalCount', 'stats'));
     }
 
     public function store(Request $request, StoreContext $context): RedirectResponse
@@ -370,7 +382,7 @@ class SupplierController extends Controller
     }
 
     /**
-     * Supplier aging report — shows outstanding debt broken into 30/60/90+ day buckets.
+     * Supplier aging report â€” shows outstanding debt broken into 30/60/90+ day buckets.
      */
     public function agingReport(StoreContext $context): \Illuminate\View\View
     {

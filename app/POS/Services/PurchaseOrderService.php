@@ -217,6 +217,10 @@ class PurchaseOrderService
      * transaction. On receive, the PO's outstanding balance is added to the
      * supplier's total_credit (credit increases when goods arrive on credit).
      *
+     * Also refreshes each Product.purchase_cost using a weighted-average of
+     * the existing on-hand stock value plus the received items value, so the
+     * "default cost" shown in the PO builder / costing stays up-to-date.
+     *
      * @return array{po: PurchaseOrder, receipt: GoodsReceipt}
      */
     public function receive(PurchaseOrder $po, User $actor): array
@@ -232,6 +236,19 @@ class PurchaseOrderService
             throw new InventoryException("PO {$po->po_number} has no items to receive.");
         }
 
+        // Snapshot on-hand inventory qty BEFORE the receipt posts stock,
+        // so we can compute weighted-average purchase_cost per product.
+        $balanceBefore = [];
+        foreach ($items as $item) {
+            $key = (int) $item->product_id;
+            if (! isset($balanceBefore[$key])) {
+                $qty = \App\POS\Models\InventoryBalance::where('store_id', $store->id)
+                    ->where('product_id', $key)
+                    ->sum('quantity');
+                $balanceBefore[$key] = bcadd((string) $qty, '0', 3);
+            }
+        }
+
         // Build the items array for the GoodsReceiptService.
         $receiptItems = $items->map(fn ($item) => [
             'product_id' => $item->product_id,
@@ -241,7 +258,7 @@ class PurchaseOrderService
         ])->toArray();
 
         // Atomically: update PO status + create receipt (receipt posts ledger).
-        $receipt = DB::transaction(function () use ($po, $store, $receiptItems, $actor) {
+        $receipt = DB::transaction(function () use ($po, $store, $receiptItems, $items, $balanceBefore, $actor) {
             $receipt = $this->receipts->create(
                 $store,
                 $receiptItems,
@@ -258,6 +275,46 @@ class PurchaseOrderService
             // Outstanding balance becomes supplier debt on receipt.
             if ($po->supplier_id && bccomp((string) $po->remaining_balance, '0', 2) > 0) {
                 $po->supplier->increment('total_credit', $po->remaining_balance);
+            }
+
+            // Refresh product.purchase_cost using weighted-average costing.
+            // Formula:
+            //   new_cost = (old_cost * old_qty + received_cost * received_qty)
+            //              / (old_qty + received_qty)
+            // Aggregate by product (variants contribute to their parent's pool).
+            $pool = [];
+            foreach ($items as $item) {
+                $pid = (int) $item->product_id;
+                if (! isset($pool[$pid])) {
+                    $pool[$pid] = ['received_qty' => '0', 'received_value' => '0'];
+                }
+                $pool[$pid]['received_qty'] = bcadd($pool[$pid]['received_qty'], (string) $item->quantity, 3);
+                $pool[$pid]['received_value'] = bcadd(
+                    $pool[$pid]['received_value'],
+                    bcmul((string) $item->quantity, (string) $item->unit_cost, 2),
+                    2
+                );
+            }
+
+            foreach ($pool as $pid => $agg) {
+                $product = Product::find($pid);
+                if (! $product || (int) $product->store_id !== (int) $store->id) {
+                    continue;
+                }
+                $oldQty = $balanceBefore[$pid] ?? '0';
+                $oldCost = (string) ($product->purchase_cost ?? '0');
+                $oldValue = bcmul($oldQty, $oldCost, 2);
+                $newQty = bcadd($oldQty, $agg['received_qty'], 3);
+
+                if (bccomp($newQty, '0', 3) > 0) {
+                    $newValue = bcadd($oldValue, $agg['received_value'], 2);
+                    $newCost = bcdiv($newValue, $newQty, 4);
+                    $product->update(['purchase_cost' => $newCost]);
+                } else {
+                    // Nothing on hand before + nothing received — just take the PO unit cost.
+                    $unitCost = bcdiv($agg['received_value'], $agg['received_qty'] ?: '1', 4);
+                    $product->update(['purchase_cost' => $unitCost]);
+                }
             }
 
             AuditLog::write(
