@@ -1020,6 +1020,8 @@ return [
 
     // Planned modules (placeholder labels — sidebar roadmap map)
     'sidebar_returns' => 'Return Orders',
+    'sidebar_sales_returns' => 'Sales Returns',
+    'sidebar_purchase_returns' => 'Purchase Returns',
     'sidebar_eload' => 'E-Load & Services',
     'sidebar_stock_count' => 'Stock Count',
     'sidebar_stock_ledger' => 'Stock Movement Ledger',
@@ -1337,6 +1339,19 @@ return [
     'po_sort_oldest' => 'Oldest first',
     'po_sort_highest' => 'Highest value',
     'po_sort_lowest' => 'Lowest value',
+    'po_return_reversed' => 'Purchase return reversed',
+    'po_return_confirm_reverse' => 'Are you sure you want to reverse this return? Stock will be restored and supplier credit adjusted.',
+    'po_return_reverse_btn' => 'Reverse',
+    'po_return_active' => 'Active',
+    'po_return_status_reversed' => 'Reversed',
+    'po_return_status_active' => 'Active',
+    'po_return_export' => 'Export CSV',
+    'po_return_filter_supplier' => 'All Suppliers',
+    'po_return_filter_date_from' => 'From',
+    'po_return_filter_date_to' => 'To',
+    'po_return_total_returns' => 'Returns',
+    'po_return_total_value' => 'Total Value',
+    'po_return_total_qty' => 'Total Qty',
 
     'supplier_export' => 'Export CSV',
     'supplier_import' => 'Import',

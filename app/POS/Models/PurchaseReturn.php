@@ -27,13 +27,26 @@ class PurchaseReturn extends Model
         'reason',
         'created_by',
         'returned_at',
+        'reversed_at',
+        'reversed_by',
     ];
 
     protected $casts = [
         'total_quantity' => 'decimal:3',
         'total_cost' => 'decimal:2',
         'returned_at' => 'datetime',
+        'reversed_at' => 'datetime',
     ];
+
+    public function isReversed(): bool
+    {
+        return $this->reversed_at !== null;
+    }
+
+    public function reversedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reversed_by');
+    }
 
     public function store(): BelongsTo
     {

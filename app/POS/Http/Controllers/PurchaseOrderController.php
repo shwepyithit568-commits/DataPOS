@@ -279,7 +279,106 @@ class PurchaseOrderController extends Controller
         $returns = $query->paginate(25)->withQueryString();
         $totalCount = $returns->total();
 
-        return view('pos.purchases.returns_index', compact('store', 'returns', 'totalCount'));
+        // Summary stats for the current filter.
+        $summaryQuery = \App\POS\Models\PurchaseReturn::where('store_id', $store->id);
+        if ($request->filled('search')) {
+            $search = trim((string) $request->search);
+            $summaryQuery->where(function ($q) use ($search) {
+                $q->where('return_number', 'like', '%' . $search . '%')
+                  ->orWhereHas('purchaseOrder', fn ($q2) => $q2->where('po_number', 'like', '%' . $search . '%'))
+                  ->orWhereHas('supplier', fn ($q2) => $q2->where('name', 'like', '%' . $search . '%'));
+            });
+        }
+        if ($request->filled('date_from')) {
+            $summaryQuery->where('returned_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $summaryQuery->where('returned_at', '<=', $request->date_to . ' 23:59:59');
+        }
+        if ($request->filled('supplier_id')) {
+            $summaryQuery->where('supplier_id', $request->supplier_id);
+        }
+        $summaryQuery->whereNull('reversed_at');
+
+        $summary = $summaryQuery->selectRaw('COUNT(*) as count, COALESCE(SUM(total_cost), 0) as total_cost, COALESCE(SUM(total_quantity), 0) as total_qty')->first();
+        $suppliers = \App\Models\Supplier::where('store_id', $store->id)->orderBy('name')->get();
+
+        return view('pos.purchases.returns_index', compact('store', 'returns', 'totalCount', 'summary', 'suppliers'));
+    }
+
+    /** Reverse a purchase return (undo — re-adds stock + restores supplier credit). */
+    public function reverseReturn(Request $request, StoreContext $context, string $store_slug, int $returnId): RedirectResponse
+    {
+        $store = $context->getStore();
+        $return = \App\POS\Models\PurchaseReturn::where('store_id', $store->id)->find($returnId);
+
+        if (! $return) {
+            abort(404);
+        }
+
+        try {
+            $this->purchaseOrders->reversePurchaseReturn($return, $request->user());
+        } catch (InventoryException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', __('messages.po_return_reversed') . ' — ' . $return->return_number);
+    }
+
+    /** Export purchase returns as CSV. */
+    public function exportReturns(Request $request, StoreContext $context)
+    {
+        $store = $context->getStore();
+
+        $query = \App\POS\Models\PurchaseReturn::where('store_id', $store->id)
+            ->with(['purchaseOrder', 'supplier', 'createdBy']);
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('return_number', 'like', '%' . $search . '%')
+                  ->orWhereHas('purchaseOrder', fn ($q2) => $q2->where('po_number', 'like', '%' . $search . '%'))
+                  ->orWhereHas('supplier', fn ($q2) => $q2->where('name', 'like', '%' . $search . '%'));
+            });
+        }
+        if ($request->filled('date_from')) {
+            $query->where('returned_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->where('returned_at', '<=', $request->date_to . ' 23:59:59');
+        }
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->supplier_id);
+        }
+        $query->latest();
+
+        $returns = $query->get();
+
+        $csv = fopen('php://temp', 'r+');
+        fputcsv($csv, ['Return #', 'PO Number', 'Supplier', 'Qty', 'Cost', 'Reason', 'Date', 'Status']);
+
+        foreach ($returns as $return) {
+            fputcsv($csv, [
+                $return->return_number,
+                $return->purchaseOrder?->po_number ?? '-',
+                $return->supplier?->name ?? '-',
+                number_format((float) $return->total_quantity, 3),
+                (float) $return->total_cost,
+                $return->reason ?? '',
+                $return->returned_at?->format('Y-m-d H:i') ?? '',
+                $return->isReversed() ? 'Reversed' : 'Active',
+            ]);
+        }
+
+        rewind($csv);
+        $content = stream_get_contents($csv);
+        fclose($csv);
+
+        $filename = 'purchase_returns_' . now()->format('Ymd_His') . '.csv';
+
+        return response($content)
+            ->header('Content-Type', 'text/csv; charset=UTF-8')
+            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
     }
 
         /** Apply payment to a specific PO. */

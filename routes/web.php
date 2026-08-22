@@ -641,6 +641,10 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/wholesale/applications', [WholesaleAdminController::class, 'index'])->name('store.admin.wholesale.applications.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::patch('/admin/wholesale/applications/{application}', [WholesaleAdminController::class, 'updateStatus'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
+        // Admin Customer Directory
+        Route::get('/admin/customers', [\App\Http\Controllers\Admin\CustomerDirectoryController::class, 'index'])->name('store.admin.customers.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/customers/{customer}', [\App\Http\Controllers\Admin\CustomerDirectoryController::class, 'show'])->name('store.admin.customers.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
         // Admin Glass Finder Management
         Route::get('/admin/glass-finder', [GlassFinderAdminController::class, 'index'])->name('store.admin.glass-finder.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/glass-finder', [GlassFinderAdminController::class, 'store'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -726,6 +730,8 @@ Route::prefix('store/{store_slug}')
             Route::get('/purchases/create', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'create'])->name('pos.purchases.create');
             Route::post('/purchases', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'store'])->name('pos.purchases.store');
             Route::get('/purchases/returns', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'returnsIndex'])->name('pos.purchases.returns');
+            Route::post('/purchases/returns/{returnId}/reverse', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'reverseReturn'])->name('pos.purchases.returns.reverse');
+            Route::get('/purchases/returns/export', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'exportReturns'])->name('pos.purchases.returns.export');
             Route::get('/purchases/{purchaseOrder}', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'show'])->name('pos.purchases.show');
             Route::post('/purchases/{purchaseOrder}/order', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'order'])->name('pos.purchases.order');
             Route::post('/purchases/{purchaseOrder}/receive', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('pos.purchases.receive');

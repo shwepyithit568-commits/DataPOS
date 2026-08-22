@@ -569,6 +569,119 @@ class PurchaseOrderService
         ];
     }
 
+    /**
+     * Reverse a purchase return — re-adds stock, restores supplier credit,
+     * and reverts the PO totals.
+     *
+     * Uses InventoryService::reverseMovement() to create reversal ledger entries
+     * for each movement posted by the original return.
+     */
+    public function reversePurchaseReturn(PurchaseReturn $return, User $actor): PurchaseReturn
+    {
+        if ($return->isReversed()) {
+            throw new InventoryException("Return {$return->return_number} has already been reversed.");
+        }
+
+        $po = $return->purchaseOrder;
+        if (! $po) {
+            throw new InventoryException("Return {$return->return_number} has no associated purchase order.");
+        }
+
+        $store = Store::findOrFail($return->store_id);
+
+        // Find all inventory movements created by this return.
+        $movements = \App\POS\Models\InventoryMovement::query()
+            ->where('store_id', $store->id)
+            ->where('source_type', 'purchase_return')
+            ->where('source_id', $return->id)
+            ->whereNull('reversal_of_id')
+            ->get();
+
+        if ($movements->isEmpty()) {
+            throw new InventoryException("Return {$return->return_number} has no inventory movements to reverse.");
+        }
+
+        $returnCost = (string) $return->total_cost;
+        $returnQty = (string) $return->total_quantity;
+
+        DB::transaction(function () use ($return, $po, $store, $movements, $returnCost, $returnQty, $actor) {
+            // Reverse each inventory movement (stock goes back in).
+            foreach ($movements as $i => $movement) {
+                $this->inventory->reverseMovement($movement, [
+                    'reason' => "Reversal of return {$return->return_number}",
+                    'client_transaction_id' => "pr-rev:{$return->id}:{$i}",
+                    'posted_by' => $actor->id,
+                ]);
+            }
+
+            // Restore PO totals (reverse what the return subtracted).
+            $newTotalCost = bcadd((string) $po->total_cost, $returnCost, 2);
+            $newTotalQty = bcadd((string) $po->total_quantity, $returnQty, 3);
+
+            // Recalculate payment after reversal.
+            $newPaidAmount = min((string) $po->paid_amount, $newTotalCost);
+            $newRemaining = bcsub($newTotalCost, $newPaidAmount, 2);
+
+            $newPaymentStatus = 'unpaid';
+            if (bccomp($newRemaining, '0', 2) <= 0) {
+                $newPaymentStatus = 'paid';
+            } elseif (bccomp($newPaidAmount, '0', 2) > 0) {
+                $newPaymentStatus = 'partial';
+            }
+
+            // Restore PO status if it was changed to 'returned' by the return.
+            $newStatus = $po->status;
+            if ($po->status === PurchaseOrder::STATUS_RETURNED && bccomp($newTotalQty, '0', 3) > 0) {
+                $newStatus = 'received';
+            }
+
+            $po->update([
+                'total_cost' => $newTotalCost,
+                'total_quantity' => $newTotalQty,
+                'paid_amount' => $newPaidAmount,
+                'remaining_balance' => $newRemaining,
+                'payment_status' => $newPaymentStatus,
+                'status' => $newStatus,
+            ]);
+
+            // Restore supplier credit.
+            if ($po->supplier_id) {
+                $po->supplier->increment('total_credit', $returnCost);
+
+                // Recalculate repaid (min of paid_amount and total_credit).
+                $supplier = $po->supplier->fresh();
+                $newRepaid = min((string) $supplier->total_repaid, (string) $supplier->total_credit);
+                if (bccomp($newRepaid, '0', 2) < 0) {
+                    $newRepaid = '0';
+                }
+                $po->supplier->update(['total_repaid' => $newRepaid]);
+            }
+
+            // Mark the return as reversed.
+            $return->update([
+                'reversed_at' => now(),
+                'reversed_by' => $actor->id,
+            ]);
+
+            AuditLog::write(
+                storeId: $po->store_id,
+                action: 'purchase_return_reversed',
+                entityType: 'purchase_return',
+                entityId: $return->id,
+                metadata: [
+                    'return_number' => $return->return_number,
+                    'po_number' => $po->po_number,
+                    'total_cost' => $returnCost,
+                    'total_quantity' => $returnQty,
+                    'movements_reversed' => $movements->count(),
+                ],
+                actorId: $actor->id,
+            );
+        });
+
+        return $return->fresh(['items.product', 'createdBy', 'reversedBy']);
+    }
+
     private function nextReturnNumber(Store $store): string
     {
         $prefix = 'PR-' . now()->format('Ymd') . '-';
