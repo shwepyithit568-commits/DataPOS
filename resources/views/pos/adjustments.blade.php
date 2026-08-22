@@ -21,15 +21,15 @@
 
         {{-- Inventory Operations Navigation Tabs --}}
         <div class="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-x-auto scrollbar-none text-xs font-bold">
-            <a href="{{ route('pos.adjustments.index', $storeRouteParams) }}"
+            <a href="{{ route('pos.adjustments.index', ['store_slug' => $store->slug]) }}"
                class="px-4 py-2 rounded-lg transition-all whitespace-nowrap {{ request()->routeIs('pos.adjustments.*') ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white' }}">
                 ⚡ {{ __('messages.adjustment_title') }}
             </a>
-            <a href="{{ route('pos.reconciliation.index', $storeRouteParams) }}"
+            <a href="{{ route('pos.reconciliation.index', ['store_slug' => $store->slug]) }}"
                class="px-4 py-2 rounded-lg transition-all whitespace-nowrap {{ request()->routeIs('pos.reconciliation.*') ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white' }}">
                 ⚖️ {{ __('messages.reconciliation') }}
             </a>
-            <a href="{{ route('pos.opening-stock.index', $storeRouteParams) }}"
+            <a href="{{ route('pos.opening-stock.index', ['store_slug' => $store->slug]) }}"
                class="px-4 py-2 rounded-lg transition-all whitespace-nowrap {{ request()->routeIs('pos.opening-stock.*') ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white' }}">
                 📦 {{ __('messages.opening_stock_title') }}
             </a>

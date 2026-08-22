@@ -263,6 +263,12 @@ Alpine.data('posApp', (opts = {}) => ({
         await this.mutate('/cart/' + line.index, { quantity: String(qty) });
     },
 
+    async setQty(line, qty) {
+        const q = parseFloat(qty);
+        if (isNaN(q) || q <= 0) { await this.removeLine(line); return; }
+        await this.mutate('/cart/' + line.index, { quantity: String(Math.round(q)) });
+    },
+
     async removeLine(line) {
         await this.mutate('/cart/' + line.index, {}, { method: 'DELETE' });
     },

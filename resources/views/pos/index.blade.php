@@ -37,14 +37,20 @@
             'web_order_imported' => __('messages.web_order_imported'),
         ];
 
-        // Module links row — inline SVG (inner markup only) instead of emoji.
+        // Module links row — high-frequency daily operation links with inline SVG icons.
         $moduleLinks = [
             ['pos/closing', 'closing_title', '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4"/>'],
-            ['pos/reports/sales', 'reports_title', '<path d="M18 20V10M12 20V4M6 20v-6"/>'],
-            ['pos/purchases', 'sidebar_purchases', '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>'],
-            ['pos/opening-stock', 'opening_stock_title', '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/>'],
-            ['pos/reconciliation', 'reconciliation_title', '<path d="M12 3v18M5 7h14M7.5 7 5 11a2.5 2.5 0 0 0 5 0L7.5 7Zm9 0L14 11a2.5 2.5 0 0 0 5 0l-2.5-4ZM8.5 21h7"/>'],
+            ['pos/reports/sales', 'reports_sales', '<path d="M18 20V10M12 20V4M6 20v-6"/>'],
+            ['pos/reports/cash', 'reports_cash', '<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>'],
+            ['pos/reports/stock', 'reports_stock', '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>'],
+            ['pos/purchases', 'receiving_subtitle', '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>'],
+            ['pos/purchases/payables', 'balance_due', '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>'],
+            ['admin/products', 'products', '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>'],
+            ['admin/orders', 'manage_orders', '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>'],
             ['pos/adjustments', 'adjustment_title', '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3 2.4-2.4Z"/>'],
+            ['pos/reconciliation', 'reconciliation_title', '<path d="M12 3v18M5 7h14M7.5 7 5 11a2.5 2.5 0 0 0 5 0L7.5 7Zm9 0L14 11a2.5 2.5 0 0 0 5 0l-2.5-4ZM8.5 21h7"/>'],
+            ['pos/opening-stock', 'opening_stock_title', '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/>'],
+            ['admin/dashboard', 'admin_panel', '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>'],
         ];
     @endphp
 
@@ -215,31 +221,63 @@
             </div>
         @endif
 
-        {{-- ── Mobile filter bottom sheet (Category | Brand tabs) ─────────── --}}
-        <div class="lg:hidden" x-data="{ fsOpen: false, fsTab: 'category' }" @pos:open-filters.window="fsOpen = true">
-            <div x-show="fsOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[85] bg-black/40" @click="fsOpen = false"></div>
+        {{-- ── Mobile filter & more bottom sheet (More | Category | Brand tabs) ── --}}
+        <div class="lg:hidden" x-data="{ fsOpen: false, fsTab: 'category' }"
+             @pos:open-filters.window="fsOpen = true; fsTab = 'category'"
+             @pos:open-more.window="fsOpen = true; fsTab = 'more'">
+            <div x-show="fsOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[85] bg-black/40 backdrop-blur-xs" @click="fsOpen = false"></div>
             <div x-show="fsOpen" x-cloak x-transition
-                 class="fixed inset-x-0 bottom-0 z-[90] lg:hidden rounded-t-3xl bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 shadow-2xl max-h-[75vh] flex flex-col pb-[env(safe-area-inset-bottom)]">
+                 class="fixed inset-x-0 bottom-0 z-[90] lg:hidden rounded-t-3xl bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 shadow-2xl max-h-[80vh] flex flex-col pb-[env(safe-area-inset-bottom)]">
                 <div class="flex items-center justify-between gap-3 px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-                    <h3 class="text-sm font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('messages.pos_filters') }}</h3>
+                    <h3 class="text-sm font-black uppercase tracking-wide text-slate-700 dark:text-slate-200"
+                        x-text="fsTab === 'more' ? '{{ __('messages.pos_more') }}' : '{{ __('messages.pos_filters') }}'"></h3>
                     <button type="button" @click="fsOpen = false" aria-label="{{ __('messages.close') }}"
                             class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition">✕</button>
                 </div>
 
-                <div class="grid grid-cols-2 gap-1 px-5 pt-3">
+                {{-- Tabs: More | Categories | Brands --}}
+                <div class="grid grid-cols-3 gap-1 px-5 pt-3">
+                    <button type="button" @click="fsTab = 'more'"
+                            class="min-h-11 rounded-xl px-2 py-2 text-xs font-black transition"
+                            :class="fsTab === 'more' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'">
+                        {{ __('messages.pos_more') }}
+                    </button>
                     <button type="button" @click="fsTab = 'category'"
-                            class="min-h-11 rounded-xl px-3 py-2 text-xs font-black transition"
+                            class="min-h-11 rounded-xl px-2 py-2 text-xs font-black transition"
                             :class="fsTab === 'category' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'">
                         {{ __('messages.categories') }}
+                        <span x-show="categoryId > 0" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 ml-1"></span>
                     </button>
                     <button type="button" @click="fsTab = 'brand'"
-                            class="min-h-11 rounded-xl px-3 py-2 text-xs font-black transition"
+                            class="min-h-11 rounded-xl px-2 py-2 text-xs font-black transition"
                             :class="fsTab === 'brand' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'">
                         {{ __('messages.brands') }}
+                        <span x-show="brandId > 0" class="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 ml-1"></span>
                     </button>
                 </div>
 
                 <div class="px-5 py-3 overflow-y-auto">
+                    {{-- More / Module options --}}
+                    <div x-show="fsTab === 'more'" class="space-y-2">
+                        <button type="button" @click="fsOpen = false; document.getElementById('pos-held-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+                                class="w-full text-left min-h-12 rounded-xl px-4 py-3 text-sm font-bold border transition flex items-center justify-between gap-3 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                            <span class="inline-flex items-center gap-2">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/></svg>
+                                {{ __('messages.held_sales') }}
+                            </span>
+                            <span class="px-2 py-0.5 rounded-full bg-amber-500 text-white text-xs font-black" x-text="cart.held_count"></span>
+                        </button>
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            @foreach ($moduleLinks as [$path, $label, $icon])
+                                <a href="{{ url('/store/' . $store->slug . '/' . $path) }}"
+                                   class="min-h-12 rounded-xl px-3 py-2.5 text-xs font-bold border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 text-slate-700 dark:text-slate-200 flex items-center gap-2 hover:border-blue-400 hover:text-blue-600 transition">
+                                    <svg class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $icon !!}</svg>
+                                    <span class="truncate">{{ __('messages.' . $label) }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+
                     {{-- Category options --}}
                     <div x-show="fsTab === 'category'" class="space-y-1">
                         <button type="button" @click="toggleCategory(0); fsOpen = false"
@@ -389,24 +427,20 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
                     </button>
 
-                    {{-- Mobile/tablet: quick actions in the same scrollable strip --}}
-                    <button type="button" @click="window.dispatchEvent(new CustomEvent('pos:toggle-more'))"
-                            class="lg:hidden shrink-0 min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl border text-xs font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 transition">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-                        {{ __('messages.pos_more') }}
+                    {{-- Mobile/tablet quick action buttons: Filters + Held Sales --}}
+                    <button type="button" @click="window.dispatchEvent(new CustomEvent('pos:open-filters'))"
+                            class="lg:hidden shrink-0 min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl border text-xs font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 transition"
+                            title="{{ __('messages.pos_filters') }}">
+                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3Z"/></svg>
+                        {{ __('messages.pos_filters') }}
+                        <span x-show="categoryId > 0 || brandId > 0" x-cloak
+                              class="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-blue-600 text-white text-[10px] font-black"
+                              x-text="(categoryId > 0 ? 1 : 0) + (brandId > 0 ? 1 : 0)"></span>
                     </button>
                     <button type="button" @click="document.getElementById('pos-held-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
                             class="lg:hidden shrink-0 min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl border text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 transition">
                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/></svg>
                         {{ __('messages.held_sales') }} <span x-text="'(' + cart.held_count + ')'"></span>
-                    </button>
-                    <button type="button" @click="window.dispatchEvent(new CustomEvent('pos:open-filters'))"
-                            class="lg:hidden shrink-0 min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl border text-xs font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 transition">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3Z"/></svg>
-                        {{ __('messages.pos_filters') }}
-                        <span x-show="categoryId > 0 || brandId > 0" x-cloak
-                              class="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-blue-600 text-white text-[10px] font-black"
-                              x-text="(categoryId > 0 ? 1 : 0) + (brandId > 0 ? 1 : 0)"></span>
                     </button>
 
                     {{-- Keyboard shortcuts (desktop only) --}}
@@ -425,43 +459,28 @@
             </div>
         </div>
 
-        {{-- Zone C — mobile: More panel (its own card, only when open) --}}
-        <div class="lg:hidden" x-data="{ moreOpen: false }" @pos:toggle-more.window="moreOpen = !moreOpen">
-            <div x-show="moreOpen" x-cloak x-transition class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm px-4 py-2.5">
-                <div class="flex flex-wrap gap-1.5">
-                    @foreach ($moduleLinks as [$path, $label, $icon])
-                        <a href="{{ url('/store/' . $store->slug . '/' . $path) }}"
-                           class="min-h-11 inline-flex items-center gap-1.5 px-3 rounded-lg text-xs font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition">
-                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $icon !!}</svg>
-                            {{ __('messages.' . $label) }}
-                        </a>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-
-        {{-- Zone B + C — desktop: module links + category/brand chips --}}
+        {{-- ── Desktop only: Navigation & Filters: More (Modules) + Categories + Brands ── --}}
         <div class="hidden lg:block rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
 
-            {{-- Desktop: module links (wraps; F7 targets this held toggle) --}}
-            <x-pos.chip-scroll variant="links" class="hidden lg:flex bg-slate-50/60 dark:bg-slate-800/30">
+            {{-- Row 1: More / Quick Module Links (horizontal chip-scroll) --}}
+            <x-pos.chip-scroll :label="__('messages.pos_more')" variant="chips" class="bg-slate-50/60 dark:bg-slate-800/30">
                 <button type="button" id="pos-held-toggle"
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900 transition"
+                        class="shrink-0 snap-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-800 transition"
                         @click="document.getElementById('pos-held-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })">
                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/></svg>
                     {{ __('messages.held_sales') }} <span x-text="'(' + cart.held_count + ')'"></span>
                 </button>
                 @foreach ($moduleLinks as [$path, $label, $icon])
                     <a href="{{ url('/store/' . $store->slug . '/' . $path) }}"
-                       class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition">
+                       class="shrink-0 snap-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition">
                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $icon !!}</svg>
                         {{ __('messages.' . $label) }}
                     </a>
                 @endforeach
             </x-pos.chip-scroll>
 
-            {{-- Desktop: category chips --}}
-            <x-pos.chip-scroll :label="__('messages.categories')" class="hidden lg:flex">
+            {{-- Row 2: Category chips --}}
+            <x-pos.chip-scroll :label="__('messages.categories')">
                 <button type="button" @click="toggleCategory(0)"
                         class="shrink-0 snap-start px-3.5 py-1.5 rounded-2xl text-[13px] font-black border transition"
                         :class="categoryId === 0 ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25 ring-2 ring-blue-600/30' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
@@ -476,8 +495,8 @@
                 </template>
             </x-pos.chip-scroll>
 
-            {{-- Desktop: brand chips --}}
-            <x-pos.chip-scroll :label="__('messages.brands')" class="hidden lg:flex rounded-b-2xl">
+            {{-- Row 3: Brand chips --}}
+            <x-pos.chip-scroll :label="__('messages.brands')" class="rounded-b-2xl">
                 <button type="button" @click="toggleBrand(0)"
                         class="shrink-0 snap-start px-3 py-1 rounded-2xl text-xs font-bold border transition"
                         :class="brandId === 0 ? 'bg-blue-600 text-white border-blue-600 ring-2 ring-blue-600/30' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
@@ -493,21 +512,71 @@
             </x-pos.chip-scroll>
         </div>
 
+        {{-- ── Mini sales summary strip (always visible, no tab needed) ──── --}}
+        @if ($todaySales->isNotEmpty())
+        @php
+            $todayTotal = $todaySales->sum(fn($s) => (float) $s->total);
+            $todayCount = $todaySales->count();
+            $topMethod = $todaySales->flatMap->payments->groupBy('method')->map->sum('amount')->sortDesc()->keys()->first() ?? 'cash';
+        @endphp
+        <div class="flex items-center gap-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2.5 shadow-sm text-xs font-bold overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <span class="text-slate-400 uppercase tracking-wide shrink-0">{{ now()->format('d M') }}</span>
+            <span class="w-px h-4 bg-slate-200 dark:bg-slate-700 shrink-0"></span>
+            <span class="inline-flex items-center gap-1.5 shrink-0">
+                <svg class="w-3.5 h-3.5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <span class="text-slate-700 dark:text-slate-200">{{ $todayCount }} {{ __('messages.sales') }}</span>
+            </span>
+            <span class="w-px h-4 bg-slate-200 dark:bg-slate-700 shrink-0"></span>
+            <span class="inline-flex items-center gap-1.5 shrink-0">
+                <svg class="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                <span class="text-emerald-700 dark:text-emerald-400 font-extrabold">Ks {{ number_format($todayTotal) }}</span>
+            </span>
+            <span class="w-px h-4 bg-slate-200 dark:bg-slate-700 shrink-0"></span>
+            <span class="inline-flex items-center gap-1.5 shrink-0 text-slate-500 dark:text-slate-400">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 11H7M12 6v12"/></svg>
+                {{ __('messages.payment_' . $topMethod) }}
+            </span>
+        </div>
+        @endif
+
         {{-- ── Two-panel: product grid (left) + cart (right) ─────────────── --}}
         <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px] items-start">
 
             {{-- LEFT: product grid --}}
-            <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-sm min-w-0">
+            <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-sm min-w-0"
+                     x-data="{ gridMode: localStorage.getItem('pos_grid_mode') || 'normal' }"
+                     x-init="$watch('gridMode', v => localStorage.setItem('pos_grid_mode', v))">
                 <div class="flex items-center justify-between gap-3 mb-3">
                     <div>
                         <p class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ __('messages.pos_products') }}</p>
                         <h2 class="text-lg font-black mt-0.5">{{ __('messages.scan_or_search') }}</h2>
                     </div>
-                    <span class="text-xs font-semibold text-slate-400" x-show="gridLoading">…</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-semibold text-slate-400" x-show="gridLoading">…</span>
+                        {{-- Grid / List mode switcher (visible on all screens including mobile) --}}
+                        <div class="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
+                            <button type="button" @click="gridMode = 'grid'"
+                                    :class="gridMode !== 'list' ? 'bg-white dark:bg-slate-700 shadow text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'"
+                                    class="w-8 h-8 rounded-lg transition grid place-items-center"
+                                    aria-label="Grid View"
+                                    title="Grid View (၂ ကော်လံပုံစံ)">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                            </button>
+                            <button type="button" @click="gridMode = 'list'"
+                                    :class="gridMode === 'list' ? 'bg-white dark:bg-slate-700 shadow text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'"
+                                    class="w-8 h-8 rounded-lg transition grid place-items-center"
+                                    aria-label="List View"
+                                    title="List View (စာရင်းပုံစံ)">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                {{-- Product cards (reference: pos_product_card.dart) --}}
-                <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3.5 max-h-[58vh] overflow-y-auto pr-1 pb-1">
+                {{-- Product cards (grid / list mode) --}}
+                {{-- GRID MODE (Mobile: 2 columns, Tablet: 3 columns, Desktop: 4 columns) --}}
+                <div x-show="gridMode !== 'list'"
+                     class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3.5 max-h-[58vh] overflow-y-auto pr-1 pb-1">
                     <template x-for="p in products" :key="p.id">
                         <div class="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition hover:shadow-lg hover:-translate-y-0.5 active:scale-[.98]"
                              :class="parseFloat(p.balance) > 0 ? '' : 'opacity-55'">
@@ -557,6 +626,40 @@
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                    </template>
+                </div>
+
+                {{-- LIST MODE --}}
+                <div x-show="gridMode === 'list'" class="max-h-[58vh] overflow-y-auto space-y-1.5 pr-1 pb-1">
+                    <template x-for="p in products" :key="'list-' + p.id">
+                        <div class="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 hover:border-blue-400 hover:shadow-md transition"
+                             :class="parseFloat(p.balance) > 0 ? '' : 'opacity-50'">
+                            {{-- Thumbnail --}}
+                            <div class="shrink-0 w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-900/70 grid place-items-center overflow-hidden">
+                                <template x-if="p.image">
+                                    <img :src="p.image" alt="" loading="lazy" class="w-full h-full object-contain p-0.5">
+                                </template>
+                                <template x-if="!p.image">
+                                    <svg class="w-5 h-5 text-slate-300 dark:text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                                </template>
+                            </div>
+                            {{-- Name + SKU --}}
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm font-bold truncate" x-text="p.name"></p>
+                                <p class="text-[11px] text-slate-400 font-mono" x-show="p.sku" x-text="p.sku || ''"></p>
+                            </div>
+                            {{-- Stock badge --}}
+                            <span class="shrink-0 px-2 py-0.5 rounded-md text-[10px] font-black text-white"
+                                  :class="parseFloat(p.balance) <= 0 ? 'bg-rose-500' : (parseFloat(p.balance) <= 5 ? 'bg-amber-500' : 'bg-emerald-500')"
+                                  x-text="parseFloat(p.balance) <= 0 ? labels.out_of_stock : '×' + p.balance"></span>
+                            {{-- Price --}}
+                            <p class="shrink-0 text-sm font-extrabold text-blue-600 dark:text-blue-400 tabular-nums" x-text="'Ks ' + Number(p.price).toLocaleString()"></p>
+                            {{-- Add button --}}
+                            <button type="button" @click="addProduct(p)" :disabled="parseFloat(p.balance) <= 0"
+                                    class="shrink-0 w-10 h-10 rounded-xl bg-blue-600 text-white grid place-items-center shadow-lg shadow-blue-600/30 hover:bg-blue-500 active:scale-90 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                            </button>
                         </div>
                     </template>
                 </div>
@@ -750,11 +853,29 @@
                                 </button>
                             </div>
                             <div class="flex items-center justify-between gap-2 mt-2">
-                                <div class="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
-                                    <button type="button" @click="changeQty(line, -1)" class="w-9 h-9 text-blue-600 dark:text-blue-400 font-black hover:bg-slate-100 dark:hover:bg-slate-800 transition">−</button>
-                                    <span class="w-9 text-center text-sm font-black" x-text="line.quantity"></span>
-                                    <button type="button" @click="changeQty(line, 1)" class="w-9 h-9 text-blue-600 dark:text-blue-400 font-black hover:bg-slate-100 dark:hover:bg-slate-800 transition">+</button>
-                                </div>
+                                {{-- Qty stepper with inline edit on click --}}
+                                 <div class="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm overflow-hidden"
+                                      x-data="{ editing: false, editVal: '' }">
+                                     <button type="button" @click="changeQty(line, -1)" class="w-9 h-9 text-blue-600 dark:text-blue-400 font-black hover:bg-slate-100 dark:hover:bg-slate-800 transition">−</button>
+                                     {{-- Click qty to type directly --}}
+                                     <template x-if="!editing">
+                                         <span class="w-9 text-center text-sm font-black cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/40 transition rounded"
+                                               x-text="line.quantity"
+                                               @click="editing = true; editVal = String(line.quantity); $nextTick(() => $refs['qtyInput_' + line.index]?.select())">
+                                         </span>
+                                     </template>
+                                     <template x-if="editing">
+                                         <input type="number" min="1" step="1"
+                                                :x-ref="'qtyInput_' + line.index"
+                                                x-model.number="editVal"
+                                                class="w-12 text-center text-sm font-black border-x border-blue-400 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 outline-none py-1 tabular-nums"
+                                                @keydown.enter.prevent="if (editVal >= 1) { setQty(line, editVal); } editing = false"
+                                                @keydown.escape.prevent="editing = false"
+                                                @blur="if (editVal >= 1) { setQty(line, editVal); } editing = false"
+                                                x-init="$nextTick(() => $el.focus())">
+                                     </template>
+                                     <button type="button" @click="changeQty(line, 1)" class="w-9 h-9 text-blue-600 dark:text-blue-400 font-black hover:bg-slate-100 dark:hover:bg-slate-800 transition">+</button>
+                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <input x-show="priceEditIndex === line.index" x-model="priceEditValue" type="number" min="0" step="100"
                                            @keydown.enter="saveLinePrice(line)" @keydown.escape="priceEditIndex = null"
@@ -881,61 +1002,197 @@
             </div>
         </div>
 
-        {{-- ── Payment modal (posts server-side, atomic) ─────────────────── --}}
-        <div x-show="showPayment" x-cloak class="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" @keydown.escape.window="showPayment = false">
-            <div class="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-5 shadow-2xl">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-black">{{ __('messages.payments') }}</h3>
-                    <button type="button" @click="showPayment = false" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+        {{-- ── Payment modal (enhanced: quick chips + numpad) ──────────────── --}}
+        <div x-show="showPayment" x-cloak class="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-sm p-3 sm:p-4" @keydown.escape.window="showPayment = false">
+            <div class="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden"
+                 x-data="{
+                     activeMethod: 'cash',
+                     padCash(val) {
+                         // numpad appends digit to current cash value
+                         let s = String(Math.round(this.cash || 0));
+                         if (val === 'C') { this.cash = 0; return; }
+                         if (val === '←') { s = s.slice(0,-1) || '0'; this.cash = parseInt(s, 10); return; }
+                         if (val === '00') { this.cash = parseInt(s + '00', 10); return; }
+                         if (val === '000') { this.cash = parseInt(s + '000', 10); return; }
+                         this.cash = parseInt(s === '0' ? val : s + val, 10);
+                     },
+                     setExact() {
+                         this.cash = Math.max(0, Number(cart.totals.total) - Number(this.kpay||0) - Number(this.wavepay||0) - Number(this.cbpay||0) - Number(this.mmqr||0) - Number(this.credit||0));
+                     }
+                 }">
+
+                {{-- Modal header --}}
+                <div class="flex items-center justify-between gap-3 px-5 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h3 class="text-base font-black">{{ __('messages.payments') }}</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            {{ __('messages.total') }}:
+                            <span class="font-extrabold text-blue-600 dark:text-blue-400" x-text="'Ks ' + Number(cart.totals.total).toLocaleString()"></span>
+                        </p>
+                    </div>
+                    <button type="button" @click="showPayment = false"
+                            class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition">✕</button>
                 </div>
 
-                <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/post') }}" class="grid gap-3">
+                <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/post') }}" class="flex flex-col max-h-[85dvh] overflow-y-auto">
                     @csrf
                     <input type="hidden" name="customer_id" :value="customer ? customer.id : ''">
                     <input type="hidden" name="web_order_id" :value="pendingWebOrderId || ''">
+                    {{-- Hidden payment method inputs (unchanged — server-side reads these) --}}
                     @foreach (['cash', 'kpay', 'wavepay', 'cb_pay', 'mmqr', 'credit'] as $i => $method)
-                        <label class="flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5"
-                               :class="customer || '{{ $method }}' !== 'credit' ? 'border-slate-200 dark:border-slate-700' : 'border-rose-300 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/20'">
-                            <span class="text-sm font-bold">
-                                {{ __('messages.payment_' . $method) }}
-                                @if ($method === 'credit')
-                                    <span class="block text-[10px] font-semibold text-slate-400">{{ __('messages.credit_hint') }}</span>
-                                @endif
-                            </span>
-                            <input type="hidden" name="payments[{{ $i }}][method]" value="{{ $method }}">
-                            <input type="number" name="payments[{{ $i }}][amount]" min="0" step="100" x-model="{{ $method === 'cash' ? 'cash' : ($method === 'cb_pay' ? 'cbpay' : $method) }}"
-                                   :disabled="{{ $method === 'credit' ? '!customer' : 'false' }}"
-                                   class="w-36 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1.5 text-right text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-40">
-                        </label>
+                        <input type="hidden" name="payments[{{ $i }}][method]" value="{{ $method }}">
+                        <input type="hidden" name="payments[{{ $i }}][amount]" x-model="{{ $method === 'cash' ? 'cash' : ($method === 'cb_pay' ? 'cbpay' : $method) }}">
                     @endforeach
 
-                    <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 text-sm space-y-1">
-                        <p class="flex justify-between" x-show="Number(cart.totals.retail_subtotal) > Number(cart.totals.total)">
-                            <span class="text-amber-600 dark:text-amber-400 inline-flex items-center gap-1">
-                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/></svg>
-                                {{ __('messages.pos_tier_total_savings') }}
-                            </span>
-                            <span class="font-black text-amber-600 dark:text-amber-400" x-text="'−Ks ' + (Number(cart.totals.retail_subtotal) - Number(cart.totals.total)).toLocaleString()"></span>
-                        </p>
-                        <p class="flex justify-between"><span class="text-slate-500">{{ __('messages.total') }}</span><span class="font-black" x-text="'Ks ' + Number(cart.totals.total).toLocaleString()"></span></p>
-                        <p class="flex justify-between" x-show="remaining !== 0">
-                            <span class="text-slate-500">{{ __('messages.subtotal') }} ({{ __('messages.pos_remaining') }})</span>
-                            <span class="font-bold" :class="remaining < 0 ? 'text-rose-600' : 'text-amber-600'" x-text="'Ks ' + remaining.toLocaleString()"></span>
-                        </p>
-                        <p class="flex justify-between" x-show="change > 0">
-                            <span class="text-slate-500">{{ __('messages.change') }}</span>
-                            <span class="font-black text-emerald-600" x-text="'Ks ' + change.toLocaleString()"></span>
-                        </p>
-                        <p class="flex justify-between" x-show="credit > 0">
-                            <span class="text-slate-500">{{ __('messages.balance_due') }}</span>
-                            <span class="font-black text-amber-600 dark:text-amber-400" x-text="'Ks ' + credit.toLocaleString()"></span>
-                        </p>
-                    </div>
+                    <div class="px-5 py-4 space-y-4">
 
-                    <button type="submit" :disabled="!exact" :class="exact ? 'bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'"
-                            class="rounded-xl px-4 py-3 text-sm font-black text-white transition">
-                        {{ __('messages.post_sale') }}
-                    </button>
+                        {{-- Payment method tiles --}}
+                        @php
+                        $methods = [
+                            ['cash',    'payment_cash',    'M17 11H7M12 6v12',                                      'bg-emerald-500', 'text-emerald-700', 'emerald'],
+                            ['kpay',    'payment_kpay',    'M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Zm0 0V5a2 2 0 0 1 2-2h5.5M21 9V5a2 2 0 0 0-2-2h-5.5', 'bg-purple-500', 'text-purple-700',  'purple'],
+                            ['wavepay', 'payment_wavepay', 'M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Zm10 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0',                              'bg-blue-500',   'text-blue-700',   'blue'],
+                            ['cb_pay',  'payment_cb_pay',  'M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm4 8h8m-4-4v8',                    'bg-orange-500', 'text-orange-700', 'orange'],
+                            ['mmqr',   'payment_mmqr',    'M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2',         'bg-pink-500',   'text-pink-700',   'pink'],
+                            ['credit',  'payment_credit',  'M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1ZM16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8', 'bg-amber-500', 'text-amber-700', 'amber'],
+                        ];
+                        @endphp
+                        <div>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2">{{ __('messages.payment_method') }}</p>
+                            <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                                @foreach ($methods as [$mid, $mlabel, $micon, $mactiveBg, $mactiveText, $mcolor])
+                                <button type="button"
+                                        @click="activeMethod = '{{ $mid }}'; {{ $mid === 'credit' ? '' : '' }}"
+                                        :disabled="{{ $mid === 'credit' ? '!customer' : 'false' }}"
+                                        :class="activeMethod === '{{ $mid }}'
+                                            ? '{{ $mactiveBg }} text-white shadow-lg ring-2 ring-{{ $mcolor }}-400/40'
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
+                                        class="flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 text-[10px] font-black transition disabled:opacity-40 disabled:cursor-not-allowed">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ $micon }}"/></svg>
+                                    {{ __('messages.' . $mlabel) }}
+                                </button>
+                                @endforeach
+                            </div>
+                            {{-- Credit warning --}}
+                            <p x-show="activeMethod === 'credit' && !customer" x-cloak
+                               class="mt-1.5 text-[11px] font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4m0 4h.01"/></svg>
+                                {{ __('messages.credit_requires_customer') }}
+                            </p>
+                        </div>
+
+                        {{-- Cash: quick amount chips + numpad --}}
+                        <div x-show="activeMethod === 'cash'" x-cloak class="space-y-3">
+                            {{-- Quick amount row --}}
+                            <div>
+                                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">{{ __('messages.quick_amounts') }}</p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach ([1000, 2000, 5000, 10000, 20000, 50000, 100000] as $amt)
+                                    <button type="button" @click="cash = {{ $amt }}"
+                                            :class="cash == {{ $amt }} ? 'bg-blue-600 text-white ring-2 ring-blue-600/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-blue-100 dark:hover:bg-blue-950'"
+                                            class="px-3 py-1.5 rounded-xl text-xs font-black tabular-nums transition">
+                                        {{ number_format($amt) }}
+                                    </button>
+                                    @endforeach
+                                    <button type="button" @click="setExact()"
+                                            :class="change === 0 && cash > 0 ? 'bg-emerald-600 text-white ring-2 ring-emerald-600/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-100 dark:hover:bg-emerald-950'"
+                                            class="px-3 py-1.5 rounded-xl text-xs font-black transition">
+                                        ✓ {{ __('messages.exact') }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- Cash amount display + numpad --}}
+                            <div class="rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                {{-- Amount display --}}
+                                <div class="px-4 pt-3 pb-2 flex items-center justify-between gap-2">
+                                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('messages.payment_cash') }}</p>
+                                    <p class="text-2xl font-extrabold tabular-nums text-slate-800 dark:text-slate-100" x-text="'Ks ' + Number(cash||0).toLocaleString()"></p>
+                                </div>
+                                {{-- Numpad --}}
+                                <div class="grid grid-cols-4 border-t border-slate-200 dark:border-slate-700">
+                                    @foreach (['7','8','9','←','4','5','6','C','1','2','3','000','0','00','',null] as $key)
+                                        @if ($key === null)
+                                            {{-- empty cell --}}
+                                            <span class="border-r border-b border-slate-200 dark:border-slate-700"></span>
+                                        @elseif ($key === '')
+                                            {{-- empty spacer --}}
+                                            <span class="border-r border-b border-slate-200 dark:border-slate-700"></span>
+                                        @else
+                                            <button type="button"
+                                                    @click="padCash('{{ $key }}')"
+                                                    class="h-11 text-center font-black text-sm border-r border-b border-slate-200 dark:border-slate-700 transition
+                                                           {{ $key === 'C' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950' : ($key === '←' ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800') }} active:scale-95">
+                                                {{ $key }}
+                                            </button>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            {{-- Hidden input for cash --}}
+                            <input type="hidden" x-model="cash">
+                        </div>
+
+                        {{-- Other payment methods: simple input --}}
+                        @foreach (['kpay', 'wavepay', 'cb_pay', 'mmqr', 'credit'] as $method)
+                        <div x-show="activeMethod === '{{ $method }}'" x-cloak class="space-y-2">
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">{{ __('messages.payment_' . $method) }} (Ks)</p>
+                            @php $xmodel = $method === 'cb_pay' ? 'cbpay' : $method; @endphp
+                            <div class="flex flex-wrap gap-1.5 mb-2">
+                                @foreach ([1000, 2000, 5000, 10000, 20000, 50000, 100000] as $amt)
+                                <button type="button" @click="{{ $xmodel }} = {{ $amt }}"
+                                        :class="{{ $xmodel }} == {{ $amt }} ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-blue-100'"
+                                        class="px-3 py-1.5 rounded-xl text-xs font-black tabular-nums transition">
+                                    {{ number_format($amt) }}
+                                </button>
+                                @endforeach
+                                <button type="button" @click="{{ $xmodel }} = Math.max(0, Number(cart.totals.total) - Number(cash||0) - {{ collect(['kpay','wavepay','cb_pay','mmqr','credit'])->reject(fn($m)=>$m===$method)->map(fn($m)=>$m==='cb_pay'?'cbpay':$m)->map(fn($m)=>"Number($m||0)")->implode(' - ') }})"
+                                        class="px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 transition">
+                                    ✓ {{ __('messages.exact') }}
+                                </button>
+                            </div>
+                            <input type="number" min="0" step="100" x-model="{{ $xmodel }}"
+                                   :disabled="{{ $method === 'credit' ? '!customer' : 'false' }}"
+                                   class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-right text-xl font-extrabold tabular-nums focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-40">
+                        </div>
+                        @endforeach
+
+                        {{-- Summary box --}}
+                        <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 px-4 py-3 space-y-1.5 text-sm">
+                            <p class="flex justify-between" x-show="Number(cart.totals.retail_subtotal) > Number(cart.totals.total)">
+                                <span class="text-amber-600 dark:text-amber-400 inline-flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/></svg>
+                                    {{ __('messages.pos_tier_total_savings') }}
+                                </span>
+                                <span class="font-black text-amber-600 dark:text-amber-400" x-text="'−Ks ' + (Number(cart.totals.retail_subtotal) - Number(cart.totals.total)).toLocaleString()"></span>
+                            </p>
+                            <p class="flex justify-between font-bold">
+                                <span class="text-slate-500">{{ __('messages.total') }}</span>
+                                <span x-text="'Ks ' + Number(cart.totals.total).toLocaleString()"></span>
+                            </p>
+                            <div class="border-t border-dashed border-slate-200 dark:border-slate-700 my-1"></div>
+                            <p class="flex justify-between" x-show="remaining !== 0">
+                                <span class="text-slate-500">{{ __('messages.pos_remaining') }}</span>
+                                <span class="font-bold" :class="remaining < 0 ? 'text-rose-600' : 'text-amber-600'" x-text="'Ks ' + remaining.toLocaleString()"></span>
+                            </p>
+                            <p class="flex justify-between" x-show="change > 0">
+                                <span class="text-slate-500">{{ __('messages.change') }}</span>
+                                <span class="font-extrabold text-emerald-600 text-lg" x-text="'Ks ' + change.toLocaleString()"></span>
+                            </p>
+                            <p class="flex justify-between" x-show="credit > 0">
+                                <span class="text-slate-500">{{ __('messages.balance_due') }}</span>
+                                <span class="font-black text-amber-600 dark:text-amber-400" x-text="'Ks ' + credit.toLocaleString()"></span>
+                            </p>
+                        </div>
+
+                        {{-- Submit --}}
+                        <button type="submit" :disabled="!exact"
+                                :class="exact ? 'bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'"
+                                class="w-full rounded-xl px-4 py-4 text-base font-black text-white transition">
+                            {{ __('messages.post_sale') }}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
