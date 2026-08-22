@@ -190,7 +190,7 @@ return [
     'wholesale' => '批发',
     'wholesale_applications' => '批发申请审核',
     'wholesale_apps' => '批发申请',
-    'admin_navigation' => '管理导航',
+    'admin_navigation' => '后台导航',
     'admin_panel' => '管理后台',
     'close_menu' => '关闭菜单',
     'expand_sidebar' => '展开侧边栏',

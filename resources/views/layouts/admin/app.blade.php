@@ -606,6 +606,7 @@
 
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'sales-analytics'])" :label="__('messages.sidebar_sales_analytics')" />
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'inventory-valuation'])" :label="__('messages.sidebar_inventory_valuation')" />
+                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'aging-report'])" :label="__('messages.sidebar_aging_report')" />
                 </x-admin.nav-group>
 
                 <x-admin.nav-group name="security" :label="__('messages.sidebar_security')" icon-class="bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300">

@@ -42,6 +42,7 @@ class ComingSoonController extends Controller
         'expense-categories'  => ['sidebar_expense_categories', 'Phase 4'],
         'sales-analytics'     => ['sidebar_sales_analytics', 'Phase 4'],
         'inventory-valuation' => ['sidebar_inventory_valuation', 'Phase 4'],
+        'aging-report'        => ['sidebar_aging_report', 'Phase 4'],
         'branches'            => ['sidebar_branches', 'Phase 4'],
         'printers'            => ['sidebar_printers', 'Phase 4'],
         'vouchers'            => ['sidebar_vouchers', 'Phase 4'],
