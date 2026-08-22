@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\POS;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
 use App\Models\Product;
+use App\Models\User;
 use App\POS\Models\BuyBack;
 use App\POS\Models\BuyBackItem;
 use App\POS\Models\Warehouse;
@@ -50,9 +50,9 @@ class BuyBackController extends Controller
     {
         $store = $context->getStore();
         $storeRouteParams = $context->getRouteParams();
-        $customers = Customer::where('store_id', $store->id)->orderBy('name')->get();
+        $customers = User::whereHas('stores', fn ($q) => $q->where('stores.id', $store->id))->orderBy('name')->get();
         $warehouse = Warehouse::where('store_id', $store->id)->where('is_default', true)->first();
-        $products = Product::where('store_id', $store->id)->where('is_active', true)->orderBy('name')->get();
+        $products = Product::where('store_id', $store->id)->orderBy('name')->get();
 
         return view('pos.buybacks.create', compact('store', 'storeRouteParams', 'customers', 'products', 'warehouse'));
     }
@@ -62,7 +62,7 @@ class BuyBackController extends Controller
         $store = $context->getStore();
 
         $validated = $request->validate([
-            'customer_id' => 'nullable|exists:customers,id',
+            'customer_id' => 'nullable|exists:users,id',
             'reason' => 'nullable|string|max:500',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',

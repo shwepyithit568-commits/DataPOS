@@ -201,9 +201,9 @@
         data-admin-alerts-url="{{ $hasStoreContext ? url('/store/' . $currentSlug . '/admin/alerts/check') : '' }}"
         data-admin-alerts-interval="30000"
         x-data="{
-            posOpen: {{ request()->is('store/*/pos') || request()->is('store/*/pos/') || request()->is('store/*/pos/closing*') || request()->is('store/*/pos/sales*') || request()->is('store/*/pos/returns*') ? 'true' : 'false' }},
+            posOpen: {{ request()->is('store/*/pos') || request()->is('store/*/pos/') || request()->is('store/*/pos/closing*') || request()->is('store/*/pos/sales*') || request()->is('store/*/pos/returns*') || request()->is('store/*/pos/buy-back*') ? 'true' : 'false' }},
             inventoryOpen: {{ Str::contains($currentPath, ['products', 'categories', 'brands', 'variant-presets', 'pos/opening-stock', 'pos/adjustments', 'pos/reconciliation']) ? 'true' : 'false' }},
-            purchasingOpen: {{ Str::contains($currentPath, ['pos/purchases', 'pos/transfers', 'pos/buy-back', 'admin/suppliers', 'admin/warehouses']) ? 'true' : 'false' }},
+            purchasingOpen: {{ Str::contains($currentPath, ['pos/purchases', 'pos/transfers', 'admin/suppliers', 'admin/warehouses']) ? 'true' : 'false' }},
             ecommerceOpen: {{ Str::contains($currentPath, ['orders', 'reviews', 'banners', 'blog', 'glass-finder', 'push']) ? 'true' : 'false' }},
             customersOpen: {{ Str::contains($currentPath, ['wholesale']) ? 'true' : 'false' }},
             serviceOpen: false,
@@ -325,12 +325,21 @@
                     </x-admin.nav-link>
 
                     @php $isSalesReturns = request()->is('store/*/pos/returns*'); @endphp
-                    <x-admin.nav-link :href="route('pos.returns.index', $storeRouteParams)" route-name="pos.returns.index" :active="$isSalesReturns" :label="__('messages.sidebar_returns')">
+                    <x-admin.nav-link :href="route('pos.returns.index', $storeRouteParams)" route-name="pos.returns.index" :active="$isSalesReturns" :label="__('messages.sidebar_sales_returns')">
                         <x-slot:icon>
                             {{-- Return / rotate-left icon --}}
                             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l-4-4m0 0l4-4m-4 4h11a4 4 0 010 8h-1"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
+
+                    @php $isBuyBack = request()->is('store/*/pos/buy-back*'); @endphp
+                    <x-admin.nav-link :href="route('pos.buybacks.index', $storeRouteParams)" route-name="pos.buybacks.index" :active="$isBuyBack" :label="__('messages.sidebar_buy_back')">
+                        <x-slot:icon>
+                            {{-- Undo / buy-back icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12a9 9 0 109-9m-9 9h9m0 0V3"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'eload'])" :label="__('messages.sidebar_eload')" />
                 </x-admin.nav-group>
 
@@ -414,7 +423,7 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
                     @php $isReturns = request()->is('store/*/pos/purchases/returns*'); @endphp
-                    <x-admin.nav-link :href="route('pos.purchases.returns', $storeRouteParams)" route-name="pos.purchases.returns" :active="$isReturns" :label="__('messages.sidebar_returns')">
+                    <x-admin.nav-link :href="route('pos.purchases.returns', $storeRouteParams)" route-name="pos.purchases.returns" :active="$isReturns" :label="__('messages.sidebar_purchase_returns')">
                         <x-slot:icon>
                             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l-4-4m0 0l4-4m-4 4h11a4 4 0 010 8h-1"/></svg>
                         </x-slot:icon>
@@ -436,12 +445,6 @@
                     <x-admin.nav-link :href="route('store.admin.warehouses.index', $storeRouteParams)" route-name="store.admin.warehouses.index" :active="$isWarehouses" :label="__('messages.sidebar_warehouses')">
                         <x-slot:icon>
                             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
-                    @php $isBuyBack = request()->is('store/*/pos/buy-back*'); @endphp
-                    <x-admin.nav-link :href="route('pos.buybacks.index', $storeRouteParams)" route-name="pos.buybacks.index" :active="$isBuyBack" :label="__('messages.sidebar_buy_back')">
-                        <x-slot:icon>
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12a9 9 0 109-9m-9 9h9m0 0V3"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
                 </x-admin.nav-group>
@@ -541,7 +544,12 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'customers'])" :label="__('messages.sidebar_customer_directory')" />
+                    <x-admin.nav-link :href="route('store.admin.customers.index', $storeRouteParams)" route-name="store.admin.customers.index" :label="__('messages.sidebar_customer_directory')">
+                        <x-slot:icon>
+                            {{-- Users icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11a4 4 0 1 0-8 0m8 0a4 4 0 1 1-8 0m8 0c3 1 5 3 5 6v1H3v-1c0-3 2-5 5-6"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'membership'])" :label="__('messages.sidebar_membership')" />
                 </x-admin.nav-group>
 

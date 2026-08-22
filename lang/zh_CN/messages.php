@@ -1020,6 +1020,8 @@ return [
 
     // Planned modules (placeholder labels — sidebar roadmap map)
     'sidebar_returns' => '退货记录',
+    'sidebar_sales_returns' => '销售退货',
+    'sidebar_purchase_returns' => '采购退货',
     'sidebar_eload' => '充值与服务',
     'sidebar_stock_count' => '库存盘点',
     'sidebar_stock_ledger' => '库存流水账',

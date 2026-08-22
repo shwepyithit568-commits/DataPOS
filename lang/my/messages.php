@@ -1020,6 +1020,8 @@ return [
 
     // Planned modules (placeholder labels — sidebar roadmap map)
     'sidebar_returns' => 'ပြန်အမ်းရမှတ်တမ်းများ',
+    'sidebar_sales_returns' => 'အရောင်းပြန်အမ်း',
+    'sidebar_purchase_returns' => 'အဝယ်ပြန်ပို့',
     'sidebar_eload' => 'E-Load နှင့် ဝန်ဆောင်မှုများ',
     'sidebar_stock_count' => 'ကုန်စာရင်းရေတွက်မှု',
     'sidebar_stock_ledger' => 'ကုန်လှုပ်ရှားမှုမှတ်တမ်း',

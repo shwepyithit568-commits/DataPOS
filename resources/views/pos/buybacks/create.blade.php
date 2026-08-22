@@ -105,7 +105,7 @@
     </form>
 </div>
 
-<script>
+<script nonce="{{ $cspNonce }}">
 function buybackForm() {
     return {
         items: [{ product_id: '', quantity: 1, unit_price: 0 }],
