@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ComingSoonController;
+use App\Http\Controllers\Admin\CustomerDirectoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\GlassFinderAdminController;
 use App\Http\Controllers\Admin\HomeBannerController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Admin\OrderAdminController;
 use App\Http\Controllers\Admin\PilotImportController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductMasterDataController;
+use App\Http\Controllers\Admin\RepairController;
 use App\Http\Controllers\Admin\StoreManagementController;
 use App\Http\Controllers\Admin\StoreSettingController;
 use App\Http\Controllers\Admin\SupplierController;
@@ -464,6 +466,23 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/blog/{post}/edit', [AdminBlogController::class, 'edit'])->name('store.admin.blog.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::put('/admin/blog/{post}', [AdminBlogController::class, 'update'])->name('store.admin.blog.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::delete('/admin/blog/{post}', [AdminBlogController::class, 'destroy'])->name('store.admin.blog.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Customer Directory
+        Route::get('/admin/customers', [CustomerDirectoryController::class, 'index'])->name('store.admin.customers.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/customers/{customer}', [CustomerDirectoryController::class, 'show'])->name('store.admin.customers.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Repair Center / Service Jobs (SoT §16)
+        Route::get('/admin/repairs', [RepairController::class, 'index'])->name('store.admin.repairs.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/repairs/export', [RepairController::class, 'export'])->name('store.admin.repairs.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/repairs/create', [RepairController::class, 'create'])->name('store.admin.repairs.create')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/repairs', [RepairController::class, 'store'])->name('store.admin.repairs.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/repairs/{repair}', [RepairController::class, 'show'])->name('store.admin.repairs.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/repairs/{repair}/print', [RepairController::class, 'printTicket'])->name('store.admin.repairs.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/repairs/{repair}/edit', [RepairController::class, 'edit'])->name('store.admin.repairs.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::put('/admin/repairs/{repair}', [RepairController::class, 'update'])->name('store.admin.repairs.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/repairs/{repair}/status', [RepairController::class, 'updateStatus'])->name('store.admin.repairs.status')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/repairs/{repair}/payments', [RepairController::class, 'addPayment'])->name('store.admin.repairs.payments.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/repairs/{repair}/items/{item}/deduct', [RepairController::class, 'deductItem'])->name('store.admin.repairs.items.deduct')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Admin Product Reviews (moderation)
         Route::get('/admin/reviews', [AdminReviewController::class, 'index'])->name('store.admin.reviews.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');

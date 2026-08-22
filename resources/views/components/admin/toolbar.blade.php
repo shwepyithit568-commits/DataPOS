@@ -26,11 +26,26 @@
     // Compute active filters for pill display
     $activeFilters = [];
     foreach ($filters as $filterKey => $filterConfig) {
+        // Date-range filter: active when either bound is set ({key}_from/{key}_to).
+        if (($filterConfig['type'] ?? 'select') === 'date') {
+            $from = request($filterKey . '_from');
+            $to = request($filterKey . '_to');
+            if ($from || $to) {
+                $activeFilters[$filterKey] = [
+                    'label' => $filterConfig['label'],
+                    'value' => ($from ?: '…') . ' → ' . ($to ?: '…'),
+                    'type' => 'date',
+                ];
+            }
+            continue;
+        }
+
         $currentValue = request($filterKey);
         if ($currentValue !== null && $currentValue !== '' && isset($filterConfig['options'][$currentValue])) {
             $activeFilters[$filterKey] = [
                 'label' => $filterConfig['label'],
                 'value' => $filterConfig['options'][$currentValue],
+                'type' => 'select',
             ];
         }
     }
@@ -324,7 +339,12 @@
                     <svg class="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                     <span>{{ $filterInfo['label'] }}:</span>
                     <span>{{ $filterInfo['value'] }}</span>
-                    <a href="{{ request()->url() . '?' . http_build_query(request()->except([$filterKey, 'page'])) }}" class="hover:text-violet-900 dark:hover:text-white" title="Remove filter">
+                    @php
+                        $pillExcept = ($filterInfo['type'] ?? 'select') === 'date'
+                            ? [$filterKey . '_from', $filterKey . '_to', 'page']
+                            : [$filterKey, 'page'];
+                    @endphp
+                    <a href="{{ request()->url() . '?' . http_build_query(request()->except($pillExcept)) }}" class="hover:text-violet-900 dark:hover:text-white" title="Remove filter">
                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                     </a>
                 </span>
@@ -364,6 +384,27 @@
                 </div>
             @endif
             @foreach ($filters as $filterKey => $filterConfig)
+                @if (($filterConfig['type'] ?? 'select') === 'date')
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ $filterConfig['label'] }}</label>
+                        <form method="GET" data-auto-submit class="flex items-center gap-1.5">
+                            @foreach (request()->except([$filterKey . '_from', $filterKey . '_to', 'page']) as $key => $val)
+                                @if (is_array($val))
+                                    @foreach ($val as $subVal)
+                                        <input type="hidden" name="{{ $key }}[]" value="{{ $subVal }}" />
+                                    @endforeach
+                                @else
+                                    <input type="hidden" name="{{ $key }}" value="{{ $val }}" />
+                                @endif
+                            @endforeach
+                            <input type="date" name="{{ $filterKey }}_from" value="{{ request($filterKey . '_from') }}"
+                                   class="flex-1 min-w-0 border dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <span class="text-xs text-gray-400 dark:text-slate-500 shrink-0">→</span>
+                            <input type="date" name="{{ $filterKey }}_to" value="{{ request($filterKey . '_to') }}"
+                                   class="flex-1 min-w-0 border dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </form>
+                    </div>
+                @else
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ $filterConfig['label'] }}</label>
                     <form method="GET" data-auto-submit>
@@ -395,6 +436,7 @@
                         </select>
                     </form>
                 </div>
+                @endif
             @endforeach
         </div>
     @endif

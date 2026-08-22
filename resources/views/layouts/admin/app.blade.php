@@ -559,7 +559,13 @@
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3 2.4-2.4Z"/></svg>
                     </x-slot:icon>
 
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'repairs'])" :label="__('messages.sidebar_repair_center')" />
+                    @php $isRepairs = request()->is('store/*/admin/repairs*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.repairs.index', $storeRouteParams)" route-name="store.admin.repairs.index" :active="$isRepairs" :label="__('messages.sidebar_repair_center')">
+                        <x-slot:icon>
+                            {{-- Wrench icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3 2.4-2.4Z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'service-jobs'])" :label="__('messages.sidebar_service_jobs')" />
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'spare-parts'])" :label="__('messages.sidebar_spare_parts')" />
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'service-settings'])" :label="__('messages.sidebar_service_settings')" />
