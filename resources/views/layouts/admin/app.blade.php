@@ -373,27 +373,15 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    @php $isPosOpeningStock = request()->is('store/*/pos/opening-stock*'); @endphp
-                    <x-admin.nav-link :href="route('pos.opening-stock.index', $storeRouteParams)" route-name="pos.opening-stock.index" :active="$isPosOpeningStock" :label="__('messages.opening_stock_title')">
+                    @php
+                        $isStockAdjustments = request()->is('store/*/pos/adjustments*')
+                            || request()->is('store/*/pos/reconciliation*')
+                            || request()->is('store/*/pos/opening-stock*');
+                    @endphp
+                    <x-admin.nav-link :href="route('pos.adjustments.index', $storeRouteParams)" route-name="pos.adjustments.index" :active="$isStockAdjustments" :label="__('messages.sidebar_stock_adjustments')">
                         <x-slot:icon>
-                            {{-- Tag icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13 11 4H4v7l9 9 7-7ZM7.5 7.5h.01"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
-
-                    @php $isPosAdjustments = request()->is('store/*/pos/adjustments*'); @endphp
-                    <x-admin.nav-link :href="route('pos.adjustments.index', $storeRouteParams)" route-name="pos.adjustments.index" :active="$isPosAdjustments" :label="__('messages.adjustment_title')">
-                        <x-slot:icon>
-                            {{-- Wrench icon --}}
+                            {{-- Adjustments icon --}}
                             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3 2.4-2.4Z"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
-
-                    @php $isPosReconciliation = request()->is('store/*/pos/reconciliation*'); @endphp
-                    <x-admin.nav-link :href="route('pos.reconciliation.index', $storeRouteParams)" route-name="pos.reconciliation.index" :active="$isPosReconciliation" :label="__('messages.reconciliation')">
-                        <x-slot:icon>
-                            {{-- Balance-scale icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M5 7h14M7.5 7 5 11a2.5 2.5 0 0 0 5 0L7.5 7Zm9 0L14 11a2.5 2.5 0 0 0 5 0l-2.5-4ZM8.5 21h7"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
 
@@ -568,7 +556,12 @@
                     </x-admin.nav-link>
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'service-jobs'])" :label="__('messages.sidebar_service_jobs')" />
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'spare-parts'])" :label="__('messages.sidebar_spare_parts')" />
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'service-settings'])" :label="__('messages.sidebar_service_settings')" />
+                    @php $isServiceSettings = request()->is('store/*/admin/service-settings*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.service_settings.index', $storeRouteParams)" route-name="store.admin.service_settings.index" :active="$isServiceSettings" :label="__('messages.sidebar_service_settings')">
+                        <x-slot:icon>
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
                 </x-admin.nav-group>
 
                 <x-admin.nav-group name="finance" :label="__('messages.sidebar_finance')" icon-class="bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300">

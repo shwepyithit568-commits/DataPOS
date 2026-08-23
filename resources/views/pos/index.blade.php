@@ -27,6 +27,7 @@
             'pos_customer_not_found_add' => __('messages.pos_customer_not_found_add'),
             'pos_customer_attached' => __('messages.pos_customer_attached'),
             'pos_customer_detached' => __('messages.pos_customer_detached'),
+            'pos_customer_saving' => __('messages.pos_customer_saving'),
             'pos_price_edit' => __('messages.pos_price_edit'),
             'pos_price_invalid' => __('messages.pos_price_invalid'),
             'pos_price_set' => __('messages.pos_price_set'),
@@ -70,52 +71,63 @@
             <span x-text="notice"></span>
         </div>
 
-        {{-- Quick-add customer modal — creates a store-scoped retail customer
-             (shared users table + store_user pivot, phone dedup server-side). --}}
+        {{-- Quick-add customer modal — creates a store-scoped retail/wholesale customer --}}
         <div x-show="quickAddOpen" x-cloak class="fixed inset-0 z-[95] grid place-items-center p-4"
              @keydown.escape.window="quickAddOpen = false">
             <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="quickAddOpen = false"></div>
             <div class="relative w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-2xl space-y-4">
-                <div class="flex items-center justify-between gap-3">
-                    <p class="text-sm font-black inline-flex items-center gap-2">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                        {{ __('messages.pos_customer_quick_add_title') }}
-                    </p>
+                <div class="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 grid place-items-center">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-black text-slate-900 dark:text-slate-100">{{ __('messages.pos_customer_quick_add_title') }}</h3>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ __('messages.pos_customer_recent') }}</p>
+                        </div>
+                    </div>
                     <button type="button" @click="quickAddOpen = false"
                             class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition">✕</button>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">{{ __('messages.pos_customer_name') }}</label>
-                    <input type="text" x-model="qname" x-ref="quickName"
-                           class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.pos_customer_name') }} <span class="text-rose-500">*</span></label>
+                    <input type="text" x-model="qname" x-ref="quickName" @keydown.enter="$refs.quickPhone?.focus()"
+                           class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition"
                            placeholder="{{ __('messages.pos_customer_name') }}">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">{{ __('messages.pos_customer_phone') }}</label>
-                    <input type="tel" x-model="qphone" @keydown.enter="quickAdd()"
-                           class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.pos_customer_phone') }} <span class="text-rose-500">*</span></label>
+                    <input type="tel" x-model="qphone" x-ref="quickPhone" @keydown.enter="quickAdd()"
+                           class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 text-sm font-mono font-semibold focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition"
                            placeholder="09 123 456 789">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">{{ __('messages.pos_customer_type') }}</label>
-                    <div class="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.pos_customer_type') }}</label>
+                    <div class="grid grid-cols-2 gap-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
                         <button type="button" @click="qtype = 'retail_customer'"
-                                :class="qtype === 'retail_customer' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow' : 'text-slate-500 dark:text-slate-400'"
-                                class="rounded-lg px-3 py-2 text-sm font-bold transition">{{ __('messages.pos_customer_retail') }}</button>
+                                :class="qtype === 'retail_customer' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'"
+                                class="rounded-lg px-3 py-2 text-xs font-black transition flex items-center justify-center gap-1.5">
+                            <span>🛒</span> {{ __('messages.pos_customer_retail') }}
+                        </button>
                         <button type="button" @click="qtype = 'wholesale_customer'"
-                                :class="qtype === 'wholesale_customer' ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow' : 'text-slate-500 dark:text-slate-400'"
-                                class="rounded-lg px-3 py-2 text-sm font-bold transition">{{ __('messages.pos_customer_wholesale') }}</button>
+                                :class="qtype === 'wholesale_customer' ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'"
+                                class="rounded-lg px-3 py-2 text-xs font-black transition flex items-center justify-center gap-1.5">
+                            <span>🏬</span> {{ __('messages.pos_customer_wholesale') }}
+                        </button>
                     </div>
-                    <p class="mt-1 text-[11px] text-slate-400" x-show="qtype === 'wholesale_customer'" x-cloak>
-                        <svg class="inline w-3 h-3 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/></svg>
-                        {{ __('messages.pos_wholesale_type_hint') }}
+                    <p class="mt-1.5 text-[11px] text-slate-400 flex items-center gap-1" x-show="qtype === 'wholesale_customer'" x-cloak>
+                        <svg class="inline w-3.5 h-3.5 text-amber-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/></svg>
+                        <span>{{ __('messages.pos_wholesale_type_hint') }}</span>
                     </p>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-2 pt-1">
                     <button type="button" @click="quickAddOpen = false"
-                            class="flex-1 rounded-xl px-4 py-2.5 text-sm font-black bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.cancel') }}</button>
+                            class="flex-1 rounded-xl px-4 py-2.5 text-sm font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.cancel') }}</button>
                     <button type="button" @click="quickAdd()" :disabled="quickBusy || !qname.trim() || !qphone.trim()"
-                            class="flex-1 rounded-xl px-4 py-2.5 text-sm font-black bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 transition">+ {{ __('messages.pos_customer_add') }}</button>
+                            class="flex-1 rounded-xl px-4 py-2.5 text-sm font-black bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
+                        <svg x-show="quickBusy" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                        <span x-text="quickBusy ? (labels.pos_customer_saving || 'Saving...') : '+ ' + '{{ __('messages.pos_customer_add') }}'"></span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -754,71 +766,131 @@
                 </div>
 
                 {{-- Customer selector header --}}
-                <div class="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30">
-                    <div class="flex items-center gap-3">
-                        <div class="w-11 h-11 shrink-0 rounded-full bg-blue-600/10 text-blue-600 dark:text-blue-400 grid place-items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <div class="px-4 pt-3.5 pb-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30">
+                    {{-- State 1: When a Customer IS Attached --}}
+                    <div x-show="customer" x-cloak class="rounded-2xl border border-blue-200/80 dark:border-blue-800/60 bg-blue-50/70 dark:bg-blue-950/40 p-3 shadow-sm">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-10 h-10 shrink-0 rounded-xl bg-blue-600 text-white font-black text-sm grid place-items-center shadow-md shadow-blue-500/20 uppercase"
+                                     x-text="customer ? customer.name.charAt(0) : 'U'"></div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <p class="text-sm font-black text-slate-900 dark:text-slate-100 truncate" x-text="customer ? customer.name : ''"></p>
+                                        <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full"
+                                              :class="customer && customer.role === 'wholesale_customer' ? 'bg-amber-500 text-white' : 'bg-blue-600 text-white'"
+                                              x-text="customer && customer.role === 'wholesale_customer' ? '🏬 {{ __('messages.pos_customer_wholesale') }}' : '🛒 {{ __('messages.pos_customer_retail') }}'"></span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5" x-text="customer ? (customer.phone || '—') : ''"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button type="button" @click="changeCustomer()"
+                                        class="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-bold transition shadow-sm"
+                                        title="{{ __('messages.pos_customer_change') }}">
+                                    🔄 <span class="hidden sm:inline">{{ __('messages.pos_customer_change') }}</span>
+                                </button>
+                                <button type="button" @click="clearCustomer()"
+                                        class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition grid place-items-center text-sm font-bold"
+                                        title="{{ __('messages.pos_customer_detached') }}">
+                                    ✕
+                                </button>
+                            </div>
                         </div>
-                        <div class="min-w-0 flex-1">
-                            <p class="text-sm font-black truncate" x-text="customer ? customer.name : '{{ __('messages.walk_in_customer') }}'"></p>
-                            <p class="text-xs text-slate-400" x-text="customer ? '{{ __('messages.customer') }}' : '{{ __('messages.select_customer') }}'"></p>
-                        </div>
-                        <button type="button" @click="openQuickAdd()"
-                                class="shrink-0 w-10 h-10 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 transition grid place-items-center"
-                                title="{{ __('messages.pos_quick_add_customer') }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
-                        </button>
+                        <template x-if="customer && parseFloat(customer.balance) > 0">
+                            <div class="mt-2.5 pt-2 border-t border-blue-200/60 dark:border-blue-900/60 flex items-center justify-between text-xs">
+                                <span class="font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                                    {{ __('messages.outstanding_debt') }}:
+                                </span>
+                                <span class="font-black text-amber-700 dark:text-amber-400 font-mono" x-text="'Ks ' + Number(customer.balance).toLocaleString()"></span>
+                            </div>
+                        </template>
                     </div>
 
-                    {{-- Customer search (F3) --}}
-                    <div class="relative mt-3">
-                        <input type="text" x-ref="customerInput" x-model="cq" @input.debounce.250ms="csearch()" :disabled="customer !== null"
-                               placeholder="{{ __('messages.customer_search_placeholder') }}"
-                               class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50">
-                        <div x-show="copen && cresults.length" x-cloak
-                             class="absolute z-30 inset-x-0 top-full mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl max-h-56 overflow-y-auto">
-                            <template x-for="c in cresults" :key="c.id">
-                                <button type="button" @click="attach(c)"
-                                        class="w-full text-left px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
-                                    <span class="min-w-0">
-                                        <span class="block text-sm font-semibold truncate" x-text="c.name"></span>
-                                        <span class="block text-[11px] text-slate-500 font-mono" x-text="c.phone || ''"></span>
-                                    </span>
-                                    <span class="shrink-0 flex items-center gap-1.5">
-                                        <span class="text-[11px] font-bold px-1.5 py-0.5 rounded"
-                                              :class="c.role === 'wholesale_customer' ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300' : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'"
-                                              x-text="c.role === 'wholesale_customer' ? '{{ __('messages.pos_customer_wholesale') }}' : '{{ __('messages.pos_customer_retail') }}'"></span>
-                                        <span class="text-[11px] font-bold" :class="parseFloat(c.balance) > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'"
-                                              x-text="parseFloat(c.balance) > 0 ? '{{ __('messages.debt') }} ' + Number(c.balance).toLocaleString() : ''"></span>
-                                    </span>
-                                </button>
-                            </template>
-                        </div>
-                        <div x-show="copen && cq.trim() !== '' && !cresults.length" x-cloak
-                             class="absolute z-30 inset-x-0 top-full mt-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl px-3 py-2 text-sm">
-                            <p class="text-slate-500">{{ __('messages.no_customers_found') }}</p>
+                    {{-- State 2: When NO Customer Attached (Walk-in / Search Mode) --}}
+                    <div x-show="!customer" x-cloak>
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <div class="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 grid place-items-center text-xs">
+                                    👤
+                                </div>
+                                <div class="min-w-0">
+                                    <span class="text-xs font-black text-slate-700 dark:text-slate-300">{{ __('messages.walk_in_customer') }}</span>
+                                    <span class="text-[10px] text-slate-400 font-semibold block">{{ __('messages.pos_customer_search_hint') }}</span>
+                                </div>
+                            </div>
                             <button type="button" @click="openQuickAdd(cq.trim())"
-                                    class="mt-1 w-full text-left px-3 py-2 rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 text-sm font-bold transition">
-                                <span x-text="labels.pos_customer_not_found_add.replace(':name', cq.trim())"></span>
+                                    class="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs transition inline-flex items-center gap-1 shadow-sm shrink-0">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                <span>{{ __('messages.pos_quick_add_customer') }}</span>
                             </button>
                         </div>
+
+                        {{-- Customer search (F3) --}}
+                        <div class="relative" @click.outside="copen = false">
+                            <div class="relative flex items-center">
+                                <span class="absolute left-3 text-slate-400 pointer-events-none text-xs">🔍</span>
+                                <input type="text" x-ref="customerInput" x-model="cq"
+                                       @focus="csearch(true)"
+                                       @click="csearch(true)"
+                                       @input.debounce.200ms="csearch()"
+                                       placeholder="{{ __('messages.customer_search_placeholder') }} (F3)"
+                                       class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 pl-8 pr-14 py-2 text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition">
+                                <div class="absolute right-2 flex items-center gap-1">
+                                    <button type="button" x-show="cq.trim() !== ''" @click="cq = ''; csearch(true); $refs.customerInput?.focus()"
+                                            class="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 text-[10px] font-bold grid place-items-center hover:bg-slate-300">✕</button>
+                                    <span class="text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 pointer-events-none">F3</span>
+                                </div>
+                            </div>
+
+                            {{-- Search Dropdown Results --}}
+                            <div x-show="copen" x-cloak
+                                 class="absolute z-30 inset-x-0 top-full mt-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl max-h-64 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                                {{-- Quick Add button inside dropdown --}}
+                                <div class="p-1.5 bg-slate-50/80 dark:bg-slate-800/50">
+                                    <button type="button" @click="openQuickAdd(cq.trim())"
+                                            class="w-full text-left px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-xs font-bold transition flex items-center justify-between gap-2">
+                                        <span class="flex items-center gap-1.5 truncate">
+                                            <span class="w-5 h-5 rounded-full bg-blue-600 text-white grid place-items-center text-xs font-black shrink-0">+</span>
+                                            <span x-text="cq.trim() ? labels.pos_customer_not_found_add.replace(':name', cq.trim()) : '+ ' + '{{ __('messages.pos_customer_quick_add_title') }}'"></span>
+                                        </span>
+                                        <span class="text-[10px] bg-blue-600/10 px-1.5 py-0.5 rounded font-mono font-bold shrink-0">Enter</span>
+                                    </button>
+                                </div>
+
+                                {{-- Results List --}}
+                                <template x-for="c in cresults" :key="c.id">
+                                    <button type="button" @click="attach(c)"
+                                            class="w-full text-left px-3 py-2.5 hover:bg-blue-50/70 dark:hover:bg-slate-800/80 flex items-center justify-between gap-2 transition group">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs grid place-items-center shrink-0 uppercase group-hover:bg-blue-600 group-hover:text-white transition"
+                                                 x-text="c.name.charAt(0)"></div>
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400" x-text="c.name"></p>
+                                                <p class="text-[11px] text-slate-400 font-mono" x-text="c.phone || '—'"></p>
+                                            </div>
+                                        </div>
+                                        <div class="shrink-0 flex items-center gap-1.5">
+                                            <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded"
+                                                  :class="c.role === 'wholesale_customer' ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'"
+                                                  x-text="c.role === 'wholesale_customer' ? '{{ __('messages.pos_customer_wholesale') }}' : '{{ __('messages.pos_customer_retail') }}'"></span>
+                                            <span x-show="parseFloat(c.balance) > 0" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 font-mono"
+                                                  x-text="'Ks ' + Number(c.balance).toLocaleString()"></span>
+                                        </div>
+                                    </button>
+                                </template>
+
+                                {{-- Empty search state --}}
+                                <div x-show="cq.trim() !== '' && !cresults.length" class="p-4 text-center">
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.no_customers_found') }}</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <template x-if="customer">
-                        <div class="mt-2 flex items-center justify-between gap-2">
-                            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold"
-                                  :class="customer.role === 'wholesale_customer' ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300' : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'">
-                                <svg class="inline w-3.5 h-3.5 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                <span x-text="customer.name"></span>
-                                <span x-show="customer.role === 'wholesale_customer'" x-text="' · ' + '{{ __('messages.pos_customer_wholesale') }}'"></span>
-                                <span x-show="parseFloat(customer.balance) > 0" x-text="' · ' + '{{ __('messages.debt') }}' + ' ' + Number(customer.balance).toLocaleString()"></span>
-                            </span>
-                            <button type="button" @click="clearCustomer()" class="text-rose-500 hover:text-rose-700 font-black text-xs">✕ {{ __('messages.customer') }}</button>
-                        </div>
-                    </template>
-                    <p x-show="credit > 0 && !customer" x-cloak class="mt-1.5 text-[11px] font-bold text-rose-600 dark:text-rose-400">
-                        <svg class="inline w-3.5 h-3.5 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4m0 4h.01"/></svg>
-                        {{ __('messages.credit_requires_customer') }}
+                    <p x-show="credit > 0 && !customer" x-cloak class="mt-2 text-[11px] font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                        <svg class="inline w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4m0 4h.01"/></svg>
+                        <span>{{ __('messages.credit_requires_customer') }}</span>
                     </p>
                 </div>
 

@@ -424,13 +424,20 @@ Alpine.data('posApp', (opts = {}) => ({
     },
 
     /* ---- customer attach (credit/debt) ---- */
-    async csearch() {
-        if (this.cq.trim() === '') { this.cresults = []; this.copen = false; return; }
+    async csearch(forceOpen = false) {
+        const query = this.cq ? this.cq.trim() : '';
+        if (query === '' && !forceOpen) {
+            this.cresults = [];
+            this.copen = false;
+            return;
+        }
         try {
-            const data = await this.fetchJson('/customers?q=' + encodeURIComponent(this.cq));
+            const data = await this.fetchJson('/customers?q=' + encodeURIComponent(query));
             this.cresults = data.customers || [];
             this.copen = true;
-        } catch (e) { this.cresults = []; }
+        } catch (e) {
+            this.cresults = [];
+        }
     },
 
     // Attach a customer server-side: the whole cart re-prices at their tier
@@ -442,7 +449,7 @@ Alpine.data('posApp', (opts = {}) => ({
         try {
             const data = await this.fetchJson('/customers/' + c.id + '/attach', { method: 'POST', body: new URLSearchParams({}) });
             this.applyCart(data);
-            this.cq = c.name;
+            this.cq = '';
             if (this.remaining > 0 && this.credit === 0) this.credit = Math.max(0, Math.round(this.remaining / 100) * 100);
             this.loadGrid(); // grid prices follow the attached tier
             this.flash(data.success || this.labels.pos_customer_attached || 'Customer attached', 'success');
@@ -464,11 +471,30 @@ Alpine.data('posApp', (opts = {}) => ({
         }
     },
 
-    openQuickAdd(name = '') {
-        this.qname = name || '';
-        this.qphone = '';
-        this.quickAddOpen = true;
-        this.$nextTick(() => this.$refs.quickName?.focus());
+    async changeCustomer() {
+        this.cq = '';
+        await this.clearCustomer();
+        this.$nextTick(() => {
+            this.csearch(true);
+            this.$refs.customerInput?.focus();
+        });
+    },
+
+    openQuickAdd(query = '') {
+        const trimmed = String(query || '').trim();
+        // Check if query is likely a phone number (digits only or starts with 09 / +95 / 9)
+        const isPhone = /^(\+?95|0?9|\d{6,})/.test(trimmed.replace(/[\s\-]/g, '')) && /^[\d\s\-\+]+$/.test(trimmed);
+        if (isPhone) {
+            this.qphone = trimmed;
+            this.qname = '';
+            this.quickAddOpen = true;
+            this.$nextTick(() => this.$refs.quickName?.focus());
+        } else {
+            this.qname = trimmed;
+            this.qphone = '';
+            this.quickAddOpen = true;
+            this.$nextTick(() => (trimmed ? this.$refs.quickPhone?.focus() : this.$refs.quickName?.focus()));
+        }
     },
 
     // Quick-add a customer: POST /pos/customers creates the user + this
@@ -484,10 +510,10 @@ Alpine.data('posApp', (opts = {}) => ({
             this.quickAddOpen = false;
             this.cresults = [];
             this.copen = false;
-            this.cq = data.customer.name;
+            this.cq = '';
             this.applyCart(data);
             this.loadGrid();
-            this.flash(data.success || this.labels.pos_customer_added, 'success');
+            this.flash(data.success || this.labels.pos_customer_added || 'Customer added', 'success');
         } catch (e) {
             this.flash(e.message, 'error');
         } finally {
@@ -522,7 +548,15 @@ Alpine.data('posApp', (opts = {}) => ({
         const actions = {
             F1: () => { e.preventDefault(); this.$refs.searchInput && this.$refs.searchInput.focus(); },
             F2: () => { e.preventDefault(); this.openPayment(); },
-            F3: () => { e.preventDefault(); this.$refs.customerInput && this.$refs.customerInput.focus(); },
+            F3: () => {
+                e.preventDefault();
+                if (this.customer) {
+                    this.changeCustomer();
+                } else {
+                    this.csearch(true);
+                    this.$nextTick(() => this.$refs.customerInput?.focus());
+                }
+            },
             F4: () => { e.preventDefault(); this.clearCart(); },
             F5: () => { e.preventDefault(); this.loadGrid(); },
             F6: () => { e.preventDefault(); this.hold(); },

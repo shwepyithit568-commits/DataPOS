@@ -17,6 +17,16 @@
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-gray-900 dark:text-slate-100 font-sans antialiased min-h-dvh flex flex-col transition-colors duration-200"
     x-data="{
+        darkMode: localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
+        toggleDarkMode() {
+            this.darkMode = !this.darkMode;
+            localStorage.setItem('theme', this.darkMode ? 'dark' : 'light');
+            if (this.darkMode) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        },
         calculatorOpen: false,
         calcDisplay: '0',
         calcLeft: null,
@@ -124,7 +134,7 @@
                     }
                 }"
                  x-init="tick(); setInterval(() => tick(), 1000)"
-                 class="hidden sm:flex flex-col items-end leading-tight select-none shrink-0">
+                 class="hidden md:flex flex-col items-end leading-tight select-none shrink-0">
                 <span class="font-black text-sm tabular-nums text-slate-800 dark:text-slate-100" x-text="t"></span>
                 <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400" x-text="d"></span>
             </div>
@@ -142,9 +152,26 @@
                      class="sm:hidden font-black text-sm tabular-nums text-slate-700 dark:text-slate-200"
                      x-text="t"></div>
 
+                {{-- Language Switcher --}}
+                <x-language-switcher id="pos-header" />
+
+                {{-- Dark / Light Mode Switcher --}}
+                <button @click="toggleDarkMode()" type="button"
+                        class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm"
+                        :aria-label="darkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+                        :title="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">
+                    <svg x-show="!darkMode" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.8A8.5 8.5 0 1111.2 3a6.5 6.5 0 009.8 9.8z" />
+                    </svg>
+                    <svg x-show="darkMode" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" x-cloak>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36-6.36-1.42 1.42M7.06 16.94l-1.42 1.42m12.72 0-1.42-1.42M7.06 7.06 5.64 5.64" />
+                        <circle cx="12" cy="12" r="4" stroke-width="2" />
+                    </svg>
+                </button>
+
                 {{-- Calculator button --}}
                 <button type="button" @click="openCalculator()"
-                        class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-600 dark:hover:text-blue-400 transition grid place-items-center"
+                        class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400 transition inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm"
                         aria-label="{{ __('messages.calculator') }}"
                         title="{{ __('messages.calculator') }}">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -154,14 +181,14 @@
                 </button>
 
                 <a href="{{ url('/store/' . $store->slug . '/admin/dashboard') }}"
-                   class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                   class="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition hidden sm:inline-flex items-center">
                     {{ __('messages.admin_panel') }}
                 </a>
                 <form method="POST" action="{{ url('/logout') }}">
                     @csrf
-                    <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-600 dark:hover:text-rose-400 transition">
+                    <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-600 dark:hover:text-rose-400 transition">
                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-                        {{ __('messages.logout') }}
+                        <span class="hidden sm:inline">{{ __('messages.logout') }}</span>
                     </button>
                 </form>
             </div>

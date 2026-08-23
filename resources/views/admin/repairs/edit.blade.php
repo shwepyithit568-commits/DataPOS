@@ -5,11 +5,21 @@
     // Consumed parts are preserved server-side (they already moved stock) —
     // only editable lines go back into the form payload.
     $editableItems = $repair->items->where('is_deducted', false)->values();
-    $productOptions = $products->map(fn ($p) => [
-        'id' => $p->id,
-        'name' => $p->name . ($p->sku ? " ({$p->sku})" : ''),
-        'price' => (float) $p->retail_price,
-    ])->values();
+    $productOptions = $products->map(function ($p) {
+        $catName = $p->category?->name ?? 'General';
+        $parentCatName = $p->category?->parent?->name;
+        $categoryPath = $parentCatName ? ($parentCatName . ' > ' . $catName) : $catName;
+
+        return [
+            'id' => $p->id,
+            'name' => $p->name,
+            'sku' => $p->sku,
+            'price' => (float) $p->retail_price,
+            'category_id' => $p->category_id,
+            'category_name' => $categoryPath,
+            'display_label' => '[' . $catName . '] ' . $p->name . ($p->sku ? " ({$p->sku})" : '') . ' · ' . number_format($p->retail_price) . ' MMK',
+        ];
+    })->values();
 @endphp
 <div class="max-w-4xl mx-auto space-y-5 sm:space-y-6">
     {{-- Header --}}
@@ -144,6 +154,7 @@
                 if (p) {
                     this.items[i].name = p.name;
                     this.items[i].unit_price = p.price;
+                    this.items[i].sku = p.sku || '';
                 }
             },
             subtotal(i) {
@@ -192,7 +203,7 @@
                                         class="w-full border dark:border-slate-600 rounded-lg px-2 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
                                     <option value="">{{ __('messages.repair_select_product_none') }}</option>
                                     <template x-for="p in products" :key="p.id">
-                                        <option :value="p.id" x-text="p.name"></option>
+                                        <option :value="p.id" x-text="p.display_label || p.name"></option>
                                     </template>
                                 </select>
                             </div>

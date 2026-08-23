@@ -33,7 +33,6 @@ class ComingSoonController extends Controller
         'membership'          => ['sidebar_membership', 'Phase 4'],
         'service-jobs'        => ['sidebar_service_jobs', 'Phase 4'],
         'spare-parts'         => ['sidebar_spare_parts', 'Phase 4'],
-        'service-settings'    => ['sidebar_service_settings', 'Phase 4'],
         'expenses'            => ['sidebar_expenses', 'Phase 4'],
         'receivables'         => ['sidebar_receivables', 'Phase 4'],
         'payables'            => ['sidebar_payables', 'Phase 4'],

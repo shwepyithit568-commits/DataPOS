@@ -77,14 +77,26 @@
                 <svg class="w-4 h-4 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                 {{ __('messages.repair_device_section') }}
             </h2>
-            <div class="grid grid-cols-2 gap-3 text-sm">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
                 <div>
-                    <div class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.repair_device_type') }}</div>
-                    <div class="font-medium text-gray-900 dark:text-slate-100">{{ $repair->device_type }}</div>
+                    <div class="text-xs text-gray-500 dark:text-slate-400">🏢 {{ __('messages.repair_brand') ?? 'Brand' }}</div>
+                    <div class="font-bold text-gray-900 dark:text-slate-100">{{ $repair->brand ?? '—' }}</div>
                 </div>
                 <div>
-                    <div class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.repair_model') }}</div>
-                    <div class="font-medium text-gray-900 dark:text-slate-100">{{ $repair->model ?? '—' }}</div>
+                    <div class="text-xs text-gray-500 dark:text-slate-400">📁 {{ __('messages.category') ?? 'Category' }}</div>
+                    <div class="font-bold text-gray-900 dark:text-slate-100">{{ $repair->category ?? $repair->device_type }}</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 dark:text-slate-400">📱 {{ __('messages.repair_model') }}</div>
+                    <div class="font-bold text-gray-900 dark:text-slate-100">{{ $repair->model ?? '—' }}</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 dark:text-slate-400">🎨 {{ __('messages.color') ?? 'Color' }}</div>
+                    <div class="font-medium text-gray-900 dark:text-slate-100">{{ $repair->color ?? '—' }}</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 dark:text-slate-400">💾 {{ __('messages.repair_storage') ?? 'Storage' }}</div>
+                    <div class="font-medium text-gray-900 dark:text-slate-100">{{ $repair->storage ?? '—' }}</div>
                 </div>
                 <div>
                     <div class="text-xs text-gray-500 dark:text-slate-400">IMEI / Serial</div>
@@ -95,14 +107,32 @@
                     <div class="font-mono font-medium text-gray-900 dark:text-slate-100">{{ $repair->voucher_no ?? '—' }}</div>
                 </div>
                 <div>
-                    <div class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.repair_estimated_completion') }}</div>
-                    <div class="font-medium text-gray-900 dark:text-slate-100">{{ $repair->estimated_completion?->format('M d, Y') ?? '—' }}</div>
-                </div>
-                <div>
                     <div class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.repair_technician') }}</div>
                     <div class="font-medium text-gray-900 dark:text-slate-100">{{ $repair->technician?->name ?? __('messages.repair_unassigned') }}</div>
                 </div>
+                <div>
+                    <div class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.repair_estimated_completion') }}</div>
+                    <div class="font-medium text-gray-900 dark:text-slate-100">{{ $repair->estimated_completion?->format('M d, Y') ?? '—' }}</div>
+                </div>
             </div>
+
+            @if ($repair->pattern_lock || $repair->device_password)
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700 grid grid-cols-2 gap-3 text-xs">
+                    @if ($repair->pattern_lock)
+                        <div>
+                            <span class="text-slate-400 block mb-0.5">🔒 Pattern Lock:</span>
+                            <span class="font-mono font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950 px-2 py-0.5 rounded">{{ str_replace('-', ' → ', $repair->pattern_lock) }}</span>
+                        </div>
+                    @endif
+                    @if ($repair->device_password)
+                        <div>
+                            <span class="text-slate-400 block mb-0.5">🔑 Password / PIN:</span>
+                            <span class="font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded">{{ $repair->device_password }}</span>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
             <div class="pt-2 border-t dark:border-slate-700 space-y-2 text-sm">
                 <div>
                     <div class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.repair_reported_problem') }}</div>

@@ -230,9 +230,7 @@ class AdminSidebarNavigationUXTest extends TestCase
             'pos.index',
             'pos.closing.index',
             'pos.purchases.index',
-            'pos.opening-stock.index',
             'pos.adjustments.index',
-            'pos.reconciliation.index',
             'pos.reports.sales',
             'store.admin.backups.index',
         ] as $routeName) {

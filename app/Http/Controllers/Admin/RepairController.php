@@ -12,6 +12,7 @@ use App\POS\Models\ServiceJob;
 use App\POS\Models\ServiceJobItem;
 use App\POS\Models\ServiceJobPayment;
 use App\POS\Models\ServiceJobStatus;
+use App\POS\Models\ServiceSetting;
 use App\POS\Services\InventoryService;
 use App\Services\StoreContext;
 use Illuminate\Database\Eloquent\Builder;
@@ -108,6 +109,7 @@ class RepairController extends Controller
                 'Line Items',
             ]);
 
+            /** @var ServiceJob $job */
             foreach ($jobs as $job) {
                 $items = $job->items
                     ->map(fn ($item) => $item->name . ' ×' . $item->quantity . ' (' . $item->item_type . ')')
@@ -140,10 +142,10 @@ class RepairController extends Controller
         $store = $context->getStore();
         $storeRouteParams = $context->getRouteParams();
 
-        [$customers, $technicians, $products] = $this->createFormData($store);
+        [$customers, $technicians, $products, $serviceSettings] = $this->createFormData($store);
 
         return view('admin.repairs.create', compact(
-            'store', 'storeRouteParams', 'customers', 'technicians', 'products'
+            'store', 'storeRouteParams', 'customers', 'technicians', 'products', 'serviceSettings'
         ));
     }
 
@@ -161,7 +163,12 @@ class RepairController extends Controller
             ]);
         }
 
-        $job = DB::transaction(function () use ($store, $validated, $items): ServiceJob {
+        $job = DB::transaction(function () use ($store, $validated, $items, $request): ServiceJob {
+            $deviceType = !empty($validated['device_type']) ? $validated['device_type'] : (!empty($validated['category']) ? $validated['category'] : (!empty($validated['brand']) ? $validated['brand'] : 'Smartphone'));
+            $reportedProblem = !empty($validated['reported_problem']) ? $validated['reported_problem'] : 'Repair Service';
+            $initialStatus = !empty($validated['status']) ? $validated['status'] : 'received';
+            $creatorId = Auth::id() ?? $request->user()?->id ?? $store->users()->value('users.id');
+
             $job = ServiceJob::create([
                 'store_id' => $store->id,
                 'job_number' => ServiceJob::generateNumber($store->id),
@@ -169,29 +176,48 @@ class RepairController extends Controller
                 'customer_id' => $validated['customer_id'] ?? null,
                 'contact_name' => $validated['contact_name'] ?? null,
                 'contact_phone' => $validated['contact_phone'] ?? null,
-                'device_type' => $validated['device_type'],
+                'shipping_address' => $validated['shipping_address'] ?? null,
+                'device_type' => $deviceType,
+                'brand' => $validated['brand'] ?? null,
+                'category' => $validated['category'] ?? null,
                 'model' => $validated['model'] ?? null,
+                'color' => $validated['color'] ?? null,
+                'storage' => $validated['storage'] ?? null,
                 'imei_serial' => $validated['imei_serial'] ?? null,
-                'reported_problem' => $validated['reported_problem'],
+                'reported_problem' => $reportedProblem,
                 'intake_condition' => $validated['intake_condition'] ?? null,
                 'accessories' => $validated['accessories'] ?? null,
+                'pattern_lock' => $validated['pattern_lock'] ?? null,
+                'device_password' => $validated['device_password'] ?? null,
                 'technician_id' => $validated['technician_id'] ?? null,
-                'status' => 'received',
+                'status' => $initialStatus,
                 'estimated_charge' => $validated['estimated_charge'] ?? 0,
                 'notes' => $validated['notes'] ?? null,
                 'warranty_notes' => $validated['warranty_notes'] ?? null,
                 'estimated_completion' => $validated['estimated_completion'] ?? null,
-                'created_by' => Auth::id(),
+                'created_by' => $creatorId,
             ]);
 
             $job->items()->createMany($items);
 
             ServiceJobStatus::create([
                 'service_job_id' => $job->id,
-                'status' => 'received',
-                'note' => 'Device received',
-                'changed_by' => Auth::id(),
+                'status' => $initialStatus,
+                'note' => 'Device ticket created',
+                'changed_by' => $creatorId,
             ]);
+
+            // Handle Advance Payment if provided
+            $advance = (float) ($validated['advance_payment'] ?? 0);
+            if ($advance > 0) {
+                ServiceJobPayment::create([
+                    'service_job_id' => $job->id,
+                    'method' => $validated['payment_method'] ?? 'cash',
+                    'amount' => $advance,
+                    'reference' => 'Advance payment on ticket intake',
+                    'created_by' => $creatorId,
+                ]);
+            }
 
             return $job;
         });
@@ -244,7 +270,7 @@ class RepairController extends Controller
         }
 
         $repair->load('items');
-        [$customers, $technicians, $products] = $this->createFormData($store);
+        [$customers, $technicians, $products, $serviceSettings] = $this->createFormData($store);
 
         return view('admin.repairs.edit', [
             'store' => $store,
@@ -253,6 +279,7 @@ class RepairController extends Controller
             'customers' => $customers,
             'technicians' => $technicians,
             'products' => $products,
+            'serviceSettings' => $serviceSettings,
         ]);
     }
 
@@ -526,10 +553,13 @@ class RepairController extends Controller
         // Store products for the spare-part picker (parts & services line items).
         $products = Product::where('store_id', $store->id)
             ->where('is_active', true)
+            ->with(['category.parent', 'brand'])
             ->orderBy('name')
-            ->get(['id', 'name', 'sku', 'retail_price']);
+            ->get(['id', 'store_id', 'category_id', 'brand_id', 'name', 'sku', 'retail_price']);
 
-        return [$customers, $technicians, $products];
+        $serviceSettings = ServiceSetting::allGroupedFor($store->id);
+
+        return [$customers, $technicians, $products, $serviceSettings];
     }
 
     private function validateJob(Request $request, Store $store): array
@@ -552,15 +582,25 @@ class RepairController extends Controller
             ],
             'contact_name' => 'nullable|string|max:120',
             'contact_phone' => 'nullable|string|max:40',
-            'device_type' => 'required|string|max:60',
+            'shipping_address' => 'nullable|string|max:1000',
+            'device_type' => 'nullable|string|max:120',
+            'brand' => 'nullable|string|max:120',
+            'category' => 'nullable|string|max:120',
             'model' => 'nullable|string|max:120',
+            'color' => 'nullable|string|max:60',
+            'storage' => 'nullable|string|max:60',
             'imei_serial' => 'nullable|string|max:60',
-            'reported_problem' => 'required|string|max:1000',
+            'reported_problem' => 'nullable|string|max:1000',
             'intake_condition' => 'nullable|string|max:1000',
             'accessories' => 'nullable|string|max:500',
+            'pattern_lock' => 'nullable|string|max:255',
+            'device_password' => 'nullable|string|max:120',
+            'status' => 'nullable|string|max:32',
             'diagnosis' => 'nullable|string|max:1000',
             'estimated_charge' => 'nullable|numeric|min:0',
             'final_charge' => 'nullable|numeric|min:0',
+            'advance_payment' => 'nullable|numeric|min:0',
+            'payment_method' => 'nullable|string|max:30',
             'voucher_no' => 'nullable|string|max:40',
             'notes' => 'nullable|string|max:1000',
             'warranty_notes' => 'nullable|string|max:1000',
