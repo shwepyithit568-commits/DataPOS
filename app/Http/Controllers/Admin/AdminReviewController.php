@@ -17,6 +17,14 @@ class AdminReviewController extends Controller
 
         $query = Review::where('store_id', $store->id)->with(['product']);
 
+        if ($search = trim((string) $request->input('search', $request->input('q', '')))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('reviewer_name', 'like', "%{$search}%")
+                    ->orWhere('comment', 'like', "%{$search}%")
+                    ->orWhereHas('product', fn ($pq) => $pq->where('name', 'like', "%{$search}%"));
+            });
+        }
+
         if ($request->filled('status')) {
             if ($request->status === 'pending') {
                 $query->where('is_approved', false);
@@ -41,7 +49,7 @@ class AdminReviewController extends Controller
 
         $pendingCount = Review::where('store_id', $store->id)->where('is_approved', false)->count();
 
-        return view('admin.reviews.index', compact('store', 'reviews', 'pendingCount'));
+        return view('admin.reviews.index', compact('store', 'reviews', 'pendingCount', 'search', 'sort'));
     }
 
     public function toggleApprove(string $store_slug, Review $review, StoreContext $context): RedirectResponse

@@ -471,7 +471,7 @@ class ProductDetailTabsAndSpecsTest extends TestCase
         $this->assertSame('SPEC-001', $rows[1][0]);
         $this->assertSame('Redmi', $rows[1][4]);
         $this->assertSame('in_stock', $rows[1][10]);
-        $this->assertSame('ပစ္စည်းရှိ', $rows[1][11]);
+        $this->assertSame(__('messages.in_stock'), $rows[1][11]);
         $this->assertSame('1 Month Warranty', $rows[1][12]);
         // Raw description kept for round-trip (script included), sanitized
         // copy for staff review (script stripped, safe HTML kept).

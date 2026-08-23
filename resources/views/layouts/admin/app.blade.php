@@ -555,7 +555,12 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'service-jobs'])" :label="__('messages.sidebar_service_jobs')" />
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'spare-parts'])" :label="__('messages.sidebar_spare_parts')" />
+                    @php $isSpareParts = request()->is('store/*/admin/spare-parts*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.spare_parts.index', $storeRouteParams)" route-name="store.admin.spare_parts.index" :active="$isSpareParts" :label="__('messages.sidebar_spare_parts')">
+                        <x-slot:icon>
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
                     @php $isServiceSettings = request()->is('store/*/admin/service-settings*'); @endphp
                     <x-admin.nav-link :href="route('store.admin.service_settings.index', $storeRouteParams)" route-name="store.admin.service_settings.index" :active="$isServiceSettings" :label="__('messages.sidebar_service_settings')">
                         <x-slot:icon>

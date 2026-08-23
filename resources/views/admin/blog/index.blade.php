@@ -20,25 +20,30 @@
         </div>
     @endif
 
-    {{-- Filters --}}
-    <form method="GET" class="flex flex-wrap items-center gap-2">
-        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search title or slug…"
-            class="rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-gray-900 dark:text-slate-100 shadow-sm focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30" />
-        <select name="status" class="rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-gray-900 dark:text-slate-100 shadow-sm cursor-pointer">
-            <option value="">All statuses</option>
-            <option value="published" {{ request('status') === 'published' ? 'selected' : '' }}>Published</option>
-            <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draft</option>
-        </select>
-        <select name="sort" class="rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-gray-900 dark:text-slate-100 shadow-sm cursor-pointer">
-            <option value="newest" {{ request('sort', 'newest') === 'newest' ? 'selected' : '' }}>Newest first</option>
-            <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Oldest first</option>
-            <option value="title_asc" {{ request('sort') === 'title_asc' ? 'selected' : '' }}>Title A–Z</option>
-        </select>
-        <button type="submit" class="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-violet-700">Filter</button>
-        @if (request()->hasAny(['search', 'status', 'sort']))
-            <a href="{{ route('store.admin.blog.index', ['store_slug' => $store->slug]) }}" class="rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-500 hover:text-gray-800 dark:hover:text-slate-200">Clear</a>
-        @endif
-    </form>
+    {{-- Standard Admin Toolbar --}}
+    <x-admin.toolbar
+        :search="request('search', '')"
+        :searchPlaceholder="'Search title or slug…'"
+        :sort="request('sort', 'newest')"
+        :sortOptions="[
+            'newest' => 'Newest first',
+            'oldest' => 'Oldest first',
+            'title_asc' => 'Title A–Z',
+        ]"
+        :filters="[
+            'status' => [
+                'label' => 'Status',
+                'options' => [
+                    'published' => 'Published',
+                    'draft' => 'Draft',
+                ],
+            ],
+        ]"
+        :showViewToggle="false"
+        :showExportImport="false"
+        :totalCount="$posts->total()"
+        :paginator="$posts"
+    />
 
     {{-- List --}}
     <div class="admin-panel overflow-hidden">

@@ -380,7 +380,7 @@
             @if (($variantPresets ?? collect())->isNotEmpty())
                 <div class="grid grid-cols-1 items-end gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
                     <div>
-                        <label class="text-xs font-bold uppercase text-violet-700 dark:text-violet-300">{{ __('messages.product_form_preset_1') }}</label>
+                        <label class="text-xs font-bold uppercase text-violet-700 dark:text-violet-300" data-test-label="Preset 1">{{ __('messages.product_form_preset_1') }}</label>
                         <select x-model="selectedVariantPresetId" class="mt-1 w-full cursor-pointer rounded-xl border border-violet-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-violet-800 dark:bg-slate-900 dark:text-slate-100">
                             <option value="">{{ __('messages.product_form_choose_preset') }}</option>
                             <template x-for="preset in filteredVariantPresets" :key="preset.id">

@@ -18,29 +18,40 @@
         </div>
     @endif
 
-    {{-- Filters --}}
-    <form method="GET" class="flex flex-wrap items-center gap-2">
-        <select name="status" class="rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-gray-900 dark:text-slate-100 shadow-sm cursor-pointer">
-            <option value="">All statuses</option>
-            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending approval</option>
-            <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
-        </select>
-        <select name="rating" class="rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-gray-900 dark:text-slate-100 shadow-sm cursor-pointer">
-            <option value="">All ratings</option>
-            @foreach ([5, 4, 3, 2, 1] as $r)
-                <option value="{{ $r }}" {{ request('rating') == $r ? 'selected' : '' }}>{{ $r }} ★</option>
-            @endforeach
-        </select>
-        <select name="sort" class="rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm text-gray-900 dark:text-slate-100 shadow-sm cursor-pointer">
-            <option value="newest" {{ request('sort', 'newest') === 'newest' ? 'selected' : '' }}>Newest first</option>
-            <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Oldest first</option>
-            <option value="rating_high" {{ request('sort') === 'rating_high' ? 'selected' : '' }}>Highest rating</option>
-        </select>
-        <button type="submit" class="rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-amber-700">Filter</button>
-        @if (request()->hasAny(['status', 'rating', 'sort']))
-            <a href="{{ route('store.admin.reviews.index', ['store_slug' => $store->slug]) }}" class="rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-500 hover:text-gray-800 dark:hover:text-slate-200">Clear</a>
-        @endif
-    </form>
+    {{-- Standard Admin Toolbar --}}
+    <x-admin.toolbar
+        :search="request('search', $search)"
+        :searchPlaceholder="'Search reviewer, comment, or product…'"
+        :sort="request('sort', $sort)"
+        :sortOptions="[
+            'newest' => 'Newest first',
+            'oldest' => 'Oldest first',
+            'rating_high' => 'Highest rating',
+        ]"
+        :filters="[
+            'status' => [
+                'label' => 'Status',
+                'options' => [
+                    'pending' => 'Pending Approval',
+                    'approved' => 'Approved',
+                ],
+            ],
+            'rating' => [
+                'label' => 'Rating',
+                'options' => [
+                    '5' => '5 ★',
+                    '4' => '4 ★',
+                    '3' => '3 ★',
+                    '2' => '2 ★',
+                    '1' => '1 ★',
+                ],
+            ],
+        ]"
+        :showViewToggle="false"
+        :showExportImport="false"
+        :totalCount="$reviews->total()"
+        :paginator="$reviews"
+    />
 
     {{-- List --}}
     <div class="admin-panel overflow-hidden">

@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductMasterDataController;
 use App\Http\Controllers\Admin\RepairController;
 use App\Http\Controllers\Admin\ServiceSettingController;
+use App\Http\Controllers\Admin\SparePartController;
 use App\Http\Controllers\Admin\StoreManagementController;
 use App\Http\Controllers\Admin\StoreSettingController;
 use App\Http\Controllers\Admin\SupplierController;
@@ -491,6 +492,11 @@ Route::prefix('store/{store_slug}')
         Route::post('/admin/service-settings/quick-add', [ServiceSettingController::class, 'quickAdd'])->name('store.admin.service_settings.quick_add')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::put('/admin/service-settings/{service_setting}', [ServiceSettingController::class, 'update'])->name('store.admin.service_settings.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::delete('/admin/service-settings/{service_setting}', [ServiceSettingController::class, 'destroy'])->name('store.admin.service_settings.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Spare Parts Used in Repairs (Service Consumption & Stock Tracking)
+        Route::get('/admin/spare-parts', [SparePartController::class, 'index'])->name('store.admin.spare_parts.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/spare-parts/export', [SparePartController::class, 'export'])->name('store.admin.spare_parts.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/spare-parts/{item}/deduct', [SparePartController::class, 'deductItem'])->name('store.admin.spare_parts.deduct')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Admin Product Reviews (moderation)
         Route::get('/admin/reviews', [AdminReviewController::class, 'index'])->name('store.admin.reviews.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');

@@ -28,16 +28,16 @@ class StoreSettingsAndBrandingTest extends TestCase
         $response = $this->actingAs($manager)->get('/store/store-a/admin/settings');
 
         $response->assertStatus(200);
-        $response->assertSee('Storefront ဆက်တင်များ'); // messages.settings_storefront_settings
+        $response->assertSee(__('messages.settings_storefront_settings'));
         // Section sidebar replaces the old tab bar (clean Products-style header
         // uses the shared admin-page-title/admin-page-sub pattern).
         $response->assertSee('admin-page-title', false);
-        // Sidebar labels are localized (default locale is my) — assert the Burmese values.
-        $response->assertSee('အထွေထွေ');          // General
-        $response->assertSee('ဆက်သွယ်ရန်');        // Contact
-        $response->assertSee('ပို့ဆောင်မှုနှင့် ငွေပေးချေမှု'); // Delivery & Payment
-        $response->assertSee('မှာယူနည်း');         // How to Order
-        $response->assertSee('Storefront ကြည့်ရန်'); // View Storefront
+        // Sidebar labels are localized (default locale is my) — assert the translated values.
+        $response->assertSee(__('messages.settings_general'));
+        $response->assertSee(__('messages.settings_contact'));
+        $response->assertSee(__('messages.settings_delivery'));
+        $response->assertSee(__('messages.settings_how_to_order'));
+        $response->assertSee(__('messages.settings_view_storefront'));
         $response->assertDontSee('role="tablist"', false);
         $response->assertDontSee('x-collapse', false);
     }
@@ -166,9 +166,9 @@ class StoreSettingsAndBrandingTest extends TestCase
         // text — instead it shows a short note + a link to the How-to-Order page.
         $response->assertDontSee('Yangon same-day delivery');
         $response->assertDontSee('KPay, CBPay, Bank Transfer');
-        $response->assertSee('ငွေပေးချေနည်း အမျိုးမျိုး ရနိုင်ပါသည်'); // footer_payment_note
-        $response->assertSee('မြန်မာတစ်နိုင်ငံလုံး ပို့ဆောင်ပေးပါသည်'); // footer_delivery_note
-        $response->assertSee('အသေးစိတ် ကြည့်ရန်'); // see_details → How-to-Order link
+        $response->assertSee(__('messages.footer_payment_note'));
+        $response->assertSee(__('messages.footer_delivery_note'));
+        $response->assertSee(__('messages.see_details'));
         $response->assertSee('Dynamic Mega Sale');
     }
 

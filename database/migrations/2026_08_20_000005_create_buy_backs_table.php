@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('store_id')->constrained()->cascadeOnDelete();
             $table->string('buyback_number', 32); // BB-YYYYMMDD-####
-            $table->foreignId('customer_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('customer_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('pos_sale_id')->nullable()->constrained('pos_sales')->nullOnDelete();
             $table->decimal('total_value', 14, 4)->default(0);
             $table->decimal('refund_amount', 14, 4)->default(0);

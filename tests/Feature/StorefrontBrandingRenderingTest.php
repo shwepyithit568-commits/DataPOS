@@ -48,7 +48,7 @@ class StorefrontBrandingRenderingTest extends TestCase
         $response = $this->get('/?store_slug=' . $store->slug);
 
         $response->assertOk();
-        $response->assertSee('မိုဘိုင်း အီကောမတ်စ်');
+        $response->assertSee(__('messages.default_tagline'));
         $response->assertDontSee('Genuine Mobile Accessories');
     }
 

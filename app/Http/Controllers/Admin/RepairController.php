@@ -410,6 +410,7 @@ class RepairController extends Controller
                     'source_type' => 'service_job',
                     'source_id' => $repair->id,
                     'client_transaction_id' => "service-job-{$repair->id}-item-{$item->id}",
+                    'occurred_at' => now(),
                     'posted_by' => Auth::id(),
                     'metadata' => [
                         'service_job_item_id' => $item->id,
