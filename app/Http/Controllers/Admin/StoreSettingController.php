@@ -27,7 +27,7 @@ class StoreSettingController extends Controller
      *   footer        — combined live preview of the storefront footer (read-only)
      *   pos           — POS behaviour (held-sale auto-expiry window)
      */
-    private const SECTIONS = ['general', 'contact', 'delivery', 'how-to-order', 'footer', 'pos'];
+    private const SECTIONS = ['general', 'appearance', 'contact', 'delivery', 'how-to-order', 'footer', 'pos'];
 
     public function edit(Request $request, StoreContext $context): View
     {
@@ -49,6 +49,15 @@ class StoreSettingController extends Controller
         $section = $request->input('section', 'general');
 
         $validated = match ($section) {
+            'appearance' => $request->validate([
+                'theme_preset'        => ['nullable', 'string', Rule::in(array_keys(\App\Models\StorefrontSetting::THEME_PRESETS))],
+                'theme_primary_color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+                'theme_accent_color'  => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+                'theme_header_bg'     => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+                'theme_body_bg'       => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+                'theme_glow_style'    => ['nullable', 'string', Rule::in(['vivid', 'subtle', 'none'])],
+                'theme_dark_mode'     => ['nullable', 'string', Rule::in(['auto', 'light', 'dark'])],
+            ]),
             'contact' => $request->validate([
                 'phone' => ['nullable', 'string', 'max:50'],
                 'viber_number' => ['nullable', 'string', 'max:50'],

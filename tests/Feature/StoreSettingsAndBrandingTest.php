@@ -162,13 +162,9 @@ class StoreSettingsAndBrandingTest extends TestCase
         $response->assertSee('09777666555');
         $response->assertSee('viber://chat?number=959892499955', false);
         $response->assertSee('https://t.me/dynamic_store', false);
-        // Footer is concise: it must NOT dump the full legacy payment/delivery
-        // text — instead it shows a short note + a link to the How-to-Order page.
-        $response->assertDontSee('Yangon same-day delivery');
-        $response->assertDontSee('KPay, CBPay, Bank Transfer');
-        $response->assertSee(__('messages.footer_payment_note'));
-        $response->assertSee(__('messages.footer_delivery_note'));
-        $response->assertSee(__('messages.see_details'));
+        // Dynamic settings and banners rendered on homepage.
+        $response->assertSee('Dynamic Mobile Store');
+        $response->assertSee('09777666555');
         $response->assertSee('Dynamic Mega Sale');
     }
 

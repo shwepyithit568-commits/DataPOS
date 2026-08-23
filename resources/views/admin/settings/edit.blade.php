@@ -8,16 +8,18 @@
 
     $settingsBase = url('/store/' . $store->slug . '/admin/settings');
     $sections = [
-        'general'      => ['label' => __('messages.settings_general'),        'icon' => 'general',  'url' => $settingsBase],
-        'contact'      => ['label' => __('messages.settings_contact'),        'icon' => 'contact',  'url' => $settingsBase . '/contact'],
-        'delivery'     => ['label' => __('messages.settings_delivery'),       'icon' => 'delivery', 'url' => $settingsBase . '/delivery'],
-        'how-to-order' => ['label' => __('messages.settings_how_to_order'),   'icon' => 'guide',    'url' => $settingsBase . '/how-to-order'],
-        'footer'       => ['label' => __('messages.settings_footer'),         'icon' => 'footer',   'url' => $settingsBase . '/footer'],
-        'pos'          => ['label' => __('messages.settings_pos'),            'icon' => 'pos',      'url' => $settingsBase . '/pos'],
+        'general'      => ['label' => __('messages.settings_general'),        'icon' => 'general',     'url' => $settingsBase],
+        'appearance'   => ['label' => __('messages.settings_appearance'),      'icon' => 'appearance',  'url' => $settingsBase . '/appearance'],
+        'contact'      => ['label' => __('messages.settings_contact'),         'icon' => 'contact',     'url' => $settingsBase . '/contact'],
+        'delivery'     => ['label' => __('messages.settings_delivery'),        'icon' => 'delivery',    'url' => $settingsBase . '/delivery'],
+        'how-to-order' => ['label' => __('messages.settings_how_to_order'),    'icon' => 'guide',       'url' => $settingsBase . '/how-to-order'],
+        'footer'       => ['label' => __('messages.settings_footer'),          'icon' => 'footer',      'url' => $settingsBase . '/footer'],
+        'pos'          => ['label' => __('messages.settings_pos'),             'icon' => 'pos',         'url' => $settingsBase . '/pos'],
     ];
 
     $sectionTitles = [
         'general'      => __('messages.settings_store_identity'),
+        'appearance'   => __('messages.settings_appearance'),
         'contact'      => __('messages.settings_contact_social'),
         'delivery'     => __('messages.settings_delivery'),
         'how-to-order' => __('messages.settings_how_to_order_page'),
@@ -30,6 +32,7 @@
 
     $sectionDescs = [
         'general'      => $store->name . ' ၏ storefront header, title နှင့် default language အတွက်အချက်အလက်များ။',
+        'appearance'   => 'Storefront ၏ Brand Color, Button Color, Header Background တို့ကို ထိန်းချုပ်ပါ — preset palette ဒါမှမဟုတ် custom HEX color ရွေးချယ်နိုင်ပါသည်။',
         'contact'      => 'Storefront footer နှင့် order confirmation တွင်ပြမည့် phone, Viber, Telegram, social media data များ။',
         'delivery'     => 'Storefront footer တွင်ပြမည့် delivery area, payment method, ကြော်ညာ စာသားများ။',
         'how-to-order' => 'Storefront ရဲ့ "မှာယူနည်း" စာမျက်နှာမှာ ပြမည့် မိတ်ဆက်စာသား၊ အဆင့်တွေနဲ့ ဗီဒီယိုလင့်များ။',
@@ -77,6 +80,9 @@
                         class="flex min-w-max items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-bold transition lg:min-w-0 {{ $section === $key ? 'bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800' }}">
                         <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg {{ $section === $key ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' }}" aria-hidden="true">
                             @switch($sec['icon'])
+                                @case('appearance')
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                                    @break
                                 @case('contact')
                                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.5 5.5 9 8l-1.5 2a10 10 0 0 0 6.5 6.5l2-1.5 2.5 2.5-1.5 3A16 16 0 0 1 3.5 7l3-1.5Z"/></svg>
                                     @break

@@ -1,25 +1,80 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{
-    darkMode: localStorage.getItem('darkMode') === 'true',
-    mobileMenuOpen: false,
-    swipeStartX: 0,
-    swipeStartY: 0,
-    onSwipeStart(e) {
-        this.swipeStartX = e.touches[0].clientX;
-        this.swipeStartY = e.touches[0].clientY;
-    },
-    onSwipeEnd(e) {
-        const dx = e.changedTouches[0].clientX - this.swipeStartX;
-        const dy = e.changedTouches[0].clientY - this.swipeStartY;
-        if (Math.abs(dx) < 60 || Math.abs(dx) <= Math.abs(dy)) return;
-        if (!this.mobileMenuOpen && this.swipeStartX <= 32 && dx > 0) {
-            this.mobileMenuOpen = true;
-        } else if (this.mobileMenuOpen && dx < 0) {
-            this.mobileMenuOpen = false;
-        }
+@php
+    $cspNonce = $cspNonce ?? \Illuminate\Support\Facades\View::getShared()['cspNonce'] ?? '';
+    $activeStoreContext = app(\App\Services\StoreContext::class)->getStore();
+    $activeStoreSlug    = request('store_slug') ?? $activeStoreContext?->slug;
+    $setting            = $activeStoreContext?->setting ?? $setting ?? null;
+    $storeDisplayName   = $setting?->store_name ?? $activeStoreContext?->name ?? config('app.name');
+    $sfColors           = $setting?->themeColors() ?? ['primary' => '#0ea5e9', 'accent' => '#7c3aed', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'vivid', 'dark_mode' => 'auto'];
+    $sfDarkMode         = $sfColors['dark_mode'] ?? 'auto';
+
+    // Check luminance of header background to automatically ensure high-contrast text & icons
+    $isDarkHeader = false;
+    if (!empty($sfColors['header_bg']) && strlen($sfColors['header_bg']) === 7) {
+        $r = hexdec(substr($sfColors['header_bg'], 1, 2));
+        $g = hexdec(substr($sfColors['header_bg'], 3, 2));
+        $b = hexdec(substr($sfColors['header_bg'], 5, 2));
+        $lum = (0.299 * $r + 0.587 * $g + 0.114 * $b) / 255;
+        $isDarkHeader = ($lum < 0.55);
     }
-}" x-on:touchstart.window.passive="onSwipeStart($event)" x-on:touchend.window.passive="onSwipeEnd($event)" :class="{ 'dark': darkMode }">
+@endphp
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+      x-data="{
+          darkMode: document.documentElement.classList.contains('dark'),
+          toggleDarkMode() {
+              this.darkMode = !this.darkMode;
+              localStorage.setItem('darkMode', this.darkMode ? 'true' : 'false');
+              if (this.darkMode) {
+                  document.documentElement.classList.add('dark');
+              } else {
+                  document.documentElement.classList.remove('dark');
+              }
+          },
+          mobileMenuOpen: false,
+          swipeStartX: 0,
+          swipeStartY: 0,
+          onSwipeStart(e) {
+              this.swipeStartX = e.touches[0].clientX;
+              this.swipeStartY = e.touches[0].clientY;
+          },
+          onSwipeEnd(e) {
+              const dx = e.changedTouches[0].clientX - this.swipeStartX;
+              const dy = e.changedTouches[0].clientY - this.swipeStartY;
+              if (Math.abs(dx) < 60 || Math.abs(dx) <= Math.abs(dy)) return;
+              if (!this.mobileMenuOpen && this.swipeStartX <= 32 && dx > 0) {
+                  this.mobileMenuOpen = true;
+              } else if (this.mobileMenuOpen && dx < 0) {
+                  this.mobileMenuOpen = false;
+              }
+          }
+      }"
+      x-on:touchstart.window.passive="onSwipeStart($event)"
+      x-on:touchend.window.passive="onSwipeEnd($event)"
+      :class="{ 'dark': darkMode }">
 <head>
+    <script nonce="{{ $cspNonce }}">
+    (function() {
+        var mode = {!! json_encode($sfDarkMode) !!};
+        var isDark = false;
+        if (mode === 'dark') {
+            isDark = true;
+        } else if (mode === 'light') {
+            isDark = false;
+        } else {
+            var saved = localStorage.getItem('darkMode');
+            if (saved !== null) {
+                isDark = (saved === 'true');
+            } else {
+                isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+        }
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    })();
+    </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -90,27 +145,142 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     {{-- VAPID public key for the browser Push API subscription (Web Push) --}}
     <meta name="vapid-public-key" content="{{ config('webpush.vapid.public_key') }}">
-</head>
-@php
-    $activeStoreContext = app(\App\Services\StoreContext::class)->getStore();
-    $activeStoreSlug = request('store_slug') ?? $activeStoreContext?->slug;
-    $setting = $activeStoreContext?->setting ?? $setting ?? null;
-    $storeDisplayName = $setting?->store_name ?? $activeStoreContext?->name ?? config('app.name');
+    @php
+        $sfGlowStyle = $sfColors['glow_style'] ?? 'vivid';
+        $glowLightOp = $sfGlowStyle === 'subtle' ? '0.07' : ($sfGlowStyle === 'none' ? '0' : '0.20');
+        $glowDarkOp  = $sfGlowStyle === 'subtle' ? '0.09' : ($sfGlowStyle === 'none' ? '0' : '0.25');
+    @endphp
+    <style>
+        :root {
+            --sf-primary:        {{ $sfColors['primary'] }};
+            --sf-accent:         {{ $sfColors['accent'] }};
+            --sf-header-bg:      {{ $sfColors['header_bg'] }};
+            --sf-header-bg-dark: color-mix(in srgb, {{ $sfColors['primary'] }} 15%, #0f172a);
+            /* Theme-adapted page body backgrounds */
+            --sf-body-bg:        {{ $sfColors['body_bg'] ?? '#f8fafc' }};
+            --sf-body-bg-dark:   color-mix(in srgb, {{ $sfColors['primary'] }} 8%, #0b0f19);
+            /* Ambient Glow Effect controls */
+            --sf-glow-display:   {{ $sfGlowStyle === 'none' ? 'none' : 'block' }};
+            --sf-glow-opacity:   {{ $glowLightOp }};
+        }
 
-    $homeUrl = $activeStoreSlug ? url('/?store_slug=' . $activeStoreSlug) : url('/');
-    $productsUrl = $activeStoreSlug ? url('/products?store_slug=' . $activeStoreSlug) : url('/products');
-    $glassFinderUrl = $activeStoreSlug ? url('/glass-finder?store_slug=' . $activeStoreSlug) : url('/glass-finder');
-    $browseUrl = $activeStoreSlug ? url('/browse?store_slug=' . $activeStoreSlug) : url('/browse');
-    $orderBuilderUrl = $activeStoreSlug ? url('/order-builder?store_slug=' . $activeStoreSlug) : url('/order-builder');
-    $howToOrderUrl = $activeStoreSlug ? url('/how-to-order?store_slug=' . $activeStoreSlug) : url('/how-to-order');
-    $blogUrl = $activeStoreSlug ? url('/blog?store_slug=' . $activeStoreSlug) : url('/blog');
-    $accountUrl = $activeStoreSlug ? url('/account?store_slug=' . $activeStoreSlug) : url('/account');
-    $favoritesUrl = $activeStoreSlug ? url('/account/favorites?store_slug=' . $activeStoreSlug) : url('/account/favorites');
-    // Service Tracking — customer tracks job status without logging in.
+        .dark:root,
+        html.dark {
+            --sf-glow-opacity:   {{ $glowDarkOp }};
+        }
+
+        /* ── Dynamic Page Body Background ── */
+        body {
+            background-color: var(--sf-body-bg) !important;
+        }
+        .dark body,
+        html.dark body {
+            background-color: var(--sf-body-bg-dark) !important;
+        }
+
+        /* ── Dynamic Header Theme ── */
+        header,
+        header > div {
+            background-color: var(--sf-header-bg) !important;
+            transition: background-color 0.25s ease;
+        }
+        .dark header,
+        .dark header > div {
+            background-color: var(--sf-header-bg-dark) !important;
+        }
+
+        @if ($isDarkHeader)
+        /* High-contrast styling when Admin selects a dark header template (e.g. Midnight or Royal Violet) */
+        header a,
+        header button,
+        header span.font-outfit,
+        header div.text-slate-900,
+        header div.text-slate-700,
+        header div.text-slate-800 {
+            color: #ffffff !important;
+        }
+        header button.border-slate-200\/80,
+        header button.border-slate-300,
+        header a.border-slate-300,
+        header a.border-slate-200\/80 {
+            background-color: rgba(255, 255, 255, 0.12) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            color: #ffffff !important;
+        }
+        header button.border-slate-200\/80 svg,
+        header a.border-slate-300 svg {
+            color: #ffffff !important;
+        }
+        header form {
+            background-color: rgba(255, 255, 255, 0.15) !important;
+            border-color: rgba(255, 255, 255, 0.3) !important;
+        }
+        header form input {
+            color: #ffffff !important;
+        }
+        header form input::placeholder {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+        @endif
+
+        /* ── Primary Brand & Highlights (Buttons, Links, Active Pills, Badges) ── */
+        .text-sky-600,
+        .text-sky-500,
+        .hover\:text-sky-600:hover,
+        .dark .text-sky-400,
+        .dark .text-sky-300 {
+            color: var(--sf-primary) !important;
+        }
+
+        .border-sky-500,
+        .border-sky-600,
+        .focus\:ring-sky-500:focus,
+        .focus-within\:border-sky-500:focus-within {
+            border-color: var(--sf-primary) !important;
+        }
+
+        .bg-sky-500,
+        .bg-sky-600 {
+            background-color: var(--sf-primary) !important;
+        }
+
+        .bg-sky-50,
+        .bg-sky-100 {
+            background-color: color-mix(in srgb, var(--sf-primary) 12%, transparent) !important;
+        }
+
+        /* ── Accent Highlights (Search button, CTAs, Buy now, Badges) ── */
+        .bg-gradient-to-r.from-violet-600.to-fuchsia-500,
+        .bg-gradient-to-r.from-violet-600.to-sky-600,
+        button[type="submit"].bg-gradient-to-r,
+        .sf-btn-accent {
+            background: var(--sf-accent) !important;
+            color: #ffffff !important;
+        }
+
+        /* Standard custom classes */
+        .sf-btn-primary    { background-color: var(--sf-primary) !important; color: #ffffff !important; }
+        .sf-text-primary   { color: var(--sf-primary) !important; }
+        .sf-border-primary { border-color: var(--sf-primary) !important; }
+        .sf-bg-primary-tint { background-color: color-mix(in srgb, var(--sf-primary) 15%, transparent) !important; }
+    </style>
+</head>
+
+@php
+    $homeUrl            = $activeStoreSlug ? url('/?store_slug=' . $activeStoreSlug) : url('/');
+    $productsUrl        = $activeStoreSlug ? url('/products?store_slug=' . $activeStoreSlug) : url('/products');
+    $glassFinderUrl     = $activeStoreSlug ? url('/glass-finder?store_slug=' . $activeStoreSlug) : url('/glass-finder');
+    $browseUrl          = $activeStoreSlug ? url('/browse?store_slug=' . $activeStoreSlug) : url('/browse');
+    $orderBuilderUrl    = $activeStoreSlug ? url('/order-builder?store_slug=' . $activeStoreSlug) : url('/order-builder');
+    $howToOrderUrl      = $activeStoreSlug ? url('/how-to-order?store_slug=' . $activeStoreSlug) : url('/how-to-order');
+    $blogUrl            = $activeStoreSlug ? url('/blog?store_slug=' . $activeStoreSlug) : url('/blog');
+    $accountUrl         = $activeStoreSlug ? url('/account?store_slug=' . $activeStoreSlug) : url('/account');
+    $favoritesUrl       = $activeStoreSlug ? url('/account/favorites?store_slug=' . $activeStoreSlug) : url('/account/favorites');
     $serviceTrackingUrl = $activeStoreSlug ? url('/service-tracking?store_slug=' . $activeStoreSlug) : url('/service-tracking');
 
-    $isHome = request()->is('/') || request()->fullUrl() === $homeUrl;
-    $isProducts = request()->is('products*') || request()->is('store/*/product/*');
+    $isHome            = request()->is('/') || request()->fullUrl() === $homeUrl;
+    $isProducts        = request()->is('products*') || request()->is('store/*/product/*');
+
     $isGlassFinder = request()->is('glass-finder*');
     $isServiceTracking = request()->is('service-tracking*') || request()->is('store/*/track/service*');
     $isBrowse = request()->is('browse*');
@@ -167,14 +337,14 @@
 @endphp
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased min-h-screen relative selection:bg-sky-500 selection:text-white pb-[calc(env(safe-area-inset-bottom,0px)+6rem)] md:pb-8">
 
-    {{-- Background Liquid Glow Circles --}}
-    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div class="absolute -top-40 -left-40 w-96 h-96 bg-sky-500/20 dark:bg-sky-500/25 rounded-full blur-3xl"></div>
-        <div class="absolute top-1/3 -right-40 w-96 h-96 bg-purple-500/20 dark:bg-purple-500/25 rounded-full blur-3xl"></div>
-        <div class="absolute -bottom-40 left-1/3 w-96 h-96 bg-cyan-500/20 dark:bg-cyan-500/25 rounded-full blur-3xl"></div>
-        <div class="absolute top-10 left-1/2 -translate-x-1/2 w-72 h-72 bg-fuchsia-500/15 dark:bg-fuchsia-500/20 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-1/4 -left-24 w-72 h-72 bg-amber-400/15 dark:bg-amber-400/20 rounded-full blur-3xl"></div>
-        <div class="absolute top-1/2 right-10 w-64 h-64 bg-emerald-400/15 dark:bg-emerald-400/20 rounded-full blur-3xl"></div>
+    {{-- Background Liquid Glow Circles — dynamically tinted with active theme colors & controlled by glow_style --}}
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0" style="display: var(--sf-glow-display, block);">
+        <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full blur-3xl transition-opacity duration-300" style="background-color: var(--sf-primary); opacity: var(--sf-glow-opacity, 0.20);"></div>
+        <div class="absolute top-1/3 -right-40 w-96 h-96 rounded-full blur-3xl transition-opacity duration-300" style="background-color: var(--sf-accent); opacity: var(--sf-glow-opacity, 0.20);"></div>
+        <div class="absolute -bottom-40 left-1/3 w-96 h-96 rounded-full blur-3xl transition-opacity duration-300" style="background-color: var(--sf-primary); opacity: var(--sf-glow-opacity, 0.15);"></div>
+        <div class="absolute top-10 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full blur-3xl transition-opacity duration-300" style="background-color: var(--sf-accent); opacity: var(--sf-glow-opacity, 0.15);"></div>
+        <div class="absolute bottom-1/4 -left-24 w-72 h-72 rounded-full blur-3xl transition-opacity duration-300" style="background-color: var(--sf-primary); opacity: var(--sf-glow-opacity, 0.15);"></div>
+        <div class="absolute top-1/2 right-10 w-64 h-64 rounded-full blur-3xl transition-opacity duration-300" style="background-color: var(--sf-accent); opacity: var(--sf-glow-opacity, 0.15);"></div>
     </div>
 
     {{-- Top utility bar (tablet/desktop only — scrolls away; contact info + account) --}}
@@ -474,7 +644,7 @@
                 </a>
 
                 {{-- Dark Mode Toggle (compact icon — visible on all viewports) --}}
-                <button @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700/80 dark:bg-slate-800 dark:text-amber-400 dark:hover:bg-slate-700" title="{{ __('messages.theme_toggle') }}">
+                <button @click="toggleDarkMode()" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700/80 dark:bg-slate-800 dark:text-amber-400 dark:hover:bg-slate-700" title="{{ __('messages.theme_toggle') }}">
                     <svg x-show="!darkMode" class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.8A8.5 8.5 0 1111.2 3a6.5 6.5 0 009.8 9.8z" />
                     </svg>
@@ -505,167 +675,19 @@
             </div>
         </div>
 
-        {{-- Mobile search row: search bar + Categories shortcut (always visible below the header — Shopee/AliExpress style) --}}
-        <div class="lg:hidden border-t border-slate-200/60 dark:border-slate-800/60 bg-white/95 dark:bg-slate-900/95 px-1 sm:px-5 pb-2.5 pt-1.5"
+        {{-- Mobile search row: search bar + Always-Visible Categories Button (Shopee/AliExpress style) --}}
+        <div class="lg:hidden border-t border-slate-200/60 dark:border-slate-800/60 bg-white/95 dark:bg-slate-900/95 px-2 sm:px-4 py-2"
              x-data="searchSuggestions('{{ $activeStoreSlug }}', '{{ url('/products/suggestions') }}', { categories: '{{ __('messages.categories') }}', brands: '{{ __('messages.brands') }}', products: '{{ __('messages.products') }}', trending: '{{ __('messages.trending_searches') }}' })"
              @click.outside="open = false">
             <div class="flex items-center gap-1.5 sm:gap-2">
-                <form action="{{ url('/products') }}" method="GET" class="relative flex min-w-0 flex-1 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 h-11 text-xs shadow-sm transition focus-within:border-sky-500 focus-within:ring-1 focus-within:ring-sky-500/30 dark:border-slate-600 dark:bg-slate-800 sm:text-sm">
-                <input type="hidden" name="store_slug" value="{{ $activeStoreSlug }}">
-                <svg class="h-4 w-4 shrink-0 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-                <input type="text" name="search" x-model="query" @input="onInput()" @focus="onFocus()" @keydown="onKeydown($event)" x-ref="searchInput" autocomplete="off" placeholder="{{ __('messages.search_products') }}" class="w-full bg-transparent outline-none text-slate-700 placeholder:text-slate-500 dark:text-slate-200 dark:placeholder:text-slate-400" role="combobox" aria-expanded="open ? 'true' : 'false'" aria-autocomplete="list" aria-controls="mobile-search-suggestions" :aria-activedescendant="activeId() || undefined">
-                <button type="submit" class="shrink-0 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3.5 py-1.5 text-xs font-extrabold text-white shadow-sm transition active:scale-95">
-                    {{ __('messages.search') }}
-                </button>
-
-                {{-- Live search suggestions dropdown (categories · brands · products) --}}
-                <div
-                    id="mobile-search-suggestions"
-                    x-show="open"
-                    x-cloak
-                    x-transition:enter="transition ease-out duration-150"
-                    x-transition:enter-start="opacity-0 -translate-y-1"
-                    x-transition:enter-end="opacity-100 translate-y-0"
-                    x-transition:leave="transition ease-in duration-100"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
-                    class="absolute left-0 right-0 top-full z-50 mt-2 max-h-[70vh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-800"
-                    role="listbox"
-                >
-                    {{-- Trending searches (chips, shown before the user types) --}}
-                    <template x-if="query.trim().length === 0 && trending.length > 0">
-                        <div class="border-b border-slate-100 dark:border-slate-700/60">
-                            <x-search-section-header>
-                                <span x-text="labels.trending"></span>
-                            </x-search-section-header>
-                            <div class="flex flex-wrap gap-2 px-3 py-2.5" role="group" :aria-label="labels.trending">
-                                <template x-for="t in trending" :key="t.type + '-' + t.label">
-                                    <button
-                                        type="button"
-                                        @click="pickTrending(t)"
-                                        class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-600 active:scale-95 dark:border-slate-600 dark:bg-slate-700/60 dark:text-slate-200 dark:hover:border-sky-500/60 dark:hover:bg-slate-600 dark:hover:text-sky-300"
-                                    >
-                                        <span aria-hidden="true" x-text="t.type === 'category' ? '🗂️' : '🏷️'"></span>
-                                        <span class="max-w-[10rem] truncate" x-text="t.label"></span>
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-                    </template>
-
-                    {{-- Categories section --}}
-                    <template x-if="categories.length > 0">
-                        <div>
-                            <x-search-section-header>
-                                <span x-text="labels.categories"></span> (<span x-text="categories.length"></span>)
-                            </x-search-section-header>
-                            <template x-for="c in categories" :key="'c' + c.id">
-                                <a
-                                    :id="'sug-c-' + c.id"
-                                    :href="c.url"
-                                    @click="open = false"
-                                    @mouseenter="activeIndex = c._i"
-                                    :class="activeIndex === c._i ? 'bg-sky-50 dark:bg-slate-700' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'"
-                                    class="flex items-center gap-3 border-b border-slate-100 px-3 py-2.5 transition last:border-0 dark:border-slate-700/60"
-                                    role="option"
-                                    :aria-selected="activeIndex === c._i ? 'true' : 'false'"
-                                >
-                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base dark:bg-slate-700" aria-hidden="true">
-                                        <span x-text="c.icon || '🗂️'"></span>
-                                    </span>
-                                    <span class="min-w-0 flex-1">
-                                        <span class="block truncate text-xs font-bold text-slate-800 dark:text-slate-100" x-text="c.name"></span>
-                                        <span class="mt-0.5 block text-[11px] font-semibold text-slate-400 dark:text-slate-500">
-                                            <span x-text="c.count"></span> <span>{{ __('messages.products') }}</span>
-                                        </span>
-                                    </span>
-                                    <svg class="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                </a>
-                            </template>
-                        </div>
-                    </template>
-
-                    {{-- Brands section --}}
-                    <template x-if="brands.length > 0">
-                        <div>
-                            <x-search-section-header>
-                                <span x-text="labels.brands"></span> (<span x-text="brands.length"></span>)
-                            </x-search-section-header>
-                            <template x-for="b in brands" :key="'b' + b.id">
-                                <a
-                                    :id="'sug-b-' + b.id"
-                                    :href="b.url"
-                                    @click="open = false"
-                                    @mouseenter="activeIndex = b._i"
-                                    :class="activeIndex === b._i ? 'bg-sky-50 dark:bg-slate-700' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'"
-                                    class="flex items-center gap-3 border-b border-slate-100 px-3 py-2.5 transition last:border-0 dark:border-slate-700/60"
-                                    role="option"
-                                    :aria-selected="activeIndex === b._i ? 'true' : 'false'"
-                                >
-                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base dark:bg-slate-700" aria-hidden="true">🏷️</span>
-                                    <span class="min-w-0 flex-1">
-                                        <span class="block truncate text-xs font-bold text-slate-800 dark:text-slate-100" x-text="b.name"></span>
-                                        <span class="mt-0.5 block text-[11px] font-semibold text-slate-400 dark:text-slate-500">
-                                            <span x-text="b.count"></span> <span>{{ __('messages.products') }}</span>
-                                        </span>
-                                    </span>
-                                    <svg class="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                </a>
-                            </template>
-                        </div>
-                    </template>
-
-                    {{-- Products section --}}
-                    <template x-if="products.length > 0">
-                        <div>
-                            <x-search-section-header>
-                                <span x-text="labels.products"></span> (<span x-text="products.length"></span>)
-                            </x-search-section-header>
-                            <template x-for="p in products" :key="'p' + p.id">
-                                <a
-                                    :id="'sug-p-' + p.id"
-                                    :href="p.url"
-                                    @click="open = false"
-                                    @mouseenter="activeIndex = p._i"
-                                    :class="activeIndex === p._i ? 'bg-sky-50 dark:bg-slate-700' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'"
-                                    class="flex items-center gap-3 border-b border-slate-100 px-3 py-2.5 transition last:border-0 dark:border-slate-700/60"
-                                    role="option"
-                                    :aria-selected="activeIndex === p._i ? 'true' : 'false'"
-                                >
-                                    <img :src="p.image" alt="" loading="lazy" decoding="async" class="h-11 w-11 shrink-0 rounded-lg bg-slate-100 object-cover dark:bg-slate-700" x-show="p.image">
-                                    <span x-show="!p.image" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg dark:bg-slate-700" aria-hidden="true">📦</span>
-                                    <span class="min-w-0 flex-1">
-                                        <span class="block truncate text-xs font-bold text-slate-800 dark:text-slate-100" x-text="p.name"></span>
-                                        <span class="mt-0.5 block text-sm font-black text-rose-600 dark:text-rose-400">
-                                            <span x-text="p.price"></span>
-                                            <span x-show="p.old_price" class="ml-1.5 align-middle text-[11px] font-semibold text-slate-400 line-through dark:text-slate-500" x-text="p.old_price"></span>
-                                        </span>
-                                    </span>
-                                    <svg class="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                </a>
-                            </template>
-                        </div>
-                    </template>
-
-                    <div x-show="loading" class="px-4 py-3.5 text-center text-xs font-bold text-slate-400 dark:text-slate-500">
-                        <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-sky-500 border-t-transparent align-middle"></span>
-                        <span class="ml-1.5 align-middle">{{ __('messages.loading') }}</span>
-                    </div>
-                    <div x-show="!loading && !hasAny() && query.trim().length > 0" class="px-4 py-3.5 text-center text-xs font-bold text-slate-400 dark:text-slate-500">
-                        {{ __('messages.no_products_found') }}
-                    </div>
-                </div>
-                </form>
                 @if ($navCategories->count() > 0)
                     <a
                         href="{{ $browseUrl }}"
-                        class="shrink-0 inline-flex h-11 items-center justify-center gap-1 rounded-xl border border-slate-200/80 bg-white px-2 text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-sky-600 active:scale-95 {{ $isBrowse ? 'border-sky-400 ring-2 ring-sky-500/40 text-sky-600' : '' }} dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-sky-300"
+                        class="shrink-0 inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border {{ $isBrowse ? 'border-sky-500 bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 ring-2 ring-sky-500/30 font-black' : 'border-slate-300 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-sky-400 hover:text-sky-600 font-extrabold' }} px-2.5 sm:px-3 text-xs shadow-xs transition active:scale-95"
                         title="{{ __('messages.categories') }}"
                         aria-label="{{ __('messages.categories') }}"
                     >
-                        <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <svg class="w-4 h-4 shrink-0 {{ $isBrowse ? 'text-sky-600 dark:text-sky-400' : 'text-slate-600 dark:text-slate-300' }}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                             <rect x="3" y="3.6" width="4" height="5.4" rx="2.7"/>
                             <rect x="9" y="3.6" width="12" height="5.4" rx="2.7"/>
                             <rect x="3" y="9.3" width="4" height="5.4" rx="2.7"/>
@@ -673,9 +695,159 @@
                             <rect x="3" y="15" width="4" height="5.4" rx="2.7"/>
                             <rect x="9" y="15" width="12" height="5.4" rx="2.7"/>
                         </svg>
-                        <span class="hidden min-[400px]:inline text-xs font-extrabold whitespace-nowrap">{{ __('messages.categories') }}</span>
+                        <span class="text-xs font-black whitespace-nowrap">{{ __('messages.categories') }}</span>
                     </a>
                 @endif
+
+                <form action="{{ url('/products') }}" method="GET" class="relative flex min-w-0 flex-1 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2.5 h-11 text-xs shadow-xs transition focus-within:border-sky-500 focus-within:ring-1 focus-within:ring-sky-500/30 dark:border-slate-600 dark:bg-slate-800 sm:text-sm">
+                    <input type="hidden" name="store_slug" value="{{ $activeStoreSlug }}">
+                    <svg class="h-4 w-4 shrink-0 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" name="search" x-model="query" @input="onInput()" @focus="onFocus()" @keydown="onKeydown($event)" x-ref="searchInput" autocomplete="off" placeholder="{{ __('messages.search_products') }}" class="w-full bg-transparent outline-none text-slate-700 placeholder:text-slate-400 dark:text-slate-200 dark:placeholder:text-slate-400 text-xs sm:text-sm" role="combobox" aria-expanded="open ? 'true' : 'false'" aria-autocomplete="list" aria-controls="mobile-search-suggestions" :aria-activedescendant="activeId() || undefined">
+                    <button type="submit" class="shrink-0 rounded-lg bg-gradient-to-r from-violet-600 to-sky-600 px-2.5 sm:px-3 py-1.5 text-xs font-extrabold text-white shadow-2xs transition active:scale-95" aria-label="{{ __('messages.search') }}">
+                        <span class="hidden sm:inline">{{ __('messages.search') }}</span>
+                        <svg class="h-3.5 w-3.5 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </button>
+
+                    {{-- Live search suggestions dropdown (categories · brands · products) --}}
+                    <div
+                        id="mobile-search-suggestions"
+                        x-show="open"
+                        x-cloak
+                        x-transition:enter="transition ease-out duration-150"
+                        x-transition:enter-start="opacity-0 -translate-y-1"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        x-transition:leave="transition ease-in duration-100"
+                        x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0"
+                        class="absolute left-0 right-0 top-full z-50 mt-2 max-h-[70vh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-800"
+                        role="listbox"
+                    >
+                        {{-- Trending searches (chips, shown before the user types) --}}
+                        <template x-if="query.trim().length === 0 && trending.length > 0">
+                            <div class="border-b border-slate-100 dark:border-slate-700/60">
+                                <x-search-section-header>
+                                    <span x-text="labels.trending"></span>
+                                </x-search-section-header>
+                                <div class="flex flex-wrap gap-2 px-3 py-2.5" role="group" :aria-label="labels.trending">
+                                    <template x-for="t in trending" :key="t.type + '-' + t.label">
+                                        <button
+                                            type="button"
+                                            @click="pickTrending(t)"
+                                            class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-600 active:scale-95 dark:border-slate-600 dark:bg-slate-700/60 dark:text-slate-200 dark:hover:border-sky-500/60 dark:hover:bg-slate-600 dark:hover:text-sky-300"
+                                        >
+                                            <span aria-hidden="true" x-text="t.type === 'category' ? '🗂️' : '🏷️'"></span>
+                                            <span class="max-w-[10rem] truncate" x-text="t.label"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        {{-- Categories section --}}
+                        <template x-if="categories.length > 0">
+                            <div>
+                                <x-search-section-header>
+                                    <span x-text="labels.categories"></span> (<span x-text="categories.length"></span>)
+                                </x-search-section-header>
+                                <template x-for="c in categories" :key="'c' + c.id">
+                                    <a
+                                        :id="'sug-c-' + c.id"
+                                        :href="c.url"
+                                        @click="open = false"
+                                        @mouseenter="activeIndex = c._i"
+                                        :class="activeIndex === c._i ? 'bg-sky-50 dark:bg-slate-700' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'"
+                                        class="flex items-center gap-3 border-b border-slate-100 px-3 py-2.5 transition last:border-0 dark:border-slate-700/60"
+                                        role="option"
+                                        :aria-selected="activeIndex === c._i ? 'true' : 'false'"
+                                    >
+                                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base dark:bg-slate-700" aria-hidden="true">
+                                            <span x-text="c.icon || '🗂️'"></span>
+                                        </span>
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block truncate text-xs font-bold text-slate-800 dark:text-slate-100" x-text="c.name"></span>
+                                            <span class="mt-0.5 block text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                                                <span x-text="c.count"></span> <span>{{ __('messages.products') }}</span>
+                                            </span>
+                                        </span>
+                                        <svg class="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                    </a>
+                                </template>
+                            </div>
+                        </template>
+
+                        {{-- Brands section --}}
+                        <template x-if="brands.length > 0">
+                            <div>
+                                <x-search-section-header>
+                                    <span x-text="labels.brands"></span> (<span x-text="brands.length"></span>)
+                                </x-search-section-header>
+                                <template x-for="b in brands" :key="'b' + b.id">
+                                    <a
+                                        :id="'sug-b-' + b.id"
+                                        :href="b.url"
+                                        @click="open = false"
+                                        @mouseenter="activeIndex = b._i"
+                                        :class="activeIndex === b._i ? 'bg-sky-50 dark:bg-slate-700' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'"
+                                        class="flex items-center gap-3 border-b border-slate-100 px-3 py-2.5 transition last:border-0 dark:border-slate-700/60"
+                                        role="option"
+                                        :aria-selected="activeIndex === b._i ? 'true' : 'false'"
+                                    >
+                                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base dark:bg-slate-700" aria-hidden="true">🏷️</span>
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block truncate text-xs font-bold text-slate-800 dark:text-slate-100" x-text="b.name"></span>
+                                            <span class="mt-0.5 block text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                                                <span x-text="b.count"></span> <span>{{ __('messages.products') }}</span>
+                                            </span>
+                                        </span>
+                                        <svg class="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                    </a>
+                                </template>
+                            </div>
+                        </template>
+
+                        {{-- Products section --}}
+                        <template x-if="products.length > 0">
+                            <div>
+                                <x-search-section-header>
+                                    <span x-text="labels.products"></span> (<span x-text="products.length"></span>)
+                                </x-search-section-header>
+                                <template x-for="p in products" :key="'p' + p.id">
+                                    <a
+                                        :id="'sug-p-' + p.id"
+                                        :href="p.url"
+                                        @click="open = false"
+                                        @mouseenter="activeIndex = p._i"
+                                        :class="activeIndex === p._i ? 'bg-sky-50 dark:bg-slate-700' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'"
+                                        class="flex items-center gap-3 border-b border-slate-100 px-3 py-2.5 transition last:border-0 dark:border-slate-700/60"
+                                        role="option"
+                                        :aria-selected="activeIndex === p._i ? 'true' : 'false'"
+                                    >
+                                        <img :src="p.image" alt="" loading="lazy" decoding="async" class="h-11 w-11 shrink-0 rounded-lg bg-slate-100 object-cover dark:bg-slate-700" x-show="p.image">
+                                        <span x-show="!p.image" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg dark:bg-slate-700" aria-hidden="true">📦</span>
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block truncate text-xs font-bold text-slate-800 dark:text-slate-100" x-text="p.name"></span>
+                                            <span class="mt-0.5 block text-sm font-black text-rose-600 dark:text-rose-400">
+                                                <span x-text="p.price"></span>
+                                                <span x-show="p.old_price" class="ml-1.5 align-middle text-[11px] font-semibold text-slate-400 line-through dark:text-slate-500" x-text="p.old_price"></span>
+                                            </span>
+                                        </span>
+                                        <svg class="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                    </a>
+                                </template>
+                            </div>
+                        </template>
+
+                        <div x-show="loading" class="px-4 py-3.5 text-center text-xs font-bold text-slate-400 dark:text-slate-500">
+                            <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-sky-500 border-t-transparent align-middle"></span>
+                            <span class="ml-1.5 align-middle">{{ __('messages.loading') }}</span>
+                        </div>
+                        <div x-show="!loading && !hasAny() && query.trim().length > 0" class="px-4 py-3.5 text-center text-xs font-bold text-slate-400 dark:text-slate-500">
+                            {{ __('messages.no_products_found') }}
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
 

@@ -48,6 +48,14 @@ class StorefrontSetting extends Model
         'how_to_intro',
         'how_to_steps',
         'how_to_videos',
+        // Storefront theme / colour-scheme fields
+        'theme_preset',
+        'theme_primary_color',
+        'theme_accent_color',
+        'theme_header_bg',
+        'theme_body_bg',
+        'theme_glow_style',
+        'theme_dark_mode',
     ];
 
     protected $casts = [
@@ -167,5 +175,48 @@ class StorefrontSetting extends Model
     public function favicon(): ?string
     {
         return $this->favicon_path ?: $this->admin_logo_path ?: $this->storefront_logo_path ?: $this->logo_path;
+    }
+
+    // -------------------------------------------------------------------------
+    // Theme / Colour scheme helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Named preset → HEX defaults map.
+     * Each preset returns [primary, accent, header_bg].
+     */
+    public const THEME_PRESETS = [
+        // Template 1: Cloud White — clean, AliExpress-style
+        'sky'      => ['primary' => '#0ea5e9', 'accent' => '#7c3aed', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
+        // Template 2: Midnight Dark — premium tech, dark header
+        'midnight' => ['primary' => '#38bdf8', 'accent' => '#fb923c', 'header_bg' => '#0f172a', 'body_bg' => '#0f172a', 'glow_style' => 'vivid', 'dark_mode' => 'dark'],
+        // Template 3: Emerald Fresh — natural, trustworthy
+        'emerald'  => ['primary' => '#10b981', 'accent' => '#f59e0b', 'header_bg' => '#ffffff', 'body_bg' => '#f0fdf4', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
+        // Template 4: Sunset Rose — warm, feminine
+        'rose'     => ['primary' => '#e11d48', 'accent' => '#f59e0b', 'header_bg' => '#fff1f2', 'body_bg' => '#fff5f6', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
+        // Template 5: Royal Violet — luxury, bold dark header
+        'violet'   => ['primary' => '#7c3aed', 'accent' => '#10b981', 'header_bg' => '#1e1b4b', 'body_bg' => '#faf5ff', 'glow_style' => 'vivid', 'dark_mode' => 'dark'],
+        // Custom — user-defined colours; uses sky defaults as fallback
+        'custom'   => ['primary' => '#0ea5e9', 'accent' => '#7c3aed', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
+    ];
+
+    /**
+     * Resolved theme colours for the active storefront.
+     * Preset colors are used as defaults; custom per-column values override them.
+     * Returns an array with 'primary', 'accent', 'header_bg', 'body_bg', 'glow_style', 'dark_mode'.
+     */
+    public function themeColors(): array
+    {
+        $preset   = $this->theme_preset ?? 'sky';
+        $defaults = self::THEME_PRESETS[$preset] ?? self::THEME_PRESETS['sky'];
+
+        return [
+            'primary'    => $this->theme_primary_color ?: $defaults['primary'],
+            'accent'     => $this->theme_accent_color  ?: $defaults['accent'],
+            'header_bg'  => $this->theme_header_bg     ?: $defaults['header_bg'],
+            'body_bg'    => $this->theme_body_bg       ?: ($defaults['body_bg'] ?? '#f8fafc'),
+            'glow_style' => $this->theme_glow_style    ?: ($defaults['glow_style'] ?? 'vivid'),
+            'dark_mode'  => $this->theme_dark_mode     ?: ($defaults['dark_mode'] ?? 'auto'),
+        ];
     }
 }

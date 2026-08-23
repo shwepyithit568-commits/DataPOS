@@ -58,9 +58,14 @@ function cachePut(request, response) {
     if (!response || response.status !== 200 || response.type === 'opaque') return;
     var url = new URL(request.url);
     if (isExcluded(url)) return;
-    caches.open(SHELL_CACHE).then(function (cache) {
-        cache.put(request, response.clone());
-    });
+    try {
+        var cloned = response.clone();
+        caches.open(SHELL_CACHE).then(function (cache) {
+            cache.put(request, cloned);
+        }).catch(function () {});
+    } catch (e) {
+        // Body was already consumed or uncloneable
+    }
 }
 
 self.addEventListener('install', function (event) {
