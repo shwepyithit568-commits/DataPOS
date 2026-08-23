@@ -7,13 +7,22 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 /**
- * Service job — a CUSTOMER-OWNED device being repaired (SoT §16).
+ * Service job — a CUSTOMER-OWNED device being serviced (SoT §16).
  *
- * The device is never store inventory. Status lifecycle:
+ * Covers Computer, CCTV, Network, Smartphone and other device types.
+ * Status lifecycle:
  * received → diagnosing → awaiting_approval → awaiting_parts → in_repair →
  * ready → delivered, with explicit cancelled / unrepairable end states.
+ *
+ * Job number: SVC-YYYYMMDD-#### (auto). If a voucher_no is supplied on
+ * intake, that acts as the human-readable reference; the SVC number is
+ * still generated as the immutable system key.
+ *
+ * tracking_token: auto-generated on create. Allows customers to check status
+ * at /store/{slug}/track/service/{token} without logging in.
  */
 class ServiceJob extends Model
 {
@@ -33,6 +42,7 @@ class ServiceJob extends Model
         'store_id',
         'job_number',
         'voucher_no',
+        'tracking_token',
         'customer_id',
         'contact_name',
         'contact_phone',
@@ -61,10 +71,30 @@ class ServiceJob extends Model
     ];
 
     protected $casts = [
-        'estimated_charge' => 'decimal:2',
-        'final_charge' => 'decimal:2',
+        'estimated_charge'     => 'decimal:2',
+        'final_charge'         => 'decimal:2',
         'estimated_completion' => 'datetime',
     ];
+
+    /**
+     * Auto-generate a unique tracking_token on every new record.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (self $job): void {
+            if (empty($job->tracking_token)) {
+                do {
+                    $token = Str::random(40);
+                } while (static::where('tracking_token', $token)->exists());
+
+                $job->tracking_token = $token;
+            }
+        });
+    }
+
+    // ── Relationships ──────────────────────────────────────────────────────
 
     public function store(): BelongsTo
     {
@@ -102,6 +132,8 @@ class ServiceJob extends Model
     {
         return $this->hasMany(ServiceJobItem::class)->orderBy('id');
     }
+
+    // ── Finance helpers ────────────────────────────────────────────────────
 
     /**
      * Sum of all line-item subtotals (parts + services) in MMK.
@@ -141,13 +173,28 @@ class ServiceJob extends Model
         return max(0, $charge - $this->paidAmount());
     }
 
+    // ── Public tracking URL ────────────────────────────────────────────────
+
     /**
-     * Generate a unique job number for the store (RPR-YYYYMMDD-####).
+     * Full public URL for the customer-facing status tracking page.
+     * Login-free — guarded by tracking_token only.
+     */
+    public function trackingUrl(string $storeSlug): string
+    {
+        return url("/store/{$storeSlug}/track/service/{$this->tracking_token}");
+    }
+
+    // ── Number generation ──────────────────────────────────────────────────
+
+    /**
+     * Generate a unique SVC job number for the store (SVC-YYYYMMDD-####).
+     * If the job carries a voucher_no, that acts as the human-readable
+     * reference; the SVC number remains the immutable system key.
      */
     public static function generateNumber(int $storeId): string
     {
-        $date = now()->format('Ymd');
-        $prefix = "RPR-{$date}-";
+        $date   = now()->format('Ymd');
+        $prefix = "SVC-{$date}-";
 
         $last = static::where('store_id', $storeId)
             ->where('job_number', 'like', "{$prefix}%")

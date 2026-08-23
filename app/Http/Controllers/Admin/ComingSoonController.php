@@ -31,7 +31,6 @@ class ComingSoonController extends Controller
         'promotions'          => ['sidebar_promotions', 'Phase 4'],
         'web-products'        => ['sidebar_web_products', 'Phase 3'],
         'membership'          => ['sidebar_membership', 'Phase 4'],
-        'service-jobs'        => ['sidebar_service_jobs', 'Phase 4'],
         'receivables'         => ['sidebar_receivables', 'Phase 4'],
         'payables'            => ['sidebar_payables', 'Phase 4'],
         'profit-loss'         => ['sidebar_profit_loss', 'Phase 4'],

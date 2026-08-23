@@ -554,7 +554,15 @@
                             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3 2.4-2.4Z"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'service-jobs'])" :label="__('messages.sidebar_service_jobs')" />
+                    @php $isServiceJobs = request()->is('store/*/admin/service-jobs*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.service_jobs.index', $storeRouteParams)" route-name="store.admin.service_jobs.index" :active="$isServiceJobs" :label="__('messages.sidebar_service_jobs')">
+                        <x-slot:icon>
+                            {{-- Cog/wrench icon for Service Jobs --}}
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
                     @php $isSpareParts = request()->is('store/*/admin/spare-parts*'); @endphp
                     <x-admin.nav-link :href="route('store.admin.spare_parts.index', $storeRouteParams)" route-name="store.admin.spare_parts.index" :active="$isSpareParts" :label="__('messages.sidebar_spare_parts')">
                         <x-slot:icon>

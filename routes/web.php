@@ -308,6 +308,17 @@ Route::get('/store/{store_slug}/orders/{order}/confirmation', [OrderController::
 Route::get('/glass-finder', [GlassFinderController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class]);
 Route::post('/glass-finder/favorite', [GlassFinderController::class, 'toggleFavorite'])->middleware('throttle:glass_finder_favorite');
 
+// Customer Service Job Live Tracking Routes (Login-free status tracking via token or lookup)
+Route::get('/service-tracking', [\App\Http\Controllers\Storefront\ServiceTrackingController::class, 'index'])
+    ->middleware([ResolveStoreContext::class, SetLocale::class])
+    ->name('storefront.service.track.index');
+Route::get('/store/{store_slug}/track/service', [\App\Http\Controllers\Storefront\ServiceTrackingController::class, 'index'])
+    ->middleware([ResolveStoreContext::class, SetLocale::class])
+    ->name('storefront.service.track.store');
+Route::get('/store/{store_slug}/track/service/{token}', [\App\Http\Controllers\Storefront\ServiceTrackingController::class, 'show'])
+    ->middleware([ResolveStoreContext::class, SetLocale::class])
+    ->name('storefront.service.track.token');
+
 // Public Blog Routes
 Route::get('/blog', [BlogController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class]);
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->middleware([ResolveStoreContext::class, SetLocale::class]);
@@ -499,6 +510,20 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/spare-parts', [SparePartController::class, 'index'])->name('store.admin.spare_parts.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/spare-parts/export', [SparePartController::class, 'export'])->name('store.admin.spare_parts.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/spare-parts/{item}/deduct', [SparePartController::class, 'deductItem'])->name('store.admin.spare_parts.deduct')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Service Jobs (Computer / CCTV / Network — SoT §16-B)
+        // SVC-YYYYMMDD-#### numbering, tracking_token for customer page.
+        Route::get('/admin/service-jobs', [\App\Http\Controllers\Admin\ServiceJobController::class, 'index'])->name('store.admin.service_jobs.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/service-jobs/export', [\App\Http\Controllers\Admin\ServiceJobController::class, 'export'])->name('store.admin.service_jobs.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/service-jobs/create', [\App\Http\Controllers\Admin\ServiceJobController::class, 'create'])->name('store.admin.service_jobs.create')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/service-jobs', [\App\Http\Controllers\Admin\ServiceJobController::class, 'store'])->name('store.admin.service_jobs.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/service-jobs/{job}', [\App\Http\Controllers\Admin\ServiceJobController::class, 'show'])->name('store.admin.service_jobs.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/service-jobs/{job}/print', [\App\Http\Controllers\Admin\ServiceJobController::class, 'printTicket'])->name('store.admin.service_jobs.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/service-jobs/{job}/edit', [\App\Http\Controllers\Admin\ServiceJobController::class, 'edit'])->name('store.admin.service_jobs.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::put('/admin/service-jobs/{job}', [\App\Http\Controllers\Admin\ServiceJobController::class, 'update'])->name('store.admin.service_jobs.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/service-jobs/{job}/status', [\App\Http\Controllers\Admin\ServiceJobController::class, 'updateStatus'])->name('store.admin.service_jobs.status')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/service-jobs/{job}/payments', [\App\Http\Controllers\Admin\ServiceJobController::class, 'addPayment'])->name('store.admin.service_jobs.payments.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/service-jobs/{job}/items/{item}/deduct', [\App\Http\Controllers\Admin\ServiceJobController::class, 'deductItem'])->name('store.admin.service_jobs.items.deduct')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Expense Categories CRUD
         Route::get('/admin/expense-categories', [ExpenseCategoryController::class, 'index'])->name('store.admin.expense_categories.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
