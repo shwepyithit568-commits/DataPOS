@@ -48,10 +48,10 @@ class AdminComingSoonPageTest extends TestCase
     public function test_manager_can_view_placeholder_page_for_registered_module(): void
     {
         $response = $this->actingAs($this->manager)
-            ->get("/store/{$this->store->slug}/admin/coming-soon/expenses");
+            ->get("/store/{$this->store->slug}/admin/coming-soon/receivables");
 
         $response->assertStatus(200);
-        $response->assertSeeText('Daily Expenses');
+        $response->assertSeeText('Accounts Receivable');
         $response->assertSeeText('Phase 4');
         $response->assertSeeText('Coming Soon');
         // Back link returns to the store dashboard.
@@ -79,14 +79,14 @@ class AdminComingSoonPageTest extends TestCase
     public function test_customer_without_store_role_is_blocked(): void
     {
         $response = $this->actingAs($this->customer)
-            ->get("/store/{$this->store->slug}/admin/coming-soon/expenses");
+            ->get("/store/{$this->store->slug}/admin/coming-soon/receivables");
 
         $response->assertStatus(403);
     }
 
     public function test_guest_is_redirected_to_login(): void
     {
-        $response = $this->get("/store/{$this->store->slug}/admin/coming-soon/expenses");
+        $response = $this->get("/store/{$this->store->slug}/admin/coming-soon/receivables");
 
         $response->assertRedirect(route('login'));
     }
@@ -97,7 +97,7 @@ class AdminComingSoonPageTest extends TestCase
         $otherStore->setting()->create(['store_name' => 'Store Two', 'default_language' => 'en']);
         // Manager of store-one tries to open a placeholder on store-two.
         $response = $this->actingAs($this->manager)
-            ->get("/store/{$otherStore->slug}/admin/coming-soon/expenses");
+            ->get("/store/{$otherStore->slug}/admin/coming-soon/receivables");
 
         $response->assertStatus(403);
     }

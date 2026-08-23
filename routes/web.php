@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ComingSoonController;
 use App\Http\Controllers\Admin\CustomerDirectoryController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ExpenseCategoryController;
+use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\GlassFinderAdminController;
 use App\Http\Controllers\Admin\HomeBannerController;
 use App\Http\Controllers\Admin\ImportHistoryController;
@@ -497,6 +499,20 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/spare-parts', [SparePartController::class, 'index'])->name('store.admin.spare_parts.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/spare-parts/export', [SparePartController::class, 'export'])->name('store.admin.spare_parts.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/spare-parts/{item}/deduct', [SparePartController::class, 'deductItem'])->name('store.admin.spare_parts.deduct')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Expense Categories CRUD
+        Route::get('/admin/expense-categories', [ExpenseCategoryController::class, 'index'])->name('store.admin.expense_categories.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/expense-categories', [ExpenseCategoryController::class, 'store'])->name('store.admin.expense_categories.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::put('/admin/expense-categories/{category}', [ExpenseCategoryController::class, 'update'])->name('store.admin.expense_categories.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::patch('/admin/expense-categories/{category}/toggle', [ExpenseCategoryController::class, 'toggle'])->name('store.admin.expense_categories.toggle')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::delete('/admin/expense-categories/{category}', [ExpenseCategoryController::class, 'destroy'])->name('store.admin.expense_categories.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Expenses Management (Daily Expenses CRUD & Export)
+        Route::get('/admin/expenses', [ExpenseController::class, 'index'])->name('store.admin.expenses.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/expenses/export', [ExpenseController::class, 'export'])->name('store.admin.expenses.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/expenses', [ExpenseController::class, 'store'])->name('store.admin.expenses.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::put('/admin/expenses/{expense}', [ExpenseController::class, 'update'])->name('store.admin.expenses.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::delete('/admin/expenses/{expense}', [ExpenseController::class, 'destroy'])->name('store.admin.expenses.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Admin Product Reviews (moderation)
         Route::get('/admin/reviews', [AdminReviewController::class, 'index'])->name('store.admin.reviews.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');

@@ -382,7 +382,7 @@
             @endif
 
             @foreach ($filters as $filterKey => $filterConfig)
-                @if (($filterConfig['type'] ?? 'select') === 'date')
+                @if (in_array(($filterConfig['type'] ?? 'select'), ['date', 'date_range'], true))
                     <div>
                         <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 flex items-center gap-1">
                             <span>📅</span>
@@ -426,13 +426,13 @@
                             @if (! empty($filterConfig['groups']))
                                 @foreach ($filterConfig['groups'] as $groupConfig)
                                     <optgroup label="{{ $groupConfig['label'] }}">
-                                        @foreach ($groupConfig['options'] as $val => $optLabel)
+                                        @foreach (($groupConfig['options'] ?? []) as $val => $optLabel)
                                             <option value="{{ $val }}" {{ request($filterKey) == $val ? 'selected' : '' }}>{{ $optLabel }}</option>
                                         @endforeach
                                     </optgroup>
                                 @endforeach
                             @else
-                                @foreach ($filterConfig['options'] as $val => $optLabel)
+                                @foreach (($filterConfig['options'] ?? []) as $val => $optLabel)
                                     <option value="{{ $val }}" {{ request($filterKey) == $val ? 'selected' : '' }}>{{ $optLabel }}</option>
                                 @endforeach
                             @endif
