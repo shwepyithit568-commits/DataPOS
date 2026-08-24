@@ -35,9 +35,9 @@ DataPOS Admin Sidebar တွင် လက်ရှိအသုံးပြုန
 | Module အမည် | Sidebar တည်နေရာ | အဓိက လုပ်ဆောင်ချက်နှင့် စနစ်ဖွဲ့စည်းပုံ | Priority |
 | :--- | :--- | :--- | :--- |
 | ✅**၁။ Customer Receivables & Debt Ledger**<br>(`sidebar_receivables`) | `Finance` အောက် | • ဖောက်သည် အကြွေးစာရင်းနှင့် ကျန်ငွေမှတ်တမ်း<br>• အကြွေးဆပ်ငွေသွင်းခြင်း (Partial / Full Payment)<br>• အကြွေးပြေစာ ဘောက်ချာ ထုတ်ပေးခြင်း<br>• အကြွေးများသော ဖောက်သည် Alert | 🔥 **အရေးအကြီးဆုံး (P0)** |
-| **၂။ Barcode & QR Label Printing**<br>(`sidebar_barcode`) | `Inventory` အောက် | • ကုန်ပစ္စည်းများ ရွေးချယ်ပြီး စတစ်ကာ Print ထုတ်ခြင်း<br>• 50x30mm, 40x30mm Thermal Sticker & A4 layout<br>• စျေးနှုန်း၊ ဘားကုဒ်၊ ဆိုင်အမည်၊ ကုန်ပစ္စည်းအမည် စိတ်ကြိုက်ထည့်သွင်းမှု | 🔥 **အရေးအကြီးဆုံး (P0)** |
-| **၃။ Profit & Loss Financial Statement**<br>(`sidebar_profit_loss`) | `Finance` အောက် | • နေ့စဉ်/လစဉ်/နှစ်စဉ် အရှုံးအမြတ် ရှင်းတမ်း<br>• စုစုပေါင်းအရောင်း (Revenue) - ကုန်ကျစရိတ် (COGS) = စုစုပေါင်းအမြတ် (Gross Profit)<br>• ဆိုင်လည်ပတ်စရိတ်များ (Expenses) နှုတ်ပြီး အသားတင်အမြတ် (Net Profit) ပြသမှု | 🔥 **အရေးအကြီးဆုံး (P0)** |
-| **၄။ Warranty & Serial / IMEI Tracker**<br>(`sidebar_warranty`) | `Inventory` အောက် | • ရောင်းချပြီး ပစ္စည်းများ၏ Serial / IMEI ဖြင့် အာမခံကာလ စစ်ဆေးခြင်း<br>• အာမခံသက်တမ်း ကုန်ဆုံးရက် တွက်ချက်မှု<br>• ပြင်ဆင်မှု မှတ်တမ်း (Service History) ချိတ်ဆက်ပြသခြင်း | ⚡ **P1** |
+| ✅**၂။ Barcode & QR Label Printing**<br>(`sidebar_barcode`) | `Inventory` အောက် | • ကုန်ပစ္စည်းများ ရွေးချယ်ပြီး စတစ်ကာ Print ထုတ်ခြင်း<br>• 50x30mm, 40x30mm Thermal Sticker & A4 layout<br>• စျေးနှုန်း၊ ဘားကုဒ်၊ ဆိုင်အမည်၊ ကုန်ပစ္စည်းအမည် စိတ်ကြိုက်ထည့်သွင်းမှု | 🔥 **အရေးအကြီးဆုံး (P0)** |
+| ✅**၃။ Profit & Loss Financial Statement**<br>(`sidebar_profit_loss`) | `Finance` အောက် | • နေ့စဉ်/လစဉ်/နှစ်စဉ် အရှုံးအမြတ် ရှင်းတမ်း<br>• စုစုပေါင်းအရောင်း (Revenue) - ကုန်ကျစရိတ် (COGS) = စုစုပေါင်းအမြတ် (Gross Profit)<br>• ဆိုင်လည်ပတ်စရိတ်များ (Expenses) နှုတ်ပြီး အသားတင်အမြတ် (Net Profit) ပြသမှု | 🔥 **အရေးအကြီးဆုံး (P0)** |
+| ✅**၄။ Warranty & Serial / IMEI Tracker**<br>(`sidebar_warranty`) | `Inventory` အောက် | • ရောင်းချပြီး ပစ္စည်းများ၏ Serial / IMEI ဖြင့် အာမခံကာလ စစ်ဆေးခြင်း<br>• အာမခံသက်တမ်း ကုန်ဆုံးရက် တွက်ချက်မှု<br>• ပြင်ဆင်မှု မှတ်တမ်း (Service History) ချိတ်ဆက်ပြသခြင်း | ⚡ **P1** |
 
 ---
 
@@ -46,9 +46,9 @@ DataPOS Admin Sidebar တွင် လက်ရှိအသုံးပြုန
 
 | Module အမည် | Sidebar တည်နေရာ | အဓိက လုပ်ဆောင်ချက်နှင့် စနစ်ဖွဲ့စည်းပုံ | Priority |
 | :--- | :--- | :--- | :--- |
-| **၅။ Stock Ledger & Bin Cards**<br>(`sidebar_stock_ledger`) | `Inventory` အောက် | • ပစ္စည်းတစ်ခုချင်းစီ၏ အဝင်၊ အထွက်၊ အရောင်း၊ အဝယ်၊ လွှဲပြောင်းမှု သမိုင်းကြောင်း (Timeline Audit Trail)<br>• Stock Movement တစ်ခုချင်းစီ၏ Reference Document (Invoice/Purchase/Adjustment ID) ပြသခြင်း | ⚡ **P1** |
-| **၆။ Physical Stock Count & Audit**<br>(`sidebar_stock_count`) | `Inventory` အောက် | • လစဉ် စတော့စစ်ဆေးခြင်း (Stock Take Sheet)<br>• Barcode Scanner ဖြင့် အစစ်အမှန် စတော့ကောင်ရေ ရိုက်ထည့်ခြင်း<br>• System စတော့နှင့် လက်တွေ့စတော့ ကွာဟချက် (Discrepancy) ကို အလိုအလျောက် ညှိပေးခြင်း | ⚡ **P1** |
-| **၇။ Bulk Price Wizard**<br>(`sidebar_price_wizard`) | `Inventory` အောက် | • ကုန်ပစ္စည်း အများအပြား၏ လက်လီ/လက်ကား စျေးနှုန်းကို တစ်ပြိုင်နက် ပြင်ဆင်ခြင်း<br>• အမြတ် % (Markup / Margin %) အလိုက် စျေးနှုန်း အလိုအလျောက် တွက်ချက်တင်ပေးခြင်း | ⚡ **P1** |
+| ✅**၅။ Stock Ledger & Bin Cards**<br>(`sidebar_stock_ledger`) | `Inventory` အောက် | • ပစ္စည်းတစ်ခုချင်းစီ၏ အဝင်၊ အထွက်၊ အရောင်း၊ အဝယ်၊ လွှဲပြောင်းမှု သမိုင်းကြောင်း (Timeline Audit Trail)<br>• Stock Movement တစ်ခုချင်းစီ၏ Reference Document (Invoice/Purchase/Adjustment ID) ပြသခြင်း | ⚡ **P1** |
+| ✅**၆။ Physical Stock Count & Audit**<br>(`sidebar_stock_count`) | `Inventory` အောက် | • လစဉ် စတော့စစ်ဆေးခြင်း (Stock Take Sheet)<br>• Barcode Scanner ဖြင့် အစစ်အမှန် စတော့ကောင်ရေ ရိုက်ထည့်ခြင်း<br>• System စတော့နှင့် လက်တွေ့စတော့ ကွာဟချက် (Discrepancy) ကို အလိုအလျောက် ညှိပေးခြင်း | ⚡ **P1** |
+| ✅**၇။ Bulk Price Wizard**<br>(`sidebar_price_wizard`) | `Inventory` အောက် | • ကုန်ပစ္စည်း အများအပြား၏ လက်လီ/လက်ကား စျေးနှုန်းကို တစ်ပြိုင်နက် ပြင်ဆင်ခြင်း<br>• အမြတ် % (Markup / Margin %) အလိုက် စျေးနှုန်း အလိုအလျောက် တွက်ချက်တင်ပေးခြင်း | ⚡ **P1** |
 | **၈။ Cash & Bank Transactions Register**<br>(`sidebar_transactions`) | `Finance` အောက် | • ကောင်တာငွေသား (Cash in Hand) နှင့် ဘဏ်စာရင်း (KPay, Wave, KBZ, CB, AYA)<br>• စာရင်းအချင်းချင်း ငွေလွှဲပြောင်းမှု (Fund Transfers) နှင့် လက်ကျန်ငွေ ရှင်းတမ်း | ⚡ **P1** |
 
 ---
