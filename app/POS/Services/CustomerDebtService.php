@@ -273,7 +273,7 @@ class CustomerDebtService
      *
      * @return \Illuminate\Database\Eloquent\Collection<int, CustomerLedgerEntry>
      */
-    public function history(Store $store, int $customerId, int $limit = 20)
+    public function history(Store $store, int $customerId, int $limit = 50)
     {
         return CustomerLedgerEntry::query()
             ->with('actor')
@@ -282,5 +282,82 @@ class CustomerDebtService
             ->latest('occurred_at')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Receivables summary for store dashboard KPIs.
+     *
+     * @return array{total_outstanding:string, customers_with_debt_count:int, collected_today:string, collected_this_month:string}
+     */
+    public function getReceivablesSummary(Store $store): array
+    {
+        // Calculate total outstanding per customer and sum positive balances
+        $sub = DB::table('customer_ledger_entries')
+            ->where('store_id', $store->id)
+            ->groupBy('customer_id')
+            ->selectRaw('SUM(amount) as customer_balance')
+            ->havingRaw('SUM(amount) > 0');
+
+        $totalOutstanding = DB::query()->fromSub($sub, 'debts')->sum('customer_balance');
+        $customerCount = DB::query()->fromSub($sub, 'debts')->count();
+
+        $collectedToday = CustomerLedgerEntry::query()
+            ->where('store_id', $store->id)
+            ->where('type', CustomerLedgerEntry::TYPE_COLLECTION)
+            ->whereDate('occurred_at', today())
+            ->sum(DB::raw('ABS(amount)'));
+
+        $collectedThisMonth = CustomerLedgerEntry::query()
+            ->where('store_id', $store->id)
+            ->where('type', CustomerLedgerEntry::TYPE_COLLECTION)
+            ->whereYear('occurred_at', now()->year)
+            ->whereMonth('occurred_at', now()->month)
+            ->sum(DB::raw('ABS(amount)'));
+
+        return [
+            'total_outstanding' => number_format((float) $totalOutstanding, 2, '.', ''),
+            'customers_with_debt_count' => (int) $customerCount,
+            'collected_today' => number_format((float) $collectedToday, 2, '.', ''),
+            'collected_this_month' => number_format((float) $collectedThisMonth, 2, '.', ''),
+        ];
+    }
+
+    /**
+     * Paginated customer receivables with search and status filter.
+     */
+    public function listCustomersWithBalancesPaginated(Store $store, ?string $search = null, ?string $filter = null, int $perPage = 15)
+    {
+        $query = DB::table('customer_ledger_entries')
+            ->join('users', 'users.id', '=', 'customer_ledger_entries.customer_id')
+            ->where('customer_ledger_entries.store_id', $store->id)
+            ->groupBy('customer_ledger_entries.customer_id', 'users.name', 'users.phone')
+            ->selectRaw(
+                'customer_ledger_entries.customer_id, users.name, users.phone, '
+                . 'SUM(customer_ledger_entries.amount) AS balance, '
+                . 'MAX(customer_ledger_entries.occurred_at) AS last_activity, '
+                . 'SUM(CASE WHEN customer_ledger_entries.amount > 0 THEN customer_ledger_entries.amount ELSE 0 END) AS total_debt_incurred, '
+                . 'SUM(CASE WHEN customer_ledger_entries.type = \'collection\' THEN ABS(customer_ledger_entries.amount) ELSE 0 END) AS total_collected'
+            );
+
+        if (!empty($search)) {
+            $term = '%' . trim($search) . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('users.name', 'like', $term)
+                  ->orWhere('users.phone', 'like', $term);
+            });
+        }
+
+        if ($filter === 'cleared') {
+            $query->havingRaw('SUM(customer_ledger_entries.amount) <= 0');
+        } elseif ($filter === 'high_debt') {
+            $query->havingRaw('SUM(customer_ledger_entries.amount) >= 100000');
+        } else {
+            // Default: show customers with outstanding balance > 0
+            $query->havingRaw('SUM(customer_ledger_entries.amount) > 0');
+        }
+
+        return $query->orderByDesc('balance')
+                     ->orderByDesc('last_activity')
+                     ->paginate($perPage);
     }
 }

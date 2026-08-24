@@ -179,49 +179,116 @@
         }
 
         /* ── Dynamic Header Theme ── */
-        header,
-        header > div {
+        header .sf-header-main {
             background-color: var(--sf-header-bg) !important;
             transition: background-color 0.25s ease;
         }
-        .dark header,
-        .dark header > div {
+        .dark header .sf-header-main,
+        html.dark header .sf-header-main {
             background-color: var(--sf-header-bg-dark) !important;
         }
 
         @if ($isDarkHeader)
-        /* High-contrast styling when Admin selects a dark header template (e.g. Midnight or Royal Violet) */
-        header a,
-        header button,
-        header span.font-outfit,
-        header div.text-slate-900,
-        header div.text-slate-700,
-        header div.text-slate-800 {
+        /* High-contrast styling for main header bar when Admin selects a dark header template (e.g. Midnight or Royal Violet) */
+        header .sf-header-main a.sf-brand-link span.font-outfit,
+        header .sf-header-main span.font-outfit,
+        header .sf-header-main div.text-slate-900,
+        header .sf-header-main div.text-slate-700,
+        header .sf-header-main div.text-slate-800 {
             color: #ffffff !important;
         }
-        header button.border-slate-200\/80,
-        header button.border-slate-300,
-        header a.border-slate-300,
-        header a.border-slate-200\/80 {
+        header .sf-header-main button.border-slate-200\/80,
+        header .sf-header-main a.border-slate-200\/80,
+        header .sf-header-main button.border-slate-300,
+        header .sf-header-main a.border-slate-300 {
             background-color: rgba(255, 255, 255, 0.12) !important;
             border-color: rgba(255, 255, 255, 0.2) !important;
             color: #ffffff !important;
         }
-        header button.border-slate-200\/80 svg,
-        header a.border-slate-300 svg {
+        header .sf-header-main button svg,
+        header .sf-header-main a svg:not(.text-rose-500) {
             color: #ffffff !important;
-        }
-        header form {
-            background-color: rgba(255, 255, 255, 0.15) !important;
-            border-color: rgba(255, 255, 255, 0.3) !important;
-        }
-        header form input {
-            color: #ffffff !important;
-        }
-        header form input::placeholder {
-            color: rgba(255, 255, 255, 0.7) !important;
         }
         @endif
+
+        /* ── Storefront Primary Desktop Navigation Bar ── */
+        header .sf-desktop-nav-row {
+            background-color: var(--sf-header-bg) !important;
+            border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+        }
+        html.dark header .sf-desktop-nav-row {
+            background-color: var(--sf-header-bg-dark) !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        header nav.sf-primary-nav {
+            background-color: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08) !important;
+        }
+        html.dark header nav.sf-primary-nav {
+            background-color: #1e293b !important;
+            border: 1px solid #334155 !important;
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.3) !important;
+        }
+
+        /* Inactive Navigation Links (Light Mode: Slate-800 dark text) */
+        header nav.sf-primary-nav a.sf-nav-link {
+            color: #1e293b !important;
+            font-weight: 800 !important;
+            text-decoration: none !important;
+            background-color: transparent !important;
+        }
+        header nav.sf-primary-nav a.sf-nav-link:hover {
+            background-color: #f1f5f9 !important;
+            color: var(--sf-primary) !important;
+        }
+
+        /* Inactive Navigation Links (Dark Mode: Crisp Slate-100 light text) */
+        html.dark header nav.sf-primary-nav a.sf-nav-link {
+            color: #f1f5f9 !important;
+            background-color: transparent !important;
+        }
+        html.dark header nav.sf-primary-nav a.sf-nav-link:hover {
+            background-color: #334155 !important;
+            color: #ffffff !important;
+        }
+
+        /* Active Navigation Link (Both Modes: High Contrast Theme Tint) */
+        header nav.sf-primary-nav a.sf-nav-active {
+            background-color: var(--sf-primary) !important;
+            color: #ffffff !important;
+            font-weight: 800 !important;
+            box-shadow: 0 2px 6px 0 color-mix(in srgb, var(--sf-primary) 35%, transparent) !important;
+        }
+
+        /* ── Dropdown / Flyout Panels Protection (Always keep proper readable colors) ── */
+        [role="menu"],
+        [role="menu"] *,
+        .sf-dropdown-menu,
+        .sf-dropdown-menu * {
+            text-shadow: none;
+        }
+        [role="menu"] .text-slate-800,
+        [role="menu"] .text-slate-900 {
+            color: #1e293b !important;
+        }
+        .dark [role="menu"] .text-slate-800,
+        .dark [role="menu"] .text-slate-900,
+        html.dark [role="menu"] .text-slate-800,
+        html.dark [role="menu"] .text-slate-900 {
+            color: #f8fafc !important;
+        }
+        [role="menu"] .text-slate-500,
+        [role="menu"] .text-slate-600 {
+            color: #64748b !important;
+        }
+        .dark [role="menu"] .text-slate-500,
+        .dark [role="menu"] .text-slate-600,
+        html.dark [role="menu"] .text-slate-500,
+        html.dark [role="menu"] .text-slate-600 {
+            color: #94a3b8 !important;
+        }
 
         /* ── Primary Brand & Highlights (Buttons, Links, Active Pills, Badges) ── */
         .text-sky-600,
@@ -410,7 +477,7 @@
 
     {{-- Header --}}
     <header x-data="{ searchOpen: false }" class="sticky top-0 border-b border-white/50 shadow-sm dark:border-slate-800/80" :class="mobileMenuOpen ? 'z-[70]' : 'z-30'" @click.outside="searchOpen = false">
-        <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur">
+        <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur sf-header-main">
         <div class="max-w-7xl mx-auto px-1 sm:px-5 lg:px-8 h-16 sm:h-[4.5rem] flex items-center gap-1.5 sm:gap-3 relative">
             {{-- Left: Category menu (Linn IT Mart style icon button) --}}
             <div class="flex shrink-0 items-center">
@@ -586,7 +653,7 @@
             </div>
 
             {{-- Center: Shop logo (flex-1 keeps it centered between the left/right action groups; truncates on small screens) --}}
-            <a href="{{ $homeUrl }}" class="flex min-w-0 flex-1 items-center justify-center group transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]">
+            <a href="{{ $homeUrl }}" class="sf-brand-link flex min-w-0 flex-1 items-center justify-center group transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]">
                 @if (!empty(($setting ?? null)?->storefrontLogo()))
                     <img
                         src="{{ asset('storage/' . $setting->storefrontLogo()) }}"
@@ -852,25 +919,25 @@
         </div>
 
         {{-- Row 2 (desktop only): Navigation (Linn IT Mart style) --}}
-        <div class="hidden lg:block border-t border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900">
+        <div class="hidden lg:block border-t border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 sf-desktop-nav-row">
             <div class="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
                 {{-- Desktop Navigation --}}
-                <nav aria-label="Storefront primary navigation" class="flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white p-1 text-sm font-extrabold shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                    <a href="{{ $homeUrl }}" class="rounded-xl px-3 py-2 transition {{ $isHome ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 hover:text-sky-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-sky-300' }}">{{ __('messages.home') }}</a>
-                    <a href="{{ $productsUrl }}" class="rounded-xl px-3 py-2 transition {{ $isProducts ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 hover:text-sky-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-sky-300' }}">{{ __('messages.products') }}</a>
-                    <a href="{{ $glassFinderUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isGlassFinder ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 hover:text-sky-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-sky-300' }}">
+                <nav aria-label="Storefront primary navigation" class="sf-primary-nav flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white p-1 text-sm font-extrabold shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                    <a href="{{ $homeUrl }}" class="rounded-xl px-3 py-2 transition {{ $isHome ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">{{ __('messages.home') }}</a>
+                    <a href="{{ $productsUrl }}" class="rounded-xl px-3 py-2 transition {{ $isProducts ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">{{ __('messages.products') }}</a>
+                    <a href="{{ $glassFinderUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isGlassFinder ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
                         <span aria-hidden="true">📱</span>
                         <span>{{ __('messages.glass_finder') }}</span>
                     </a>
-                    <a href="{{ $serviceTrackingUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isServiceTracking ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 hover:text-sky-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-sky-300' }}">
+                    <a href="{{ $serviceTrackingUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isServiceTracking ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
                         <span aria-hidden="true">🔧</span>
                         <span>{{ __('messages.nav_service_track') }}</span>
                     </a>
-                    <a href="{{ $howToOrderUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isHowToOrder ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 hover:text-sky-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-sky-300' }}">
+                    <a href="{{ $howToOrderUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isHowToOrder ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
                         <span aria-hidden="true">📖</span>
                         <span>{{ __('messages.how_to_order') }}</span>
                     </a>
-                    <a href="{{ $blogUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isBlog ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 hover:text-sky-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-sky-300' }}">
+                    <a href="{{ $blogUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isBlog ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
                         <span aria-hidden="true">📝</span>
                         <span>{{ __('messages.blog') }}</span>
                     </a>

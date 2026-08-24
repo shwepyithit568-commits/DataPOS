@@ -486,6 +486,12 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/customers', [CustomerDirectoryController::class, 'index'])->name('store.admin.customers.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/customers/{customer}', [CustomerDirectoryController::class, 'show'])->name('store.admin.customers.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
+        // Customer Receivables & Debt Ledger Management (SoT §17)
+        Route::get('/admin/receivables', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'index'])->name('store.admin.receivables.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/receivables/{customer}', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'show'])->name('store.admin.receivables.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/receivables/{customer}/collect', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'collect'])->name('store.admin.receivables.collect')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/receivables/{customer}/statement', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'statement'])->name('store.admin.receivables.statement')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
         // Repair Center / Service Jobs (SoT §16)
         Route::get('/admin/repairs', [RepairController::class, 'index'])->name('store.admin.repairs.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/repairs/export', [RepairController::class, 'export'])->name('store.admin.repairs.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');

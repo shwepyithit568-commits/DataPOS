@@ -84,12 +84,12 @@ AI Agent သည် အောက်ဆုံးအဆင့်ရှိ Assumptio
 ## Development Server
 
 ```bash
-php artisan serve --host=0.0.0.0 --port=8500
+php artisan serve --host=0.0.0.0 --port=8502
 ```
 
 `Port 8000` သည် Project အဟောင်းဖြစ်သည်။
 
-DataPOS အတွက် `8500` ကိုသာ အသုံးပြုရမည်။
+DataPOS အတွက် `8502` ကိုသာ အသုံးပြုရမည်။
 
 ---
 
