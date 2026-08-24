@@ -770,6 +770,40 @@ Route::prefix('store/{store_slug}')
         Route::post('/admin/vouchers/{voucher}/set-default', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'setDefault'])->name('store.admin.vouchers.set_default')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::get('/admin/vouchers/{voucher}/preview', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'preview'])->name('store.admin.vouchers.preview')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
+        // Multi-Branch Management (sidebar_branches)
+        Route::get('/admin/branches', [\App\Http\Controllers\Admin\BranchManagementController::class, 'index'])->name('store.admin.branches.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/branches/create', [\App\Http\Controllers\Admin\BranchManagementController::class, 'create'])->name('store.admin.branches.create')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/branches', [\App\Http\Controllers\Admin\BranchManagementController::class, 'store'])->name('store.admin.branches.store')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/branches/{branch}', [\App\Http\Controllers\Admin\BranchManagementController::class, 'show'])->name('store.admin.branches.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/branches/{branch}/edit', [\App\Http\Controllers\Admin\BranchManagementController::class, 'edit'])->name('store.admin.branches.edit')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::put('/admin/branches/{branch}', [\App\Http\Controllers\Admin\BranchManagementController::class, 'update'])->name('store.admin.branches.update')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::delete('/admin/branches/{branch}', [\App\Http\Controllers\Admin\BranchManagementController::class, 'destroy'])->name('store.admin.branches.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/branches/{branch}/set-default', [\App\Http\Controllers\Admin\BranchManagementController::class, 'setDefault'])->name('store.admin.branches.set_default')->middleware(EnsureStoreAccess::class . ':store_manager');
+
+        // Currency Exchange Rates (sidebar_exchange_rates)
+        Route::get('/admin/exchange-rates', [\App\Http\Controllers\Admin\CurrencyExchangeController::class, 'index'])->name('store.admin.exchange_rates.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/exchange-rates', [\App\Http\Controllers\Admin\CurrencyExchangeController::class, 'store'])->name('store.admin.exchange_rates.store')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/exchange-rates/bulk-update', [\App\Http\Controllers\Admin\CurrencyExchangeController::class, 'bulkUpdate'])->name('store.admin.exchange_rates.bulk_update')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/exchange-rates/convert', [\App\Http\Controllers\Admin\CurrencyExchangeController::class, 'convert'])->name('store.admin.exchange_rates.convert')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::put('/admin/exchange-rates/{currency}', [\App\Http\Controllers\Admin\CurrencyExchangeController::class, 'update'])->name('store.admin.exchange_rates.update')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::delete('/admin/exchange-rates/{currency}', [\App\Http\Controllers\Admin\CurrencyExchangeController::class, 'destroy'])->name('store.admin.exchange_rates.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+
+        // Membership Tier & Loyalty Points (sidebar_membership)
+        Route::get('/admin/membership', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'index'])->name('store.admin.membership.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/membership/tiers', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'storeTier'])->name('store.admin.membership.tiers.store')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::put('/admin/membership/tiers/{tier}', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'updateTier'])->name('store.admin.membership.tiers.update')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::delete('/admin/membership/tiers/{tier}', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'destroyTier'])->name('store.admin.membership.tiers.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/membership/adjust-points', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'adjustPoints'])->name('store.admin.membership.adjust_points')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/membership/assign-tier', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'assignTier'])->name('store.admin.membership.assign_tier')->middleware(EnsureStoreAccess::class . ':store_manager');
+
+        // Promotions & Coupon Engine (sidebar_promotions)
+        Route::get('/admin/promotions', [\App\Http\Controllers\Admin\PromotionController::class, 'index'])->name('store.admin.promotions.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/promotions', [\App\Http\Controllers\Admin\PromotionController::class, 'store'])->name('store.admin.promotions.store')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/promotions/validate-coupon', [\App\Http\Controllers\Admin\PromotionController::class, 'validateCoupon'])->name('store.admin.promotions.validate_coupon')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::put('/admin/promotions/{promotion}', [\App\Http\Controllers\Admin\PromotionController::class, 'update'])->name('store.admin.promotions.update')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/promotions/{promotion}/toggle', [\App\Http\Controllers\Admin\PromotionController::class, 'toggle'])->name('store.admin.promotions.toggle')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::delete('/admin/promotions/{promotion}', [\App\Http\Controllers\Admin\PromotionController::class, 'destroy'])->name('store.admin.promotions.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+
         // Roadmap placeholder page — one route for every not-yet-built module
         // (sidebar "coming soon" links). The module registry (slug → label +
         // phase) lives in ComingSoonController; unknown slugs 404.

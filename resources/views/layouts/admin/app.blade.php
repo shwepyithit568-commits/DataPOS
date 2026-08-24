@@ -544,7 +544,13 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'promotions'])" :label="__('messages.sidebar_promotions')" />
+                    @php $isPromotions = request()->is('store/*/admin/promotions*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.promotions.index', $storeRouteParams)" route-name="store.admin.promotions.index" :active="$isPromotions" :label="__('messages.sidebar_promotions')">
+                        <x-slot:icon>
+                            {{-- Tag / Coupon icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'web-products'])" :label="__('messages.sidebar_web_products')" />
                 </x-admin.nav-group>
 
@@ -568,7 +574,13 @@
                             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11a4 4 0 1 0-8 0m8 0a4 4 0 1 1-8 0m8 0c3 1 5 3 5 6v1H3v-1c0-3 2-5 5-6"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'membership'])" :label="__('messages.sidebar_membership')" />
+                    @php $isMembership = request()->is('store/*/admin/membership*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.membership.index', $storeRouteParams)" route-name="store.admin.membership.index" :active="$isMembership" :label="__('messages.sidebar_membership')">
+                        <x-slot:icon>
+                            {{-- VIP Crown / Medal Icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
                 </x-admin.nav-group>
 
                 <x-admin.nav-group name="service" :label="__('messages.sidebar_service')" icon-class="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
@@ -759,7 +771,13 @@
                             </x-admin.nav-link>
                         @endif
 
-                        <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'branches'])" :label="__('messages.sidebar_branches')" />
+                        @php $isBranches = request()->is('store/*/admin/branches*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.branches.index', $storeRouteParams)" route-name="store.admin.branches.index" :active="$isBranches" :label="__('messages.sidebar_branches')">
+                            <x-slot:icon>
+                                {{-- Branch / Location Multi-Store Icon --}}
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7H3l2-4h14l2 4M5 21V10.85M19 21V10.85M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
                         @php $isPrinters = request()->is('store/*/admin/printers*'); @endphp
                         <x-admin.nav-link :href="route('store.admin.printers.index', $storeRouteParams)" route-name="store.admin.printers.index" :active="$isPrinters" :label="__('messages.sidebar_printers')">
                             <x-slot:icon>
@@ -774,7 +792,13 @@
                                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 6v12"/></svg>
                             </x-slot:icon>
                         </x-admin.nav-link>
-                        <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'exchange-rates'])" :label="__('messages.sidebar_exchange_rates')" />
+                        @php $isExchangeRates = request()->is('store/*/admin/exchange-rates*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.exchange_rates.index', $storeRouteParams)" route-name="store.admin.exchange_rates.index" :active="$isExchangeRates" :label="__('messages.sidebar_exchange_rates')">
+                            <x-slot:icon>
+                                {{-- Currency Exchange Icon --}}
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
                 </x-admin.nav-group>
                 @endif
             @endif

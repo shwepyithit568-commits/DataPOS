@@ -60,8 +60,8 @@ DataPOS Admin Sidebar တွင် လက်ရှိအသုံးပြုန
 | :--- | :--- | :--- | :--- |
 | ✅**၉။ Printer Setup & Direct Printing**<br>(`sidebar_printers`) | `Setup` အောက် | • 58mm / 80mm Thermal Receipt Printers Setting<br>• USB, Bluetooth, LAN / Network IP Printer ချိတ်ဆက်မှု<br>• Print Copies, Auto Cutter, Cash Drawer Kick အဖွင့်/အပိတ် | ⚡ **P1** |
 | ✅**၁၀။ Voucher Customizer & Templates**<br>(`sidebar_vouchers`) | `Setup` အောက် | • ဘောက်ချာခေါင်းစဉ်၊ ဆိုင် Logo၊ ဖုန်းနံပါတ်၊ လိပ်စာ၊ ကျေးဇူးတင်စကား စိတ်ကြိုက်ပြင်ဆင်ခြင်း<br>• KPay / Wave QR Code ဘောက်ချာတွင် ထည့်သွင်းပြသခြင်း<br>• A4, A5, 80mm, 58mm Voucher Templates | ⚡ **P1** |
-| **၁၁။ Multi-Branch Management**<br>(`sidebar_branches`) | `Setup` အောက် | • ဆိုင်ခွဲများ (Branch 1, Branch 2) သတ်မှတ်ခြင်း<br>• ဆိုင်ခွဲအလိုက် သီးခြား POS စာရင်းနှင့် Stock ခွဲဝေမှု | 🔹 **P2** |
-| **၁၂။ Currency Exchange Rates**<br>(`sidebar_exchange_rates`) | `Setup` အောက် | • MMK, USD, THB (ဘတ်), CNY (ယွမ်) နေ့စဉ် ငွေလဲနှုန်းများ<br>• နိုင်ငံခြားငွေဖြင့် ဝင်လာသော ပစ္စည်းများအား မြန်မာကျပ်ငွေသို့ အလိုအလျောက် ဈေးပြောင်းလဲပေးခြင်း | 🔹 **P2** |
+| ✅**၁၁။ Multi-Branch Management**<br>(`sidebar_branches`) | `Setup` အောက် | • ဆိုင်ခွဲများ (Branch 1, Branch 2) သတ်မှတ်ခြင်း<br>• ဆိုင်ခွဲအလိုက် သီးခြား POS စာရင်းနှင့် Stock ခွဲဝေမှု | 🔹 **P2** |
+| ✅**၁၂။ Currency Exchange Rates**<br>(`sidebar_exchange_rates`) | `Setup` အောက် | • MMK, USD, THB (ဘတ်), CNY (ယွမ်) နေ့စဉ် ငွေလဲနှုန်းများ<br>• နိုင်ငံခြားငွေဖြင့် ဝင်လာသော ပစ္စည်းများအား မြန်မာကျပ်ငွေသို့ အလိုအလျောက် ဈေးပြောင်းလဲပေးခြင်း | 🔹 **P2** |
 
 ---
 
@@ -70,8 +70,8 @@ DataPOS Admin Sidebar တွင် လက်ရှိအသုံးပြုန
 
 | Module အမည် | Sidebar တည်နေရာ | အဓိက လုပ်ဆောင်ချက်နှင့် စနစ်ဖွဲ့စည်းပုံ | Priority |
 | :--- | :--- | :--- | :--- |
-| **၁၃။ Membership Tier & Loyalty Points**<br>(`sidebar_membership`) | `Customers` အောက် | • ဖောက်သည် အဆင့်များ (Silver, Gold, VIP Member)<br>• ဝယ်ယူမှုပမာဏအလိုက် Points ပေးခြင်းနှင့် Points ဖြင့် ငွေလျှော့ဝယ်ယူနိုင်ခြင်း | 🔹 **P2** |
-| **၁၄။ Promotions & Coupon Engine**<br>(`sidebar_promotions`) | `Ecommerce` အောက် | • Coupon Code လျှော့စျေးများ (ဥပမာ: `THADINGYUT10` - 10% Off)<br>• Buy 1 Get 1 (တစ်ခုဝယ် တစ်ခုလက်ဆောင်) နှင့် အထူးလျှော့စျေး သတ်မှတ်ခြင်း | 🔹 **P2** |
+| ✅**၁၃။ Membership Tier & Loyalty Points**<br>(`sidebar_membership`) | `Customers` အောက် | • ဖောက်သည် အဆင့်များ (Silver, Gold, VIP Member)<br>• ဝယ်ယူမှုပမာဏအလိုက် Points ပေးခြင်းနှင့် Points ဖြင့် ငွေလျှော့ဝယ်ယူနိုင်ခြင်း | 🔹 **P2** |
+| ✅**၁၄။ Promotions & Coupon Engine**<br>(`sidebar_promotions`) | `Ecommerce` အောက် | • Coupon Code လျှော့စျေးများ (ဥပမာ: `THADINGYUT10` - 10% Off)<br>• Buy 1 Get 1 (တစ်ခုဝယ် တစ်ခုလက်ဆောင်) နှင့် အထူးလျှော့စျေး သတ်မှတ်ခြင်း | 🔹 **P2** |
 | **၁၅။ Web Catalog Product Visibility**<br>(`sidebar_web_products`) | `Ecommerce` အောက် | • Online Storefront တွင် ပြသမည့် ပစ္စည်းများနှင့် ဆိုင်တွင်းသာ ရောင်းမည့် ပစ္စည်းများ သီးသန့် ခွဲထုတ်ထိန်းချုပ်ခြင်း | 🔹 **P2** |
 | **၁၆။ Mobile E-Load & Bill Register**<br>(`sidebar_eload`) | `POS` အောက် | • MPT, Atom, Ooredoo, Mytel ဖုန်းဘေလ်ဖြည့်ခြင်း မှတ်တမ်း<br>• E-Load ဝယ်စျေး/ရောင်းစျေးနှင့် အမြတ်ငွေ အလိုအလျောက် တွက်ချက်မှု | 🔹 **P2** |
 
