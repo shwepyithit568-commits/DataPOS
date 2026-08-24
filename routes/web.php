@@ -743,6 +743,33 @@ Route::prefix('store/{store_slug}')
         Route::post('/admin/price-wizard/apply', [\App\Http\Controllers\Admin\BulkPriceWizardController::class, 'apply'])->name('store.admin.price_wizard.apply')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/price-wizard/export', [\App\Http\Controllers\Admin\BulkPriceWizardController::class, 'export'])->name('store.admin.price_wizard.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
+        // Cash & Bank Transactions Register (sidebar_transactions)
+        Route::get('/admin/transactions', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'index'])->name('store.admin.transactions.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/transactions/deposit', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'deposit'])->name('store.admin.transactions.deposit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/transactions/withdraw', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'withdraw'])->name('store.admin.transactions.withdraw')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/transactions/transfer', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'transfer'])->name('store.admin.transactions.transfer')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/transactions/account', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'storeAccount'])->name('store.admin.transactions.account.store')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/transactions/export', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'export'])->name('store.admin.transactions.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/transactions/{transaction}/voucher', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'printVoucher'])->name('store.admin.transactions.voucher')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Printer Setup & Direct Printing (sidebar_printers)
+        Route::get('/admin/printers', [\App\Http\Controllers\Admin\PrinterController::class, 'index'])->name('store.admin.printers.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/printers/create', [\App\Http\Controllers\Admin\PrinterController::class, 'create'])->name('store.admin.printers.create')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/printers', [\App\Http\Controllers\Admin\PrinterController::class, 'store'])->name('store.admin.printers.store')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/printers/{printer}/edit', [\App\Http\Controllers\Admin\PrinterController::class, 'edit'])->name('store.admin.printers.edit')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::put('/admin/printers/{printer}', [\App\Http\Controllers\Admin\PrinterController::class, 'update'])->name('store.admin.printers.update')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::delete('/admin/printers/{printer}', [\App\Http\Controllers\Admin\PrinterController::class, 'destroy'])->name('store.admin.printers.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/printers/{printer}/set-default', [\App\Http\Controllers\Admin\PrinterController::class, 'setDefault'])->name('store.admin.printers.set_default')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/printers/{printer}/test-print', [\App\Http\Controllers\Admin\PrinterController::class, 'testPrint'])->name('store.admin.printers.test_print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Voucher Customizer & Templates (sidebar_vouchers)
+        Route::get('/admin/vouchers', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'index'])->name('store.admin.vouchers.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/vouchers', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'store'])->name('store.admin.vouchers.store')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::put('/admin/vouchers/{voucher}', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'update'])->name('store.admin.vouchers.update')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::delete('/admin/vouchers/{voucher}', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'destroy'])->name('store.admin.vouchers.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/vouchers/{voucher}/set-default', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'setDefault'])->name('store.admin.vouchers.set_default')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/vouchers/{voucher}/preview', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'preview'])->name('store.admin.vouchers.preview')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
         // Roadmap placeholder page — one route for every not-yet-built module
         // (sidebar "coming soon" links). The module registry (slug → label +
         // phase) lives in ComingSoonController; unknown slugs 404.

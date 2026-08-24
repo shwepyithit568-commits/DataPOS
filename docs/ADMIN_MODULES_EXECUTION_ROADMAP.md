@@ -49,7 +49,7 @@ DataPOS Admin Sidebar တွင် လက်ရှိအသုံးပြုန
 | ✅**၅။ Stock Ledger & Bin Cards**<br>(`sidebar_stock_ledger`) | `Inventory` အောက် | • ပစ္စည်းတစ်ခုချင်းစီ၏ အဝင်၊ အထွက်၊ အရောင်း၊ အဝယ်၊ လွှဲပြောင်းမှု သမိုင်းကြောင်း (Timeline Audit Trail)<br>• Stock Movement တစ်ခုချင်းစီ၏ Reference Document (Invoice/Purchase/Adjustment ID) ပြသခြင်း | ⚡ **P1** |
 | ✅**၆။ Physical Stock Count & Audit**<br>(`sidebar_stock_count`) | `Inventory` အောက် | • လစဉ် စတော့စစ်ဆေးခြင်း (Stock Take Sheet)<br>• Barcode Scanner ဖြင့် အစစ်အမှန် စတော့ကောင်ရေ ရိုက်ထည့်ခြင်း<br>• System စတော့နှင့် လက်တွေ့စတော့ ကွာဟချက် (Discrepancy) ကို အလိုအလျောက် ညှိပေးခြင်း | ⚡ **P1** |
 | ✅**၇။ Bulk Price Wizard**<br>(`sidebar_price_wizard`) | `Inventory` အောက် | • ကုန်ပစ္စည်း အများအပြား၏ လက်လီ/လက်ကား စျေးနှုန်းကို တစ်ပြိုင်နက် ပြင်ဆင်ခြင်း<br>• အမြတ် % (Markup / Margin %) အလိုက် စျေးနှုန်း အလိုအလျောက် တွက်ချက်တင်ပေးခြင်း | ⚡ **P1** |
-| **၈။ Cash & Bank Transactions Register**<br>(`sidebar_transactions`) | `Finance` အောက် | • ကောင်တာငွေသား (Cash in Hand) နှင့် ဘဏ်စာရင်း (KPay, Wave, KBZ, CB, AYA)<br>• စာရင်းအချင်းချင်း ငွေလွှဲပြောင်းမှု (Fund Transfers) နှင့် လက်ကျန်ငွေ ရှင်းတမ်း | ⚡ **P1** |
+| ✅**၈။ Cash & Bank Transactions Register**<br>(`sidebar_transactions`) | `Finance` အောက် | • ကောင်တာငွေသား (Cash in Hand) နှင့် ဘဏ်စာရင်း (KPay, Wave, KBZ, CB, AYA)<br>• စာရင်းအချင်းချင်း ငွေလွှဲပြောင်းမှု (Fund Transfers) နှင့် လက်ကျန်ငွေ ရှင်းတမ်း | ⚡ **P1** |
 
 ---
 
@@ -58,8 +58,8 @@ DataPOS Admin Sidebar တွင် လက်ရှိအသုံးပြုန
 
 | Module အမည် | Sidebar တည်နေရာ | အဓိက လုပ်ဆောင်ချက်နှင့် စနစ်ဖွဲ့စည်းပုံ | Priority |
 | :--- | :--- | :--- | :--- |
-| **၉။ Printer Setup & Direct Printing**<br>(`sidebar_printers`) | `Setup` အောက် | • 58mm / 80mm Thermal Receipt Printers Setting<br>• USB, Bluetooth, LAN / Network IP Printer ချိတ်ဆက်မှု<br>• Print Copies, Auto Cutter, Cash Drawer Kick အဖွင့်/အပိတ် | ⚡ **P1** |
-| **၁၀။ Voucher Customizer & Templates**<br>(`sidebar_vouchers`) | `Setup` အောက် | • ဘောက်ချာခေါင်းစဉ်၊ ဆိုင် Logo၊ ဖုန်းနံပါတ်၊ လိပ်စာ၊ ကျေးဇူးတင်စကား စိတ်ကြိုက်ပြင်ဆင်ခြင်း<br>• KPay / Wave QR Code ဘောက်ချာတွင် ထည့်သွင်းပြသခြင်း<br>• A4, A5, 80mm, 58mm Voucher Templates | ⚡ **P1** |
+| ✅**၉။ Printer Setup & Direct Printing**<br>(`sidebar_printers`) | `Setup` အောက် | • 58mm / 80mm Thermal Receipt Printers Setting<br>• USB, Bluetooth, LAN / Network IP Printer ချိတ်ဆက်မှု<br>• Print Copies, Auto Cutter, Cash Drawer Kick အဖွင့်/အပိတ် | ⚡ **P1** |
+| ✅**၁၀။ Voucher Customizer & Templates**<br>(`sidebar_vouchers`) | `Setup` အောက် | • ဘောက်ချာခေါင်းစဉ်၊ ဆိုင် Logo၊ ဖုန်းနံပါတ်၊ လိပ်စာ၊ ကျေးဇူးတင်စကား စိတ်ကြိုက်ပြင်ဆင်ခြင်း<br>• KPay / Wave QR Code ဘောက်ချာတွင် ထည့်သွင်းပြသခြင်း<br>• A4, A5, 80mm, 58mm Voucher Templates | ⚡ **P1** |
 | **၁၁။ Multi-Branch Management**<br>(`sidebar_branches`) | `Setup` အောက် | • ဆိုင်ခွဲများ (Branch 1, Branch 2) သတ်မှတ်ခြင်း<br>• ဆိုင်ခွဲအလိုက် သီးခြား POS စာရင်းနှင့် Stock ခွဲဝေမှု | 🔹 **P2** |
 | **၁၂။ Currency Exchange Rates**<br>(`sidebar_exchange_rates`) | `Setup` အောက် | • MMK, USD, THB (ဘတ်), CNY (ယွမ်) နေ့စဉ် ငွေလဲနှုန်းများ<br>• နိုင်ငံခြားငွေဖြင့် ဝင်လာသော ပစ္စည်းများအား မြန်မာကျပ်ငွေသို့ အလိုအလျောက် ဈေးပြောင်းလဲပေးခြင်း | 🔹 **P2** |
 
