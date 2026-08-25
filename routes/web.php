@@ -484,7 +484,10 @@ Route::prefix('store/{store_slug}')
 
         // Customer Directory
         Route::get('/admin/customers', [CustomerDirectoryController::class, 'index'])->name('store.admin.customers.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/customers', [CustomerDirectoryController::class, 'store'])->name('store.admin.customers.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/customers/export', [CustomerDirectoryController::class, 'exportCsv'])->name('store.admin.customers.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/customers/{customer}', [CustomerDirectoryController::class, 'show'])->name('store.admin.customers.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::put('/admin/customers/{customer}', [CustomerDirectoryController::class, 'update'])->name('store.admin.customers.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Customer Receivables & Debt Ledger Management (SoT §17)
         Route::get('/admin/receivables', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'index'])->name('store.admin.receivables.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -877,13 +880,13 @@ Route::prefix('store/{store_slug}')
 
         // Admin Order Requests Management
         Route::get('/admin/orders', [OrderAdminController::class, 'index'])->name('store.admin.orders.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/orders/export', [OrderAdminController::class, 'export'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/orders/{order}', [OrderAdminController::class, 'show'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/orders/{order}/invoice', [OrderAdminController::class, 'invoice'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::patch('/admin/orders/{order}/status', [OrderAdminController::class, 'updateStatus'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::patch('/admin/orders/{order}/finances', [OrderAdminController::class, 'updateFinances'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::patch('/admin/orders/{order}/note', [OrderAdminController::class, 'updateNote'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::delete('/admin/orders/{order}', [OrderAdminController::class, 'destroy'])->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/orders/export', [OrderAdminController::class, 'export'])->name('store.admin.orders.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/orders/{order}', [OrderAdminController::class, 'show'])->name('store.admin.orders.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/orders/{order}/invoice', [OrderAdminController::class, 'invoice'])->name('store.admin.orders.invoice')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::patch('/admin/orders/{order}/status', [OrderAdminController::class, 'updateStatus'])->name('store.admin.orders.update_status')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::patch('/admin/orders/{order}/finances', [OrderAdminController::class, 'updateFinances'])->name('store.admin.orders.update_finances')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::patch('/admin/orders/{order}/note', [OrderAdminController::class, 'updateNote'])->name('store.admin.orders.update_note')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::delete('/admin/orders/{order}', [OrderAdminController::class, 'destroy'])->name('store.admin.orders.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
 
         // Admin Web Push management (subscriber count, test/custom send, history)
         Route::get('/admin/push', [PushNotificationController::class, 'index'])->name('store.admin.push.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');

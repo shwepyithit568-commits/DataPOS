@@ -110,7 +110,7 @@ class StaffRoleController extends Controller
     /**
      * Store a new custom staff role.
      */
-    public function store(Request $request, StoreContext $context): RedirectResponse
+    public function store(Request $request, StoreContext $context, string $store_slug = ''): RedirectResponse
     {
         $store = $context->getStore();
         if (! $store) {
@@ -144,7 +144,7 @@ class StaffRoleController extends Controller
     /**
      * Update an existing staff role.
      */
-    public function update(StoreContext $context, string $store_slug, int|string $role, Request $request): RedirectResponse
+    public function update(Request $request, StoreContext $context, string $store_slug, int|string $role): RedirectResponse
     {
         $store = $context->getStore();
         if (! $store) {
@@ -176,7 +176,7 @@ class StaffRoleController extends Controller
     /**
      * Delete a custom staff role.
      */
-    public function destroy(StoreContext $context, string $store_slug, int|string $role): RedirectResponse
+    public function destroy(Request $request, StoreContext $context, string $store_slug, int|string $role): RedirectResponse
     {
         $store = $context->getStore();
         if (! $store) {
@@ -203,7 +203,7 @@ class StaffRoleController extends Controller
     /**
      * Assign a role to a staff member.
      */
-    public function assignStaff(Request $request, StoreContext $context): RedirectResponse
+    public function assignStaff(Request $request, StoreContext $context, string $store_slug = ''): RedirectResponse
     {
         $store = $context->getStore();
         if (! $store) {
@@ -226,7 +226,7 @@ class StaffRoleController extends Controller
     /**
      * Export Roles Matrix to CSV.
      */
-    public function exportCsv(Request $request, StoreContext $context): StreamedResponse
+    public function exportCsv(Request $request, StoreContext $context, string $store_slug = ''): StreamedResponse
     {
         $store = $context->getStore();
         if (! $store) {

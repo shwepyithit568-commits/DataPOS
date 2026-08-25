@@ -19,76 +19,112 @@ class OrderAdminController extends Controller
     public function index(Request $request, StoreContext $context): View
     {
         $store = $context->getStore();
+        if (! $store) {
+            abort(404);
+        }
+
+        $storeRouteParams = ['store_slug' => $store->slug];
+        $tab = $request->query('tab', 'all');
 
         $query = $this->filteredQuery($request, $store);
+
+        // Tab filter
+        if ($tab === 'pending') {
+            $query->where('status', 'pending_contact');
+        } elseif ($tab === 'confirmed') {
+            $query->where('status', 'confirmed');
+        } elseif ($tab === 'delivered') {
+            $query->where('status', 'delivered');
+        } elseif ($tab === 'cancelled') {
+            $query->where('status', 'cancelled');
+        }
 
         // Sorting
         $sort = $request->get('sort', 'newest');
         match ($sort) {
-            'oldest'        => $query->oldest(),
-            'amount_high'   => $query->orderBy('total_amount', 'desc'),
-            'amount_low'    => $query->orderBy('total_amount', 'asc'),
-            default         => $query->latest(),
+            'oldest'        => $query->oldest('created_at'),
+            'amount_high'   => $query->orderByRaw('COALESCE(agreed_amount, total_amount) DESC'),
+            'amount_low'    => $query->orderByRaw('COALESCE(agreed_amount, total_amount) ASC'),
+            default         => $query->latest('created_at'),
         };
 
-        $perPage = request('per_page') === 'all' ? 100000 : (int) request('per_page', 25);
+        $perPage = request('per_page') === 'all' ? 1000 : (int) request('per_page', 25);
         $orders = $query->paginate($perPage)->withQueryString();
         $totalCount = $orders->total();
 
-        // Summary stats — rebuild base filtered query to avoid clone-after-paginate issues
-        $baseFiltered = fn () => $this->filteredQuery($request, $store);
+        // Summary KPI stats for store
+        $storeOrders = Order::where('store_id', $store->id);
+        $totalOrdersCount = (clone $storeOrders)->count();
+        $pendingCount = (clone $storeOrders)->where('status', 'pending_contact')->count();
+        $confirmedCount = (clone $storeOrders)->where('status', 'confirmed')->count();
+        $deliveredCount = (clone $storeOrders)->where('status', 'delivered')->count();
+        $cancelledCount = (clone $storeOrders)->where('status', 'cancelled')->count();
+
+        $revenue = (float) (clone $storeOrders)
+            ->whereIn('status', ['confirmed', 'delivered'])
+            ->selectRaw('SUM(COALESCE(agreed_amount, total_amount)) as rev')
+            ->value('rev') ?? 0.0;
+
+        $pendingRevenue = (float) (clone $storeOrders)
+            ->where('status', 'pending_contact')
+            ->selectRaw('SUM(COALESCE(agreed_amount, total_amount)) as rev')
+            ->value('rev') ?? 0.0;
 
         $stats = [
-            'total'     => $totalCount,
-            'pending'   => $baseFiltered()->where('status', 'pending_contact')->count(),
-            'confirmed' => $baseFiltered()->where('status', 'confirmed')->count(),
-            'delivered' => $baseFiltered()->where('status', 'delivered')->count(),
-            'cancelled'      => $baseFiltered()->where('status', 'cancelled')->count(),
-            // Revenue = confirmed + delivered (delivered orders were confirmed
-            // before, so excluding them would drop revenue on status change).
-            'revenue'        => $this->revenueSum($baseFiltered()->whereIn('status', ['confirmed', 'delivered'])),
-            'pendingRevenue' => $this->revenueSum($baseFiltered()->where('status', 'pending_contact')),
+            'total'          => $totalOrdersCount,
+            'pending'        => $pendingCount,
+            'confirmed'      => $confirmedCount,
+            'delivered'      => $deliveredCount,
+            'cancelled'      => $cancelledCount,
+            'revenue'        => $revenue,
+            'pendingRevenue' => $pendingRevenue,
         ];
 
-        return view('admin.orders.index', compact('store', 'orders', 'totalCount', 'stats'));
+        return view('admin.orders.index', compact(
+            'store',
+            'storeRouteParams',
+            'orders',
+            'totalCount',
+            'stats',
+            'tab',
+            'sort'
+        ));
     }
 
     public function show(string $store_slug, Order $order, StoreContext $context): View
     {
         $store = $context->getStore();
-
-        if ($order->store_id !== $store->id) {
+        if (! $store || $order->store_id !== $store->id) {
             abort(403, 'Unauthorized store order access.');
         }
 
+        $storeRouteParams = ['store_slug' => $store->slug];
         $order->load(['items', 'user']);
 
-        return view('admin.orders.show', compact('store', 'order'));
+        return view('admin.orders.show', compact('store', 'storeRouteParams', 'order'));
     }
 
     /**
-     * Printable invoice — a standalone page (no admin chrome) meant to be
-     * printed to PDF / shared with the customer.
+     * Printable invoice.
      */
     public function invoice(string $store_slug, Order $order, StoreContext $context): View
     {
         $store = $context->getStore();
-
-        if ($order->store_id !== $store->id) {
+        if (! $store || $order->store_id !== $store->id) {
             abort(403, 'Unauthorized store order access.');
         }
 
+        $storeRouteParams = ['store_slug' => $store->slug];
         $order->load(['items', 'user']);
         $setting = $store->setting;
 
-        return view('admin.orders.invoice', compact('store', 'order', 'setting'));
+        return view('admin.orders.invoice', compact('store', 'storeRouteParams', 'order', 'setting'));
     }
 
     public function updateStatus(Request $request, string $store_slug, Order $order, StoreContext $context): RedirectResponse
     {
         $store = $context->getStore();
-
-        if ($order->store_id !== $store->id) {
+        if (! $store || $order->store_id !== $store->id) {
             abort(403, 'Unauthorized store order update.');
         }
 
@@ -98,10 +134,6 @@ class OrderAdminController extends Controller
 
         $fromStatus = $order->status;
 
-        // Inventory ledger integration (SoT §5 / target-design §2.5): reserve /
-        // commit / release stock BEFORE the status persists — a failed
-        // reservation blocks the transition so POS and online orders can never
-        // oversell the same stock.
         try {
             app(OrderInventoryAdapter::class)->handleStatusChange($order, $fromStatus, $validated['status']);
         } catch (InventoryException $e) {
@@ -110,27 +142,29 @@ class OrderAdminController extends Controller
 
         $order->update(['status' => $validated['status']]);
 
-        // Notify the team that the order progressed (deduped per status value,
-        // queued, best-effort — a push failure must never fail the update).
         app(\App\Support\AdminPushNotifier::class)->dispatch(
             $store,
             'order-status.' . $order->id . '.' . $validated['status'],
             new \App\Notifications\OrderStatusNotification($order, $validated['status']),
         );
 
-        return back()->with('success', 'Order status updated to ' . $validated['status']);
+        $statusLabels = [
+            'pending_contact' => 'Pending Contact',
+            'confirmed'       => 'Confirmed (အတည်ပြုပြီး)',
+            'delivered'       => 'Delivered (ပို့ဆောင်ပြီး)',
+            'cancelled'       => 'Cancelled (ပယ်ဖျက်ပြီး)',
+        ];
+
+        return back()->with('success', 'Order status updated to: ' . ($statusLabels[$validated['status']] ?? $validated['status']));
     }
 
     /**
-     * Record the final agreed price (negotiated over the phone/Viber/Telegram)
-     * and whether the customer has paid. Glass-finder orders carry a Ks 0
-     * total until the owner sets the agreed amount here.
+     * Record the final agreed price and whether paid.
      */
     public function updateFinances(Request $request, string $store_slug, Order $order, StoreContext $context): RedirectResponse
     {
         $store = $context->getStore();
-
-        if ($order->store_id !== $store->id) {
+        if (! $store || $order->store_id !== $store->id) {
             abort(403, 'Unauthorized store order update.');
         }
 
@@ -146,8 +180,6 @@ class OrderAdminController extends Controller
             'payment_status' => $validated['payment_status'],
         ]);
 
-        // Notify the team when an order is marked paid (deduped, queued,
-        // best-effort). Unpaid marking does not notify.
         if ($validated['payment_status'] === 'paid') {
             app(\App\Support\AdminPushNotifier::class)->dispatch(
                 $store,
@@ -156,19 +188,16 @@ class OrderAdminController extends Controller
             );
         }
 
-        return back()->with('success', 'Order payment details updated.');
+        return back()->with('success', 'Order payment & agreed amount updated.');
     }
 
     /**
-     * Save an internal admin note on the order. This is a private remark
-     * (delivery instructions, follow-up reminders, negotiated details) —
-     * customers never see it; their own note stays in customer_note.
+     * Save an internal admin note on the order.
      */
     public function updateNote(Request $request, string $store_slug, Order $order, StoreContext $context): RedirectResponse
     {
         $store = $context->getStore();
-
-        if ($order->store_id !== $store->id) {
+        if (! $store || $order->store_id !== $store->id) {
             abort(403, 'Unauthorized store order update.');
         }
 
@@ -177,25 +206,21 @@ class OrderAdminController extends Controller
         ]);
 
         $note = trim((string) ($validated['admin_note'] ?? ''));
-
         $order->update(['admin_note' => $note === '' ? null : $note]);
 
-        return back()->with('success', 'Admin note saved.');
+        return back()->with('success', 'Admin note saved successfully.');
     }
 
     /**
      * Delete an order — owner (store_manager) only.
-     * Cascades to order items via the model relationship.
      */
     public function destroy(string $store_slug, Order $order, StoreContext $context): RedirectResponse
     {
         $store = $context->getStore();
-
-        if ($order->store_id !== $store->id) {
+        if (! $store || $order->store_id !== $store->id) {
             abort(403, 'Unauthorized store order access.');
         }
 
-        // Only store_manager (owner) can delete orders
         $user = request()->user();
         if (!$user->isPlatformOwner() && !$user->hasStoreRole($store->id, ['store_manager'])) {
             abort(403, 'Only the store owner can delete orders.');
@@ -205,7 +230,7 @@ class OrderAdminController extends Controller
         $order->items()->delete();
         $order->delete();
 
-        return back()->with('success', "Order {$orderNumber} has been deleted.");
+        return back()->with('success', "Order #{$orderNumber} has been deleted.");
     }
 
     /**
@@ -214,23 +239,28 @@ class OrderAdminController extends Controller
     public function export(Request $request, StoreContext $context): StreamedResponse
     {
         $store = $context->getStore();
+        if (! $store) {
+            abort(404);
+        }
 
-        $orders = $this->filteredQuery($request, $store)->latest()->get();
+        $orders = $this->filteredQuery($request, $store)->latest('created_at')->get();
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="orders-' . now()->format('Ymd-His') . '.csv"',
+            'Content-Disposition' => 'attachment; filename="orders-' . $store->slug . '-' . now()->format('Ymd-His') . '.csv"',
         ];
 
-        return response()->streamDownload(function () use ($orders) {
+        return response()->streamDownload(function () use ($orders, $store) {
             $stream = fopen('php://output', 'w');
-
-            // UTF-8 BOM so Excel opens the file with correct encoding
             fwrite($stream, "\xEF\xBB\xBF");
+
+            fputcsv($stream, ['Order Requests Report', $store->name]);
+            fputcsv($stream, ['Export Date', now()->toFormattedDateString() . ' ' . now()->format('h:i A')]);
+            fputcsv($stream, []);
 
             fputcsv($stream, [
                 'Order No', 'Date', 'Customer Name', 'Phone', 'Contact Channel',
-                'Pricing Type', 'Status', 'Payment Status', 'Total (Ks)', 'Agreed Amount (Ks)', 'Items',
+                'Pricing Type', 'Status', 'Payment Status', 'Total (Ks)', 'Agreed Amount (Ks)', 'Items Summary',
             ]);
 
             foreach ($orders as $order) {
@@ -243,31 +273,26 @@ class OrderAdminController extends Controller
                     $order->created_at->format('Y-m-d H:i'),
                     $order->customer_name,
                     $order->customer_phone,
-                    $order->contact_channel,
-                    $order->pricing_type,
-                    $order->status,
-                    $order->payment_status,
-                    number_format((float) $order->total_amount),
-                    $order->agreed_amount !== null ? number_format((float) $order->agreed_amount) : '',
+                    strtoupper($order->contact_channel),
+                    ucfirst($order->pricing_type),
+                    ucfirst(str_replace('_', ' ', $order->status)),
+                    strtoupper($order->payment_status),
+                    number_format((float) $order->total_amount, 0, '.', ''),
+                    $order->agreed_amount !== null ? number_format((float) $order->agreed_amount, 0, '.', '') : '',
                     $items,
                 ]);
             }
 
             fclose($stream);
-        }, 'orders-' . now()->format('Ymd-His') . '.csv', $headers);
+        }, 'orders-' . $store->slug . '-' . now()->format('Ymd-His') . '.csv', $headers);
     }
 
-    /**
-     * Shared search/filter builder so the index, stats and CSV export all
-     * honour the exact same filters.
-     */
     private function filteredQuery(Request $request, Store $store): Builder
     {
         $query = Order::where('store_id', $store->id)->with(['items', 'user']);
 
-        // Search: order number, customer name, or customer phone
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', '%' . $search . '%')
                   ->orWhere('customer_name', 'like', '%' . $search . '%')
@@ -276,34 +301,18 @@ class OrderAdminController extends Controller
             });
         }
 
-        // Filter: status
-        if ($request->filled('status') && in_array($request->status, ['pending_contact', 'confirmed', 'delivered', 'cancelled'])) {
+        if ($request->filled('status') && in_array($request->status, ['pending_contact', 'confirmed', 'delivered', 'cancelled'], true)) {
             $query->where('status', $request->status);
         }
 
-        // Filter: pricing type
-        if ($request->filled('pricing_type') && in_array($request->pricing_type, ['retail', 'wholesale'])) {
+        if ($request->filled('pricing_type') && in_array($request->pricing_type, ['retail', 'wholesale'], true)) {
             $query->where('pricing_type', $request->pricing_type);
         }
 
-        // Filter: contact channel
-        if ($request->filled('contact_channel') && in_array($request->contact_channel, ['viber', 'telegram', 'phone'])) {
+        if ($request->filled('contact_channel') && in_array($request->contact_channel, ['viber', 'telegram', 'phone'], true)) {
             $query->where('contact_channel', $request->contact_channel);
         }
 
         return $query;
-    }
-
-    /**
-     * Sum of confirmed-order revenue, using the admin-confirmed agreed
-     * amount where set (glass orders) and the line-item total otherwise.
-     */
-    private function revenueSum(Builder $query): float
-    {
-        $row = $query->selectRaw(
-            'SUM(COALESCE(agreed_amount, total_amount)) as revenue'
-        )->first();
-
-        return (float) ($row->revenue ?? 0);
     }
 }

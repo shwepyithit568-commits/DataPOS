@@ -6,6 +6,14 @@
     $storeRouteParams = ['store_slug' => $store->slug];
     $rolesArray = ($roles instanceof \Illuminate\Pagination\LengthAwarePaginator ? $roles->items() : $roles->all());
     $staffArray = $staffMembers->all();
+
+    $allPermGroupKeys = [];
+    $allAvailableKeys = [];
+    foreach ($permissionGroups as $gKey => $gData) {
+        $keys = array_keys($gData['permissions']);
+        $allPermGroupKeys[$gKey] = $keys;
+        $allAvailableKeys = array_merge($allAvailableKeys, $keys);
+    }
 @endphp
 
 @section('content')
@@ -18,6 +26,8 @@
         assignModalOpen: false,
         allRolesList: {{ Illuminate\Support\Js::from($rolesArray) }},
         allStaffList: {{ Illuminate\Support\Js::from($staffArray) }},
+        permissionGroups: {{ Illuminate\Support\Js::from($allPermGroupKeys) }},
+        allAvailablePermissions: {{ Illuminate\Support\Js::from($allAvailableKeys) }},
         newRole: {
             name: '',
             description: '',
@@ -49,13 +59,17 @@
         openEditModalById(roleId) {
             const role = this.allRolesList.find(r => r.id === roleId);
             if (role) {
+                let perms = Array.isArray(role.permissions) ? [...role.permissions] : [];
+                if (perms.includes('*')) {
+                    perms = [...this.allAvailablePermissions];
+                }
                 this.editingRole = {
                     id: role.id,
                     name: role.name,
                     description: role.description || '',
                     color: role.color || '#0284c7',
                     is_active: !!role.is_active,
-                    permissions: Array.isArray(role.permissions) ? [...role.permissions] : []
+                    permissions: perms
                 };
                 this.editModalOpen = true;
             }
@@ -71,7 +85,8 @@
                 this.assignModalOpen = true;
             }
         },
-        toggleGroup(targetObj, groupKeys) {
+        toggleGroup(targetObj, groupKey) {
+            const groupKeys = this.permissionGroups[groupKey] || [];
             const hasAll = groupKeys.every(k => targetObj.permissions.includes(k));
             if (hasAll) {
                 targetObj.permissions = targetObj.permissions.filter(p => !groupKeys.includes(p));
@@ -79,6 +94,12 @@
                 const combined = [...targetObj.permissions, ...groupKeys];
                 targetObj.permissions = [...new Set(combined)];
             }
+        },
+        selectAll(targetObj) {
+            targetObj.permissions = [...this.allAvailablePermissions];
+        },
+        deselectAll(targetObj) {
+            targetObj.permissions = [];
         }
      }"
      @view-changed.window="viewMode = $event.detail; localStorage.setItem('admin_view_mode', $event.detail)">
@@ -106,7 +127,7 @@
 
         {{-- Top Right Action (Create Role Button) --}}
         <div class="flex items-center gap-2.5 self-start sm:self-auto">
-            <button type="button" @click="openCreateModal()"
+            <button type="button" @click.stop="openCreateModal()"
                     class="px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition flex items-center gap-2 active:scale-95">
                 <span class="text-base leading-none">+</span>
                 <span>{{ __('messages.roles_new') }}</span>
@@ -280,7 +301,7 @@
                     </div>
 
                     <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                        <button type="button" @click="openEditModalById({{ (int) $role->id }})"
+                        <button type="button" @click.stop="openEditModalById({{ (int) $role->id }})"
                                 class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1">
                             <span>✏️</span>
                             <span>Edit Permissions</span>
@@ -349,7 +370,7 @@
                                 </td>
                                 <td class="py-3.5 px-4 text-right">
                                     <div class="inline-flex items-center gap-2">
-                                        <button type="button" @click="openEditModalById({{ (int) $role->id }})"
+                                        <button type="button" @click.stop="openEditModalById({{ (int) $role->id }})"
                                                 class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200 transition">
                                             Edit
                                         </button>
@@ -429,7 +450,7 @@
                                     </span>
                                 </td>
                                 <td class="py-3.5 px-4 text-right">
-                                    <button type="button" @click="openAssignModalById({{ (int) $staff->user_id }})"
+                                    <button type="button" @click.stop="openAssignModalById({{ (int) $staff->user_id }})"
                                             class="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 transition inline-flex items-center gap-1">
                                         <span>🎭</span>
                                         <span>Change Role</span>
@@ -450,9 +471,11 @@
     </div>
 
     {{-- MODAL 1: CREATE NEW ROLE MODAL --}}
-    <div x-show="createModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-        <div @click.away="createModalOpen = false"
-             class="w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 border border-slate-200 dark:border-slate-800 my-8 max-h-[90vh] overflow-y-auto">
+    <div x-show="createModalOpen" x-cloak
+         @click.self="createModalOpen = false"
+         @keydown.escape.window="createModalOpen = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+        <div class="w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 border border-slate-200 dark:border-slate-800 my-8 max-h-[90vh] overflow-y-auto">
             
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -495,18 +518,20 @@
                 <div class="space-y-3 pt-2">
                     <div class="flex items-center justify-between">
                         <h4 class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Granular Permissions Matrix</h4>
-                        <span class="text-[11px] text-blue-600 dark:text-blue-400 font-bold" x-text="`${newRole.permissions.length} selected`"></span>
+                        <div class="flex items-center gap-3">
+                            <button type="button" @click="selectAll(newRole)" class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline">Select All</button>
+                            <span class="text-slate-300 dark:text-slate-700">|</span>
+                            <button type="button" @click="deselectAll(newRole)" class="text-[11px] font-bold text-slate-500 hover:underline">Clear All</button>
+                            <span class="text-[11px] text-blue-600 dark:text-blue-400 font-bold ml-1" x-text="`${newRole.permissions.length} selected`"></span>
+                        </div>
                     </div>
 
                     <div class="space-y-3">
                         @foreach ($permissionGroups as $groupKey => $group)
-                            @php
-                                $groupPermKeys = array_keys($group['permissions']);
-                            @endphp
                             <div class="p-3.5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2.5">
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-black text-slate-800 dark:text-slate-200">{{ $group['label'] }}</span>
-                                    <button type="button" @click="toggleGroup(newRole, {{ json_encode($groupPermKeys) }})"
+                                    <button type="button" @click="toggleGroup(newRole, '{{ $groupKey }}')"
                                             class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline">
                                         Toggle All
                                     </button>
@@ -544,9 +569,11 @@
     </div>
 
     {{-- MODAL 2: EDIT ROLE MODAL --}}
-    <div x-show="editModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-        <div @click.away="editModalOpen = false"
-             class="w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 border border-slate-200 dark:border-slate-800 my-8 max-h-[90vh] overflow-y-auto">
+    <div x-show="editModalOpen" x-cloak
+         @click.self="editModalOpen = false"
+         @keydown.escape.window="editModalOpen = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+        <div class="w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 border border-slate-200 dark:border-slate-800 my-8 max-h-[90vh] overflow-y-auto">
             
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
@@ -585,24 +612,34 @@
                                   placeholder="Role duties and responsibilities summary..."
                                   class="w-full px-3.5 py-2 rounded-xl text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                     </div>
+
+                    <div class="sm:col-span-2">
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="is_active" value="1" x-model="editingRole.is_active"
+                                   class="rounded text-blue-600 focus:ring-blue-500">
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Active (Available for staff assignment)</span>
+                        </label>
+                    </div>
                 </div>
 
                 {{-- Granular Permissions Matrix Section --}}
                 <div class="space-y-3 pt-2">
                     <div class="flex items-center justify-between">
                         <h4 class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">Granular Permissions Matrix</h4>
-                        <span class="text-[11px] text-blue-600 dark:text-blue-400 font-bold" x-text="`${editingRole.permissions.includes('*') ? 'Full Access' : editingRole.permissions.length + ' selected'}`"></span>
+                        <div class="flex items-center gap-3">
+                            <button type="button" @click="selectAll(editingRole)" class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline">Select All</button>
+                            <span class="text-slate-300 dark:text-slate-700">|</span>
+                            <button type="button" @click="deselectAll(editingRole)" class="text-[11px] font-bold text-slate-500 hover:underline">Clear All</button>
+                            <span class="text-[11px] text-blue-600 dark:text-blue-400 font-bold ml-1" x-text="`${editingRole.permissions.length} selected`"></span>
+                        </div>
                     </div>
 
                     <div class="space-y-3">
                         @foreach ($permissionGroups as $groupKey => $group)
-                            @php
-                                $groupPermKeys = array_keys($group['permissions']);
-                            @endphp
                             <div class="p-3.5 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2.5">
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-black text-slate-800 dark:text-slate-200">{{ $group['label'] }}</span>
-                                    <button type="button" @click="toggleGroup(editingRole, {{ json_encode($groupPermKeys) }})"
+                                    <button type="button" @click="toggleGroup(editingRole, '{{ $groupKey }}')"
                                             class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline">
                                         Toggle All
                                     </button>
@@ -640,8 +677,11 @@
     </div>
 
     {{-- MODAL 3: ASSIGN STAFF ROLE MODAL --}}
-    <div x-show="assignModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <div @click.away="assignModalOpen = false" class="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200 dark:border-slate-800">
+    <div x-show="assignModalOpen" x-cloak
+         @click.self="assignModalOpen = false"
+         @keydown.escape.window="assignModalOpen = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200 dark:border-slate-800">
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
                     <span>🎭</span>
@@ -675,7 +715,7 @@
                     <button type="button" @click="assignModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
                         Cancel
                     </button>
-                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 transition">
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 transition">
                         Confirm Assignment
                     </button>
                 </div>

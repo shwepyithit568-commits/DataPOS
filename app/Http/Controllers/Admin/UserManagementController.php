@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\StaffRole;
 use App\Models\Store;
 use App\Models\User;
 use App\Support\AdminListReturn;
@@ -19,7 +20,7 @@ class UserManagementController extends Controller
 {
     private const GLOBAL_ROLES = ['customer', 'platform_owner'];
 
-    private const STORE_ROLES = ['retail_customer', 'wholesale_customer', 'staff', 'store_manager'];
+    private const STORE_ROLES = ['store_manager', 'staff', 'wholesale_customer', 'retail_customer'];
 
     private const MEMBERSHIP_STATUSES = ['active', 'pending', 'suspended'];
 
@@ -27,72 +28,131 @@ class UserManagementController extends Controller
     {
         $store = $this->resolveStore($context);
 
-        $users = User::query()
+        // Ensure default staff roles exist
+        StaffRole::bootstrapDefaultRoles($store);
+
+        $query = User::query()
             ->with(['stores' => fn ($query) => $query->where('stores.id', $store->id)])
-            ->when($request->filled('search'), function ($query) use ($request) {
-                $search = $request->string('search')->toString();
+            ->where(function ($q) use ($store) {
+                $q->whereHas('stores', fn ($storeQuery) => $storeQuery->where('stores.id', $store->id))
+                  ->orWhere('role', 'platform_owner');
+            });
 
-                $query->where(function ($nested) use ($search) {
-                    $nested->where('name', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
-                });
-            })
-            ->when($request->filled('role'), function ($query) use ($request, $store) {
-                $role = $request->string('role')->toString();
+        if ($request->filled('search')) {
+            $search = trim($request->string('search')->toString());
+            $query->where(function ($nested) use ($search) {
+                $nested->where('name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
 
-                if ($role === 'platform_owner') {
-                    $query->where('role', 'platform_owner');
-                    return;
-                }
+        if ($request->filled('role')) {
+            $role = $request->string('role')->toString();
+            if ($role === 'platform_owner') {
+                $query->where('role', 'platform_owner');
+            } elseif (in_array($role, self::STORE_ROLES, true)) {
+                $query->whereHas('stores', fn ($storeQuery) => $storeQuery
+                    ->where('stores.id', $store->id)
+                    ->wherePivot('role', $role));
+            }
+        }
 
-                if (in_array($role, self::STORE_ROLES, true)) {
-                    $query->whereHas('stores', fn ($storeQuery) => $storeQuery
-                        ->where('stores.id', $store->id)
-                        ->wherePivot('role', $role));
-                }
-            })
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+        if ($request->filled('staff_role_id')) {
+            $staffRoleId = (int) $request->input('staff_role_id');
+            $query->whereHas('stores', fn ($storeQuery) => $storeQuery
+                ->where('stores.id', $store->id)
+                ->wherePivot('staff_role_id', $staffRoleId));
+        }
 
-        // Remember this filtered list URL so an edit/create round-trip can
-        // return the user to the exact same search/filter state.
+        if ($request->filled('status')) {
+            $status = $request->string('status')->toString();
+            if (in_array($status, self::MEMBERSHIP_STATUSES, true)) {
+                $query->whereHas('stores', fn ($storeQuery) => $storeQuery
+                    ->where('stores.id', $store->id)
+                    ->wherePivot('status', $status));
+            }
+        }
+
+        $tab = $request->query('tab', 'all');
+        if ($tab === 'staff') {
+            $query->whereHas('stores', fn ($storeQuery) => $storeQuery
+                ->where('stores.id', $store->id)
+                ->wherePivotIn('role', ['store_manager', 'staff']));
+        } elseif ($tab === 'customers') {
+            $query->whereHas('stores', fn ($storeQuery) => $storeQuery
+                ->where('stores.id', $store->id)
+                ->wherePivotIn('role', ['retail_customer', 'wholesale_customer']));
+        } elseif ($tab === 'suspended') {
+            $query->whereHas('stores', fn ($storeQuery) => $storeQuery
+                ->where('stores.id', $store->id)
+                ->wherePivot('status', 'suspended'));
+        }
+
+        $users = $query->latest()->paginate(20)->withQueryString();
+
+        // Load all active and available staff role templates for this store
+        $staffRoles = StaffRole::where('store_id', $store->id)->where('is_active', true)->orderBy('name')->get();
+        $allStaffRolesMap = StaffRole::where('store_id', $store->id)->get()->keyBy('id');
+
+        // Calculate KPI metrics
+        $totalUsers = DB::table('store_user')->where('store_id', $store->id)->count();
+        $staffCount = DB::table('store_user')->where('store_id', $store->id)->whereIn('role', ['store_manager', 'staff'])->count();
+        $customerCount = DB::table('store_user')->where('store_id', $store->id)->whereIn('role', ['retail_customer', 'wholesale_customer'])->count();
+        $suspendedCount = DB::table('store_user')->where('store_id', $store->id)->where('status', 'suspended')->count();
+
+        $metrics = [
+            'total_users'     => $totalUsers,
+            'staff_count'     => $staffCount,
+            'customer_count'  => $customerCount,
+            'suspended_count' => $suspendedCount,
+        ];
+
+        $availableRoles = auth()->user()?->isPlatformOwner()
+            ? ['platform_owner', ...self::STORE_ROLES]
+            : self::STORE_ROLES;
+
         AdminListReturn::capture($request, 'admin_users_return');
 
         return view('admin.users.index', [
-            'store' => $store,
-            'users' => $users,
-            'roles' => ['platform_owner', ...self::STORE_ROLES],
-            'statuses' => self::MEMBERSHIP_STATUSES,
+            'store'            => $store,
+            'users'            => $users,
+            'roles'            => $availableRoles,
+            'statuses'         => self::MEMBERSHIP_STATUSES,
+            'staffRoles'       => $staffRoles,
+            'allStaffRolesMap' => $allStaffRolesMap,
+            'metrics'          => $metrics,
+            'currentTab'       => $tab,
         ]);
     }
 
     public function store(Request $request, StoreContext $context): RedirectResponse
     {
         $store = $this->resolveStore($context);
-        $validated = $this->validatePayload($request);
+        $validated = $this->validatePayload($request, null, $store);
 
         DB::transaction(function () use ($validated, $store) {
             $user = User::create([
-                'name' => $validated['name'],
-                'phone' => $validated['phone'],
-                'email' => $validated['email'] ?? null,
+                'name'     => $validated['name'],
+                'phone'    => $validated['phone'],
+                'email'    => $validated['email'] ?? null,
                 'password' => Hash::make($validated['password']),
-                'role' => $validated['role'] === 'platform_owner' ? 'platform_owner' : 'customer',
-                'pos_pin' => $validated['pos_pin'] ?? null,
+                'role'     => $validated['role'] === 'platform_owner' ? 'platform_owner' : 'customer',
+                'pos_pin'  => $validated['pos_pin'] ?? null,
             ]);
 
             if ($validated['role'] !== 'platform_owner') {
+                $isStaff = in_array($validated['role'], ['store_manager', 'staff'], true);
                 $user->stores()->attach($store->id, [
-                    'role' => $validated['role'],
-                    'status' => $validated['status'],
+                    'role'          => $validated['role'],
+                    'staff_role_id' => $isStaff ? ($validated['staff_role_id'] ?? null) : null,
+                    'status'        => $validated['status'] ?? 'active',
                 ]);
             }
         });
 
         return redirect(AdminListReturn::resolve('admin_users_return', route('store.admin.users.index', ['store_slug' => $store->slug])))
-            ->with('success', 'User account created successfully.');
+            ->with('success', 'အသုံးပြုသူ အကောင့် အောင်မြင်စွာ ဖန်တီးပြီးပါပြီ။ (User account created successfully.)');
     }
 
     public function edit(string $store_slug, User $user, StoreContext $context): View
@@ -100,31 +160,37 @@ class UserManagementController extends Controller
         $store = $this->resolveStore($context);
         $user->load(['stores' => fn ($query) => $query->where('stores.id', $store->id)]);
 
+        $staffRoles = StaffRole::where('store_id', $store->id)->where('is_active', true)->orderBy('name')->get();
+        $availableRoles = auth()->user()?->isPlatformOwner()
+            ? ['platform_owner', ...self::STORE_ROLES]
+            : self::STORE_ROLES;
+
         $returnTo = AdminListReturn::peek('admin_users_return', route('store.admin.users.index', ['store_slug' => $store->slug]));
 
         return view('admin.users.edit', [
-            'store' => $store,
-            'managedUser' => $user,
-            'membership' => $user->stores->first()?->pivot,
-            'roles' => ['platform_owner', ...self::STORE_ROLES],
-            'statuses' => self::MEMBERSHIP_STATUSES,
-            'returnTo' => $returnTo,
+            'store'          => $store,
+            'managedUser'    => $user,
+            'membership'     => $user->stores->first()?->pivot,
+            'roles'          => $availableRoles,
+            'statuses'       => self::MEMBERSHIP_STATUSES,
+            'staffRoles'     => $staffRoles,
+            'returnTo'       => $returnTo,
         ]);
     }
 
     public function update(Request $request, string $store_slug, User $user, StoreContext $context): RedirectResponse
     {
         $store = $this->resolveStore($context);
-        $validated = $this->validatePayload($request, $user);
+        $validated = $this->validatePayload($request, $user, $store);
 
         DB::transaction(function () use ($validated, $user, $store) {
             $user->fill([
-                'name' => $validated['name'],
+                'name'  => $validated['name'],
                 'phone' => $validated['phone'],
                 'email' => $validated['email'] ?? null,
             ]);
 
-            if ($user->id !== auth()->id()) {
+            if ($user->id !== auth()->id() && auth()->user()?->isPlatformOwner()) {
                 $user->role = $validated['role'] === 'platform_owner' ? 'platform_owner' : 'customer';
             }
 
@@ -133,7 +199,6 @@ class UserManagementController extends Controller
             }
 
             if (array_key_exists('pos_pin', $validated)) {
-                // Empty clears the PIN; otherwise stored hashed (cast).
                 $user->pos_pin = $validated['pos_pin'] !== null && $validated['pos_pin'] !== ''
                     ? $validated['pos_pin']
                     : null;
@@ -146,16 +211,18 @@ class UserManagementController extends Controller
                 return;
             }
 
+            $isStaff = in_array($validated['role'], ['store_manager', 'staff'], true);
             $user->stores()->syncWithoutDetaching([
                 $store->id => [
-                    'role' => $validated['role'],
-                    'status' => $validated['status'],
+                    'role'          => $validated['role'],
+                    'staff_role_id' => $isStaff ? ($validated['staff_role_id'] ?? null) : null,
+                    'status'        => $validated['status'] ?? 'active',
                 ],
             ]);
         });
 
         return redirect(AdminListReturn::resolve('admin_users_return', route('store.admin.users.index', ['store_slug' => $store->slug])))
-            ->with('success', 'User account updated successfully.');
+            ->with('success', 'အသုံးပြုသူ အချက်အလက်များ အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။ (User updated successfully.)');
     }
 
     public function suspend(string $store_slug, User $user, StoreContext $context): RedirectResponse
@@ -163,23 +230,34 @@ class UserManagementController extends Controller
         $store = $this->resolveStore($context);
 
         if ($user->id === auth()->id()) {
-            return back()->withErrors(['user' => 'You cannot suspend your own account.']);
+            return back()->withErrors(['user' => 'မိမိကိုယ်ပိုင် အကောင့်အား ပိတ်ပင်ခွင့်မရှိပါ။ (You cannot suspend your own account.)']);
         }
 
         if ($user->isPlatformOwner()) {
             return back()->withErrors(['user' => 'Platform owner accounts cannot be suspended from a store page.']);
         }
 
+        $currentMembership = $user->stores()->where('stores.id', $store->id)->first()?->pivot;
+        $newStatus = ($currentMembership && $currentMembership->status === 'suspended') ? 'active' : 'suspended';
+
         $user->stores()->syncWithoutDetaching([
-            $store->id => ['status' => 'suspended'],
+            $store->id => ['status' => $newStatus],
         ]);
 
-        return back()->with('success', 'User store access suspended.');
+        $message = $newStatus === 'active'
+            ? 'အသုံးပြုသူ အကောင့်အား ပြန်လည် အသုံးပြုခွင့် ပေးလိုက်ပါပြီ။ (Account activated.)'
+            : 'အသုံးပြုသူ အကောင့်အား ယာယီ ပိတ်ပင်လိုက်ပါပြီ။ (Account suspended.)';
+
+        return back()->with('success', $message);
     }
 
-    private function validatePayload(Request $request, ?User $user = null): array
+    private function validatePayload(Request $request, ?User $user = null, ?Store $store = null): array
     {
-        $passwordRules = [Password::min(12)->mixedCase()->numbers()->symbols()];
+        $passwordRules = [Password::min(6)];
+
+        $allowedRoles = auth()->user()?->isPlatformOwner()
+            ? ['platform_owner', ...self::STORE_ROLES]
+            : self::STORE_ROLES;
 
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -198,12 +276,17 @@ class UserManagementController extends Controller
             'role' => [
                 'required',
                 'string',
-                Rule::in(['platform_owner', ...self::STORE_ROLES]),
+                Rule::in($allowedRoles),
                 function ($attribute, $value, $fail) use ($user) {
-                    if ($user && $user->id === auth()->id() && $value !== 'platform_owner') {
+                    if ($user && $user->id === auth()->id() && $value !== 'platform_owner' && $user->isPlatformOwner()) {
                         $fail('You cannot remove your own platform owner role.');
                     }
                 },
+            ],
+            'staff_role_id' => [
+                'nullable',
+                'integer',
+                $store ? Rule::exists('staff_roles', 'id')->where('store_id', $store->id) : 'nullable',
             ],
             'status' => [
                 Rule::requiredIf(fn () => $request->input('role') !== 'platform_owner'),
@@ -225,7 +308,8 @@ class UserManagementController extends Controller
         $store = $context->getStore();
 
         abort_unless($store, 404, 'Store not found.');
-        abort_unless(auth()->user()?->isPlatformOwner(), 403, 'Platform owner access required.');
+        $user = auth()->user();
+        abort_unless($user && ($user->isPlatformOwner() || $user->hasStoreRole($store->id, ['store_manager'])), 403, 'Store manager or platform owner access required.');
 
         return $store;
     }

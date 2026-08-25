@@ -1,110 +1,203 @@
 @extends('layouts.admin.app')
 
+@section('title', 'Edit User - ' . ($managedUser->name ?? 'DataPOS'))
+
+@php
+    $storeRouteParams = ['store_slug' => $store->slug];
+    $currentRole = $managedUser->role === 'platform_owner' ? 'platform_owner' : ($membership?->role ?? 'retail_customer');
+    $currentStaffRoleId = (string) old('staff_role_id', $membership?->staff_role_id ?? '');
+@endphp
+
 @section('content')
-<div class="w-full space-y-5 sm:space-y-6">
-    <div class="flex items-start sm:items-center justify-between gap-3 flex-wrap">
-        <div class="min-w-0">
-            <h1 class="text-lg sm:text-2xl font-bold text-gray-900 dark:text-slate-100 font-outfit leading-tight">
-                Edit User
-            </h1>
-            <p class="text-xs text-gray-500 dark:text-slate-400">
-                {{ $managedUser->name }} · {{ substr($managedUser->phone, 0, 4) }}****{{ substr($managedUser->phone, -3) }}
-            </p>
+<div class="w-full max-w-4xl mx-auto space-y-5 sm:space-y-6 pb-12"
+     x-data="{
+        selectedRole: '{{ old('role', $currentRole) }}',
+        isStaffRole(r) {
+            return r === 'staff' || r === 'store_manager';
+        }
+     }">
+
+    {{-- Top Header --}}
+    <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <a href="{{ $returnTo ?? route('store.admin.users.index', $storeRouteParams) }}"
+               class="w-10 h-10 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 grid place-items-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition shadow-sm">
+                ←
+            </a>
+            <div>
+                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <a href="{{ route('store.admin.users.index', $storeRouteParams) }}" class="hover:text-slate-600 dark:hover:text-slate-300 transition">
+                        Users & Staff
+                    </a>
+                    <span>/</span>
+                    <span class="text-violet-600 dark:text-violet-400">Edit User</span>
+                </div>
+                <h1 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                    <span>{{ $managedUser->name }}</span>
+                    @if ($managedUser->id === auth()->id())
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">YOU</span>
+                    @endif
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400">📞 {{ $managedUser->phone }} · {{ $store->name }}</p>
+            </div>
         </div>
-        <a href="{{ $returnTo ?? route('store.admin.users.index', ['store_slug' => $store->slug]) }}" class="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:underline">
-            Back to users
+
+        <a href="{{ $returnTo ?? route('store.admin.users.index', $storeRouteParams) }}"
+           class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            Back to list
         </a>
     </div>
 
+    {{-- Validation Flash Errors --}}
     @if ($errors->any())
-        <div class="p-3.5 sm:p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 space-y-1">
-            <div class="font-bold">Please check the form:</div>
+        <div class="p-4 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-3xl text-xs font-bold text-rose-700 dark:text-rose-300 space-y-1 shadow-sm">
+            <div class="font-black flex items-center gap-1.5">
+                <span>⚠️</span>
+                <span>ဖြည့်သွင်းချက်များ မှားယွင်းနေပါသည်:</span>
+            </div>
             @foreach ($errors->all() as $error)
-                <div>{{ $error }}</div>
+                <p class="ml-5">• {{ $error }}</p>
             @endforeach
         </div>
     @endif
 
-    <form method="POST" action="{{ route('store.admin.users.update', ['store_slug' => $store->slug, 'user' => $managedUser]) }}" class="bg-white dark:bg-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+    {{-- Edit Form Container --}}
+    <form method="POST" action="{{ route('store.admin.users.update', array_merge($storeRouteParams, ['user' => $managedUser->id])) }}"
+          class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-6">
         @csrf
         @method('PUT')
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
-                <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Name</label>
-                <input type="text" name="name" value="{{ old('name', $managedUser->name) }}" required class="w-full border dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none" />
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Phone</label>
-                <input type="text" name="phone" value="{{ old('phone', $managedUser->phone) }}" required class="w-full border dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none" />
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Email optional</label>
-                <input type="email" name="email" value="{{ old('email', $managedUser->email) }}" class="w-full border dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none" />
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Role</label>
-                <select name="role" required class="w-full border dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none">
-                    @foreach ($roles as $role)
-                        @php
-                            $currentRole = $managedUser->role === 'platform_owner' ? 'platform_owner' : ($membership?->role ?? 'retail_customer');
-                        @endphp
-                        <option value="{{ $role }}" {{ old('role', $currentRole) === $role ? 'selected' : '' }}>{{ str_replace('_', ' ', $role) }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Store status</label>
-                <select name="status" class="w-full border dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none">
-                    @foreach ($statuses as $status)
-                        <option value="{{ $status }}" {{ old('status', $membership?->status ?? 'active') === $status ? 'selected' : '' }}>{{ $status }}</option>
-                    @endforeach
-                </select>
+        {{-- Section 1: Basic Profile Info --}}
+        <div>
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                <span>👤</span>
+                <span>အခြေခံ အချက်အလက်များ (Basic Profile)</span>
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">အမည် (Full Name) *</label>
+                    <input type="text" name="name" value="{{ old('name', $managedUser->name) }}" required
+                           class="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">ဖုန်းနံပါတ် (Phone) *</label>
+                    <input type="text" name="phone" value="{{ old('phone', $managedUser->phone) }}" required
+                           class="w-full px-3.5 py-2.5 rounded-xl text-xs font-mono font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">အီးမေးလ် (Email - Optional)</label>
+                    <input type="email" name="email" value="{{ old('email', $managedUser->email) }}"
+                           placeholder="optional@example.com"
+                           class="w-full px-3.5 py-2.5 rounded-xl text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
             </div>
         </div>
 
-        <div class="pt-4 border-t border-gray-100 dark:border-slate-700 space-y-3">
-            <div>
-                <h2 class="text-sm font-bold text-gray-900 dark:text-slate-100">Reset password optional</h2>
-                <p class="text-xs text-gray-500 dark:text-slate-400">Leave both fields blank to keep the current password.</p>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        {{-- Section 2: Store Role & Permission Template --}}
+        <div class="pt-4 border-t border-slate-100 dark:border-slate-800">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                <span>🛡️</span>
+                <span>ရာထူးနှင့် အခွင့်အရေးများ (Role & Permissions)</span>
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">New password</label>
-                    <input type="password" name="password" autocomplete="new-password" class="w-full border dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none" />
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">စနစ်အဆင့် (System Role) *</label>
+                    <select name="role" x-model="selectedRole" required
+                            class="w-full px-3.5 py-2.5 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500">
+                        @foreach ($roles as $role)
+                            <option value="{{ $role }}" {{ old('role', $currentRole) === $role ? 'selected' : '' }}>
+                                {{ ucwords(str_replace('_', ' ', $role)) }} {{ $role === 'platform_owner' ? '(Global Owner)' : '' }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Confirm new password</label>
-                    <input type="password" name="password_confirmation" autocomplete="new-password" class="w-full border dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none" />
+
+                {{-- Granular Staff Role Template --}}
+                <div x-show="isStaffRole(selectedRole)" x-transition>
+                    <label class="block text-xs font-bold text-blue-700 dark:text-blue-300 mb-1">
+                        <span>🛡️ ဝန်ထမ်း ရာထူးပုံစံ (Staff Role Template)</span>
+                    </label>
+                    <select name="staff_role_id"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-xs font-bold bg-blue-50/50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- No Specific Role (Default) --</option>
+                        @foreach ($staffRoles as $sr)
+                            <option value="{{ $sr->id }}" {{ $currentStaffRoleId === (string) $sr->id ? 'selected' : '' }}>
+                                {{ $sr->name }} ({{ $sr->is_system ? 'System' : 'Custom' }})
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">POS Manager PIN <span class="text-gray-400 font-normal">(4–6 digits, optional)</span></label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">အခြေအနေ (Store Status) *</label>
+                    <select name="status"
+                            class="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500">
+                        @foreach ($statuses as $status)
+                            <option value="{{ $status }}" {{ old('status', $membership?->status ?? 'active') === $status ? 'selected' : '' }}>
+                                {{ ucfirst($status) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div x-show="isStaffRole(selectedRole)" x-transition>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        POS Manager PIN <span class="text-slate-400 font-normal">(4-6 Digits, Optional)</span>
+                    </label>
                     <input type="password" name="pos_pin" inputmode="numeric" maxlength="6" autocomplete="new-password"
-                           class="w-full border dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none" />
-                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
-                        ဈေးလျှော့မှု သတ်မှတ်ချက် (threshold) ကျော်ရင် cashier က ဒီ PIN ထည့်ပြီး အတည်ပြုရပါမယ် —
-                        manager/owner အကောင့်တွေမှာသာ ထားပေးပါ။ ဗလာထားရင် PIN ရှိပြီးသား အတိုင်းပဲ။
-                    </p>
+                           placeholder="ထားခဲ့ပါက ယခင်အတိုင်း မပြောင်းလဲပါ"
+                           class="w-full px-3.5 py-2.5 rounded-xl text-xs font-mono bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    <p class="text-[11px] text-slate-400 mt-1">ကောင်တာတွင် ဈေးလျှော့ခွင့် သတ်မှတ်ချက် ကျော်လွန်သည့်အခါ မန်နေဂျာအတည်ပြု PIN</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Section 3: Reset Password (Optional) --}}
+        <div class="pt-4 border-t border-slate-100 dark:border-slate-800">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1.5">
+                <span>🔑</span>
+                <span>စကားဝှက် အသစ်လဲလှယ်ခြင်း (Reset Password - Optional)</span>
+            </h3>
+            <p class="text-[11px] text-slate-400 mb-3">စကားဝှက် အဟောင်းအတိုင်း ထားလိုပါက အလွတ်ထားခဲ့နိုင်ပါသည်</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">စကားဝှက် အသစ် (New Password)</label>
+                    <input type="password" name="password" autocomplete="new-password"
+                           placeholder="Leave blank to keep current"
+                           class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">စကားဝှက် အတည်ပြုခြင်း (Confirm Password)</label>
+                    <input type="password" name="password_confirmation" autocomplete="new-password"
+                           placeholder="Confirm new password"
+                           class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 </div>
             </div>
         </div>
 
         @if ($managedUser->id === auth()->id())
-            <div class="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-300">
-                You can update your profile details, but you cannot remove your own platform owner role.
+            <div class="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                <span>⚠️</span>
+                <span>မိမိကိုယ်ပိုင် Platform Owner အဆင့်အား ဤနေရာမှ ဖြုတ်ချခွင့် မရှိပါ။</span>
             </div>
         @endif
 
-        <div class="flex flex-col sm:flex-row gap-3">
-            <button type="submit" class="px-4 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 font-semibold text-sm shadow">
-                Save Changes
-            </button>
-            <a href="{{ $returnTo ?? route('store.admin.users.index', ['store_slug' => $store->slug]) }}" class="px-4 py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-200 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 font-semibold text-sm text-center">
+        {{-- Form Submit Buttons --}}
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <a href="{{ $returnTo ?? route('store.admin.users.index', $storeRouteParams) }}"
+               class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition">
                 Cancel
             </a>
+            <button type="submit" class="px-6 py-2.5 rounded-xl text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-md shadow-violet-500/20 transition">
+                Save Changes (သိမ်းဆည်းမည်)
+            </button>
         </div>
     </form>
+
 </div>
 @endsection
