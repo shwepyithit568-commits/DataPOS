@@ -478,16 +478,38 @@ class InventoryService
     }
 
     /** products.stock_status is a derived cache (SoT §5) — refresh from the ledger. */
-    protected function refreshProductStockStatus(int $storeId, int $productId): void
+    public function refreshProductStockStatus(int $storeId, int $productId): void
     {
         $total = DB::table('inventory_balances')
             ->where('store_id', $storeId)
             ->where('product_id', $productId)
             ->sum('quantity_on_hand');
 
+        $stockStatus = (float) $total > 0 ? 'in_stock' : 'out_of_stock';
+
         Product::query()->where('id', $productId)->update([
-            'stock_status' => (float) $total > 0 ? 'in_stock' : 'out_of_stock',
+            'stock_status' => $stockStatus,
         ]);
+
+        $variants = ProductVariant::where('product_id', $productId)->get();
+        foreach ($variants as $variant) {
+            $hasVariantBalance = DB::table('inventory_balances')
+                ->where('store_id', $storeId)
+                ->where('product_id', $productId)
+                ->where('product_variant_id', $variant->id)
+                ->exists();
+
+            if ($hasVariantBalance) {
+                $variantStock = DB::table('inventory_balances')
+                    ->where('store_id', $storeId)
+                    ->where('product_id', $productId)
+                    ->where('product_variant_id', $variant->id)
+                    ->sum('quantity_on_hand');
+                $variant->update(['stock_status' => (float) $variantStock > 0 ? 'in_stock' : 'out_of_stock']);
+            } else {
+                $variant->update(['stock_status' => $stockStatus]);
+            }
+        }
     }
 
     /**

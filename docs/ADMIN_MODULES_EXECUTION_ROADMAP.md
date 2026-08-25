@@ -72,7 +72,7 @@ DataPOS Admin Sidebar တွင် လက်ရှိအသုံးပြုန
 | :--- | :--- | :--- | :--- |
 | ✅**၁၃။ Membership Tier & Loyalty Points**<br>(`sidebar_membership`) | `Customers` အောက် | • ဖောက်သည် အဆင့်များ (Silver, Gold, VIP Member)<br>• ဝယ်ယူမှုပမာဏအလိုက် Points ပေးခြင်းနှင့် Points ဖြင့် ငွေလျှော့ဝယ်ယူနိုင်ခြင်း | 🔹 **P2** |
 | ✅**၁၄။ Promotions & Coupon Engine**<br>(`sidebar_promotions`) | `Ecommerce` အောက် | • Coupon Code လျှော့စျေးများ (ဥပမာ: `THADINGYUT10` - 10% Off)<br>• Buy 1 Get 1 (တစ်ခုဝယ် တစ်ခုလက်ဆောင်) နှင့် အထူးလျှော့စျေး သတ်မှတ်ခြင်း | 🔹 **P2** |
-| **၁၅။ Web Catalog Product Visibility**<br>(`sidebar_web_products`) | `Ecommerce` အောက် | • Online Storefront တွင် ပြသမည့် ပစ္စည်းများနှင့် ဆိုင်တွင်းသာ ရောင်းမည့် ပစ္စည်းများ သီးသန့် ခွဲထုတ်ထိန်းချုပ်ခြင်း | 🔹 **P2** |
+| ✅**၁၅။ Web Catalog Product Visibility**<br>(`sidebar_web_products`) | `Ecommerce` အောက် | • Online Storefront တွင် ပြသမည့် ပစ္စည်းများနှင့် ဆိုင်တွင်းသာ ရောင်းမည့် ပစ္စည်းများ သီးသန့် ခွဲထုတ်ထိန်းချုပ်ခြင်း | 🔹 **P2** |
 | **၁၆။ Mobile E-Load & Bill Register**<br>(`sidebar_eload`) | `POS` အောက် | • MPT, Atom, Ooredoo, Mytel ဖုန်းဘေလ်ဖြည့်ခြင်း မှတ်တမ်း<br>• E-Load ဝယ်စျေး/ရောင်းစျေးနှင့် အမြတ်ငွေ အလိုအလျောက် တွက်ချက်မှု | 🔹 **P2** |
 
 ---

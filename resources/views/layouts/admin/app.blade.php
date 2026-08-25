@@ -551,7 +551,14 @@
                             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'web-products'])" :label="__('messages.sidebar_web_products')" />
+
+                    @php $isWebProducts = request()->is('store/*/admin/web-products*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.web_products.index', $storeRouteParams)" route-name="store.admin.web_products.index" :active="$isWebProducts" :label="__('messages.sidebar_web_products')">
+                        <x-slot:icon>
+                            {{-- Globe / Storefront web icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
                 </x-admin.nav-group>
 
                 <x-admin.nav-group name="customers" :label="__('messages.sidebar_customers')" icon-class="bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">

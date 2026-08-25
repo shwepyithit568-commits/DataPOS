@@ -275,7 +275,7 @@ Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update
 
 Route::get('/products', [CatalogController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page');
 Route::get('/products/suggestions', [CatalogController::class, 'suggestions'])->middleware([ResolveStoreContext::class, SetLocale::class, 'throttle:60,1']);
-Route::get('/store/{store_slug}/product/{slug}', [CatalogController::class, 'show'])->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page');
+Route::get('/store/{store_slug}/product/{slug}', [CatalogController::class, 'show'])->name('storefront.product')->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page');
 
 // AliExpress-style two-pane category browser (left rail + brands/sub-categories panel)
 Route::get('/browse', [BrowseController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page');
@@ -670,12 +670,12 @@ Route::prefix('store/{store_slug}')
                 Route::post('/admin/suppliers/quick-store', [SupplierController::class, 'quickStore'])
             ->name('store.admin.suppliers.quick-store')
             ->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:60,1']);
-        Route::get('/admin/products/create', [ProductController::class, 'create'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/products/create', [ProductController::class, 'create'])->name('store.admin.products.create')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/products', [ProductController::class, 'store'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/products/bulk-stock', [ProductController::class, 'bulkStock'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/products/bulk-prices', [ProductController::class, 'bulkAdjustPrices'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/products/bulk-delete', [ProductController::class, 'bulkDelete'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/products/{product}/edit', [ProductController::class, 'edit'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/products/{product}/edit', [ProductController::class, 'edit'])->name('store.admin.products.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::put('/admin/products/{product}', [ProductController::class, 'update'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::delete('/admin/products/{product}', [ProductController::class, 'destroy'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/products/{product}/toggle-featured', [ProductController::class, 'toggleFeatured'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -803,6 +803,13 @@ Route::prefix('store/{store_slug}')
         Route::put('/admin/promotions/{promotion}', [\App\Http\Controllers\Admin\PromotionController::class, 'update'])->name('store.admin.promotions.update')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::post('/admin/promotions/{promotion}/toggle', [\App\Http\Controllers\Admin\PromotionController::class, 'toggle'])->name('store.admin.promotions.toggle')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::delete('/admin/promotions/{promotion}', [\App\Http\Controllers\Admin\PromotionController::class, 'destroy'])->name('store.admin.promotions.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+
+        // Web Catalog Product Visibility (sidebar_web_products)
+        Route::get('/admin/web-products', [\App\Http\Controllers\Admin\WebProductController::class, 'index'])->name('store.admin.web_products.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/web-products/toggle-visibility', [\App\Http\Controllers\Admin\WebProductController::class, 'toggleVisibility'])->name('store.admin.web_products.toggle_visibility')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/web-products/toggle-featured', [\App\Http\Controllers\Admin\WebProductController::class, 'toggleFeatured'])->name('store.admin.web_products.toggle_featured')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/web-products/bulk-visibility', [\App\Http\Controllers\Admin\WebProductController::class, 'bulkVisibility'])->name('store.admin.web_products.bulk_visibility')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/web-products/bulk-featured', [\App\Http\Controllers\Admin\WebProductController::class, 'bulkFeatured'])->name('store.admin.web_products.bulk_featured')->middleware(EnsureStoreAccess::class . ':store_manager');
 
         // Roadmap placeholder page — one route for every not-yet-built module
         // (sidebar "coming soon" links). The module registry (slug → label +

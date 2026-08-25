@@ -103,7 +103,7 @@
                     value="{{ request('search', $search) }}"
                     placeholder="{{ $searchPlaceholder }}"
                     @input.debounce.450ms="liveSearchSubmit($refs.searchFormDesktop)"
-                    class="w-full pl-9 pr-9 py-2.5 min-h-[42px] border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/70 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-inner"
+                    class="w-full pl-9 pr-9 py-2.5 min-h-[42px] border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-inner"
                 />
                 <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -173,9 +173,9 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
                 </svg>
                 <select name="sort" data-auto-submit
-                    class="border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 min-h-[42px] py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/70 text-slate-700 dark:text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none shadow-sm transition">
+                    class="border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 min-h-[42px] py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none shadow-sm transition">
                     @foreach ($sortOptions as $key => $label)
-                        <option value="{{ $key }}" {{ request('sort', $sort) === $key ? 'selected' : '' }}>
+                        <option value="{{ $key }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort', $sort) === $key ? 'selected' : '' }}>
                             {{ $label }}
                         </option>
                     @endforeach
@@ -217,7 +217,7 @@
         @if ($bulkActions)
             <button type="button" @click="$dispatch('bulk-actions-request')"
                 class="relative shrink-0 min-h-[42px] px-3.5 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-xs sm:text-sm font-bold flex items-center gap-1.5 whitespace-nowrap transition border border-slate-200/80 dark:border-slate-700 shadow-sm">
-                <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
                 <span>Bulk Actions</span>
@@ -246,7 +246,7 @@
 
         {{-- ===== 7. ITEMS PER PAGE SELECTOR ===== --}}
         @if ($showPerPageSelector)
-            <form method="GET" class="shrink-0 flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700 p-1 shadow-inner">
+            <form method="GET" class="shrink-0 flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 p-1 shadow-inner">
                 @foreach (request()->except(['per_page', 'page']) as $key => $val)
                     @if (is_array($val))
                         @foreach ($val as $subVal)
@@ -259,7 +259,7 @@
                 <select name="per_page" data-auto-submit title="Items per page"
                     class="border border-slate-200 dark:border-slate-700 rounded-lg px-2 min-h-[32px] py-1 text-xs bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-sm">
                     @foreach ($perPageOptions as $val => $label)
-                        <option value="{{ $val }}" {{ (string) $currentPerPage === (string) $val ? 'selected' : '' }}>{{ $label }}</option>
+                        <option value="{{ $val }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ (string) $currentPerPage === (string) $val ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
                 <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 pr-1.5 hidden sm:inline">/ pg</span>
@@ -295,9 +295,9 @@
                     x-ref="mobileSearch"
                     x-init="searchOpen && $nextTick(() => $refs.mobileSearch.focus())"
                     @input.debounce.450ms="liveSearchSubmit($refs.searchFormMobile)"
-                    class="w-full pl-9 pr-9 py-2.5 min-h-[42px] border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
+                    class="w-full pl-9 pr-9 py-2.5 min-h-[42px] border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
                 />
-                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 @if ($hasActiveSearch)
@@ -308,7 +308,7 @@
                     </a>
                 @endif
             </div>
-            <button type="submit" class="shrink-0 min-h-[42px] px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-black shadow active:scale-95 transition flex items-center justify-center">
+            <button type="submit" class="shrink-0 min-h-[42px] px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black shadow active:scale-95 transition flex items-center justify-center">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </button>
         </form>
@@ -317,7 +317,7 @@
     {{-- Active Filter Pills (horizontal scroll on mobile, wrap on desktop) --}}
     @if (count($activeFilters) > 0 || $hasActiveSearch)
         <div class="flex flex-nowrap items-center gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 overflow-x-auto pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0 scrollbar-thin">
-            <span class="text-xs font-bold text-slate-400 mr-1 flex items-center gap-1">
+            <span class="text-xs font-bold text-slate-400 dark:text-slate-500 mr-1 flex items-center gap-1">
                 <span>🔎</span>
                 <span>Active:</span>
             </span>
@@ -331,7 +331,7 @@
             @endif
             @foreach ($activeFilters as $filterKey => $filterInfo)
                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm">
-                    <span class="text-slate-400">{{ $filterInfo['label'] }}:</span>
+                    <span class="text-slate-400 dark:text-slate-500">{{ $filterInfo['label'] }}:</span>
                     <span class="font-black">{{ $filterInfo['value'] }}</span>
                     @php
                         $pillExcept = ($filterInfo['type'] ?? 'select') === 'date'
@@ -352,7 +352,7 @@
 
     {{-- Advanced Filter Panel (Slide-down drawer with smooth layout) --}}
     @if (count($filters) > 0 || count($sortOptions) > 0)
-        <div x-show="showAdvanced" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" class="pt-3.5 mt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
+        <div x-show="showAdvanced" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" class="pt-3.5 mt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
             {{-- Mobile-only: Sort --}}
             @if (count($sortOptions) > 0)
                 <div class="sm:hidden">
@@ -372,7 +372,7 @@
                         @endforeach
                         <select name="sort" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
                             @foreach ($sortOptions as $key => $label)
-                                <option value="{{ $key }}" {{ request('sort', $sort) === $key ? 'selected' : '' }}>
+                                <option value="{{ $key }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort', $sort) === $key ? 'selected' : '' }}>
                                     {{ $label }}
                                 </option>
                             @endforeach
@@ -399,10 +399,10 @@
                                 @endif
                             @endforeach
                             <input type="date" name="{{ $filterKey }}_from" value="{{ request($filterKey . '_from') }}"
-                                   class="flex-1 min-w-0 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-2 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
-                            <span class="text-xs text-slate-400 shrink-0 font-bold">→</span>
+                                   class="flex-1 min-w-0 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-2 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm [color-scheme:light] dark:[color-scheme:dark]" />
+                            <span class="text-xs text-slate-400 dark:text-slate-500 shrink-0 font-bold">→</span>
                             <input type="date" name="{{ $filterKey }}_to" value="{{ request($filterKey . '_to') }}"
-                                   class="flex-1 min-w-0 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-2 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" />
+                                   class="flex-1 min-w-0 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-2 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm [color-scheme:light] dark:[color-scheme:dark]" />
                         </form>
                     </div>
                 @else
@@ -422,18 +422,18 @@
                             @endif
                         @endforeach
                         <select name="{{ $filterKey }}" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
-                            <option value="">All {{ $filterConfig['label'] }}</option>
+                            <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">All {{ $filterConfig['label'] }}</option>
                             @if (! empty($filterConfig['groups']))
                                 @foreach ($filterConfig['groups'] as $groupConfig)
-                                    <optgroup label="{{ $groupConfig['label'] }}">
+                                    <optgroup label="{{ $groupConfig['label'] }}" class="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold">
                                         @foreach (($groupConfig['options'] ?? []) as $val => $optLabel)
-                                            <option value="{{ $val }}" {{ request($filterKey) == $val ? 'selected' : '' }}>{{ $optLabel }}</option>
+                                            <option value="{{ $val }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-normal" {{ request($filterKey) == $val ? 'selected' : '' }}>{{ $optLabel }}</option>
                                         @endforeach
                                     </optgroup>
                                 @endforeach
                             @else
                                 @foreach (($filterConfig['options'] ?? []) as $val => $optLabel)
-                                    <option value="{{ $val }}" {{ request($filterKey) == $val ? 'selected' : '' }}>{{ $optLabel }}</option>
+                                    <option value="{{ $val }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request($filterKey) == $val ? 'selected' : '' }}>{{ $optLabel }}</option>
                                 @endforeach
                             @endif
                         </select>

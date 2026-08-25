@@ -331,7 +331,7 @@ class ProductController extends Controller
             'sale_starts_at'  => ['nullable', 'date'],
             'sale_ends_at'    => ['nullable', 'date', 'after_or_equal:sale_starts_at'],
             'wholesale_price' => ['required', 'numeric', 'min:0'],
-            'stock_status'    => ['required', 'in:in_stock,out_of_stock'],
+            'stock_status'    => ['nullable', 'in:in_stock,out_of_stock'],
             'auto_sku'        => ['nullable', 'boolean'],
             'reorder_level'   => ['nullable', 'numeric', 'min:0'],
             'supplier_id'     => ['nullable', 'exists:suppliers,id'],
@@ -352,7 +352,7 @@ class ProductController extends Controller
             'variants.*.sku'            => ['nullable', 'string', 'max:100'],
             'variants.*.retail_price'   => ['required', 'numeric', 'min:0'],
             'variants.*.wholesale_price'=> ['nullable', 'numeric', 'min:0'],
-            'variants.*.stock_status'   => ['required', 'in:in_stock,out_of_stock'],
+            'variants.*.stock_status'   => ['nullable', 'in:in_stock,out_of_stock'],
             'variants.*.is_default'     => ['nullable', 'boolean'],
             'variants.*.attributes'     => ['nullable', 'array', 'max:5'],
             'variants.*.attributes.*.label' => ['required', 'string', 'max:50'],
@@ -390,6 +390,10 @@ class ProductController extends Controller
             ? ImageOptimizer::store($request->file('image'), 'products', 1600)
             : null;
 
+        // Auto-derive stock status: if initial stock is provided, starts in_stock; else out_of_stock (or passed value)
+        $initialStock = isset($validated['initial_stock']) ? (float) $validated['initial_stock'] : 0.0;
+        $stockStatus = $initialStock > 0 ? 'in_stock' : ($validated['stock_status'] ?? 'out_of_stock');
+
         $product = Product::create([
             'store_id'        => $store->id,
             'category_id'     => $validated['category_id'] ?? null,
@@ -404,7 +408,7 @@ class ProductController extends Controller
             'sale_starts_at'  => $validated['sale_starts_at'] ?? null,
             'sale_ends_at'    => $validated['sale_ends_at'] ?? null,
             'wholesale_price' => $validated['wholesale_price'],
-            'stock_status'    => $validated['stock_status'],
+            'stock_status'    => $stockStatus,
             'image_path'      => $imagePath,
             'warranty'        => $validated['warranty'] ?? null,
             'return_policy'   => $validated['return_policy'] ?? null,
@@ -421,7 +425,7 @@ class ProductController extends Controller
 
         // Initial stock on create → one opening_balance ledger movement so the
         // product starts with real stock (valued at the purchase cost when set).
-        if (isset($validated['initial_stock']) && (float) $validated['initial_stock'] > 0) {
+        if ($initialStock > 0) {
             app(InventoryService::class)->postMovement([
                 'store_id' => $store->id,
                 'product_id' => $product->id,
@@ -482,7 +486,7 @@ class ProductController extends Controller
             'sale_starts_at'  => ['nullable', 'date'],
             'sale_ends_at'    => ['nullable', 'date', 'after_or_equal:sale_starts_at'],
             'wholesale_price' => ['required', 'numeric', 'min:0'],
-            'stock_status'    => ['required', 'in:in_stock,out_of_stock'],
+            'stock_status'    => ['nullable', 'in:in_stock,out_of_stock'],
             'reorder_level'   => ['nullable', 'numeric', 'min:0'],
             'supplier_id'     => ['nullable', 'exists:suppliers,id'],
             'purchase_cost'   => ['nullable', 'numeric', 'min:0'],
@@ -501,7 +505,7 @@ class ProductController extends Controller
             'variants.*.sku'            => ['nullable', 'string', 'max:100'],
             'variants.*.retail_price'   => ['required', 'numeric', 'min:0'],
             'variants.*.wholesale_price'=> ['nullable', 'numeric', 'min:0'],
-            'variants.*.stock_status'   => ['required', 'in:in_stock,out_of_stock'],
+            'variants.*.stock_status'   => ['nullable', 'in:in_stock,out_of_stock'],
             'variants.*.is_default'     => ['nullable', 'boolean'],
             'variants.*.attributes'     => ['nullable', 'array', 'max:5'],
             'variants.*.attributes.*.label' => ['required', 'string', 'max:50'],
@@ -540,6 +544,22 @@ class ProductController extends Controller
             $imagePath = ImageOptimizer::store($request->file('image'), 'products', 1600);
         }
 
+        // Auto-derive stock status from inventory balances if inventory exists
+        $hasInventoryBalance = \Illuminate\Support\Facades\DB::table('inventory_balances')
+            ->where('store_id', $store->id)
+            ->where('product_id', $product->id)
+            ->exists();
+
+        if ($hasInventoryBalance) {
+            $totalOnHand = (float) \Illuminate\Support\Facades\DB::table('inventory_balances')
+                ->where('store_id', $store->id)
+                ->where('product_id', $product->id)
+                ->sum('quantity_on_hand');
+            $stockStatus = $totalOnHand > 0 ? 'in_stock' : 'out_of_stock';
+        } else {
+            $stockStatus = $validated['stock_status'] ?? $product->stock_status ?? 'out_of_stock';
+        }
+
         // Data-safety: only write nullable fields when the request actually sent
         // them. A field the form left untouched (absent) must preserve the
         // persisted value; a field explicitly sent blank is an intentional clear.
@@ -556,7 +576,7 @@ class ProductController extends Controller
             'sale_starts_at'  => $validated['sale_starts_at'] ?? null,
             'sale_ends_at'    => $validated['sale_ends_at'] ?? null,
             'wholesale_price' => $validated['wholesale_price'],
-            'stock_status'    => $validated['stock_status'],
+            'stock_status'    => $stockStatus,
             'image_path'      => $imagePath,
             'warranty'        => $request->has('warranty') ? ($validated['warranty'] ?? null) : $product->warranty,
             'return_policy'   => $request->has('return_policy') ? ($validated['return_policy'] ?? null) : $product->return_policy,

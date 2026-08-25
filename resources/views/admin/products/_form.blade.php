@@ -89,10 +89,36 @@
 
             <div>
                 <label class="{{ $label }}">{{ __('messages.product_form_stock_status') }}</label>
-                <select name="stock_status" x-model="productStock" class="{{ $input }} cursor-pointer">
-                    <option value="in_stock" {{ old('stock_status', $product->stock_status) === 'in_stock' ? 'selected' : '' }}>{{ __('messages.in_stock') }}</option>
-                    <option value="out_of_stock" {{ old('stock_status', $product->stock_status) === 'out_of_stock' ? 'selected' : '' }}>{{ __('messages.out_of_stock') }}</option>
-                </select>
+                <div class="mt-1 flex flex-wrap items-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 min-h-[42px]">
+                    @if (!$isEdit)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/50">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            <span>{{ __('messages.product_stock_auto_managed') }}</span>
+                        </span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400">
+                            {{ __('messages.product_stock_auto_create_hint') }}
+                        </span>
+                    @else
+                        @php
+                            $onHand = $product->stock_on_hand;
+                            $isInStock = $product->stock_status === 'in_stock';
+                        @endphp
+                        @if($isInStock)
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                <span>{{ __('messages.in_stock') }} ({{ number_format($onHand, 0) }})</span>
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
+                                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                <span>{{ __('messages.out_of_stock') }} ({{ number_format($onHand, 0) }})</span>
+                            </span>
+                        @endif
+                        <span class="text-xs text-slate-500 dark:text-slate-400">
+                            {{ __('messages.product_stock_auto_edit_hint') }}
+                        </span>
+                    @endif
+                </div>
             </div>
         </div>
     </section>
@@ -445,10 +471,11 @@
 
                         <div>
                             <label class="text-xs font-bold uppercase text-gray-500 dark:text-slate-400">{{ __('messages.product_form_variant_stock') }}</label>
-                            <select x-model="v.stock_status" :name="'variants[' + i + '][stock_status]'" class="mt-1 w-full cursor-pointer rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
-                                <option value="in_stock">{{ __('messages.in_stock') }}</option>
-                                <option value="out_of_stock">{{ __('messages.out_of_stock') }}</option>
-                            </select>
+                            <div class="mt-1 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-xs">
+                                <span class="w-2 h-2 rounded-full" :class="v.stock_status === 'out_of_stock' ? 'bg-rose-500' : 'bg-emerald-500'"></span>
+                                <span class="font-bold text-slate-700 dark:text-slate-300" x-text="v.stock_status === 'out_of_stock' ? '{{ __('messages.out_of_stock') }}' : '{{ __('messages.in_stock') }}'"></span>
+                                <span class="text-[10px] text-slate-400">({{ __('messages.product_stock_auto_managed') }})</span>
+                            </div>
                         </div>
 
                         <div>

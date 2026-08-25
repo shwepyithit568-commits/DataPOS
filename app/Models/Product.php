@@ -191,6 +191,16 @@ class Product extends Model
         return (string) ($this->attributes['retail_price'] ?? '0');
     }
 
+    public function inventoryBalances(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\POS\Models\InventoryBalance::class);
+    }
+
+    public function getStockOnHandAttribute(): float
+    {
+        return (float) $this->inventoryBalances()->sum('quantity_on_hand');
+    }
+
     /**
      * Convenience accessor: maps the legacy "cost" field to purchase_cost
      * so PO builder, costing, and product search can all use $product->cost.
