@@ -340,7 +340,13 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'eload'])" :label="__('messages.sidebar_eload')" />
+                    @php $isEload = request()->is('store/*/admin/eload*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.eload.index', $storeRouteParams)" route-name="store.admin.eload.index" :active="$isEload" :label="__('messages.sidebar_eload')">
+                        <x-slot:icon>
+                            {{-- Phone / topup signal icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2zM12 7v4m-2-2h4"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
                 </x-admin.nav-group>
 
                 <x-admin.nav-group name="inventory" :label="__('messages.sidebar_inventory')" icon-class="bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"><!-- SIDEBAR_MARKER_2026 -->
@@ -679,15 +685,51 @@
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></svg>
                     </x-slot:icon>
 
-                    @php $isPosReports = request()->is('store/*/pos/reports*'); @endphp
-                    <x-admin.nav-link :href="route('pos.reports.sales', $storeRouteParams)" route-name="pos.reports.sales" :active="$isPosReports" :label="__('messages.reports_title')">
+                    {{-- 1. POS Sales Report --}}
+                    @php $isPosSales = request()->routeIs('pos.reports.sales*'); @endphp
+                    <x-admin.nav-link :href="route('pos.reports.sales', $storeRouteParams)" route-name="pos.reports.sales" :active="$isPosSales" :label="__('messages.reports_sales')">
                         <x-slot:icon>
-                            {{-- Bar-chart icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></svg>
+                            {{-- Receipt / Bill icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'sales-analytics'])" :label="__('messages.sidebar_sales_analytics')" />
+                    {{-- 2. Cash Drawer Shift Report --}}
+                    @php $isPosCash = request()->routeIs('pos.reports.cash*'); @endphp
+                    <x-admin.nav-link :href="route('pos.reports.cash', $storeRouteParams)" route-name="pos.reports.cash" :active="$isPosCash" :label="__('messages.reports_cash')">
+                        <x-slot:icon>
+                            {{-- Cash Drawer / Vault icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
+                    {{-- 3. Stock Balance Report --}}
+                    @php $isPosStock = request()->routeIs('pos.reports.stock*'); @endphp
+                    <x-admin.nav-link :href="route('pos.reports.stock', $storeRouteParams)" route-name="pos.reports.stock" :active="$isPosStock" :label="__('messages.reports_stock')">
+                        <x-slot:icon>
+                            {{-- Package / Stock icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
+                    {{-- 4. Service & Repair Report --}}
+                    @php $isPosServices = request()->routeIs('pos.reports.services*'); @endphp
+                    <x-admin.nav-link :href="route('pos.reports.services', $storeRouteParams)" route-name="pos.reports.services" :active="$isPosServices" :label="__('messages.sidebar_report_services')">
+                        <x-slot:icon>
+                            {{-- Wrench / Tool icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
+                    {{-- 5. Sales Analytics & Deep Charts --}}
+                    @php $isSalesAnalytics = request()->routeIs('store.admin.sales_analytics.*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.sales_analytics.index', $storeRouteParams)" route-name="store.admin.sales_analytics.index" :active="$isSalesAnalytics" :label="__('messages.sidebar_sales_analytics')">
+                        <x-slot:icon>
+                            {{-- Deep Analytics / Chart icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'inventory-valuation'])" :label="__('messages.sidebar_inventory_valuation')" />
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'aging-report'])" :label="__('messages.sidebar_aging_report')" />
                 </x-admin.nav-group>

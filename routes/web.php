@@ -811,6 +811,19 @@ Route::prefix('store/{store_slug}')
         Route::post('/admin/web-products/bulk-visibility', [\App\Http\Controllers\Admin\WebProductController::class, 'bulkVisibility'])->name('store.admin.web_products.bulk_visibility')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::post('/admin/web-products/bulk-featured', [\App\Http\Controllers\Admin\WebProductController::class, 'bulkFeatured'])->name('store.admin.web_products.bulk_featured')->middleware(EnsureStoreAccess::class . ':store_manager');
 
+        // Mobile E-Load & Bill Register (sidebar_eload)
+        Route::get('/admin/eload', [\App\Http\Controllers\Admin\EloadController::class, 'index'])->name('store.admin.eload.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/eload', [\App\Http\Controllers\Admin\EloadController::class, 'store'])->name('store.admin.eload.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/eload/refill', [\App\Http\Controllers\Admin\EloadController::class, 'refill'])->name('store.admin.eload.refill')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/eload/accounts', [\App\Http\Controllers\Admin\EloadController::class, 'saveAccount'])->name('store.admin.eload.accounts.store')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::delete('/admin/eload/accounts/{id}', [\App\Http\Controllers\Admin\EloadController::class, 'deleteAccount'])->name('store.admin.eload.accounts.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::patch('/admin/eload/transactions/{id}/status', [\App\Http\Controllers\Admin\EloadController::class, 'updateStatus'])->name('store.admin.eload.status')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/eload/transactions/{id}/slip', [\App\Http\Controllers\Admin\EloadController::class, 'printSlip'])->name('store.admin.eload.slip')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Sales Analytics & Deep Charts (sidebar_sales_analytics)
+        Route::get('/admin/reports/sales-analytics', [\App\Http\Controllers\Admin\SalesAnalyticsController::class, 'index'])->name('store.admin.sales_analytics.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/reports/sales-analytics/export', [\App\Http\Controllers\Admin\SalesAnalyticsController::class, 'exportCsv'])->name('store.admin.sales_analytics.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
         // Roadmap placeholder page — one route for every not-yet-built module
         // (sidebar "coming soon" links). The module registry (slug → label +
         // phase) lives in ComingSoonController; unknown slugs 404.
@@ -900,10 +913,13 @@ Route::prefix('store/{store_slug}')
             Route::post('/closing/{closing}/approve', [\App\POS\Http\Controllers\DailyClosingController::class, 'approve'])->name('pos.closing.approve')
                 ->middleware(EnsureStoreAccess::class . ':store_manager');
 
-            // Minimal reports (target-design §2.10) — sales / cash drawer / stock.
+            // POS Reports (Sales / Cash Drawer / Stock / Services & Repairs)
             Route::get('/reports/sales', [\App\POS\Http\Controllers\PosReportController::class, 'sales'])->name('pos.reports.sales');
+            Route::get('/reports/sales/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportSales'])->name('pos.reports.sales.export');
             Route::get('/reports/cash', [\App\POS\Http\Controllers\PosReportController::class, 'cash'])->name('pos.reports.cash');
             Route::get('/reports/stock', [\App\POS\Http\Controllers\PosReportController::class, 'stock'])->name('pos.reports.stock');
+            Route::get('/reports/services', [\App\POS\Http\Controllers\PosReportController::class, 'services'])->name('pos.reports.services');
+            Route::get('/reports/services/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportServices'])->name('pos.reports.services.export');
 
             // POS product search (used by PO create form)
             Route::get('/purchases/products', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'productSearch'])->name('pos.purchases.product-search');

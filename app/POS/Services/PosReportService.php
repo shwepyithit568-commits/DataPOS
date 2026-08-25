@@ -151,4 +151,100 @@ class PosReportService
             'total_units' => $totalUnits,
         ];
     }
+
+    /* ------------------------------------------------------------------ */
+    /*  Service Jobs & Repair Reports                                     */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Generate Service / Repair Jobs Report.
+     */
+    public function serviceJobsReport(Store $store, Carbon $from, Carbon $to, ?int $technicianId = null, ?string $status = null): array
+    {
+        $query = \App\POS\Models\ServiceJob::query()
+            ->with(['technician', 'customer', 'items', 'payments'])
+            ->where('store_id', $store->id)
+            ->whereBetween('created_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()]);
+
+        if ($technicianId) {
+            $query->where('technician_id', $technicianId);
+        }
+
+        if ($status && in_array($status, \App\POS\Models\ServiceJob::STATUSES, true)) {
+            $query->where('status', $status);
+        }
+
+        $jobs = $query->latest('created_at')->get();
+
+        $totalEstimated = 0.0;
+        $totalFinalCharge = 0.0;
+        $totalPaid = 0.0;
+        $totalPartsCost = 0.0;
+
+        $statusCounts = [
+            'received'          => 0,
+            'diagnosing'        => 0,
+            'awaiting_approval' => 0,
+            'awaiting_parts'    => 0,
+            'in_repair'         => 0,
+            'ready'             => 0,
+            'delivered'         => 0,
+            'cancelled'         => 0,
+            'unrepairable'      => 0,
+        ];
+
+        $techPerformance = [];
+
+        foreach ($jobs as $job) {
+            $final = (float) ($job->final_charge ?: $job->estimated_charge ?: 0);
+            $paid = (float) $job->payments->sum('amount');
+            $partsCost = (float) $job->items->where('type', 'part')->sum('cost');
+
+            $totalEstimated += (float) ($job->estimated_charge ?? 0);
+            $totalFinalCharge += $final;
+            $totalPaid += $paid;
+            $totalPartsCost += $partsCost;
+
+            if (isset($statusCounts[$job->status])) {
+                $statusCounts[$job->status]++;
+            }
+
+            // Technician aggregate
+            $techId = (int) ($job->technician_id ?? 0);
+            $techName = $job->technician?->name ?? 'Unassigned';
+            if (!isset($techPerformance[$techId])) {
+                $techPerformance[$techId] = [
+                    'id'          => $techId,
+                    'name'        => $techName,
+                    'jobs_count'  => 0,
+                    'completed'   => 0,
+                    'revenue'     => 0.0,
+                    'parts_cost'  => 0.0,
+                ];
+            }
+            $techPerformance[$techId]['jobs_count']++;
+            if (in_array($job->status, ['ready', 'delivered'], true)) {
+                $techPerformance[$techId]['completed']++;
+            }
+            $techPerformance[$techId]['revenue'] += $final;
+            $techPerformance[$techId]['parts_cost'] += $partsCost;
+        }
+
+        $grossServiceProfit = $totalFinalCharge - $totalPartsCost;
+        $completedCount = $statusCounts['ready'] + $statusCounts['delivered'];
+        $pendingCount = $jobs->count() - $completedCount - $statusCounts['cancelled'] - $statusCounts['unrepairable'];
+
+        return [
+            'jobs'                 => $jobs,
+            'count'                => $jobs->count(),
+            'completed_count'      => $completedCount,
+            'pending_count'        => max(0, $pendingCount),
+            'total_revenue'        => $totalFinalCharge,
+            'total_paid'           => $totalPaid,
+            'total_parts_cost'     => $totalPartsCost,
+            'gross_service_profit' => $grossServiceProfit,
+            'status_counts'        => $statusCounts,
+            'technicians'          => array_values($techPerformance),
+        ];
+    }
 }

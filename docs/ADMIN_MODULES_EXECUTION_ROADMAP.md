@@ -73,7 +73,7 @@ DataPOS Admin Sidebar တွင် လက်ရှိအသုံးပြုန
 | ✅**၁၃။ Membership Tier & Loyalty Points**<br>(`sidebar_membership`) | `Customers` အောက် | • ဖောက်သည် အဆင့်များ (Silver, Gold, VIP Member)<br>• ဝယ်ယူမှုပမာဏအလိုက် Points ပေးခြင်းနှင့် Points ဖြင့် ငွေလျှော့ဝယ်ယူနိုင်ခြင်း | 🔹 **P2** |
 | ✅**၁၄။ Promotions & Coupon Engine**<br>(`sidebar_promotions`) | `Ecommerce` အောက် | • Coupon Code လျှော့စျေးများ (ဥပမာ: `THADINGYUT10` - 10% Off)<br>• Buy 1 Get 1 (တစ်ခုဝယ် တစ်ခုလက်ဆောင်) နှင့် အထူးလျှော့စျေး သတ်မှတ်ခြင်း | 🔹 **P2** |
 | ✅**၁၅။ Web Catalog Product Visibility**<br>(`sidebar_web_products`) | `Ecommerce` အောက် | • Online Storefront တွင် ပြသမည့် ပစ္စည်းများနှင့် ဆိုင်တွင်းသာ ရောင်းမည့် ပစ္စည်းများ သီးသန့် ခွဲထုတ်ထိန်းချုပ်ခြင်း | 🔹 **P2** |
-| **၁၆။ Mobile E-Load & Bill Register**<br>(`sidebar_eload`) | `POS` အောက် | • MPT, Atom, Ooredoo, Mytel ဖုန်းဘေလ်ဖြည့်ခြင်း မှတ်တမ်း<br>• E-Load ဝယ်စျေး/ရောင်းစျေးနှင့် အမြတ်ငွေ အလိုအလျောက် တွက်ချက်မှု | 🔹 **P2** |
+| ✅**၁၆။ Mobile E-Load & Bill Register**<br>(`sidebar_eload`) | `POS` အောက် | • MPT, Atom, Ooredoo, Mytel ဖုန်းဘေလ်ဖြည့်ခြင်း မှတ်တမ်း<br>• E-Load ဝယ်စျေး/ရောင်းစျေးနှင့် အမြတ်ငွေ အလိုအလျောက် တွက်ချက်မှု | 🔹 **P2** |
 
 ---
 
@@ -82,8 +82,8 @@ DataPOS Admin Sidebar တွင် လက်ရှိအသုံးပြုန
 
 | Module အမည် | Sidebar တည်နေရာ | အဓိက လုပ်ဆောင်ချက်နှင့် စနစ်ဖွဲ့စည်းပုံ | Priority |
 | :--- | :--- | :--- | :--- |
-| **၁၇။ Sales Analytics & Deep Charts**<br>(`sidebar_sales_analytics`) | `Reports` အောက် | • ရောင်းအားအကောင်းဆုံး ပစ္စည်းများ (Top Selling Items)<br>• နာရီအလိုက်/နေ့အလိုက် ရောင်းအားဂရပ်များ (Peak Sales Hours)<br>• Cashier တစ်ဦးချင်းစီ၏ စွမ်းဆောင်ရည် | 🔹 **P2** |
-| **၁၈။ Inventory Valuation Report**<br>(`sidebar_inventory_valuation`) | `Reports` အောက် | • စတော့လက်ကျန် စုစုပေါင်း၏ ကုန်ကျစရိတ်တန်ဖိုး (Total Inventory Value at Cost)<br>• ရောင်းရငွေတန်ဖိုး (Total Value at Retail Price) နှင့် ခန့်မှန်းအမြတ်ငွေ | 🔹 **P2** |
+| ✅**၁၇။ Sales Analytics & Deep Charts**<br>(`sidebar_sales_analytics`) | `Reports` အောက် | • ရောင်းအားအကောင်းဆုံး ပစ္စည်းများ (Top Selling Items)<br>• နာရီအလိုက်/နေ့အလိုက် ရောင်းအားဂရပ်များ (Peak Sales Hours)<br>• Cashier တစ်ဦးချင်းစီ၏ စွမ်းဆောင်ရည် | 🔹 **P2** |
+|**၁၈။ Inventory Valuation Report**<br>(`sidebar_inventory_valuation`) | `Reports` အောက် | • စတော့လက်ကျန် စုစုပေါင်း၏ ကုန်ကျစရိတ်တန်ဖိုး (Total Inventory Value at Cost)<br>• ရောင်းရငွေတန်ဖိုး (Total Value at Retail Price) နှင့် ခန့်မှန်းအမြတ်ငွေ | 🔹 **P2** |
 | **၁၉။ Debt Aging Analysis Report**<br>(`sidebar_aging_report`) | `Reports` အောက် | • အကြွေးသက်တမ်း ခွဲခြားမှု (၁-၃၀ ရက်၊ ၃၁-၆၀ ရက်၊ ၆၁-၉၀ ရက်၊ ရက် ၉၀ အထက်)<br>• မဆပ်ဘဲ ကြာမြင့်နေသော အန္တရာယ်ရှိ အကြွေးစာရင်းများ သတိပေးခြင်း | 🔹 **P2** |
 | **၂၀။ Staff Roles & Granular Permissions**<br>(`sidebar_roles`) | `Security` အောက် | • မန်နေဂျာ၊ စာရင်းကိုင်၊ အရောင်းစာရေး (Cashier) ရာထူးခွဲခြားခြင်း<br>• လျှော့စျေးပေးခွင့်၊ စျေးနှုန်းပြင်ခွင့်၊ အကြွေးပေးခွင့်၊ အစီရင်ခံစာကြည့်ခွင့် အသေးစိတ် သတ်မှတ်ခြင်း | 🔹 **P2** |
 | **၂၁။ System Audit Trail Logs**<br>(`sidebar_audit_logs`) | `Security` အောက် | • စျေးနှုန်းပြင်ဆင်ခြင်း၊ စတော့ဖြတ်ခြင်း၊ ဘောက်ချာဖျက်ခြင်း၊ ငွေထုတ်ခြင်း စသည့် အရေးကြီးလုပ်ဆောင်ချက်များကို မည်သူ/မည်သည့်အချိန်တွင် လုပ်ခဲ့သည်ကို အသေးစိတ် မှတ်တမ်းတင်ခြင်း | 🔹 **P2** |
