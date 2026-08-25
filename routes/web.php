@@ -845,6 +845,12 @@ Route::prefix('store/{store_slug}')
         Route::post('/admin/security/roles/assign-staff', [\App\Http\Controllers\Admin\StaffRoleController::class, 'assignStaff'])->name('store.admin.roles.assign_staff')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::get('/admin/security/roles/export', [\App\Http\Controllers\Admin\StaffRoleController::class, 'exportCsv'])->name('store.admin.roles.export')->middleware(EnsureStoreAccess::class . ':store_manager');
 
+        // System Audit Trail Logs (sidebar_audit_logs)
+        Route::get('/admin/security/audit-logs/export', [\App\Http\Controllers\Admin\AuditLogController::class, 'export'])->name('store.admin.audit-logs.export')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/security/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('store.admin.audit-logs.index')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/security/audit-logs/{log}', [\App\Http\Controllers\Admin\AuditLogController::class, 'show'])->name('store.admin.audit-logs.show')->middleware(EnsureStoreAccess::class . ':store_manager');
+
+
         // Roadmap placeholder page — one route for every not-yet-built module
         // (sidebar "coming soon" links). The module registry (slug → label +
         // phase) lives in ComingSoonController; unknown slugs 404.
@@ -864,9 +870,27 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/backups/{file}/download', [BackupController::class, 'download'])->name('store.admin.backups.download')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::delete('/admin/backups/{file}', [BackupController::class, 'destroy'])->name('store.admin.backups.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
 
+        // Database Tools & Optimizer (sidebar_database)
+        Route::get('/admin/database', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'index'])->name('store.admin.database.index')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/database/vacuum', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'vacuum'])->name('store.admin.database.vacuum')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/database/optimize', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'optimize'])->name('store.admin.database.optimize')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/database/integrity-check', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'integrityCheck'])->name('store.admin.database.integrity')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/database/clear-cache', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'clearCache'])->name('store.admin.database.clear_cache')->middleware(EnsureStoreAccess::class . ':store_manager');
+
+        // System Alert Center & Notifications (sidebar_alerts)
+        Route::get('/admin/alerts', [\App\Http\Controllers\Admin\SystemAlertCenterController::class, 'index'])->name('store.admin.alerts.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/alerts/test-ping', [\App\Http\Controllers\Admin\SystemAlertCenterController::class, 'testNotification'])->name('store.admin.alerts.test_ping')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/alerts/daily-summary', [\App\Http\Controllers\Admin\SystemAlertCenterController::class, 'sendDailySummary'])->name('store.admin.alerts.daily_summary')->middleware(EnsureStoreAccess::class . ':store_manager');
+
+
         // Admin Wholesale Applications Management
+        Route::get('/admin/wholesale/applications/export', [WholesaleAdminController::class, 'export'])->name('store.admin.wholesale.applications.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/wholesale/applications', [WholesaleAdminController::class, 'index'])->name('store.admin.wholesale.applications.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::patch('/admin/wholesale/applications/{application}', [WholesaleAdminController::class, 'updateStatus'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/wholesale/applications/{application}', [WholesaleAdminController::class, 'show'])->name('store.admin.wholesale.applications.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/wholesale/applications/{application}/print', [WholesaleAdminController::class, 'print'])->name('store.admin.wholesale.applications.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::patch('/admin/wholesale/applications/{application}', [WholesaleAdminController::class, 'updateStatus'])->name('store.admin.wholesale.applications.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::delete('/admin/wholesale/applications/{application}', [WholesaleAdminController::class, 'destroy'])->name('store.admin.wholesale.applications.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+
 
         // Admin Glass Finder Management
         Route::get('/admin/glass-finder', [GlassFinderAdminController::class, 'index'])->name('store.admin.glass-finder.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');

@@ -18,6 +18,7 @@ class WholesaleApplication extends Model
         'address',
         'status',
         'notes',
+        'admin_note',
     ];
 
     public function store(): BelongsTo

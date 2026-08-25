@@ -43,9 +43,6 @@ class ComingSoonController extends Controller
         'vouchers'            => ['sidebar_vouchers', 'Phase 4'],
         'exchange-rates'      => ['sidebar_exchange_rates', 'Phase 4'],
         'roles'               => ['sidebar_roles', 'Phase 4'],
-        'audit-logs'          => ['sidebar_audit_logs', 'Phase 4'],
-        'database'            => ['sidebar_database', 'Phase 4'],
-        'alerts'              => ['sidebar_alerts', 'Phase 4'],
     ];
 
     public static function modules(): array

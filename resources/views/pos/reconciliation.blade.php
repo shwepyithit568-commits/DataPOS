@@ -1,209 +1,270 @@
-@extends('layouts.pos.app')
+@extends('layouts.admin.app')
+
+@section('title', __('messages.sidebar_stock_reconciliation') . ' - ' . $store->name)
 
 @section('content')
     @php
-        $isManager = auth()->user()?->hasStoreRole($store->id, 'store_manager');
+        $isManager = auth()->user()?->hasStoreRole($store->id, 'store_manager') || auth()->user()?->hasStoreRole($store->id, 'store_owner');
+        $storeRouteParams = ['store_slug' => $store->slug];
+        
+        $totalProducts = $report['products'] ?? 0;
+        $diffProducts = $report['diff_products'] ?? 0;
+        $totalDiff = (float)($report['total_diff'] ?? 0);
+        $isClean = $report['clean'] ?? false;
     @endphp
 
-    <div class="mx-auto max-w-5xl px-4 py-6 space-y-6">
+    <div class="space-y-6 pb-12" 
+         x-data="{ 
+             onlyDiffs: false, 
+             searchQuery: '',
+             reconcileModalOpen: false,
+             matchesFilter(name, sku, hasDiff) {
+                 const matchesSearch = this.searchQuery === '' || 
+                     name.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
+                     sku.toLowerCase().includes(this.searchQuery.toLowerCase());
+                 const matchesDiff = !this.onlyDiffs || hasDiff;
+                 return matchesSearch && matchesDiff;
+             }
+         }">
 
-        <div class="flex items-center justify-between gap-3">
+        {{-- Page Header --}}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 rounded-2xl shadow-sm">
             <div>
-                <p class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ __('messages.reconciliation_title') }}</p>
-                <h1 class="text-xl font-black mt-0.5">{{ __('messages.reconciliation_subtitle') }}</h1>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ __('messages.reconciliation_hint') }}</p>
+                <div class="flex items-center gap-2.5">
+                    <span class="inline-flex items-center justify-center p-2.5 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 font-bold text-xl">
+                        ⚖️
+                    </span>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                            {{ __('messages.sidebar_stock_reconciliation') }}
+                        </h1>
+                        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                            {{ __('messages.reconciliation_hint') }}
+                        </p>
+                    </div>
+                </div>
             </div>
-            <a href="{{ url('/store/' . $store->slug . '/pos') }}"
-               class="rounded-xl px-4 py-2 text-sm font-bold bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition">
-                ← {{ __('messages.back_to_pos') }}
-            </a>
+            <div class="flex items-center gap-2.5 flex-wrap">
+                @if ($isManager && !$isClean)
+                    <button type="button" @click="reconcileModalOpen = true"
+                            class="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-md shadow-sky-600/20 transition cursor-pointer">
+                        <span>⚖️</span> အလိုအလျောက် ညှိနှိုင်းပြင်ဆင်မည်
+                    </button>
+                @endif
+                <button type="button" onclick="window.print()"
+                        class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition border border-slate-200 dark:border-slate-700">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    <span>Print ရှင်းတမ်း</span>
+                </button>
+            </div>
         </div>
 
-        {{-- Inventory Operations Navigation Tabs --}}
-        <div class="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-x-auto scrollbar-none text-xs font-bold">
-            <a href="{{ route('pos.adjustments.index', ['store_slug' => $store->slug]) }}"
-               class="px-4 py-2 rounded-lg transition-all whitespace-nowrap {{ request()->routeIs('pos.adjustments.*') ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white' }}">
-                ⚡ {{ __('messages.adjustment_title') }}
-            </a>
-            <a href="{{ route('pos.reconciliation.index', ['store_slug' => $store->slug]) }}"
-               class="px-4 py-2 rounded-lg transition-all whitespace-nowrap {{ request()->routeIs('pos.reconciliation.*') ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white' }}">
-                ⚖️ {{ __('messages.reconciliation') }}
-            </a>
-            <a href="{{ route('pos.opening-stock.index', ['store_slug' => $store->slug]) }}"
-               class="px-4 py-2 rounded-lg transition-all whitespace-nowrap {{ request()->routeIs('pos.opening-stock.*') ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white' }}">
-                📦 {{ __('messages.opening_stock_title') }}
-            </a>
-        </div>
-
+        {{-- Flash Alerts --}}
         @if (session('error'))
-            <div class="rounded-xl border border-rose-300 dark:border-rose-700 bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-300 px-4 py-3 text-sm font-semibold">
-                ⚠️ {{ session('error') }}
+            <div class="rounded-2xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 px-5 py-4 text-sm font-semibold flex items-center gap-3 shadow-sm">
+                <span class="text-xl">⚠️</span>
+                <div>{{ session('error') }}</div>
             </div>
         @endif
         @if (session('success'))
-            <div class="rounded-xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-4 py-3 text-sm font-semibold">
-                ✅ {{ session('success') }}
+            <div class="rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-5 py-4 text-sm font-semibold flex items-center gap-3 shadow-sm">
+                <span class="text-xl">✅</span>
+                <div>{{ session('success') }}</div>
             </div>
         @endif
 
-        <div x-data="{ onlyDiffs: false }" class="space-y-6">
-            {{-- Summary cards --}}
-            <div class="grid grid-cols-3 gap-3">
-                <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
-                    <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">{{ __('messages.reconciliation_products') }}</p>
-                    <p class="text-2xl font-black mt-1">{{ $report['products'] }}</p>
+        {{-- KPI Summary Cards --}}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">စစ်ဆေးပြီး ပစ္စည်းစုစုပေါင်း</span>
+                <p class="text-2xl font-black text-slate-900 dark:text-white mt-1 font-mono">{{ number_format($totalProducts) }}</p>
+                <span class="text-[11px] text-slate-500 mt-0.5 block">Total Audited Items</span>
+            </div>
+
+            <div class="rounded-2xl bg-white dark:bg-slate-900 border p-4 sm:p-5 shadow-sm {{ $isClean ? 'border-emerald-200 dark:border-emerald-900/50' : 'border-amber-200 dark:border-amber-900/50' }}">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider {{ $isClean ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">ကွာဟချက်ရှိသော ပစ္စည်း</span>
+                    <span class="p-1 rounded-lg {{ $isClean ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600' }}">⚖️</span>
                 </div>
-                <div class="rounded-2xl bg-white dark:bg-slate-900 border p-4 shadow-sm
-                    {{ $report['clean'] ? 'border-emerald-200 dark:border-emerald-800' : 'border-amber-200 dark:border-amber-800' }}">
-                    <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">{{ __('messages.reconciliation_diff_products') }}</p>
-                    <p class="text-2xl font-black mt-1 {{ $report['clean'] ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
-                        {{ $report['diff_products'] }}
-                    </p>
-                </div>
-                <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
-                    <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">{{ __('messages.reconciliation_total_diff') }}</p>
-                    <p class="text-2xl font-black mt-1">{{ number_format((float) $report['total_diff'], 3) }}</p>
+                <p class="text-2xl font-black font-mono mt-1 {{ $isClean ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
+                    {{ number_format($diffProducts) }}
+                </p>
+                <span class="text-[11px] text-slate-500 mt-0.5 block">{{ $isClean ? 'Clean (ကိုက်ညီပါသည်)' : 'Requires Adjustment' }}</span>
+            </div>
+
+            <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">စုစုပေါင်း ကွာဟချက် အရေအတွက်</span>
+                <p class="text-2xl font-black font-mono mt-1 {{ $totalDiff != 0 ? 'text-amber-600' : 'text-emerald-600' }}">
+                    {{ $totalDiff > 0 ? '+' : '' }}{{ number_format($totalDiff, 3) }}
+                </p>
+                <span class="text-[11px] text-slate-500 mt-0.5 block">Net Stock Variance</span>
+            </div>
+
+            <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">စာရင်း အခြေအနေ</span>
+                <p class="text-base font-black mt-2 {{ $isClean ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
+                    {{ $isClean ? '✨ အားလုံး ကိုက်ညီပါသည်' : '⚠️ ကွာဟချက် စစ်ဆေးရန်' }}
+                </p>
+                <span class="text-[11px] text-slate-500 mt-0.5 block">Audit Status</span>
+            </div>
+        </div>
+
+        {{-- Toolbar --}}
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 rounded-2xl shadow-sm">
+            <div class="relative flex-1 max-w-md">
+                <input type="text" x-model="searchQuery"
+                       placeholder="ကုန်ပစ္စည်းအမည် သို့မဟုတ် SKU ဖြင့် စစ်ဆေးရန်..."
+                       class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2 pl-9 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500">
+                <div class="absolute left-3 top-2.5 text-slate-400 pointer-events-none">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                 </div>
             </div>
 
-            @if ($report['clean'] && $report['products'] > 0)
-                <div class="rounded-xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-4 py-3 text-sm font-semibold">
-                    ✅ {{ __('messages.reconciliation_clean') }}
-                </div>
-            @endif
+            <div class="flex items-center gap-2">
+                <button type="button" @click="onlyDiffs = false"
+                        :class="!onlyDiffs ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'"
+                        class="px-3.5 py-1.5 rounded-xl text-xs transition font-semibold">
+                    အားလုံးပြရန် ({{ $totalProducts }})
+                </button>
+                <button type="button" @click="onlyDiffs = true"
+                        :class="onlyDiffs ? 'bg-sky-600 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'"
+                        class="px-3.5 py-1.5 rounded-xl text-xs transition font-semibold flex items-center gap-1">
+                    <span>⚠️ ကွာဟချက်ရှိသည်များ ({{ $diffProducts }})</span>
+                </button>
+            </div>
+        </div>
 
-            @if ($report['products'] === 0)
-                <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 text-center text-sm text-slate-500 shadow-sm">
-                    {{ __('messages.reconciliation_none') }}
+        {{-- Discrepancy Table --}}
+        <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>📋</span> စတော့ ကွာဟချက် နှိုင်းယှဉ်ချက် ရှင်းတမ်း
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Import သွင်းခဲ့သော အဖွင့်စာရင်းနှင့် Ledger ရှိ မှတ်တမ်းများအား ကုန်ပစ္စည်းတစ်ခုချင်းစီအလိုက် စစ်ဆေးမှု
+                    </p>
+                </div>
+            </div>
+
+            @if (empty($report['rows']) || $totalProducts === 0)
+                <div class="p-12 text-center text-slate-500">
+                    <p class="text-3xl mb-2">⚖️</p>
+                    <p class="text-sm font-bold text-slate-700 dark:text-slate-300">{{ __('messages.reconciliation_none') }}</p>
+                    <p class="text-xs text-slate-400 mt-1">ကွာဟချက် ညှိနှိုင်းရန် ကုန်ပစ္စည်း စာရင်းများ မရှိသေးပါ</p>
                 </div>
             @else
-                <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                    <div class="flex items-center justify-between gap-3 px-4 pt-3.5 pb-3 flex-wrap">
-                        <p class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ __('messages.opening_stock_requests') }}</p>
-                        <label class="flex items-center gap-1.5 text-xs font-bold text-slate-500 cursor-pointer">
-                            <input type="checkbox" x-model="onlyDiffs" class="rounded border-slate-300">
-                            {{ __('messages.reconciliation_only_diffs') }}
-                        </label>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="bg-slate-50 dark:bg-slate-800/60 text-xs text-slate-500 dark:text-slate-400">
-                                <tr>
-                                    <th class="text-left px-4 py-2">{{ __('messages.product') }}</th>
-                                    <th class="text-right px-4 py-2">{{ __('messages.reconciliation_imported') }}</th>
-                                    <th class="text-right px-4 py-2">{{ __('messages.reconciliation_recorded') }}</th>
-                                    <th class="text-right px-4 py-2">{{ __('messages.reconciliation_diff') }}</th>
-                                    <th class="text-right px-4 py-2">{{ __('messages.reconciliation_on_hand') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                @foreach ($report['rows'] as $row)
-                                    @php
-                                        $isDiff = bccomp((string) $row['diff'], '0', 3) !== 0;
-                                        $diffColor = $isDiff ? (bccomp((string) $row['diff'], '0', 3) > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400') : 'text-slate-400';
-                                    @endphp
-                                    <tr x-show="!onlyDiffs || {{ $isDiff ? 'true' : 'false' }}"
-                                        class="{{ $isDiff ? 'bg-amber-50/60 dark:bg-amber-950/20' : '' }}">
-                                        <td class="px-4 py-2">
-                                            <span class="font-semibold">{{ $row['product_name'] }}</span>
-                                            @if ($row['sku'])
-                                                <span class="block text-[10px] font-mono text-slate-400">{{ $row['sku'] }}</span>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50 dark:bg-slate-800/80 text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
+                            <tr>
+                                <th class="text-left px-5 py-3.5">{{ __('messages.product') }}</th>
+                                <th class="text-right px-4 py-3.5">Import အဖွင့်စာရင်း</th>
+                                <th class="text-right px-4 py-3.5">Ledger မှတ်တမ်း</th>
+                                <th class="text-right px-4 py-3.5">ကွာဟချက် (Variance)</th>
+                                <th class="text-right px-5 py-3.5">လက်ရှိ On-Hand</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                            @foreach ($report['rows'] as $row)
+                                @php 
+                                    $hasDiff = abs((float) ($row['diff'] ?? 0)) > 0.0001; 
+                                    $productName = $row['product_name'] ?? '—';
+                                    $productSku = $row['sku'] ?? '';
+                                @endphp
+                                <tr x-show="matchesFilter('{{ addslashes($productName) }}', '{{ addslashes($productSku) }}', {{ $hasDiff ? 'true' : 'false' }})" 
+                                    class="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition {{ $hasDiff ? 'bg-amber-50/30 dark:bg-amber-950/20' : '' }}">
+                                    <td class="px-5 py-3.5 font-semibold text-slate-900 dark:text-white">
+                                        <div class="flex items-center gap-2">
+                                            @if ($hasDiff)
+                                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                            @else
+                                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                                             @endif
-                                        </td>
-                                        <td class="px-4 py-2 text-right font-mono">{{ number_format((float) $row['imported'], 3) }}</td>
-                                        <td class="px-4 py-2 text-right font-mono">{{ number_format((float) $row['recorded'], 3) }}</td>
-                                        <td class="px-4 py-2 text-right font-mono font-bold {{ $diffColor }}">
-                                            {{ $isDiff ? ($row['diff'] > 0 ? '+' : '') . number_format((float) $row['diff'], 3) : '—' }}
-                                        </td>
-                                        <td class="px-4 py-2 text-right font-mono text-slate-500">{{ number_format((float) $row['on_hand'], 3) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                @if ($isManager)
-                    <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/reconciliation/approve') }}"
-                          class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-3"
-                          onsubmit="return confirm('{{ __('messages.reconciliation_approve_confirm') }}');">
-                        @csrf
-                        <div class="flex gap-2 flex-wrap">
-                            <input type="text" name="review_notes" maxlength="500" placeholder="{{ __('messages.reconciliation_review_notes') }}"
-                                   class="flex-1 min-w-[200px] rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm">
-                            <button type="submit"
-                                    class="rounded-lg px-5 py-2.5 text-sm font-black text-white bg-emerald-600 hover:bg-emerald-500 transition">
-                                ⚖️ {{ __('messages.reconciliation_approve') }}
-                            </button>
-                        </div>
-                        <p class="text-xs text-slate-500">{{ __('messages.reconciliation_approve_hint') }}</p>
-                    </form>
-                @else
-                    <p class="text-xs font-semibold text-slate-500 text-center">{{ __('messages.reconciliation_waits') }}</p>
-                @endif
-            @endif
-
-            {{-- History --}}
-            <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-3">
-                <p class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ __('messages.reconciliation_history') }}</p>
-
-                @if ($history->isEmpty())
-                    <p class="text-center text-sm text-slate-500 py-4">{{ __('messages.reconciliation_history_none') }}</p>
-                @else
-                    @foreach ($history as $rec)
-                        <div class="rounded-xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50/60 dark:bg-emerald-950/20 p-3.5 space-y-2">
-                            <div class="flex items-center justify-between gap-3 flex-wrap">
-                                <div>
-                                    <p class="font-mono font-bold">{{ $rec->reconciliation_number }}</p>
-                                    <p class="text-xs text-slate-500">
-                                        {{ $rec->approved_at?->format('d M Y, H:i') }} · {{ __('messages.opening_stock_reviewed_by') }}: {{ $rec->reviewedBy?->name ?? '—' }}
-                                    </p>
-                                    @if ($rec->review_notes)
-                                        <p class="text-xs italic text-slate-500 mt-0.5">"{{ $rec->review_notes }}"</p>
-                                    @endif
-                                </div>
-                                <div class="text-right text-xs">
-                                    <p class="font-bold">
-                                        @if ($rec->diff_count > 0)
-                                            <span class="text-amber-600 dark:text-amber-400">{{ $rec->diff_count }} {{ __('messages.reconciliation_diff_products') }}</span>
-                                        @else
-                                            <span class="text-emerald-600 dark:text-emerald-400">✓ {{ __('messages.reconciliation_clean') }}</span>
+                                            <span>{{ $productName }}</span>
+                                        </div>
+                                        @if (!empty($productSku))
+                                            <span class="text-xs font-mono text-slate-400 block mt-0.5 ml-4">SKU: {{ $productSku }}</span>
                                         @endif
-                                    </p>
-                                    <p class="text-slate-500">{{ __('messages.reconciliation_total_diff') }}: {{ number_format((float) $rec->total_diff, 3) }}</p>
-                                </div>
+                                    </td>
+                                    <td class="px-4 py-3.5 text-right font-mono text-slate-600 dark:text-slate-300">
+                                        {{ number_format((float) ($row['imported_qty'] ?? 0), 3) }}
+                                    </td>
+                                    <td class="px-4 py-3.5 text-right font-mono text-slate-600 dark:text-slate-300">
+                                        {{ number_format((float) ($row['recorded_qty'] ?? 0), 3) }}
+                                    </td>
+                                    <td class="px-4 py-3.5 text-right font-mono font-black {{ $hasDiff ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400' }}">
+                                        {{ (float) ($row['diff'] ?? 0) > 0 ? '+' : '' }}{{ number_format((float) ($row['diff'] ?? 0), 3) }}
+                                    </td>
+                                    <td class="px-5 py-3.5 text-right font-mono font-bold text-slate-900 dark:text-white">
+                                        {{ number_format((float) ($row['on_hand'] ?? 0), 3) }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+
+        {{-- Past Reconciliation Records --}}
+        @if (!empty($history) && $history->isNotEmpty())
+            <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-sm space-y-4">
+                <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>📜</span> ယခင် ညှိနှိုင်းပြင်ဆင်ခဲ့သော မှတ်တမ်းများ
+                </h3>
+                <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                    @foreach ($history as $h)
+                        <div class="py-3 flex items-center justify-between gap-3 text-sm">
+                            <div>
+                                <span class="font-mono font-bold text-slate-900 dark:text-white">{{ $h->reconciliation_number }}</span>
+                                <span class="text-xs text-slate-500 block mt-0.5">
+                                    အတည်ပြုသူ: {{ $h->approver?->name ?? '—' }} · ရက်စွဲ: {{ $h->created_at->format('d M Y, H:i') }}
+                                </span>
                             </div>
-                            @if ($rec->items->isNotEmpty())
-                                <div class="overflow-x-auto rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                                    <table class="w-full text-xs">
-                                        <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400">
-                                            <tr>
-                                                <th class="text-left px-3 py-1.5">{{ __('messages.product') }}</th>
-                                                <th class="text-right px-3 py-1.5">{{ __('messages.reconciliation_imported') }}</th>
-                                                <th class="text-right px-3 py-1.5">{{ __('messages.reconciliation_recorded') }}</th>
-                                                <th class="text-right px-3 py-1.5">{{ __('messages.reconciliation_diff') }}</th>
-                                                <th class="text-right px-3 py-1.5">{{ __('messages.adjustment_in') }} / {{ __('messages.adjustment_out') }}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                            @foreach ($rec->items as $item)
-                                                <tr>
-                                                    <td class="px-3 py-1.5 font-semibold">{{ $item->product?->name ?? '—' }}</td>
-                                                    <td class="px-3 py-1.5 text-right font-mono">{{ number_format((float) $item->imported_quantity, 3) }}</td>
-                                                    <td class="px-3 py-1.5 text-right font-mono">{{ number_format((float) $item->recorded_quantity, 3) }}</td>
-                                                    <td class="px-3 py-1.5 text-right font-mono font-bold {{ bccomp((string) $item->difference, '0', 3) > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
-                                                        {{ number_format((float) $item->difference, 3) }}
-                                                    </td>
-                                                    <td class="px-3 py-1.5 text-right font-mono">{{ $item->movement_type === 'adjustment_out' ? '−' : '+' }}{{ number_format((float) $item->correction, 3) }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            @endif
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                ပြီးစီး
+                            </span>
                         </div>
                     @endforeach
-                @endif
+                </div>
+            </div>
+        @endif
+
+        {{-- Auto-Reconcile Modal --}}
+        <div x-show="reconcileModalOpen" style="display: none;" 
+             class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4"
+             x-transition>
+            <div class="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4"
+                 @click.outside="reconcileModalOpen = false">
+                
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="p-2 rounded-xl bg-sky-500/10 text-sky-600 font-bold">⚖️</span>
+                        <h3 class="text-lg font-black text-slate-900 dark:text-white">ကွာဟချက်များအား အလိုအလျောက် ညှိနှိုင်းမည်</h3>
+                    </div>
+                    <button type="button" @click="reconcileModalOpen = false" class="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+
+                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                    မန်နေဂျာမှ အတည်ပြုပါက လက်ရှိ စစ်ဆေးတွေ့ရှိသော ကွာဟချက် (<strong>{{ $diffProducts }}</strong>) ခုအား Stock Movements ဖြင့် အလိုအလျောက် ညှိနှိုင်းတင်သွင်းပေးသွားမည် ဖြစ်ပါသည်။
+                </p>
+
+                <form method="POST" action="{{ route('pos.reconciliation.approve', $storeRouteParams) }}" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">စစ်ဆေးချက် မှတ်ချက်</label>
+                        <input type="text" name="review_notes" placeholder="ဥပမာ - လစဉ် စာရင်းစစ် ကွာဟချက် အလိုအလျောက် ညှိနှိုင်းခြင်း..." maxlength="255"
+                               class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500/20">
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 pt-2">
+                        <button type="button" @click="reconcileModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">ပယ်ဖျက်မည်</button>
+                        <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-md transition">
+                            အတည်ပြု ညှိနှိုင်းမည်
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
