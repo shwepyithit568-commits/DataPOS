@@ -36,7 +36,6 @@
             document.documentElement.classList.remove('dark');
         }
     </script>
-    @vite(['resources/css/admin.css', 'resources/js/app-admin.js'])
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-gray-900 dark:text-slate-100 font-sans antialiased flex h-dvh overflow-hidden transition-colors duration-200"
     x-data="{
@@ -730,8 +729,23 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'inventory-valuation'])" :label="__('messages.sidebar_inventory_valuation')" />
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'aging-report'])" :label="__('messages.sidebar_aging_report')" />
+                    {{-- 6. Inventory Valuation Report --}}
+                    @php $isInventoryValuation = request()->routeIs('store.admin.inventory_valuation.*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.inventory_valuation.index', $storeRouteParams)" route-name="store.admin.inventory_valuation.index" :active="$isInventoryValuation" :label="__('messages.sidebar_inventory_valuation')">
+                        <x-slot:icon>
+                            {{-- Calculator / Valuation icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
+                    {{-- 7. Debt Aging Analysis Report --}}
+                    @php $isDebtAging = request()->routeIs('store.admin.debt_aging.*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.debt_aging.index', $storeRouteParams)" route-name="store.admin.debt_aging.index" :active="$isDebtAging" :label="__('messages.sidebar_aging_report')">
+                        <x-slot:icon>
+                            {{-- Clock / Overdue debt icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
                 </x-admin.nav-group>
 
                 <x-admin.nav-group name="security" :label="__('messages.sidebar_security')" icon-class="bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300">
@@ -740,7 +754,15 @@
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6l8-3Z"/></svg>
                     </x-slot:icon>
 
-                    <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'roles'])" :label="__('messages.sidebar_roles')" />
+                    {{-- Staff Roles & Granular Permissions --}}
+                    @php $isStaffRoles = request()->routeIs('store.admin.roles.*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.roles.index', $storeRouteParams)" route-name="store.admin.roles.index" :active="$isStaffRoles" :label="__('messages.sidebar_roles')">
+                        <x-slot:icon>
+                            {{-- Key / Permissions icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5 4 4"/><path d="M13 7 8.7 11.3a2 2 0 0 0-.58 1.23l-.8 4.7 4.7-.8a2 2 0 0 0 1.23-.58L17.5 11.5"/><circle cx="6" cy="6" r="3"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
                     <x-admin.nav-placeholder :href="route('store.admin.coming-soon', [...$storeRouteParams, 'module' => 'audit-logs'])" :label="__('messages.sidebar_audit_logs')" />
                 </x-admin.nav-group>
 

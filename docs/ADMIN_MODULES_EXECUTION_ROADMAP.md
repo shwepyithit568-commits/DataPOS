@@ -83,11 +83,11 @@ DataPOS Admin Sidebar တွင် လက်ရှိအသုံးပြုန
 | Module အမည် | Sidebar တည်နေရာ | အဓိက လုပ်ဆောင်ချက်နှင့် စနစ်ဖွဲ့စည်းပုံ | Priority |
 | :--- | :--- | :--- | :--- |
 | ✅**၁၇။ Sales Analytics & Deep Charts**<br>(`sidebar_sales_analytics`) | `Reports` အောက် | • ရောင်းအားအကောင်းဆုံး ပစ္စည်းများ (Top Selling Items)<br>• နာရီအလိုက်/နေ့အလိုက် ရောင်းအားဂရပ်များ (Peak Sales Hours)<br>• Cashier တစ်ဦးချင်းစီ၏ စွမ်းဆောင်ရည် | 🔹 **P2** |
-|**၁၈။ Inventory Valuation Report**<br>(`sidebar_inventory_valuation`) | `Reports` အောက် | • စတော့လက်ကျန် စုစုပေါင်း၏ ကုန်ကျစရိတ်တန်ဖိုး (Total Inventory Value at Cost)<br>• ရောင်းရငွေတန်ဖိုး (Total Value at Retail Price) နှင့် ခန့်မှန်းအမြတ်ငွေ | 🔹 **P2** |
-| **၁၉။ Debt Aging Analysis Report**<br>(`sidebar_aging_report`) | `Reports` အောက် | • အကြွေးသက်တမ်း ခွဲခြားမှု (၁-၃၀ ရက်၊ ၃၁-၆၀ ရက်၊ ၆၁-၉၀ ရက်၊ ရက် ၉၀ အထက်)<br>• မဆပ်ဘဲ ကြာမြင့်နေသော အန္တရာယ်ရှိ အကြွေးစာရင်းများ သတိပေးခြင်း | 🔹 **P2** |
-| **၂၀။ Staff Roles & Granular Permissions**<br>(`sidebar_roles`) | `Security` အောက် | • မန်နေဂျာ၊ စာရင်းကိုင်၊ အရောင်းစာရေး (Cashier) ရာထူးခွဲခြားခြင်း<br>• လျှော့စျေးပေးခွင့်၊ စျေးနှုန်းပြင်ခွင့်၊ အကြွေးပေးခွင့်၊ အစီရင်ခံစာကြည့်ခွင့် အသေးစိတ် သတ်မှတ်ခြင်း | 🔹 **P2** |
+| ✅**၁၈။ Inventory Valuation Report**<br>(`sidebar_inventory_valuation`) | `Reports` အောက် | • စတော့လက်ကျန် စုစုပေါင်း၏ ကုန်ကျစရိတ်တန်ဖိုး (Total Inventory Value at Cost)<br>• ရောင်းရငွေတန်ဖိုး (Total Value at Retail Price) နှင့် ခန့်မှန်းအမြတ်ငွေ | 🔹 **P2** |
+| ✅**၁၉။ Debt Aging Analysis Report**<br>(`sidebar_aging_report`) | `Reports` အောက် | • အကြွေးသက်တမ်း ခွဲခြားမှု (၁-၃၀ ရက်၊ ၃၁-၆၀ ရက်၊ ၆၁-၉၀ ရက်၊ ရက် ၉၀ အထက်)<br>• မဆပ်ဘဲ ကြာမြင့်နေသော အန္တရာယ်ရှိ အကြွေးစာရင်းများ သတိပေးခြင်း | 🔹 **P2** |
+| ✅**၂၀။ Staff Roles & Granular Permissions**<br>(`sidebar_roles`) | `Security` အောက် | • မန်နေဂျာ၊ စာရင်းကိုင်၊ အရောင်းစာရေး (Cashier) ရာထူးခွဲခြားခြင်း<br>• လျှော့စျေးပေးခွင့်၊ စျေးနှုန်းပြင်ခွင့်၊ အကြွေးပေးခွင့်၊ အစီရင်ခံစာကြည့်ခွင့် အသေးစိတ် သတ်မှတ်ခြင်း | 🔹 **P2** |
 | **၂၁။ System Audit Trail Logs**<br>(`sidebar_audit_logs`) | `Security` အောက် | • စျေးနှုန်းပြင်ဆင်ခြင်း၊ စတော့ဖြတ်ခြင်း၊ ဘောက်ချာဖျက်ခြင်း၊ ငွေထုတ်ခြင်း စသည့် အရေးကြီးလုပ်ဆောင်ချက်များကို မည်သူ/မည်သည့်အချိန်တွင် လုပ်ခဲ့သည်ကို အသေးစိတ် မှတ်တမ်းတင်ခြင်း | 🔹 **P2** |
-| **၂၂။ Database Optimizer & System Alerts**<br>(`sidebar_database` / `alerts`) | `Maintenance` အောက် | • Database Vacuum / Index Optimize ပြုလုပ်ပေးခြင်း<br>• စတော့နည်းပါးမှု၊ အကြွေးကျော်လွန်မှု၊ နေ့စဉ်အရောင်း အကျဉ်းချုပ်ကို Telegram Bot / Email သို့ သတိပေးချက် ပို့ပေးခြင်း | 🔹 **P2** |
+| **၂၂။ Database Optimizer & System Alerts**<br>(`sidebar_database` / `alerts`) | `Maintenance` အောက် | • Database Vacuum / Index Optimize ပြုလုပ်ပေးခြင်း<br>• စတော့နည်းပါးမှု၊ အကြွေးကျော်လွန်မှု၊ နေ့စဉ်အရောင်း အကျဉ်းချုပ်ကို Telegram Bot / Email သို့ သတိပေးချက် ပို့ပေးခြင်း | 🔹 **P2** |       
 
 ---
 

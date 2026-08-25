@@ -824,6 +824,24 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/reports/sales-analytics', [\App\Http\Controllers\Admin\SalesAnalyticsController::class, 'index'])->name('store.admin.sales_analytics.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/reports/sales-analytics/export', [\App\Http\Controllers\Admin\SalesAnalyticsController::class, 'exportCsv'])->name('store.admin.sales_analytics.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
+        // Inventory Valuation Report (sidebar_inventory_valuation)
+        Route::get('/admin/reports/inventory-valuation', [\App\Http\Controllers\Admin\InventoryValuationController::class, 'index'])->name('store.admin.inventory_valuation.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/reports/inventory-valuation/export', [\App\Http\Controllers\Admin\InventoryValuationController::class, 'exportCsv'])->name('store.admin.inventory_valuation.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/reports/inventory-valuation/print', [\App\Http\Controllers\Admin\InventoryValuationController::class, 'printReport'])->name('store.admin.inventory_valuation.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Debt Aging Analysis Report (sidebar_aging_report)
+        Route::get('/admin/reports/debt-aging', [\App\Http\Controllers\Admin\DebtAgingController::class, 'index'])->name('store.admin.debt_aging.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/reports/debt-aging/export', [\App\Http\Controllers\Admin\DebtAgingController::class, 'exportCsv'])->name('store.admin.debt_aging.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/reports/debt-aging/print', [\App\Http\Controllers\Admin\DebtAgingController::class, 'printReport'])->name('store.admin.debt_aging.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Staff Roles & Granular Permissions (sidebar_roles)
+        Route::get('/admin/security/roles', [\App\Http\Controllers\Admin\StaffRoleController::class, 'index'])->name('store.admin.roles.index')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/security/roles', [\App\Http\Controllers\Admin\StaffRoleController::class, 'store'])->name('store.admin.roles.store')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::put('/admin/security/roles/{role}', [\App\Http\Controllers\Admin\StaffRoleController::class, 'update'])->name('store.admin.roles.update')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::delete('/admin/security/roles/{role}', [\App\Http\Controllers\Admin\StaffRoleController::class, 'destroy'])->name('store.admin.roles.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/security/roles/assign-staff', [\App\Http\Controllers\Admin\StaffRoleController::class, 'assignStaff'])->name('store.admin.roles.assign_staff')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/security/roles/export', [\App\Http\Controllers\Admin\StaffRoleController::class, 'exportCsv'])->name('store.admin.roles.export')->middleware(EnsureStoreAccess::class . ':store_manager');
+
         // Roadmap placeholder page — one route for every not-yet-built module
         // (sidebar "coming soon" links). The module registry (slug → label +
         // phase) lives in ComingSoonController; unknown slugs 404.
