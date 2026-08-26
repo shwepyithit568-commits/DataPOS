@@ -169,7 +169,7 @@ class ProductController extends Controller
     }
 
     /**
-     * Stream the store's full product list as an Excel-friendly CSV.
+     * Stream the store's full product list as an Excel-friendly CSV or XLSX file.
      * One export, one button: the 18 round-trip columns the product importer
      * accepts, plus the customer-facing Specifications columns the old
      * separate "Specs CSV" export carried — Burmese stock label,
@@ -181,12 +181,42 @@ class ProductController extends Controller
         $store = $context->getStore();
         $request = request();
 
+        $products = $this->buildExportProducts($store, $request);
+
+        // Fixed column labels — the importer round-trip names must not change.
+        $fixedColumns = [
+            'SKU', 'Name', 'Category', 'Parent Category', 'Brand',
+            'Retail Price (Ks)', 'Wholesale Price (Ks)', 'Discount Price (Ks)',
+            'Sale Starts At', 'Sale Ends At', 'Stock Status', 'Stock Status (Burmese)',
+            'Warranty', 'Return Policy', 'Meta Description', 'Featured',
+            'Description', 'Sanitized Description', 'Images', 'Variants',
+            'Variant Name(s)', 'Variant SKU(s)',
+        ];
+
+        $attributeColumns = $this->getExportAttributeColumns($products, $fixedColumns);
+
+        $format = strtolower((string) $request->input('format', 'csv'));
+
+        if ($format === 'xlsx' || $format === 'excel') {
+            return $this->exportXlsx($products, $fixedColumns, $attributeColumns);
+        }
+
+        return $this->exportCsv($products, $fixedColumns, $attributeColumns);
+    }
+
+    /**
+     * Build and execute the query for product export based on request filters.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, Product>
+     */
+    private function buildExportProducts(Store $store, Request $request): \Illuminate\Database\Eloquent\Collection
+    {
         $query = Product::where('store_id', $store->id)
             ->with(['category.parent', 'brand', 'images', 'variants']);
 
         // Enhanced Search: name, SKU, brand name, category name, barcode, etc.
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = (string) $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', '%' . $search . '%')
                   ->orWhere('sku', 'like', '%' . $search . '%')
@@ -272,31 +302,26 @@ class ProductController extends Controller
 
         // Respect the toolbar's per-page choice (25 / 50 / 100 / 200 / all).
         // Absent per_page keeps the legacy full export (import pages rely on it).
-        $perPage = request('per_page');
+        $perPage = $request->input('per_page');
         if ($perPage !== 'all' && in_array((int) $perPage, [25, 50, 100, 200], true)) {
             $query->limit((int) $perPage);
         }
 
-        /** @var \Illuminate\Database\Eloquent\Collection<int, Product> $products */
-        $products = $query->get();
+        return $query->get();
+    }
 
-        // Fixed column labels — the importer round-trip names must not change.
-        $fixedColumns = [
-            'SKU', 'Name', 'Category', 'Parent Category', 'Brand',
-            'Retail Price (Ks)', 'Wholesale Price (Ks)', 'Discount Price (Ks)',
-            'Sale Starts At', 'Sale Ends At', 'Stock Status', 'Stock Status (Burmese)',
-            'Warranty', 'Return Policy', 'Meta Description', 'Featured',
-            'Description', 'Sanitized Description', 'Images', 'Variants',
-            'Variant Name(s)', 'Variant SKU(s)',
-        ];
-
-        // Dynamic variant-attribute columns (Color / Storage / Size …) collected
-        // from the products in this export so the sheet stays uniform. A label
-        // whose normalized form collides with a fixed column (e.g. a variant
-        // attribute called "Brand") is skipped — two headers that the importer
-        // maps to the same key would corrupt the round-trip.
+    /**
+     * Extract dynamic variant-attribute columns from the given products.
+     *
+     * @param \Illuminate\Database\Eloquent\Collection<int, Product> $products
+     * @param array<int, string> $fixedColumns
+     * @return array<int, string>
+     */
+    private function getExportAttributeColumns(\Illuminate\Database\Eloquent\Collection $products, array $fixedColumns): array
+    {
         $normalizedFixed = array_map(fn ($label) => $this->normalizeHeaderKey($label), $fixedColumns);
         $attributeColumns = [];
+
         foreach ($products as $product) {
             foreach (\App\Support\ProductSpecifications::structuredFor($product) as $key => $value) {
                 if (str_starts_with($key, 'attr_')) {
@@ -308,111 +333,136 @@ class ProductController extends Controller
                 }
             }
         }
+
         sort($attributeColumns);
 
-        $format = strtolower((string) $request->input('format', 'csv'));
+        return $attributeColumns;
+    }
 
-        if ($format === 'xlsx' || $format === 'excel') {
-            $filename = 'products-' . now()->format('Ymd-His') . '.xlsx';
-            $tempFile = tempnam(sys_get_temp_dir(), 'datapos_prod_');
+    /**
+     * Export products to XLSX spreadsheet format.
+     *
+     * @param \Illuminate\Database\Eloquent\Collection<int, Product> $products
+     * @param array<int, string> $fixedColumns
+     * @param array<int, string> $attributeColumns
+     */
+    private function exportXlsx(
+        \Illuminate\Database\Eloquent\Collection $products,
+        array $fixedColumns,
+        array $attributeColumns
+    ): \Symfony\Component\HttpFoundation\BinaryFileResponse {
+        $filename = 'products-' . now()->format('Ymd-His') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_prod_');
 
-            $spreadsheet = new Spreadsheet();
-            $sheet = $spreadsheet->getActiveSheet();
-            $sheet->setTitle('Products');
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Products');
 
-            $allHeaders = array_merge($fixedColumns, $attributeColumns);
-            $sheet->fromArray([$allHeaders], null, 'A1');
+        $allHeaders = array_merge($fixedColumns, $attributeColumns);
+        $sheet->fromArray([$allHeaders], null, 'A1');
 
-            // Header styling
-            $highestCol = $sheet->getHighestColumn();
-            $sheet->getStyle("A1:{$highestCol}1")->applyFromArray([
-                'font' => [
-                    'bold' => true,
-                    'color' => ['rgb' => 'FFFFFF'],
-                    'size' => 11,
-                ],
-                'fill' => [
-                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => '4F46E5'],
-                ],
-                'alignment' => [
-                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
-                ],
-            ]);
-            $sheet->getRowDimension(1)->setRowHeight(26);
-            $sheet->freezePane('A2');
+        // Header styling
+        $highestCol = $sheet->getHighestColumn();
+        $sheet->getStyle("A1:{$highestCol}1")->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+                'size' => 11,
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4F46E5'],
+            ],
+            'alignment' => [
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet->getRowDimension(1)->setRowHeight(26);
+        $sheet->freezePane('A2');
 
-            $rowIndex = 2;
-            foreach ($products as $product) {
-                $specs = \App\Support\ProductSpecifications::structuredFor($product);
+        $rowIndex = 2;
+        foreach ($products as $product) {
+            $specs = \App\Support\ProductSpecifications::structuredFor($product);
 
-                $images = collect([$product->image_path])
-                    ->merge($product->images->pluck('image_path'))
-                    ->filter()
-                    ->unique()
-                    ->implode('; ');
+            $images = collect([$product->image_path])
+                ->merge($product->images->pluck('image_path'))
+                ->filter()
+                ->unique()
+                ->implode('; ');
 
-                $variantsJson = $product->variants
-                    ->map(fn ($v) => [
-                        'name' => $v->name,
-                        'attributes' => $v->attributes ?? [],
-                        'sku' => $v->sku,
-                        'retail_price' => (float) $v->retail_price,
-                        'wholesale_price' => $v->wholesale_price !== null ? (float) $v->wholesale_price : null,
-                        'stock_status' => $v->stock_status,
-                    ])
-                    ->values()
-                    ->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $variantsJson = $product->variants
+                ->map(fn ($v) => [
+                    'name' => $v->name,
+                    'attributes' => $v->attributes ?? [],
+                    'sku' => $v->sku,
+                    'retail_price' => (float) $v->retail_price,
+                    'wholesale_price' => $v->wholesale_price !== null ? (float) $v->wholesale_price : null,
+                    'stock_status' => $v->stock_status,
+                ])
+                ->values()
+                ->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-                $row = [
-                    (string) $product->sku,
-                    (string) $product->name,
-                    $product->category?->name ?? '',
-                    $product->category?->parent?->name ?? '',
-                    $product->brand?->name ?? '',
-                    (float) $product->retail_price,
-                    (float) $product->wholesale_price,
-                    $product->old_price !== null ? (float) $product->old_price : '',
-                    $product->sale_starts_at ? $product->sale_starts_at->format('Y-m-d H:i') : '',
-                    $product->sale_ends_at ? $product->sale_ends_at->format('Y-m-d H:i') : '',
-                    $product->stock_status,
-                    $specs['stock'] ?? '',
-                    $product->warranty ?? '',
-                    $product->return_policy ?? '',
-                    $product->meta_description ?? '',
-                    $product->is_featured ? 'yes' : 'no',
-                    $product->description ?? '',
-                    \App\Support\SafeHtml::sanitize($product->description ?? ''),
-                    $images,
-                    $variantsJson,
-                    $specs['variant_names'] ?? '',
-                    $specs['variant_skus'] ?? '',
-                ];
-                foreach ($attributeColumns as $column) {
-                    $row[] = $specs['attr_' . $column] ?? '';
-                }
-
-                $sheet->fromArray([$row], null, "A{$rowIndex}");
-
-                // Number format for retail & wholesale prices
-                $sheet->getStyle("F{$rowIndex}:H{$rowIndex}")->getNumberFormat()->setFormatCode('#,##0');
-                $sheet->getRowDimension($rowIndex)->setRowHeight(20);
-                $rowIndex++;
+            $row = [
+                (string) $product->sku,
+                (string) $product->name,
+                $product->category?->name ?? '',
+                $product->category?->parent?->name ?? '',
+                $product->brand?->name ?? '',
+                (float) $product->retail_price,
+                (float) $product->wholesale_price,
+                $product->old_price !== null ? (float) $product->old_price : '',
+                $product->sale_starts_at ? $product->sale_starts_at->format('Y-m-d H:i') : '',
+                $product->sale_ends_at ? $product->sale_ends_at->format('Y-m-d H:i') : '',
+                $product->stock_status,
+                $specs['stock'] ?? '',
+                $product->warranty ?? '',
+                $product->return_policy ?? '',
+                $product->meta_description ?? '',
+                $product->is_featured ? 'yes' : 'no',
+                $product->description ?? '',
+                \App\Support\SafeHtml::sanitize($product->description ?? ''),
+                $images,
+                $variantsJson,
+                $specs['variant_names'] ?? '',
+                $specs['variant_skus'] ?? '',
+            ];
+            foreach ($attributeColumns as $column) {
+                $row[] = $specs['attr_' . $column] ?? '';
             }
 
-            foreach (range('A', $highestCol) as $col) {
-                $sheet->getColumnDimension($col)->setAutoSize(true);
-            }
+            $sheet->fromArray([$row], null, "A{$rowIndex}");
 
-            $writer = new Xlsx($spreadsheet);
-            $writer->save($tempFile);
-            $spreadsheet->disconnectWorksheets();
-
-            return response()->download($tempFile, $filename, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            ])->deleteFileAfterSend(true);
+            // Number format for retail & wholesale prices
+            $sheet->getStyle("F{$rowIndex}:H{$rowIndex}")->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getRowDimension($rowIndex)->setRowHeight(20);
+            $rowIndex++;
         }
 
+        foreach (range('A', $highestCol) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+        $spreadsheet->disconnectWorksheets();
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Export products to CSV format.
+     *
+     * @param \Illuminate\Database\Eloquent\Collection<int, Product> $products
+     * @param array<int, string> $fixedColumns
+     * @param array<int, string> $attributeColumns
+     */
+    private function exportCsv(
+        \Illuminate\Database\Eloquent\Collection $products,
+        array $fixedColumns,
+        array $attributeColumns
+    ): \Symfony\Component\HttpFoundation\BinaryFileResponse {
         $filename = 'products-' . now()->format('Ymd-His') . '.csv';
         $tempFile = tempnam(sys_get_temp_dir(), 'datapos_csv_');
         $stream = fopen($tempFile, 'w');
