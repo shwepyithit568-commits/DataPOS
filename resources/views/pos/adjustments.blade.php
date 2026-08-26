@@ -79,7 +79,7 @@
                             {{ __('messages.sidebar_stock_adjustments') }}
                         </h1>
                         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                            {{ __('messages.adjustment_hint') }}
+                            {{ __('messages.adjustment_subtitle') }}
                         </p>
                     </div>
                 </div>

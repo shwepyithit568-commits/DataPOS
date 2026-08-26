@@ -15,9 +15,13 @@ class Product extends Model
         'category_id',
         'brand_id',
         'sku',
+        'product_type',
+        'barcode',
         'name',
         'slug',
         'description',
+        'compatible_models',
+        'specs',
         'meta_description',
         'retail_price',
         'old_price',
@@ -30,6 +34,8 @@ class Product extends Model
         'return_policy',
         'is_featured',
         'reorder_level',
+        'shelf_location',
+        'warehouse_id',
         'supplier_id',
         'purchase_cost',
         'is_ecommerce',
@@ -45,11 +51,13 @@ class Product extends Model
         'reorder_level' => 'decimal:3',
         'purchase_cost' => 'decimal:4',
         'is_ecommerce' => 'boolean',
+        'specs' => 'array',
     ];
 
     /** Matches the DB default — products are online until marked counter-only. */
     protected $attributes = [
         'is_ecommerce' => true,
+        'product_type' => 'standard',
     ];
 
     public function supplier(): BelongsTo
@@ -70,6 +78,11 @@ class Product extends Model
     public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class);
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(\App\POS\Models\Warehouse::class);
     }
 
     public function images(): \Illuminate\Database\Eloquent\Relations\HasMany

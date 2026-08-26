@@ -14,6 +14,7 @@ class Brand extends Model
     protected $fillable = [
         'store_id',
         'name',
+        'code',
         'slug',
         'logo_path',
     ];

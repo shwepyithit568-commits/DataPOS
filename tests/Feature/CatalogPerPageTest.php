@@ -27,6 +27,8 @@ class CatalogPerPageTest extends TestCase
                 'retail_price' => 1000 + $i,
                 'wholesale_price' => 900 + $i,
                 'stock_status' => 'in_stock',
+                'created_at' => now()->subMinutes($count - $i),
+                'updated_at' => now()->subMinutes($count - $i),
             ]);
         }
 

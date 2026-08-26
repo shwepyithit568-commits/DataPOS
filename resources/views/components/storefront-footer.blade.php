@@ -229,15 +229,23 @@
 
             {{-- Column 4: Stay Connected & Socials / ဆိုရှယ်မီဒီယာနှင့် မျှဝေရန် --}}
             <div class="space-y-3">
-                <div>
-                    <h3 class="{{ $colHeader }}">
-                        {{ __('messages.follow_us') }}
-                    </h3>
-                </div>
-                <div class="space-y-3 pt-1">
+                @if (!empty($ftSocialLinks['facebook']) || !empty($ftSocialLinks['youtube']) || !empty($ftSocialLinks['tiktok']))
+                    <div>
+                        <h3 class="{{ $colHeader }}">
+                            {{ __('messages.follow_us') }}
+                        </h3>
+                    </div>
                     <p class="text-xs sm:text-[13px] font-medium text-slate-800 dark:text-slate-200 font-myanmar">
                         သတင်းများနှင့် အထူးပရိုမိုးရှင်းများကို ဆိုရှယ်မီဒီယာများတွင် စောင့်ကြည့်နိုင်ပါသည်။
                     </p>
+                @else
+                    <div>
+                        <h3 class="{{ $colHeader }}">
+                            {{ __('messages.share') }}
+                        </h3>
+                    </div>
+                @endif
+                <div class="space-y-3 pt-1">
 
                     <div class="flex flex-wrap items-center gap-2">
                         @if (!empty($ftSocialLinks['facebook']))
@@ -365,7 +373,7 @@
                     @if (!empty($setting?->footer_ad_text))
                         {{ $setting->footer_ad_text }}
                     @else
-                        © {{ date('Y') }} {{ $storeDisplayName }}. All rights reserved. Powered by DataPOS.
+                        © {{ date('Y') }} DataPOS. All rights reserved.
                     @endif
                 </span>
             </div>

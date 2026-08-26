@@ -123,11 +123,12 @@ class AdminRepairCenterTest extends TestCase
                 'estimated_charge' => '35000',
             ]);
 
+        /** @var ServiceJob $job */
         $job = ServiceJob::where('store_id', $this->store->id)->first();
 
         $this->assertNotNull($job);
         $this->assertSame('received', $job->status);
-        $this->assertStringStartsWith('RPR-', $job->job_number);
+        $this->assertStringStartsWith('SVC-', $job->job_number);
         // Intake must append the initial status-history row.
         $this->assertSame(1, $job->statusHistory()->count());
 
@@ -510,6 +511,7 @@ class AdminRepairCenterTest extends TestCase
                 ],
             ]);
 
+        /** @var ServiceJob $job */
         $job = ServiceJob::first();
 
         $this->assertNotNull($job);
@@ -543,6 +545,7 @@ class AdminRepairCenterTest extends TestCase
                 ],
             ]);
 
+        /** @var ServiceJob $job */
         $job = ServiceJob::first();
         $this->assertNotNull($job);
         // Foreign product row is dropped, the local service row is kept.

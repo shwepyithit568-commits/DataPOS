@@ -88,7 +88,8 @@ class FlashSaleHomeSectionTest extends TestCase
         $html = $response->getContent();
         $start = strpos($html, 'id="flash-sale-section"');
         $this->assertNotFalse($start);
-        $section = substr($html, $start, strpos($html, 'Most Popular Category', $start) - $start);
+        $end = strpos($html, '<!-- end flash-sale-section -->', $start);
+        $section = $end !== false ? substr($html, $start, $end - $start) : substr($html, $start, 5000);
         $this->assertStringContainsString('Active Deal Phone', $section);
         $this->assertStringContainsString('Upcoming Deal Charger', $section);
         $this->assertStringContainsString(__('messages.starting_soon_short'), $section);

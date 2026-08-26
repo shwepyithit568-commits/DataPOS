@@ -78,7 +78,7 @@ class CustomerDirectoryController extends Controller
         }
 
         // Sorting
-        $sort = $request->get('sort', 'name_asc');
+        $sort = $request->input('sort', 'name_asc');
         $query = match ($sort) {
             'newest'   => $query->latest('users.created_at'),
             'oldest'   => $query->oldest('users.created_at'),

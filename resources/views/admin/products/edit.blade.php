@@ -13,13 +13,26 @@
         brandModalOpen: false,
         supplierModalOpen: false,
         newCategoryName: '',
+        newCategoryCode: '',
         newCategoryParent: '',
         newBrandName: '',
+        newBrandCode: '',
         newSupplierName: '',
         newSupplierPhone: '',
-        categories: {{ json_encode($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name, 'parent' => $c->parent?->name, 'parent_id' => $c->parent_id])) }},
-        brands: {{ json_encode($brands->map(fn($b) => ['id' => $b->id, 'name' => $b->name])) }},
+        autoSku: false,
+        productType: '{{ old('product_type', $product->product_type ?? 'standard') }}',
+        productBarcode: '{{ old('barcode', $product->barcode ?? '') }}',
+        productShelfLocation: '{{ old('shelf_location', $product->shelf_location ?? '') }}',
+        productWarehouseId: '{{ old('warehouse_id', $product->warehouse_id ?? '') }}',
+        productCompatibleModels: '{{ old('compatible_models', $product->compatible_models ?? '') }}',
+        productModelCode: '',
+        productExtraCode: '',
+        productColorCode: '',
+        productNameInput: @js(old('name', $product->name)),
+        categories: {{ json_encode($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name, 'code' => $c->code, 'parent' => $c->parent?->name, 'parent_id' => $c->parent_id])) }},
+        brands: {{ json_encode($brands->map(fn($b) => ['id' => $b->id, 'name' => $b->name, 'code' => $b->code])) }},
         suppliers: {{ json_encode($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])) }},
+        warehouses: {{ json_encode($warehouses->map(fn($w) => ['id' => $w->id, 'name' => $w->name])) }},
         selectedSupplier: '{{ old('supplier_id', $product->supplier_id) }}',
         variantPresets: @js($variantPresets),
         selectedVariantPresetId: '',
@@ -27,16 +40,16 @@
         selectedMainCategory: '{{ $initialMainCategory }}',
         selectedSubCategory: '{{ $initialSubCategory }}',
         selectedBrand: '{{ old('brand_id', $product->brand_id) }}',
-        variants: {{ json_encode(collect(old('variants', $variants->map(fn($v) => [
-            'id' => $v->id,
-            'name' => $v->name,
-            'attributes' => $v->attributes ?? [],
-            'sku' => $v->sku,
-            'retail_price' => (string) $v->retail_price,
-            'wholesale_price' => $v->wholesale_price !== null ? (string) $v->wholesale_price : '',
-            'stock_status' => $v->stock_status,
-            'is_default' => (bool) $v->is_default,
-            'image_path' => $v->image_path,
+        variants: {{ json_encode(collect(old('variants', collect($variants)->map(fn($v) => [
+            'id' => is_array($v) ? ($v['id'] ?? null) : $v->id,
+            'name' => is_array($v) ? ($v['name'] ?? '') : $v->name,
+            'attributes' => is_array($v) ? ($v['attributes'] ?? []) : ($v->attributes ?? []),
+            'sku' => is_array($v) ? ($v['sku'] ?? '') : $v->sku,
+            'retail_price' => (string) (is_array($v) ? ($v['retail_price'] ?? '') : $v->retail_price),
+            'wholesale_price' => (is_array($v) ? ($v['wholesale_price'] ?? null) : $v->wholesale_price) !== null ? (string) (is_array($v) ? $v['wholesale_price'] : $v->wholesale_price) : '',
+            'stock_status' => is_array($v) ? ($v['stock_status'] ?? 'in_stock') : $v->stock_status,
+            'is_default' => (bool) (is_array($v) ? ($v['is_default'] ?? false) : $v->is_default),
+            'image_path' => is_array($v) ? ($v['image_path'] ?? null) : $v->image_path,
         ])->toArray()))->map(fn($v) => [
             'id' => $v['id'] ?? null,
             'name' => $v['name'] ?? '',
@@ -45,7 +58,7 @@
             'retail_price' => $v['retail_price'] ?? '',
             'wholesale_price' => $v['wholesale_price'] ?? '',
             'stock_status' => $v['stock_status'] ?? 'in_stock',
-            'is_default' => !empty($v['is_default']),
+            'is_default' => (bool) ($v['is_default'] ?? false),
             'image_path' => $v['image_path'] ?? null,
             'image_preview' => null,
             'remove_image' => false,
@@ -58,6 +71,51 @@
         productSku: '{{ old('sku', $product->sku) }}',
         productWarranty: '{{ old('warranty', $product->warranty) }}',
         productStock: '{{ old('stock_status', $product->stock_status) }}',
+        recomputeSmartSkuAndName() {
+            if (!this.autoSku) return;
+            const brandObj = this.brands.find(b => String(b.id) === String(this.selectedBrand));
+            const catObj = this.categories.find(c => String(c.id) === String(this.selectedSubCategory || this.selectedMainCategory));
+            
+            const brandCode = (brandObj ? (brandObj.code || brandObj.name || '') : '').toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
+            const model = (this.productModelCode || '').toUpperCase().trim().replace(/[^A-Z0-9\-_]/g, '');
+            const catCode = (catObj ? (catObj.code || catObj.name || '') : '').toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
+            const extra = (this.productExtraCode || '').toUpperCase().trim().replace(/[^A-Z0-9\-_]/g, '');
+            const color = (this.productColorCode || '').toUpperCase().trim().replace(/[^A-Z0-9\-_]/g, '');
+            
+            const parts = [];
+            if (brandCode) parts.push(brandCode);
+            if (model) parts.push(model);
+            if (catCode) parts.push(catCode);
+            if (extra) parts.push(extra);
+            if (color) parts.push(color);
+            
+            if (parts.length > 0) {
+                this.productSku = parts.join('-');
+            }
+            
+            const nameParts = [];
+            if (brandObj && brandObj.name) {
+                nameParts.push(brandObj.name.trim());
+            }
+            if (model) nameParts.push(this.productModelCode.trim());
+            if (catObj && catObj.name) {
+                let cleanCat = catObj.name.split('(')[0].trim();
+                nameParts.push(cleanCat);
+            }
+            if (this.productCompatibleModels && this.productCompatibleModels.trim()) {
+                nameParts.push('(' + this.productCompatibleModels.trim() + ')');
+            }
+            if (this.productExtraCode && this.productExtraCode.trim()) {
+                nameParts.push(this.productExtraCode.trim());
+            }
+            if (this.productColorCode && this.productColorCode.trim()) {
+                nameParts.push(this.productColorCode.trim());
+            }
+            
+            if (nameParts.length > 0) {
+                this.productNameInput = nameParts.join(' ');
+            }
+        },
         // Return-policy preview + meta-length counter read the DOM (no string
         // embedding in this double-quoted x-data attribute).
         returnPolicyPreview: null,
@@ -237,7 +295,7 @@
             const res = await fetch('{{ url('/store/' . $store->slug . '/admin/categories/quick-store') }}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                body: JSON.stringify({ name: this.newCategoryName, parent_id: this.newCategoryParent || null })
+                body: JSON.stringify({ name: this.newCategoryName, code: this.newCategoryCode || null, parent_id: this.newCategoryParent || null })
             });
             const data = await res.json();
             if (data.success) {
@@ -246,7 +304,7 @@
                 const parentName = data.parent_id
                     ? (this.categories.find((c) => String(c.id) === String(data.parent_id))?.name ?? null)
                     : null;
-                this.categories.push({ id: data.id, name: data.name, parent: parentName, parent_id: data.parent_id });
+                this.categories.push({ id: data.id, name: data.name, code: data.code, parent: parentName, parent_id: data.parent_id });
                 if (data.parent_id) {
                     this.selectedSubCategory = String(data.id);
                 } else {
@@ -255,8 +313,10 @@
                 }
                 this.normalizeVariantPresetSelection();
                 this.newCategoryName = '';
+                this.newCategoryCode = '';
                 this.newCategoryParent = '';
                 this.categoryModalOpen = false;
+                this.recomputeSmartSkuAndName();
             }
         },
         async createBrand() {
@@ -264,14 +324,16 @@
             const res = await fetch('{{ url('/store/' . $store->slug . '/admin/brands/quick-store') }}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                body: JSON.stringify({ name: this.newBrandName })
+                body: JSON.stringify({ name: this.newBrandName, code: this.newBrandCode || null })
             });
             const data = await res.json();
             if (data.success) {
-                this.brands.push({ id: data.id, name: data.name });
-                this.selectedBrand = data.id;
+                this.brands.push({ id: data.id, name: data.name, code: data.code });
+                this.selectedBrand = String(data.id);
                 this.newBrandName = '';
+                this.newBrandCode = '';
                 this.brandModalOpen = false;
+                this.recomputeSmartSkuAndName();
             }
         },
         async createSupplier() {
@@ -292,28 +354,73 @@
         }
     }" @richtext-sync.window="onRichTextSync($event)">
 
-    <div class="flex flex-col justify-between gap-3 rounded-xl bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:flex-row sm:items-center sm:p-5">
-        <div class="min-w-0">
-            <p class="text-xs font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400">{{ $store->name }} @if($product->sku) / {{ $product->sku }} @endif</p>
-            <h1 class="mt-1 truncate text-2xl font-black text-gray-900 dark:text-slate-100 font-outfit">{{ __('messages.product_form_edit_title', ['name' => $product->name]) }}</h1>
+    {{-- Top Header --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/products') }}"
+               class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition grid place-items-center shadow-sm">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white truncate max-w-lg font-outfit">
+                        {{ $product->name }}
+                    </h1>
+                    @if($product->sku)
+                        <span class="px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            {{ $product->sku }}
+                        </span>
+                    @endif
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400">{{ $store->name }} · {{ __('messages.product_form_edit_title', ['name' => $product->name]) }}</p>
+            </div>
         </div>
-        <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/products') }}" class="shrink-0 px-4 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-200 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 text-sm font-medium transition">{{ __('messages.product_form_back_to_products') }}</a>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ url('/store/' . $store->slug . '/products/' . $product->slug) }}" target="_blank"
+               class="px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 transition flex items-center gap-1.5 shadow-sm">
+                <span>👁️</span>
+                <span>{{ __('messages.view_in_store') ?? 'Storefront' }}</span>
+            </a>
+            <a href="{{ url('/store/' . $store->slug . '/admin/categories') }}"
+               class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1.5 shadow-sm">
+                <span>📁</span>
+                <span>{{ __('messages.categories') }}</span>
+            </a>
+            <a href="{{ url('/store/' . $store->slug . '/admin/brands') }}"
+               class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1.5 shadow-sm">
+                <span>🏷️</span>
+                <span>{{ __('messages.brands') }}</span>
+            </a>
+            <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/products') }}"
+               class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition flex items-center gap-1.5 shadow-sm">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <span>{{ __('messages.product_form_back_to_products') }}</span>
+            </a>
+        </div>
     </div>
 
     @if (session('success'))
-        <div class="p-4 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-700 dark:text-green-300">
-            {{ session('success') }}
+        <div class="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-3xl text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-sm">
+            <span>✓</span>
+            <span>{{ session('success') }}</span>
         </div>
     @endif
 
     @if ($errors->any())
-        <div class="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300">
-            <p class="font-bold">{{ __('messages.product_form_check_fields') }}</p>
+        <div class="p-4 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-3xl text-xs font-bold text-rose-700 dark:text-rose-300 space-y-1.5 shadow-sm">
+            <div class="flex items-center gap-2">
+                <span>⚠️</span>
+                <span class="font-black">{{ __('messages.product_form_check_fields') }}</span>
+            </div>
+            @foreach ($errors->all() as $error)
+                <p class="pl-6">• {{ $error }}</p>
+            @endforeach
         </div>
     @endif
 
     <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id) }}" enctype="multipart/form-data"
-        class="space-y-5">
+        class="space-y-6">
         @csrf
         @method('PUT')
 
@@ -321,109 +428,145 @@
     </form>
 
     {{-- Product Gallery Multi-Image Uploader (existing images live here) --}}
-    <div class="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl space-y-6 transition-colors duration-200 shadow-sm">
-        <div>
-            <h2 class="text-lg font-black text-gray-900 dark:text-slate-100">{{ __('messages.product_form_gallery_section') }}</h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-slate-400">
-                {{ __('messages.product_form_gallery_upload_hint', ['count' => $maxGalleryImages, 'remaining' => $remainingGallerySlots, 'size' => $imageMaxMb]) }}
-            </p>
+    <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 space-y-6 transition-colors duration-200 shadow-sm">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div class="flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 grid place-items-center text-base font-bold">🖼️</span>
+                <div>
+                    <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">{{ __('messages.product_form_gallery_section') }}</h2>
+                    <p class="text-[11px] text-slate-400">
+                        {{ __('messages.product_form_gallery_upload_hint', ['count' => $maxGalleryImages, 'remaining' => $remainingGallerySlots, 'size' => $imageMaxMb]) }}
+                    </p>
+                </div>
+            </div>
+            <span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                {{ count($images) }} / {{ $maxGalleryImages }}
+            </span>
         </div>
 
         <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id . '/images') }}" enctype="multipart/form-data" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             @csrf
             <div class="flex-1">
-                <input type="file" name="images[]" multiple accept="image/*" required {{ $remainingGallerySlots === 0 ? 'disabled' : '' }} class="block w-full text-sm text-gray-500 dark:text-slate-400 border dark:border-slate-600 rounded-xl p-2 bg-white dark:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed" />
+                <input type="file" name="images[]" multiple accept="image/*" required {{ $remainingGallerySlots === 0 ? 'disabled' : '' }} class="block w-full text-xs text-slate-600 dark:text-slate-400 file:mr-3 file:rounded-xl file:border-0 file:bg-violet-50 file:px-3.5 file:py-2 file:text-xs file:font-bold file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-slate-800 dark:file:text-violet-300 rounded-2xl border border-slate-200 dark:border-slate-700 p-2 bg-slate-50 dark:bg-slate-800/60 disabled:opacity-50 disabled:cursor-not-allowed" />
             </div>
-            <button type="submit" {{ $remainingGallerySlots === 0 ? 'disabled' : '' }} class="px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-medium text-sm whitespace-nowrap shadow disabled:opacity-50 disabled:cursor-not-allowed">{{ __('messages.product_form_upload_images') }}</button>
+            <button type="submit" {{ $remainingGallerySlots === 0 ? 'disabled' : '' }} class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-xs whitespace-nowrap shadow-md shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                + {{ __('messages.product_form_upload_images') }}
+            </button>
         </form>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             @forelse ($images as $img)
-                <div class="relative rounded-xl p-2 space-y-2 bg-gray-50 dark:bg-slate-900">
-                    <img src="{{ asset('storage/' . $img->image_path) }}" class="h-32 w-full object-cover rounded-lg" />
+                <div class="relative rounded-2xl p-2.5 space-y-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 group transition">
+                    <img src="{{ asset('storage/' . $img->image_path) }}" class="h-32 w-full object-cover rounded-xl" />
                     @if ($img->is_primary || $product->image_path === $img->image_path)
-                        <span class="absolute top-3 left-3 bg-violet-600 text-white text-xs px-2 py-0.5 rounded font-semibold shadow">{{ __('messages.product_form_primary') }}</span>
+                        <span class="absolute top-4 left-4 bg-violet-600 text-white text-[10px] px-2 py-0.5 rounded-lg font-bold shadow-md">{{ __('messages.product_form_primary') }}</span>
                     @endif
                     <div class="flex items-center justify-between pt-1">
                         @if (!$img->is_primary && $product->image_path !== $img->image_path)
                             <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id . '/images/' . $img->id . '/primary') }}">
                                 @csrf
-                                <button type="submit" class="text-xs text-violet-600 dark:text-violet-400 hover:underline font-medium">{{ __('messages.product_form_set_primary') }}</button>
+                                <button type="submit" class="text-xs text-violet-600 dark:text-violet-400 hover:underline font-bold">{{ __('messages.product_form_set_primary') }}</button>
                             </form>
                         @else
-                            <span class="text-xs text-gray-400 dark:text-slate-500 font-medium">{{ __('messages.product_form_primary') }}</span>
+                            <span class="text-[11px] text-slate-400 dark:text-slate-500 font-bold">★ {{ __('messages.product_form_primary') }}</span>
                         @endif
 
                         <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id . '/images/' . $img->id) }}">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" data-confirm="{{ __('messages.product_form_delete_image_confirm') }}" class="text-xs text-red-600 dark:text-red-400 hover:underline font-medium">{{ __('messages.product_form_delete_image') }}</button>
+                            <button type="submit" data-confirm="{{ __('messages.product_form_delete_image_confirm') }}" class="text-xs text-rose-600 dark:text-rose-400 hover:underline font-bold">{{ __('messages.product_form_delete_image') }}</button>
                         </form>
                     </div>
                 </div>
             @empty
-                <div class="col-span-full text-sm text-gray-500 dark:text-slate-400 italic">{{ __('messages.product_form_no_gallery_images') }}</div>
+                <div class="col-span-full py-8 text-center text-xs text-slate-400 italic">{{ __('messages.product_form_no_gallery_images') }}</div>
             @endforelse
         </div>
     </div>
 
     {{-- Quick Create Category Modal (Main or Sub — connected to Master Data) --}}
-    <div x-show="categoryModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-sm w-full space-y-4 shadow-xl">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-slate-100">{{ __('messages.product_form_quick_category_title') }}</h3>
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ __('messages.product_form_category_name') }}</label>
-                <input type="text" x-model="newCategoryName" @keydown.enter.prevent="createCategory()" class="w-full rounded-xl border dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="{{ __('messages.product_form_category_name_placeholder') }}" />
+    <div x-show="categoryModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-sm font-bold">📁</span>
+                    <h3 class="text-sm font-black text-slate-900 dark:text-white">{{ __('messages.product_form_quick_category_title') }}</h3>
+                </div>
+                <button type="button" @click="categoryModalOpen = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold">✕</button>
             </div>
             <div>
-                <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ __('messages.product_form_quick_category_type') }}</label>
-                <select x-model="newCategoryParent" class="w-full rounded-xl border dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 cursor-pointer">
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_category_name') }} <span class="text-rose-500">*</span></label>
+                <input type="text" x-model="newCategoryName" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="{{ __('messages.product_form_category_name_placeholder') }}" />
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_code') }}</label>
+                <input type="text" x-model="newCategoryCode" class="w-full uppercase rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="{{ __('messages.product_form_code_placeholder') }}" />
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_quick_category_type') }}</label>
+                <select x-model="newCategoryParent" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition cursor-pointer">
                     <option value="">{{ __('messages.product_form_quick_category_main') }}</option>
                     <template x-for="m in mainCategories" :key="m.id">
                         <option :value="m.id" x-text="'{{ __('messages.product_form_quick_category_sub_of') }}: ' + m.name"></option>
                     </template>
                 </select>
-                <p class="mt-1 text-xs text-gray-500 dark:text-slate-400" x-show="newCategoryParent" x-cloak>
+                <p class="mt-1 text-[11px] text-slate-400" x-show="newCategoryParent" x-cloak>
                     {{ __('messages.product_form_quick_category_sub_hint') }}
                 </p>
             </div>
-            <div class="flex justify-end space-x-2">
-                <button type="button" @click="categoryModalOpen = false" class="px-3 py-1.5 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-medium">{{ __('messages.close') }}</button>
-                <button type="button" @click="createCategory()" class="px-3 py-1.5 bg-violet-600 text-white rounded-xl text-sm font-medium">{{ __('messages.product_form_save_category') }}</button>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" @click="categoryModalOpen = false" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.close') }}</button>
+                <button type="button" @click="createCategory()" class="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl text-xs font-black shadow-md shadow-violet-500/20 transition">{{ __('messages.product_form_save_category') }}</button>
             </div>
         </div>
     </div>
 
     {{-- Quick Create Brand Modal --}}
-    <div x-show="brandModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-sm w-full space-y-4 shadow-xl">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-slate-100">{{ __('messages.product_form_quick_brand_title') }}</h3>
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ __('messages.product_form_brand_name') }}</label>
-                <input type="text" x-model="newBrandName" @keydown.enter.prevent="createBrand()" class="w-full rounded-xl border dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="{{ __('messages.product_form_brand_name_placeholder') }}" />
+    <div x-show="brandModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-sm font-bold">🏷️</span>
+                    <h3 class="text-sm font-black text-slate-900 dark:text-white">{{ __('messages.product_form_quick_brand_title') }}</h3>
+                </div>
+                <button type="button" @click="brandModalOpen = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold">✕</button>
             </div>
-            <div class="flex justify-end space-x-2">
-                <button type="button" @click="brandModalOpen = false" class="px-3 py-1.5 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-medium">{{ __('messages.close') }}</button>
-                <button type="button" @click="createBrand()" class="px-3 py-1.5 bg-violet-600 text-white rounded-xl text-sm font-medium">{{ __('messages.product_form_save_brand') }}</button>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_brand_name') }} <span class="text-rose-500">*</span></label>
+                <input type="text" x-model="newBrandName" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="{{ __('messages.product_form_brand_name_placeholder') }}" />
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_code') }}</label>
+                <input type="text" x-model="newBrandCode" class="w-full uppercase rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="{{ __('messages.product_form_code_placeholder') }}" />
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" @click="brandModalOpen = false" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.close') }}</button>
+                <button type="button" @click="createBrand()" class="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl text-xs font-black shadow-md shadow-violet-500/20 transition">{{ __('messages.product_form_save_brand') }}</button>
             </div>
         </div>
     </div>
 
     {{-- Quick Create Supplier Modal --}}
-    <div x-show="supplierModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-sm w-full space-y-4 shadow-xl">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-slate-100">{{ __('messages.product_form_quick_supplier_title') }}</h3>
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ __('messages.product_form_supplier_name') }}</label>
-                <input type="text" x-model="newSupplierName" @keydown.enter.prevent="createSupplier()" class="w-full rounded-xl border dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="{{ __('messages.product_form_supplier_name_placeholder') }}" />
+    <div x-show="supplierModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-sm font-bold">🏢</span>
+                    <h3 class="text-sm font-black text-slate-900 dark:text-white">{{ __('messages.product_form_quick_supplier_title') }}</h3>
+                </div>
+                <button type="button" @click="supplierModalOpen = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold">✕</button>
             </div>
             <div>
-                <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ __('messages.product_form_supplier_phone') }}</label>
-                <input type="text" x-model="newSupplierPhone" @keydown.enter.prevent="createSupplier()" class="w-full rounded-xl border dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="09xxxxxxxxx" />
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_supplier_name') }}</label>
+                <input type="text" x-model="newSupplierName" @keydown.enter.prevent="createSupplier()" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="{{ __('messages.product_form_supplier_name_placeholder') }}" />
             </div>
-            <div class="flex justify-end space-x-2">
-                <button type="button" @click="supplierModalOpen = false" class="px-3 py-1.5 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl text-sm font-medium">{{ __('messages.close') }}</button>
-                <button type="button" @click="createSupplier()" class="px-3 py-1.5 bg-violet-600 text-white rounded-xl text-sm font-medium">{{ __('messages.product_form_save_supplier') }}</button>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_supplier_phone') }}</label>
+                <input type="text" x-model="newSupplierPhone" @keydown.enter.prevent="createSupplier()" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="09xxxxxxxxx" />
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" @click="supplierModalOpen = false" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.close') }}</button>
+                <button type="button" @click="createSupplier()" class="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl text-xs font-black shadow-md shadow-violet-500/20 transition">{{ __('messages.product_form_save_supplier') }}</button>
             </div>
         </div>
     </div>

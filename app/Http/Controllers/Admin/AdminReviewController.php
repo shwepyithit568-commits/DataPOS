@@ -37,7 +37,7 @@ class AdminReviewController extends Controller
             $query->where('rating', (int) $request->rating);
         }
 
-        $sort = $request->get('sort', 'newest');
+        $sort = $request->input('sort', 'newest');
         match ($sort) {
             'oldest'     => $query->oldest(),
             'rating_high' => $query->orderByDesc('rating'),

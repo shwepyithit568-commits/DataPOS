@@ -27,7 +27,16 @@ use Illuminate\View\View;
  */
 class ProductMasterDataController extends Controller
 {
-    protected const TABS = ['categories', 'brands', 'variant-presets'];
+    protected const TABS = [
+        'categories',
+        'brands',
+        'connectors',
+        'colors',
+        'shelves',
+        'warranties',
+        'return-policies',
+        'variant-presets',
+    ];
 
     public function index(Request $request, StoreContext $context): View
     {
@@ -44,6 +53,11 @@ class ProductMasterDataController extends Controller
         $data = match ($activeTab) {
             'brands' => $this->brandsData($request, $storeId),
             'variant-presets' => $this->presetsData($request, $storeId),
+            'connectors' => $this->masterPresetData($request, $storeId, 'connector_spec', 'connectors'),
+            'colors' => $this->masterPresetData($request, $storeId, 'color', 'colors'),
+            'shelves' => $this->masterPresetData($request, $storeId, 'shelf_location', 'shelves'),
+            'warranties' => $this->masterPresetData($request, $storeId, 'warranty', 'warranties'),
+            'return-policies' => $this->masterPresetData($request, $storeId, 'return_policy', 'return-policies'),
             default => $this->categoriesData($request, $storeId),
         };
 
@@ -57,15 +71,19 @@ class ProductMasterDataController extends Controller
 
     /**
      * Cross-tab aggregate summary counts for the top stat cards.
-     *
-     * @param  int  $storeId
-     * @return array{categories:int, brands:int, presets:int, products:int, presets_total_rows:int}
      */
     private function summaryStats(int $storeId): array
     {
         $categoriesCount = Category::where('store_id', $storeId)->count();
         $brandsCount = Brand::where('store_id', $storeId)->count();
         $productsCount = Product::where('store_id', $storeId)->count();
+        
+        $connectorsCount = \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'connector_spec')->count();
+        $colorsCount = \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'color')->count();
+        $shelvesCount = \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'shelf_location')->count();
+        $warrantiesCount = \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'warranty')->count();
+        $returnPoliciesCount = \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'return_policy')->count();
+
         $presets = VariantPreset::where('store_id', $storeId)
             ->select('id', 'options')
             ->get();
@@ -77,9 +95,41 @@ class ProductMasterDataController extends Controller
         return [
             'categories' => $categoriesCount,
             'brands' => $brandsCount,
+            'connectors' => $connectorsCount,
+            'colors' => $colorsCount,
+            'shelves' => $shelvesCount,
+            'warranties' => $warrantiesCount,
+            'return_policies' => $returnPoliciesCount,
             'presets' => $presetsCount,
             'products' => $productsCount,
             'presets_total_rows' => $presetsTotalRows,
+        ];
+    }
+
+    /**
+     * Master Presets data for a specific type.
+     */
+    private function masterPresetData(Request $request, int $storeId, string $type, string $tabName): array
+    {
+        $search = trim((string) $request->query('search', ''));
+
+        $query = \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', $type);
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+
+        $presets = $query->orderBy('sort_order')->orderBy('code')->orderBy('name')->paginate(50)->withQueryString();
+
+        return [
+            'presetList' => $presets,
+            'presetType' => $type,
+            'tabName' => $tabName,
+            'search' => $search,
         ];
     }
 
@@ -189,7 +239,7 @@ class ProductMasterDataController extends Controller
             }
         }
 
-        $sort = $request->get('sort', 'newest');
+        $sort = $request->input('sort', 'newest');
         match ($sort) {
             'oldest'        => $query->oldest(),
             'name_asc'      => $query->orderBy('name', 'asc'),

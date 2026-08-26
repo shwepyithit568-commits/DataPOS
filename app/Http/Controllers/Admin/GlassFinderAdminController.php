@@ -38,7 +38,7 @@ class GlassFinderAdminController extends Controller
             $query->where('stock_status', $request->stock_status);
         }
 
-        $sort = $request->get('sort', 'newest');
+        $sort = $request->input('sort', 'newest');
         if ($sort === 'oldest') {
             $query->oldest();
         } else {

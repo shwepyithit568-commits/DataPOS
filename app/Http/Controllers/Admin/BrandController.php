@@ -51,7 +51,7 @@ class BrandController extends Controller
         }
 
         // Sorting
-        $sort = $request->get('sort', 'newest');
+        $sort = $request->input('sort', 'newest');
         match ($sort) {
             'oldest'        => $query->oldest(),
             'name_asc'      => $query->orderBy('name', 'asc'),
@@ -83,6 +83,7 @@ class BrandController extends Controller
 
         $validated = $request->validate([
             'name' => ['bail', 'required', 'string', 'max:255', $this->uniqueNameRule($store->id)],
+            'code' => ['nullable', 'string', 'max:50'],
             'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
         ]);
 
@@ -91,6 +92,7 @@ class BrandController extends Controller
         $brand = Brand::create([
             'store_id' => $store->id,
             'name' => trim($validated['name']),
+            'code' => ! empty($validated['code']) ? strtoupper(trim($validated['code'])) : null,
             'slug' => $this->uniqueSlug($store->id, Str::slug($validated['name'])),
             'logo_path' => $logoPath,
         ]);
@@ -125,12 +127,14 @@ class BrandController extends Controller
 
         $validated = $request->validate([
             'name' => ['bail', 'required', 'string', 'max:255', $this->uniqueNameRule($store->id, $brand->id)],
+            'code' => ['nullable', 'string', 'max:50'],
             'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
             'remove_logo' => ['nullable', 'boolean'],
         ]);
 
         $data = [
             'name' => trim($validated['name']),
+            'code' => ! empty($validated['code']) ? strtoupper(trim($validated['code'])) : null,
             'slug' => $this->uniqueSlug($store->id, Str::slug($validated['name']), $brand->id),
         ];
 
@@ -343,11 +347,13 @@ class BrandController extends Controller
 
         $validated = $request->validate([
             'name' => ['bail', 'required', 'string', 'max:255', $this->uniqueNameRule($store->id)],
+            'code' => ['nullable', 'string', 'max:50'],
         ]);
 
         $brand = Brand::create([
             'store_id' => $store->id,
             'name'     => trim($validated['name']),
+            'code'     => ! empty($validated['code']) ? strtoupper(trim($validated['code'])) : null,
             'slug'     => $this->uniqueSlug($store->id, Str::slug($validated['name'])),
         ]);
 
@@ -355,6 +361,7 @@ class BrandController extends Controller
             'success'  => true,
             'id'       => $brand->id,
             'name'     => $brand->name,
+            'code'     => $brand->code,
         ]);
     }
 

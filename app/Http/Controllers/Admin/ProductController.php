@@ -43,6 +43,9 @@ class ProductController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', '%' . $search . '%')
                   ->orWhere('sku', 'like', '%' . $search . '%')
+                  ->orWhere('barcode', 'like', '%' . $search . '%')
+                  ->orWhere('compatible_models', 'like', '%' . $search . '%')
+                  ->orWhere('shelf_location', 'like', '%' . $search . '%')
                   ->orWhereHas('brand', function ($bq) use ($search) {
                       $bq->where('name', 'like', '%' . $search . '%');
                   })
@@ -59,6 +62,11 @@ class ProductController extends Controller
         // Filter by stock status
         if ($request->filled('stock_status')) {
             $query->where('stock_status', $request->stock_status);
+        }
+
+        // Filter by product archetype (standard, serialized, service, weight_based)
+        if ($request->filled('product_type')) {
+            $query->where('product_type', $request->product_type);
         }
 
         // Filter by online visibility (is_ecommerce = "Sell Online" toggle)
@@ -89,10 +97,16 @@ class ProductController extends Controller
         }
 
         // Sorting options
-        $sort = $request->get('sort', 'newest');
+        $sort = $request->input('sort', 'newest');
         switch ($sort) {
             case 'oldest':
                 $query->oldest();
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
                 break;
             case 'price_asc':
                 $query->orderBy('retail_price', 'asc');
@@ -177,6 +191,7 @@ class ProductController extends Controller
             $query->limit((int) $perPage);
         }
 
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Product> $products */
         $products = $query->get();
 
         // Fixed column labels — the importer round-trip names must not change.
@@ -293,10 +308,11 @@ class ProductController extends Controller
             abort(403, 'Unauthorized product access.');
         }
 
-        $product->load(['category.parent', 'brand', 'variants']);
+        $product->load(['category.parent', 'brand', 'variants', 'images', 'warehouse', 'supplier']);
 
         return view('admin.products._details', [
             'product' => $product,
+            'store'   => $store,
         ]);
     }
 
@@ -306,14 +322,16 @@ class ProductController extends Controller
         $categories = Category::where('store_id', $store->id)->with('parent')->get();
         $brands = Brand::where('store_id', $store->id)->get();
         $suppliers = \App\Models\Supplier::where('store_id', $store->id)->orderBy('name')->get(['id', 'name']);
+        $warehouses = \App\POS\Models\Warehouse::where('store_id', $store->id)->where('is_active', true)->orderBy('name')->get(['id', 'name']);
         $variantPresets = $this->variantPresets($store->id);
+        $masterPresets = \App\Models\ProductMasterPreset::where('store_id', $store->id)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
 
         $imageMaxMb = self::IMAGE_MAX_KB / 1024;
-        $product = new Product(['store_id' => $store->id, 'stock_status' => 'in_stock']);
+        $product = new Product(['store_id' => $store->id, 'stock_status' => 'in_stock', 'product_type' => 'standard']);
 
         $returnTo = AdminListReturn::peek('admin_products_return', '/store/' . $store->slug . '/admin/products');
 
-        return view('admin.products.create', compact('store', 'categories', 'brands', 'suppliers', 'variantPresets', 'imageMaxMb', 'product', 'returnTo'));
+        return view('admin.products.create', compact('store', 'categories', 'brands', 'suppliers', 'warehouses', 'variantPresets', 'masterPresets', 'imageMaxMb', 'product', 'returnTo'));
     }
 
     public function store(Request $request, StoreContext $context): RedirectResponse
@@ -324,6 +342,10 @@ class ProductController extends Controller
             'name'            => ['required', 'string', 'max:255'],
             // SKU is optional on create — the Auto-SKU toggle generates one.
             'sku'             => ['nullable', 'string', 'max:100'],
+            'product_type'    => ['nullable', 'string', 'in:standard,serialized,variant,service'],
+            'barcode'         => ['nullable', 'string', 'max:100'],
+            'shelf_location'  => ['nullable', 'string', 'max:100'],
+            'warehouse_id'    => ['nullable', 'exists:warehouses,id'],
             'category_id'     => ['nullable', 'exists:categories,id'],
             'brand_id'        => ['nullable', 'exists:brands,id'],
             'retail_price'    => ['required', 'numeric', 'min:0'],
@@ -342,6 +364,8 @@ class ProductController extends Controller
             'gallery_images'  => ['nullable', 'array', 'max:' . self::MAX_GALLERY_IMAGES],
             'gallery_images.*'=> ['image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
             'description'     => ['nullable', 'string'],
+            'compatible_models'=> ['nullable', 'string'],
+            'specs'           => ['nullable', 'array'],
             'meta_description'=> ['nullable', 'string', 'max:1000'],
             'warranty'        => ['nullable', 'string', 'max:255'],
             'return_policy'   => ['nullable', 'string', 'max:255'],
@@ -399,9 +423,13 @@ class ProductController extends Controller
             'category_id'     => $validated['category_id'] ?? null,
             'brand_id'        => $validated['brand_id'] ?? null,
             'sku'             => $sku,
+            'product_type'    => $validated['product_type'] ?? 'standard',
+            'barcode'         => $validated['barcode'] ?? null,
             'name'            => $validated['name'],
             'slug'            => Str::slug($validated['name'] . '-' . Str::random(5)),
             'description'     => $validated['description'] ?? null,
+            'compatible_models'=> $validated['compatible_models'] ?? null,
+            'specs'           => $validated['specs'] ?? null,
             'meta_description'=> $validated['meta_description'] ?? null,
             'retail_price'    => $validated['retail_price'],
             'old_price'       => $validated['old_price'] ?? null,
@@ -414,6 +442,8 @@ class ProductController extends Controller
             'return_policy'   => $validated['return_policy'] ?? null,
             'is_featured'     => $request->boolean('is_featured', false),
             'reorder_level'   => $validated['reorder_level'] ?? null,
+            'shelf_location'  => $validated['shelf_location'] ?? null,
+            'warehouse_id'    => $validated['warehouse_id'] ?? null,
             'supplier_id'     => $validated['supplier_id'] ?? null,
             'purchase_cost'   => $validated['purchase_cost'] ?? null,
             // Hidden 0-input + checkbox: boolean() reflects the checkbox state.
@@ -456,7 +486,9 @@ class ProductController extends Controller
         $categories = Category::where('store_id', $store->id)->with('parent')->get();
         $brands = Brand::where('store_id', $store->id)->get();
         $suppliers = \App\Models\Supplier::where('store_id', $store->id)->orderBy('name')->get(['id', 'name']);
+        $warehouses = \App\POS\Models\Warehouse::where('store_id', $store->id)->where('is_active', true)->orderBy('name')->get(['id', 'name']);
         $variantPresets = $this->variantPresets($store->id);
+        $masterPresets = \App\Models\ProductMasterPreset::where('store_id', $store->id)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         $images = $product->images;
         $variants = $product->variants;
         $imageMaxMb = self::IMAGE_MAX_KB / 1024;
@@ -465,7 +497,7 @@ class ProductController extends Controller
 
         $returnTo = AdminListReturn::peek('admin_products_return', '/store/' . $store->slug . '/admin/products');
 
-        return view('admin.products.edit', compact('store', 'product', 'categories', 'brands', 'suppliers', 'variantPresets', 'images', 'variants', 'imageMaxMb', 'maxGalleryImages', 'remainingGallerySlots', 'returnTo'));
+        return view('admin.products.edit', compact('store', 'product', 'categories', 'brands', 'suppliers', 'warehouses', 'variantPresets', 'masterPresets', 'images', 'variants', 'imageMaxMb', 'maxGalleryImages', 'remainingGallerySlots', 'returnTo'));
     }
 
     public function update(Request $request, string $store_slug, Product $product, StoreContext $context): RedirectResponse
@@ -479,6 +511,10 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name'            => ['required', 'string', 'max:255'],
             'sku'             => ['required', 'string', 'max:100'],
+            'product_type'    => ['nullable', 'string', 'in:standard,serialized,variant,service'],
+            'barcode'         => ['nullable', 'string', 'max:100'],
+            'shelf_location'  => ['nullable', 'string', 'max:100'],
+            'warehouse_id'    => ['nullable', 'exists:warehouses,id'],
             'category_id'     => ['nullable', 'exists:categories,id'],
             'brand_id'        => ['nullable', 'exists:brands,id'],
             'retail_price'    => ['required', 'numeric', 'min:0'],
@@ -495,6 +531,8 @@ class ProductController extends Controller
             'gallery_images'  => ['nullable', 'array', 'max:' . self::MAX_GALLERY_IMAGES],
             'gallery_images.*'=> ['image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
             'description'     => ['nullable', 'string'],
+            'compatible_models'=> ['nullable', 'string'],
+            'specs'           => ['nullable', 'array'],
             'meta_description'=> ['nullable', 'string', 'max:1000'],
             'warranty'        => ['nullable', 'string', 'max:255'],
             'return_policy'   => ['nullable', 'string', 'max:255'],
@@ -539,7 +577,7 @@ class ProductController extends Controller
         $imagePath = $product->image_path;
         if ($request->hasFile('image')) {
             if ($product->image_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($product->image_path);
+                Storage::disk('public')->delete($product->image_path);
             }
             $imagePath = ImageOptimizer::store($request->file('image'), 'products', 1600);
         }
@@ -568,8 +606,14 @@ class ProductController extends Controller
             'category_id'     => $request->has('category_id') ? ($validated['category_id'] ?? null) : $product->category_id,
             'brand_id'        => $request->has('brand_id') ? ($validated['brand_id'] ?? null) : $product->brand_id,
             'sku'             => $validated['sku'],
+            'product_type'    => $request->has('product_type') ? ($validated['product_type'] ?? 'standard') : $product->product_type,
+            'barcode'         => $request->has('barcode') ? ($validated['barcode'] ?? null) : $product->barcode,
+            'shelf_location'  => $request->has('shelf_location') ? ($validated['shelf_location'] ?? null) : $product->shelf_location,
+            'warehouse_id'    => $request->has('warehouse_id') ? ($validated['warehouse_id'] ?? null) : $product->warehouse_id,
             'name'            => $validated['name'],
             'description'     => $request->has('description') ? ($validated['description'] ?? null) : $product->description,
+            'compatible_models'=> $request->has('compatible_models') ? ($validated['compatible_models'] ?? null) : $product->compatible_models,
+            'specs'           => $request->has('specs') ? ($validated['specs'] ?? null) : $product->specs,
             'meta_description'=> $request->has('meta_description') ? ($validated['meta_description'] ?? null) : $product->meta_description,
             'retail_price'    => $validated['retail_price'],
             'old_price'       => $validated['old_price'] ?? null,
@@ -826,13 +870,14 @@ class ProductController extends Controller
         }
 
         if ($image->image_path) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($image->image_path);
+            Storage::disk('public')->delete($image->image_path);
         }
 
         $wasPrimary = $image->is_primary;
         $image->delete();
 
         if ($wasPrimary || $product->image_path === $image->image_path) {
+            /** @var \App\Models\ProductImage|null $nextImage */
             $nextImage = $product->images()->first();
             if ($nextImage) {
                 $nextImage->update(['is_primary' => true]);
@@ -1088,12 +1133,12 @@ class ProductController extends Controller
         }
 
         if ($product->image_path) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($product->image_path);
+            Storage::disk('public')->delete($product->image_path);
         }
 
         foreach ($product->images as $img) {
             if ($img->image_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($img->image_path);
+                Storage::disk('public')->delete($img->image_path);
             }
         }
 
@@ -1192,11 +1237,11 @@ class ProductController extends Controller
         $count = 0;
         foreach ($products as $product) {
             if ($product->image_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($product->image_path);
+                Storage::disk('public')->delete($product->image_path);
             }
             foreach ($product->images as $img) {
                 if ($img->image_path) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($img->image_path);
+                    Storage::disk('public')->delete($img->image_path);
                 }
             }
             $product->delete();

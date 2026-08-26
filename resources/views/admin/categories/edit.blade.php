@@ -71,6 +71,16 @@
             @enderror
         </div>
 
+        <div>
+            <label for="edit-category-code" class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">{{ __('messages.product_form_code') }}</label>
+            <input id="edit-category-code" type="text" name="code" value="{{ old('code', $category->code) }}"
+                @input="dirty = true"
+                class="w-full uppercase font-mono border dark:border-slate-600 rounded-lg px-3 py-2.5 min-h-11 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition" placeholder="{{ __('messages.product_form_code_placeholder') }}" />
+            @error('code')
+                <p class="mt-1 text-xs font-semibold text-red-600 dark:text-red-400">{{ $message }}</p>
+            @enderror
+        </div>
+
         {{-- Category Type: Parent vs Sub-category --}}
         <div>
             <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">{{ __('messages.category_type') }}</label>

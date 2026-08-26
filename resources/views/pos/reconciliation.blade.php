@@ -39,7 +39,7 @@
                             {{ __('messages.sidebar_stock_reconciliation') }}
                         </h1>
                         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                            {{ __('messages.reconciliation_hint') }}
+                            {{ __('messages.reconciliation_subtitle') }}
                         </p>
                     </div>
                 </div>

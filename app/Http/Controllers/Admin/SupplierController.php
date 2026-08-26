@@ -58,7 +58,7 @@ class SupplierController extends Controller
         }
 
         // Sorting
-        $sort = $request->get('sort', 'newest');
+        $sort = $request->input('sort', 'newest');
         match ($sort) {
             'oldest'        => $query->oldest(),
             'name_asc'      => $query->orderBy('name', 'asc'),
@@ -384,7 +384,7 @@ class SupplierController extends Controller
     /**
      * Supplier aging report — shows outstanding debt broken into 30/60/90+ day buckets.
      */
-    public function agingReport(StoreContext $context): \Illuminate\View\View
+    public function agingReport(StoreContext $context): View
     {
         $store = $context->getStore();
         $today = now()->startOfDay();

@@ -301,6 +301,7 @@ class CategoryController extends Controller
 
         $validated = $request->validate([
             'name' => ['bail', 'required', 'string', 'max:255', $this->uniqueNameRule($store->id)],
+            'code' => ['nullable', 'string', 'max:50'],
             'parent_id' => ['nullable', $this->parentRule($store->id)],
             'description' => ['nullable', 'string'],
             'icon' => ['nullable', 'string', 'max:8'],
@@ -313,6 +314,7 @@ class CategoryController extends Controller
             'store_id' => $store->id,
             'parent_id' => ! empty($validated['parent_id']) ? (int) $validated['parent_id'] : null,
             'name' => trim($validated['name']),
+            'code' => ! empty($validated['code']) ? strtoupper(trim($validated['code'])) : null,
             'slug' => $this->uniqueSlug($store->id, Str::slug($validated['name'])),
             'description' => $validated['description'] ?? null,
             'icon' => $validated['icon'] ?? null,
@@ -359,6 +361,7 @@ class CategoryController extends Controller
 
         $validated = $request->validate([
             'name' => ['bail', 'required', 'string', 'max:255', $this->uniqueNameRule($store->id, $category->id)],
+            'code' => ['nullable', 'string', 'max:50'],
             'parent_id' => ['nullable', $this->parentRule($store->id, $category)],
             'description' => ['nullable', 'string'],
             'icon' => ['nullable', 'string', 'max:8'],
@@ -368,6 +371,7 @@ class CategoryController extends Controller
 
         $data = [
             'name' => trim($validated['name']),
+            'code' => ! empty($validated['code']) ? strtoupper(trim($validated['code'])) : null,
             'slug' => $this->uniqueSlug($store->id, Str::slug($validated['name']), $category->id),
             'description' => $validated['description'] ?? null,
             'icon' => $validated['icon'] ?? null,
@@ -435,6 +439,7 @@ class CategoryController extends Controller
 
         $validated = $request->validate([
             'name'      => ['bail', 'required', 'string', 'max:255', $this->uniqueNameRule($store->id)],
+            'code'      => ['nullable', 'string', 'max:50'],
             'parent_id' => ['nullable', 'integer'],
         ]);
 
@@ -457,6 +462,7 @@ class CategoryController extends Controller
         $category = Category::create([
             'store_id'  => $store->id,
             'name'      => trim($validated['name']),
+            'code'      => ! empty($validated['code']) ? strtoupper(trim($validated['code'])) : null,
             'slug'      => $this->uniqueSlug($store->id, Str::slug($validated['name'])),
             'parent_id' => $parent?->id,
         ]);
@@ -465,6 +471,7 @@ class CategoryController extends Controller
             'success'   => true,
             'id'        => $category->id,
             'name'      => $category->name,
+            'code'      => $category->code,
             'parent_id' => $category->parent_id,
             'parent'    => $parent?->name,
         ]);

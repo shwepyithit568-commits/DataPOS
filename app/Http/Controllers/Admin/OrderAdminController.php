@@ -40,7 +40,7 @@ class OrderAdminController extends Controller
         }
 
         // Sorting
-        $sort = $request->get('sort', 'newest');
+        $sort = $request->input('sort', 'newest');
         match ($sort) {
             'oldest'        => $query->oldest('created_at'),
             'amount_high'   => $query->orderByRaw('COALESCE(agreed_amount, total_amount) DESC'),
@@ -275,10 +275,9 @@ class OrderAdminController extends Controller
                     $order->customer_phone,
                     strtoupper($order->contact_channel),
                     ucfirst($order->pricing_type),
-                    ucfirst(str_replace('_', ' ', $order->status)),
-                    strtoupper($order->payment_status),
-                    number_format((float) $order->total_amount, 0, '.', ''),
-                    $order->agreed_amount !== null ? number_format((float) $order->agreed_amount, 0, '.', '') : '',
+                    $order->payment_status,
+                    number_format((float) $order->total_amount, 0),
+                    $order->agreed_amount !== null ? number_format((float) $order->agreed_amount, 0) : '',
                     $items,
                 ]);
             }

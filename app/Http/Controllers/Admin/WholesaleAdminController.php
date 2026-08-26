@@ -33,7 +33,7 @@ class WholesaleAdminController extends Controller
         }
 
         // Sorting
-        $sort = $request->get('sort', 'newest');
+        $sort = $request->input('sort', 'newest');
         match ($sort) {
             'oldest'    => $query->oldest('created_at'),
             'business'  => $query->orderBy('business_name', 'asc'),

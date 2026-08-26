@@ -8,7 +8,7 @@
     @csrf
     <input type="hidden" name="parent_id" value="{{ $parent->id }}" />
     <p class="text-xs font-semibold text-violet-700 dark:text-violet-400">➕ {{ __('messages.category_add_sub_under', ['name' => $parent->name]) }}</p>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-start">
         <div>
             <label for="add-sub-name" class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">{{ __('messages.category_sub_name') }} <span class="text-rose-500">*</span></label>
             <input id="add-sub-name" x-ref="addSubName" x-init="$el.focus()" type="text" name="name" required
@@ -17,6 +17,18 @@
                 class="w-full border dark:border-slate-600 rounded-lg px-3 py-2.5 min-h-11 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition {{ old('parent_id') == $parent->id && $errors->has('name') ? 'border-red-400 dark:border-red-500' : '' }}" />
             @if (old('parent_id') == $parent->id)
                 @error('name')
+                    <p class="mt-1 text-xs font-semibold text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            @endif
+        </div>
+        <div>
+            <label for="add-sub-code" class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">{{ __('messages.product_form_code') }}</label>
+            <input id="add-sub-code" type="text" name="code"
+                value="{{ old('parent_id') == $parent->id ? old('code') : '' }}"
+                placeholder="{{ __('messages.product_form_code_placeholder') }}"
+                class="w-full uppercase font-mono border dark:border-slate-600 rounded-lg px-3 py-2.5 min-h-11 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition" />
+            @if (old('parent_id') == $parent->id)
+                @error('code')
                     <p class="mt-1 text-xs font-semibold text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             @endif

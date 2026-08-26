@@ -16,7 +16,7 @@ class CatalogController extends Controller
     {
         $store = $context->getStore();
 
-        abort_unless($store, 404, 'Store not found.');
+        abort_unless((bool) $store, 404, 'Store not found.');
 
         // Only categories/brands that actually have products are shown in the
         // storefront filter — empty ones clutter the list for customers.
@@ -109,7 +109,7 @@ class CatalogController extends Controller
         }
 
         // Sort — mirrors Linn's "Release (New to Old) / Price (Low to High) / Price (High to Low)"
-        $sort = $request->get('sort', 'newest');
+        $sort = $request->input('sort', 'newest');
         $query->when($sort === 'price_low_high', function ($q) {
             return $q->orderBy('retail_price', 'asc');
         }, function ($q) use ($sort) {
@@ -119,7 +119,7 @@ class CatalogController extends Controller
         });
 
         // Per-page selector (toolbar): 40 / 80 / 120 / All. Anything else falls back to 40.
-        $perPage = match ($request->get('per_page')) {
+        $perPage = match ($request->input('per_page')) {
             '80' => 80,
             '120' => 120,
             'all' => PHP_INT_MAX,
@@ -189,7 +189,7 @@ class CatalogController extends Controller
             ]);
         }
 
-        $search = trim((string) $request->get('search', ''));
+        $search = trim((string) $request->input('search', ''));
 
         if ($search === '') {
             // Trending searches: most popular categories & brands (by product
@@ -303,7 +303,7 @@ class CatalogController extends Controller
     {
         $store = $context->getStore();
 
-        abort_unless($store, 404, 'Store not found.');
+        abort_unless((bool) $store, 404, 'Store not found.');
 
         $product = Product::where('store_id', $store->id)
             ->where('slug', $slug)

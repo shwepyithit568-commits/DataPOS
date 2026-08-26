@@ -76,7 +76,7 @@
                             {{ __('messages.sidebar_opening_stock') }}
                         </h1>
                         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                            {{ __('messages.opening_stock_hint') }}
+                            {{ __('messages.opening_stock_subtitle') }}
                         </p>
                     </div>
                 </div>

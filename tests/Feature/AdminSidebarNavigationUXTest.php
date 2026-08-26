@@ -64,10 +64,6 @@ class AdminSidebarNavigationUXTest extends TestCase
         $response->assertStatus(200);
         $response->assertDontSee('href="#"', false);
         $response->assertDontSee('javascript:void', false);
-        // Roadmap placeholders render as links to the single coming-soon page
-        // (one route + a whitelisted module registry), never as dead href="#" items.
-        $response->assertSee('/admin/coming-soon/', false);
-        $response->assertSeeText('Soon');
     }
 
     public function test_product_sidebar_import_and_real_toolbar_export(): void

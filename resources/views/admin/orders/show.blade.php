@@ -101,7 +101,7 @@
 
                 @if ($order->contact_identifier)
                     <div class="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-                        <span class="text-slate-400 font-bold">Contact ID</span>
+                        <span class="text-slate-400 font-bold">Contact:</span>
                         <span class="font-bold text-violet-600 dark:text-violet-400">{{ $order->contact_identifier }}</span>
                     </div>
                 @endif
@@ -171,7 +171,7 @@
                 <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
                     <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                         <span>💵</span>
-                        <span>ဈေးနှုန်းညှိနှိုင်းမှုနှင့် ငွေပေးချေမှု (Agreed Price & Payment)</span>
+                        <span>ဈေးနှုန်းညှိနှိုင်းမှုနှင့် ငွေပေးချေမှု (Payment &amp; Price)</span>
                     </h3>
                 </div>
 

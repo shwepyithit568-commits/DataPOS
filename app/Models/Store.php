@@ -12,6 +12,7 @@ class Store extends Model
 
     protected $fillable = [
         'name',
+        'business_type',
         'slug',
         'viber_number',
         'telegram_username',
@@ -54,6 +55,11 @@ class Store extends Model
     public function deliveryMethods(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(StoreDeliveryMethod::class);
+    }
+
+    public function productMasterPresets(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductMasterPreset::class)->orderBy('sort_order')->orderBy('name');
     }
 
     /* ------------------------------------------------------------------ */

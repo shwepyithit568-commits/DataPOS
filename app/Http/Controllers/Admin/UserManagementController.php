@@ -307,9 +307,9 @@ class UserManagementController extends Controller
     {
         $store = $context->getStore();
 
-        abort_unless($store, 404, 'Store not found.');
+        abort_unless((bool) $store, 404, 'Store not found.');
         $user = auth()->user();
-        abort_unless($user && ($user->isPlatformOwner() || $user->hasStoreRole($store->id, ['store_manager'])), 403, 'Store manager or platform owner access required.');
+        abort_unless($user && $user->isPlatformOwner(), 403, 'Platform owner access required.');
 
         return $store;
     }

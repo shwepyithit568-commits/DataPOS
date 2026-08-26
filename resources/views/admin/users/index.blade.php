@@ -35,7 +35,7 @@
                     <span class="text-violet-600 dark:text-violet-400">Users & Staff</span>
                 </div>
                 <h1 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
-                    <span>အသုံးပြုသူနှင့် ဝန်ထမ်းများ (Users & Staff Directory)</span>
+                    <span>အသုံးပြုသူနှင့် ဝန်ထမ်းများ (Users & Customers)</span>
                 </h1>
                 <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ $store->name }} · စနစ်သုံးစွဲသူနှင့် ဝန်ထမ်းရာထူးများ စီမံခန့်ခွဲမှု</p>
             </div>
@@ -128,13 +128,13 @@
     </div>
 
     {{-- 3. Collapsible Create New User / Staff Form --}}
-    <div x-show="createOpen" x-collapse x-cloak
+    <div x-show="createOpen" x-transition x-cloak
          class="rounded-3xl bg-white dark:bg-slate-900 border border-violet-200 dark:border-violet-900/50 p-5 sm:p-7 shadow-xl space-y-5">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div class="flex items-center gap-2">
                 <span class="text-lg">✨</span>
                 <div>
-                    <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">အကောင့်အသစ် ဖွင့်လှစ်ခြင်း (Create User / Staff Account)</h3>
+                    <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">အကောင့်အသစ် ဖွင့်လှစ်ခြင်း (Create User Account)</h3>
                     <p class="text-xs text-slate-400">ဆိုင်ဝန်ထမ်း သို့မဟုတ် ဖောက်သည် အကောင့်သစ် ဖွင့်လှစ်ပြီး ရာထူးသတ်မှတ်ပါ</p>
                 </div>
             </div>

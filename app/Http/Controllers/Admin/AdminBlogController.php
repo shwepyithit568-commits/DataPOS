@@ -36,7 +36,7 @@ class AdminBlogController extends Controller
             }
         }
 
-        $sort = $request->get('sort', 'newest');
+        $sort = $request->input('sort', 'newest');
         match ($sort) {
             'oldest'     => $query->oldest(),
             'title_asc'  => $query->orderBy('title', 'asc'),

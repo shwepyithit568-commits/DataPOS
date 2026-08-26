@@ -18,6 +18,41 @@
                 'iconBg' => 'bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400',
                 'iconBgActive' => 'bg-blue-100 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300',
             ],
+            'connectors' => [
+                'label' => '🔌 Connectors & Specs',
+                'count' => $summary['connectors'] ?? 0,
+                'icon' => 'M13 10V3L4 14h7v7l9-11h-7z',
+                'iconBg' => 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400',
+                'iconBgActive' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300',
+            ],
+            'colors' => [
+                'label' => '🎨 Color Codes',
+                'count' => $summary['colors'] ?? 0,
+                'icon' => 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01',
+                'iconBg' => 'bg-amber-100 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400',
+                'iconBgActive' => 'bg-amber-100 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300',
+            ],
+            'shelves' => [
+                'label' => '🗄️ Shelf / Locations',
+                'count' => $summary['shelves'] ?? 0,
+                'icon' => 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
+                'iconBg' => 'bg-purple-100 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400',
+                'iconBgActive' => 'bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300',
+            ],
+            'warranties' => [
+                'label' => '🛡️ Warranty Presets',
+                'count' => $summary['warranties'] ?? 0,
+                'icon' => 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+                'iconBg' => 'bg-sky-100 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400',
+                'iconBgActive' => 'bg-sky-100 text-sky-700 dark:bg-sky-950/70 dark:text-sky-300',
+            ],
+            'return-policies' => [
+                'label' => '🔄 Return Policies',
+                'count' => $summary['return_policies'] ?? 0,
+                'icon' => 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
+                'iconBg' => 'bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400',
+                'iconBgActive' => 'bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300',
+            ],
             'variant-presets' => [
                 'label' => __('messages.variant_settings'),
                 'count' => $summary['presets'],
@@ -29,10 +64,15 @@
         ];
 
         $statAccentClasses = [
-            'products'   => 'bg-violet-100 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400',
-            'categories' => 'bg-orange-100 text-orange-600 dark:bg-orange-950/60 dark:text-orange-400',
-            'brands'     => 'bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400',
-            'presets'    => 'bg-teal-100 text-teal-600 dark:bg-teal-950/60 dark:text-teal-400',
+            'products'        => 'bg-violet-100 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400',
+            'categories'      => 'bg-orange-100 text-orange-600 dark:bg-orange-950/60 dark:text-orange-400',
+            'brands'          => 'bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400',
+            'connectors'      => 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400',
+            'colors'          => 'bg-amber-100 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400',
+            'shelves'         => 'bg-purple-100 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400',
+            'warranties'      => 'bg-sky-100 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400',
+            'return_policies' => 'bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400',
+            'presets'         => 'bg-teal-100 text-teal-600 dark:bg-teal-950/60 dark:text-teal-400',
         ];
     @endphp
 
@@ -67,134 +107,30 @@
     </header>
 
     {{-- ============================================================
-         SUMMARY STAT CARDS  (4-up — grid, mobile 2 × 2, desktop 1 × 4)
-         Inspired by the Suppliers / PO list pages — consistent visual
-         language across the admin suite.  Cards are clickable and
-         jump to their corresponding tab (Products jumps to product list).
+         HORIZONTAL TAB BAR — scrollable on small screens
          ============================================================ --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3" role="list" aria-label="{{ __('messages.master_data_summary') }}">
-        <a href="{{ url('/store/' . $store->slug . '/admin/products') }}" role="listitem"
-           class="group bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700 p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3 transition hover:shadow-md hover:border-violet-200 dark:hover:border-violet-800/60 active:scale-[.99]">
-            <div class="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl grid place-items-center text-base sm:text-lg {{ $statAccentClasses['products'] }}">
-                <svg class="w-[18px] h-[18px] sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-            </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-lg sm:text-2xl font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums">
-                    {{ number_format($summary['products']) }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-semibold uppercase tracking-wide">
-                    {{ __('messages.products') }}
-                </p>
-            </div>
-        </a>
-
-        <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'categories']) }}" role="listitem"
-           class="group bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700 p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3 transition hover:shadow-md hover:border-orange-200 dark:hover:border-orange-800/60 active:scale-[.99]">
-            <div class="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl grid place-items-center {{ $statAccentClasses['categories'] }}">
-                <svg class="w-[18px] h-[18px] sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z" />
-                </svg>
-            </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-lg sm:text-2xl font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums">
-                    {{ number_format($summary['categories']) }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-semibold uppercase tracking-wide">
-                    {{ __('messages.categories') }}
-                </p>
-            </div>
-        </a>
-
-        <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'brands']) }}" role="listitem"
-           class="group bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700 p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3 transition hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800/60 active:scale-[.99]">
-            <div class="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl grid place-items-center {{ $statAccentClasses['brands'] }}">
-                <svg class="w-[18px] h-[18px] sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13 11 4H4v7l9 9 7-7ZM7.5 7.5h.01" />
-                </svg>
-            </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-lg sm:text-2xl font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums">
-                    {{ number_format($summary['brands']) }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-semibold uppercase tracking-wide">
-                    {{ __('messages.brands') }}
-                </p>
-            </div>
-        </a>
-
-        <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'variant-presets']) }}" role="listitem"
-           class="group bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700 p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3 transition hover:shadow-md hover:border-teal-200 dark:hover:border-teal-800/60 active:scale-[.99]">
-            <div class="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl grid place-items-center {{ $statAccentClasses['presets'] }}">
-                <svg class="w-[18px] h-[18px] sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h10M4 17h10M18 5v4M18 15v4M14 7h8M14 17h8" />
-                </svg>
-            </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-lg sm:text-2xl font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums">
-                    {{ number_format($summary['presets']) }}
-                    <span class="text-[11px] sm:text-sm font-bold text-slate-400 dark:text-slate-500 ml-1 tabular-nums">
-                        / {{ number_format($summary['presets_total_rows']) }}
-                    </span>
-                </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-semibold uppercase tracking-wide">
-                    {{ __('messages.variant_settings') }}
-                </p>
-            </div>
-        </a>
-    </div>
-
-    {{-- ============================================================
-         SEGMENTED TAB SWITCHER  (professional POS/SaaS style)
-         - Container: soft pill with inner padding
-         - Mobile: overflow-x-auto so tabs never wrap (edge-to-edge feel)
-         - Active tab: elevated white card with subtle shadow + violet ring
-         - Each tab: icon + label + count badge
-         - URL driven (?tab=...) — refresh / back / shareable safe
-         ============================================================ --}}
-    <nav class="bg-slate-100/90 dark:bg-slate-800/80 rounded-2xl p-1" role="tablist" aria-label="{{ __('messages.master_data') }}">
-        <ul class="flex items-stretch gap-1 overflow-x-auto pb-0 scrollbar-thin" role="none">
+    <nav class="bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200/80 dark:border-slate-700 p-1.5 shadow-sm" aria-label="{{ __('messages.master_data_tabs') }}">
+        <ul class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1" role="tablist">
             @foreach ($tabs as $key => $tab)
-                @php
-                    $isActive = $activeTab === $key;
-                    $hrefQueryParams = ['store_slug' => $store->slug, 'tab' => $key];
-                    if ($key === 'categories' && request()->filled('search')) {
-                        $hrefQueryParams['search'] = request('search');
-                    }
-                    if ($key === 'brands') {
-                        foreach (['search','sort','has_logo','per_page'] as $q) {
-                            if (request()->filled($q)) $hrefQueryParams[$q] = request($q);
-                        }
-                    }
-                @endphp
-                <li class="flex-1 sm:flex-none min-w-0" role="none">
+                @php $isActive = $activeTab === $key; @endphp
+                <li role="presentation" class="shrink-0">
                     <a
-                        href="{{ route('store.admin.products.master-data', $hrefQueryParams) }}"
+                        href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => $key]) }}"
                         role="tab"
-                        @if ($isActive) aria-selected="true" @endif
-                        class="group relative w-full inline-flex items-center justify-center sm:justify-start gap-2 sm:gap-2.5 rounded-xl px-2.5 sm:px-4 py-2.5 text-xs sm:text-sm font-black transition min-h-[44px]
+                        id="md-tab-btn-{{ $key }}"
+                        aria-selected="{{ $isActive ? 'true' : 'false' }}"
+                        aria-controls="md-tab-{{ $key }}"
+                        class="group inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black transition
                             @if($isActive)
-                                bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10
+                                bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 ring-1 ring-violet-200 dark:ring-violet-800/80 shadow-xs
                             @else
-                                text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-700/50
+                                text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/50
                             @endif
                         "
                     >
-                        <span class="shrink-0 inline-flex w-7 h-7 sm:w-8 sm:h-8 rounded-lg items-center justify-center {{ $isActive ? $tab['iconBgActive'] : $tab['iconBg'] }} transition">
-                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true">
-                                <path d="{{ $tab['icon'] }}"/>
-                            </svg>
-                        </span>
                         <span class="truncate">{{ $tab['label'] }}</span>
-                        <span class="shrink-0 inline-flex items-center justify-center min-w-[1.5rem] h-[1.5rem] px-1.5 rounded-full text-[11px] font-black tabular-nums transition
-                            @if($isActive)
-                                bg-violet-100 dark:bg-violet-950/70 text-violet-700 dark:text-violet-300
-                            @else
-                                bg-white/70 dark:bg-slate-700/70 text-slate-500 dark:text-slate-400 group-hover:bg-white dark:group-hover:bg-slate-700
-                            @endif
-                        ">
-                            {{ number_format($tab['count']) }}
+                        <span class="inline-flex items-center justify-center px-1.5 min-w-[1.25rem] h-5 rounded-md text-[10px] font-bold {{ $isActive ? 'bg-violet-200 dark:bg-violet-900 text-violet-900 dark:text-violet-200' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300' }}">
+                            {{ $tab['count'] }}
                         </span>
                     </a>
                 </li>
@@ -204,10 +140,6 @@
 
     {{-- ============================================================
          ACTIVE TAB CONTENT
-         Embeds the SAME _content partial used by the standalone index
-         pages, so CRUD / search / filter / sort / pagination behaviour
-         stays perfectly in sync between the hub + standalone routes.
-         Flashes, toolbars, and Alpine state live inside the partials.
          ============================================================ --}}
     <section aria-labelledby="md-tab-{{ $activeTab }}">
         <h2 id="md-tab-{{ $activeTab }}" class="sr-only">
@@ -217,6 +149,8 @@
             @include('admin.brands._content', ['embedded' => true])
         @elseif ($activeTab === 'variant-presets')
             @include('admin.variant_presets._content', ['embedded' => true])
+        @elseif (in_array($activeTab, ['connectors', 'colors', 'shelves', 'warranties', 'return-policies'], true))
+            @include('admin.master_data._preset_content', ['embedded' => true])
         @else
             @include('admin.categories._content', ['embedded' => true])
         @endif

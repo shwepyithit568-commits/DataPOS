@@ -118,13 +118,14 @@
 
         {{-- Revenue --}}
         <a href="{{ route('store.admin.orders.index', array_merge($storeRouteParams, ['tab' => 'all'])) }}"
-           class="col-span-2 sm:col-span-1 rounded-3xl bg-white dark:bg-slate-900 border {{ $tab === 'all' ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 shadow-sm transition hover:shadow-md">
+           class="col-span-2 sm:col-span-1 rounded-3xl bg-white dark:bg-slate-900 border {{ $tab === 'all' ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 shadow-sm transition hover:shadow-md"
+           title="{{ __('messages.revenue_confirmed_only') }}">
             <div class="flex items-center justify-between mb-1">
                 <span class="text-xs font-bold text-violet-600 dark:text-violet-400 truncate">Revenue</span>
                 <span class="text-base">💰</span>
             </div>
             <h3 class="text-lg sm:text-xl font-black text-violet-600 dark:text-violet-400 font-mono tracking-tight">Ks {{ number_format($stats['revenue'], 0) }}</h3>
-            <p class="text-[10px] text-slate-400 font-semibold mt-0.5 truncate">Pending: Ks {{ number_format($stats['pendingRevenue'], 0) }}</p>
+            <p class="text-[10px] text-slate-400 font-semibold mt-0.5 truncate">{{ __('messages.pending_revenue') }}: Ks {{ number_format($stats['pendingRevenue'], 0) }}</p>
         </a>
     </div>
 

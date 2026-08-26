@@ -611,6 +611,11 @@ Route::prefix('store/{store_slug}')
         Route::patch('/admin/variant-presets/{variantPreset}/move', [VariantPresetController::class, 'move'])->name('store.admin.variant-presets.move')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::delete('/admin/variant-presets/{variantPreset}', [VariantPresetController::class, 'destroy'])->name('store.admin.variant-presets.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
+        // Admin Master Presets (Connectors, Colors, Shelf Locations, Warranties, Return Policies)
+        Route::post('/admin/product-master-presets', [\App\Http\Controllers\Admin\ProductMasterPresetController::class, 'store'])->name('store.admin.product-master-presets.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::put('/admin/product-master-presets/{masterPreset}', [\App\Http\Controllers\Admin\ProductMasterPresetController::class, 'update'])->name('store.admin.product-master-presets.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::delete('/admin/product-master-presets/{masterPreset}', [\App\Http\Controllers\Admin\ProductMasterPresetController::class, 'destroy'])->name('store.admin.product-master-presets.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
         // Admin Products CRUD & Bulk Actions
         Route::get('/admin/products', [ProductController::class, 'index'])->name('store.admin.products.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         // Products Master Data hub — horizontal scroll tabs (categories /
