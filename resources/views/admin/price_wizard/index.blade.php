@@ -361,14 +361,14 @@ window.priceWizardData = function (initialProducts) {
 
         {{-- Below Cost Warning --}}
         <div class="p-2.5 sm:p-3 rounded-lg border shadow-2xs {{ $stats['below_cost_count'] > 0 ? 'border-rose-200/80 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20' : 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900' }}">
-            <div class="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 {{ $stats['below_cost_count'] > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500' }}">
+            <div class="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 {{ $stats['below_cost_count'] > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500 dark:text-slate-400' }}">
                 <span>⚠️</span>
                 <span>{{ __('messages.price_wizard_stat_below_cost') }}</span>
             </div>
             <div class="text-base sm:text-lg font-black font-mono mt-0.5 {{ $stats['below_cost_count'] > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-200' }}">
                 {{ number_format($stats['below_cost_count']) }}
             </div>
-            <div class="text-[10px] mt-0.5 truncate {{ $stats['below_cost_count'] > 0 ? 'text-rose-600/80 dark:text-rose-400/80 font-bold' : 'text-slate-400' }}">
+            <div class="text-[10px] mt-0.5 truncate {{ $stats['below_cost_count'] > 0 ? 'text-rose-600/80 dark:text-rose-400/80 font-bold' : 'text-slate-400 dark:text-slate-500' }}">
                 {{ $stats['below_cost_count'] > 0 ? 'Requires attention' : 'All healthy' }}
             </div>
         </div>
@@ -395,7 +395,7 @@ window.priceWizardData = function (initialProducts) {
 
             {{-- Quick Preset Buttons --}}
             <div class="flex flex-wrap items-center gap-1">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider mr-0.5">Quick Markup:</span>
+                <span class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-0.5">Quick Markup:</span>
                 <template x-for="pct in [10, 15, 20, 25, 30, 40, 50]" :key="pct">
                     <button type="button"
                             @click="setQuickMarkup(pct)"
@@ -450,7 +450,7 @@ window.priceWizardData = function (initialProducts) {
                            x-model.number="calcValue"
                            @input="recalculateAll()"
                            class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 pr-10 text-xs bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-mono font-bold focus:ring-2 focus:ring-violet-500 shadow-2xs">
-                    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400"
+                    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 dark:text-slate-500"
                           x-text="isPercentageMode() ? '%' : 'Ks'"></span>
                 </div>
             </div>
@@ -480,31 +480,31 @@ window.priceWizardData = function (initialProducts) {
             <div class="flex flex-wrap items-center gap-1.5">
                 <button type="button"
                         @click="selectAll(true)"
-                        class="px-2 py-1 rounded-md text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 transition shadow-2xs">
+                        class="px-2 py-1 rounded-md text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition shadow-2xs">
                     {{ __('messages.price_wizard_select_all') }}
                 </button>
                 <button type="button"
                         @click="selectAll(false)"
-                        class="px-2 py-1 rounded-md text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 transition shadow-2xs">
+                        class="px-2 py-1 rounded-md text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition shadow-2xs">
                     {{ __('messages.price_wizard_deselect_all') }}
                 </button>
                 <button type="button"
                         @click="invertSelection()"
-                        class="px-2 py-1 rounded-md text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 transition shadow-2xs">
+                        class="px-2 py-1 rounded-md text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition shadow-2xs">
                     {{ __('messages.price_wizard_invert_selection') }}
                 </button>
-                <span class="text-xs font-bold text-slate-500 font-mono ml-1">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-400 font-mono ml-1">
                     <span x-text="selectedCount"></span> / <span x-text="items.length"></span> selected
                 </span>
             </div>
 
             <div class="flex flex-wrap items-center gap-3 text-xs font-bold text-slate-700 dark:text-slate-300">
                 <label class="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" x-model="syncVariants" class="rounded border-slate-300 text-violet-600 focus:ring-violet-500">
+                    <input type="checkbox" x-model="syncVariants" class="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-800 text-violet-600 focus:ring-violet-500">
                     <span>{{ __('messages.price_wizard_sync_variants') }}</span>
                 </label>
                 <label class="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" x-model="setOldPrice" class="rounded border-slate-300 text-violet-600 focus:ring-violet-500">
+                    <input type="checkbox" x-model="setOldPrice" class="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-800 text-violet-600 focus:ring-violet-500">
                     <span>{{ __('messages.price_wizard_set_old_price') }}</span>
                 </label>
             </div>
@@ -523,8 +523,8 @@ window.priceWizardData = function (initialProducts) {
                            name="search"
                            value="{{ $filters['search'] ?? '' }}"
                            placeholder="{{ __('messages.search') }} product, SKU..."
-                           class="w-full pl-8 pr-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-xs bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 shadow-2xs font-semibold">
-                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           class="w-full pl-8 pr-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-xs bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 shadow-2xs font-semibold">
+                    <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                 </div>
@@ -567,7 +567,7 @@ window.priceWizardData = function (initialProducts) {
                 <div class="flex items-center gap-1 justify-end">
                     @if(!empty($filters['search']) || !empty($filters['category_id']) || !empty($filters['brand_id']) || !empty($filters['supplier_id']) || !empty($filters['cost_filter']))
                         <a href="{{ route('store.admin.price_wizard.index', ['store_slug' => $store->slug]) }}"
-                           class="px-2.5 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition shadow-2xs">
+                           class="px-2.5 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition shadow-2xs">
                             {{ __('messages.reset') }}
                         </a>
                     @endif
@@ -609,29 +609,29 @@ window.priceWizardData = function (initialProducts) {
         <div class="overflow-x-auto max-h-[70vh] overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800">
             <table class="w-full text-left text-xs border-collapse font-sans text-slate-700 dark:text-slate-200">
                 {{-- Sticky Header --}}
-                <thead class="sticky top-0 z-20 bg-slate-100 dark:bg-slate-800/95 backdrop-blur-xs border-b-2 border-slate-300 dark:border-slate-600 shadow-2xs select-none">
-                    <tr class="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider divide-x divide-slate-300 dark:divide-slate-700">
-                        <th class="p-2.5 w-10 text-center">
+                <thead class="sticky top-0 z-20 bg-slate-100 dark:bg-slate-800 border-b-2 border-slate-300 dark:border-slate-700 shadow-xs select-none">
+                    <tr class="text-[11px] font-black uppercase tracking-wider divide-x divide-slate-300 dark:divide-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">
+                        <th class="p-2.5 w-10 text-center bg-slate-100 dark:bg-slate-800">
                             <input type="checkbox"
                                    @change="toggleSelectAll($event.target.checked)"
                                    :checked="selectedCount === items.length && items.length > 0"
-                                   class="rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
+                                   class="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-violet-600 focus:ring-violet-500 cursor-pointer">
                         </th>
-                        <th class="py-2.5 px-3 min-w-[200px]">{{ __('messages.product') }}</th>
-                        <th class="py-2.5 px-3 text-right min-w-[110px]">{{ __('messages.price_wizard_current_cost') }}</th>
-                        <th class="py-2.5 px-3 text-right min-w-[120px]">{{ __('messages.price_wizard_current_retail') }}</th>
-                        <th class="py-2.5 px-3 text-right min-w-[120px]">{{ __('messages.price_wizard_current_wholesale') }}</th>
-                        <th class="py-2.5 px-3 text-right min-w-[90px]">{{ __('messages.price_wizard_current_margin') }}</th>
-                        <th class="py-2.5 px-3 text-right min-w-[140px] font-black text-violet-700 dark:text-violet-300 bg-violet-50/70 dark:bg-violet-950/40">
+                        <th class="py-2.5 px-3 min-w-[200px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ __('messages.product') }}</th>
+                        <th class="py-2.5 px-3 text-right min-w-[110px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ __('messages.price_wizard_current_cost') }}</th>
+                        <th class="py-2.5 px-3 text-right min-w-[120px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ __('messages.price_wizard_current_retail') }}</th>
+                        <th class="py-2.5 px-3 text-right min-w-[120px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ __('messages.price_wizard_current_wholesale') }}</th>
+                        <th class="py-2.5 px-3 text-right min-w-[90px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ __('messages.price_wizard_current_margin') }}</th>
+                        <th class="py-2.5 px-3 text-right min-w-[140px] font-black text-violet-900 dark:text-violet-100 bg-violet-100 dark:bg-violet-900/60 border-b-2 border-violet-500">
                             {{ __('messages.price_wizard_new_price') }}
                         </th>
-                        <th class="py-2.5 px-3 text-right min-w-[130px]">{{ __('messages.price_wizard_difference') }}</th>
-                        <th class="py-2.5 px-3 text-right min-w-[90px]">{{ __('messages.price_wizard_new_margin') }}</th>
+                        <th class="py-2.5 px-3 text-right min-w-[130px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ __('messages.price_wizard_difference') }}</th>
+                        <th class="py-2.5 px-3 text-right min-w-[90px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ __('messages.price_wizard_new_margin') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200/90 dark:divide-slate-800 bg-white dark:bg-slate-900">
                     <template x-for="(item, index) in items" :key="item.id">
-                        <tr :class="item.selected ? 'hover:bg-slate-50/80 dark:hover:bg-slate-800/50' : 'bg-slate-50/50 dark:bg-slate-950/50 opacity-60'"
+                        <tr :class="item.selected ? 'hover:bg-slate-50/80 dark:hover:bg-slate-800/50' : 'bg-slate-50/50 dark:bg-slate-950/60 opacity-60'"
                             class="divide-x divide-slate-200/80 dark:divide-slate-800 transition">
 
                             {{-- Row Checkbox --}}
@@ -639,13 +639,13 @@ window.priceWizardData = function (initialProducts) {
                                 <input type="checkbox"
                                        x-model="item.selected"
                                        @change="onItemSelectionChange(item)"
-                                       class="rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
+                                       class="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-800 text-violet-600 focus:ring-violet-500 cursor-pointer">
                             </td>
 
                             {{-- Product Name & SKU --}}
                             <td class="py-2 px-3">
                                 <div class="font-bold text-slate-900 dark:text-slate-100 leading-tight" x-text="item.name"></div>
-                                <div class="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5 font-mono">
+                                <div class="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-mono">
                                     <span>SKU: <span x-text="item.sku"></span></span>
                                     <span>•</span>
                                     <span x-text="item.category_name"></span>
@@ -654,22 +654,22 @@ window.priceWizardData = function (initialProducts) {
 
                             {{-- Purchase Cost --}}
                             <td class="py-2 px-3 text-right font-mono font-semibold text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                <span x-text="formatCurrency(item.cost)"></span> <span class="text-[10px]">Ks</span>
+                                <span x-text="formatCurrency(item.cost)"></span> <span class="text-[10px] text-slate-400 dark:text-slate-500">Ks</span>
                             </td>
 
                             {{-- Current Retail --}}
                             <td class="py-2 px-3 text-right font-mono text-xs text-slate-800 dark:text-slate-200 font-bold whitespace-nowrap">
-                                <span x-text="formatCurrency(item.current_retail)"></span> <span class="text-[10px] text-slate-400">Ks</span>
+                                <span x-text="formatCurrency(item.current_retail)"></span> <span class="text-[10px] text-slate-400 dark:text-slate-500">Ks</span>
                             </td>
 
                             {{-- Current Wholesale --}}
                             <td class="py-2 px-3 text-right font-mono text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                                <span x-text="formatCurrency(item.current_wholesale)"></span> <span class="text-[10px] text-slate-400">Ks</span>
+                                <span x-text="formatCurrency(item.current_wholesale)"></span> <span class="text-[10px] text-slate-400 dark:text-slate-500">Ks</span>
                             </td>
 
                             {{-- Current Margin --}}
                             <td class="py-2 px-3 text-right font-mono font-bold text-xs whitespace-nowrap"
-                                :class="item.current_margin >= 20 ? 'text-emerald-600 dark:text-emerald-400' : (item.current_margin > 0 ? 'text-amber-600' : 'text-slate-400')">
+                                :class="item.current_margin >= 20 ? 'text-emerald-600 dark:text-emerald-400' : (item.current_margin > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500')">
                                 <span x-text="item.current_margin + '%'"></span>
                             </td>
 
@@ -682,7 +682,7 @@ window.priceWizardData = function (initialProducts) {
                                            @input="onManualPriceChange(item)"
                                            :disabled="!item.selected"
                                            class="w-full text-right font-mono font-black text-xs px-2 py-1 rounded-md border focus:ring-2 focus:ring-violet-500 shadow-inner transition
-                                               bg-white dark:bg-slate-800 text-violet-900 dark:text-violet-200 border-violet-300 dark:border-violet-700">
+                                               bg-white dark:bg-slate-800 text-violet-900 dark:text-violet-200 border-violet-300 dark:border-violet-700 disabled:opacity-50 disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:text-slate-400 dark:disabled:text-slate-500">
                                 </div>
                             </td>
 
@@ -701,13 +701,13 @@ window.priceWizardData = function (initialProducts) {
                                     </span>
                                 </template>
                                 <template x-if="item.delta === 0">
-                                    <span class="text-slate-400">-</span>
+                                    <span class="text-slate-400 dark:text-slate-500">-</span>
                                 </template>
                             </td>
 
                             {{-- New Margin % --}}
                             <td class="py-2 px-3 text-right font-mono text-xs whitespace-nowrap font-black">
-                                <span :class="item.is_below_cost ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded' : (item.new_margin >= 20 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600')">
+                                <span :class="item.is_below_cost ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded' : (item.new_margin >= 20 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400')">
                                     <span x-text="item.new_margin + '%'"></span>
                                     <template x-if="item.is_below_cost">
                                         <span class="ml-1 text-[10px]" title="Below Purchase Cost!">⚠️ Loss</span>
@@ -720,10 +720,10 @@ window.priceWizardData = function (initialProducts) {
 
                     <template x-if="items.length === 0">
                         <tr>
-                            <td colspan="9" class="p-8 text-center text-slate-400">
+                            <td colspan="9" class="p-8 text-center text-slate-400 dark:text-slate-500">
                                 <div class="flex flex-col items-center justify-center">
                                     <span class="text-3xl mb-2">🏷️</span>
-                                    <p class="text-sm font-semibold">{{ __('messages.price_wizard_no_products') }}</p>
+                                    <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">{{ __('messages.price_wizard_no_products') }}</p>
                                 </div>
                             </td>
                         </tr>
@@ -761,32 +761,32 @@ window.priceWizardData = function (initialProducts) {
                         <h3 class="text-sm font-black text-slate-900 dark:text-slate-100">
                             {{ __('messages.price_wizard_confirm_title') }}
                         </h3>
-                        <p class="text-[11px] text-slate-500">Review the summary before applying batch price adjustments.</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Review the summary before applying batch price adjustments.</p>
                     </div>
                 </div>
-                <button type="button" @click="showModal = false" class="text-slate-400 hover:text-slate-600 text-base font-bold">&times;</button>
+                <button type="button" @click="showModal = false" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-base font-bold">&times;</button>
             </div>
 
             {{-- Summary Stats in Modal --}}
             <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700 space-y-1.5 text-xs">
                 <div class="flex justify-between">
-                    <span class="text-slate-500">Products to update:</span>
+                    <span class="text-slate-500 dark:text-slate-400">Products to update:</span>
                     <span class="font-bold font-mono text-slate-900 dark:text-slate-100" x-text="modifiedCount"></span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-slate-500">Target Field:</span>
+                    <span class="text-slate-500 dark:text-slate-400">Target Field:</span>
                     <span class="font-bold text-violet-600 dark:text-violet-400" x-text="targetField.replace('_', ' ').toUpperCase()"></span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-slate-500">Price Increases:</span>
-                    <span class="font-bold font-mono text-emerald-600" x-text="priceIncreases"></span>
+                    <span class="text-slate-500 dark:text-slate-400">Price Increases:</span>
+                    <span class="font-bold font-mono text-emerald-600 dark:text-emerald-400" x-text="priceIncreases"></span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-slate-500">Price Decreases:</span>
-                    <span class="font-bold font-mono text-rose-600" x-text="priceDecreases"></span>
+                    <span class="text-slate-500 dark:text-slate-400">Price Decreases:</span>
+                    <span class="font-bold font-mono text-rose-600 dark:text-rose-400" x-text="priceDecreases"></span>
                 </div>
                 <template x-if="belowCostWarnings > 0">
-                    <div class="flex justify-between text-rose-600 font-bold pt-1.5 border-t border-rose-200 dark:border-rose-800">
+                    <div class="flex justify-between text-rose-600 dark:text-rose-400 font-bold pt-1.5 border-t border-rose-200 dark:border-rose-800">
                         <span>⚠️ Below Purchase Cost Warnings:</span>
                         <span class="font-mono" x-text="belowCostWarnings"></span>
                     </div>

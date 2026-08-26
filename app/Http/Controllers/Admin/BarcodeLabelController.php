@@ -28,16 +28,32 @@ class BarcodeLabelController extends Controller
             abort(404);
         }
 
+        $totalProducts = Product::where('store_id', $store->id)->count();
+        $inStockCount = Product::where('store_id', $store->id)->where('stock_status', 'in_stock')->count();
+        $withBarcodeCount = Product::where('store_id', $store->id)->whereNotNull('barcode')->where('barcode', '!=', '')->count();
+
         // Recent / Top in-stock products for quick selection
         $recentProducts = Product::where('store_id', $store->id)
             ->with(['variants', 'category', 'brand'])
             ->latest('id')
-            ->take(30)
+            ->take(50)
             ->get();
+
+        $categories = \App\Models\Category::where('store_id', $store->id)->withCount('products')->get();
+        $brands = \App\Models\Brand::where('store_id', $store->id)->withCount('products')->get();
 
         $presets = $this->getPresets();
 
-        return view('admin.barcode.index', compact('store', 'recentProducts', 'presets'));
+        return view('admin.barcode.index', compact(
+            'store',
+            'recentProducts',
+            'presets',
+            'totalProducts',
+            'inStockCount',
+            'withBarcodeCount',
+            'categories',
+            'brands'
+        ));
     }
 
     /**
@@ -50,21 +66,31 @@ class BarcodeLabelController extends Controller
             return response()->json([], 404);
         }
 
-        $query = trim($request->input('q', ''));
-        if (strlen($query) < 1) {
-            return response()->json([]);
-        }
+        $query = trim((string) $request->input('q', ''));
+        $categoryId = $request->input('category_id');
+        $brandId = $request->input('brand_id');
 
-        $term = '%' . $query . '%';
+        $q = Product::where('store_id', $store->id);
 
-        $products = Product::where('store_id', $store->id)
-            ->where(function ($q) use ($term) {
-                $q->where('name', 'like', $term)
+        if (strlen($query) >= 1) {
+            $term = '%' . $query . '%';
+            $q->where(function ($sq) use ($term) {
+                $sq->where('name', 'like', $term)
                   ->orWhere('sku', 'like', $term)
                   ->orWhere('barcode', 'like', $term);
-            })
-            ->with(['variants'])
-            ->take(20)
+            });
+        }
+
+        if (!empty($categoryId)) {
+            $q->where('category_id', $categoryId);
+        }
+
+        if (!empty($brandId)) {
+            $q->where('brand_id', $brandId);
+        }
+
+        $products = $q->with(['variants', 'category', 'brand'])
+            ->take(30)
             ->get();
 
         $results = [];
@@ -79,6 +105,7 @@ class BarcodeLabelController extends Controller
                         'name' => $product->name . ' (' . $variant->name . ')',
                         'product_name' => $product->name,
                         'variant_name' => $variant->name,
+                        'category_name' => $product->category?->name ?? '-',
                         'code' => $code ?: 'PRD-' . $product->id,
                         'price' => (float) ($variant->retail_price ?: $product->retail_price),
                         'stock' => $variant->stock_quantity ?? $product->stock_quantity ?? 0,
@@ -93,6 +120,7 @@ class BarcodeLabelController extends Controller
                     'name' => $product->name,
                     'product_name' => $product->name,
                     'variant_name' => null,
+                    'category_name' => $product->category?->name ?? '-',
                     'code' => $code ?: 'PRD-' . $product->id,
                     'price' => (float) $product->retail_price,
                     'stock' => $product->stock_quantity ?? 0,
@@ -140,8 +168,9 @@ class BarcodeLabelController extends Controller
                 if ($codeType === 'qr_code') {
                     $svgCache[$code] = $this->barcodeService->generateQrCodeSvg($code, 64);
                 } else {
-                    $barHeight = $preset['bar_height'] ?? 40;
-                    $svgCache[$code] = $this->barcodeService->generateCode128Svg($code, $barHeight, 1.6, $showCodeText);
+                    $barHeight = $preset['bar_height'] ?? 28;
+                    $barWidth = $preset['bar_width'] ?? 1.3;
+                    $svgCache[$code] = $this->barcodeService->generateCode128Svg($code, $barHeight, $barWidth, $showCodeText);
                 }
             }
 
@@ -180,8 +209,13 @@ class BarcodeLabelController extends Controller
                 'type' => 'thermal',
                 'width_mm' => 50,
                 'height_mm' => 30,
-                'bar_height' => 38,
-                'font_size_px' => 11,
+                'bar_height' => 28,
+                'bar_width' => 1.35,
+                'padding' => '1.2mm 2mm',
+                'store_font' => '9px',
+                'name_font' => '9px',
+                'name_max_lines' => 2,
+                'price_font' => '11px',
                 'description' => 'စံနှုန်းမီ ဖုန်းနှင့် အပိုပစ္စည်း အရောင်းဆိုင်သုံး စတစ်ကာ',
             ],
             'thermal_40x30' => [
@@ -189,8 +223,13 @@ class BarcodeLabelController extends Controller
                 'type' => 'thermal',
                 'width_mm' => 40,
                 'height_mm' => 30,
-                'bar_height' => 32,
-                'font_size_px' => 10,
+                'bar_height' => 26,
+                'bar_width' => 1.25,
+                'padding' => '1.2mm 1.5mm',
+                'store_font' => '8.5px',
+                'name_font' => '8.5px',
+                'name_max_lines' => 2,
+                'price_font' => '10px',
                 'description' => 'အပိုပစ္စည်း အသေးစားများအတွက် စတစ်ကာ',
             ],
             'thermal_40x20' => [
@@ -198,8 +237,13 @@ class BarcodeLabelController extends Controller
                 'type' => 'thermal',
                 'width_mm' => 40,
                 'height_mm' => 20,
-                'bar_height' => 24,
-                'font_size_px' => 9,
+                'bar_height' => 16,
+                'bar_width' => 1.15,
+                'padding' => '0.8mm 1.2mm',
+                'store_font' => '7.5px',
+                'name_font' => '7.5px',
+                'name_max_lines' => 1,
+                'price_font' => '9px',
                 'description' => 'ကြိုး၊ ဖုန်းကာဗာ၊ အလှကုန်ပစ္စည်းငယ်များအတွက်',
             ],
             'a4_24' => [
@@ -209,8 +253,13 @@ class BarcodeLabelController extends Controller
                 'rows' => 8,
                 'width_mm' => 70,
                 'height_mm' => 37,
-                'bar_height' => 42,
-                'font_size_px' => 11,
+                'bar_height' => 32,
+                'bar_width' => 1.45,
+                'padding' => '2mm 2.5mm',
+                'store_font' => '10px',
+                'name_font' => '9.5px',
+                'name_max_lines' => 2,
+                'price_font' => '12px',
                 'description' => 'A4 စတစ်ကာ စာရွက် (တစ်ရွက် ၂၄ ကတ်)',
             ],
             'a4_30' => [
@@ -220,8 +269,13 @@ class BarcodeLabelController extends Controller
                 'rows' => 10,
                 'width_mm' => 70,
                 'height_mm' => 29.7,
-                'bar_height' => 34,
-                'font_size_px' => 10,
+                'bar_height' => 26,
+                'bar_width' => 1.35,
+                'padding' => '1.5mm 2mm',
+                'store_font' => '9px',
+                'name_font' => '8.5px',
+                'name_max_lines' => 2,
+                'price_font' => '10.5px',
                 'description' => 'A4 စတစ်ကာ စာရွက် (တစ်ရွက် ၃၀ ကတ်)',
             ],
             'a4_40' => [
@@ -231,8 +285,13 @@ class BarcodeLabelController extends Controller
                 'rows' => 10,
                 'width_mm' => 52.5,
                 'height_mm' => 29.7,
-                'bar_height' => 30,
-                'font_size_px' => 9,
+                'bar_height' => 24,
+                'bar_width' => 1.2,
+                'padding' => '1.2mm 1.5mm',
+                'store_font' => '8px',
+                'name_font' => '7.5px',
+                'name_max_lines' => 1,
+                'price_font' => '9.5px',
                 'description' => 'A4 စတစ်ကာ စာရွက် (တစ်ရွက် ၄၀ ကတ်)',
             ],
         ];

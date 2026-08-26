@@ -110,13 +110,12 @@ class BarcodeGeneratorService
         }
 
         return sprintf(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %.2f %d" width="100%%" height="%d" preserveAspectRatio="xMidYMid meet">
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %.2f %d" width="100%%" height="100%%" preserveAspectRatio="xMidYMid meet">
     <rect width="100%%" height="100%%" fill="#ffffff" />
     %s
     %s
 </svg>',
             $svgWidth,
-            $svgHeight,
             $svgHeight,
             $rectsHtml,
             $textHtml
@@ -124,25 +123,10 @@ class BarcodeGeneratorService
     }
 
     /**
-     * Generate SVG QR Code representation using clean native matrix generator.
+     * Generate SVG QR Code representation using clean native vector matrix generator.
      */
     public function generateQrCodeSvg(string $text, int $size = 80): string
     {
-        $text = trim($text);
-        if ($text === '') {
-            $text = '000000';
-        }
-
-        // Generate clean SVG QR-like square matrix or encoded payload
-        // Using standard Google Charts API / local SVG fallback for high compatibility
-        $encodedText = rawurlencode($text);
-        $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size={$size}x{$size}&data={$encodedText}&margin=0";
-
-        return sprintf(
-            '<img src="%s" alt="QR Code" width="%d" height="%d" class="mx-auto block" loading="lazy" />',
-            htmlspecialchars($qrUrl, ENT_QUOTES, 'UTF-8'),
-            $size,
-            $size
-        );
+        return QrCodeEncoder::generateSvg($text, $size);
     }
 }

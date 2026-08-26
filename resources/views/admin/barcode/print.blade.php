@@ -15,13 +15,15 @@
         body {
             background-color: #f1f5f9;
             color: #000000;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         /* ── Non-printable Action Toolbar ── */
         .no-print-bar {
             background: #1e293b;
             color: #ffffff;
-            padding: 12px 20px;
+            padding: 10px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -31,10 +33,15 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
         }
 
-        .btn {
-            padding: 7px 16px;
-            border-radius: 6px;
+        .no-print-bar-title {
             font-size: 13px;
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 12px;
             font-weight: bold;
             cursor: pointer;
             border: none;
@@ -56,24 +63,31 @@
             margin-right: 8px;
         }
 
-        /* ── Thermal Roll Label Layout ── */
+        .btn-close:hover {
+            background: #475569;
+        }
+
+        /* ── Accurate Page Dimension & Layout Rules ── */
         @if($preset['type'] === 'thermal')
             @page {
                 size: {{ $preset['width_mm'] }}mm {{ $preset['height_mm'] }}mm;
-                margin: 0;
+                margin: 0mm;
             }
 
             .print-container {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                padding: 10px 0;
+                margin: 0 auto;
+                padding: 16px 0;
             }
 
             .label-item {
                 width: {{ $preset['width_mm'] }}mm;
                 height: {{ $preset['height_mm'] }}mm;
-                padding: 1.5mm 2mm;
+                max-width: {{ $preset['width_mm'] }}mm;
+                max-height: {{ $preset['height_mm'] }}mm;
+                padding: {{ $preset['padding'] ?? '1.2mm 2mm' }};
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -81,48 +95,59 @@
                 text-align: center;
                 background: #ffffff;
                 overflow: hidden;
+                box-sizing: border-box;
                 page-break-after: always;
                 break-after: page;
-                margin-bottom: 4px; /* For screen preview */
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                page-break-inside: avoid;
+                break-inside: avoid;
+                margin-bottom: 8px; /* On-screen gap */
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+                border: 1px solid #cbd5e1;
+                border-radius: 2px;
             }
         @else
-            /* ── A4 Sheet Label Layout ── */
             @page {
                 size: A4 portrait;
-                margin: 8mm 6mm;
+                margin: 0mm;
             }
 
             .print-container {
                 display: grid;
                 grid-template-columns: repeat({{ $preset['cols'] }}, {{ $preset['width_mm'] }}mm);
-                gap: 1.5mm;
+                grid-auto-rows: {{ $preset['height_mm'] }}mm;
+                width: 210mm;
+                margin: 20px auto;
+                padding: 0;
                 justify-content: center;
-                padding: 10px;
                 background: #ffffff;
-                max-width: 210mm;
-                margin: 0 auto;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+                border: 1px solid #cbd5e1;
+                page-break-inside: auto;
             }
 
             .label-item {
                 width: {{ $preset['width_mm'] }}mm;
                 height: {{ $preset['height_mm'] }}mm;
-                padding: 2mm;
+                max-width: {{ $preset['width_mm'] }}mm;
+                max-height: {{ $preset['height_mm'] }}mm;
+                padding: {{ $preset['padding'] ?? '1.5mm 2mm' }};
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: space-between;
                 text-align: center;
                 background: #ffffff;
-                border: 1px dashed #e2e8f0;
+                box-sizing: border-box;
                 overflow: hidden;
+                border: 1px dashed #e2e8f0;
+                page-break-inside: avoid;
+                break-inside: avoid;
             }
         @endif
 
-        /* ── Label Content Styles ── */
+        /* ── Label Content Styles (Calibrated per Preset) ── */
         .store-name {
-            font-size: {{ max(8, ($preset['font_size_px'] ?? 10) - 1) }}px;
+            font-size: {{ $preset['store_font'] ?? '9px' }};
             font-weight: 800;
             color: #000000;
             line-height: 1.1;
@@ -130,43 +155,55 @@
             overflow: hidden;
             text-overflow: ellipsis;
             width: 100%;
+            letter-spacing: -0.01em;
         }
 
         .product-name {
-            font-size: {{ max(7, ($preset['font_size_px'] ?? 10) - 2) }}px;
+            font-size: {{ $preset['name_font'] ?? '8.5px' }};
             font-weight: 600;
             color: #000000;
             line-height: 1.15;
-            max-height: 2.3em;
+            max-height: {{ ($preset['name_max_lines'] ?? 2) === 1 ? '1.25em' : '2.35em' }};
             overflow: hidden;
             width: 100%;
+            word-break: break-word;
         }
 
         .barcode-wrapper {
             width: 100%;
+            flex: 1 1 auto;
+            min-height: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-grow: 1;
-            padding: 1px 0;
+            overflow: hidden;
+            padding: 0.5px 0;
         }
 
         .barcode-wrapper svg {
+            width: 100%;
+            height: 100%;
             max-width: 100%;
             max-height: 100%;
+            display: block;
         }
 
         .price-tag {
-            font-size: {{ ($preset['font_size_px'] ?? 10) + 1 }}px;
+            font-size: {{ $preset['price_font'] ?? '10.5px' }};
             font-weight: 900;
             color: #000000;
             line-height: 1;
+            font-family: monospace, sans-serif;
+            letter-spacing: -0.02em;
         }
 
-        /* ── Print Media Optimization ── */
+        /* ── Exact Print Media Overrides ── */
         @media print {
-            body {
-                background: transparent;
+            body, html {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
             }
 
             .no-print-bar {
@@ -177,6 +214,7 @@
                 padding: 0 !important;
                 box-shadow: none !important;
                 margin: 0 !important;
+                border: none !important;
                 background: transparent !important;
             }
 
@@ -184,6 +222,8 @@
                 margin: 0 !important;
                 box-shadow: none !important;
                 border: none !important;
+                border-radius: 0 !important;
+                background: transparent !important;
             }
         }
     </style>
@@ -192,7 +232,7 @@
 
     {{-- Top Action Toolbar --}}
     <div class="no-print-bar">
-        <div>
+        <div class="no-print-bar-title">
             <strong>{{ $store->name }}</strong> —
             <span>{{ $preset['name'] }} ({{ count($labels) }} {{ __('messages.barcode_total_labels') }})</span>
         </div>
