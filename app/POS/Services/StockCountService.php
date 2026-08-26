@@ -37,29 +37,54 @@ class StockCountService
     }
 
     /**
-     * List stock count sessions with optional search and status filter.
+     * List stock count sessions with optional search, status, scope, and sort filters.
      */
-    public function listSessions(Store $store, ?string $search = null, ?string $status = null, int $perPage = 15): LengthAwarePaginator
-    {
+    public function listSessions(
+        Store $store,
+        ?string $search = null,
+        ?string $status = null,
+        int|string $perPage = 15,
+        ?string $scope = null,
+        string $sort = 'newest'
+    ): LengthAwarePaginator {
         $query = StockCount::query()
             ->where('store_id', $store->id)
-            ->with(['createdBy', 'approvedBy', 'branch', 'warehouse'])
-            ->latest('id');
+            ->with(['createdBy', 'approvedBy', 'branch', 'warehouse']);
 
+        // Status Filter
         if ($status && in_array($status, [StockCount::STATUS_DRAFT, StockCount::STATUS_IN_PROGRESS, StockCount::STATUS_APPROVED, StockCount::STATUS_CANCELLED], true)) {
             $query->where('status', $status);
         }
 
+        // Scope Filter
+        if ($scope && in_array($scope, [StockCount::SCOPE_ALL, StockCount::SCOPE_CATEGORY], true)) {
+            $query->where('scope', $scope);
+        }
+
+        // Search Filter
         if ($search && trim($search) !== '') {
             $term = trim($search);
             $query->where(function ($q) use ($term) {
                 $q->where('session_number', 'like', "%{$term}%")
                     ->orWhere('notes', 'like', "%{$term}%")
-                    ->orWhereHas('createdBy', fn ($uq) => $uq->where('name', 'like', "%{$term}%"));
+                    ->orWhereHas('createdBy', fn ($uq) => $uq->where('name', 'like', "%{$term}%"))
+                    ->orWhereHas('warehouse', fn ($wq) => $wq->where('name', 'like', "%{$term}%"))
+                    ->orWhereHas('branch', fn ($bq) => $bq->where('name', 'like', "%{$term}%"));
             });
         }
 
-        return $query->paginate($perPage);
+        // Sorting
+        match ($sort) {
+            'oldest' => $query->oldest('id'),
+            'progress_desc' => $query->orderByRaw('(counted_items / GREATEST(total_items, 1)) DESC')->latest('id'),
+            'items_desc' => $query->orderByDesc('total_items')->latest('id'),
+            'variance_desc' => $query->orderByDesc('variance_items')->latest('id'),
+            default => $query->latest('id'),
+        };
+
+        $limit = ($perPage === 'all' || (int) $perPage > 200) ? 500 : max(10, (int) $perPage);
+
+        return $query->paginate($limit)->withQueryString();
     }
 
     /**

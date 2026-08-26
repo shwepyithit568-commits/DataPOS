@@ -35,11 +35,37 @@ class StockCountController extends Controller
 
         $search = $request->input('search');
         $status = $request->input('status');
+        $scope = $request->input('scope');
+        $sort = $request->input('sort', 'newest');
+        $perPage = $request->input('per_page', 15);
+        $activeView = $request->input('view', 'table');
+
+        $filters = [
+            'search' => $search,
+            'status' => $status,
+            'scope' => $scope,
+            'sort' => $sort,
+            'per_page' => $perPage,
+        ];
+
+        $activeFiltersCount = collect([$search, $status, $scope])->filter(fn ($v) => !empty($v))->count();
 
         $stats = $this->stockCountService->getStatistics($store);
-        $sessions = $this->stockCountService->listSessions($store, $search, $status, 15);
+        $sessions = $this->stockCountService->listSessions($store, $search, $status, $perPage, $scope, $sort);
 
-        return view('admin.stock_count.index', compact('store', 'sessions', 'stats', 'search', 'status'));
+        return view('admin.stock_count.index', compact(
+            'store',
+            'sessions',
+            'stats',
+            'filters',
+            'search',
+            'status',
+            'scope',
+            'sort',
+            'perPage',
+            'activeView',
+            'activeFiltersCount'
+        ));
     }
 
     /**

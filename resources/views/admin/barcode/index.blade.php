@@ -19,7 +19,7 @@ window._barcodeInitialPool = [
     @endforeach
 ];
 
-window._barcodePresets = @json($presets);
+window._barcodePresets = {!! json_encode($presets, JSON_UNESCAPED_UNICODE) !!};
 
 // Standalone pure JavaScript QR Code Generator (Versions 1-4, ECL M) - 100% Offline
 window.renderQrCodeSvg = function (text, size) {
@@ -280,8 +280,112 @@ window.barcodeDesignerFactory = function () {
         selectedItems: initialItems,
         recentPool: pool,
 
+        // Custom Dimensions, Spacing & Typography Designer State
+        isCustomMode: false,
+        showCustomPanel: false,
+        showSaveModal: false,
+        isSavingTemplate: false,
+        newTemplateName: '',
+        customParams: {
+            name: 'Custom Label',
+            type: 'thermal',
+            width_mm: 50,
+            height_mm: 30,
+            gap_x_mm: 0,
+            gap_y_mm: 0,
+            padding_top_mm: 1.2,
+            padding_bottom_mm: 1.2,
+            padding_left_mm: 1.5,
+            padding_right_mm: 1.5,
+            spacing_store_to_name_mm: 0.5,
+            spacing_name_to_code_mm: 0.5,
+            spacing_code_to_price_mm: 0.5,
+            store_font_num: 9.0,
+            name_font_num: 8.5,
+            price_font_num: 11.0,
+            margin_top_mm: 0,
+            margin_bottom_mm: 0,
+            margin_left_mm: 0,
+            margin_right_mm: 0,
+            cols: 1,
+            rows: 1,
+            bar_height: 28,
+            bar_width: 1.35
+        },
+
+        init: function () {
+            this.syncCustomParamsFromSelected();
+        },
+
+        syncCustomParamsFromSelected: function () {
+            var p = this.presets[this.selectedPreset] || this.presets['thermal_50x30'];
+            if (p) {
+                this.customParams.name = p.name || 'Custom Label';
+                this.customParams.type = p.type || 'thermal';
+                this.customParams.width_mm = p.width_mm || 50;
+                this.customParams.height_mm = p.height_mm || 30;
+                this.customParams.gap_x_mm = p.gap_x_mm || 0;
+                this.customParams.gap_y_mm = p.gap_y_mm || 0;
+                this.customParams.padding_top_mm = p.padding_top_mm || 1.2;
+                this.customParams.padding_bottom_mm = p.padding_bottom_mm || 1.2;
+                this.customParams.padding_left_mm = p.padding_left_mm || 1.5;
+                this.customParams.padding_right_mm = p.padding_right_mm || 1.5;
+                this.customParams.spacing_store_to_name_mm = p.spacing_store_to_name_mm || 0.5;
+                this.customParams.spacing_name_to_code_mm = p.spacing_name_to_code_mm || 0.5;
+                this.customParams.spacing_code_to_price_mm = p.spacing_code_to_price_mm || 0.5;
+                this.customParams.store_font_num = parseFloat(p.store_font) || 9.0;
+                this.customParams.name_font_num = parseFloat(p.name_font) || 8.5;
+                this.customParams.price_font_num = parseFloat(p.price_font) || 11.0;
+                this.customParams.margin_top_mm = p.margin_top_mm || 0;
+                this.customParams.margin_bottom_mm = p.margin_bottom_mm || 0;
+                this.customParams.margin_left_mm = p.margin_left_mm || 0;
+                this.customParams.margin_right_mm = p.margin_right_mm || 0;
+                this.customParams.cols = p.cols || 1;
+                this.customParams.rows = p.rows || 1;
+                this.customParams.bar_height = p.bar_height || (p.height_mm <= 22 ? 16 : 28);
+                this.customParams.bar_width = p.bar_width || 1.35;
+            }
+        },
+
+        selectPreset: function (key) {
+            this.selectedPreset = key;
+            this.isCustomMode = false;
+            this.syncCustomParamsFromSelected();
+        },
+
         get currentPresetObj() {
-            return this.presets[this.selectedPreset] || this.presets['thermal_50x30'] || {};
+            if (this.isCustomMode) {
+                return {
+                    name: this.customParams.name || 'Custom Label',
+                    type: this.customParams.type,
+                    width_mm: parseFloat(this.customParams.width_mm) || 50,
+                    height_mm: parseFloat(this.customParams.height_mm) || 30,
+                    gap_x_mm: parseFloat(this.customParams.gap_x_mm) || 0,
+                    gap_y_mm: parseFloat(this.customParams.gap_y_mm) || 0,
+                    padding_top_mm: parseFloat(this.customParams.padding_top_mm) || 1.2,
+                    padding_bottom_mm: parseFloat(this.customParams.padding_bottom_mm) || 1.2,
+                    padding_left_mm: parseFloat(this.customParams.padding_left_mm) || 1.5,
+                    padding_right_mm: parseFloat(this.customParams.padding_right_mm) || 1.5,
+                    padding: `${this.customParams.padding_top_mm || 1.2}mm ${this.customParams.padding_right_mm || 1.5}mm ${this.customParams.padding_bottom_mm || 1.2}mm ${this.customParams.padding_left_mm || 1.5}mm`,
+                    spacing_store_to_name_mm: parseFloat(this.customParams.spacing_store_to_name_mm) || 0.5,
+                    spacing_name_to_code_mm: parseFloat(this.customParams.spacing_name_to_code_mm) || 0.5,
+                    spacing_code_to_price_mm: parseFloat(this.customParams.spacing_code_to_price_mm) || 0.5,
+                    cols: parseInt(this.customParams.cols) || 1,
+                    rows: parseInt(this.customParams.rows) || 1,
+                    bar_height: parseInt(this.customParams.bar_height) || 28,
+                    store_font: (this.customParams.store_font_num || 9.0) + 'px',
+                    name_font: (this.customParams.name_font_num || 8.5) + 'px',
+                    price_font: (this.customParams.price_font_num || 11.0) + 'px',
+                    is_custom: true
+                };
+            }
+            var base = this.presets[this.selectedPreset] || this.presets['thermal_50x30'] || {};
+            return {
+                ...base,
+                spacing_store_to_name_mm: parseFloat(base.spacing_store_to_name_mm) || 0.5,
+                spacing_name_to_code_mm: parseFloat(base.spacing_name_to_code_mm) || 0.5,
+                spacing_code_to_price_mm: parseFloat(base.spacing_code_to_price_mm) || 0.5,
+            };
         },
 
         get previewItem() {
@@ -376,6 +480,93 @@ window.barcodeDesignerFactory = function () {
             }
         },
 
+        async saveCurrentTemplate() {
+            if (!this.newTemplateName.trim()) return;
+            this.isSavingTemplate = true;
+            try {
+                const payload = {
+                    name: this.newTemplateName.trim(),
+                    type: this.customParams.type,
+                    width_mm: this.customParams.width_mm,
+                    height_mm: this.customParams.height_mm,
+                    gap_x_mm: this.customParams.gap_x_mm,
+                    gap_y_mm: this.customParams.gap_y_mm,
+                    padding_top_mm: this.customParams.padding_top_mm,
+                    padding_bottom_mm: this.customParams.padding_bottom_mm,
+                    padding_left_mm: this.customParams.padding_left_mm,
+                    padding_right_mm: this.customParams.padding_right_mm,
+                    spacing_store_to_name_mm: this.customParams.spacing_store_to_name_mm,
+                    spacing_name_to_code_mm: this.customParams.spacing_name_to_code_mm,
+                    spacing_code_to_price_mm: this.customParams.spacing_code_to_price_mm,
+                    store_font: (this.customParams.store_font_num || 9.0) + 'px',
+                    name_font: (this.customParams.name_font_num || 8.5) + 'px',
+                    price_font: (this.customParams.price_font_num || 11.0) + 'px',
+                    margin_top_mm: this.customParams.margin_top_mm,
+                    margin_bottom_mm: this.customParams.margin_bottom_mm,
+                    margin_left_mm: this.customParams.margin_left_mm,
+                    margin_right_mm: this.customParams.margin_right_mm,
+                    cols: this.customParams.cols,
+                    rows: this.customParams.rows,
+                    bar_height: this.customParams.bar_height,
+                    bar_width: this.customParams.bar_width,
+                    code_type: this.codeType,
+                    show_store_name: this.showStoreName,
+                    show_product_name: this.showProductName,
+                    show_price: this.showPrice,
+                    show_code_text: this.showCodeText,
+                };
+
+                const res = await fetch(`{{ route('store.admin.barcode.templates.save', ['store_slug' => $store->slug]) }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    this.presets[data.preset_key] = data.preset;
+                    this.selectedPreset = data.preset_key;
+                    this.isCustomMode = false;
+                    this.showSaveModal = false;
+                    this.newTemplateName = '';
+                } else {
+                    alert(data.message || 'Failed to save template');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error saving template');
+            } finally {
+                this.isSavingTemplate = false;
+            }
+        },
+
+        async deleteCustomTemplate(key, templateId) {
+            if (!confirm('{{ __('messages.barcode_delete_template_confirm') }}')) return;
+            try {
+                const res = await fetch(`{{ route('store.admin.barcode.templates.delete', ['store_slug' => $store->slug, 'id' => ':id']) }}`.replace(':id', templateId), {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    delete this.presets[key];
+                    if (this.selectedPreset === key) {
+                        this.selectedPreset = 'thermal_50x30';
+                        this.syncCustomParamsFromSelected();
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
         submitPrint: function () {
             if (this.selectedItems.length === 0) return;
             document.getElementById('items_json_field').value = JSON.stringify(this.selectedItems);
@@ -385,67 +576,60 @@ window.barcodeDesignerFactory = function () {
 };
 </script>
 
-<div x-data="barcodeDesignerFactory()" class="w-full space-y-2 sm:space-y-2.5">
+<div class="w-full space-y-2 sm:space-y-2.5" x-data="barcodeDesignerFactory()" x-init="init()">
 
     {{-- ============================================================
-         1. COMPACT HERO PAGE HEADER
+         1. COMPACT HERO HEADER (Admin UI Standard)
          ============================================================ --}}
-    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-        <div class="min-w-0">
-            {{-- Eyebrow Pill --}}
-            <div class="flex items-center gap-1.5 mb-0.5">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-black uppercase tracking-wider bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
-                    <span>🏷️</span>
-                    <span>{{ __('messages.sidebar_barcode') ?? 'Barcode & Label Designer' }}</span>
-                </span>
-                <span class="text-slate-300 dark:text-slate-700">/</span>
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">{{ $store->name }}</span>
+    <div class="relative overflow-hidden rounded-lg bg-gradient-to-r from-slate-900 via-violet-950 to-slate-900 text-white p-3 sm:p-3.5 shadow-md border border-violet-900/40">
+        <div class="absolute -right-8 -top-8 w-44 h-44 bg-violet-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div class="space-y-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                        🏷️ {{ __('messages.barcode_label_printing_title') }}
+                    </span>
+                    <span class="text-slate-400 text-xs font-medium">•</span>
+                    <span class="text-xs font-semibold text-slate-300">{{ $store->name }}</span>
+                </div>
+                <h1 class="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
+                    {{ __('messages.sidebar_barcode') }}
+                    <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-violet-600/30 text-violet-200 border border-violet-500/30"
+                          x-text="totalLabelsCount + ' {{ __('messages.barcode_total_labels') }}'"></span>
+                </h1>
             </div>
-            {{-- Title --}}
-            <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <span>{{ __('messages.barcode_label_printing_title') }}</span>
-                <span class="text-xs font-mono font-bold text-slate-400 dark:text-slate-500" x-text="'(' + totalLabelsCount + ' stickers)'"></span>
-            </h1>
-            {{-- Subtitle with Store Context --}}
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                {{ $store->name }} · {{ __('messages.barcode_label_printing_sub') }}
-            </p>
+
+            {{-- Header Action Buttons --}}
+            <div class="flex items-center gap-2 flex-wrap">
+                {{-- Add all recent button --}}
+                <button type="button"
+                        @click="addAllRecent()"
+                        class="px-2.5 py-1.5 rounded-md text-xs font-bold bg-white/10 hover:bg-white/15 text-white transition border border-white/10 shadow-2xs flex items-center gap-1.5 cursor-pointer">
+                    <span>⚡</span>
+                    <span>{{ __('messages.barcode_add_all_in_stock') }}</span>
+                </button>
+
+                {{-- Clear selection button --}}
+                <button type="button"
+                        x-show="selectedItems.length > 0"
+                        @click="clearSelection()"
+                        class="px-2.5 py-1.5 rounded-md text-xs font-bold bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 transition border border-rose-500/30 shadow-2xs cursor-pointer">
+                    ✕ {{ __('messages.barcode_clear_selection') ?? 'Clear Selection' }}
+                </button>
+
+                {{-- Primary Print Button --}}
+                <button type="button"
+                        @click="submitPrint()"
+                        :disabled="selectedItems.length === 0"
+                        :class="selectedItems.length === 0 ? 'opacity-50 cursor-not-allowed bg-slate-700 text-slate-400' : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-900/30 cursor-pointer'"
+                        class="px-3.5 py-1.5 rounded-md text-xs font-black transition flex items-center gap-1.5 border border-violet-400/30">
+                    <span>🖨️</span>
+                    <span>{{ __('messages.print_stickers_btn') }}</span>
+                </button>
+            </div>
         </div>
-
-        {{-- Actions Row --}}
-        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0">
-            <button type="button"
-                    @click="addAllRecent()"
-                    class="px-2.5 py-1.5 sm:px-3 sm:py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs transition flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-                <span>{{ __('messages.barcode_add_all_in_stock') }}</span>
-            </button>
-
-            <button type="button"
-                    x-show="selectedItems.length > 0"
-                    @click="clearSelection()"
-                    class="px-2.5 py-1.5 sm:px-3 sm:py-1.5 text-xs font-bold rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 transition flex items-center gap-1">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                <span>{{ __('messages.clear_all') }}</span>
-            </button>
-
-            {{-- Primary Print Stickers CTA --}}
-            <button type="button"
-                    @click="submitPrint()"
-                    :disabled="selectedItems.length === 0"
-                    class="px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-lg text-xs font-black bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                <span>{{ __('messages.print_stickers_btn') }}</span>
-                <span x-show="totalLabelsCount > 0" class="px-1.5 py-0.5 rounded-md bg-white/20 text-[11px] font-mono font-bold" x-text="totalLabelsCount"></span>
-            </button>
-        </div>
-    </header>
+    </div>
 
     {{-- ============================================================
          2. SUMMARY STAT CARDS (4-UP COMPACT METRIC CARDS)
@@ -476,7 +660,7 @@ window.barcodeDesignerFactory = function () {
                     {{ number_format($inStockCount) }}
                 </p>
                 <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
-                    In-Stock Items
+                    {{ __('messages.status_in_stock') ?? 'In-Stock Items' }}
                 </p>
             </div>
         </div>
@@ -498,12 +682,12 @@ window.barcodeDesignerFactory = function () {
         {{-- Total Stickers to Print --}}
         <div class="w-full bg-white dark:bg-slate-900 rounded-lg border border-violet-200/80 dark:border-violet-900/60 bg-violet-50/30 dark:bg-violet-950/20 p-2.5 sm:p-3 flex items-center gap-2.5 sm:gap-3 shadow-2xs transition">
             <div class="shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg grid place-items-center bg-violet-600 text-white shadow-inner">
-                <span class="text-base sm:text-lg">🖨️</span>
+                <span class="text-base sm:text-lg">🏷️</span>
             </div>
             <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-lg font-black text-violet-700 dark:text-violet-300 leading-none tabular-nums font-mono" x-text="totalLabelsCount">
+                <p class="text-base sm:text-lg font-black text-violet-600 dark:text-violet-400 leading-none tabular-nums font-mono" x-text="totalLabelsCount">
                 </p>
-                <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
+                <p class="text-[10px] sm:text-[11px] text-violet-900 dark:text-violet-300 mt-1 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.barcode_total_labels') }}
                 </p>
             </div>
@@ -518,7 +702,7 @@ window.barcodeDesignerFactory = function () {
         {{-- Left Column: Designer Settings & Product Selection Matrix (8 Cols on Desktop) --}}
         <div class="lg:col-span-8 space-y-2 sm:space-y-2.5">
 
-            {{-- 3.1 LABEL CONFIGURATION & PRESET SELECTOR CARD --}}
+            {{-- 3.1 LABEL CONFIGURATION & PRESET / CUSTOM TEMPLATE SELECTOR CARD --}}
             <div class="p-3 sm:p-3.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
                     <div class="flex items-center gap-2">
@@ -529,24 +713,212 @@ window.barcodeDesignerFactory = function () {
                             {{ __('messages.barcode_settings_title') }}
                         </h2>
                     </div>
-                    <span class="text-[11px] font-mono font-bold text-violet-600 dark:text-violet-400 uppercase tracking-wider"
-                          x-text="currentPresetObj.width_mm ? currentPresetObj.width_mm + 'mm × ' + currentPresetObj.height_mm + 'mm' : ''"></span>
+
+                    {{-- Custom Designer Toggle Button --}}
+                    <div class="flex items-center gap-2">
+                        <button type="button"
+                                @click="showCustomPanel = !showCustomPanel; if (showCustomPanel) isCustomMode = true;"
+                                :class="showCustomPanel ? 'bg-violet-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
+                                class="px-2.5 py-1 text-xs font-bold rounded-md transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                            <span>✨</span>
+                            <span>{{ __('messages.barcode_custom_designer') }}</span>
+                        </button>
+                    </div>
                 </div>
 
-                {{-- Preset Selector Cards Grid --}}
+                {{-- Preset Selector Cards Grid (Defaults + Saved Templates) --}}
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    @foreach ($presets as $key => $preset)
-                        <label class="relative flex flex-col p-2.5 rounded-lg border cursor-pointer transition select-none shadow-2xs"
-                               :class="selectedPreset === '{{ $key }}' ? 'border-violet-600 bg-violet-50/60 dark:border-violet-500 dark:bg-violet-950/40 ring-2 ring-violet-500/20' : 'border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 bg-white dark:bg-slate-800/60'">
-                            <input type="radio" name="preset" value="{{ $key }}" x-model="selectedPreset" class="sr-only">
+                    <template x-for="(preset, key) in presets" :key="key">
+                        <div class="relative flex flex-col p-2.5 rounded-lg border cursor-pointer transition select-none shadow-2xs group"
+                             @click="selectPreset(key)"
+                             :class="selectedPreset === key && !isCustomMode ? 'border-violet-600 bg-violet-50/60 dark:border-violet-500 dark:bg-violet-950/40 ring-2 ring-violet-500/20' : 'border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 bg-white dark:bg-slate-800/60'">
                             <div class="flex items-center justify-between gap-1 mb-1">
-                                <span class="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">{{ $preset['name'] }}</span>
-                                <span class="w-2.5 h-2.5 rounded-full shrink-0"
-                                      :class="selectedPreset === '{{ $key }}' ? 'bg-violet-600' : 'bg-slate-300 dark:bg-slate-600'"></span>
+                                <div class="flex items-center gap-1 min-w-0">
+                                    <span class="font-bold text-xs text-slate-900 dark:text-slate-100 truncate" x-text="preset.name"></span>
+                                    <span x-show="preset.is_custom" class="px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                                        {{ __('messages.barcode_custom_template_badge') }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    {{-- Delete custom template icon button --}}
+                                    <button type="button"
+                                            x-show="preset.is_custom"
+                                            @click.stop="deleteCustomTemplate(key, preset.template_id)"
+                                            class="text-slate-400 hover:text-rose-600 p-0.5 rounded opacity-0 group-hover:opacity-100 transition cursor-pointer"
+                                            title="{{ __('messages.delete') ?? 'Delete Template' }}">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                    <span class="w-2.5 h-2.5 rounded-full"
+                                          :class="selectedPreset === key && !isCustomMode ? 'bg-violet-600' : 'bg-slate-300 dark:bg-slate-600'"></span>
+                                </div>
                             </div>
-                            <p class="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1 leading-normal">{{ $preset['description'] }}</p>
-                        </label>
-                    @endforeach
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1 leading-normal" x-text="preset.description"></p>
+                        </div>
+                    </template>
+
+                    {{-- Server-rendered fallback for SSR and Crawler / Test engines --}}
+                    <noscript>
+                        @foreach ($presets as $key => $preset)
+                            <div class="p-2.5 rounded-lg border border-slate-200 bg-white dark:bg-slate-800">
+                                <span class="font-bold text-xs">{{ $preset['name'] }}</span>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400">{{ $preset['description'] }}</p>
+                            </div>
+                        @endforeach
+                    </noscript>
+                </div>
+
+                {{-- ============================================================
+                     CUSTOM DIMENSION, SPACING & TEMPLATE CREATOR PANEL
+                     ============================================================ --}}
+                <div x-show="showCustomPanel"
+                     x-collapse
+                     class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-violet-200/90 dark:border-violet-900/60 space-y-3 mt-2 shadow-inner">
+                    <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-1.5">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-black text-violet-900 dark:text-violet-200">📐 {{ __('messages.barcode_custom_designer') }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button"
+                                    @click="showSaveModal = true"
+                                    class="px-2.5 py-1 text-xs font-black rounded bg-violet-600 hover:bg-violet-700 text-white shadow-2xs flex items-center gap-1 cursor-pointer">
+                                <span>💾</span>
+                                <span>{{ __('messages.barcode_save_template_btn') }}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Section 1: Paper & Dimension Spacings --}}
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                        {{-- Paper Type --}}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.barcode_paper_type') }}</label>
+                            <select x-model="customParams.type"
+                                    @change="isCustomMode = true"
+                                    class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-violet-500">
+                                <option value="thermal">{{ __('messages.barcode_paper_thermal') }}</option>
+                                <option value="sheet">{{ __('messages.barcode_paper_sheet') }}</option>
+                            </select>
+                        </div>
+
+                        {{-- Label Width (mm) --}}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.barcode_label_width') }}</label>
+                            <input type="number" step="0.5" x-model.number="customParams.width_mm" @input="isCustomMode = true"
+                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold focus:ring-2 focus:ring-violet-500">
+                        </div>
+
+                        {{-- Label Height (mm) --}}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.barcode_label_height') }}</label>
+                            <input type="number" step="0.5" x-model.number="customParams.height_mm" @input="isCustomMode = true"
+                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold focus:ring-2 focus:ring-violet-500">
+                        </div>
+
+                        {{-- Barcode Bar Height --}}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.barcode_bar_height') }}</label>
+                            <input type="number" x-model.number="customParams.bar_height" @input="isCustomMode = true"
+                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold focus:ring-2 focus:ring-violet-500">
+                        </div>
+
+                        {{-- Horizontal Gap / Spacing (mm) --}}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.barcode_gap_x') }}</label>
+                            <input type="number" step="0.5" x-model.number="customParams.gap_x_mm" @input="isCustomMode = true"
+                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold focus:ring-2 focus:ring-violet-500"
+                                   placeholder="0">
+                        </div>
+
+                        {{-- Vertical Gap / Spacing (mm) --}}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.barcode_gap_y') }}</label>
+                            <input type="number" step="0.5" x-model.number="customParams.gap_y_mm" @input="isCustomMode = true"
+                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold focus:ring-2 focus:ring-violet-500"
+                                   placeholder="0">
+                        </div>
+
+                        {{-- Top/Bottom Padding (mm) --}}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.barcode_padding_tb') }}</label>
+                            <input type="number" step="0.2" x-model.number="customParams.padding_top_mm" @input="isCustomMode = true; customParams.padding_bottom_mm = customParams.padding_top_mm"
+                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold focus:ring-2 focus:ring-violet-500">
+                        </div>
+
+                        {{-- Left/Right Padding (mm) --}}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.barcode_padding_lr') }}</label>
+                            <input type="number" step="0.2" x-model.number="customParams.padding_left_mm" @input="isCustomMode = true; customParams.padding_right_mm = customParams.padding_left_mm"
+                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold focus:ring-2 focus:ring-violet-500">
+                        </div>
+
+                        {{-- Sheet Columns (Only for Sheet type) --}}
+                        <div x-show="customParams.type === 'sheet'">
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.barcode_sheet_columns') }}</label>
+                            <input type="number" min="1" max="10" x-model.number="customParams.cols" @input="isCustomMode = true"
+                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold focus:ring-2 focus:ring-violet-500">
+                        </div>
+
+                        {{-- Sheet Rows (Only for Sheet type) --}}
+                        <div x-show="customParams.type === 'sheet'">
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.barcode_sheet_rows') }}</label>
+                            <input type="number" min="1" max="30" x-model.number="customParams.rows" @input="isCustomMode = true"
+                                   class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold focus:ring-2 focus:ring-violet-500">
+                        </div>
+                    </div>
+
+                    {{-- Section 2: Fine-Grained Typography & Inter-Element Spacings --}}
+                    <div class="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-2">
+                        <span class="text-[11px] font-black text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                            <span>🔤</span>
+                            <span>{{ __('messages.barcode_typography_spacing_title') }}</span>
+                        </span>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 text-xs">
+                            {{-- Store Name Font Size --}}
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-300 mb-0.5">{{ __('messages.barcode_store_name_size') }}</label>
+                                <input type="number" step="0.5" min="6" max="20" x-model.number="customParams.store_font_num" @input="isCustomMode = true"
+                                       class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold">
+                            </div>
+
+                            {{-- Product Name Font Size --}}
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-300 mb-0.5">{{ __('messages.barcode_product_name_size') }}</label>
+                                <input type="number" step="0.5" min="6" max="20" x-model.number="customParams.name_font_num" @input="isCustomMode = true"
+                                       class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold">
+                            </div>
+
+                            {{-- Price Font Size --}}
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-300 mb-0.5">{{ __('messages.barcode_price_size') }}</label>
+                                <input type="number" step="0.5" min="7" max="24" x-model.number="customParams.price_font_num" @input="isCustomMode = true"
+                                       class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold">
+                            </div>
+
+                            {{-- Spacing: Store to Product Name --}}
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-300 mb-0.5">{{ __('messages.barcode_spacing_store_to_name') }}</label>
+                                <input type="number" step="0.2" min="0" max="10" x-model.number="customParams.spacing_store_to_name_mm" @input="isCustomMode = true"
+                                       class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold">
+                            </div>
+
+                            {{-- Spacing: Product Name to Code --}}
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-300 mb-0.5">{{ __('messages.barcode_spacing_name_to_code') }}</label>
+                                <input type="number" step="0.2" min="0" max="10" x-model.number="customParams.spacing_name_to_code_mm" @input="isCustomMode = true"
+                                       class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold">
+                            </div>
+
+                            {{-- Spacing: Code to Price --}}
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-300 mb-0.5">{{ __('messages.barcode_spacing_code_to_price') }}</label>
+                                <input type="number" step="0.2" min="0" max="10" x-model.number="customParams.spacing_code_to_price_mm" @input="isCustomMode = true"
+                                       class="w-full border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono font-bold">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Barcode / QR Code Switcher & Field Visibility Toggles --}}
@@ -554,20 +926,20 @@ window.barcodeDesignerFactory = function () {
                     {{-- Format Selector (Code 128 vs QR Code) --}}
                     <div>
                         <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            {{ __('messages.barcode_format') }}
+                            {{ __('messages.barcode_type') }}
                         </label>
                         <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200 dark:border-slate-700 text-xs">
                             <button type="button"
                                     @click="codeType = 'barcode_128'"
-                                    :class="codeType === 'barcode_128' ? 'bg-white dark:bg-slate-900 text-violet-600 dark:text-violet-400 shadow-xs font-black' : 'text-slate-600 dark:text-slate-400 font-semibold hover:text-slate-900'"
-                                    class="py-1.5 px-2 rounded-md text-center transition flex items-center justify-center gap-1.5">
+                                    :class="codeType === 'barcode_128' ? 'bg-white dark:bg-slate-900 text-violet-600 dark:text-violet-400 shadow-xs font-black' : 'text-slate-600 dark:text-slate-400 font-semibold hover:text-slate-900 dark:hover:text-slate-200'"
+                                    class="py-1.5 px-2 rounded-md text-center transition flex items-center justify-center gap-1.5 cursor-pointer">
                                 <span>|||</span>
                                 <span>Code 128</span>
                             </button>
                             <button type="button"
                                     @click="codeType = 'qr_code'"
-                                    :class="codeType === 'qr_code' ? 'bg-white dark:bg-slate-900 text-violet-600 dark:text-violet-400 shadow-xs font-black' : 'text-slate-600 dark:text-slate-400 font-semibold hover:text-slate-900'"
-                                    class="py-1.5 px-2 rounded-md text-center transition flex items-center justify-center gap-1.5">
+                                    :class="codeType === 'qr_code' ? 'bg-white dark:bg-slate-900 text-violet-600 dark:text-violet-400 shadow-xs font-black' : 'text-slate-600 dark:text-slate-400 font-semibold hover:text-slate-900 dark:hover:text-slate-200'"
+                                    class="py-1.5 px-2 rounded-md text-center transition flex items-center justify-center gap-1.5 cursor-pointer">
                                 <span>⊞</span>
                                 <span>QR Code</span>
                             </button>
@@ -577,24 +949,24 @@ window.barcodeDesignerFactory = function () {
                     {{-- Visibility Switches (4 elements) --}}
                     <div>
                         <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            {{ __('messages.barcode_visible_elements') }}
+                            {{ __('messages.barcode_display_elements') }}
                         </label>
                         <div class="grid grid-cols-2 gap-1 text-[11px]">
                             <label class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 cursor-pointer">
                                 <input type="checkbox" x-model="showStoreName" class="rounded border-slate-300 dark:border-slate-600 text-violet-600 focus:ring-violet-500">
-                                <span>{{ __('messages.store_name') }}</span>
+                                <span>{{ __('messages.barcode_show_store_name') }}</span>
                             </label>
                             <label class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 cursor-pointer">
                                 <input type="checkbox" x-model="showProductName" class="rounded border-slate-300 dark:border-slate-600 text-violet-600 focus:ring-violet-500">
-                                <span>{{ __('messages.product_name') }}</span>
+                                <span>{{ __('messages.barcode_show_product_name') }}</span>
                             </label>
                             <label class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 cursor-pointer">
                                 <input type="checkbox" x-model="showPrice" class="rounded border-slate-300 dark:border-slate-600 text-violet-600 focus:ring-violet-500">
-                                <span>{{ __('messages.price') }}</span>
+                                <span>{{ __('messages.barcode_show_price') }}</span>
                             </label>
                             <label class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 cursor-pointer">
                                 <input type="checkbox" x-model="showCodeText" class="rounded border-slate-300 dark:border-slate-600 text-violet-600 focus:ring-violet-500">
-                                <span>Code Text</span>
+                                <span>{{ __('messages.barcode_show_code_text') }}</span>
                             </label>
                         </div>
                     </div>
@@ -615,7 +987,7 @@ window.barcodeDesignerFactory = function () {
 
                     <div class="flex items-center gap-1.5">
                         <span class="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
-                            <span x-text="selectedItems.length"></span> items in print queue
+                            <span x-text="selectedItems.length"></span> {{ __('messages.barcode_selected_products') }}
                         </span>
                     </div>
                 </div>
@@ -707,7 +1079,7 @@ window.barcodeDesignerFactory = function () {
                                             <p class="text-sm font-semibold text-slate-600 dark:text-slate-300">{{ __('messages.barcode_no_items_selected_hint') }}</p>
                                             <button type="button"
                                                     @click="addAllRecent()"
-                                                    class="mt-2 text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline">
+                                                    class="mt-2 text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline cursor-pointer">
                                                 + {{ __('messages.barcode_add_all_in_stock') }}
                                             </button>
                                         </div>
@@ -743,14 +1115,14 @@ window.barcodeDesignerFactory = function () {
                                         <div class="inline-flex items-center justify-center gap-1">
                                             <button type="button"
                                                     @click="if (item.quantity > 1) item.quantity--"
-                                                    class="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-black flex items-center justify-center shadow-2xs">-</button>
+                                                    class="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-black flex items-center justify-center shadow-2xs cursor-pointer">-</button>
                                             <input type="number"
                                                    x-model.number="item.quantity"
                                                    min="1"
                                                    class="w-14 text-center px-1.5 py-1 text-xs font-mono font-black rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 shadow-2xs">
                                             <button type="button"
                                                     @click="item.quantity++"
-                                                    class="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-black flex items-center justify-center shadow-2xs">+</button>
+                                                    class="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-black flex items-center justify-center shadow-2xs cursor-pointer">+</button>
                                         </div>
                                     </td>
 
@@ -758,8 +1130,8 @@ window.barcodeDesignerFactory = function () {
                                     <td class="py-2 px-2 text-center" @click.stop>
                                         <button type="button"
                                                 @click="removeItem(index)"
-                                                class="text-slate-400 hover:text-rose-600 transition p-1"
-                                                title="Remove">
+                                                class="text-slate-400 hover:text-rose-600 transition p-1 cursor-pointer"
+                                                title="{{ __('messages.delete') ?? 'Remove' }}">
                                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                             </svg>
@@ -790,46 +1162,50 @@ window.barcodeDesignerFactory = function () {
                     <div x-show="selectedItems.length > 1" class="flex items-center gap-1">
                         <button type="button"
                                 @click="prevPreview()"
-                                class="w-5 h-5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 flex items-center justify-center text-xs font-bold shadow-2xs">◀</button>
+                                class="w-5 h-5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-xs font-bold shadow-2xs cursor-pointer">◀</button>
                         <span class="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400"
                               x-text="(previewIndex + 1) + ' / ' + selectedItems.length"></span>
                         <button type="button"
                                 @click="nextPreview()"
-                                class="w-5 h-5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 flex items-center justify-center text-xs font-bold shadow-2xs">▶</button>
+                                class="w-5 h-5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center text-xs font-bold shadow-2xs cursor-pointer">▶</button>
                     </div>
                 </div>
 
-                {{-- Scaled Realistic Thermal Sticker Card Box --}}
-                <div class="p-4 sm:p-6 rounded-lg bg-slate-100 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 flex items-center justify-center min-h-[220px]">
-                    <div class="bg-white text-slate-900 p-3 rounded-md shadow-md border border-slate-300 w-full max-w-[240px] text-center flex flex-col items-center justify-center space-y-1 transition-all">
+                {{-- Scaled Realistic Thermal Sticker Card Box (Responsive Aspect Ratio + Live Typography & Spacing) --}}
+                <div class="p-4 sm:p-5 rounded-lg bg-slate-100 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 flex items-center justify-center min-h-[220px]">
+                    <div class="bg-white text-slate-900 rounded-md shadow-md border border-slate-300 dark:border-slate-600 w-full max-w-[240px] text-center flex flex-col items-center justify-between transition-all"
+                         :style="`aspect-ratio: ${currentPresetObj.width_mm || 50} / ${currentPresetObj.height_mm || 30}; min-height: 110px; padding: ${currentPresetObj.padding_top_mm || 1.2}mm ${currentPresetObj.padding_right_mm || 1.5}mm ${currentPresetObj.padding_bottom_mm || 1.2}mm ${currentPresetObj.padding_left_mm || 1.5}mm;`">
                         {{-- Store Name --}}
                         <div x-show="showStoreName"
-                             class="text-[11px] font-extrabold tracking-tight text-slate-800 truncate w-full"
+                             class="font-extrabold tracking-tight text-slate-800 truncate w-full"
+                             :style="`font-size: ${currentPresetObj.store_font || '9px'}; margin-bottom: ${currentPresetObj.spacing_store_to_name_mm || 0.5}mm;`"
                              x-text="'{{ $store->name }}'"></div>
 
                         {{-- Product Name --}}
                         <div x-show="showProductName"
-                             class="text-[10px] font-semibold text-slate-700 line-clamp-2 w-full leading-tight"
+                             class="font-semibold text-slate-700 line-clamp-2 w-full leading-tight"
+                             :style="`font-size: ${currentPresetObj.name_font || '8.5px'}; margin-bottom: ${currentPresetObj.spacing_name_to_code_mm || 0.5}mm;`"
                              x-text="previewItem ? previewItem.name : 'Sample Product Name'"></div>
 
                         {{-- Barcode / QR Graphic Simulation --}}
-                        <div class="py-1 w-full flex items-center justify-center">
+                        <div class="w-full flex items-center justify-center flex-1 min-h-0"
+                             :style="`margin-bottom: ${currentPresetObj.spacing_code_to_price_mm || 0.5}mm;`">
                             <template x-if="codeType === 'barcode_128'">
                                 <div class="w-full flex flex-col items-center">
-                                    <div class="h-9 w-4/5 bg-slate-900 flex items-center justify-center text-white text-[9px] font-mono tracking-widest rounded-xs"
-                                         style="background-image: repeating-linear-gradient(90deg, #000 0px, #000 2px, #fff 2px, #fff 4px, #000 4px, #000 7px, #fff 7px, #fff 8px);"></div>
+                                    <div class="w-4/5 bg-slate-900 flex items-center justify-center text-white font-mono tracking-widest rounded-xs"
+                                         :style="`height: ${Math.min(32, Math.max(14, (currentPresetObj.bar_height || 28) * 0.85))}px; background-image: repeating-linear-gradient(90deg, #000 0px, #000 2px, #fff 2px, #fff 4px, #000 4px, #000 7px, #fff 7px, #fff 8px);`"></div>
                                     <div x-show="showCodeText"
-                                         class="text-[9px] font-mono font-bold mt-0.5 text-slate-800"
+                                         class="text-[8.5px] font-mono font-bold mt-0.5 text-slate-800"
                                          x-text="previewItem ? previewItem.code : '885123456789'"></div>
                                 </div>
                             </template>
                             <template x-if="codeType === 'qr_code'">
                                 <div class="w-full flex flex-col items-center justify-center">
-                                    <div class="w-16 h-16 bg-white p-0.5 border border-slate-200 rounded flex items-center justify-center shadow-xs"
+                                    <div class="w-14 h-14 bg-white p-0.5 border border-slate-200 rounded flex items-center justify-center shadow-xs"
                                          x-html="renderQrSvg(previewItem ? previewItem.code : '885123456789')">
                                     </div>
                                     <div x-show="showCodeText"
-                                         class="text-[9px] font-mono font-bold mt-0.5 text-slate-800"
+                                         class="text-[8.5px] font-mono font-bold mt-0.5 text-slate-800"
                                          x-text="previewItem ? previewItem.code : '885123456789'"></div>
                                 </div>
                             </template>
@@ -837,7 +1213,8 @@ window.barcodeDesignerFactory = function () {
 
                         {{-- Price Badge (MMK) --}}
                         <div x-show="showPrice"
-                             class="text-xs font-black text-slate-950 font-mono"
+                             class="font-black text-slate-950 font-mono"
+                             :style="`font-size: ${currentPresetObj.price_font || '11px'};`"
                              x-text="previewItem ? formatNumber(previewItem.price) + ' Ks' : '15,000 Ks'"></div>
                     </div>
                 </div>
@@ -845,13 +1222,18 @@ window.barcodeDesignerFactory = function () {
                 {{-- Summary Specs & Dimensions Details --}}
                 <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700 space-y-1.5 text-xs">
                     <div class="flex justify-between">
-                        <span class="text-slate-500 dark:text-slate-400">Selected Label Format:</span>
+                        <span class="text-slate-500 dark:text-slate-400">Selected Label:</span>
                         <span class="font-bold text-slate-900 dark:text-slate-100" x-text="currentPresetObj.name || selectedPreset"></span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-slate-500 dark:text-slate-400">Dimensions:</span>
+                        <span class="text-slate-500 dark:text-slate-400">{{ __('messages.barcode_label_width') }}:</span>
                         <span class="font-mono font-bold text-slate-900 dark:text-slate-100"
-                              x-text="currentPresetObj.width_mm ? currentPresetObj.width_mm + 'mm × ' + currentPresetObj.height_mm + 'mm' : 'Standard'"></span>
+                              x-text="(currentPresetObj.width_mm || 50) + 'mm × ' + (currentPresetObj.height_mm || 30) + 'mm'"></span>
+                    </div>
+                    <div class="flex justify-between" x-show="currentPresetObj.gap_x_mm > 0 || currentPresetObj.gap_y_mm > 0">
+                        <span class="text-slate-500 dark:text-slate-400">Gap Spacing:</span>
+                        <span class="font-mono font-bold text-amber-600 dark:text-amber-400"
+                              x-text="(currentPresetObj.gap_x_mm || 0) + 'mm (X) / ' + (currentPresetObj.gap_y_mm || 0) + 'mm (Y)'"></span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-slate-500 dark:text-slate-400">{{ __('messages.barcode_selected_products') }}:</span>
@@ -867,31 +1249,115 @@ window.barcodeDesignerFactory = function () {
                 <button type="button"
                         @click="submitPrint()"
                         :disabled="selectedItems.length === 0"
-                        class="w-full py-2.5 px-4 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-black shadow-2xs transition flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
+                        :class="selectedItems.length === 0 ? 'opacity-50 cursor-not-allowed bg-slate-700 text-slate-400' : 'bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-900/30 active:scale-[0.99] cursor-pointer'"
+                        class="w-full py-2.5 px-4 rounded-lg font-black text-xs sm:text-sm tracking-wide transition flex items-center justify-center gap-2 border border-violet-400/30">
+                    <span>🖨️</span>
                     <span>{{ __('messages.print_stickers_btn') }}</span>
-                    <span x-show="totalLabelsCount > 0" class="px-1.5 py-0.5 rounded-md bg-white/20 text-[11px] font-mono font-bold" x-text="totalLabelsCount"></span>
                 </button>
             </div>
         </div>
     </div>
 
-    {{-- Hidden Form to Submit to Print View in New Tab --}}
+    {{-- ============================================================
+         4. SAVE AS TEMPLATE MODAL DIALOG
+         ============================================================ --}}
+    <div x-show="showSaveModal"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div @click.away="showSaveModal = false"
+             class="w-full max-w-md bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-4 animate-in fade-in zoom-in-95">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">💾</span>
+                    <h3 class="text-sm font-black text-slate-900 dark:text-slate-100">{{ __('messages.barcode_save_template_modal_title') }}</h3>
+                </div>
+                <button type="button" @click="showSaveModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold cursor-pointer">✕</button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.barcode_template_name') }}</label>
+                    <input type="text"
+                           x-model="newTemplateName"
+                           placeholder="{{ __('messages.barcode_template_name_placeholder') }}"
+                           class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-violet-500">
+                </div>
+
+                <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700 space-y-1 text-[11px]">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500 dark:text-slate-400">{{ __('messages.barcode_label_width') }}:</span>
+                        <span class="font-mono font-bold text-slate-800 dark:text-slate-200" x-text="customParams.width_mm + 'mm × ' + customParams.height_mm + 'mm'"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500 dark:text-slate-400">Spacing Gaps:</span>
+                        <span class="font-mono font-bold text-slate-800 dark:text-slate-200" x-text="(customParams.gap_x_mm || 0) + 'mm (X) / ' + (customParams.gap_y_mm || 0) + 'mm (Y)'"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500 dark:text-slate-400">{{ __('messages.barcode_paper_type') }}:</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200 uppercase" x-text="customParams.type"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button type="button"
+                        @click="showSaveModal = false"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer">
+                    {{ __('messages.cancel') ?? 'Cancel' }}
+                </button>
+                <button type="button"
+                        @click="saveCurrentTemplate()"
+                        :disabled="!newTemplateName.trim() || isSavingTemplate"
+                        class="px-4 py-1.5 rounded-lg text-xs font-black bg-violet-600 hover:bg-violet-700 text-white shadow-md disabled:opacity-50 flex items-center gap-1.5 cursor-pointer">
+                    <span x-show="isSavingTemplate">⏳</span>
+                    <span>{{ __('messages.barcode_save_template_btn') }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- ============================================================
+         5. HIDDEN FORM FOR PRINT SUBMISSION
+         ============================================================ --}}
     <form id="barcodePrintForm"
-          action="{{ route('store.admin.barcode.print', ['store_slug' => $store->slug]) }}"
           method="POST"
+          action="{{ route('store.admin.barcode.print', ['store_slug' => $store->slug]) }}"
           target="_blank"
           class="hidden">
         @csrf
         <input type="hidden" name="preset" :value="selectedPreset">
+        <input type="hidden" name="is_custom_override" :value="isCustomMode ? '1' : '0'">
+        <input type="hidden" name="custom_name" :value="customParams.name">
+        <input type="hidden" name="custom_type" :value="customParams.type">
+        <input type="hidden" name="custom_width_mm" :value="customParams.width_mm">
+        <input type="hidden" name="custom_height_mm" :value="customParams.height_mm">
+        <input type="hidden" name="custom_gap_x_mm" :value="customParams.gap_x_mm">
+        <input type="hidden" name="custom_gap_y_mm" :value="customParams.gap_y_mm">
+        <input type="hidden" name="custom_padding_top_mm" :value="customParams.padding_top_mm">
+        <input type="hidden" name="custom_padding_bottom_mm" :value="customParams.padding_bottom_mm">
+        <input type="hidden" name="custom_padding_left_mm" :value="customParams.padding_left_mm">
+        <input type="hidden" name="custom_padding_right_mm" :value="customParams.padding_right_mm">
+        <input type="hidden" name="custom_spacing_store_to_name_mm" :value="customParams.spacing_store_to_name_mm">
+        <input type="hidden" name="custom_spacing_name_to_code_mm" :value="customParams.spacing_name_to_code_mm">
+        <input type="hidden" name="custom_spacing_code_to_price_mm" :value="customParams.spacing_code_to_price_mm">
+        <input type="hidden" name="custom_store_font" :value="(customParams.store_font_num || 9.0) + 'px'">
+        <input type="hidden" name="custom_name_font" :value="(customParams.name_font_num || 8.5) + 'px'">
+        <input type="hidden" name="custom_price_font" :value="(customParams.price_font_num || 11.0) + 'px'">
+        <input type="hidden" name="custom_margin_top_mm" :value="customParams.margin_top_mm">
+        <input type="hidden" name="custom_margin_bottom_mm" :value="customParams.margin_bottom_mm">
+        <input type="hidden" name="custom_margin_left_mm" :value="customParams.margin_left_mm">
+        <input type="hidden" name="custom_margin_right_mm" :value="customParams.margin_right_mm">
+        <input type="hidden" name="custom_cols" :value="customParams.cols">
+        <input type="hidden" name="custom_rows" :value="customParams.rows">
+        <input type="hidden" name="custom_bar_height" :value="customParams.bar_height">
+        <input type="hidden" name="custom_bar_width" :value="customParams.bar_width">
         <input type="hidden" name="code_type" :value="codeType">
         <input type="hidden" name="show_store_name" :value="showStoreName ? '1' : '0'">
         <input type="hidden" name="show_product_name" :value="showProductName ? '1' : '0'">
         <input type="hidden" name="show_price" :value="showPrice ? '1' : '0'">
         <input type="hidden" name="show_code_text" :value="showCodeText ? '1' : '0'">
-        <input type="hidden" name="items_json" id="items_json_field">
+        <input type="hidden" name="items_json" id="items_json_field" value="[]">
     </form>
+
 </div>
 @endsection

@@ -715,6 +715,8 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/barcode', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'index'])->name('store.admin.barcode.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/barcode/search', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'search'])->name('store.admin.barcode.search')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/barcode/print', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'print'])->name('store.admin.barcode.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/barcode/templates', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'saveTemplate'])->name('store.admin.barcode.templates.save')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::delete('/admin/barcode/templates/{id}', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'deleteTemplate'])->name('store.admin.barcode.templates.delete')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Warranty & Serial / IMEI Tracker (SoT §19)
         Route::get('/admin/warranty', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'index'])->name('store.admin.warranty.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');

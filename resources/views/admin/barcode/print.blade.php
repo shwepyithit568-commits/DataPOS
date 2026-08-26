@@ -108,13 +108,15 @@
         @else
             @page {
                 size: A4 portrait;
-                margin: 0mm;
+                margin: {{ $preset['margin_top_mm'] ?? 0 }}mm {{ $preset['margin_right_mm'] ?? 0 }}mm {{ $preset['margin_bottom_mm'] ?? 0 }}mm {{ $preset['margin_left_mm'] ?? 0 }}mm;
             }
 
             .print-container {
                 display: grid;
-                grid-template-columns: repeat({{ $preset['cols'] }}, {{ $preset['width_mm'] }}mm);
+                grid-template-columns: repeat({{ $preset['cols'] ?? 3 }}, {{ $preset['width_mm'] }}mm);
                 grid-auto-rows: {{ $preset['height_mm'] }}mm;
+                column-gap: {{ $preset['gap_x_mm'] ?? 0 }}mm;
+                row-gap: {{ $preset['gap_y_mm'] ?? 0 }}mm;
                 width: 210mm;
                 margin: 20px auto;
                 padding: 0;
@@ -156,6 +158,7 @@
             text-overflow: ellipsis;
             width: 100%;
             letter-spacing: -0.01em;
+            margin-bottom: {{ $preset['spacing_store_to_name_mm'] ?? 0.5 }}mm;
         }
 
         .product-name {
@@ -167,6 +170,7 @@
             overflow: hidden;
             width: 100%;
             word-break: break-word;
+            margin-bottom: {{ $preset['spacing_name_to_code_mm'] ?? 0.5 }}mm;
         }
 
         .barcode-wrapper {
@@ -178,6 +182,7 @@
             justify-content: center;
             overflow: hidden;
             padding: 0.5px 0;
+            margin-bottom: {{ $preset['spacing_code_to_price_mm'] ?? 0.5 }}mm;
         }
 
         .barcode-wrapper svg {

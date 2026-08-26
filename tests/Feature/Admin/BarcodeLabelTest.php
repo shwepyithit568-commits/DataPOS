@@ -141,4 +141,82 @@ class BarcodeLabelTest extends TestCase
         $this->assertStringContainsString('<rect', $svg);
         $this->assertStringContainsString('ITEM-998877', $svg);
     }
+
+    public function test_admin_can_save_and_delete_custom_barcode_template(): void
+    {
+        $saveResponse = $this->actingAs($this->admin)->postJson(route('store.admin.barcode.templates.save', [
+            'store_slug' => $this->store->slug,
+        ]), [
+            'name' => 'Custom Jewelry Tag 45x25',
+            'type' => 'thermal',
+            'width_mm' => 45.0,
+            'height_mm' => 25.0,
+            'gap_x_mm' => 2.0,
+            'gap_y_mm' => 2.0,
+            'bar_height' => 20,
+            'code_type' => 'barcode_128',
+            'show_store_name' => true,
+            'show_product_name' => true,
+            'show_price' => true,
+        ]);
+
+        $saveResponse->assertStatus(200);
+        $saveResponse->assertJsonFragment(['success' => true]);
+
+        $this->assertDatabaseHas('barcode_templates', [
+            'store_id' => $this->store->id,
+            'name' => 'Custom Jewelry Tag 45x25',
+            'width_mm' => 45.0,
+        ]);
+
+        $template = \App\Models\BarcodeTemplate::where('store_id', $this->store->id)->where('name', 'Custom Jewelry Tag 45x25')->first();
+        $this->assertNotNull($template);
+
+        // Delete template
+        $deleteResponse = $this->actingAs($this->admin)->deleteJson(route('store.admin.barcode.templates.delete', [
+            'store_slug' => $this->store->slug,
+            'id' => $template->id,
+        ]));
+
+        $deleteResponse->assertStatus(200);
+        $this->assertDatabaseMissing('barcode_templates', [
+            'id' => $template->id,
+        ]);
+    }
+
+    public function test_admin_can_print_with_custom_dimensions_override(): void
+    {
+        $items = [
+            [
+                'id' => "p-{$this->product->id}",
+                'product_id' => $this->product->id,
+                'name' => $this->product->name,
+                'code' => $this->product->barcode,
+                'price' => $this->product->retail_price,
+                'quantity' => 2,
+            ]
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('store.admin.barcode.print', [
+            'store_slug' => $this->store->slug,
+        ]), [
+            'is_custom_override' => '1',
+            'custom_name' => 'Custom 45x25mm Label',
+            'custom_type' => 'thermal',
+            'custom_width_mm' => 45,
+            'custom_height_mm' => 25,
+            'custom_gap_x_mm' => 2,
+            'custom_gap_y_mm' => 2,
+            'code_type' => 'qr_code',
+            'show_store_name' => '1',
+            'show_product_name' => '1',
+            'show_price' => '1',
+            'show_code_text' => '1',
+            'items_json' => json_encode($items),
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertSee('45mm 25mm');
+        $response->assertSee('<svg', false);
+    }
 }

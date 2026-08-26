@@ -1,6 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', $session->session_number . ' - ' . __('messages.sidebar_stock_count'))
+@section('main_padding', 'p-2')
 
 @section('content')
 <div x-data="stockCountSheet()" class="space-y-6">
