@@ -263,7 +263,9 @@
                 'options' => [
                     'standard'     => __('messages.product_type_standard'),
                     'serialized'   => __('messages.product_type_serialized'),
+                    'variant'      => __('messages.product_type_variant'),
                     'service'      => __('messages.product_type_service'),
+                    'digital'      => __('messages.product_type_digital'),
                     'weight_based' => __('messages.product_type_weight_based'),
                 ]
             ],

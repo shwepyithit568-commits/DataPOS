@@ -1,172 +1,185 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.sidebar_stock_ledger') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-2')
 
 @section('content')
-<div class="w-full space-y-5 sm:space-y-6">
+<div class="w-full space-y-2 sm:space-y-2.5">
 
     {{-- ============================================================
-         PAGE HEADER — standard admin-page-header pattern
+         1. COMPACT HERO PAGE HEADER
          ============================================================ --}}
-    <div class="admin-page-header">
+    <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
         <div class="min-w-0">
-            <p class="text-[11px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                {{ __('messages.sidebar_inventory') ?? 'Inventory' }}
-            </p>
-            <h1 class="admin-page-title mt-0.5">
-                {{ __('messages.stock_ledger_title') }}
+            <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
+                    <span>📦</span>
+                    <span>{{ __('messages.sidebar_inventory') ?? 'Inventory' }}</span>
+                </span>
+                <span class="text-slate-300 dark:text-slate-700">/</span>
+                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">{{ $store->name }}</span>
+            </div>
+            <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span>{{ __('messages.stock_ledger_title') }}</span>
+                <span class="text-xs font-mono font-bold text-slate-400">({{ number_format($movements->total()) }})</span>
             </h1>
-            <p class="admin-page-sub mt-1">
-                {{ $store->name }} · {{ __('messages.stock_ledger_sub') }}
-            </p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{{ __('messages.stock_ledger_sub') }}</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2 shrink-0">
+
+        <div class="flex flex-wrap items-center gap-1.5 shrink-0">
             {{-- Switch to Bin Card --}}
             <a href="{{ route('store.admin.stock_ledger.bin_card', ['store_slug' => $store->slug]) }}"
-               class="admin-secondary-btn">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-                <span class="hidden sm:inline">{{ __('messages.stock_ledger_bin_card') }}</span>
-            </a>
-            {{-- Export CSV --}}
-            <a href="{{ route('store.admin.stock_ledger.export', array_merge(['store_slug' => $store->slug], request()->all())) }}"
-               class="admin-primary-btn">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <span class="hidden sm:inline">{{ __('messages.stock_ledger_export_csv') }}</span>
+               class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition flex items-center gap-1 shadow-2xs">
+                <span>📑</span>
+                <span>{{ __('messages.stock_ledger_bin_card') }}</span>
             </a>
         </div>
     </div>
 
     {{-- ============================================================
-         KPI Summary Hairline Grid — standard admin-hairline-grid pattern
+         2. KPI SUMMARY CARDS (4-UP COMPACT)
          ============================================================ --}}
-    <div class="admin-hairline-grid grid-cols-2 sm:grid-cols-4">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
         {{-- Total Movements --}}
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label">{{ __('messages.stock_ledger_stat_total') }}</div>
-            <div class="admin-stat-value">{{ number_format($metrics['total_records']) }}</div>
-            <div class="admin-stat-sub">{{ number_format($metrics['unique_products']) }} {{ __('messages.stock_ledger_stat_products') }}</div>
-        </div>
-        {{-- Total Inbound --}}
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label text-emerald-600 dark:text-emerald-400">{{ __('messages.stock_ledger_stat_inflow') }}</div>
-            <div class="admin-stat-value text-emerald-600 dark:text-emerald-400">+{{ number_format($metrics['total_inflow'], 3) }}</div>
-            <div class="admin-stat-sub">Purchases, Returns, Adj.</div>
-        </div>
-        {{-- Total Outbound --}}
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label text-rose-600 dark:text-rose-400">{{ __('messages.stock_ledger_stat_outflow') }}</div>
-            <div class="admin-stat-value text-rose-600 dark:text-rose-400">-{{ number_format($metrics['total_outflow'], 3) }}</div>
-            <div class="admin-stat-sub">Sales, Transfers, Adj.</div>
-        </div>
-        {{-- Net Delta --}}
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label {{ $metrics['net_delta'] >= 0 ? 'text-violet-600 dark:text-violet-400' : 'text-rose-600 dark:text-rose-400' }}">
-                {{ __('messages.stock_ledger_stat_net') }}
+        <div class="p-2.5 sm:p-3 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+            <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                <span>📊</span>
+                <span>{{ __('messages.stock_ledger_stat_total') }}</span>
             </div>
-            <div class="admin-stat-value {{ $metrics['net_delta'] >= 0 ? 'text-violet-600 dark:text-violet-400' : 'text-rose-600 dark:text-rose-400' }}">
+            <div class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 font-mono mt-0.5">
+                {{ number_format($metrics['total_records']) }}
+            </div>
+            <div class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">
+                {{ number_format($metrics['unique_products']) }} {{ __('messages.stock_ledger_stat_products') }}
+            </div>
+        </div>
+
+        {{-- Total Inbound --}}
+        <div class="p-2.5 sm:p-3 rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-2xs">
+            <div class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1">
+                <span>📥</span>
+                <span>{{ __('messages.stock_ledger_stat_inflow') }}</span>
+            </div>
+            <div class="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
+                +{{ number_format($metrics['total_inflow'], 3) }}
+            </div>
+            <div class="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5 truncate">
+                Purchases, Returns, Adj.
+            </div>
+        </div>
+
+        {{-- Total Outbound --}}
+        <div class="p-2.5 sm:p-3 rounded-lg border border-rose-200/80 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20 shadow-2xs">
+            <div class="text-[11px] font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider flex items-center gap-1">
+                <span>📤</span>
+                <span>{{ __('messages.stock_ledger_stat_outflow') }}</span>
+            </div>
+            <div class="text-base sm:text-lg font-black text-rose-600 dark:text-rose-400 font-mono mt-0.5">
+                -{{ number_format($metrics['total_outflow'], 3) }}
+            </div>
+            <div class="text-[10px] text-rose-600/80 dark:text-rose-400/80 mt-0.5 truncate">
+                Sales, Transfers, Adj.
+            </div>
+        </div>
+
+        {{-- Net Delta --}}
+        <div class="p-2.5 sm:p-3 rounded-lg border border-violet-200/80 dark:border-violet-900/60 bg-violet-50/40 dark:bg-violet-950/20 shadow-2xs">
+            <div class="text-[11px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider flex items-center gap-1">
+                <span>⚡</span>
+                <span>{{ __('messages.stock_ledger_stat_net') }}</span>
+            </div>
+            <div class="text-base sm:text-lg font-black font-mono mt-0.5 {{ $metrics['net_delta'] >= 0 ? 'text-violet-600 dark:text-violet-400' : 'text-rose-600 dark:text-rose-400' }}">
                 {{ $metrics['net_delta'] >= 0 ? '+' : '' }}{{ number_format($metrics['net_delta'], 3) }}
             </div>
-            <div class="admin-stat-sub">Net On-Hand Movement</div>
+            <div class="text-[10px] text-violet-600/80 dark:text-violet-400/80 mt-0.5 truncate">
+                Net On-Hand Movement
+            </div>
         </div>
     </div>
 
     {{-- ============================================================
-         STANDARD Toolbar — matching x-admin.toolbar component style
+         3. STANDARD TOOLBAR
          ============================================================ --}}
-    <div class="rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm p-2.5 sm:p-3.5 mb-5 sm:mb-6 transition">
-        <form method="GET" action="{{ route('store.admin.stock_ledger.index', ['store_slug' => $store->slug]) }}">
+    <x-admin.toolbar
+        :showSearch="true"
+        :searchPlaceholder="__('messages.search') . ' product, SKU, ref...'"
+        :searchValue="$filters['search'] ?? ''"
+        :filterCount="$activeFiltersCount ?? 0"
+        :showExportImport="true"
+        :exportUrl="$exportUrl"
+        :showPagination="true"
+        :paginator="$movements"
+        :showPerPageSelector="true"
+        :perPageOptions="[
+            25    => '25',
+            50    => '50',
+            100   => '100',
+            200   => '200',
+            'all' => __('messages.all'),
+        ]"
+    >
+        {{-- Quick Flow Filter Tabs inside toolbar --}}
+        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs shrink-0">
+            @foreach([
+                'all' => __('messages.stock_ledger_all_movements'),
+                'inflow' => __('messages.stock_ledger_inflow_tab'),
+                'outflow' => __('messages.stock_ledger_outflow_tab'),
+            ] as $flowVal => $flowLabel)
+                <a href="{{ route('store.admin.stock_ledger.index', array_merge(['store_slug' => $store->slug], request()->query(), ['flow' => $flowVal, 'page' => 1])) }}"
+                   class="px-2.5 py-1 rounded-md text-xs font-bold transition whitespace-nowrap {{ ($filters['flow'] ?? 'all') === $flowVal ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white' }}">
+                    {{ $flowLabel }}
+                </a>
+            @endforeach
+        </div>
 
-            {{-- Top Row: Flow Tabs + Date Presets + Filter submit --}}
-            <div class="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 -mx-1 px-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
-
-                {{-- Flow Tabs (All / Inbound / Outbound) --}}
-                <div class="flex items-center bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200/80 dark:border-slate-700 shrink-0 shadow-inner">
-                    @foreach([
-                        'all' => __('messages.stock_ledger_all_movements'),
-                        'inflow' => __('messages.stock_ledger_inflow_tab'),
-                        'outflow' => __('messages.stock_ledger_outflow_tab'),
-                    ] as $flowVal => $flowLabel)
-                        <button type="submit" name="flow" value="{{ $flowVal }}"
-                                class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap
-                                    @if(($filters['flow'] ?? 'all') === $flowVal)
-                                        bg-white dark:bg-slate-700 shadow-sm
-                                        {{ $flowVal === 'inflow' ? 'text-emerald-600 dark:text-emerald-400' : ($flowVal === 'outflow' ? 'text-rose-600 dark:text-rose-400' : 'text-blue-600 dark:text-blue-400') }}
-                                    @else
-                                        text-slate-500 hover:text-slate-900 dark:hover:text-white
-                                    @endif">
-                            {{ $flowLabel }}
-                        </button>
-                    @endforeach
-                </div>
-
-                {{-- Vertical divider --}}
-                <span class="hidden sm:inline-block w-px h-6 bg-slate-200 dark:bg-slate-700 shrink-0"></span>
-
-                {{-- Date Preset Buttons --}}
-                @php
-                    $datePresets = [
-                        'today' => __('messages.today'),
-                        'yesterday' => __('messages.yesterday'),
-                        '7days' => __('messages.7days'),
-                        'this_month' => __('messages.this_month'),
-                        'last_month' => __('messages.last_month'),
-                        'all' => __('messages.all'),
-                    ];
-                @endphp
-                @foreach($datePresets as $key => $label)
-                    <button type="submit" name="preset" value="{{ $key }}"
-                            class="shrink-0 min-h-[42px] px-3.5 py-2 rounded-xl border text-xs font-bold transition whitespace-nowrap shadow-sm
-                                {{ $preset === $key
-                                    ? 'bg-violet-600 text-white border-violet-600'
-                                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700' }}">
-                        {{ $label }}
-                    </button>
-                @endforeach
-
-                {{-- Spacer --}}
-                <span class="hidden sm:inline-block w-px h-6 bg-slate-200 dark:bg-slate-700 shrink-0"></span>
-
-                {{-- Search Box --}}
-                <div class="hidden sm:relative sm:flex items-center sm:w-60 lg:w-72">
-                    <input type="text"
-                           name="search"
-                           value="{{ $filters['search'] ?? '' }}"
-                           placeholder="{{ __('messages.search') }} product, SKU..."
-                           class="w-full pl-9 pr-3.5 py-2.5 min-h-[42px] border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/70 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors shadow-inner">
-                    <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+        {{-- Filter Dropdown Slot --}}
+        <x-slot:filterSlot>
+            <div class="space-y-3 p-1">
+                {{-- Date Presets --}}
+                <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5">
+                        {{ __('messages.date') }}
+                    </label>
+                    <div class="grid grid-cols-3 gap-1">
+                        @foreach([
+                            'today' => __('messages.today'),
+                            'yesterday' => __('messages.yesterday'),
+                            '7days' => __('messages.7days'),
+                            'this_month' => __('messages.this_month'),
+                            'last_month' => __('messages.last_month'),
+                            'all' => __('messages.all'),
+                        ] as $key => $label)
+                            <a href="{{ route('store.admin.stock_ledger.index', array_merge(['store_slug' => $store->slug], request()->query(), ['preset' => $key, 'page' => 1])) }}"
+                               class="px-2 py-1 text-center text-xs font-bold rounded-md border transition {{ ($preset ?? 'this_month') === $key ? 'bg-violet-600 text-white border-violet-600' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100' }}">
+                                {{ $label }}
+                            </a>
+                        @endforeach
+                    </div>
                 </div>
 
                 {{-- Movement Type Filter --}}
-                <div class="relative shrink-0">
-                    <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                    </svg>
-                    <select name="movement_type"
-                            class="border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 min-h-[42px] py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/70 text-slate-700 dark:text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer appearance-none shadow-sm transition">
-                        <option value="">{{ __('messages.stock_ledger_all_types') }}</option>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+                        {{ __('messages.stock_ledger_movement_type') }}
+                    </label>
+                    <select name="movement_type" data-auto-submit class="w-full text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-slate-900 dark:text-slate-100 font-semibold focus:ring-2 focus:ring-violet-500">
+                        <option value="">-- {{ __('messages.stock_ledger_all_types') }} --</option>
                         @foreach($movementTypes as $type)
                             <option value="{{ $type->value }}" {{ ($filters['movement_type'] ?? '') === $type->value ? 'selected' : '' }}>
                                 {{ $type->label() }}
                             </option>
                         @endforeach
                     </select>
-                    <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
                 </div>
 
                 {{-- Warehouse Filter --}}
                 @if($warehouses->count() > 1)
-                    <div class="relative shrink-0">
-                        <select name="warehouse_id"
-                                class="border border-slate-200 dark:border-slate-700 rounded-xl px-3 min-h-[42px] py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/70 text-slate-700 dark:text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer appearance-none shadow-sm transition">
-                            <option value="">{{ __('messages.all_warehouses') }}</option>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+                            {{ __('messages.warehouse') ?? 'Warehouse' }}
+                        </label>
+                        <select name="warehouse_id" data-auto-submit class="w-full text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-slate-900 dark:text-slate-100 font-semibold focus:ring-2 focus:ring-violet-500">
+                            <option value="">-- {{ __('messages.all_warehouses') }} --</option>
                             @foreach($warehouses as $wh)
                                 <option value="{{ $wh->id }}" {{ ($filters['warehouse_id'] ?? '') == $wh->id ? 'selected' : '' }}>
                                     {{ $wh->name }}
@@ -176,59 +189,39 @@
                     </div>
                 @endif
 
-                {{-- Filter / Reset Buttons --}}
-                <div class="flex items-center gap-1 ml-auto shrink-0">
-                    @if(!empty($filters['search']) || !empty($filters['movement_type']) || !empty($filters['warehouse_id']) || ($filters['flow'] ?? 'all') !== 'all' || $preset !== 'this_month')
+                @if($activeFiltersCount > 0)
+                    <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
                         <a href="{{ route('store.admin.stock_ledger.index', ['store_slug' => $store->slug]) }}"
-                           class="shrink-0 min-h-[42px] px-3.5 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition shadow-sm">
+                           class="block w-full text-center px-3 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/40 rounded-lg hover:bg-rose-100 transition">
                             {{ __('messages.reset') }}
                         </a>
-                    @endif
-                    <button type="submit"
-                            class="shrink-0 min-h-[42px] px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm flex items-center gap-1.5 transition">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                        <span>{{ __('messages.filter') }}</span>
-                    </button>
-                </div>
-
-                {{-- Result Count --}}
-                <span class="shrink-0 ml-1 inline-flex items-center px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700 text-xs font-black text-slate-600 dark:text-slate-300 font-mono whitespace-nowrap shadow-inner">
-                    {{ number_format($movements->total()) }} items
-                </span>
+                    </div>
+                @endif
             </div>
-        </form>
-    </div>
+        </x-slot:filterSlot>
+    </x-admin.toolbar>
 
     {{-- ============================================================
-         Stock Ledger Table
+         4. SPREADSHEET DATA GRID TABLE (GOOGLE SHEETS STYLE)
          ============================================================ --}}
-    <div class="rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-sm overflow-hidden">
-        <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <h2 class="font-bold text-slate-900 dark:text-slate-100 font-outfit text-base">
-                {{ __('messages.stock_ledger_all_movements') }}
-            </h2>
-            <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                {{ $movements->total() }} {{ __('messages.stock_ledger_stat_total') }}
-            </span>
-        </div>
-
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300">
-                <thead class="bg-slate-50/75 dark:bg-slate-800/50 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
-                    <tr>
-                        <th class="px-4 py-3">{{ __('messages.stock_ledger_date') }}</th>
-                        <th class="px-4 py-3">{{ __('messages.product') }}</th>
-                        <th class="px-4 py-3">{{ __('messages.stock_ledger_movement_type') }}</th>
-                        <th class="px-4 py-3 text-right">{{ __('messages.stock_ledger_delta_qty') }}</th>
-                        <th class="px-4 py-3 text-right">{{ __('messages.stock_ledger_unit_cost') }}</th>
-                        <th class="px-4 py-3 text-right">{{ __('messages.stock_ledger_total_value') }}</th>
-                        <th class="px-4 py-3">{{ __('messages.stock_ledger_reference') }}</th>
-                        <th class="px-4 py-3 text-right">{{ __('messages.actions') }}</th>
+    <div id="data-table" class="w-full bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-lg shadow-2xs overflow-hidden transition">
+        <div class="overflow-x-auto max-h-[75vh] overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800">
+            <table class="w-full text-left text-xs border-collapse font-sans text-slate-700 dark:text-slate-200">
+                {{-- Sticky Header --}}
+                <thead class="sticky top-0 z-20 bg-slate-100 dark:bg-slate-800/95 backdrop-blur-xs border-b-2 border-slate-300 dark:border-slate-600 shadow-2xs select-none">
+                    <tr class="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider divide-x divide-slate-300 dark:divide-slate-700">
+                        <th class="py-2.5 px-3 min-w-[130px]">{{ __('messages.stock_ledger_date') }}</th>
+                        <th class="py-2.5 px-3 min-w-[200px]">{{ __('messages.product') }}</th>
+                        <th class="py-2.5 px-3 min-w-[140px]">{{ __('messages.stock_ledger_movement_type') }}</th>
+                        <th class="py-2.5 px-3 text-right min-w-[100px]">{{ __('messages.stock_ledger_delta_qty') }}</th>
+                        <th class="py-2.5 px-3 text-right min-w-[110px]">{{ __('messages.stock_ledger_unit_cost') }}</th>
+                        <th class="py-2.5 px-3 text-right min-w-[120px]">{{ __('messages.stock_ledger_total_value') }}</th>
+                        <th class="py-2.5 px-3 min-w-[130px]">{{ __('messages.stock_ledger_reference') }}</th>
+                        <th class="py-2.5 px-3 text-center w-28">{{ __('messages.actions') }}</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                {{-- Table Body --}}
+                <tbody class="divide-y divide-slate-200/90 dark:divide-slate-800 bg-white dark:bg-slate-900">
                     @forelse($movements as $m)
                         @php
                             $delta = (float) $m->quantity_delta;
@@ -236,98 +229,98 @@
                             $totalVal = round(abs($delta) * $cost, 2);
                             $typeEnum = $m->type();
                         @endphp
-                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition">
+                        <tr class="divide-x divide-slate-200/80 dark:divide-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
 
-                            {{-- Date & User --}}
-                            <td class="px-4 py-3 whitespace-nowrap text-xs">
-                                <div class="font-mono text-slate-900 dark:text-slate-100 font-medium">
+                            {{-- Date & Posted User --}}
+                            <td class="py-2 px-3 whitespace-nowrap">
+                                <div class="font-mono text-slate-900 dark:text-slate-100 font-bold">
                                     {{ $m->occurred_at ? $m->occurred_at->format('d/m/Y H:i') : '-' }}
                                 </div>
-                                <div class="text-[11px] text-slate-400 mt-0.5">
-                                    {{ $m->postedBy?->name ?? 'System' }}
+                                <div class="text-[10px] text-slate-400 mt-0.5">
+                                    👤 {{ $m->postedBy?->name ?? 'System' }}
                                 </div>
                             </td>
 
-                            {{-- Product --}}
-                            <td class="px-4 py-3">
-                                <div class="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                            {{-- Product Name & SKU --}}
+                            <td class="py-2 px-3">
+                                <div class="font-bold text-slate-900 dark:text-slate-100 leading-tight">
                                     {{ $m->product?->name ?? 'Product #' . $m->product_id }}
                                 </div>
-                                <div class="text-xs font-mono text-slate-400 mt-0.5">
-                                    SKU: {{ $m->product?->sku ?? '-' }}
+                                <div class="text-[10px] font-mono text-slate-400 mt-0.5 flex items-center gap-1.5">
+                                    <span>SKU: {{ $m->product?->sku ?? '-' }}</span>
+                                    @if($m->productVariant)
+                                        <span class="px-1.5 py-0.2 rounded bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-sans font-bold">
+                                            {{ $m->productVariant->name }}
+                                        </span>
+                                    @endif
                                 </div>
                             </td>
 
                             {{-- Movement Type Badge --}}
-                            <td class="px-4 py-3 whitespace-nowrap">
+                            <td class="py-2 px-3 whitespace-nowrap">
                                 @if($delta > 0)
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
-                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
-                                        {{ $typeEnum->label() }}
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                        <span>📥</span>
+                                        <span>{{ $typeEnum->label() }}</span>
                                     </span>
                                 @elseif($delta < 0)
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60">
-                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
-                                        {{ $typeEnum->label() }}
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-md bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                                        <span>📤</span>
+                                        <span>{{ $typeEnum->label() }}</span>
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                    <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-bold rounded-md bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                         {{ $typeEnum->label() }}
                                     </span>
                                 @endif
                             </td>
 
                             {{-- Quantity Delta --}}
-                            <td class="px-4 py-3 text-right whitespace-nowrap font-mono font-bold text-sm {{ $delta > 0 ? 'text-emerald-600 dark:text-emerald-400' : ($delta < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400') }}">
+                            <td class="py-2 px-3 text-right whitespace-nowrap font-mono font-black text-xs {{ $delta > 0 ? 'text-emerald-600 dark:text-emerald-400' : ($delta < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400') }}">
                                 {{ $delta > 0 ? '+' : '' }}{{ number_format($delta, 3) }}
                             </td>
 
                             {{-- Unit Cost --}}
-                            <td class="px-4 py-3 text-right whitespace-nowrap font-mono text-xs text-slate-600 dark:text-slate-400">
-                                {{ number_format($cost, 2) }}
+                            <td class="py-2 px-3 text-right whitespace-nowrap font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                {{ number_format($cost) }}
                             </td>
 
                             {{-- Total Value --}}
-                            <td class="px-4 py-3 text-right whitespace-nowrap font-mono font-bold text-xs text-slate-900 dark:text-slate-100">
-                                {{ number_format($totalVal, 2) }} <span class="text-[10px] text-slate-400">MMK</span>
+                            <td class="py-2 px-3 text-right whitespace-nowrap font-mono font-black text-xs text-slate-900 dark:text-slate-100">
+                                {{ number_format($totalVal) }} <span class="text-[10px] font-normal text-slate-400">Ks</span>
                             </td>
 
                             {{-- Reference --}}
-                            <td class="px-4 py-3 text-xs">
+                            <td class="py-2 px-3 whitespace-nowrap text-xs">
                                 @if($m->source_type)
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                                         {{ ucfirst($m->source_type) }} {{ $m->source_id ? '#' . $m->source_id : '' }}
                                     </span>
                                 @elseif($m->client_transaction_id)
-                                    <span class="text-xs font-mono text-slate-400 truncate max-w-[140px] block" title="{{ $m->client_transaction_id }}">
-                                        {{ Str::limit($m->client_transaction_id, 16) }}
+                                    <span class="text-xs font-mono text-slate-400 truncate max-w-[130px] block" title="{{ $m->client_transaction_id }}">
+                                        {{ Str::limit($m->client_transaction_id, 14) }}
                                     </span>
                                 @else
                                     <span class="text-slate-400">-</span>
                                 @endif
                             </td>
 
-                            {{-- Action —  View Bin Card --}}
-                            <td class="px-4 py-3 text-right whitespace-nowrap">
+                            {{-- Action — View Bin Card --}}
+                            <td class="py-2 px-3 text-center whitespace-nowrap">
                                 @if($m->product_id)
                                     <a href="{{ route('store.admin.stock_ledger.bin_card', ['store_slug' => $store->slug, 'product' => $m->product_id]) }}"
                                        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-950/40 transition">
-                                        <span>{{ __('messages.stock_ledger_bin_card') }}</span>
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                        </svg>
+                                        <span>📑</span>
+                                        <span>{{ __('messages.stock_ledger_view_bin_card') ?? 'Bin Card' }}</span>
                                     </a>
                                 @endif
                             </td>
-
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-4 py-16 text-center text-slate-400">
+                            <td colspan="8" class="p-8 text-center text-slate-400">
                                 <div class="flex flex-col items-center justify-center">
-                                    <svg class="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                    </svg>
+                                    <span class="text-3xl mb-2">📦</span>
                                     <p class="text-sm font-semibold">{{ __('messages.stock_ledger_no_movements') }}</p>
                                 </div>
                             </td>
@@ -336,12 +329,6 @@
                 </tbody>
             </table>
         </div>
-
-        @if($movements->hasPages())
-            <div class="p-4 border-t border-slate-100 dark:border-slate-800">
-                {{ $movements->links() }}
-            </div>
-        @endif
     </div>
 
 </div>

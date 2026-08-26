@@ -161,6 +161,37 @@ class ProductSmartArchitectureTest extends TestCase
         $this->assertEquals('All Androids', $product->compatible_models);
     }
 
+    public function test_can_create_and_update_digital_product(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->post("/store/{$this->store->slug}/admin/products", [
+                'name' => 'Windows 11 Pro Retail Key',
+                'sku' => 'WIN11-PRO-KEY',
+                'product_type' => 'digital',
+                'retail_price' => 25000,
+                'wholesale_price' => 18000,
+            ]);
+
+        $response->assertRedirect();
+
+        $product = Product::where('sku', 'WIN11-PRO-KEY')->firstOrFail();
+        $this->assertEquals('digital', $product->product_type);
+
+        $updateResponse = $this->actingAs($this->manager)
+            ->put("/store/{$this->store->slug}/admin/products/{$product->id}", [
+                'name' => 'Windows 11 Pro OEM Key',
+                'sku' => 'WIN11-PRO-OEM',
+                'product_type' => 'digital',
+                'retail_price' => 22000,
+                'wholesale_price' => 15000,
+            ]);
+
+        $updateResponse->assertRedirect();
+        $product->refresh();
+        $this->assertEquals('digital', $product->product_type);
+        $this->assertEquals('WIN11-PRO-OEM', $product->sku);
+    }
+
     public function test_can_manage_product_master_presets_in_master_data(): void
     {
         // 1. Create Preset via Controller

@@ -12,7 +12,9 @@ use App\Services\StoreContext;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class StockLedgerController extends Controller
 {
@@ -43,8 +45,11 @@ class StockLedgerController extends Controller
             'to' => $to,
         ];
 
+        $perPage = $request->input('per_page', '25');
+        $perPageInt = $perPage === 'all' ? 5000 : (in_array((int) $perPage, [25, 50, 100, 200], true) ? (int) $perPage : 25);
+
         $metrics = $this->ledgerService->getSummaryMetrics($store, $filters);
-        $movements = $this->ledgerService->listMovements($store, $filters, 25);
+        $movements = $this->ledgerService->listMovements($store, $filters, $perPageInt);
 
         $warehouses = Warehouse::where('store_id', $store->id)->get();
         $movementTypes = InventoryMovementType::cases();
@@ -52,6 +57,17 @@ class StockLedgerController extends Controller
         $selectedProduct = !empty($filters['product_id'])
             ? Product::where('store_id', $store->id)->find($filters['product_id'])
             : null;
+
+        // Calculate active filters count for toolbar badge
+        $activeFiltersCount = 0;
+        if (!empty($filters['search'])) $activeFiltersCount++;
+        if (!empty($filters['movement_type'])) $activeFiltersCount++;
+        if (!empty($filters['warehouse_id'])) $activeFiltersCount++;
+        if (!empty($filters['product_id'])) $activeFiltersCount++;
+        if (($filters['flow'] ?? 'all') !== 'all') $activeFiltersCount++;
+        if ($preset !== 'this_month') $activeFiltersCount++;
+
+        $exportUrl = route('store.admin.stock_ledger.export', array_merge(['store_slug' => $store->slug], $request->all()));
 
         return view('admin.stock_ledger.index', compact(
             'store',
@@ -63,7 +79,10 @@ class StockLedgerController extends Controller
             'to',
             'warehouses',
             'movementTypes',
-            'selectedProduct'
+            'selectedProduct',
+            'activeFiltersCount',
+            'exportUrl',
+            'perPage'
         ));
     }
 
@@ -110,9 +129,9 @@ class StockLedgerController extends Controller
     }
 
     /**
-     * Export movements to CSV.
+     * Export movements to XLSX or CSV using BinaryFileResponse.
      */
-    public function export(StoreContext $context, Request $request): StreamedResponse
+    public function export(StoreContext $context, Request $request): BinaryFileResponse
     {
         $store = $context->getStore();
         if (!$store) {
@@ -131,7 +150,95 @@ class StockLedgerController extends Controller
             'to' => $to,
         ];
 
-        return $this->ledgerService->exportMovementsCsv($store, $filters);
+        $format = strtolower((string) $request->input('format', 'csv'));
+        $movements = $this->ledgerService->listMovements($store, $filters, 5000);
+
+        $headers = [
+            'Date & Time',
+            'Product Name',
+            'SKU',
+            'Movement Type',
+            'Quantity Delta',
+            'Unit Cost (MMK)',
+            'Total Value (MMK)',
+            'Source / Reference',
+            'Posted By',
+            'Transaction ID',
+        ];
+
+        $rows = [];
+        foreach ($movements as $m) {
+            $delta = (float) $m->quantity_delta;
+            $cost = (float) $m->unit_cost;
+            $value = round(abs($delta) * $cost, 2);
+
+            $rows[] = [
+                $m->occurred_at ? $m->occurred_at->format('Y-m-d H:i:s') : '',
+                $m->product?->name ?? 'N/A',
+                $m->product?->sku ?? '-',
+                $m->type()->label(),
+                $delta,
+                $cost,
+                $value,
+                $m->source_type ? ($m->source_type . ($m->source_id ? " #{$m->source_id}" : '')) : '-',
+                $m->postedBy?->name ?? 'System',
+                $m->client_transaction_id ?? '-',
+            ];
+        }
+
+        if ($format === 'xlsx' || $format === 'excel') {
+            $filename = 'stock-ledger-' . $store->slug . '-' . now()->format('Ymd-His') . '.xlsx';
+            $tempFile = tempnam(sys_get_temp_dir(), 'datapos_stock_');
+
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Stock Ledger');
+
+            $sheet->fromArray([$headers], null, 'A1');
+            if (!empty($rows)) {
+                $sheet->fromArray($rows, null, 'A2');
+            }
+
+            // Style headers
+            $highestCol = $sheet->getHighestColumn();
+            $sheet->getStyle("A1:{$highestCol}1")->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+                'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '4F46E5']],
+                'alignment' => ['vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER],
+            ]);
+            $sheet->getRowDimension(1)->setRowHeight(28);
+
+            foreach (range('A', $highestCol) as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($tempFile);
+
+            return response()->download($tempFile, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Length' => (string) filesize($tempFile),
+            ])->deleteFileAfterSend(true);
+        }
+
+        // CSV fallback
+        $filename = 'stock-ledger-' . $store->slug . '-' . now()->format('Ymd-His') . '.csv';
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_stock_csv_');
+        $handle = fopen($tempFile, 'w');
+        // UTF-8 BOM
+        fputs($handle, "\xEF\xBB\xBF");
+        fputcsv($handle, $headers);
+        foreach ($rows as $row) {
+            fputcsv($handle, $row);
+        }
+        fclose($handle);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Length' => (string) filesize($tempFile),
+        ])->deleteFileAfterSend(true);
     }
 
     /**

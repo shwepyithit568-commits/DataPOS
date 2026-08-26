@@ -394,6 +394,11 @@
                 <span>🏷️</span>
                 <span>{{ __('messages.brands') }}</span>
             </a>
+            <a href="{{ url('/store/' . $store->slug . '/admin/suppliers') }}"
+               class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1 shadow-2xs">
+                <span>🏢</span>
+                <span>{{ __('messages.suppliers') }}</span>
+            </a>
             <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/products') }}"
                class="px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition flex items-center gap-1 shadow-2xs">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>

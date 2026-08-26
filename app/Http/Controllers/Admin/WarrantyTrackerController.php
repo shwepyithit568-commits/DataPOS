@@ -34,16 +34,24 @@ class WarrantyTrackerController extends Controller
 
         $search = $request->input('search');
         $status = $request->input('status', 'all');
+        $perPage = $request->input('per_page', '25');
+        $perPageInt = $perPage === 'all' ? 5000 : (in_array((int) $perPage, [25, 50, 100, 200], true) ? (int) $perPage : 25);
 
         $stats = $this->warrantyService->getStatistics($store);
-        $warranties = $this->warrantyService->listWarranties($store, $search, $status, 15);
+        $warranties = $this->warrantyService->listWarranties($store, $search, $status, $perPageInt);
+
+        $activeFiltersCount = 0;
+        if (!empty($search)) $activeFiltersCount++;
+        if ($status !== 'all') $activeFiltersCount++;
 
         return view('admin.warranty.index', compact(
             'store',
             'warranties',
             'stats',
             'search',
-            'status'
+            'status',
+            'perPage',
+            'activeFiltersCount'
         ));
     }
 

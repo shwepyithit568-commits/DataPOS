@@ -25,7 +25,7 @@
             <input type="hidden" name="product_type" :value="productType" />
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-0.5">
             <button type="button" @click="productType = 'standard'"
                 :class="productType === 'standard' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/25 border-violet-600' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-violet-300'"
                 class="flex flex-col items-center justify-center p-2.5 rounded-lg border text-center transition-all duration-150">
@@ -52,6 +52,13 @@
                 class="flex flex-col items-center justify-center p-2.5 rounded-lg border text-center transition-all duration-150">
                 <span class="text-lg mb-0.5">🛠️</span>
                 <span class="text-xs font-black">{{ __('messages.product_type_service') }}</span>
+            </button>
+
+            <button type="button" @click="productType = 'digital'"
+                :class="productType === 'digital' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/25 border-violet-600' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-violet-300'"
+                class="flex flex-col items-center justify-center p-2.5 rounded-lg border text-center transition-all duration-150">
+                <span class="text-lg mb-0.5">💻</span>
+                <span class="text-xs font-black">{{ __('messages.product_type_digital') }}</span>
             </button>
         </div>
     </section>
@@ -392,6 +399,10 @@
 
         <div x-show="productType === 'service'" x-cloak class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-lg text-xs font-bold text-amber-800 dark:text-amber-300">
             {{ __('messages.product_form_service_item_notice') }}
+        </div>
+
+        <div x-show="productType === 'digital'" x-cloak class="p-3 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 rounded-lg text-xs font-bold text-sky-800 dark:text-sky-300">
+            {{ __('messages.product_form_digital_item_notice') }}
         </div>
 
         <div class="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-2">
