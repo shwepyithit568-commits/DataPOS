@@ -200,7 +200,7 @@
         data-admin-alerts-url="{{ $hasStoreContext ? url('/store/' . $currentSlug . '/admin/alerts/check') : '' }}"
         data-admin-alerts-interval="30000"
         x-data="{
-            posOpen: {{ request()->is('store/*/pos*') || request()->is('store/*/admin/eload*') ? 'true' : 'false' }},
+            posOpen: {{ (request()->is('store/*/pos') || request()->is('store/*/pos/') || request()->is('store/*/pos/closing*') || request()->is('store/*/pos/returns*') || request()->is('store/*/pos/buy-back*') || request()->is('store/*/admin/eload*')) ? 'true' : 'false' }},
             inventoryOpen: {{ Str::contains($currentPath, ['products', 'categories', 'brands', 'variant-presets', 'pos/opening-stock', 'pos/adjustments', 'pos/reconciliation', 'stock-count', 'stock-ledger', 'price-wizard', 'barcode', 'warranty']) ? 'true' : 'false' }},
             purchasingOpen: {{ Str::contains($currentPath, ['suppliers', 'pos/purchases', 'pos/transfers', 'warehouses']) ? 'true' : 'false' }},
             ecommerceOpen: {{ Str::contains($currentPath, ['orders', 'reviews', 'banners', 'blog', 'glass-finder', 'push', 'promotions', 'web-products']) ? 'true' : 'false' }},

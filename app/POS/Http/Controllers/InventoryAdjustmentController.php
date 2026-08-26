@@ -29,20 +29,83 @@ class InventoryAdjustmentController extends Controller
     ) {
     }
 
-    public function index(StoreContext $context): View
+    public function index(Request $request, StoreContext $context): View
     {
         $store = $context->getStore();
 
-        $requests = $this->adjustments->recent($store);
+        // Calculate KPI stats across all store adjustment requests
+        $allStoreQuery = InventoryAdjustment::query()->where('store_id', $store->id);
+        $totalCount = (clone $allStoreQuery)->count();
+        $pendingCount = (clone $allStoreQuery)->where('status', 'pending')->count();
+        $approvedCount = (clone $allStoreQuery)->where('status', 'approved')->count();
+        $rejectedCount = (clone $allStoreQuery)->where('status', 'rejected')->count();
+        $netQuantity = (clone $allStoreQuery)->where('status', 'approved')->sum('total_quantity');
+
+        $stats = [
+            'total' => $totalCount,
+            'pending' => $pendingCount,
+            'approved' => $approvedCount,
+            'rejected' => $rejectedCount,
+            'net_quantity' => (float) $netQuantity,
+        ];
+
+        // Filters
+        $status = $request->query('status');
+        $search = trim((string) $request->query('search', ''));
+        $sort = $request->query('sort', 'newest');
+        $perPageParam = $request->query('per_page', 25);
+        $perPage = ($perPageParam === 'all' || (int)$perPageParam > 500) ? 500 : (int) $perPageParam;
+
+        $query = InventoryAdjustment::query()
+            ->with(['items.product', 'items.productVariant', 'submittedBy', 'reviewedBy', 'warehouse'])
+            ->where('store_id', $store->id);
+
+        if (!empty($status) && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('adjustment_number', 'like', "%{$search}%")
+                  ->orWhere('notes', 'like', "%{$search}%")
+                  ->orWhere('review_notes', 'like', "%{$search}%")
+                  ->orWhereHas('submittedBy', function ($subQ) use ($search) {
+                      $subQ->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('items.product', function ($itemQ) use ($search) {
+                      $itemQ->where('name', 'like', "%{$search}%")
+                            ->orWhere('sku', 'like', "%{$search}%")
+                            ->orWhere('barcode', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        match ($sort) {
+            'oldest' => $query->oldest(),
+            'qty_desc' => $query->orderByDesc('total_quantity'),
+            'qty_asc' => $query->orderBy('total_quantity'),
+            default => $query->latest(),
+        };
+
+        $requests = $query->paginate($perPage)->withQueryString();
 
         // Attach each line's current on-hand so the manager can sanity-check.
-        $requests->each(function ($req) {
+        $requests->getCollection()->each(function ($req) {
             $req->items->each(function ($item) {
                 $item->on_hand = $this->inventory->totalOnHand($item->store_id, $item->product_id, $item->product_variant_id);
             });
         });
 
-        return view('pos.adjustments', compact('store', 'requests'));
+        $filters = [
+            'status' => $status,
+            'search' => $search,
+            'sort' => $sort,
+            'per_page' => $perPageParam,
+        ];
+
+        $activeFiltersCount = (!empty($status) && $status !== 'all' ? 1 : 0) + ($search !== '' ? 1 : 0);
+
+        return view('pos.adjustments', compact('store', 'requests', 'stats', 'filters', 'activeFiltersCount'));
     }
 
     public function store(Request $request, StoreContext $context): RedirectResponse

@@ -1,49 +1,35 @@
-
 @php
     $presetIcons = ['📂', '📱', '🔧', '🔌', '🎧', '⚡', '📷', '🔋', '🗜️', '🧰', '💾', '🖥️', '📶', '🛡️', '🧲', '💡', '📦', '🗂️'];
-
-    // The Add Main tab opens when the Main form has validation errors (and no Sub
-    // form was the source) or when the store has no categories at all.
-    $mainFormHasErrors = $errors->has('name') || $errors->has('icon') || $errors->has('image');
-    $startTab = (($mainFormHasErrors && ! old('parent_id')) || $hasNoCategories) ? 'add' : 'list';
-    $addSubForInit = old('parent_id') ? (int) old('parent_id') : null;
     $highlightCategory = session('highlight_category');
-
-    $catUploaderLabels = [
-        'current' => __('messages.category_current_image'),
-        'keep_current' => __('messages.category_image_keep_current'),
-        'remove' => __('messages.category_remove_image'),
-        'replace' => __('messages.category_image_replace'),
-        'optional' => __('messages.category_image_optional'),
-        'no_logo' => __('messages.category_no_image'),
-        'invalid_type' => __('messages.category_image_invalid_type'),
-        'too_large' => __('messages.category_image_too_large', ['mb' => $imageMaxMb]),
-        'recommended' => __('messages.category_image_recommended'),
-        'remove_selected' => __('messages.category_image_remove_selected'),
-    ];
 @endphp
-<div class="w-full space-y-5 sm:space-y-6">
+
+<div class="w-full space-y-2 sm:space-y-2.5">
     @unless($embedded ?? false)
         {{-- Header (hidden when embedded inside Master Data hub) --}}
-        <div class="admin-page-header">
+        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
             <div>
-                <h1 class="admin-page-title">{{ __('messages.categories') }}</h1>
-                <p class="admin-page-sub">{{ $store->name }} — {{ __('messages.category_index_sub') }}</p>
+                <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">{{ __('messages.categories') }}</h1>
+                <p class="text-[11px] text-slate-400 font-mono">{{ $store->name }} — {{ __('messages.category_index_sub') }}</p>
             </div>
+            <button type="button" @click="$dispatch('open-category-create')"
+                    class="px-3.5 py-1.5 rounded-lg text-xs font-black bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-900/20 transition flex items-center gap-1.5 active:scale-95 shrink-0">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <span>{{ __('messages.category_add_main_title') }}</span>
+            </button>
         </div>
     @endunless
 
     {{-- Success Flash --}}
     @if (session('success'))
-        <div class="p-3.5 sm:p-4 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-700 dark:text-green-300 flex items-start gap-2">
-            <span class="text-base flex-shrink-0">✓</span>
+        <div class="p-2.5 sm:p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs text-emerald-700 dark:text-emerald-300 flex items-start gap-2">
+            <span class="text-sm font-bold flex-shrink-0">✓</span>
             <span>{{ session('success') }}</span>
         </div>
     @endif
 
     {{-- Error Flash --}}
     @if ($errors->any())
-        <div class="p-3.5 sm:p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 space-y-1">
+        <div class="p-2.5 sm:p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg text-xs text-red-700 dark:text-red-300 space-y-1">
             <div class="flex items-center gap-2 font-bold"><span>⚠️</span><span>Errors:</span></div>
             @foreach ($errors->all() as $error)
                 <div class="pl-6">• {{ $error }}</div>
@@ -51,31 +37,63 @@
         </div>
     @endif
 
-    {{-- Single Alpine scope: tabs + view mode + tree + inline Add Sub + delete modal --}}
+    {{-- Single Alpine scope: Modal Form + View Mode + Category Tree + Delete Modal --}}
     <div x-data="{
-        tab: '{{ $startTab }}',
+        modalOpen: false,
+        modalMode: 'create', // 'create' or 'edit'
+        editId: null,
+        formName: '',
+        formCode: '',
+        formParentId: '',
+        formIcon: '📂',
+        formDescription: '',
+        formCurrentImageUrl: null,
+        removeImage: false,
         viewMode: localStorage.getItem('admin_view_mode') || 'table',
-        openSections: { @if ($highlightParentId) {{ (int) $highlightParentId }}: true @endif @if ($addSubForInit) @if ($highlightParentId), @endif {{ (int) $addSubForInit }}: true @endif },
-        addSubFor: {{ $addSubForInit ?? 'null' }},
-        savingMain: false,
-        savingSub: false,
+        openSections: { @if ($highlightParentId) {{ (int) $highlightParentId }}: true @endif },
+        saving: false,
         confirmTarget: null,
         lastDeleteEl: null,
         deleting: false,
+
         isOpen(id) { return this.openSections[id] ?? {{ $autoOpen ? 'true' : 'false' }}; },
         toggle(id) { this.openSections[id] = !this.isOpen(id); },
-        openAdd() {
-            this.tab = 'add';
-            this.$nextTick(() => this.$refs.addMainName?.focus());
+
+        openCreate(parentId = '') {
+            this.modalMode = 'create';
+            this.editId = null;
+            this.formName = '';
+            this.formCode = '';
+            this.formParentId = parentId ? String(parentId) : '';
+            this.formIcon = '📂';
+            this.formDescription = '';
+            this.formCurrentImageUrl = null;
+            this.removeImage = false;
+            this.saving = false;
+            this.modalOpen = true;
+            this.$nextTick(() => this.$refs.catModalName?.focus());
         },
-        openAddSub(id) {
-            this.openSections[id] = true;
-            this.addSubFor = id;
+
+        openEdit(item) {
+            this.modalMode = 'edit';
+            this.editId = item.id;
+            this.formName = item.name || '';
+            this.formCode = item.code || '';
+            this.formParentId = item.parent_id ? String(item.parent_id) : '';
+            this.formIcon = item.icon || '📂';
+            this.formDescription = item.description || '';
+            this.formCurrentImageUrl = item.image_path ? ('{{ asset('storage') }}/' + item.image_path) : null;
+            this.removeImage = false;
+            this.saving = false;
+            this.modalOpen = true;
+            this.$nextTick(() => this.$refs.catModalName?.focus());
         },
-        closeAddSub() { this.addSubFor = null; },
+
+        closeModal() {
+            this.modalOpen = false;
+        },
+
         openConfirm(el) {
-            // Read id/name/counts straight from the clicked button so the
-            // modal can never submit a stale row.
             this.confirmTarget = {
                 id: el.dataset.id,
                 name: el.dataset.name,
@@ -86,49 +104,27 @@
             this.lastDeleteEl = el;
             this.$nextTick(() => this.$refs.confirmCancel?.focus());
         },
+
         closeConfirm() {
             this.confirmTarget = null;
             this.$nextTick(() => this.lastDeleteEl?.focus());
         },
+
         submitDelete() {
             if (this.deleting) return;
             this.deleting = true;
             this.$refs.deleteForm.submit();
-        },
-        trapFocus(e) {
-            const panel = this.$refs.confirmPanel;
-            if (!panel) return;
-            const focusables = [...panel.querySelectorAll('button, a[href], input, select, textarea, [tabindex]')].filter(el => !el.disabled && el.offsetParent !== null && el.getAttribute('tabindex') !== '-1');
-            if (focusables.length === 0) return;
-            const first = focusables[0];
-            const last = focusables[focusables.length - 1];
-            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
         }
     }"
-        @keydown.escape.window="if (confirmTarget) closeConfirm(); else if (addSubFor) closeAddSub(); else if (tab === 'add' && !savingMain && !($refs.addMainName && $refs.addMainName.value)) tab = 'list'"
-        @view-changed.window="viewMode = $event.detail; localStorage.setItem('admin_view_mode', $event.detail)"
-        class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden transition-colors duration-200">
+    @open-category-create.window="openCreate()"
+    @keydown.escape.window="if (modalOpen) closeModal(); else if (confirmTarget) closeConfirm();"
+    @view-changed.window="viewMode = $event.detail; localStorage.setItem('admin_view_mode', $event.detail)"
+    class="w-full space-y-2 sm:space-y-2.5">
 
-        {{-- Tab bar --}}
-        <div class="flex border-b dark:border-slate-700 bg-gray-50/60 dark:bg-slate-900/40" role="tablist">
-            <button type="button" role="tab" :aria-selected="tab === 'list'" @click="tab = 'list'"
-                class="flex-1 sm:flex-none sm:px-6 py-3 text-xs sm:text-sm sm:text-base font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition border-b-2 -mb-px min-w-0"
-                :class="tab === 'list' ? 'border-violet-600 text-violet-700 dark:text-violet-300 bg-white dark:bg-slate-800' : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-800'">
-                <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center text-xs sm:text-sm shrink-0">📂</span>
-                <span class="truncate">{{ __('messages.categories') }}</span>
-                <span class="shrink-0 px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-xs font-bold text-gray-600 dark:text-slate-300">{{ number_format($totalCount) }}</span>
-            </button>
-            <button type="button" role="tab" :aria-selected="tab === 'add'" @click="openAdd()"
-                class="flex-1 sm:flex-none sm:px-6 py-3 text-xs sm:text-sm sm:text-base font-semibold flex items-center justify-center gap-1.5 sm:gap-2 transition border-b-2 -mb-px min-w-0"
-                :class="tab === 'add' ? 'border-violet-600 text-violet-700 dark:text-violet-300 bg-white dark:bg-slate-800' : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-800'">
-                <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center text-xs sm:text-sm font-bold shrink-0">+</span>
-                <span class="truncate">{{ __('messages.category_add_main_title') }}</span>
-            </button>
-        </div>
-
-        {{-- Toolbar — list tab only (Add tab keeps the page focused on the form) --}}
-        <div x-show="tab === 'list'" x-cloak x-transition.opacity.duration.150ms class="p-2.5 sm:p-3 sm:pb-0">
+        {{-- ============================================================
+             1. TOOLBAR AREA: Search, Filters, View Toggle, Export/Import
+             ============================================================ --}}
+        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
             <x-admin.toolbar
                 :search="request('search', '')"
                 searchPlaceholder="{{ __('messages.category_search_placeholder') }}"
@@ -148,462 +144,486 @@
             />
         </div>
 
-        {{-- Categories list tab panel --}}
-        <div x-show="tab === 'list'" x-cloak x-transition
-            x-init="@if ($highlightCategory) $nextTick(() => { const v = localStorage.getItem('admin_view_mode') || 'table'; const el = document.getElementById(v === 'card' ? 'cat-row-{{ $highlightCategory }}' : 'cat-row-t-{{ $highlightCategory }}'); el?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }) @endif">
+        {{-- Floating Action Button for Mobile/Tablet Quick Add --}}
+        <button type="button" @click="openCreate()"
+                class="fixed bottom-5 right-5 z-40 sm:hidden w-12 h-12 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-xl shadow-violet-900/40 flex items-center justify-center text-2xl font-bold active:scale-95 transition"
+                title="{{ __('messages.category_add_main_title') }}">
+            +
+        </button>
 
-            {{-- Matching/context note while searching --}}
-            @if ($matchingCount !== null)
-                <p class="px-3.5 sm:px-4 py-2 text-xs text-gray-500 dark:text-slate-400">
-                    {{ __('messages.category_results_matching', ['count' => number_format($matchingCount)]) }}
-                    · {{ __('messages.category_includes_context') }}
-                </p>
-            @endif
+        {{-- Matching/context note while searching --}}
+        @if ($matchingCount !== null)
+            <div class="px-2 py-1 text-xs text-slate-500 dark:text-slate-400">
+                {{ __('messages.category_results_matching', ['count' => number_format($matchingCount)]) }} · {{ __('messages.category_includes_context') }}
+            </div>
+        @endif
 
-            {{-- ===== View: Table (products-style — hairline dividers, horizontal
-                 scroll on narrow screens; card grid is the mobile alternative) ===== --}}
-            <div x-show="viewMode === 'table'" x-cloak class="overflow-x-auto">
-                <table class="w-full min-w-[760px] text-left text-sm text-gray-600 dark:text-slate-300">
-                    <thead class="bg-gray-50 dark:bg-slate-900/50 border-b dark:border-slate-700 font-semibold text-gray-700 dark:text-slate-200">
-                        <tr>
-                            <th class="p-3">{{ __('messages.category_col_icon') }}</th>
-                            <th class="p-3">{{ __('messages.category_name') }}</th>
-                            <th class="p-3 hidden sm:table-cell">{{ __('messages.category_type') }}</th>
-                            <th class="p-3 text-center">{{ __('messages.category_col_subs') }}</th>
-                            <th class="p-3 text-center">{{ __('messages.category_items') }}</th>
-                            <th class="p-3 text-right">{{ __('messages.category_col_actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
-                        @forelse ($parents as $parent)
-                            @php
-                                $parentChildren = $children[$parent->id] ?? collect();
-                                $parentTotalItems = $parentProductTotals[$parent->id] ?? $parent->products_count;
-                            @endphp
+        {{-- Categories Content Container --}}
+        <div x-init="@if ($highlightCategory) $nextTick(() => { const v = localStorage.getItem('admin_view_mode') || 'table'; const el = document.getElementById(v === 'card' ? 'cat-row-{{ $highlightCategory }}' : 'cat-row-t-{{ $highlightCategory }}'); el?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }) @endif">
 
-                            {{-- Parent row — click to expand/collapse sub-categories --}}
-                            <tr id="cat-row-t-{{ $parent->id }}"
-                                @click="toggle({{ $parent->id }})" role="button" tabindex="0"
-                                @keydown.enter.prevent="toggle({{ $parent->id }})" @keydown.space.prevent="toggle({{ $parent->id }})"
-                                :aria-expanded="isOpen({{ $parent->id }}) ? 'true' : 'false'"
-                                class="cursor-pointer select-none hover:bg-gray-50/60 dark:hover:bg-slate-700/40 transition {{ $highlightCategory && (int) $highlightCategory === (int) $parent->id ? 'bg-violet-50/60 dark:bg-violet-950/20 ring-2 ring-violet-400/70' : '' }}">
-                                <td class="p-3">
-                                    <div class="flex items-center gap-2 min-w-0">
-                                        <svg class="w-3.5 h-3.5 text-gray-400 transition-transform duration-200 shrink-0" :class="isOpen({{ $parent->id }}) ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                        </svg>
-                                        <span class="w-9 h-9 shrink-0 rounded-lg bg-white dark:bg-slate-800 border border-violet-100 dark:border-slate-700 flex items-center justify-center text-base overflow-hidden">
-                                            @if ($parent->image_path)
-                                                <img src="{{ asset('storage/' . $parent->image_path) }}" alt="{{ $parent->name }}" loading="lazy" class="h-full w-full object-contain" />
-                                            @else
-                                                <span>{{ $parent->icon ?: '📂' }}</span>
-                                            @endif
-                                        </span>
-                                    </div>
-                                </td>
-                                <td class="p-3 max-w-[16rem]">
-                                    <div class="flex items-center gap-1.5 font-bold text-gray-900 dark:text-slate-100 text-sm break-words">
-                                        <span>{{ $parent->name }}</span>
-                                        @if ($parent->code)
-                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-black bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">{{ $parent->code }}</span>
-                                        @endif
-                                        @if ($highlightCategory && (int) $highlightCategory === (int) $parent->id)
-                                            <span class="inline-block ml-1 px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 text-[11px] font-bold align-middle">{{ __('messages.category_new_badge') }}</span>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="p-3 hidden sm:table-cell text-xs font-medium text-gray-400 dark:text-slate-500">{{ __('messages.category_type_parent') }}</td>
-                                <td class="p-3 text-center tabular-nums">{{ $parent->children_count }}</td>
-                                <td class="p-3 text-center tabular-nums">{{ number_format($parentTotalItems) }}</td>
-                                <td class="p-3">
-                                    <div class="flex items-center justify-end gap-1.5 whitespace-nowrap">
-                                        <button type="button" @click.stop="openAddSub({{ $parent->id }})"
-                                            class="min-h-11 px-2.5 py-1.5 rounded-lg bg-violet-600 text-white hover:bg-violet-700 font-semibold text-xs shadow-sm transition whitespace-nowrap">
-                                            + {{ __('messages.category_add_sub') }}
-                                        </button>
-                                        <a href="{{ url('/store/' . $store->slug . '/admin/categories/' . $parent->id . '/edit') }}" @click.stop
-                                            class="min-h-11 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 transition whitespace-nowrap">
-                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.4-9.4a2 2 0 1 1 2.8 2.8L11 14l-4 1 1-4 9.6-9.4Z"/></svg>
-                                            <span class="hidden lg:inline">{{ __('messages.edit') }}</span>
-                                        </a>
-                                        @if ($parent->products_count > 0 || $parent->children_count > 0)
-                                            {{-- Blocked: parent is in use — never offer deletion --}}
-                                            <span class="min-h-11 inline-flex items-center gap-1.5 px-2.5 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 text-xs"
-                                                title="{{ __('messages.category_delete_blocked_hint') }}">
-                                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2Zm10-10V7a4 4 0 0 0-8 0v4h8Z"/></svg>
-                                                @if ($parent->products_count > 0)
-                                                    <span>{{ __('messages.category_used_by_products', ['count' => $parent->products_count]) }}</span>
-                                                    <a href="{{ url('/store/' . $store->slug . '/admin/products?category_id=' . $parent->id) }}"
-                                                        class="min-h-11 inline-flex items-center gap-0.5 px-1 font-semibold text-violet-600 dark:text-violet-400 hover:underline"
-                                                        title="{{ __('messages.category_view_products') }}">
-                                                        {{ __('messages.category_view_products') }}
-                                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                                    </a>
-                                                @endif
-                                                @if ($parent->children_count > 0)
-                                                    <span class="hidden lg:inline">{{ __('messages.category_contains_subs', ['count' => $parent->children_count]) }}</span>
-                                                @endif
-                                            </span>
-                                        @else
-                                            <button type="button" data-id="{{ $parent->id }}" data-name="{{ $parent->name }}"
-                                                data-products="0" data-children="0"
-                                                @click.stop="openConfirm($el)"
-                                                class="min-h-11 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition"
-                                                :aria-label="@js(__('messages.category_delete_modal_title'))">
-                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.9 12.1A2 2 0 0 1 16.1 21H7.9a2 2 0 0 1-2-1.9L5 7m5-4h4a1 1 0 0 1 1 1v2H9V4a1 1 0 0 1 1-1ZM4 7h16"/></svg>
-                                                <span class="hidden lg:inline">{{ __('messages.delete') }}</span>
-                                            </button>
-                                        @endif
-                                    </div>
-                                </td>
+            {{-- ============================================================
+                 2. SPREADSHEET TREE TABLE VIEW
+                 ============================================================ --}}
+            <div x-show="viewMode === 'table'" class="w-full bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-lg shadow-2xs overflow-hidden transition">
+                <div class="overflow-x-auto max-h-[72vh] overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800">
+                    <table class="w-full text-left text-xs border-collapse font-sans text-slate-700 dark:text-slate-200">
+                        <thead class="sticky top-0 z-20 bg-slate-100 dark:bg-slate-800/95 backdrop-blur-xs border-b-2 border-slate-300 dark:border-slate-600 shadow-2xs select-none">
+                            <tr class="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider divide-x divide-slate-300 dark:divide-slate-700">
+                                <th class="py-2.5 px-3 w-16 text-center">{{ __('messages.category_col_icon') }}</th>
+                                <th class="py-2.5 px-3 min-w-[200px]">{{ __('messages.category_name') }}</th>
+                                <th class="py-2.5 px-3 hidden sm:table-cell min-w-[120px]">{{ __('messages.category_type') }}</th>
+                                <th class="py-2.5 px-3 text-center min-w-[90px]">{{ __('messages.category_col_subs') }}</th>
+                                <th class="py-2.5 px-3 text-center min-w-[90px]">{{ __('messages.category_items') }}</th>
+                                <th class="py-2.5 px-3 text-right w-44">{{ __('messages.category_col_actions') }}</th>
                             </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200/80 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                            @forelse ($parents as $parent)
+                                @php
+                                    $parentChildren = $children[$parent->id] ?? collect();
+                                    $parentTotalItems = $parentProductTotals[$parent->id] ?? $parent->products_count;
+                                @endphp
 
-                            {{-- Inline Add Sub form — full-width row directly under the parent --}}
-                            <template x-if="viewMode === 'table' && addSubFor === {{ $parent->id }}">
-                                <tr>
-                                    <td colspan="6" class="p-3.5 bg-violet-50/70 dark:bg-violet-950/20 border-t border-violet-100 dark:border-violet-900/50">
-                                        @include('admin.categories._add_sub_form', ['parent' => $parent])
-                                    </td>
-                                </tr>
-                            </template>
-
-                            {{-- Sub-category rows (indented, hidden until parent expands) --}}
-                            @foreach ($parentChildren as $child)
-                                <tr id="cat-row-t-{{ $child->id }}" data-cat-row="{{ $child->id }}"
-                                    x-show="isOpen({{ $parent->id }})" x-cloak
-                                    class="hover:bg-gray-50/60 dark:hover:bg-slate-700/40 transition {{ $highlightCategory && (int) $highlightCategory === (int) $child->id ? 'bg-violet-50/60 dark:bg-violet-950/20 ring-2 ring-violet-400/70' : '' }}">
-                                    <td class="p-3 pl-12">
-                                        <div class="flex items-center gap-2 min-w-0">
-                                            <svg class="w-3.5 h-3.5 text-gray-300 dark:text-slate-600 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path d="M10.59 6.59L15.17 11H3v2h12.17l-4.58 4.59L12 19l7-7-7-7z" />
+                                {{-- Main / Parent Row --}}
+                                <tr id="cat-row-t-{{ $parent->id }}"
+                                    @click="toggle({{ $parent->id }})" role="button" tabindex="0"
+                                    @keydown.enter.prevent="toggle({{ $parent->id }})" @keydown.space.prevent="toggle({{ $parent->id }})"
+                                    :aria-expanded="isOpen({{ $parent->id }}) ? 'true' : 'false'"
+                                    class="divide-x divide-slate-200/80 dark:divide-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 cursor-pointer transition select-none {{ $highlightCategory && (int) $highlightCategory === (int) $parent->id ? 'bg-violet-50/60 dark:bg-violet-950/20 ring-2 ring-violet-400/70' : '' }}">
+                                    
+                                    {{-- Icon / Expand Caret --}}
+                                    <td class="py-2 px-3 text-center">
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0" :class="isOpen({{ $parent->id }}) ? 'rotate-90 text-violet-600' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
                                             </svg>
-                                            <span class="w-8 h-8 shrink-0 rounded-md bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-sm overflow-hidden">
-                                                @if ($child->image_path)
-                                                    <img src="{{ asset('storage/' . $child->image_path) }}" alt="{{ $child->name }}" loading="lazy" class="h-full w-full object-contain" />
+                                            <span class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-sm overflow-hidden shrink-0">
+                                                @if ($parent->image_path)
+                                                    <img src="{{ asset('storage/' . $parent->image_path) }}" alt="{{ $parent->name }}" loading="lazy" class="h-full w-full object-contain p-0.5" />
                                                 @else
-                                                    <span>{{ $child->icon ?: '🗂️' }}</span>
+                                                    <span>{{ $parent->icon ?: '📂' }}</span>
                                                 @endif
                                             </span>
                                         </div>
                                     </td>
-                                    <td class="p-3 max-w-[16rem]">
-                                        <span class="inline-flex items-center gap-1.5 font-semibold text-gray-800 dark:text-slate-100 text-sm break-words">
-                                            <span>{{ $child->name }}</span>
-                                            @if ($child->code)
-                                                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-black bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">{{ $child->code }}</span>
+
+                                    {{-- Name & Code --}}
+                                    <td class="py-2 px-3">
+                                        <div class="flex items-center gap-1.5 font-black text-slate-900 dark:text-slate-100 text-xs sm:text-sm break-words">
+                                            <span>{{ $parent->name }}</span>
+                                            @if ($parent->code)
+                                                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">{{ $parent->code }}</span>
                                             @endif
-                                            @if ($highlightCategory && (int) $highlightCategory === (int) $child->id)
-                                                <span class="inline-block ml-1 px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 text-[11px] font-bold">{{ __('messages.category_new_badge') }}</span>
+                                            @if ($highlightCategory && (int) $highlightCategory === (int) $parent->id)
+                                                <span class="px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 text-[9px] font-black uppercase">{{ __('messages.category_new_badge') }}</span>
                                             @endif
+                                        </div>
+                                        @if ($parent->description)
+                                            <p class="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{{ $parent->description }}</p>
+                                        @endif
+                                    </td>
+
+                                    {{-- Type --}}
+                                    <td class="py-2 px-3 hidden sm:table-cell text-xs font-bold text-slate-500 dark:text-slate-400">
+                                        <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                            {{ __('messages.category_type_parent') }}
                                         </span>
                                     </td>
-                                    <td class="p-3 hidden sm:table-cell text-xs font-medium text-gray-400 dark:text-slate-500">{{ __('messages.category_type_sub') }}</td>
-                                    <td class="p-3 text-center text-gray-400">—</td>
-                                    <td class="p-3 text-center tabular-nums">{{ number_format($child->products_count) }}</td>
-                                    <td class="p-3">
-                                        <div class="flex items-center justify-end gap-1.5 whitespace-nowrap">
-                                            <a href="{{ url('/store/' . $store->slug . '/admin/categories/' . $child->id . '/edit') }}"
-                                                class="min-h-11 inline-flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 transition">
-                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.4-9.4a2 2 0 1 1 2.8 2.8L11 14l-4 1 1-4 9.6-9.4Z"/></svg>
-                                                <span class="hidden lg:inline">{{ __('messages.edit') }}</span>
-                                            </a>
-                                            @if ($child->products_count > 0)
-                                                {{-- Blocked: child has products --}}
-                                                <a href="{{ url('/store/' . $store->slug . '/admin/products?category_id=' . $child->id) }}"
-                                                    class="min-h-11 inline-flex items-center gap-1 px-2 py-1.5 rounded-md bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 font-semibold text-xs"
-                                                    title="{{ __('messages.category_delete_blocked_products', ['count' => $child->products_count]) }}">
-                                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2Zm10-10V7a4 4 0 0 0-8 0v4h8Z"/></svg>
-                                                    <span class="hidden xl:inline">{{ __('messages.category_used_by_products', ['count' => $child->products_count]) }}</span>
-                                                </a>
+
+                                    {{-- Sub count --}}
+                                    <td class="py-2 px-3 text-center font-mono font-bold">{{ $parent->children_count }}</td>
+
+                                    {{-- Items total count --}}
+                                    <td class="py-2 px-3 text-center font-mono font-bold">{{ number_format($parentTotalItems) }}</td>
+
+                                    {{-- Action Buttons --}}
+                                    <td class="py-2 px-3 text-right whitespace-nowrap" @click.stop>
+                                        <div class="inline-flex items-center gap-1">
+                                            <button type="button" @click="openCreate({{ $parent->id }})"
+                                                class="px-2 py-1 rounded text-xs font-bold bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/50 dark:hover:bg-violet-900/60 text-violet-700 dark:text-violet-300 transition flex items-center gap-1">
+                                                <span>+</span> {{ __('messages.category_add_sub') }}
+                                            </button>
+                                            <button type="button" @click="openEdit({{ Js::from($parent) }})"
+                                                class="px-2 py-1 rounded text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition flex items-center gap-1">
+                                                <span>✏️</span> {{ __('messages.edit') }}
+                                            </button>
+                                            @if ($parent->products_count > 0 || $parent->children_count > 0)
+                                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-xs font-semibold"
+                                                    title="{{ __('messages.category_delete_blocked_hint') }}">
+                                                    <span>🔒</span> Used
+                                                </span>
                                             @else
-                                                <button type="button" data-id="{{ $child->id }}" data-name="{{ $child->name }}"
+                                                <button type="button" data-id="{{ $parent->id }}" data-name="{{ $parent->name }}"
                                                     data-products="0" data-children="0"
                                                     @click="openConfirm($el)"
-                                                    class="min-h-11 inline-flex items-center px-2 py-1.5 rounded-md text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition"
-                                                    :aria-label="@js(__('messages.category_delete_modal_title'))">
-                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.9 12.1A2 2 0 0 1 16.1 21H7.9a2 2 0 0 1-2-1.9L5 7m5-4h4a1 1 0 0 1 1 1v2H9V4a1 1 0 0 1 1-1ZM4 7h16"/></svg>
+                                                    class="px-2 py-1 rounded text-xs font-bold bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 transition flex items-center gap-1 active:scale-95">
+                                                    <span>🗑️</span>
                                                 </button>
                                             @endif
                                         </div>
                                     </td>
                                 </tr>
-                            @endforeach
-                        @empty
-                            <tr>
-                                <td colspan="6" class="p-8 text-center">
-                                    <div class="text-4xl mb-3 opacity-40">📂</div>
-                                    <div class="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-1">{{ __('messages.category_empty_title') }}</div>
-                                    <div class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.category_empty_hint') }}</div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+
+                                {{-- Sub-category Rows (Nested inside parent) --}}
+                                @foreach ($parentChildren as $child)
+                                    <tr id="cat-row-t-{{ $child->id }}" data-cat-row="{{ $child->id }}"
+                                        x-show="isOpen({{ $parent->id }})" x-cloak
+                                        class="divide-x divide-slate-200/60 dark:divide-slate-800/80 bg-slate-50/60 dark:bg-slate-850/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 transition {{ $highlightCategory && (int) $highlightCategory === (int) $child->id ? 'bg-violet-50/60 dark:bg-violet-950/20 ring-2 ring-violet-400/70' : '' }}">
+                                        
+                                        {{-- Indented Icon --}}
+                                        <td class="py-2 px-3 text-center pl-6">
+                                            <div class="flex items-center justify-center gap-1">
+                                                <span class="text-slate-300 dark:text-slate-600">↳</span>
+                                                <span class="w-7 h-7 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs overflow-hidden">
+                                                    @if ($child->image_path)
+                                                        <img src="{{ asset('storage/' . $child->image_path) }}" alt="{{ $child->name }}" loading="lazy" class="h-full w-full object-contain" />
+                                                    @else
+                                                        <span>{{ $child->icon ?: '🗂️' }}</span>
+                                                    @endif
+                                                </span>
+                                            </div>
+                                        </td>
+
+                                        {{-- Sub Name & Code --}}
+                                        <td class="py-2 px-3 pl-4">
+                                            <div class="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200 text-xs break-words">
+                                                <span>{{ $child->name }}</span>
+                                                @if ($child->code)
+                                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">{{ $child->code }}</span>
+                                                @endif
+                                                @if ($highlightCategory && (int) $highlightCategory === (int) $child->id)
+                                                    <span class="px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 text-[9px] font-black uppercase">{{ __('messages.category_new_badge') }}</span>
+                                                @endif
+                                            </div>
+                                        </td>
+
+                                        {{-- Type --}}
+                                        <td class="py-2 px-3 hidden sm:table-cell text-xs text-slate-400 dark:text-slate-500">
+                                            <span>{{ __('messages.category_type_sub') }}</span>
+                                        </td>
+
+                                        {{-- Sub count --}}
+                                        <td class="py-2 px-3 text-center text-slate-300 dark:text-slate-600">—</td>
+
+                                        {{-- Items count --}}
+                                        <td class="py-2 px-3 text-center font-mono text-xs font-bold">{{ number_format($child->products_count) }}</td>
+
+                                        {{-- Actions --}}
+                                        <td class="py-2 px-3 text-right whitespace-nowrap">
+                                            <div class="inline-flex items-center gap-1">
+                                                <button type="button" @click="openEdit({{ Js::from($child) }})"
+                                                    class="px-2 py-1 rounded text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition flex items-center gap-1">
+                                                    <span>✏️</span> {{ __('messages.edit') }}
+                                                </button>
+                                                @if ($child->products_count > 0)
+                                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-xs font-semibold"
+                                                        title="{{ __('messages.category_delete_blocked_products', ['count' => $child->products_count]) }}">
+                                                        <span>🔒</span> Used
+                                                    </span>
+                                                @else
+                                                    <button type="button" data-id="{{ $child->id }}" data-name="{{ $child->name }}"
+                                                        data-products="0" data-children="0"
+                                                        @click="openConfirm($el)"
+                                                        class="px-2 py-1 rounded text-xs font-bold bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 transition flex items-center gap-1 active:scale-95">
+                                                        <span>🗑️</span>
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="p-8 text-center text-slate-400">
+                                        <div class="text-3xl mb-2 opacity-55">📂</div>
+                                        <div class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.category_empty_title') }}</div>
+                                        <div class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.category_empty_hint') }}</div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            {{-- ===== View: Card grid (icon/image + name + counts + actions) ===== --}}
-            <div x-show="viewMode === 'card'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 items-start">
+            {{-- ============================================================
+                 3. RESPONSIVE MULTI-COLUMN CARD GRID
+                 ============================================================ --}}
+            <div x-show="viewMode === 'card' || viewMode === 'cards'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
                 @forelse ($parents as $parent)
                     @php
                         $parentChildren = $children[$parent->id] ?? collect();
                         $parentTotalItems = $parentProductTotals[$parent->id] ?? $parent->products_count;
                     @endphp
 
-                    {{-- ===== Main Category card ===== --}}
-                    <section id="cat-section-{{ $parent->id }}" aria-labelledby="cat-title-{{ $parent->id }}"
-                        class="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div id="cat-card-{{ $parent->id }}"
+                        class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs hover:border-violet-300 dark:hover:border-violet-600/50 hover:shadow-sm transition flex flex-col justify-between group {{ $highlightCategory && (int) $highlightCategory === (int) $parent->id ? 'ring-2 ring-violet-400/70 bg-violet-50/10 dark:bg-violet-950/10' : '' }}">
+                        
+                        <div class="p-3 space-y-2">
+                            {{-- Card Header: Icon + Code + Active Pill --}}
+                            <div class="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-base overflow-hidden shrink-0">
+                                        @if ($parent->image_path)
+                                            <img src="{{ asset('storage/' . $parent->image_path) }}" alt="{{ $parent->name }}" loading="lazy" class="h-full w-full object-contain p-0.5" />
+                                        @else
+                                            <span>{{ $parent->icon ?: '📂' }}</span>
+                                        @endif
+                                    </span>
+                                    @if ($parent->code)
+                                        <span class="px-2 py-0.5 rounded font-mono font-black text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 truncate">
+                                            {{ $parent->code }}
+                                        </span>
+                                    @endif
+                                </div>
 
-                        {{-- Parent header row — click to expand/collapse sub-categories --}}
-                        <div id="cat-row-{{ $parent->id }}"
-                            @click="toggle({{ $parent->id }})" role="button" tabindex="0"
-                            @keydown.enter.prevent="toggle({{ $parent->id }})" @keydown.space.prevent="toggle({{ $parent->id }})"
-                            :aria-expanded="isOpen({{ $parent->id }}) ? 'true' : 'false'"
-                            aria-controls="cat-children-{{ $parent->id }}"
-                            class="flex items-center gap-3 p-3.5 sm:p-4 bg-gray-50/60 dark:bg-slate-900/40 cursor-pointer select-none group {{ $highlightCategory && (int) $highlightCategory === (int) $parent->id ? 'ring-2 ring-violet-400/70' : '' }}">
-                            <div class="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-lg bg-white dark:bg-slate-800 border border-violet-100 dark:border-slate-700 flex items-center justify-center text-lg overflow-hidden">
-                                @if ($parent->image_path)
-                                    <img src="{{ asset('storage/' . $parent->image_path) }}" alt="{{ $parent->name }}" loading="lazy" class="h-full w-full object-contain" />
-                                @else
-                                    <span>{{ $parent->icon ?: '📂' }}</span>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                    <span>✓</span> Active
+                                </span>
+                            </div>
+
+                            {{-- Category Title & Description --}}
+                            <div>
+                                <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 line-clamp-1" title="{{ $parent->name }}">
+                                    {{ $parent->name }}
+                                </h4>
+                                @if ($parent->description)
+                                    <p class="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{{ $parent->description }}</p>
                                 @endif
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <div id="cat-title-{{ $parent->id }}" class="font-bold text-gray-900 dark:text-slate-100 text-sm sm:text-base break-words">
-                                    {{ $parent->name }}
-                                    @if ($highlightCategory && (int) $highlightCategory === (int) $parent->id)
-                                        <span class="inline-block ml-1 px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 text-[11px] font-bold align-middle">{{ __('messages.category_new_badge') }}</span>
-                                    @endif
-                                </div>
-                                <div class="text-xs text-gray-400 dark:text-slate-500">
-                                    {{ __('messages.category_sub_count_items', ['count' => $parent->children_count, 'items' => number_format($parentTotalItems)]) }}
-                                </div>
+
+                            {{-- Stats Pills --}}
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 text-[10px] font-bold border border-violet-200 dark:border-violet-800/80">
+                                    {{ $parent->children_count }} {{ __('messages.category_col_subs') }}
+                                </span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-bold border border-slate-200 dark:border-slate-700">
+                                    {{ number_format($parentTotalItems) }} {{ __('messages.category_items') }}
+                                </span>
                             </div>
-                            <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0" :class="isOpen({{ $parent->id }}) ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
+
+                            {{-- Sub-categories preview drawer inside card --}}
+                            @if ($parentChildren->isNotEmpty())
+                                <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-1">
+                                    <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                                        <span>Sub-categories</span>
+                                        <button type="button" @click="toggle({{ $parent->id }})" class="text-violet-600 hover:underline">
+                                            <span x-text="isOpen({{ $parent->id }}) ? 'Hide' : 'Show ({{ $parentChildren->count() }})'"></span>
+                                        </button>
+                                    </div>
+                                    <div x-show="isOpen({{ $parent->id }})" x-cloak class="space-y-1 max-h-36 overflow-y-auto no-scrollbar pt-1">
+                                        @foreach ($parentChildren as $child)
+                                            <div class="flex items-center justify-between gap-1 p-1.5 rounded bg-slate-50 dark:bg-slate-800/50 text-xs">
+                                                <span class="truncate font-semibold text-slate-700 dark:text-slate-200 text-[11px]">{{ $child->icon ?: '•' }} {{ $child->name }}</span>
+                                                <div class="flex items-center gap-1 shrink-0">
+                                                    <button type="button" @click="openEdit({{ Js::from($child) }})" class="text-slate-400 hover:text-violet-600 text-[11px]">✏️</button>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
-                        {{-- Action buttons row (separate from header — always visible, not cramped) --}}
-                        <div class="flex items-center gap-2 px-3.5 sm:px-4 py-2.5 border-t border-gray-100 dark:border-slate-700/60 bg-white dark:bg-slate-800">
-                            <button type="button" @click.stop="openAddSub({{ $parent->id }})"
-                                class="min-h-11 px-3 py-1.5 rounded-lg bg-violet-600 text-white hover:bg-violet-700 font-semibold text-xs shadow-sm transition">
-                                + {{ __('messages.category_add_sub') }}
-                            </button>
-                            <a href="{{ url('/store/' . $store->slug . '/admin/categories/' . $parent->id . '/edit') }}" @click.stop
-                                class="min-h-11 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 transition">
-                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.4-9.4a2 2 0 1 1 2.8 2.8L11 14l-4 1 1-4 9.6-9.4Z"/></svg>
-                                {{ __('messages.edit') }}
-                            </a>
+                        {{-- Card Footer Action Row --}}
+                        <div class="p-2.5 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1 mt-2">
+                            <div class="inline-flex items-center gap-1">
+                                <button type="button" @click="openCreate({{ $parent->id }})"
+                                    class="px-2 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold transition flex items-center gap-1 shadow-2xs">
+                                    <span>+ Sub</span>
+                                </button>
+                                <button type="button" @click="openEdit({{ Js::from($parent) }})"
+                                    class="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition flex items-center gap-1">
+                                    <span>✏️</span>
+                                </button>
+                            </div>
+
                             @if ($parent->products_count > 0 || $parent->children_count > 0)
-                                <span class="ml-auto inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 text-xs"
-                                    title="{{ __('messages.category_delete_blocked_hint') }}">
-                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2Zm10-10V7a4 4 0 0 0-8 0v4h8Z"/></svg>
-                                    @if ($parent->products_count > 0)
-                                        <a href="{{ url('/store/' . $store->slug . '/admin/products?category_id=' . $parent->id) }}"
-                                            class="min-h-11 inline-flex items-center gap-0.5 px-1 font-semibold text-violet-600 dark:text-violet-400 hover:underline">
-                                            {{ $parent->products_count }} {{ __('messages.category_items') }}
-                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                        </a>
-                                    @endif
-                                    @if ($parent->children_count > 0)
-                                        <span>{{ $parent->children_count }} {{ __('messages.category_type_sub') }}</span>
-                                    @endif
+                                <span class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg bg-gray-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-xs font-semibold" title="{{ __('messages.category_delete_blocked_hint') }}">
+                                    <span>🔒</span> Used
                                 </span>
                             @else
                                 <button type="button" data-id="{{ $parent->id }}" data-name="{{ $parent->name }}"
                                     data-products="0" data-children="0"
-                                    @click.stop="openConfirm($el)"
-                                    class="min-h-11 ml-auto inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition"
-                                    :aria-label="@js(__('messages.category_delete_modal_title'))">
-                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.9 12.1A2 2 0 0 1 16.1 21H7.9a2 2 0 0 1-2-1.9L5 7m5-4h4a1 1 0 0 1 1 1v2H9V4a1 1 0 0 1 1-1ZM4 7h16"/></svg>
-                                    {{ __('messages.delete') }}
+                                    @click="openConfirm($el)"
+                                    class="px-2 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-bold transition flex items-center gap-1 active:scale-95">
+                                    <span>🗑️</span>
                                 </button>
                             @endif
                         </div>
-
-                        {{-- Inline Add Sub form — directly under the card header --}}
-                        <template x-if="viewMode === 'card' && addSubFor === {{ $parent->id }}">
-                            <div class="bg-violet-50/70 dark:bg-violet-950/20 border-b border-violet-200/70 dark:border-violet-900/50 p-3.5 sm:p-4">
-                                @include('admin.categories._add_sub_form', ['parent' => $parent])
-                            </div>
-                        </template>
-
-                        {{-- Sub-categories --}}
-                        <div id="cat-children-{{ $parent->id }}" x-show="isOpen({{ $parent->id }})" x-cloak x-transition class="divide-y divide-gray-100 dark:divide-slate-800">
-                            @forelse ($parentChildren as $child)
-                                <div id="cat-row-{{ $child->id }}" data-cat-row="{{ $child->id }}"
-                                    class="flex items-center gap-2.5 px-3.5 sm:px-4 py-2.5 sm:py-3 pl-8 sm:pl-10 group hover:bg-gray-50 dark:hover:bg-slate-700/40 transition {{ $highlightCategory && (int) $highlightCategory === (int) $child->id ? 'bg-violet-50/60 dark:bg-violet-950/20 ring-2 ring-violet-400/70' : '' }}">
-                                    <svg class="w-3.5 h-3.5 shrink-0 text-gray-300 dark:text-slate-600" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path d="M10.59 6.59L15.17 11H3v2h12.17l-4.58 4.59L12 19l7-7-7-7z" />
-                                    </svg>
-                                    <span class="w-8 h-8 shrink-0 rounded-md bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-sm overflow-hidden">
-                                        @if ($child->image_path)
-                                            <img src="{{ asset('storage/' . $child->image_path) }}" alt="{{ $child->name }}" loading="lazy" class="h-full w-full object-contain" />
-                                        @else
-                                            <span>{{ $child->icon ?: '🗂️' }}</span>
-                                        @endif
-                                    </span>
-                                    <div class="flex-1 min-w-0">
-                                        <span class="font-semibold text-gray-800 dark:text-slate-100 text-xs sm:text-sm break-words">
-                                            {{ $child->name }}
-                                            @if ($highlightCategory && (int) $highlightCategory === (int) $child->id)
-                                                <span class="inline-block ml-1 px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 text-[11px] font-bold">{{ __('messages.category_new_badge') }}</span>
-                                            @endif
-                                        </span>
-                                        <span class="ml-1.5 text-xs text-gray-400 dark:text-slate-500">{{ number_format($child->products_count) }} {{ __('messages.category_items') }}</span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5 shrink-0">
-                                        <a href="{{ url('/store/' . $store->slug . '/admin/categories/' . $child->id . '/edit') }}"
-                                            class="min-h-11 inline-flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 transition">
-                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.4-9.4a2 2 0 1 1 2.8 2.8L11 14l-4 1 1-4 9.6-9.4Z"/></svg>
-                                            <span class="hidden sm:inline">{{ __('messages.edit') }}</span>
-                                        </a>
-                                        @if ($child->products_count > 0)
-                                            {{-- Blocked: child has products --}}
-                                            <a href="{{ url('/store/' . $store->slug . '/admin/products?category_id=' . $child->id) }}"
-                                                class="min-h-11 inline-flex items-center gap-1 px-2 py-1.5 rounded-md bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 font-semibold text-xs"
-                                                title="{{ __('messages.category_delete_blocked_products', ['count' => $child->products_count]) }}">
-                                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2Zm10-10V7a4 4 0 0 0-8 0v4h8Z"/></svg>
-                                                {{ __('messages.category_used_by_products', ['count' => $child->products_count]) }}
-                                            </a>
-                                        @else
-                                            <button type="button" data-id="{{ $child->id }}" data-name="{{ $child->name }}"
-                                                data-products="0" data-children="0"
-                                                @click="openConfirm($el)"
-                                                class="min-h-11 inline-flex items-center px-2 py-1.5 rounded-md text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition"
-                                                :aria-label="@js(__('messages.category_delete_modal_title'))">
-                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.9 12.1A2 2 0 0 1 16.1 21H7.9a2 2 0 0 1-2-1.9L5 7m5-4h4a1 1 0 0 1 1 1v2H9V4a1 1 0 0 1 1-1ZM4 7h16"/></svg>
-                                            </button>
-                                        @endif
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="px-4 py-3 pl-10 text-xs text-gray-400 dark:text-slate-500 italic">{{ __('messages.category_no_subs') }}</div>
-                            @endforelse
-                        </div>
-                    </section>
+                    </div>
                 @empty
-                    <div class="col-span-full p-8 text-center">
-                        <div class="text-4xl mb-3 opacity-40">📂</div>
-                        <div class="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-1">{{ __('messages.category_empty_title') }}</div>
-                        <div class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.category_empty_hint') }}</div>
+                    <div class="col-span-full bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 p-8 rounded-xl text-center text-slate-400 dark:text-slate-500 shadow-2xs">
+                        <div class="text-3xl mb-2 opacity-55">📂</div>
+                        <div class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.category_empty_title') }}</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.category_empty_hint') }}</div>
                     </div>
                 @endforelse
             </div>
         </div>
 
-        {{-- Add Main Category tab panel --}}
-        <div x-show="tab === 'add'" x-cloak x-transition>
-            <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/categories') }}" enctype="multipart/form-data"
-                @submit="if (savingMain) { $event.preventDefault(); } else { savingMain = true; }"
-                class="p-4 sm:p-5 space-y-4">
-                @csrf
-                <p class="text-xs text-gray-400 dark:text-slate-500">{{ __('messages.category_add_main_hint') }}</p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
-                    <div>
-                        <label for="add-main-name" class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">{{ __('messages.category_main_name') }} <span class="text-rose-500">*</span></label>
-                        <input id="add-main-name" x-ref="addMainName" type="text" name="name" required
-                            value="{{ old('name') }}"
-                            placeholder="e.g. Spare Part"
-                            class="w-full border dark:border-slate-600 rounded-lg px-3 py-2.5 min-h-11 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition {{ $errors->has('name') ? 'border-red-400 dark:border-red-500' : '' }}" />
-                        @error('name')
-                            <p class="mt-1 text-xs font-semibold text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
+        {{-- ============================================================
+             4. CREATE / EDIT CATEGORY MODAL (Unified Dialog Form)
+             ============================================================ --}}
+        <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+            <div class="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity" @click="closeModal()"></div>
+            <div class="min-h-full flex items-center justify-center p-4">
+                <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-5 space-y-4" @click.stop>
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                            <span x-text="modalMode === 'create' ? (formParentId ? '➕ Add Sub-category' : '➕ {{ __('messages.category_add_main_title') }}') : '✏️ {{ __('messages.edit') }} ' + formName"></span>
+                        </h3>
+                        <button type="button" @click="closeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold">&times;</button>
                     </div>
-                    <div>
-                        <label for="add-main-code" class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">{{ __('messages.product_form_code') }}</label>
-                        <input id="add-main-code" type="text" name="code"
-                            value="{{ old('code') }}"
-                            placeholder="{{ __('messages.product_form_code_placeholder') }}"
-                            class="w-full uppercase font-mono border dark:border-slate-600 rounded-lg px-3 py-2.5 min-h-11 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition" />
-                        @error('code')
-                            <p class="mt-1 text-xs font-semibold text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div x-data="{ icon: @js(old('icon', '')) }">
-                        <label for="add-main-icon" class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">{{ __('messages.category_icon_optional') }}</label>
-                        <input id="add-main-icon" type="text" name="icon" x-model="icon" maxlength="8" placeholder="📂"
-                            class="w-full border dark:border-slate-600 rounded-lg px-3 py-2.5 min-h-11 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition" />
-                        <div class="mt-2 flex flex-wrap gap-1">
-                            @foreach ($presetIcons as $presetIcon)
-                                <button type="button" @click="icon = @js($presetIcon)"
-                                    :aria-pressed="icon === @js($presetIcon)" :aria-label="@js($presetIcon)"
-                                    :class="icon === @js($presetIcon) ? 'ring-2 ring-violet-500 bg-violet-100 dark:bg-violet-900/40 border-violet-500' : 'border-slate-200 dark:border-slate-600 hover:border-violet-500 hover:bg-violet-50 dark:hover:bg-slate-700'"
-                                    class="h-9 w-9 min-h-9 rounded-lg border text-sm transition">
-                                    {{ $presetIcon }}
-                                </button>
-                            @endforeach
-                        </div>
-                    </div>
-                    <div class="sm:col-span-2 lg:col-span-1">
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">{{ __('messages.category_image_optional') }}</label>
-                        <x-admin.logo-uploader :maxMb="$imageMaxMb" :input-name="'image'" :labels="$catUploaderLabels" />
-                        @error('image')
-                            <p class="mt-1 text-xs font-semibold text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <button type="submit" :disabled="savingMain"
-                        class="inline-flex items-center justify-center gap-2 min-h-11 px-5 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed font-semibold text-sm shadow transition">
-                        <span x-show="!savingMain" class="inline-flex items-center gap-1.5"><span class="text-base leading-none">+</span><span>{{ __('messages.category_save_main') }}</span></span>
-                        <span x-show="savingMain" class="inline-flex items-center gap-2">
-                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                            {{ __('messages.category_saving') }}
-                        </span>
-                    </button>
-                    <button type="button" @click="tab = 'list'" :disabled="savingMain"
-                        class="min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition">
-                        {{ __('messages.cancel') }}
-                    </button>
-                </div>
-            </form>
-        </div>
 
-        {{-- Delete confirmation modal (accessible: focus trap, Escape, backdrop, focus return) --}}
-        <div x-show="confirmTarget" x-cloak x-transition.opacity.duration.150ms class="fixed inset-0 z-50" role="dialog" aria-modal="true"
-            aria-labelledby="category-delete-title">
-            <div class="fixed inset-0 bg-black/40" @click="closeConfirm()" aria-hidden="true"></div>
-            <div class="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
-                <div x-ref="confirmPanel" @keydown.tab.prevent="trapFocus($event)" @click.stop
-                    class="pointer-events-auto w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 p-5 shadow-xl border border-gray-200 dark:border-slate-700">
-                    <div class="flex items-start gap-3">
-                        <div class="shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+                    <form method="POST"
+                        :action="modalMode === 'create' ? '{{ url('/store/' . $store->slug . '/admin/categories') }}' : '{{ url('/store/' . $store->slug . '/admin/categories') }}/' + editId"
+                        enctype="multipart/form-data"
+                        @submit="if (saving) { $event.preventDefault(); } else { saving = true; }"
+                        class="space-y-3.5">
+                        @csrf
+                        <template x-if="modalMode === 'edit'">
+                            <input type="hidden" name="_method" value="PUT" />
+                        </template>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label for="cat-modal-name" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.category_name') }} <span class="text-rose-500">*</span></label>
+                                <input id="cat-modal-name" x-ref="catModalName" type="text" name="name" x-model="formName" required
+                                    placeholder="e.g. Mobile Phones, Adapters"
+                                    class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500" />
+                            </div>
+
+                            <div>
+                                <label for="cat-modal-code" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_code') }}</label>
+                                <input id="cat-modal-code" type="text" name="code" x-model="formCode"
+                                    placeholder="{{ __('messages.product_form_code_placeholder') }}"
+                                    class="w-full uppercase font-mono rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500" />
+                            </div>
                         </div>
-                        <div class="min-w-0">
-                            <h3 id="category-delete-title" class="text-base font-bold text-gray-900 dark:text-slate-100">{{ __('messages.category_delete_modal_title') }}</h3>
-                            <p class="mt-1 text-sm text-gray-600 dark:text-slate-300 break-words font-medium" x-text="confirmTarget ? confirmTarget.name : ''"></p>
-                            <p class="mt-0.5 text-xs text-gray-400 dark:text-slate-500">{{ __('messages.category_delete_modal_warning') }}</p>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-slate-400" x-text="confirmTarget ? @js(__('messages.category_delete_modal_counts', ['products' => ':p', 'children' => ':c'])).replace(':p', confirmTarget.products).replace(':c', confirmTarget.children) : ''"></p>
+
+                        {{-- Parent Category Selector --}}
+                        <div>
+                            <label for="cat-modal-parent" class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Parent Hierarchy (အဓိက အုပ်စု သတ်မှတ်ခြင်း)</label>
+                            <select id="cat-modal-parent" name="parent_id" x-model="formParentId"
+                                class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500">
+                                <option value="">— None (Main Category / ပင်မ အုပ်စု) —</option>
+                                @foreach ($parents as $p)
+                                    <option value="{{ $p->id }}">{{ $p->icon ?: '📂' }} {{ $p->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
-                    </div>
-                    <div class="mt-5 flex items-center justify-end gap-2">
-                        <button type="button" x-ref="confirmCancel" @click="closeConfirm()"
-                            class="min-h-11 px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition">
-                            {{ __('messages.cancel') }}
-                        </button>
-                        <form x-ref="deleteForm" method="POST"
-                            :action="'/store/{{ $store->slug }}/admin/categories/' + (confirmTarget ? confirmTarget.id : '')"
-                            class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" @click="submitDelete()" :disabled="deleting"
-                                class="min-h-11 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed shadow transition">
-                                <span x-show="!deleting" class="inline-flex items-center gap-1.5">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.9 12.1A2 2 0 0 1 16.1 21H7.9a2 2 0 0 1-2-1.9L5 7m5-4h4a1 1 0 0 1 1 1v2H9V4a1 1 0 0 1 1-1ZM4 7h16"/></svg>
-                                    {{ __('messages.delete') }}
+
+                        {{-- Icon Picker with presets --}}
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.category_icon_optional') }}</label>
+                            <div class="flex items-center gap-2 mb-2">
+                                <input type="text" name="icon" x-model="formIcon" maxlength="8" placeholder="📂"
+                                    class="w-20 text-center font-bold text-base rounded-lg border border-slate-200 dark:border-slate-700 px-2 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500" />
+                                <span class="text-[11px] text-slate-400">Choose an icon below or type emoji</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1 max-h-20 overflow-y-auto no-scrollbar p-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                @foreach ($presetIcons as $pIcon)
+                                    <button type="button" @click="formIcon = '{{ $pIcon }}'"
+                                        :class="formIcon === '{{ $pIcon }}' ? 'bg-violet-600 text-white ring-2 ring-violet-400' : 'bg-white dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200'"
+                                        class="w-7 h-7 rounded-md text-xs font-bold transition flex items-center justify-center">
+                                        {{ $pIcon }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        {{-- Image Uploader --}}
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.category_image_optional') }}</label>
+                            
+                            {{-- Current image preview if editing --}}
+                            <template x-if="modalMode === 'edit' && formCurrentImageUrl && !removeImage">
+                                <div class="mb-2 flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                    <img :src="formCurrentImageUrl" class="h-10 w-10 object-contain rounded bg-white p-1 border border-slate-200 dark:border-slate-600" />
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.category_current_image') }}</p>
+                                        <button type="button" @click="removeImage = true" class="text-[11px] font-bold text-rose-500 hover:underline">
+                                            ✕ Remove Image
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template x-if="removeImage">
+                                <input type="hidden" name="remove_image" value="1" />
+                            </template>
+
+                            <input type="file" name="image" accept="image/png,image/jpeg,image/webp"
+                                class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-violet-950/60 dark:file:text-violet-300 cursor-pointer border border-slate-200 dark:border-slate-700 rounded-lg p-1 bg-slate-50 dark:bg-slate-800" />
+                            <p class="text-[10px] text-slate-400 mt-1">PNG, JPG, WEBP up to 10MB</p>
+                        </div>
+
+                        {{-- Description --}}
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Description / Notes</label>
+                            <textarea name="description" x-model="formDescription" rows="2" placeholder="Enter category details..."
+                                class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500"></textarea>
+                        </div>
+
+                        {{-- Footer CTA --}}
+                        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                            <button type="button" @click="closeModal()"
+                                class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition">
+                                {{ __('messages.cancel') }}
+                            </button>
+                            <button type="submit" :disabled="saving"
+                                class="px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-black shadow-md shadow-violet-500/20 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
+                                <span x-show="!saving" class="inline-flex items-center gap-1.5">
+                                    <span x-text="modalMode === 'create' ? '+ {{ __('messages.save') }}' : '✓ {{ __('messages.save_changes') }}'"></span>
                                 </span>
-                                <span x-show="deleting" class="inline-flex items-center gap-2">
-                                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                                    {{ __('messages.category_deleting') }}
+                                <span x-show="saving" class="inline-flex items-center gap-2">
+                                    <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                                    <span>Saving...</span>
                                 </span>
                             </button>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
+
+        {{-- ============================================================
+             5. DELETE CATEGORY CONFIRMATION MODAL
+             ============================================================ --}}
+        <div x-show="confirmTarget" x-cloak class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+            <div class="fixed inset-0 bg-black/60 backdrop-blur-xs" @click="closeConfirm()"></div>
+            <div class="min-h-full flex items-center justify-center p-4">
+                <div class="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-5 space-y-4" @click.stop>
+                    <div class="text-center space-y-2">
+                        <div class="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 grid place-items-center text-xl mx-auto">🗑️</div>
+                        <h4 class="text-sm font-black text-slate-900 dark:text-slate-100">{{ __('messages.category_delete_modal_title') }}</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            {{ __('messages.category_delete_modal_warning') }} <strong class="text-slate-900 dark:text-slate-100" x-text="confirmTarget?.name"></strong>?
+                        </p>
+                        <p class="text-[11px] text-slate-400" x-text="@js(__('messages.category_delete_modal_counts', ['products' => ':p', 'children' => ':c'])).replace(':p', confirmTarget?.products || '0').replace(':c', confirmTarget?.children || '0')"></p>
+                    </div>
+
+                    <form x-ref="deleteForm" method="POST"
+                        :action="'/store/{{ $store->slug }}/admin/categories/' + (confirmTarget ? confirmTarget.id : '')">
+                        @csrf
+                        @method('DELETE')
+                        <div class="flex items-center justify-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <button type="button" x-ref="confirmCancel" @click="closeConfirm()"
+                                class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition">
+                                {{ __('messages.cancel') }}
+                            </button>
+                            <button type="submit" @click="submitDelete()" :disabled="deleting"
+                                class="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-md shadow-rose-500/20 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
+                                <span x-show="!deleting">{{ __('messages.delete') }}</span>
+                                <span x-show="deleting">Deleting...</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
-

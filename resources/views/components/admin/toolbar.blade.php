@@ -276,79 +276,82 @@
                         </button>
                     </div>
 
-                    {{-- Floating Action Card / Modal --}}
-                    <div x-show="exportModalOpen" x-cloak
-                         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-xs"
-                         @click.self="exportModalOpen = false"
-                         @keydown.escape.window="exportModalOpen = false"
-                         x-transition:enter="transition ease-out duration-200"
-                         x-transition:enter-start="opacity-0 scale-95"
-                         x-transition:enter-end="opacity-100 scale-100"
-                         x-transition:leave="transition ease-in duration-150"
-                         x-transition:leave-start="opacity-100 scale-100"
-                         x-transition:leave-end="opacity-0 scale-95">
-                        
-                        <div class="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-5 space-y-4 text-left"
-                             @click.stop>
-                            {{-- Header --}}
-                            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                                <div class="flex items-center gap-2.5">
-                                    <span class="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-950/80 text-violet-600 dark:text-violet-400 grid place-items-center text-sm shadow-inner">📤</span>
-                                    <div>
-                                        <h3 class="text-sm font-black text-slate-900 dark:text-slate-100">{{ __('messages.export') }} Products</h3>
-                                        <p class="text-[11px] text-slate-400">Select export file format</p>
+                    {{-- Floating Action Card / Modal (Teleported to Body for top-most layer) --}}
+                    <template x-teleport="body">
+                        <div x-show="exportModalOpen" x-cloak
+                             style="z-index: 99999;"
+                             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
+                             @click.self="exportModalOpen = false"
+                             @keydown.escape.window="exportModalOpen = false"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 scale-95"
+                             x-transition:enter-end="opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 scale-100"
+                             x-transition:leave-end="opacity-0 scale-95">
+                            
+                            <div class="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-5 space-y-4 text-left"
+                                 @click.stop>
+                                {{-- Header --}}
+                                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-950/80 text-violet-600 dark:text-violet-400 grid place-items-center text-sm shadow-inner">📤</span>
+                                        <div>
+                                            <h3 class="text-sm font-black text-slate-900 dark:text-slate-100">{{ __('messages.export') }}</h3>
+                                            <p class="text-[11px] text-slate-400">Select export file format</p>
+                                        </div>
                                     </div>
+                                    <button type="button" @click="exportModalOpen = false"
+                                            class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
                                 </div>
-                                <button type="button" @click="exportModalOpen = false"
-                                        class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                                </button>
-                            </div>
 
-                            {{-- Format Cards --}}
-                            <div class="space-y-2.5">
-                                {{-- Excel Option --}}
-                                <a href="{{ $xlsxUrl }}" download="products.xlsx" @click="exportModalOpen = false"
-                                   class="group flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 hover:border-emerald-500/80 dark:hover:border-emerald-500/80 bg-white dark:bg-slate-800/80 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition-all shadow-xs hover:shadow-md active:scale-[0.99]">
-                                    <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 grid place-items-center text-lg font-black shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-                                        📊
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center gap-1.5">
-                                            <span class="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-300">Microsoft Excel (.xlsx)</span>
-                                            <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Recommended</span>
+                                {{-- Format Cards --}}
+                                <div class="space-y-2.5">
+                                    {{-- Excel Option --}}
+                                    <a href="{{ $xlsxUrl }}" download @click="exportModalOpen = false"
+                                       class="group flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 hover:border-emerald-500/80 dark:hover:border-emerald-500/80 bg-white dark:bg-slate-800/80 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 transition-all shadow-xs hover:shadow-md active:scale-[0.99]">
+                                        <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 grid place-items-center text-lg font-black shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+                                            📊
                                         </div>
-                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                                            Full styling, column auto-fit, header colors & ready for print/share.
-                                        </p>
-                                    </div>
-                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0 group-hover:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </a>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-300">Microsoft Excel (.xlsx)</span>
+                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Recommended</span>
+                                            </div>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                                                Full styling, column auto-fit, header colors & ready for print/share.
+                                            </p>
+                                        </div>
+                                        <svg class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0 group-hover:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </a>
 
-                                {{-- CSV Option --}}
-                                <a href="{{ $csvUrl }}" download="products.csv" @click="exportModalOpen = false"
-                                   class="group flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 hover:border-sky-500/80 dark:hover:border-sky-500/80 bg-white dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/20 transition-all shadow-xs hover:shadow-md active:scale-[0.99]">
-                                    <div class="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-950/80 text-sky-600 dark:text-sky-400 grid place-items-center text-lg font-black shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-                                        📄
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center gap-1.5">
-                                            <span class="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-sky-700 dark:group-hover:text-sky-300">CSV Document (.csv)</span>
-                                            <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300">UTF-8</span>
+                                    {{-- CSV Option --}}
+                                    <a href="{{ $csvUrl }}" download @click="exportModalOpen = false"
+                                       class="group flex items-center gap-3.5 p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 hover:border-sky-500/80 dark:hover:border-sky-500/80 bg-white dark:bg-slate-800/80 hover:bg-sky-50/50 dark:hover:bg-sky-950/20 transition-all shadow-xs hover:shadow-md active:scale-[0.99]">
+                                        <div class="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-950/80 text-sky-600 dark:text-sky-400 grid place-items-center text-lg font-black shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+                                            📄
                                         </div>
-                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                                            Universal lightweight format for POS import, bulk editing & migration.
-                                        </p>
-                                    </div>
-                                    <svg class="w-4 h-4 text-slate-400 group-hover:text-sky-600 shrink-0 group-hover:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </a>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-sky-700 dark:group-hover:text-sky-300">CSV Document (.csv)</span>
+                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300">UTF-8</span>
+                                            </div>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                                                Universal lightweight format for POS import, bulk editing & migration.
+                                            </p>
+                                        </div>
+                                        <svg class="w-4 h-4 text-slate-400 group-hover:text-sky-600 shrink-0 group-hover:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </template>
                 </div>
             @endif
         @endif

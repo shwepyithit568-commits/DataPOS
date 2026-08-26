@@ -35,4 +35,9 @@ class InventoryAdjustmentItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function productVariant(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\ProductVariant::class, 'product_variant_id');
+    }
 }

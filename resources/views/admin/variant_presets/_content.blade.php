@@ -1,16 +1,8 @@
-
 @php
-    $editingPreset = $editingPreset ?? null;
-    $initialOptions = old('options', $editingPreset?->options ?? [[
-        'name' => '',
-        'sku_suffix' => '',
-        'retail_price_adjustment' => 0,
-        'wholesale_price_adjustment' => 0,
-        'stock_status' => 'in_stock',
-    ]]);
     $totalRows = $presets->sum(fn ($preset) => count($preset->options ?? []));
     $stockRows = $presets->sum(fn ($preset) => collect($preset->options ?? [])->where('stock_status', 'in_stock')->count());
     $outRows = max(0, $totalRows - $stockRows);
+
     $familyOptions = [
         '' => __('messages.variant_preset_family_all'),
         'mobile' => __('messages.variant_preset_family_mobile'),
@@ -22,491 +14,527 @@
     ];
 @endphp
 
-<div class="w-full space-y-5 sm:space-y-6">
-    @if($embedded ?? false)
-        {{-- Embedded inside Master Data hub: only the action CTAs are visible (no duplicate title/stats) --}}
-        <div class="flex justify-end items-center gap-2">
-            <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}"
-                class="inline-flex min-h-11 items-center justify-center rounded-xl bg-violet-600 px-4 py-2 text-sm font-black text-white shadow-sm transition hover:bg-violet-700">
-                {{ __('messages.variant_preset_product_create') }}
-            </a>
-            @if ($editingPreset)
-                <a href="{{ route('store.admin.variant-presets.index', ['store_slug' => $store->slug]) }}"
-                    class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-                    {{ __('messages.variant_preset_cancel_edit') }}
-                </a>
-            @endif
-        </div>
-    @else
-        {{-- Standalone full page: title + CTAs + subtitle + stat grid --}}
-        <div class="admin-page-header">
+<div class="w-full space-y-2 sm:space-y-2.5">
+    @unless($embedded ?? false)
+        {{-- Header (hidden when embedded inside Master Data hub) --}}
+        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
             <div>
-                <h1 class="admin-page-title">{{ __('messages.variant_preset_title') }}</h1>
-                <p class="admin-page-sub">{{ $store->name }} · {{ __('messages.variant_preset_subtitle') }}</p>
+                <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">{{ __('messages.variant_preset_title') }}</h1>
+                <p class="text-[11px] text-slate-400 font-mono">{{ $store->name }} — {{ __('messages.variant_preset_subtitle') }}</p>
             </div>
-            <div class="flex items-center gap-2">
-                <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}"
-                    class="inline-flex min-h-11 items-center justify-center rounded-xl bg-violet-600 px-4 py-2 text-sm font-black text-white shadow-sm transition hover:bg-violet-700">
-                    {{ __('messages.variant_preset_product_create') }}
-                </a>
-                @if ($editingPreset)
-                    <a href="{{ route('store.admin.variant-presets.index', ['store_slug' => $store->slug]) }}"
-                        class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-                        {{ __('messages.variant_preset_cancel_edit') }}
-                    </a>
-                @endif
-            </div>
+            <button type="button" @click="$dispatch('open-variant-create')"
+                    class="px-3.5 py-1.5 rounded-lg text-xs font-black bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-900/20 transition flex items-center gap-1.5 active:scale-95 shrink-0">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <span>{{ __('messages.variant_preset_add_title') }}</span>
+            </button>
         </div>
-    @endif
+    @endunless
 
+    {{-- Success Flash --}}
     @if (session('success'))
-        <div class="p-3.5 sm:p-4 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-700 dark:text-green-300 flex items-start gap-2">
-            <span class="text-base flex-shrink-0">✓</span>
+        <div class="p-2.5 sm:p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs text-emerald-700 dark:text-emerald-300 flex items-start gap-2">
+            <span class="text-sm font-bold flex-shrink-0">✓</span>
             <span>{{ session('success') }}</span>
         </div>
     @endif
 
+    {{-- Error Flash --}}
     @if ($errors->any())
-        <div class="p-3.5 sm:p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 space-y-1">
-            <div class="font-bold">{{ __('messages.variant_preset_check_fields') }}</div>
+        <div class="p-2.5 sm:p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg text-xs text-red-700 dark:text-red-300 space-y-1">
+            <div class="flex items-center gap-2 font-bold"><span>⚠️</span><span>Errors:</span></div>
             @foreach ($errors->all() as $error)
-                <div>{{ $error }}</div>
+                <div class="pl-6">• {{ $error }}</div>
             @endforeach
         </div>
     @endif
 
-    @unless($embedded ?? false)
-        <div class="admin-hairline-grid grid-cols-2 lg:grid-cols-4">
-            <div class="admin-hairline-cell">
-                <div class="admin-stat-label">{{ __('messages.variant_preset_presets') }}</div>
-                <div class="admin-stat-value">{{ number_format($presets->count()) }}</div>
-            </div>
-            <div class="admin-hairline-cell">
-                <div class="admin-stat-label">{{ __('messages.variant_preset_total_rows') }}</div>
-                <div class="admin-stat-value">{{ number_format($totalRows) }}</div>
-            </div>
-            <div class="admin-hairline-cell">
-                <div class="admin-stat-label text-emerald-600 dark:text-emerald-400">{{ __('messages.variant_preset_in_stock_rows') }}</div>
-                <div class="admin-stat-value">{{ number_format($stockRows) }}</div>
-            </div>
-            <div class="admin-hairline-cell">
-                <div class="admin-stat-label text-rose-600 dark:text-rose-400">{{ __('messages.variant_preset_out_rows') }}</div>
-                <div class="admin-stat-value">{{ number_format($outRows) }}</div>
-            </div>
-        </div>
-    @endunless
+    {{-- Single Alpine scope: Modal Form + View Mode + Preset Table / Cards + Delete Modal --}}
+    <div x-data="{
+        modalOpen: false,
+        modalMode: 'create', // 'create' or 'edit'
+        editId: null,
+        formName: '',
+        formCategoryFamily: '',
+        formSortOrder: 0,
+        formOptions: [{ name: '', sku_suffix: '', retail_price_adjustment: 0, wholesale_price_adjustment: 0, stock_status: 'in_stock' }],
+        viewMode: localStorage.getItem('admin_view_mode') || 'table',
+        searchQuery: '',
+        familyFilter: '',
+        saving: false,
+        confirmTarget: null,
+        deleting: false,
 
-    <div
-        x-data="{
-            open: {{ $editingPreset || $errors->any() ? 'true' : 'false' }},
-            options: @js(collect($initialOptions)->map(fn($option) => [
-                'name' => $option['name'] ?? '',
-                'sku_suffix' => $option['sku_suffix'] ?? '',
-                'retail_price_adjustment' => $option['retail_price_adjustment'] ?? 0,
-                'wholesale_price_adjustment' => $option['wholesale_price_adjustment'] ?? 0,
-                'stock_status' => $option['stock_status'] ?? 'in_stock',
-            ])->values()),
-            addOption() {
-                this.options.push({ name: '', sku_suffix: '', retail_price_adjustment: 0, wholesale_price_adjustment: 0, stock_status: 'in_stock' });
-            },
-            removeOption(index) {
-                if (this.options.length > 1) this.options.splice(index, 1);
+        openCreate() {
+            this.modalMode = 'create';
+            this.editId = null;
+            this.formName = '';
+            this.formCategoryFamily = '';
+            this.formSortOrder = 0;
+            this.formOptions = [
+                { name: '', sku_suffix: '', retail_price_adjustment: 0, wholesale_price_adjustment: 0, stock_status: 'in_stock' }
+            ];
+            this.saving = false;
+            this.modalOpen = true;
+            this.$nextTick(() => this.$refs.variantModalName?.focus());
+        },
+
+        openEdit(preset) {
+            this.modalMode = 'edit';
+            this.editId = preset.id;
+            this.formName = preset.name || '';
+            this.formCategoryFamily = preset.category_family || '';
+            this.formSortOrder = preset.sort_order || 0;
+            this.formOptions = Array.isArray(preset.options) && preset.options.length > 0
+                ? JSON.parse(JSON.stringify(preset.options))
+                : [{ name: '', sku_suffix: '', retail_price_adjustment: 0, wholesale_price_adjustment: 0, stock_status: 'in_stock' }];
+            this.saving = false;
+            this.modalOpen = true;
+            this.$nextTick(() => this.$refs.variantModalName?.focus());
+        },
+
+        addOptionRow() {
+            this.formOptions.push({
+                name: '',
+                sku_suffix: '',
+                retail_price_adjustment: 0,
+                wholesale_price_adjustment: 0,
+                stock_status: 'in_stock'
+            });
+        },
+
+        removeOptionRow(index) {
+            if (this.formOptions.length > 1) {
+                this.formOptions.splice(index, 1);
             }
-        }"
-        class="admin-panel overflow-hidden"
-    >
-        <button type="button" @click="open = !open" class="w-full flex items-center justify-between gap-3 p-4 sm:p-5 text-left hover:bg-gray-50 dark:hover:bg-slate-700/40 transition">
-            <span class="flex items-center gap-3 min-w-0">
-                <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">+</span>
-                <span class="min-w-0">
-                    <span class="block text-sm sm:text-base font-black text-gray-900 dark:text-slate-100">{{ $editingPreset ? __('messages.variant_preset_edit_title') : __('messages.variant_preset_add_title') }}</span>
-                    <span class="block text-xs text-gray-500 dark:text-slate-400 truncate">{{ __('messages.variant_preset_form_hint') }}</span>
+        },
+
+        closeModal() {
+            this.modalOpen = false;
+        },
+
+        openConfirm(preset) {
+            this.confirmTarget = preset;
+            this.deleting = false;
+        },
+
+        closeConfirm() {
+            this.confirmTarget = null;
+        },
+
+        matches(preset) {
+            const q = this.searchQuery.trim().toLowerCase();
+            const matchesSearch = !q || (preset.name && preset.name.toLowerCase().includes(q)) || (preset.options && JSON.stringify(preset.options).toLowerCase().includes(q));
+            const matchesFamily = !this.familyFilter || preset.category_family === this.familyFilter;
+            return matchesSearch && matchesFamily;
+        }
+    }"
+    @open-variant-create.window="openCreate()"
+    @keydown.escape.window="if (modalOpen) closeModal(); else if (confirmTarget) closeConfirm();"
+    @view-changed.window="viewMode = $event.detail; localStorage.setItem('admin_view_mode', $event.detail)"
+    class="w-full space-y-2 sm:space-y-2.5">
+
+        {{-- ============================================================
+             1. TOOLBAR AREA: Search, Family Filter, View Toggle
+             ============================================================ --}}
+        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2 flex-1">
+                {{-- Search Box --}}
+                <div class="relative w-full sm:w-64">
+                    <input type="text" x-model="searchQuery" placeholder="{{ __('messages.variant_preset_search_placeholder') }}"
+                           class="w-full pl-8 pr-3 py-1.5 min-h-[36px] border border-slate-200 dark:border-slate-700 rounded-lg text-xs bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:ring-2 focus:ring-violet-500/40" />
+                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+
+                {{-- Family Filter --}}
+                <select x-model="familyFilter"
+                        class="border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 min-h-[36px] text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/40 cursor-pointer">
+                    @foreach ($familyOptions as $val => $label)
+                        <option value="{{ $val }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+
+                {{-- Total Count Badge --}}
+                <span class="text-xs text-slate-400 font-mono hidden sm:inline">
+                    {{ number_format($presets->count()) }} Presets ({{ number_format($totalRows) }} Options)
                 </span>
-            </span>
-            <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-        </button>
-
-        <form x-show="open" x-transition method="POST" action="{{ $editingPreset ? route('store.admin.variant-presets.update', ['store_slug' => $store->slug, 'variantPreset' => $editingPreset]) : route('store.admin.variant-presets.store', ['store_slug' => $store->slug]) }}" class="border-t border-gray-100 p-4 sm:p-5 space-y-4 dark:border-slate-700">
-            @csrf
-            @if ($editingPreset)
-                @method('PUT')
-            @endif
-
-            <div class="grid grid-cols-1 lg:grid-cols-[1fr_12rem_9rem] gap-3">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">{{ __('messages.variant_preset_name') }} <span class="text-rose-500">*</span></label>
-                    <input type="text" name="name" value="{{ old('name', $editingPreset?->name) }}" required maxlength="100" placeholder="{{ __('messages.variant_preset_name_placeholder') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm bg-white text-gray-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" />
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">{{ __('messages.variant_preset_category_family') }}</label>
-                    <select name="category_family" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm bg-white text-gray-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
-                        @foreach ($familyOptions as $value => $label)
-                            <option value="{{ $value }}" {{ old('category_family', $editingPreset?->category_family) === $value ? 'selected' : '' }}>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">{{ __('messages.variant_preset_sort') }}</label>
-                    <input type="number" name="sort_order" value="{{ old('sort_order', $editingPreset?->sort_order ?? 0) }}" min="0" max="9999" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm bg-white text-gray-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" />
-                </div>
             </div>
 
-            <div class="rounded-xl overflow-hidden">
-                <div class="flex items-center justify-between gap-3 bg-gray-50 px-3 py-2.5 dark:bg-slate-900/60">
-                    <div>
-                        <h3 class="text-xs font-black uppercase text-gray-600 dark:text-slate-300">{{ __('messages.variant_preset_options') }}</h3>
-                        <p class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.variant_preset_price_hint') }}</p>
-                    </div>
-                    <button type="button" @click="addOption()" class="shrink-0 rounded-lg border border-violet-300 bg-white px-3 py-1.5 text-xs font-bold text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:bg-slate-800 dark:text-violet-300 dark:hover:bg-violet-950/30">{{ __('messages.variant_preset_add_row') }}</button>
-                </div>
-
-                <div class="hidden lg:grid grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.9fr_4rem] gap-2 border-t border-gray-100 bg-white px-3 py-2 text-xs font-black uppercase text-gray-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500">
-                    <span>{{ __('messages.variant_preset_option_name') }}</span>
-                    <span>{{ __('messages.variant_preset_sku_suffix') }}</span>
-                    <span>{{ __('messages.variant_preset_retail_adjustment') }}</span>
-                    <span>{{ __('messages.variant_preset_wholesale_adjustment') }}</span>
-                    <span>{{ __('messages.variant_preset_stock') }}</span>
-                    <span></span>
-                </div>
-
-                <div class="divide-y divide-gray-100 dark:divide-slate-700">
-                    <template x-for="(option, index) in options" :key="index">
-                        <div class="grid grid-cols-1 lg:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.9fr_4rem] gap-2 p-3 bg-white dark:bg-slate-800">
-                            <div>
-                                <label class="lg:hidden text-xs font-bold text-gray-500 dark:text-slate-400 uppercase">{{ __('messages.variant_preset_option_name') }} *</label>
-                                <input type="text" x-model="option.name" :name="'options[' + index + '][name]'" required maxlength="100" class="mt-1 lg:mt-0 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white text-gray-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" placeholder="256GB" />
-                            </div>
-                            <div>
-                                <label class="lg:hidden text-xs font-bold text-gray-500 dark:text-slate-400 uppercase">{{ __('messages.variant_preset_sku_suffix') }}</label>
-                                <input type="text" x-model="option.sku_suffix" :name="'options[' + index + '][sku_suffix]'" maxlength="50" class="mt-1 lg:mt-0 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white text-gray-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" placeholder="256" />
-                            </div>
-                            <div>
-                                <label class="lg:hidden text-xs font-bold text-gray-500 dark:text-slate-400 uppercase">{{ __('messages.variant_preset_retail_adjustment') }}</label>
-                                <input type="number" step="0.01" x-model="option.retail_price_adjustment" :name="'options[' + index + '][retail_price_adjustment]'" class="mt-1 lg:mt-0 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white text-gray-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" />
-                            </div>
-                            <div>
-                                <label class="lg:hidden text-xs font-bold text-gray-500 dark:text-slate-400 uppercase">{{ __('messages.variant_preset_wholesale_adjustment') }}</label>
-                                <input type="number" step="0.01" x-model="option.wholesale_price_adjustment" :name="'options[' + index + '][wholesale_price_adjustment]'" class="mt-1 lg:mt-0 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white text-gray-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" />
-                            </div>
-                            <div>
-                                <label class="lg:hidden text-xs font-bold text-gray-500 dark:text-slate-400 uppercase">{{ __('messages.variant_preset_stock') }}</label>
-                                <select x-model="option.stock_status" :name="'options[' + index + '][stock_status]'" class="mt-1 lg:mt-0 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white text-gray-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
-                                    <option value="in_stock">{{ __('messages.in_stock') }}</option>
-                                    <option value="out_of_stock">{{ __('messages.out_of_stock') }}</option>
-                                </select>
-                            </div>
-                            <button type="button" @click="removeOption(index)" class="rounded-lg px-2 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-rose-950/40" :disabled="options.length === 1">
-                                {{ __('messages.variant_preset_remove') }}
-                            </button>
-                        </div>
-                    </template>
-                </div>
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-gray-100 pt-4 dark:border-slate-700">
-                <p class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.variant_preset_combine_hint') }}</p>
-                <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-xl bg-violet-600 px-5 py-2 text-sm font-black text-white shadow-sm hover:bg-violet-700">
-                    {{ $editingPreset ? __('messages.variant_preset_update') : __('messages.variant_preset_save') }}
+            {{-- View Toggle (Table / Card) --}}
+            <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 shrink-0" role="group">
+                <button type="button"
+                    @click="viewMode = 'table'; localStorage.setItem('admin_view_mode', 'table'); $dispatch('view-changed', 'table')"
+                    :class="viewMode === 'table' ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-2xs font-black' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+                    class="px-2 py-1 text-xs rounded-md transition flex items-center gap-1"
+                    title="Table View">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18M3 6h18v12H3z"/></svg>
+                    <span class="hidden sm:inline">Table</span>
+                </button>
+                <button type="button"
+                    @click="viewMode = 'card'; localStorage.setItem('admin_view_mode', 'card'); $dispatch('view-changed', 'card')"
+                    :class="(viewMode === 'card' || viewMode === 'cards') ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-2xs font-black' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+                    class="px-2 py-1 text-xs rounded-md transition flex items-center gap-1"
+                    title="Cards View">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+                    <span class="hidden sm:inline">Cards</span>
                 </button>
             </div>
-        </form>
-    </div>
-
-    <div
-        x-data="{
-            search: '',
-            filter: 'all',
-            viewMode: localStorage.getItem('admin_view_mode') || 'card',
-            visibleCount: {{ $presets->count() }},
-            matches(card) {
-                const query = this.search.trim().toLowerCase();
-                const matchesSearch = query === '' || card.dataset.search.includes(query);
-                const matchesFilter = this.filter === 'all'
-                    || (this.filter === 'adjusted' && card.dataset.adjusted === '1')
-                    || (this.filter === 'plain' && card.dataset.adjusted === '0')
-                    || (this.filter === 'out' && card.dataset.hasOut === '1')
-                    || card.dataset.family === this.filter;
-
-                return matchesSearch && matchesFilter;
-            },
-            refresh() {
-                this.$nextTick(() => {
-                    this.visibleCount = Array.from(this.$refs.cards.querySelectorAll('[data-preset-card]'))
-                        .filter((card) => this.matches(card))
-                        .length;
-                });
-            }
-        }"
-        x-init="$watch('search', () => refresh()); $watch('filter', () => refresh()); refresh();"
-        class="space-y-3"
-    >
-        <div class="flex items-start justify-between gap-3 flex-wrap">
-            <div class="min-w-0">
-                <h2 class="text-base font-black text-gray-900 dark:text-slate-100">{{ __('messages.variant_preset_saved_title') }}</h2>
-                <p class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.variant_preset_saved_hint') }}</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <div class="text-xs font-bold text-gray-500 dark:text-slate-400">
-                    <span x-text="visibleCount"></span> {{ __('messages.variant_preset_shown') }}
-                </div>
-                <div class="flex rounded-lg border border-gray-200 dark:border-slate-600 overflow-hidden">
-                    <button type="button" @click="viewMode = 'table'; localStorage.setItem('admin_view_mode', 'table')"
-                        :class="viewMode === 'table' ? 'bg-violet-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'"
-                        class="p-2 transition" title="Table view">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M3 6h18M3 18h18"/></svg>
-                    </button>
-                    <button type="button" @click="viewMode = 'card'; localStorage.setItem('admin_view_mode', 'card')"
-                        :class="viewMode === 'card' ? 'bg-violet-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'"
-                        class="p-2 transition" title="Card view">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
-                    </button>
-                </div>
-            </div>
         </div>
 
-        <div class="rounded-xl bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-            <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3">
-                <div>
-                    <label class="sr-only" for="variant-preset-search">{{ __('messages.variant_preset_search_label') }}</label>
-                    <input id="variant-preset-search" type="search" x-model="search" placeholder="{{ __('messages.variant_preset_search_placeholder') }}" class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" />
-                </div>
-                <div class="grid grid-cols-2 sm:flex sm:items-center gap-2">
-                    <button type="button" @click="filter = 'all'" :class="filter === 'all' ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600'" class="rounded-lg px-3 py-2 text-xs font-black transition">{{ __('messages.variant_preset_filter_all') }}</button>
-                    <button type="button" @click="filter = 'adjusted'" :class="filter === 'adjusted' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50'" class="rounded-lg px-3 py-2 text-xs font-black transition">{{ __('messages.variant_preset_filter_adjusted') }}</button>
-                    <button type="button" @click="filter = 'plain'" :class="filter === 'plain' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50'" class="rounded-lg px-3 py-2 text-xs font-black transition">{{ __('messages.variant_preset_filter_plain') }}</button>
-                    <button type="button" @click="filter = 'out'" :class="filter === 'out' ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50'" class="rounded-lg px-3 py-2 text-xs font-black transition">{{ __('messages.variant_preset_filter_out') }}</button>
-                    <button type="button" @click="filter = 'mobile'" :class="filter === 'mobile' ? 'bg-sky-600 text-white' : 'bg-sky-50 text-sky-700 hover:bg-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:hover:bg-sky-900/50'" class="rounded-lg px-3 py-2 text-xs font-black transition">{{ __('messages.variant_preset_family_mobile') }}</button>
-                    <button type="button" @click="filter = 'fashion'" :class="filter === 'fashion' ? 'bg-fuchsia-600 text-white' : 'bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100 dark:bg-fuchsia-950/40 dark:text-fuchsia-300 dark:hover:bg-fuchsia-900/50'" class="rounded-lg px-3 py-2 text-xs font-black transition">{{ __('messages.variant_preset_family_fashion') }}</button>
-                    <button type="button" @click="filter = 'network'" :class="filter === 'network' ? 'bg-teal-600 text-white' : 'bg-teal-50 text-teal-700 hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-300 dark:hover:bg-teal-900/50'" class="rounded-lg px-3 py-2 text-xs font-black transition">{{ __('messages.variant_preset_family_network') }}</button>
-                    <button type="button" @click="search = ''; filter = 'all'" class="rounded-lg bg-white px-3 py-2 text-xs font-black text-gray-600 transition hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-700">{{ __('messages.variant_preset_filter_clear') }}</button>
-                </div>
-            </div>
-        </div>
+        {{-- Floating Action Button for Mobile/Tablet Quick Add --}}
+        <button type="button" @click="openCreate()"
+                class="fixed bottom-5 right-5 z-40 sm:hidden w-12 h-12 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-xl shadow-violet-900/40 flex items-center justify-center text-2xl font-bold active:scale-95 transition"
+                title="{{ __('messages.variant_preset_add_title') }}">
+            +
+        </button>
 
-        {{-- Table View --}}
-        <div x-show="viewMode === 'table'" x-cloak class="overflow-x-auto">
-            <table class="w-full min-w-[700px] text-left text-sm text-gray-600 dark:text-slate-300">
-                <thead class="bg-gray-50 dark:bg-slate-900/50 border-b dark:border-slate-700 font-semibold text-gray-700 dark:text-slate-200">
-                    <tr>
-                        <th class="p-3">{{ __('messages.variant_preset_option_name') }}</th>
-                        <th class="p-3 hidden sm:table-cell">{{ __('messages.variant_preset_category_family') }}</th>
-                        <th class="p-3 text-center">{{ __('messages.variant_preset_rows') }}</th>
-                        <th class="p-3 text-center hidden md:table-cell">{{ __('messages.variant_preset_sku_suffix') }}</th>
-                        <th class="p-3 text-center">{{ __('messages.variant_preset_stock') }}</th>
-                        <th class="p-3 text-right">{{ __('messages.variant_preset_col_actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
-                    @forelse ($presets as $preset)
-                        @php
-                            $options = $preset->options ?? [];
-                            $hasAdjustments = collect($options)->contains(fn ($option) => ((float) ($option['retail_price_adjustment'] ?? 0)) !== 0.0 || ((float) ($option['wholesale_price_adjustment'] ?? 0)) !== 0.0);
-                            $hasOutRows = collect($options)->contains(fn ($option) => ($option['stock_status'] ?? 'in_stock') === 'out_of_stock');
-                            $family = $preset->category_family ?? '';
-                            $searchText = strtolower(collect([
-                                $preset->name,
-                                $familyOptions[$family] ?? $family,
-                                $preset->sort_order,
-                                collect($options)->pluck('name')->implode(' '),
-                                collect($options)->pluck('sku_suffix')->implode(' '),
-                            ])->filter()->implode(' '));
-                        @endphp
-                        <tr data-preset-card data-search="{{ e($searchText) }}" data-adjusted="{{ $hasAdjustments ? '1' : '0' }}" data-has-out="{{ $hasOutRows ? '1' : '0' }}" data-family="{{ $family }}"
-                            x-show="matches($el)" x-transition.opacity
-                            class="{{ $editingPreset?->id === $preset->id ? 'bg-violet-50/60 dark:bg-violet-950/20' : '' }}">
-                            <td class="p-3">
-                                <div class="font-bold text-gray-900 dark:text-slate-100 text-sm break-words">{{ $preset->name }}
-                                    @if ($editingPreset?->id === $preset->id)
-                                        <span class="ml-1 inline-block px-1.5 py-0.5 rounded-full bg-violet-600 text-white text-[10px] font-bold">{{ __('messages.variant_preset_editing') }}</span>
-                                    @endif
-                                </div>
-                                <div class="text-[11px] text-gray-400 dark:text-slate-500 truncate">{{ collect($options)->pluck('name')->take(4)->implode(', ') }}</div>
-                            </td>
-                            <td class="p-3 hidden sm:table-cell text-xs font-medium">
-                                <span class="rounded-full bg-sky-100 px-2 py-0.5 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">{{ $familyOptions[$family] ?? __('messages.variant_preset_family_all') }}</span>
-                            </td>
-                            <td class="p-3 text-center tabular-nums font-semibold">{{ count($options) }}</td>
-                            <td class="p-3 text-center hidden md:table-cell text-xs font-mono text-gray-500 dark:text-slate-400">
-                                {{ collect($options)->pluck('sku_suffix')->filter()->take(2)->implode(', ') ?: '—' }}
-                            </td>
-                            <td class="p-3 text-center">
-                                <span class="rounded-full px-2 py-0.5 text-[11px] font-bold {{ $hasAdjustments ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' }}">
-                                    {{ $hasAdjustments ? __('messages.variant_preset_filter_adjusted') : __('messages.variant_preset_no_price_adjustment') }}
-                                </span>
-                            </td>
-                            <td class="p-3">
-                                <div class="flex items-center justify-end gap-1.5">
-                                    <a href="{{ route('store.admin.variant-presets.edit', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}"
-                                        class="min-h-11 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 transition">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.4-9.4a2 2 0 1 1 2.8 2.8L11 14l-4 1 1-4 9.6-9.4Z"/></svg>
-                                        {{ __('messages.edit') }}
-                                    </a>
-                                    <form method="POST" action="{{ route('store.admin.variant-presets.destroy', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" data-confirm="{{ __('messages.variant_preset_delete_confirm') }}"
-                                            class="min-h-11 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition">
-                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.9 12.1A2 2 0 0 1 16.1 21H7.9a2 2 0 0 1-2-1.9L5 7m5-4h4a1 1 0 0 1 1 1v2H9V4a1 1 0 0 1 1-1ZM4 7h16"/></svg>
-                                            {{ __('messages.delete') }}
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
+        {{-- ============================================================
+             2. SPREADSHEET TABLE VIEW
+             ============================================================ --}}
+        <div x-show="viewMode === 'table'" class="w-full bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-lg shadow-2xs overflow-hidden transition">
+            <div class="overflow-x-auto max-h-[72vh] overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800">
+                <table class="w-full text-left text-xs border-collapse font-sans text-slate-700 dark:text-slate-200">
+                    <thead class="sticky top-0 z-20 bg-slate-100 dark:bg-slate-800/95 backdrop-blur-xs border-b-2 border-slate-300 dark:border-slate-600 shadow-2xs select-none">
+                        <tr class="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider divide-x divide-slate-300 dark:divide-slate-700">
+                            <th class="py-2.5 px-3 min-w-[180px]">{{ __('messages.variant_preset_name') }}</th>
+                            <th class="py-2.5 px-3 min-w-[120px]">{{ __('messages.variant_preset_category_family') }}</th>
+                            <th class="py-2.5 px-3 text-center w-20">{{ __('messages.variant_preset_rows') }}</th>
+                            <th class="py-2.5 px-3 min-w-[280px]">Options Preview / Pricing</th>
+                            <th class="py-2.5 px-3 text-center w-24">Reorder</th>
+                            <th class="py-2.5 px-3 text-right w-36">{{ __('messages.variant_preset_col_actions') }}</th>
                         </tr>
-                    @empty
-                        <tr><td colspan="6" class="p-8 text-center text-sm text-gray-500 dark:text-slate-400">{{ __('messages.variant_preset_empty_title') }}</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200/80 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                        @forelse ($presets as $preset)
+                            @php
+                                $optCount = count($preset->options ?? []);
+                                $inStockCount = collect($preset->options ?? [])->where('stock_status', 'in_stock')->count();
+                            @endphp
+                            <tr x-show="matches({{ Js::from($preset) }})"
+                                class="divide-x divide-slate-200/80 dark:divide-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
+                                
+                                {{-- Name --}}
+                                <td class="py-2.5 px-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800 grid place-items-center text-xs font-black shrink-0">⚡</span>
+                                        <span class="font-black text-slate-900 dark:text-slate-100 text-xs sm:text-sm">{{ $preset->name }}</span>
+                                    </div>
+                                </td>
+
+                                {{-- Family --}}
+                                <td class="py-2.5 px-3">
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                        {{ $familyOptions[$preset->category_family] ?? ($preset->category_family ?: 'All Families') }}
+                                    </span>
+                                </td>
+
+                                {{-- Options count --}}
+                                <td class="py-2.5 px-3 text-center font-mono font-bold">{{ $optCount }}</td>
+
+                                {{-- Options preview chips --}}
+                                <td class="py-2.5 px-3">
+                                    <div class="flex flex-wrap items-center gap-1 max-h-16 overflow-y-auto no-scrollbar">
+                                        @foreach ($preset->options ?? [] as $opt)
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                                                <span>{{ $opt['name'] }}</span>
+                                                @if (!empty($opt['retail_price_adjustment']))
+                                                    <span class="text-violet-600 dark:text-violet-400 font-sans">({{ ($opt['retail_price_adjustment'] > 0 ? '+' : '') . number_format($opt['retail_price_adjustment']) }})</span>
+                                                @endif
+                                                @if (($opt['stock_status'] ?? '') === 'out_of_stock')
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500" title="Out of Stock"></span>
+                                                @endif
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                </td>
+
+                                {{-- Reorder Up/Down --}}
+                                <td class="py-2.5 px-3 text-center">
+                                    <div class="inline-flex items-center gap-1">
+                                        <form method="POST" action="{{ route('store.admin.variant-presets.move', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}">
+                                            @csrf
+                                            <input type="hidden" name="direction" value="up" />
+                                            <button type="submit" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 text-xs" title="Move Up">▲</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('store.admin.variant-presets.move', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}">
+                                            @csrf
+                                            <input type="hidden" name="direction" value="down" />
+                                            <button type="submit" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 text-xs" title="Move Down">▼</button>
+                                        </form>
+                                    </div>
+                                </td>
+
+                                {{-- Actions --}}
+                                <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                                    <div class="inline-flex items-center gap-1">
+                                        <button type="button" @click="openEdit({{ Js::from($preset) }})"
+                                            class="px-2 py-1 rounded text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition flex items-center gap-1">
+                                            <span>✏️</span> {{ __('messages.edit') }}
+                                        </button>
+                                        <form method="POST" action="{{ route('store.admin.variant-presets.duplicate', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}" class="inline">
+                                            @csrf
+                                            <button type="submit" class="px-2 py-1 rounded text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition" title="Duplicate">
+                                                📑
+                                            </button>
+                                        </form>
+                                        <button type="button" @click="openConfirm({{ Js::from($preset) }})"
+                                            class="px-2 py-1 rounded text-xs font-bold bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 transition active:scale-95" title="Delete">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="p-8 text-center text-slate-400">
+                                    <div class="text-3xl mb-2 opacity-55">⚡</div>
+                                    <div class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.variant_preset_empty_title') }}</div>
+                                    <div class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.variant_preset_empty_hint') }}</div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        {{-- Card View --}}
-        <div x-show="viewMode === 'card'" x-cloak x-ref="cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        {{-- ============================================================
+             3. RESPONSIVE MULTI-COLUMN CARD GRID
+             ============================================================ --}}
+        <div x-show="viewMode === 'card' || viewMode === 'cards'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
             @forelse ($presets as $preset)
                 @php
-                    $options = $preset->options ?? [];
-                    $previewOptions = array_slice($options, 0, 6);
-                    $hasAdjustments = collect($options)->contains(fn ($option) => ((float) ($option['retail_price_adjustment'] ?? 0)) !== 0.0 || ((float) ($option['wholesale_price_adjustment'] ?? 0)) !== 0.0);
-                    $hasOutRows = collect($options)->contains(fn ($option) => ($option['stock_status'] ?? 'in_stock') === 'out_of_stock');
-                    $family = $preset->category_family ?? '';
-                    $searchText = strtolower(collect([
-                        $preset->name,
-                        $familyOptions[$family] ?? $family,
-                        $preset->sort_order,
-                        collect($options)->pluck('name')->implode(' '),
-                        collect($options)->pluck('sku_suffix')->implode(' '),
-                    ])->filter()->implode(' '));
+                    $optCount = count($preset->options ?? []);
                 @endphp
-                <div
-                    x-data="{ expanded: {{ $editingPreset?->id === $preset->id ? 'true' : 'false' }} }"
-                    x-show="matches($el)"
-                    x-transition.opacity
-                    data-preset-card
-                    data-search="{{ e($searchText) }}"
-                    data-adjusted="{{ $hasAdjustments ? '1' : '0' }}"
-                    data-has-out="{{ $hasOutRows ? '1' : '0' }}"
-                    data-family="{{ $family }}"
-                    class="rounded-xl border {{ $editingPreset?->id === $preset->id ? 'border-violet-400 ring-2 ring-violet-500/20' : 'border-gray-200 dark:border-slate-700' }} bg-white p-4 shadow-sm transition hover:shadow-md dark:bg-slate-800"
-                >
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-2 min-w-0">
-                                <h3 class="truncate text-sm font-black text-gray-900 dark:text-slate-100">{{ $preset->name }}</h3>
-                                @if ($editingPreset?->id === $preset->id)
-                                    <span class="shrink-0 rounded-full bg-violet-600 px-2 py-0.5 text-xs font-black text-white">{{ __('messages.variant_preset_editing') }}</span>
-                                @endif
-                            </div>
-                            <div class="mt-1 flex items-center gap-1.5 flex-wrap">
-                                <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-black text-gray-600 dark:bg-slate-700 dark:text-slate-300">{{ count($options) }} {{ __('messages.variant_preset_rows') }}</span>
-                                <span class="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-black text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">{{ $familyOptions[$family] ?? __('messages.variant_preset_family_all') }}</span>
-                                <span class="rounded-full {{ $hasAdjustments ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' }} px-2 py-0.5 text-xs font-black">
-                                    {{ $hasAdjustments ? __('messages.variant_preset_filter_adjusted') : __('messages.variant_preset_no_price_adjustment') }}
+                <div x-show="matches({{ Js::from($preset) }})"
+                     class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs hover:border-violet-300 dark:hover:border-violet-600/50 hover:shadow-sm transition flex flex-col justify-between group">
+                    
+                    <div class="p-3 space-y-2">
+                        {{-- Card Header: Icon + Category Family Pill --}}
+                        <div class="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span class="w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800 grid place-items-center text-xs font-black shrink-0">⚡</span>
+                                <span class="px-2 py-0.5 rounded font-mono font-bold text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 truncate">
+                                    {{ $familyOptions[$preset->category_family] ?? ($preset->category_family ?: 'All') }}
                                 </span>
                             </div>
-                        </div>
-                        <span class="rounded-lg bg-violet-50 px-2 py-1 text-xs font-black text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">#{{ $preset->sort_order }}</span>
-                    </div>
 
-                    <div class="mt-3 flex flex-wrap gap-1.5 min-h-8">
-                        @foreach ($previewOptions as $option)
-                            <span class="rounded-full px-2 py-1 text-xs font-semibold text-gray-700 dark:border-slate-700 dark:text-slate-300">
-                                {{ $option['name'] ?? '' }}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
+                                {{ $optCount }} Options
                             </span>
-                        @endforeach
-                        @if (count($options) > count($previewOptions))
-                            <span class="rounded-full bg-gray-100 px-2 py-1 text-xs font-black text-gray-500 dark:bg-slate-700 dark:text-slate-400">+{{ count($options) - count($previewOptions) }}</span>
-                        @endif
-                    </div>
-
-                    <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
-                        <div class="rounded-lg bg-gray-50 px-3 py-2 dark:bg-slate-900/60">
-                            <div class="font-bold text-gray-500 dark:text-slate-400">{{ __('messages.variant_preset_sku_samples') }}</div>
-                            <div class="mt-0.5 truncate font-mono text-gray-800 dark:text-slate-200">
-                                {{ collect($options)->pluck('sku_suffix')->filter()->take(2)->implode(', ') ?: __('messages.variant_preset_none') }}
-                            </div>
                         </div>
-                        <div class="rounded-lg bg-gray-50 px-3 py-2 dark:bg-slate-900/60">
-                            <div class="font-bold text-gray-500 dark:text-slate-400">{{ __('messages.variant_preset_stock') }}</div>
-                            <div class="mt-0.5 font-black text-gray-800 dark:text-slate-200">
-                                {{ collect($options)->where('stock_status', 'in_stock')->count() }}/{{ count($options) }}
-                            </div>
-                        </div>
-                    </div>
 
-                    <button type="button" @click="expanded = !expanded" data-test-label="View Rows" class="mt-3 w-full rounded-lg px-3 py-2 text-xs font-black text-gray-600 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700/60">
-                        <span x-text="expanded ? @js(__('messages.variant_preset_hide_rows')) : @js(__('messages.variant_preset_view_rows'))"></span>
-                    </button>
-
-                    <div x-show="expanded" x-transition class="mt-3 overflow-hidden rounded-lg">
-                        <div class="grid grid-cols-[1fr_4.5rem_4.5rem] gap-2 bg-gray-50 px-3 py-2 text-xs font-black uppercase text-gray-500 dark:bg-slate-900/60 dark:text-slate-400">
-                            <span>{{ __('messages.variant_preset_option') }}</span>
-                            <span>SKU</span>
-                            <span>{{ __('messages.variant_preset_stock') }}</span>
+                        {{-- Preset Title --}}
+                        <div>
+                            <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 line-clamp-1" title="{{ $preset->name }}">
+                                {{ $preset->name }}
+                            </h4>
                         </div>
-                        <div class="max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-slate-700">
-                            @foreach ($options as $option)
-                                <div class="grid grid-cols-[1fr_4.5rem_4.5rem] gap-2 px-3 py-2 text-xs">
-                                    <span class="min-w-0 truncate font-semibold text-gray-800 dark:text-slate-100">{{ $option['name'] ?? '' }}</span>
-                                    <span class="truncate font-mono text-gray-500 dark:text-slate-400">{{ $option['sku_suffix'] ?? '-' }}</span>
-                                    <span class="font-bold {{ ($option['stock_status'] ?? 'in_stock') === 'in_stock' ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300' }}">
-                                        {{ ($option['stock_status'] ?? 'in_stock') === 'in_stock' ? __('messages.variant_preset_in_short') : __('messages.variant_preset_out_short') }}
-                                    </span>
-                                </div>
+
+                        {{-- Options Pills in Card --}}
+                        <div class="flex flex-wrap items-center gap-1 max-h-24 overflow-y-auto no-scrollbar pt-1">
+                            @foreach ($preset->options ?? [] as $opt)
+                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                                    <span>{{ $opt['name'] }}</span>
+                                    @if (!empty($opt['retail_price_adjustment']))
+                                        <span class="text-violet-600 dark:text-violet-400 font-sans">({{ ($opt['retail_price_adjustment'] > 0 ? '+' : '') . number_format($opt['retail_price_adjustment']) }})</span>
+                                    @endif
+                                </span>
                             @endforeach
                         </div>
                     </div>
 
-                    <div class="mt-4 grid grid-cols-2 gap-2">
-                        <a href="{{ route('store.admin.variant-presets.edit', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}" class="flex-1 text-center rounded-lg bg-violet-50 px-3 py-2 text-xs font-black text-violet-700 hover:bg-violet-100 dark:bg-violet-950/50 dark:text-violet-300 dark:hover:bg-violet-900/60">
-                            {{ __('messages.variant_preset_edit') }}
-                        </a>
-                        <form method="POST" action="{{ route('store.admin.variant-presets.duplicate', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}">
-                            @csrf
-                            <button type="submit" data-test-label="Duplicate" class="w-full rounded-lg bg-sky-50 px-3 py-2 text-xs font-black text-sky-700 hover:bg-sky-100 dark:bg-sky-950/50 dark:text-sky-300 dark:hover:bg-sky-900/60">
-                                {{ __('messages.variant_preset_duplicate') }}
+                    {{-- Footer Actions --}}
+                    <div class="p-2.5 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
+                        <div class="inline-flex items-center gap-1">
+                            <button type="button" @click="openEdit({{ Js::from($preset) }})"
+                                class="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition flex items-center gap-1">
+                                <span>✏️</span> Edit
                             </button>
-                        </form>
-                        <form method="POST" action="{{ route('store.admin.variant-presets.move', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}">
-                            @csrf
-                            @method('PATCH')
-                            <input type="hidden" name="direction" value="up" />
-                            <button type="submit" data-test-label="Move Up" class="w-full rounded-lg bg-gray-50 px-3 py-2 text-xs font-black text-gray-700 hover:bg-gray-100 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-700">
-                                {{ __('messages.variant_preset_move_up') }}
+                            <form method="POST" action="{{ route('store.admin.variant-presets.duplicate', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}" class="inline">
+                                @csrf
+                                <button type="submit" class="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition" title="Duplicate">
+                                    📑
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="inline-flex items-center gap-1">
+                            <form method="POST" action="{{ route('store.admin.variant-presets.move', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}" class="inline">
+                                @csrf
+                                <input type="hidden" name="direction" value="up" />
+                                <button type="submit" class="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs" title="Move Up">▲</button>
+                            </form>
+                            <form method="POST" action="{{ route('store.admin.variant-presets.move', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}" class="inline">
+                                @csrf
+                                <input type="hidden" name="direction" value="down" />
+                                <button type="submit" class="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs" title="Move Down">▼</button>
+                            </form>
+                            <button type="button" @click="openConfirm({{ Js::from($preset) }})"
+                                class="px-2 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-bold transition active:scale-95" title="Delete">
+                                🗑️
                             </button>
-                        </form>
-                        <form method="POST" action="{{ route('store.admin.variant-presets.move', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}">
-                            @csrf
-                            @method('PATCH')
-                            <input type="hidden" name="direction" value="down" />
-                            <button type="submit" data-test-label="Move Down" class="w-full rounded-lg bg-gray-50 px-3 py-2 text-xs font-black text-gray-700 hover:bg-gray-100 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-700">
-                                {{ __('messages.variant_preset_move_down') }}
-                            </button>
-                        </form>
-                        <form method="POST" action="{{ route('store.admin.variant-presets.destroy', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}" class="flex-1">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" data-confirm="{{ __('messages.variant_preset_delete_confirm') }}" class="w-full rounded-lg bg-rose-50 px-3 py-2 text-xs font-black text-rose-700 hover:bg-rose-100 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-900/60">
-                                {{ __('messages.variant_preset_delete') }}
-                            </button>
-                        </form>
+                        </div>
                     </div>
                 </div>
             @empty
-                <div class="md:col-span-2 xl:col-span-3 rounded-xl bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-800">
-                    <div class="text-sm font-semibold text-gray-700 dark:text-slate-200 mb-1">{{ __('messages.variant_preset_empty_title') }}</div>
-                    <div class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.variant_preset_empty_hint') }}</div>
+                <div class="col-span-full bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 p-8 rounded-xl text-center text-slate-400 shadow-2xs">
+                    <div class="text-3xl mb-2 opacity-55">⚡</div>
+                    <div class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.variant_preset_empty_title') }}</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.variant_preset_empty_hint') }}</div>
                 </div>
             @endforelse
-
-            @if ($presets->isNotEmpty())
-                <div x-show="visibleCount === 0" x-cloak class="md:col-span-2 xl:col-span-3 rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-800">
-                    <div class="text-sm font-black text-gray-800 dark:text-slate-100">{{ __('messages.variant_preset_no_match_title') }}</div>
-                    <div class="mt-1 text-xs text-gray-500 dark:text-slate-400">{{ __('messages.variant_preset_no_match_hint') }}</div>
-                </div>
-            @endif
         </div>
+
+        {{-- ============================================================
+             4. CREATE / EDIT MODAL (Unified Alpine Dialog)
+             ============================================================ --}}
+        <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+            <div class="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity" @click="closeModal()"></div>
+            <div class="min-h-full flex items-center justify-center p-4">
+                <div class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-5 space-y-4" @click.stop>
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                            <span x-text="modalMode === 'create' ? '➕ {{ __('messages.variant_preset_add_title') }}' : '✏️ {{ __('messages.variant_preset_edit_title') }}: ' + formName"></span>
+                        </h3>
+                        <button type="button" @click="closeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold">&times;</button>
+                    </div>
+
+                    <form method="POST"
+                        :action="modalMode === 'create' ? '{{ route('store.admin.variant-presets.store', ['store_slug' => $store->slug]) }}' : '{{ url('/store/' . $store->slug . '/admin/variant-presets') }}/' + editId"
+                        @submit="if (saving) { $event.preventDefault(); } else { saving = true; }"
+                        class="space-y-4">
+                        @csrf
+                        <template x-if="modalMode === 'edit'">
+                            <input type="hidden" name="_method" value="PUT" />
+                        </template>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.variant_preset_name') }} <span class="text-rose-500">*</span></label>
+                                <input type="text" x-ref="variantModalName" name="name" x-model="formName" required maxlength="100"
+                                    placeholder="e.g. Storage Capacity, Phone Colors"
+                                    class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.variant_preset_category_family') }}</label>
+                                <select name="category_family" x-model="formCategoryFamily"
+                                    class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500">
+                                    @foreach ($familyOptions as $value => $label)
+                                        <option value="{{ $value }}">{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- Dynamic Options Repeater --}}
+                        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                            <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800">
+                                <span class="text-xs font-black uppercase text-slate-700 dark:text-slate-300">{{ __('messages.variant_preset_options') }}</span>
+                                <button type="button" @click="addOptionRow()"
+                                    class="px-2.5 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold transition flex items-center gap-1">
+                                    <span>+</span> {{ __('messages.variant_preset_add_row') }}
+                                </button>
+                            </div>
+
+                            <div class="max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 p-2 space-y-2">
+                                <template x-for="(opt, idx) in formOptions" :key="idx">
+                                    <div class="grid grid-cols-1 sm:grid-cols-[1.5fr_1fr_1fr_1fr_1.2fr_auto] gap-2 items-center bg-slate-50/50 dark:bg-slate-850 p-2 rounded-lg border border-slate-200/60 dark:border-slate-800">
+                                        <div>
+                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">Option Name *</label>
+                                            <input type="text" :name="'options[' + idx + '][name]'" x-model="opt.name" required placeholder="e.g. 256GB"
+                                                class="w-full rounded border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                        <div>
+                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">SKU Suffix</label>
+                                            <input type="text" :name="'options[' + idx + '][sku_suffix]'" x-model="opt.sku_suffix" placeholder="256"
+                                                class="w-full rounded border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-xs font-mono bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                        <div>
+                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">Retail Adj (+/-)</label>
+                                            <input type="number" step="0.01" :name="'options[' + idx + '][retail_price_adjustment]'" x-model="opt.retail_price_adjustment"
+                                                class="w-full rounded border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-xs font-mono bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                        <div>
+                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">Wholesale Adj</label>
+                                            <input type="number" step="0.01" :name="'options[' + idx + '][wholesale_price_adjustment]'" x-model="opt.wholesale_price_adjustment"
+                                                class="w-full rounded border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-xs font-mono bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                        <div>
+                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">Stock</label>
+                                            <select :name="'options[' + idx + '][stock_status]'" x-model="opt.stock_status"
+                                                class="w-full rounded border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500">
+                                                <option value="in_stock">In Stock</option>
+                                                <option value="out_of_stock">Out of Stock</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <button type="button" @click="removeOptionRow(idx)" :disabled="formOptions.length === 1"
+                                                class="p-1.5 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:opacity-30 disabled:cursor-not-allowed">
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        {{-- Modal Footer --}}
+                        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                            <button type="button" @click="closeModal()"
+                                class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition">
+                                {{ __('messages.cancel') }}
+                            </button>
+                            <button type="submit" :disabled="saving"
+                                class="px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-black shadow-md shadow-violet-500/20 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
+                                <span x-show="!saving" class="inline-flex items-center gap-1.5">
+                                    <span x-text="modalMode === 'create' ? '+ {{ __('messages.save') }}' : '✓ {{ __('messages.save_changes') }}'"></span>
+                                </span>
+                                <span x-show="saving" class="inline-flex items-center gap-2">
+                                    <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                                    <span>Saving...</span>
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {{-- ============================================================
+             5. DELETE PRESET CONFIRMATION MODAL
+             ============================================================ --}}
+        <div x-show="confirmTarget" x-cloak class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+            <div class="fixed inset-0 bg-black/60 backdrop-blur-xs" @click="closeConfirm()"></div>
+            <div class="min-h-full flex items-center justify-center p-4">
+                <div class="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-5 space-y-4" @click.stop>
+                    <div class="text-center space-y-2">
+                        <div class="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 grid place-items-center text-xl mx-auto">🗑️</div>
+                        <h4 class="text-sm font-black text-slate-900 dark:text-slate-100">{{ __('messages.variant_preset_delete') }}</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            Are you sure you want to delete <strong class="text-slate-900 dark:text-slate-100" x-text="confirmTarget?.name"></strong>?
+                        </p>
+                    </div>
+
+                    <form method="POST"
+                        :action="'/store/{{ $store->slug }}/admin/variant-presets/' + (confirmTarget ? confirmTarget.id : '')">
+                        @csrf
+                        @method('DELETE')
+                        <div class="flex items-center justify-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <button type="button" @click="closeConfirm()"
+                                class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition">
+                                {{ __('messages.cancel') }}
+                            </button>
+                            <button type="submit" :disabled="deleting"
+                                class="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-md shadow-rose-500/20 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
+                                <span x-show="!deleting">{{ __('messages.delete') }}</span>
+                                <span x-show="deleting">Deleting...</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
-

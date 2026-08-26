@@ -8,7 +8,7 @@
     $total = $warehouses->count();
 @endphp
 
-<div x-data="warehousePage()" x-init="init()">
+<div x-data="warehousePage()" x-init="init()" class="w-full space-y-3">
     <x-admin.toolbar
         :search="$search"
         :search-placeholder="__('messages.search_warehouse_placeholder')"
@@ -24,7 +24,6 @@
         :view-mode="$viewMode"
         :show-pagination="false"
     />
-</div>
 
 <div class="flex items-center justify-between mb-4">
     <div class="flex items-center gap-2 border-b border-neutral-200 dark:border-white/10">
@@ -104,6 +103,7 @@
             <div class="flex justify-end gap-2"><button type="button" @click="deleteWh=null" class="px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200 cursor-pointer">{{ __('messages.cancel') }}</button><button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg cursor-pointer">{{ __('messages.delete') }}</button></div>
         </form>
     </div>
+</div>
 </div>
 
 <script>

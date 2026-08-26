@@ -4,7 +4,9 @@
 @section('main_padding', 'p-2')
 
 @section('content')
-<div x-data="warrantyTracker()" class="w-full space-y-2 sm:space-y-2.5">
+<div x-data="warrantyTracker()"
+     @view-changed.window="viewMode = $event.detail"
+     class="w-full space-y-2 sm:space-y-2.5">
 
     {{-- ============================================================
          1. COMPACT HERO PAGE HEADER
@@ -29,7 +31,7 @@
         <div class="flex flex-wrap items-center gap-1.5 shrink-0">
             {{-- Register New Warranty --}}
             <a href="{{ route('store.admin.warranty.create', ['store_slug' => $store->slug]) }}"
-               class="px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white transition flex items-center gap-1.5 shadow-2xs">
+               class="px-3.5 py-1.5 rounded-lg text-xs font-black bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-900/20 transition flex items-center gap-1.5 active:scale-95">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
                 </svg>
@@ -44,7 +46,7 @@
     <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-2.5">
         {{-- Total Warranties --}}
         <a href="{{ route('store.admin.warranty.index', ['store_slug' => $store->slug, 'status' => 'all']) }}"
-           class="p-2.5 sm:p-3 rounded-lg border transition shadow-2xs {{ $status === 'all' ? 'border-violet-600 bg-violet-50/60 dark:border-violet-500 dark:bg-violet-950/40 ring-1 ring-violet-500' : 'border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 hover:border-slate-300' }}">
+           class="p-2.5 sm:p-3 rounded-lg border transition shadow-2xs {{ $status === 'all' ? 'border-violet-600 bg-violet-50/60 dark:border-violet-500 dark:bg-violet-950/40 ring-2 ring-violet-500/20' : 'border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 hover:border-slate-300' }}">
             <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
                 <span>📋</span>
                 <span>{{ __('messages.warranty_stat_total') }}</span>
@@ -57,7 +59,7 @@
 
         {{-- Active Warranties --}}
         <a href="{{ route('store.admin.warranty.index', ['store_slug' => $store->slug, 'status' => 'active']) }}"
-           class="p-2.5 sm:p-3 rounded-lg border transition shadow-2xs {{ $status === 'active' ? 'border-emerald-600 bg-emerald-50/60 dark:border-emerald-500 dark:bg-emerald-950/40 ring-1 ring-emerald-500' : 'border-emerald-200/80 bg-emerald-50/30 dark:border-emerald-900/60 dark:bg-emerald-950/20 hover:border-emerald-300' }}">
+           class="p-2.5 sm:p-3 rounded-lg border transition shadow-2xs {{ $status === 'active' ? 'border-emerald-600 bg-emerald-50/60 dark:border-emerald-500 dark:bg-emerald-950/40 ring-2 ring-emerald-500/20' : 'border-emerald-200/80 bg-emerald-50/30 dark:border-emerald-900/60 dark:bg-emerald-950/20 hover:border-emerald-300' }}">
             <div class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1">
                 <span>✅</span>
                 <span>{{ __('messages.warranty_stat_active') }}</span>
@@ -70,7 +72,7 @@
 
         {{-- Expiring Soon --}}
         <a href="{{ route('store.admin.warranty.index', ['store_slug' => $store->slug, 'status' => 'expiring_soon']) }}"
-           class="p-2.5 sm:p-3 rounded-lg border transition shadow-2xs {{ $status === 'expiring_soon' ? 'border-amber-600 bg-amber-50/60 dark:border-amber-500 dark:bg-amber-950/40 ring-1 ring-amber-500' : 'border-amber-200/80 bg-amber-50/30 dark:border-amber-900/60 dark:bg-amber-950/20 hover:border-amber-300' }}">
+           class="p-2.5 sm:p-3 rounded-lg border transition shadow-2xs {{ $status === 'expiring_soon' ? 'border-amber-600 bg-amber-50/60 dark:border-amber-500 dark:bg-amber-950/40 ring-2 ring-amber-500/20' : 'border-amber-200/80 bg-amber-50/30 dark:border-amber-900/60 dark:bg-amber-950/20 hover:border-amber-300' }}">
             <div class="text-[11px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1">
                 <span>⏳</span>
                 <span>{{ __('messages.warranty_stat_expiring_soon') }}</span>
@@ -83,7 +85,7 @@
 
         {{-- Expired Warranties --}}
         <a href="{{ route('store.admin.warranty.index', ['store_slug' => $store->slug, 'status' => 'expired']) }}"
-           class="p-2.5 sm:p-3 rounded-lg border transition shadow-2xs {{ $status === 'expired' ? 'border-rose-600 bg-rose-50/60 dark:border-rose-500 dark:bg-rose-950/40 ring-1 ring-rose-500' : 'border-rose-200/80 bg-rose-50/30 dark:border-rose-900/60 dark:bg-rose-950/20 hover:border-rose-300' }}">
+           class="p-2.5 sm:p-3 rounded-lg border transition shadow-2xs {{ $status === 'expired' ? 'border-rose-600 bg-rose-50/60 dark:border-rose-500 dark:bg-rose-950/40 ring-2 ring-rose-500/20' : 'border-rose-200/80 bg-rose-50/30 dark:border-rose-900/60 dark:bg-rose-950/20 hover:border-rose-300' }}">
             <div class="text-[11px] font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider flex items-center gap-1">
                 <span>⚠️</span>
                 <span>{{ __('messages.warranty_stat_expired') }}</span>
@@ -96,7 +98,7 @@
 
         {{-- Claimed / Repaired --}}
         <a href="{{ route('store.admin.warranty.index', ['store_slug' => $store->slug, 'status' => 'claimed']) }}"
-           class="p-2.5 sm:p-3 rounded-lg border transition shadow-2xs {{ $status === 'claimed' ? 'border-indigo-600 bg-indigo-50/60 dark:border-indigo-500 dark:bg-indigo-950/40 ring-1 ring-indigo-500' : 'border-indigo-200/80 bg-indigo-50/30 dark:border-indigo-900/60 dark:bg-indigo-950/20 hover:border-indigo-300' }}">
+           class="p-2.5 sm:p-3 rounded-lg border transition shadow-2xs {{ $status === 'claimed' ? 'border-indigo-600 bg-indigo-50/60 dark:border-indigo-500 dark:bg-indigo-950/40 ring-2 ring-indigo-500/20' : 'border-indigo-200/80 bg-indigo-50/30 dark:border-indigo-900/60 dark:bg-indigo-950/20 hover:border-indigo-300' }}">
             <div class="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider flex items-center gap-1">
                 <span>🛠️</span>
                 <span>{{ __('messages.warranty_stat_claimed') }}</span>
@@ -116,6 +118,8 @@
         :searchPlaceholder="__('messages.search_warranty_placeholder') ?? 'Search product, SN, IMEI, customer...'"
         :searchValue="$search ?? ''"
         :filterCount="$activeFiltersCount ?? 0"
+        :showViewToggle="true"
+        :activeView="'table'"
         :showPagination="true"
         :paginator="$warranties"
         :showPerPageSelector="true"
@@ -137,7 +141,7 @@
                 'claimed' => __('messages.status_claimed'),
             ] as $stKey => $stLabel)
                 <a href="{{ route('store.admin.warranty.index', array_merge(['store_slug' => $store->slug], request()->query(), ['status' => $stKey, 'page' => 1])) }}"
-                   class="px-2.5 py-1 rounded-md text-xs font-bold transition whitespace-nowrap {{ ($status ?? 'all') === $stKey ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white' }}">
+                   class="px-2.5 py-1 rounded-md text-xs font-bold transition whitespace-nowrap {{ ($status ?? 'all') === $stKey ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-2xs font-black' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white' }}">
                     {{ $stLabel }}
                 </a>
             @endforeach
@@ -204,9 +208,9 @@
     </x-admin.toolbar>
 
     {{-- ============================================================
-         4. SPREADSHEET DATA GRID TABLE (GOOGLE SHEETS STYLE)
+         4. SPREADSHEET DATA GRID TABLE (TABLE VIEW)
          ============================================================ --}}
-    <div id="data-table" class="w-full bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-lg shadow-2xs overflow-hidden transition">
+    <div x-show="viewMode === 'table'" class="w-full bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-lg shadow-2xs overflow-hidden transition">
         <div class="overflow-x-auto max-h-[75vh] overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800">
             <table class="w-full text-left text-xs border-collapse font-sans text-slate-700 dark:text-slate-200">
                 {{-- Sticky Header --}}
@@ -291,27 +295,27 @@
                             {{-- Status Badge --}}
                             <td class="py-2 px-3 text-center whitespace-nowrap">
                                 @if($compStatus === 'active')
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                                         <span>✅</span>
                                         <span>{{ __('messages.status_active') }}</span>
                                     </span>
                                 @elseif($compStatus === 'expiring_soon')
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-                                        <span>⏳</span>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
                                         <span>{{ __('messages.status_expiring_soon') }}</span>
                                     </span>
                                 @elseif($compStatus === 'expired')
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
                                         <span>⚠️</span>
                                         <span>{{ __('messages.status_expired') }}</span>
                                     </span>
                                 @elseif($compStatus === 'claimed')
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
                                         <span>🛠️</span>
                                         <span>{{ __('messages.status_claimed') }}</span>
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                         {{ ucfirst($compStatus) }}
                                     </span>
                                 @endif
@@ -324,12 +328,12 @@
                                     <a href="{{ route('store.admin.warranty.certificate', ['store_slug' => $store->slug, 'warranty' => $w->id]) }}"
                                        target="_blank"
                                        title="{{ __('messages.print_certificate') }}"
-                                       class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                                       class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                                         <span>🖨️</span>
                                     </a>
                                     {{-- View Details --}}
                                     <a href="{{ route('store.admin.warranty.show', ['store_slug' => $store->slug, 'warranty' => $w->id]) }}"
-                                       class="px-2 py-1 text-xs font-bold rounded-lg bg-violet-50 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/60 dark:text-violet-300 transition flex items-center gap-0.5">
+                                       class="px-2.5 py-1 text-xs font-bold rounded-lg bg-violet-50 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/60 dark:text-violet-300 transition flex items-center gap-0.5">
                                         <span>{{ __('messages.view_details') }}</span>
                                         <span>&rarr;</span>
                                     </a>
@@ -351,11 +355,153 @@
         </div>
     </div>
 
+    {{-- ============================================================
+         5. RESPONSIVE CARDS VIEW GRID (CARD VIEW MODE)
+         ============================================================ --}}
+    <div x-show="viewMode === 'card' || viewMode === 'cards'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
+        @forelse ($warranties as $w)
+            @php
+                $compStatus = $w->computed_status;
+            @endphp
+            <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-violet-300 dark:hover:border-violet-600/50 hover:shadow-sm transition flex flex-col justify-between group overflow-hidden">
+                {{-- Top Card Content --}}
+                <div class="p-3 sm:p-3.5 space-y-2.5">
+                    {{-- Header: Product Name + Status Badge --}}
+                    <div class="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <div class="min-w-0 flex-1">
+                            <a href="{{ route('store.admin.warranty.show', ['store_slug' => $store->slug, 'warranty' => $w->id]) }}"
+                               class="font-black text-xs sm:text-sm text-slate-900 dark:text-white hover:text-violet-600 dark:hover:text-violet-400 line-clamp-1 block transition">
+                                {{ $w->product_name }}
+                            </a>
+                            @if($w->invoice_number)
+                                <span class="text-[10px] font-mono text-slate-400 block mt-0.5">Inv: #{{ $w->invoice_number }}</span>
+                            @endif
+                        </div>
+
+                        {{-- Status Pill --}}
+                        @if($compStatus === 'active')
+                            <span class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                <span>✅</span>
+                                <span>{{ __('messages.status_active') }}</span>
+                            </span>
+                        @elseif($compStatus === 'expiring_soon')
+                            <span class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                                <span>{{ __('messages.status_expiring_soon') }}</span>
+                            </span>
+                        @elseif($compStatus === 'expired')
+                            <span class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                                <span>⚠️</span>
+                                <span>{{ __('messages.status_expired') }}</span>
+                            </span>
+                        @elseif($compStatus === 'claimed')
+                            <span class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                <span>🛠️</span>
+                                <span>{{ __('messages.status_claimed') }}</span>
+                            </span>
+                        @else
+                            <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                {{ ucfirst($compStatus) }}
+                            </span>
+                        @endif
+                    </div>
+
+                    {{-- Serial & IMEI Pill Container --}}
+                    <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs font-mono space-y-0.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400 text-[10px] uppercase font-bold">Serial No:</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200 text-[11px] select-all">{{ $w->serial_number }}</span>
+                        </div>
+                        @if($w->imei_primary)
+                            <div class="flex items-center justify-between pt-0.5 border-t border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-slate-400 text-[10px] uppercase font-bold">IMEI:</span>
+                                <span class="font-bold text-slate-600 dark:text-slate-300 text-[10px] select-all">{{ $w->imei_primary }}</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Validity & Expiry Timeline Box --}}
+                    <div class="p-2.5 rounded-lg border {{ $w->days_remaining > 0 ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/40' : 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/40' }} space-y-1.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                သက်တမ်း ကုန်ဆုံးရက်:
+                            </span>
+                            <span class="font-black font-mono text-xs {{ $w->days_remaining > 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-400' }}">
+                                {{ $w->warranty_expiry_date->format('d/m/Y') }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-200/60 dark:border-slate-700/60 font-mono">
+                            <span class="text-[10px] text-slate-400 font-sans">
+                                ဝယ်ယူ: {{ $w->purchase_date->format('d/m/Y') }} ({{ $w->warranty_duration_months }} လ)
+                            </span>
+                            @if($w->days_remaining > 0)
+                                <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-900/50 px-1.5 py-0.2 rounded">
+                                    {{ $w->days_remaining }} days left
+                                </span>
+                            @else
+                                <span class="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-100/60 dark:bg-rose-900/50 px-1.5 py-0.2 rounded">
+                                    Expired
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Customer Metadata --}}
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between pt-0.5">
+                        <div class="truncate flex items-center gap-1 min-w-0">
+                            <span>👤</span>
+                            <span class="font-bold text-slate-700 dark:text-slate-300 truncate">{{ $w->customer_name ?: 'Walk-in Customer' }}</span>
+                        </div>
+                        @if($w->customer_phone)
+                            <span class="font-mono text-[10px] text-slate-400 shrink-0">{{ $w->customer_phone }}</span>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Card Action Footer --}}
+                <div class="p-2.5 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                    <a href="{{ route('store.admin.warranty.certificate', ['store_slug' => $store->slug, 'warranty' => $w->id]) }}"
+                       target="_blank"
+                       title="{{ __('messages.print_certificate') }}"
+                       class="p-1.5 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition text-xs font-bold flex items-center gap-1">
+                        <span>🖨️</span>
+                        <span>Certificate</span>
+                    </a>
+
+                    <a href="{{ route('store.admin.warranty.show', ['store_slug' => $store->slug, 'warranty' => $w->id]) }}"
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-50 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/60 dark:text-violet-300 transition flex items-center gap-1 active:scale-95">
+                        <span>{{ __('messages.view_details') }}</span>
+                        <span>&rarr;</span>
+                    </a>
+                </div>
+            </div>
+        @empty
+            <div class="col-span-full p-12 text-center text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 shadow-2xs">
+                <span class="text-3xl mb-2 block">🛡️</span>
+                <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ __('messages.no_warranties_found') }}</p>
+                <a href="{{ route('store.admin.warranty.create', ['store_slug' => $store->slug]) }}"
+                   class="mt-3 inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition shadow-sm">
+                    <span>+</span>
+                    <span>{{ __('messages.register_new_warranty') }}</span>
+                </a>
+            </div>
+        @endforelse
+    </div>
+
+    {{-- Bottom Pagination --}}
+    @if($warranties->hasPages())
+        <div class="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+            {{ $warranties->links() }}
+        </div>
+    @endif
+
 </div>
 
 <script nonce="{{ $cspNonce }}">
 window.warrantyTracker = function() {
     return {
+        viewMode: localStorage.getItem('admin_view_mode') || 'table',
         scanInput: '',
         scanResults: [],
         async doQuickScan() {
