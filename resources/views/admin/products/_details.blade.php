@@ -15,13 +15,13 @@
     {{-- ============================================================
          1. TOP HERO CARD (Image, Title, Badges, SKU, Pricing)
          ============================================================ --}}
-    <div class="flex flex-col sm:flex-row gap-4 p-4 rounded-3xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 transition">
+    <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-lg sm:rounded-xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 transition">
         {{-- Product Thumbnail & Gallery --}}
         <div class="shrink-0 flex flex-col items-center sm:items-start gap-2">
             @if ($product->image_path)
-                <img src="{{ asset('storage/' . $product->image_path) }}" alt="{{ $product->name }}" class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm" />
+                <img src="{{ asset('storage/' . $product->image_path) }}" alt="{{ $product->name }}" class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs" />
             @else
-                <div class="w-24 h-24 sm:w-28 sm:h-28 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 grid place-items-center text-3xl shadow-inner text-slate-400">
+                <div class="w-24 h-24 sm:w-28 sm:h-28 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 grid place-items-center text-3xl shadow-inner text-slate-400">
                     📷
                 </div>
             @endif

@@ -1,22 +1,22 @@
 {{-- Shared product form body. Requires Alpine state on create/edit wrappers. --}}
 @php
-    $input = 'w-full rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition';
+    $input = 'w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition';
     $label = 'block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1';
     $hint  = 'mt-1 text-[11px] text-slate-400 dark:text-slate-500';
-    $section = 'rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm space-y-4';
-    $fileInput = 'block w-full text-xs text-slate-600 dark:text-slate-400 file:mr-3 file:rounded-xl file:border-0 file:bg-violet-50 file:px-3.5 file:py-2 file:text-xs file:font-bold file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-slate-800 dark:file:text-violet-300 rounded-2xl border border-slate-200 dark:border-slate-700 p-2 bg-slate-50 dark:bg-slate-800/60';
+    $section = 'w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 sm:p-4 shadow-2xs space-y-3';
+    $fileInput = 'block w-full text-xs text-slate-600 dark:text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-50 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-slate-800 dark:file:text-violet-300 rounded-lg border border-slate-200 dark:border-slate-700 p-1.5 bg-slate-50 dark:bg-slate-800/60';
 @endphp
 
-<div class="space-y-6">
+<div class="space-y-2 sm:space-y-2.5">
     {{-- 0. Product Type Switcher (Standard, Serialized, Variant, Service) --}}
-    <section class="rounded-3xl bg-gradient-to-r from-violet-500/10 via-indigo-500/5 to-sky-500/10 dark:from-violet-950/40 dark:via-indigo-950/20 dark:to-sky-950/40 border border-violet-200/80 dark:border-violet-800/60 p-5 sm:p-6 shadow-sm space-y-3">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-violet-100 dark:border-violet-900/60 pb-3">
-            <div class="flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-violet-600 text-white grid place-items-center text-base font-bold shadow-md shadow-violet-500/20">
+    <section class="w-full rounded-lg bg-gradient-to-r from-violet-500/10 via-indigo-500/5 to-sky-500/10 dark:from-violet-950/40 dark:via-indigo-950/20 dark:to-sky-950/40 border border-violet-200/80 dark:border-violet-800/60 p-3 sm:p-4 shadow-2xs space-y-2.5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-violet-100 dark:border-violet-900/60 pb-2.5">
+            <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-violet-600 text-white grid place-items-center text-sm font-bold shadow-xs">
                     ⚡
                 </span>
                 <div>
-                    <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                    <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                         {{ __('messages.product_form_product_type') }}
                     </h2>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ __('messages.product_type_hint') }}</p>
@@ -25,32 +25,32 @@
             <input type="hidden" name="product_type" :value="productType" />
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
             <button type="button" @click="productType = 'standard'"
-                :class="productType === 'standard' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30 border-violet-600 scale-[1.02]' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-violet-300'"
-                class="flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all duration-200">
-                <span class="text-xl mb-1">📦</span>
+                :class="productType === 'standard' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/25 border-violet-600' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-violet-300'"
+                class="flex flex-col items-center justify-center p-2.5 rounded-lg border text-center transition-all duration-150">
+                <span class="text-lg mb-0.5">📦</span>
                 <span class="text-xs font-black">{{ __('messages.product_type_standard') }}</span>
             </button>
 
             <button type="button" @click="productType = 'serialized'"
-                :class="productType === 'serialized' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30 border-violet-600 scale-[1.02]' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-violet-300'"
-                class="flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all duration-200">
-                <span class="text-xl mb-1">📱</span>
+                :class="productType === 'serialized' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/25 border-violet-600' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-violet-300'"
+                class="flex flex-col items-center justify-center p-2.5 rounded-lg border text-center transition-all duration-150">
+                <span class="text-lg mb-0.5">📱</span>
                 <span class="text-xs font-black">{{ __('messages.product_type_serialized') }}</span>
             </button>
 
             <button type="button" @click="productType = 'variant'"
-                :class="productType === 'variant' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30 border-violet-600 scale-[1.02]' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-violet-300'"
-                class="flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all duration-200">
-                <span class="text-xl mb-1">🔀</span>
+                :class="productType === 'variant' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/25 border-violet-600' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-violet-300'"
+                class="flex flex-col items-center justify-center p-2.5 rounded-lg border text-center transition-all duration-150">
+                <span class="text-lg mb-0.5">🔀</span>
                 <span class="text-xs font-black">{{ __('messages.product_type_variant') }}</span>
             </button>
 
             <button type="button" @click="productType = 'service'"
-                :class="productType === 'service' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30 border-violet-600 scale-[1.02]' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-violet-300'"
-                class="flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all duration-200">
-                <span class="text-xl mb-1">🛠️</span>
+                :class="productType === 'service' ? 'bg-violet-600 text-white shadow-md shadow-violet-500/25 border-violet-600' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-violet-300'"
+                class="flex flex-col items-center justify-center p-2.5 rounded-lg border text-center transition-all duration-150">
+                <span class="text-lg mb-0.5">🛠️</span>
                 <span class="text-xs font-black">{{ __('messages.product_type_service') }}</span>
             </button>
         </div>
@@ -58,13 +58,13 @@
 
     {{-- 1. Core Information & Smart Auto-SKU Card --}}
     <section class="{{ $section }}">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-1">
-            <div class="flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 grid place-items-center text-base font-bold">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-1">
+            <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 grid place-items-center text-sm font-bold">
                     📦
                 </span>
                 <div>
-                    <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                    <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                         {{ __('messages.product_form_core_section') }}
                     </h2>
                     <p class="text-[11px] text-slate-400">{{ __('messages.product_form_core_section_hint') }}</p>
@@ -72,7 +72,7 @@
             </div>
 
             {{-- Auto-SKU Switch Toggle --}}
-            <label class="inline-flex cursor-pointer select-none items-center gap-2 px-3 py-1.5 rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50/70 dark:bg-violet-950/40 text-xs font-black text-violet-700 dark:text-violet-300 transition hover:bg-violet-100">
+            <label class="inline-flex cursor-pointer select-none items-center gap-1.5 px-2.5 py-1 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50/70 dark:bg-violet-950/40 text-xs font-black text-violet-700 dark:text-violet-300 transition hover:bg-violet-100">
                 <input type="checkbox" name="auto_sku" value="1" x-model="autoSku" @change="recomputeSmartSkuAndName()" class="rounded border-violet-300 text-violet-600 focus:ring-violet-500" />
                 <span>⚡ {{ __('messages.product_form_auto_sku') }}</span>
             </label>
@@ -149,20 +149,20 @@
 @endphp
 
         {{-- Smart Generator Real-time Builder (Visible when autoSku is enabled) --}}
-        <div x-show="autoSku" x-cloak class="rounded-3xl border border-indigo-200/80 dark:border-indigo-800/80 bg-indigo-50/50 dark:bg-slate-800/90 p-4 sm:p-5 space-y-4 shadow-sm backdrop-blur-xs transition-colors">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100 dark:border-indigo-900/60 pb-3">
-                <h3 class="text-xs sm:text-sm font-black uppercase tracking-wide text-indigo-950 dark:text-indigo-200 flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white grid place-items-center text-xs shadow-xs">✨</span>
-                    <span>{{ __('messages.product_form_smart_sku_engine') }} <span class="text-[11px] font-normal text-slate-500 dark:text-slate-400">({{ __('messages.product_form_formula_hint') }})</span></span>
+        <div x-show="autoSku" x-cloak class="rounded-lg border border-indigo-200/80 dark:border-indigo-800/80 bg-indigo-50/50 dark:bg-slate-800/90 p-3 sm:p-3.5 space-y-2.5 shadow-2xs backdrop-blur-xs transition-colors">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100 dark:border-indigo-900/60 pb-2">
+                <h3 class="text-xs font-black uppercase tracking-wide text-indigo-950 dark:text-indigo-200 flex items-center gap-1.5">
+                    <span class="w-5 h-5 rounded bg-indigo-600 text-white grid place-items-center text-xs shadow-2xs">✨</span>
+                    <span>{{ __('messages.product_form_smart_sku_engine') }} <span class="text-[10px] font-normal text-slate-500 dark:text-slate-400">({{ __('messages.product_form_formula_hint') }})</span></span>
                 </h3>
-                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100/70 dark:bg-indigo-950/70 px-2.5 py-1 rounded-xl border border-indigo-200 dark:border-indigo-800/70">
+                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100/70 dark:bg-indigo-950/70 px-2 py-0.5 rounded-lg border border-indigo-200 dark:border-indigo-800/70">
                     ⚡ {{ __('messages.product_form_fast_presets') }}
                 </span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3">
                 {{-- 1. Model Code (Manual typing per product as requested) --}}
-                <div class="space-y-1.5">
+                <div class="space-y-1">
                     <div class="flex items-center justify-between">
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">{{ __('messages.product_form_smart_model_code') }}</label>
                         <span class="text-[10px] text-slate-400 font-medium">{{ __('messages.product_form_type_from_device') }}</span>
@@ -172,41 +172,41 @@
                 </div>
 
                 {{-- 2. Connector / Spec Code with Compact Dropdown & Manual Input --}}
-                <div class="space-y-1.5">
+                <div class="space-y-1">
                     <div class="flex items-center justify-between">
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">{{ __('messages.product_form_smart_extra_code') }}</label>
                         <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'connectors']) }}" target="_blank" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline">{{ __('messages.product_form_manage_presets') }}</a>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex gap-1.5">
                         <select x-model="productExtraCode" @change="recomputeSmartSkuAndName()" class="{{ $input }} cursor-pointer text-xs flex-1">
                             <option value="">-- {{ __('messages.product_form_smart_extra_code_placeholder') }} --</option>
                             @foreach ($skuExtraList as $ex)
                                 <option value="{{ $ex->code }}">{{ $ex->code }} ({{ $ex->name }})</option>
                             @endforeach
                         </select>
-                        <input type="text" x-model="productExtraCode" @input="recomputeSmartSkuAndName()" class="w-24 rounded-2xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-mono font-bold uppercase focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="Manual" title="Custom code" />
+                        <input type="text" x-model="productExtraCode" @input="recomputeSmartSkuAndName()" class="w-20 sm:w-24 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-mono font-bold uppercase focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition" placeholder="Manual" title="Custom code" />
                     </div>
                 </div>
 
                 {{-- 3. Color Code with Compact Dropdown & Manual Input --}}
-                <div class="space-y-1.5">
+                <div class="space-y-1">
                     <div class="flex items-center justify-between">
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">{{ __('messages.product_form_smart_color_code') }}</label>
                         <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'colors']) }}" target="_blank" class="text-[11px] text-amber-600 dark:text-amber-400 font-bold hover:underline">{{ __('messages.product_form_manage_presets') }}</a>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex gap-1.5">
                         <select x-model="productColorCode" @change="recomputeSmartSkuAndName()" class="{{ $input }} cursor-pointer text-xs flex-1">
                             <option value="">-- {{ __('messages.product_form_smart_color_code_placeholder') }} --</option>
                             @foreach ($skuColorList as $c)
                                 <option value="{{ $c->code }}">{{ $c->code }} - {{ $c->name }}</option>
                             @endforeach
                         </select>
-                        <input type="text" x-model="productColorCode" @input="recomputeSmartSkuAndName()" class="w-24 rounded-2xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-mono font-bold uppercase focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="Manual" title="Custom code" />
+                        <input type="text" x-model="productColorCode" @input="recomputeSmartSkuAndName()" class="w-20 sm:w-24 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-mono font-bold uppercase focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition" placeholder="Manual" title="Custom code" />
                     </div>
                 </div>
 
                 {{-- 4. Compatible Models (အလားတူမော်ဒယ်များ - Auto-fills in Name, NOT SKU) --}}
-                <div class="space-y-1.5 md:col-span-3 pt-2 border-t border-indigo-100/70 dark:border-indigo-900/40">
+                <div class="space-y-1 md:col-span-3 pt-2 border-t border-indigo-100/70 dark:border-indigo-900/40">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                             <span>📱</span>
@@ -221,19 +221,19 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-3 pt-3 border-t border-indigo-100 dark:border-indigo-900/60 text-xs">
-                <div class="flex items-center gap-2 bg-white dark:bg-slate-900 px-4 py-2 rounded-2xl border border-indigo-200/80 dark:border-indigo-800/80 shadow-xs">
+            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-indigo-100 dark:border-indigo-900/60 text-xs">
+                <div class="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-indigo-200/80 dark:border-indigo-800/80 shadow-2xs">
                     <span class="text-slate-500 dark:text-slate-400 font-bold text-xs">{{ __('messages.product_form_generated_sku_preview') }}:</span>
                     <span class="font-mono font-black text-indigo-600 dark:text-indigo-400 text-xs sm:text-sm tracking-wider" x-text="productSku || 'SKU-PENDING'"></span>
                 </div>
-                <div class="flex items-center gap-2 bg-white dark:bg-slate-900 px-4 py-2 rounded-2xl border border-indigo-200/80 dark:border-indigo-800/80 shadow-xs">
+                <div class="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-indigo-200/80 dark:border-indigo-800/80 shadow-2xs">
                     <span class="text-slate-500 dark:text-slate-400 font-bold text-xs">{{ __('messages.product_form_generated_name_preview') }}:</span>
                     <span class="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm" x-text="productNameInput || 'Product Name'"></span>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-2">
             <div>
                 <label class="{{ $label }}">{{ __('messages.product_form_name') }} <span class="text-rose-500">*</span></label>
                 <input type="text" name="name" x-model="productNameInput" required class="{{ $input }}" placeholder="{{ __('messages.product_form_name_placeholder') }}" />
@@ -257,7 +257,7 @@
                 </div>
                 <div class="relative">
                     <input type="text" name="barcode" x-model="productBarcode" value="{{ old('barcode', $product->barcode) }}" class="{{ $input }} pl-9 font-mono" placeholder="{{ __('messages.product_form_barcode_placeholder') }}" />
-                    <span class="absolute left-3 top-3 text-slate-400">
+                    <span class="absolute left-3 top-2.5 text-slate-400">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
                     </span>
                 </div>
@@ -319,25 +319,25 @@
 
     {{-- 2. Pricing & Promotion Card --}}
     <section class="{{ $section }}">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-1">
-            <div class="flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-base font-bold">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-1">
+            <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-sm font-bold">
                     🏷️
                 </span>
                 <div>
-                    <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                    <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                         {{ __('messages.product_form_pricing_section') }}
                     </h2>
                     <p class="text-[11px] text-slate-400">{{ __('messages.product_form_pricing_section_hint') }}</p>
                 </div>
             </div>
-            <div class="rounded-xl px-3 py-1.5 text-xs font-black border"
+            <div class="rounded-lg px-2.5 py-1 text-xs font-black border"
                  :class="marginPercent >= 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'">
                 {{ __('messages.product_form_margin') }}: <span x-text="marginPercent + '%'">0%</span>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-2">
             <div>
                 <label class="{{ $label }}">{{ __('messages.product_form_retail_price') }} <span class="text-rose-500">*</span></label>
                 <input type="number" step="0.01" min="0" name="retail_price" x-model="marginRetail" value="{{ old('retail_price', $product->retail_price) }}" required class="{{ $input }}" placeholder="1990000" />
@@ -357,7 +357,7 @@
                 @error('old_price')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
             </div>
 
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-2.5 sm:gap-3 sm:grid-cols-2">
                 <div>
                     <label class="{{ $label }}">{{ __('messages.product_form_sale_starts_at') }}</label>
                     <input type="datetime-local" name="sale_starts_at" value="{{ old('sale_starts_at', optional($product->sale_starts_at)->format('Y-m-d\TH:i')) }}" class="{{ $input }}" />
@@ -376,13 +376,13 @@
 
     {{-- 3. Inventory, Warehouse & Shelf Location Card --}}
     <section class="{{ $section }}">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-1">
-            <div class="flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 grid place-items-center text-base font-bold">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-1">
+            <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 grid place-items-center text-sm font-bold">
                     🏢
                 </span>
                 <div>
-                    <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                    <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                         {{ __('messages.product_form_inventory_section') }}
                     </h2>
                     <p class="text-[11px] text-slate-400">{{ __('messages.product_form_inventory_section_hint') }}</p>
@@ -390,11 +390,11 @@
             </div>
         </div>
 
-        <div x-show="productType === 'service'" x-cloak class="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl text-xs font-bold text-amber-800 dark:text-amber-300">
+        <div x-show="productType === 'service'" x-cloak class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-lg text-xs font-bold text-amber-800 dark:text-amber-300">
             {{ __('messages.product_form_service_item_notice') }}
         </div>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-2">
             <div>
                 <label class="{{ $label }}">{{ __('messages.product_form_warehouse') }}</label>
                 <select name="warehouse_id" x-model="productWarehouseId" class="{{ $input }} cursor-pointer">
@@ -411,14 +411,14 @@
                     <label class="{{ $label }} mb-0">{{ __('messages.product_form_shelf_location') }}</label>
                     <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'shelves']) }}" target="_blank" class="text-[11px] font-bold text-purple-600 dark:text-purple-400 hover:underline">{{ __('messages.product_form_manage_presets') }}</a>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-1.5">
                     <select x-model="productShelfLocation" class="{{ $input }} cursor-pointer text-xs flex-1">
                         <option value="">-- {{ __('messages.product_form_shelf_location_placeholder') }} --</option>
                         @foreach ($shelfList as $sh)
                             <option value="{{ $sh->name }}">{{ $sh->code ? '[' . $sh->code . '] ' : '' }}{{ $sh->name }}</option>
                         @endforeach
                     </select>
-                    <input type="text" name="shelf_location" x-model="productShelfLocation" class="w-28 rounded-2xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="Manual" title="Custom shelf location" />
+                    <input type="text" name="shelf_location" x-model="productShelfLocation" class="w-24 sm:w-28 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition" placeholder="Manual" title="Custom shelf location" />
                 </div>
                 @error('shelf_location')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
             </div>
@@ -440,7 +440,7 @@
             @else
             <div>
                 <label class="{{ $label }}">{{ __('messages.product_form_initial_stock') }}</label>
-                <p class="mt-1 rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-3 text-xs leading-5 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">{{ __('messages.product_form_initial_stock_edit_note') }}</p>
+                <p class="mt-1 rounded-lg bg-slate-50 dark:bg-slate-800/60 p-2.5 text-xs leading-5 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">{{ __('messages.product_form_initial_stock_edit_note') }}</p>
             </div>
             @endif
 
@@ -468,13 +468,13 @@
 
     {{-- 4. Media & Gallery Card --}}
     <section class="{{ $section }}">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-1">
-            <div class="flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 grid place-items-center text-base font-bold">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-1">
+            <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 grid place-items-center text-sm font-bold">
                     🖼️
                 </span>
                 <div>
-                    <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                    <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                         {{ __('messages.product_form_media_section') }}
                     </h2>
                     <p class="text-[11px] text-slate-400">{{ __('messages.product_form_media_section_hint') }}</p>
@@ -482,21 +482,21 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-2">
             <div>
                 <label class="{{ $label }}">{{ __('messages.product_form_product_image') }}</label>
                 <input type="file" name="image" accept="image/*" @change="previewMain($event)" class="{{ $fileInput }}" />
                 <p class="{{ $hint }}">{{ __('messages.product_form_product_image_hint', ['size' => 10]) }}</p>
                 @error('image')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
-                <div class="mt-3 flex flex-wrap gap-2.5">
-                    <img x-show="mainPreview" :src="mainPreview" class="h-28 w-28 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shadow-sm" />
+                <div class="mt-2.5 flex flex-wrap gap-2">
+                    <img x-show="mainPreview" :src="mainPreview" class="h-24 w-24 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shadow-2xs" />
                     @if (!$isEdit && !empty($product->image_path))
-                        <img src="{{ asset('storage/' . $product->image_path) }}" class="h-28 w-28 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shadow-sm" />
+                        <img src="{{ asset('storage/' . $product->image_path) }}" class="h-24 w-24 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shadow-2xs" />
                     @endif
                     @if ($isEdit && !empty($product->image_path))
-                        <div class="relative h-28 w-28 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                            <img src="{{ asset('storage/' . $product->image_path) }}" class="h-28 w-28 object-cover" />
-                            <span class="absolute inset-x-0 bottom-0 bg-slate-900/80 py-1 text-center text-[10px] font-bold text-white">{{ __('messages.product_form_current_image') }}</span>
+                        <div class="relative h-24 w-24 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+                            <img src="{{ asset('storage/' . $product->image_path) }}" class="h-24 w-24 object-cover" />
+                            <span class="absolute inset-x-0 bottom-0 bg-slate-900/80 py-0.5 text-center text-[9px] font-bold text-white">{{ __('messages.product_form_current_image') }}</span>
                         </div>
                     @endif
                 </div>
@@ -506,9 +506,9 @@
                 <label class="{{ $label }}">{{ __('messages.product_form_gallery_images') }}</label>
                 <input type="file" name="gallery_images[]" multiple accept="image/*" @change="previewGallery($event)" class="{{ $fileInput }}" />
                 <p class="{{ $hint }}">{{ __('messages.product_form_gallery_hint', ['count' => 4, 'size' => 10]) }}</p>
-                <div class="mt-3 flex flex-wrap gap-2.5">
+                <div class="mt-2.5 flex flex-wrap gap-2">
                     <template x-for="(g, gi) in galleryPreviews" :key="gi">
-                        <img :src="g" class="h-28 w-28 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shadow-sm" />
+                        <img :src="g" class="h-24 w-24 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shadow-2xs" />
                     </template>
                 </div>
             </div>
@@ -517,13 +517,13 @@
 
     {{-- 5. Warranty & Policy Card --}}
     <section class="{{ $section }}">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-1">
-            <div class="flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 grid place-items-center text-base font-bold">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-1">
+            <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 grid place-items-center text-sm font-bold">
                     🛡️
                 </span>
                 <div>
-                    <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                    <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                         {{ __('messages.product_form_policy_section') }}
                     </h2>
                     <p class="text-[11px] text-slate-400">{{ __('messages.product_form_policy_section_hint') }}</p>
@@ -531,20 +531,20 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-2">
             <div>
                 <div class="flex items-center justify-between gap-3 mb-1">
                     <label class="{{ $label }} mb-0">{{ __('messages.product_form_warranty') }}</label>
                     <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'warranties']) }}" target="_blank" class="text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline">{{ __('messages.product_form_manage_presets') }}</a>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-1.5">
                     <select x-model="productWarranty" class="{{ $input }} cursor-pointer text-xs flex-1">
                         <option value="">-- {{ __('messages.product_form_warranty_placeholder') }} --</option>
                         @foreach ($warrantyList as $w)
                             <option value="{{ $w->name }}">{{ $w->name }}</option>
                         @endforeach
                     </select>
-                    <input type="text" name="warranty" x-model="productWarranty" class="w-28 rounded-2xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="Manual" title="Custom warranty" />
+                    <input type="text" name="warranty" x-model="productWarranty" class="w-24 sm:w-28 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition" placeholder="Manual" title="Custom warranty" />
                 </div>
             </div>
 
@@ -553,7 +553,7 @@
                     <label class="{{ $label }} mb-0">{{ __('messages.product_form_return_policy') }}</label>
                     <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'return-policies']) }}" target="_blank" class="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline">{{ __('messages.product_form_manage_presets') }}</a>
                 </div>
-                <select @change="if($event.target.value){ let el = document.getElementById('product_return_policy_input'); if(el){ el.value = $event.target.value; el.dispatchEvent(new Event('input')); } }" class="{{ $input }} cursor-pointer text-xs mb-2">
+                <select @change="if($event.target.value){ let el = document.getElementById('product_return_policy_input'); if(el){ el.value = $event.target.value; el.dispatchEvent(new Event('input')); } }" class="{{ $input }} cursor-pointer text-xs mb-1.5">
                     <option value="">-- {{ __('messages.product_form_fill_template') }} --</option>
                     @foreach ($returnPolicyList as $rp)
                         <option value="{{ addslashes($rp->content) }}">📋 {{ $rp->name }}</option>
@@ -588,21 +588,21 @@
 
     {{-- 6. Product Variants & Presets Card --}}
     <section class="{{ $section }}">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3 mb-1">
-            <div class="flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-base font-bold">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-1">
+            <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-sm font-bold">
                     🎨
                 </span>
                 <div>
-                    <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
                         <span>{{ __('messages.product_form_variants_section') }}</span>
-                        <span class="text-xs font-semibold text-slate-400">({{ __('messages.product_form_variants_optional') }})</span>
+                        <span class="text-[11px] font-semibold text-slate-400">({{ __('messages.product_form_variants_optional') }})</span>
                     </h2>
                     <p class="text-[11px] text-slate-400">{{ __('messages.product_form_variants_hint') }}</p>
                 </div>
             </div>
 
-            <button type="button" @click="addVariant()" class="px-4 py-2 rounded-2xl text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-md shadow-violet-500/20 transition flex items-center gap-1.5 self-start sm:self-auto">
+            <button type="button" @click="addVariant()" class="px-3 py-1.5 rounded-lg text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-sm transition flex items-center gap-1 self-start sm:self-auto">
                 <span>+</span>
                 <span>{{ __('messages.product_form_add_variant') }}</span>
             </button>
@@ -611,7 +611,7 @@
         @error('variants')<p class="text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
 
         {{-- Preset Selector Box --}}
-        <div class="rounded-2xl border border-violet-100 dark:border-violet-900/60 bg-violet-50/50 dark:bg-violet-950/20 p-4 space-y-3">
+        <div class="rounded-lg border border-violet-100 dark:border-violet-900/60 bg-violet-50/50 dark:bg-violet-950/20 p-3 space-y-2.5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <h3 class="text-xs font-black uppercase tracking-wide text-violet-900 dark:text-violet-200 flex items-center gap-1.5">
                     <span>⚡</span>
@@ -621,10 +621,10 @@
             </div>
 
             @if (($variantPresets ?? collect())->isNotEmpty())
-                <div class="grid grid-cols-1 items-end gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
+                <div class="grid grid-cols-1 items-end gap-2.5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
                     <div>
                         <label class="text-[11px] font-bold uppercase text-violet-700 dark:text-violet-300" data-test-label="Preset 1">{{ __('messages.product_form_preset_1') }}</label>
-                        <select x-model="selectedVariantPresetId" class="mt-1 w-full cursor-pointer rounded-2xl border border-violet-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-900 dark:border-violet-800 dark:bg-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500">
+                        <select x-model="selectedVariantPresetId" class="mt-1 w-full cursor-pointer rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-900 dark:border-violet-800 dark:bg-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500/40">
                             <option value="">{{ __('messages.product_form_choose_preset') }}</option>
                             <template x-for="preset in filteredVariantPresets" :key="preset.id">
                                 <option :value="preset.id" x-text="preset.name"></option>
@@ -634,7 +634,7 @@
 
                     <div>
                         <label class="text-[11px] font-bold uppercase text-violet-700 dark:text-violet-300" data-test-label="Preset 2 (optional)">{{ __('messages.product_form_preset_2') }}</label>
-                        <select x-model="selectedVariantPresetIdTwo" class="mt-1 w-full cursor-pointer rounded-2xl border border-violet-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-900 dark:border-violet-800 dark:bg-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500">
+                        <select x-model="selectedVariantPresetIdTwo" class="mt-1 w-full cursor-pointer rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-900 dark:border-violet-800 dark:bg-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500/40">
                             <option value="">{{ __('messages.product_form_combine_with') }}</option>
                             <template x-for="preset in filteredVariantPresets" :key="preset.id">
                                 <option :value="preset.id" x-text="preset.name"></option>
@@ -642,11 +642,11 @@
                         </select>
                     </div>
 
-                    <button type="button" @click="applyVariantPreset()" :disabled="!selectedVariantPresetId" data-test-label="Apply Preset" class="px-4 py-2.5 rounded-2xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-black shadow-md shadow-violet-500/20 disabled:cursor-not-allowed disabled:opacity-50 transition">
+                    <button type="button" @click="applyVariantPreset()" :disabled="!selectedVariantPresetId" data-test-label="Apply Preset" class="px-3.5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-black shadow-sm disabled:cursor-not-allowed disabled:opacity-50 transition">
                         {{ __('messages.product_form_apply_preset') }}
                     </button>
 
-                    <button type="button" @click="applyVariantPresetCombination()" :disabled="!selectedVariantPresetId || !selectedVariantPresetIdTwo || selectedVariantPresetId === selectedVariantPresetIdTwo" data-test-label="Generate Combinations" class="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-md shadow-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-50 transition">
+                    <button type="button" @click="applyVariantPresetCombination()" :disabled="!selectedVariantPresetId || !selectedVariantPresetIdTwo || selectedVariantPresetId === selectedVariantPresetIdTwo" data-test-label="Generate Combinations" class="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow-sm disabled:cursor-not-allowed disabled:opacity-50 transition">
                         {{ __('messages.product_form_generate_combinations') }}
                     </button>
                 </div>
@@ -663,33 +663,33 @@
         </div>
 
         {{-- Variant Items List --}}
-        <div class="space-y-3">
+        <div class="space-y-2.5">
             <template x-for="(v, i) in variants" :key="i">
-                <div class="rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-800/40 p-4 space-y-3 transition">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="rounded-full bg-violet-600 px-3 py-1 text-xs font-black text-white shadow-sm" x-text="'{{ __('messages.product_form_variant_label') }} ' + (i + 1)"></span>
+                <div class="rounded-lg border border-slate-200 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2.5 transition">
+                    <div class="flex items-center justify-between gap-2.5">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="rounded-md bg-violet-600 px-2.5 py-0.5 text-xs font-black text-white shadow-2xs" x-text="'{{ __('messages.product_form_variant_label') }} ' + (i + 1)"></span>
                             <template x-for="(attr, ai) in (v.attributes || [])" :key="ai">
-                                <span class="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-bold text-violet-700 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300" x-text="attr.label + ': ' + attr.value"></span>
+                                <span class="rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-bold text-violet-700 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300" x-text="attr.label + ': ' + attr.value"></span>
                             </template>
                         </div>
-                        <button type="button" @click="removeVariant(i)" class="rounded-xl px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition">{{ __('messages.product_form_remove_variant') }}</button>
+                        <button type="button" @click="removeVariant(i)" class="rounded-lg px-2 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition">{{ __('messages.product_form_remove_variant') }}</button>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                         <div>
                             <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">{{ __('messages.product_form_variant_name') }} *</label>
-                            <input type="text" x-model="v.name" :name="'variants[' + i + '][name]'" required class="mt-1 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-sm font-semibold text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500" placeholder="{{ __('messages.product_form_variant_name_placeholder') }}" />
+                            <input type="text" x-model="v.name" :name="'variants[' + i + '][name]'" required class="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500/40" placeholder="{{ __('messages.product_form_variant_name_placeholder') }}" />
                         </div>
 
                         <div>
                             <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">{{ __('messages.product_form_sku') }}</label>
-                            <input type="text" x-model="v.sku" :name="'variants[' + i + '][sku]'" class="mt-1 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-sm font-semibold text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500" placeholder="{{ __('messages.product_form_variant_sku_placeholder') }}" />
+                            <input type="text" x-model="v.sku" :name="'variants[' + i + '][sku]'" class="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500/40" placeholder="{{ __('messages.product_form_variant_sku_placeholder') }}" />
                         </div>
 
                         <div>
                             <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">{{ __('messages.product_form_variant_stock') }}</label>
-                            <div class="mt-1 flex items-center gap-2 px-3.5 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800 text-xs">
+                            <div class="mt-1 flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800 text-xs">
                                 <span class="w-2 h-2 rounded-full" :class="v.stock_status === 'out_of_stock' ? 'bg-rose-500' : 'bg-emerald-500'"></span>
                                 <span class="font-bold text-slate-700 dark:text-slate-300" x-text="v.stock_status === 'out_of_stock' ? '{{ __('messages.out_of_stock') }}' : '{{ __('messages.in_stock') }}'"></span>
                                 <span class="text-[10px] text-slate-400">({{ __('messages.product_stock_auto_managed') }})</span>
@@ -698,15 +698,15 @@
 
                         <div>
                             <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">{{ __('messages.product_form_variant_retail_price') }} *</label>
-                            <input type="number" step="0.01" min="0" x-model="v.retail_price" :name="'variants[' + i + '][retail_price]'" required class="mt-1 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-sm font-semibold text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500" />
+                            <input type="number" step="0.01" min="0" x-model="v.retail_price" :name="'variants[' + i + '][retail_price]'" required class="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500/40" />
                         </div>
 
                         <div>
                             <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">{{ __('messages.product_form_variant_wholesale_price') }}</label>
-                            <input type="number" step="0.01" min="0" x-model="v.wholesale_price" :name="'variants[' + i + '][wholesale_price]'" class="mt-1 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-sm font-semibold text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500" />
+                            <input type="number" step="0.01" min="0" x-model="v.wholesale_price" :name="'variants[' + i + '][wholesale_price]'" class="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500/40" />
                         </div>
 
-                        <div class="flex items-end pb-1.5">
+                        <div class="flex items-end pb-1">
                             <label class="inline-flex cursor-pointer select-none items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
                                 <input type="checkbox" x-model="v.is_default" :name="'variants[' + i + '][is_default]'" value="1" class="rounded border-slate-300 text-violet-600 focus:ring-violet-500" />
                                 {{ __('messages.product_form_default_variant') }}
@@ -714,17 +714,17 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
+                    <div class="grid grid-cols-1 items-end gap-2.5 sm:grid-cols-2 pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
                         <div>
                             <label class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">{{ __('messages.product_form_variant_image') }}</label>
-                            <input type="file" accept="image/*" @change="previewVariantImage($event, i)" :name="'variants[' + i + '][image]'" class="mt-1 block w-full text-xs text-slate-600 dark:text-slate-400 file:mr-3 file:rounded-xl file:border-0 file:bg-violet-50 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-slate-800 dark:file:text-violet-300 rounded-2xl border border-slate-200 dark:border-slate-700 p-1.5 bg-white dark:bg-slate-900" />
+                            <input type="file" accept="image/*" @change="previewVariantImage($event, i)" :name="'variants[' + i + '][image]'" class="mt-1 block w-full text-xs text-slate-600 dark:text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-50 file:px-2.5 file:py-1 file:text-xs file:font-bold file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-slate-800 dark:file:text-violet-300 rounded-lg border border-slate-200 dark:border-slate-700 p-1 bg-white dark:bg-slate-900" />
                             <p class="{{ $hint }}">{{ __('messages.product_form_variant_image_hint') }}</p>
                         </div>
 
                         <div class="flex items-center gap-2">
-                            <img x-show="v.image_preview" :src="v.image_preview" class="h-14 w-14 rounded-xl border border-slate-200 dark:border-slate-700 object-cover shadow-sm" />
+                            <img x-show="v.image_preview" :src="v.image_preview" class="h-12 w-12 rounded-lg border border-slate-200 dark:border-slate-700 object-cover shadow-2xs" />
                             <template x-if="v.image_path && !v.image_preview">
-                                <img :src="'/storage/' + v.image_path" class="h-14 w-14 rounded-xl border border-slate-200 dark:border-slate-700 object-cover shadow-sm" />
+                                <img :src="'/storage/' + v.image_path" class="h-12 w-12 rounded-lg border border-slate-200 dark:border-slate-700 object-cover shadow-2xs" />
                             </template>
                             <label x-show="v.image_path && !v.image_preview" class="inline-flex cursor-pointer select-none items-center gap-1 text-xs font-bold text-rose-600">
                                 <input type="checkbox" x-model="v.remove_image" :name="'variants[' + i + '][remove_image]'" value="1" class="rounded border-slate-300 text-rose-600 focus:ring-rose-500" />
@@ -747,13 +747,13 @@
 
     {{-- 7. Storefront Live Previews Card --}}
     <section class="{{ $section }}">
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-1">
-            <div class="flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-xl bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 grid place-items-center text-base font-bold">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-1">
+            <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 grid place-items-center text-sm font-bold">
                     👁️
                 </span>
                 <div>
-                    <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                    <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                         {{ __('messages.product_form_preview_section') }}
                     </h2>
                     <p class="text-[11px] text-slate-400">{{ __('messages.product_form_specs_preview_hint') }}</p>
@@ -761,10 +761,10 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div class="grid grid-cols-1 gap-2.5 sm:gap-3 lg:grid-cols-2">
             <div class="min-w-0">
-                <h3 class="mb-2 text-xs font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('messages.product_form_description_preview') }}</h3>
-                <div class="min-h-[8rem] rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm leading-relaxed text-slate-800 prose prose-sm max-w-none dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100">
+                <h3 class="mb-1.5 text-xs font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('messages.product_form_description_preview') }}</h3>
+                <div class="min-h-[7rem] rounded-lg border border-slate-200 bg-slate-50/80 p-3 text-xs sm:text-sm leading-relaxed text-slate-800 prose prose-sm max-w-none dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100">
                     <template x-if="descriptionPreviewHtml">
                         <div x-html="descriptionPreviewHtml"></div>
                     </template>
@@ -775,12 +775,12 @@
             </div>
 
             <div class="min-w-0">
-                <h3 class="mb-2 text-xs font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('messages.product_form_specs_preview') }}</h3>
-                <div class="min-h-[8rem] rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/60">
+                <h3 class="mb-1.5 text-xs font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('messages.product_form_specs_preview') }}</h3>
+                <div class="min-h-[7rem] rounded-lg border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-900/60">
                     <template x-if="previewSpecs().length">
                         <dl class="divide-y divide-slate-100 dark:divide-slate-800">
                             <template x-for="(row, i) in previewSpecs()" :key="i">
-                                <div class="grid grid-cols-1 gap-x-3 gap-y-0.5 py-1.5 sm:grid-cols-[minmax(0,9rem)_minmax(0,1fr)] sm:items-start">
+                                <div class="grid grid-cols-1 gap-x-3 gap-y-0.5 py-1 sm:grid-cols-[minmax(0,9rem)_minmax(0,1fr)] sm:items-start">
                                     <dt class="break-words text-xs font-bold text-slate-500 dark:text-slate-400" x-text="row.label"></dt>
                                     <dd class="min-w-0 break-words text-xs font-semibold text-slate-800 dark:text-slate-200" x-text="row.value"></dd>
                                 </div>
@@ -795,8 +795,8 @@
 
             {{-- Return Policy preview --}}
             <div class="min-w-0 lg:col-span-2">
-                <h3 class="mb-2 text-xs font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('messages.return_policy') }}</h3>
-                <div class="min-h-[3.5rem] rounded-2xl border border-slate-200 bg-slate-50/80 p-3.5 dark:border-slate-700 dark:bg-slate-900/60">
+                <h3 class="mb-1.5 text-xs font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('messages.return_policy') }}</h3>
+                <div class="min-h-[3rem] rounded-lg border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-900/60">
                     <p class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line" x-show="returnPolicyPreview === null">{{ old('return_policy', $product->return_policy) ?: __('messages.specs_empty') }}</p>
                     <p class="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line" x-show="returnPolicyPreview !== null" x-text="returnPolicyPreview"></p>
                 </div>
@@ -805,10 +805,10 @@
     </section>
 
     {{-- Sticky Bottom Action Bar --}}
-    <div class="sticky bottom-0 z-20 -mx-4 -mb-6 mt-8 border-t border-slate-200/80 bg-white/95 px-4 py-4 backdrop-blur-md shadow-[0_-8px_24px_rgba(15,23,42,0.08)] dark:border-slate-800/80 dark:bg-slate-900/95 sm:-mx-6 sm:px-6 rounded-b-3xl">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div class="flex flex-wrap items-center gap-4 sm:gap-6">
-                <label class="inline-flex cursor-pointer select-none items-center gap-2.5">
+    <div class="sticky bottom-0 z-20 w-full border border-slate-200/90 bg-white/95 px-3 py-2.5 sm:px-4 backdrop-blur-md shadow-[0_-4px_16px_rgba(15,23,42,0.06)] dark:border-slate-800/90 dark:bg-slate-900/95 rounded-lg">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-3 sm:gap-5">
+                <label class="inline-flex cursor-pointer select-none items-center gap-2">
                     <input type="checkbox" name="is_featured" value="1" id="is_featured" {{ old('is_featured', $product->is_featured) ? 'checked' : '' }} class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500" />
                     <span class="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1">
                         <span>⭐</span>
@@ -816,7 +816,7 @@
                     </span>
                 </label>
 
-                <label class="inline-flex cursor-pointer select-none items-center gap-2.5" title="{{ __('messages.product_form_sell_online_hint') }}">
+                <label class="inline-flex cursor-pointer select-none items-center gap-2" title="{{ __('messages.product_form_sell_online_hint') }}">
                     <input type="hidden" name="is_ecommerce" value="0" />
                     <input type="checkbox" name="is_ecommerce" value="1" id="is_ecommerce" {{ old('is_ecommerce', $product->is_ecommerce ?? true) ? 'checked' : '' }} class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
                     <span class="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1">
@@ -826,12 +826,12 @@
                 </label>
             </div>
 
-            <div class="flex items-center gap-2.5">
+            <div class="flex items-center gap-2">
                 <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/products') }}"
-                   class="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition">
+                   class="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition">
                     {{ __('messages.cancel') }}
                 </a>
-                <button type="submit" class="px-6 py-2.5 rounded-2xl bg-violet-600 hover:bg-violet-500 text-white font-black text-xs shadow-md shadow-violet-500/25 transition flex items-center gap-1.5">
+                <button type="submit" class="px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-black text-xs shadow-md shadow-violet-500/20 transition flex items-center gap-1.5">
                     <span>💾</span>
                     <span>{{ $isEdit ? __('messages.product_form_update_product') : __('messages.product_form_save_product') }}</span>
                 </button>
@@ -839,3 +839,4 @@
         </div>
     </div>
 </div>
+

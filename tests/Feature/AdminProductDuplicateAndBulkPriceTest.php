@@ -101,6 +101,27 @@ class AdminProductDuplicateAndBulkPriceTest extends TestCase
         $this->assertStringContainsString('7 days', $content);
     }
 
+    /** Export streams the product list as a native Excel (.xlsx) spreadsheet. */
+    public function test_admin_can_export_products_as_xlsx(): void
+    {
+        $this->makeProduct([
+            'name' => 'A88 Micro',
+            'sku' => 'A88',
+            'warranty' => '7 days',
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->get("/store/{$this->store->slug}/admin/products/export?format=xlsx");
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        $content = $response->streamedContent();
+        $this->assertNotEmpty($content);
+        // ZIP / XLSX magic signature PK\x03\x04
+        $this->assertStringStartsWith("PK\x03\x04", $content);
+    }
+
     /** The export only ever contains the current store's products. */
     public function test_product_export_is_scoped_to_store(): void
     {

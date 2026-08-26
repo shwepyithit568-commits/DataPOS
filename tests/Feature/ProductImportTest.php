@@ -581,4 +581,24 @@ class ProductImportTest extends TestCase
         $this->assertNotNull($product->category->parent);
         $this->assertEquals('Spare Part', $product->category->parent->name);
     }
+
+    public function test_manager_can_download_import_template(): void
+    {
+        $store = Store::create(['name' => 'Test Store', 'slug' => 'test-store']);
+        $manager = User::create([
+            'name' => 'Manager',
+            'phone' => '09111111111',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $manager->stores()->attach($store->id, ['role' => 'store_manager', 'status' => 'active']);
+
+        $response = $this->actingAs($manager)
+            ->get("/store/{$store->slug}/admin/products/import/template");
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $this->assertNotEmpty($response->streamedContent());
+    }
 }
+

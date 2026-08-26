@@ -1,12 +1,14 @@
 @extends('layouts.admin.app')
 
+@section('main_padding', 'p-2')
+
 @section('content')
 @php
     $initialCategory = collect($categories)->first(fn ($c) => (string) $c->id === (string) old('category_id'));
     $initialMainCategory = $initialCategory ? ($initialCategory->parent_id ?? $initialCategory->id) : '';
     $initialSubCategory = $initialCategory?->parent_id ? $initialCategory->id : '';
 @endphp
-<div class="w-full space-y-5"
+<div class="w-full space-y-2 sm:space-y-2.5"
     x-data="{
         categoryModalOpen: false,
         brandModalOpen: false,
@@ -344,38 +346,38 @@
     }" @richtext-sync.window="onRichTextSync($event)">
 
     {{-- Top Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex items-center gap-3">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+        <div class="flex items-center gap-2.5 min-w-0">
             <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/products') }}"
-               class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition grid place-items-center shadow-sm">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+               class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition grid place-items-center shadow-2xs shrink-0">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
-            <div>
-                <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 font-outfit">
+            <div class="min-w-0">
+                <h1 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2 font-outfit truncate">
                     {{ __('messages.product_form_create_title') }}
                 </h1>
-                <p class="text-xs text-slate-500 dark:text-slate-400">{{ $store->name }} · {{ __('messages.products') }}</p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ $store->name }} · {{ __('messages.products') }}</p>
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-center gap-1.5 shrink-0">
             <a href="{{ url('/store/' . $store->slug . '/admin/categories') }}"
-               class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1.5 shadow-sm">
+               class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1 shadow-2xs">
                 <span>📁</span>
                 <span>{{ __('messages.categories') }}</span>
             </a>
             <a href="{{ url('/store/' . $store->slug . '/admin/brands') }}"
-               class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1.5 shadow-sm">
+               class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1 shadow-2xs">
                 <span>🏷️</span>
                 <span>{{ __('messages.brands') }}</span>
             </a>
             <a href="{{ url('/store/' . $store->slug . '/admin/suppliers') }}"
-               class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1.5 shadow-sm">
+               class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1 shadow-2xs">
                 <span>🏢</span>
                 <span>{{ __('messages.suppliers') }}</span>
             </a>
             <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/products') }}"
-               class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition flex items-center gap-1.5 shadow-sm">
+               class="px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition flex items-center gap-1 shadow-2xs">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 <span>{{ __('messages.product_form_back_to_products') }}</span>
             </a>
@@ -383,7 +385,7 @@
     </div>
 
     @if ($errors->any())
-        <div class="p-4 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-3xl text-xs font-bold text-rose-700 dark:text-rose-300 space-y-1.5 shadow-sm">
+        <div class="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-lg text-xs font-bold text-rose-700 dark:text-rose-300 space-y-1 shadow-2xs">
             <div class="flex items-center gap-2">
                 <span>⚠️</span>
                 <span class="font-black">{{ __('messages.product_form_check_fields') }}</span>
@@ -395,33 +397,33 @@
     @endif
 
     <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products') }}" enctype="multipart/form-data"
-        class="space-y-6">
+        class="space-y-2 sm:space-y-2.5">
         @csrf
 
         @include('admin.products._form', ['isEdit' => false])
     </form>
 
     {{-- Quick Create Category Modal (Main or Sub — connected to Master Data) --}}
-    <div x-show="categoryModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+    <div x-show="categoryModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 max-w-sm w-full space-y-3.5 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div class="flex items-center gap-2">
-                    <span class="w-7 h-7 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-sm font-bold">📁</span>
+                    <span class="w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-sm font-bold">📁</span>
                     <h3 class="text-sm font-black text-slate-900 dark:text-white">{{ __('messages.product_form_quick_category_title') }}</h3>
                 </div>
                 <button type="button" @click="categoryModalOpen = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold">✕</button>
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_category_name') }} <span class="text-rose-500">*</span></label>
-                <input type="text" x-model="newCategoryName" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="{{ __('messages.product_form_category_name_placeholder') }}" />
+                <input type="text" x-model="newCategoryName" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition" placeholder="{{ __('messages.product_form_category_name_placeholder') }}" />
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_code') }}</label>
-                <input type="text" x-model="newCategoryCode" class="w-full uppercase rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="{{ __('messages.product_form_code_placeholder') }}" />
+                <input type="text" x-model="newCategoryCode" class="w-full uppercase rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition" placeholder="{{ __('messages.product_form_code_placeholder') }}" />
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_quick_category_type') }}</label>
-                <select x-model="newCategoryParent" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition cursor-pointer">
+                <select x-model="newCategoryParent" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition cursor-pointer">
                     <option value="">{{ __('messages.product_form_quick_category_main') }}</option>
                     <template x-for="m in mainCategories" :key="m.id">
                         <option :value="m.id" x-text="'{{ __('messages.product_form_quick_category_sub_of') }}: ' + m.name"></option>
@@ -431,59 +433,59 @@
                     {{ __('messages.product_form_quick_category_sub_hint') }}
                 </p>
             </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button type="button" @click="categoryModalOpen = false" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.close') }}</button>
-                <button type="button" @click="createCategory()" class="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl text-xs font-black shadow-md shadow-violet-500/20 transition">{{ __('messages.product_form_save_category') }}</button>
+            <div class="flex justify-end gap-2 pt-1.5">
+                <button type="button" @click="categoryModalOpen = false" class="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.close') }}</button>
+                <button type="button" @click="createCategory()" class="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-black shadow-sm transition">{{ __('messages.product_form_save_category') }}</button>
             </div>
         </div>
     </div>
 
     {{-- Quick Create Brand Modal --}}
-    <div x-show="brandModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+    <div x-show="brandModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 max-w-sm w-full space-y-3.5 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div class="flex items-center gap-2">
-                    <span class="w-7 h-7 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-sm font-bold">🏷️</span>
+                    <span class="w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-sm font-bold">🏷️</span>
                     <h3 class="text-sm font-black text-slate-900 dark:text-white">{{ __('messages.product_form_quick_brand_title') }}</h3>
                 </div>
                 <button type="button" @click="brandModalOpen = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold">✕</button>
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_brand_name') }} <span class="text-rose-500">*</span></label>
-                <input type="text" x-model="newBrandName" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="{{ __('messages.product_form_brand_name_placeholder') }}" />
+                <input type="text" x-model="newBrandName" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition" placeholder="{{ __('messages.product_form_brand_name_placeholder') }}" />
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_code') }}</label>
-                <input type="text" x-model="newBrandCode" class="w-full uppercase rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="{{ __('messages.product_form_code_placeholder') }}" />
+                <input type="text" x-model="newBrandCode" class="w-full uppercase rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition" placeholder="{{ __('messages.product_form_code_placeholder') }}" />
             </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button type="button" @click="brandModalOpen = false" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.close') }}</button>
-                <button type="button" @click="createBrand()" class="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl text-xs font-black shadow-md shadow-violet-500/20 transition">{{ __('messages.product_form_save_brand') }}</button>
+            <div class="flex justify-end gap-2 pt-1.5">
+                <button type="button" @click="brandModalOpen = false" class="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.close') }}</button>
+                <button type="button" @click="createBrand()" class="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-black shadow-sm transition">{{ __('messages.product_form_save_brand') }}</button>
             </div>
         </div>
     </div>
 
     {{-- Quick Create Supplier Modal --}}
-    <div x-show="supplierModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+    <div x-show="supplierModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 max-w-sm w-full space-y-3.5 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div class="flex items-center gap-2">
-                    <span class="w-7 h-7 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-sm font-bold">🏢</span>
+                    <span class="w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-sm font-bold">🏢</span>
                     <h3 class="text-sm font-black text-slate-900 dark:text-white">{{ __('messages.product_form_quick_supplier_title') }}</h3>
                 </div>
                 <button type="button" @click="supplierModalOpen = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold">✕</button>
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_supplier_name') }}</label>
-                <input type="text" x-model="newSupplierName" @keydown.enter.prevent="createSupplier()" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="{{ __('messages.product_form_supplier_name_placeholder') }}" />
+                <input type="text" x-model="newSupplierName" @keydown.enter.prevent="createSupplier()" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition" placeholder="{{ __('messages.product_form_supplier_name_placeholder') }}" />
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.product_form_supplier_phone') }}</label>
-                <input type="text" x-model="newSupplierPhone" @keydown.enter.prevent="createSupplier()" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 px-3.5 py-2.5 text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition" placeholder="09xxxxxxxxx" />
+                <input type="text" x-model="newSupplierPhone" @keydown.enter.prevent="createSupplier()" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition" placeholder="09xxxxxxxxx" />
             </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button type="button" @click="supplierModalOpen = false" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.close') }}</button>
-                <button type="button" @click="createSupplier()" class="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl text-xs font-black shadow-md shadow-violet-500/20 transition">{{ __('messages.product_form_save_supplier') }}</button>
+            <div class="flex justify-end gap-2 pt-1.5">
+                <button type="button" @click="supplierModalOpen = false" class="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.close') }}</button>
+                <button type="button" @click="createSupplier()" class="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-black shadow-sm transition">{{ __('messages.product_form_save_supplier') }}</button>
             </div>
         </div>
     </div>

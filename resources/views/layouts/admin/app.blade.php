@@ -1051,7 +1051,7 @@
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-50 dark:bg-slate-900/60 transition-colors duration-200">
+        <main class="flex-1 overflow-y-auto @yield('main_padding', 'p-2 sm:p-2.5 lg:p-3') bg-slate-50 dark:bg-slate-900/60 transition-colors duration-200">
             {{ $slot ?? '' }}
             @yield('content')
         </main>

@@ -123,10 +123,10 @@ class ProductController extends Controller
                 break;
         }
 
-        // Per-page: only 50 / 100 / 200 (dropdown) — legacy ?per_page=all still honored
+        // Per-page: 25 / 50 / 100 / 200 (dropdown) — legacy ?per_page=all still honored
         $perPageValue = request('per_page', 50);
         $perPage = $perPageValue === 'all' ? 100000 : (int) $perPageValue;
-        if (! in_array($perPage, [50, 100, 200, 100000], true)) {
+        if (! in_array($perPage, [25, 50, 100, 200, 100000], true)) {
             $perPage = 50;
         }
         $products = $query->paginate($perPage)->withQueryString();
@@ -176,18 +176,104 @@ class ProductController extends Controller
      * human-readable variant names/SKUs, dynamic variant-attribute columns,
      * and the sanitized description — all merged into a single file.
      */
-    public function export(StoreContext $context): StreamedResponse
+    public function export(StoreContext $context): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         $store = $context->getStore();
+        $request = request();
 
         $query = Product::where('store_id', $store->id)
-            ->with(['category.parent', 'brand', 'images', 'variants'])
-            ->orderBy('sku');
+            ->with(['category.parent', 'brand', 'images', 'variants']);
 
-        // Respect the toolbar's per-page choice (50 / 100 / 200 / all).
+        // Enhanced Search: name, SKU, brand name, category name, barcode, etc.
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('sku', 'like', '%' . $search . '%')
+                  ->orWhere('barcode', 'like', '%' . $search . '%')
+                  ->orWhere('compatible_models', 'like', '%' . $search . '%')
+                  ->orWhere('shelf_location', 'like', '%' . $search . '%')
+                  ->orWhereHas('brand', function ($bq) use ($search) {
+                      $bq->where('name', 'like', '%' . $search . '%');
+                  })
+                  ->orWhereHas('category', function ($cq) use ($search) {
+                      $cq->where('name', 'like', '%' . $search . '%');
+                  })
+                  ->orWhereHas('variants', function ($vq) use ($search) {
+                      $vq->where('name', 'like', '%' . $search . '%')
+                         ->orWhere('sku', 'like', '%' . $search . '%');
+                  });
+            });
+        }
+
+        // Filter by stock status
+        if ($request->filled('stock_status')) {
+            $query->where('stock_status', $request->stock_status);
+        }
+
+        // Filter by product archetype
+        if ($request->filled('product_type')) {
+            $query->where('product_type', $request->product_type);
+        }
+
+        // Filter by online visibility
+        if ($request->filled('is_ecommerce')) {
+            $query->where('is_ecommerce', $request->is_ecommerce === 'online');
+        }
+
+        // Filter by Category (and subcategories)
+        if ($request->filled('category_id')) {
+            $catId = (int) $request->category_id;
+            $allCategories = Category::where('store_id', $store->id)->get();
+            $categoryTree = $allCategories
+                ->whereNull('parent_id')
+                ->map(fn ($main) => (object) [
+                    'category' => $main,
+                    'children' => $allCategories->where('parent_id', $main->id)->values(),
+                ])
+                ->values();
+            $childIds = collect($categoryTree)->firstWhere('category.id', $catId)?->children->pluck('id') ?? collect();
+            $query->whereIn('category_id', $childIds->push($catId)->unique()->values()->all());
+        }
+
+        // Filter by Brand
+        if ($request->filled('brand_id')) {
+            $query->where('brand_id', $request->brand_id);
+        }
+
+        // Sorting
+        $sort = $request->input('sort', 'sku');
+        switch ($sort) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
+                break;
+            case 'price_asc':
+                $query->orderBy('retail_price', 'asc');
+                break;
+            case 'price_desc':
+                $query->orderBy('retail_price', 'desc');
+                break;
+            case 'stock':
+                $query->orderBy('stock_status', 'asc');
+                break;
+            case 'newest':
+                $query->latest();
+                break;
+            default:
+                $query->orderBy('sku', 'asc');
+                break;
+        }
+
+        // Respect the toolbar's per-page choice (25 / 50 / 100 / 200 / all).
         // Absent per_page keeps the legacy full export (import pages rely on it).
         $perPage = request('per_page');
-        if ($perPage !== 'all' && in_array((int) $perPage, [50, 100, 200], true)) {
+        if ($perPage !== 'all' && in_array((int) $perPage, [25, 50, 100, 200], true)) {
             $query->limit((int) $perPage);
         }
 
@@ -224,18 +310,39 @@ class ProductController extends Controller
         }
         sort($attributeColumns);
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="products-' . now()->format('Ymd-His') . '.csv"',
-        ];
+        $format = strtolower((string) $request->input('format', 'csv'));
 
-        return response()->streamDownload(function () use ($products, $fixedColumns, $attributeColumns) {
-            $stream = fopen('php://output', 'w');
+        if ($format === 'xlsx' || $format === 'excel') {
+            $filename = 'products-' . now()->format('Ymd-His') . '.xlsx';
+            $tempFile = tempnam(sys_get_temp_dir(), 'datapos_prod_');
 
-            // UTF-8 BOM so Excel opens the file with correct encoding
-            fwrite($stream, "\xEF\xBB\xBF");
-            fputcsv($stream, array_merge($fixedColumns, $attributeColumns));
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Products');
 
+            $allHeaders = array_merge($fixedColumns, $attributeColumns);
+            $sheet->fromArray([$allHeaders], null, 'A1');
+
+            // Header styling
+            $highestCol = $sheet->getHighestColumn();
+            $sheet->getStyle("A1:{$highestCol}1")->applyFromArray([
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF'],
+                    'size' => 11,
+                ],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '4F46E5'],
+                ],
+                'alignment' => [
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+            ]);
+            $sheet->getRowDimension(1)->setRowHeight(26);
+            $sheet->freezePane('A2');
+
+            $rowIndex = 2;
             foreach ($products as $product) {
                 $specs = \App\Support\ProductSpecifications::structuredFor($product);
 
@@ -245,8 +352,6 @@ class ProductController extends Controller
                     ->unique()
                     ->implode('; ');
 
-                // Variants as JSON — same format the importer accepts, so a
-                // product list can be edited offline and re-imported.
                 $variantsJson = $product->variants
                     ->map(fn ($v) => [
                         'name' => $v->name,
@@ -260,38 +365,121 @@ class ProductController extends Controller
                     ->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
                 $row = [
-                    $this->csvCell($product->sku),
-                    $this->csvCell($product->name),
-                    $this->csvCell($product->category?->name ?? ''),
-                    $this->csvCell($product->category?->parent?->name ?? ''),
-                    $this->csvCell($product->brand?->name ?? ''),
-                    number_format((float) $product->retail_price),
-                    number_format((float) $product->wholesale_price),
-                    $product->old_price !== null ? number_format((float) $product->old_price) : '',
+                    (string) $product->sku,
+                    (string) $product->name,
+                    $product->category?->name ?? '',
+                    $product->category?->parent?->name ?? '',
+                    $product->brand?->name ?? '',
+                    (float) $product->retail_price,
+                    (float) $product->wholesale_price,
+                    $product->old_price !== null ? (float) $product->old_price : '',
                     $product->sale_starts_at ? $product->sale_starts_at->format('Y-m-d H:i') : '',
                     $product->sale_ends_at ? $product->sale_ends_at->format('Y-m-d H:i') : '',
                     $product->stock_status,
-                    $this->csvCell($specs['stock'] ?? ''),
-                    $this->csvCell($product->warranty ?? ''),
-                    $this->csvCell($product->return_policy ?? ''),
-                    $this->csvCell($product->meta_description ?? ''),
+                    $specs['stock'] ?? '',
+                    $product->warranty ?? '',
+                    $product->return_policy ?? '',
+                    $product->meta_description ?? '',
                     $product->is_featured ? 'yes' : 'no',
-                    $this->csvCell($product->description ?? ''),
-                    $this->csvCell(\App\Support\SafeHtml::sanitize($product->description ?? '')),
-                    $this->csvCell($images),
+                    $product->description ?? '',
+                    \App\Support\SafeHtml::sanitize($product->description ?? ''),
+                    $images,
                     $variantsJson,
-                    $this->csvCell($specs['variant_names'] ?? ''),
-                    $this->csvCell($specs['variant_skus'] ?? ''),
+                    $specs['variant_names'] ?? '',
+                    $specs['variant_skus'] ?? '',
                 ];
                 foreach ($attributeColumns as $column) {
-                    $row[] = $this->csvCell($specs['attr_' . $column] ?? '');
+                    $row[] = $specs['attr_' . $column] ?? '';
                 }
 
-                fputcsv($stream, $row);
+                $sheet->fromArray([$row], null, "A{$rowIndex}");
+
+                // Number format for retail & wholesale prices
+                $sheet->getStyle("F{$rowIndex}:H{$rowIndex}")->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getRowDimension($rowIndex)->setRowHeight(20);
+                $rowIndex++;
             }
 
-            fclose($stream);
-        }, 'products-' . now()->format('Ymd-His') . '.csv', $headers);
+            foreach (range('A', $highestCol) as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($tempFile);
+            $spreadsheet->disconnectWorksheets();
+
+            return response()->download($tempFile, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])->deleteFileAfterSend(true);
+        }
+
+        $filename = 'products-' . now()->format('Ymd-His') . '.csv';
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_csv_');
+        $stream = fopen($tempFile, 'w');
+
+        // UTF-8 BOM so Excel opens the file with correct encoding
+        fwrite($stream, "\xEF\xBB\xBF");
+        fputcsv($stream, array_merge($fixedColumns, $attributeColumns));
+
+        foreach ($products as $product) {
+            $specs = \App\Support\ProductSpecifications::structuredFor($product);
+
+            $images = collect([$product->image_path])
+                ->merge($product->images->pluck('image_path'))
+                ->filter()
+                ->unique()
+                ->implode('; ');
+
+            // Variants as JSON — same format the importer accepts, so a
+            // product list can be edited offline and re-imported.
+            $variantsJson = $product->variants
+                ->map(fn ($v) => [
+                    'name' => $v->name,
+                    'attributes' => $v->attributes ?? [],
+                    'sku' => $v->sku,
+                    'retail_price' => (float) $v->retail_price,
+                    'wholesale_price' => $v->wholesale_price !== null ? (float) $v->wholesale_price : null,
+                    'stock_status' => $v->stock_status,
+                ])
+                ->values()
+                ->toJson(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+            $row = [
+                $this->csvCell($product->sku),
+                $this->csvCell($product->name),
+                $this->csvCell($product->category?->name ?? ''),
+                $this->csvCell($product->category?->parent?->name ?? ''),
+                $this->csvCell($product->brand?->name ?? ''),
+                number_format((float) $product->retail_price),
+                number_format((float) $product->wholesale_price),
+                $product->old_price !== null ? number_format((float) $product->old_price) : '',
+                $product->sale_starts_at ? $product->sale_starts_at->format('Y-m-d H:i') : '',
+                $product->sale_ends_at ? $product->sale_ends_at->format('Y-m-d H:i') : '',
+                $product->stock_status,
+                $this->csvCell($specs['stock'] ?? ''),
+                $this->csvCell($product->warranty ?? ''),
+                $this->csvCell($product->return_policy ?? ''),
+                $this->csvCell($product->meta_description ?? ''),
+                $product->is_featured ? 'yes' : 'no',
+                $this->csvCell($product->description ?? ''),
+                $this->csvCell(\App\Support\SafeHtml::sanitize($product->description ?? '')),
+                $this->csvCell($images),
+                $variantsJson,
+                $this->csvCell($specs['variant_names'] ?? ''),
+                $this->csvCell($specs['variant_skus'] ?? ''),
+            ];
+            foreach ($attributeColumns as $column) {
+                $row[] = $this->csvCell($specs['attr_' . $column] ?? '');
+            }
+
+            fputcsv($stream, $row);
+        }
+
+        fclose($stream);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ])->deleteFileAfterSend(true);
     }
 
     /**
@@ -982,107 +1170,106 @@ class ProductController extends Controller
         }
     }
 
-    public function downloadImportTemplate(): StreamedResponse
+    public function downloadImportTemplate(): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
-        $headers = [
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_tpl_');
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Products');
+        $sheet->fromArray([
+            [
+                'name',
+                'sku',
+                'brand',
+                'category',
+                'parent_category',
+                'retail_price',
+                'wholesale_price',
+                'old_price',
+                'sale_starts_at',
+                'sale_ends_at',
+                'stock_status',
+                'warranty',
+                'return_policy',
+                'description',
+                'meta_description',
+                'image_url',
+                'featured',
+                'variants',
+            ],
+            [
+                'iPhone 15 Pro Max Tempered Glass',
+                'SKU-001',
+                'Apple',
+                'Tempered Glass',
+                'Accessories',
+                '18000',
+                '15000',
+                '22000',
+                '2026-08-01 00:00',
+                '2026-08-31 23:59',
+                'in_stock',
+                '7 days',
+                'No return after installation',
+                'Premium clear glass',
+                'Best-selling screen protector for iPhone 15 Pro Max',
+                '',
+                'yes',
+                '[{"name":"128GB","sku":"SKU-001-128","retail_price":18000,"wholesale_price":15000,"stock_status":"in_stock"},{"name":"256GB","sku":"SKU-001-256","retail_price":19500,"wholesale_price":16200,"stock_status":"in_stock"}]',
+            ],
+            // Example 2 — one product, three connector variants with DIFFERENT
+            // prices + variant attributes (these become the Specifications tab).
+            [
+                'L2009 Fast Charging Cable',
+                'L2009',
+                '168',
+                'Cable',
+                'Accessories',
+                '5000',
+                '4500',
+                '',
+                '',
+                '',
+                'in_stock',
+                '1 Month Warranty',
+                '',
+                'Fast charging cable with detachable heads.',
+                '',
+                '',
+                'no',
+                '[{"name":"Type C","sku":"L2009-TC","retail_price":5000,"wholesale_price":4500,"stock_status":"in_stock","attributes":[{"label":"Connector","value":"Type C"},{"label":"Length","value":"1.2m"}]},{"name":"Micro","sku":"L2009-MC","retail_price":4000,"wholesale_price":3700,"stock_status":"in_stock","attributes":[{"label":"Connector","value":"Micro"}]},{"name":"Lightning","sku":"L2009-LT","retail_price":7000,"wholesale_price":6300,"stock_status":"in_stock","attributes":[{"label":"Connector","value":"Lightning"}]}]',
+            ],
+        ]);
+
+        $instructionSheet = $spreadsheet->createSheet();
+        $instructionSheet->setTitle('Instructions');
+        $instructionSheet->fromArray([
+            ['Instruction', 'Value'],
+            ['Required columns', 'name, sku, retail_price, wholesale_price, stock_status'],
+            ['Optional columns', 'brand, category, parent_category, old_price, sale_starts_at, sale_ends_at, warranty, return_policy, description, meta_description, image_url, featured, variants'],
+            ['Allowed stock_status', 'in_stock, out_of_stock'],
+            ['parent_category', 'The Main Category the "category" (sub-category) belongs under. Blank = category is top-level.'],
+            ['old_price', 'Original price shown as a discount (strikethrough). Blank = no discount.'],
+            ['sale_starts_at / sale_ends_at', 'Sale window. Format Y-m-d H:i (e.g. 2026-08-01 00:00). Blank = no limit.'],
+            ['Accepted featured true values', '1, true, yes, Y'],
+            ['Featured default', 'Blank or other values are imported as false.'],
+            ['Duplicate SKU default', 'Skipped unless Update existing products is selected during import.'],
+            ['Variants format', 'JSON array of {name, sku, retail_price, wholesale_price, stock_status}. Use double quotes. Blank = no variants.'],
+            ['Variants example', '[{"name":"256GB","sku":"SKU-001-256","retail_price":19500,"wholesale_price":16200,"stock_status":"in_stock"}]'],
+            ['Variants — different prices', 'Every variant has its OWN retail_price / wholesale_price / sku / stock_status. Sizes, colors and connector types with different prices are fully supported (see row 3 of the Products sheet).'],
+            ['Variants — two dimensions', 'For connector + color (e.g. "Type C / Black") write one variant per combination, each with its own sku and price. The system also auto-generates combinations from the admin form Variant Presets.'],
+            ['Variant attributes (Specifications)', 'Each variant may carry an attributes array of {label, value} pairs — they appear on the product page Specifications tab (e.g. Battery: 300mAh, Water Resistance: IP68). See row 3 of the Products sheet.'],
+            ['Store assignment', 'The system always uses the current admin store. Do not add store_id.'],
+        ]);
+
+        $spreadsheet->setActiveSheetIndex(0);
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+        $spreadsheet->disconnectWorksheets();
+
+        return response()->download($tempFile, 'product-import-template.xlsx', [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="product-import-template.xlsx"',
-        ];
-
-        return response()->streamDownload(function () {
-            $spreadsheet = new Spreadsheet();
-            $sheet = $spreadsheet->getActiveSheet();
-            $sheet->setTitle('Products');
-            $sheet->fromArray([
-                [
-                    'name',
-                    'sku',
-                    'brand',
-                    'category',
-                    'parent_category',
-                    'retail_price',
-                    'wholesale_price',
-                    'old_price',
-                    'sale_starts_at',
-                    'sale_ends_at',
-                    'stock_status',
-                    'warranty',
-                    'return_policy',
-                    'description',
-                    'meta_description',
-                    'image_url',
-                    'featured',
-                    'variants',
-                ],
-                [
-                    'iPhone 15 Pro Max Tempered Glass',
-                    'SKU-001',
-                    'Apple',
-                    'Tempered Glass',
-                    'Accessories',
-                    '18000',
-                    '15000',
-                    '22000',
-                    '2026-08-01 00:00',
-                    '2026-08-31 23:59',
-                    'in_stock',
-                    '7 days',
-                    'No return after installation',
-                    'Premium clear glass',
-                    'Best-selling screen protector for iPhone 15 Pro Max',
-                    '',
-                    'yes',
-                    '[{"name":"128GB","sku":"SKU-001-128","retail_price":18000,"wholesale_price":15000,"stock_status":"in_stock"},{"name":"256GB","sku":"SKU-001-256","retail_price":19500,"wholesale_price":16200,"stock_status":"in_stock"}]',
-                ],
-                // Example 2 — one product, three connector variants with DIFFERENT
-                // prices + variant attributes (these become the Specifications tab).
-                [
-                    'L2009 Fast Charging Cable',
-                    'L2009',
-                    '168',
-                    'Cable',
-                    'Accessories',
-                    '5000',
-                    '4500',
-                    '',
-                    '',
-                    '',
-                    'in_stock',
-                    '1 Month Warranty',
-                    '',
-                    'Fast charging cable with detachable heads.',
-                    '',
-                    '',
-                    'no',
-                    '[{"name":"Type C","sku":"L2009-TC","retail_price":5000,"wholesale_price":4500,"stock_status":"in_stock","attributes":[{"label":"Connector","value":"Type C"},{"label":"Length","value":"1.2m"}]},{"name":"Micro","sku":"L2009-MC","retail_price":4000,"wholesale_price":3700,"stock_status":"in_stock","attributes":[{"label":"Connector","value":"Micro"}]},{"name":"Lightning","sku":"L2009-LT","retail_price":7000,"wholesale_price":6300,"stock_status":"in_stock","attributes":[{"label":"Connector","value":"Lightning"}]}]',
-                ],
-            ]);
-
-            $instructionSheet = $spreadsheet->createSheet();
-            $instructionSheet->setTitle('Instructions');
-            $instructionSheet->fromArray([
-                ['Instruction', 'Value'],
-                ['Required columns', 'name, sku, retail_price, wholesale_price, stock_status'],
-                ['Optional columns', 'brand, category, parent_category, old_price, sale_starts_at, sale_ends_at, warranty, return_policy, description, meta_description, image_url, featured, variants'],
-                ['Allowed stock_status', 'in_stock, out_of_stock'],
-                ['parent_category', 'The Main Category the "category" (sub-category) belongs under. Blank = category is top-level.'],
-                ['old_price', 'Original price shown as a discount (strikethrough). Blank = no discount.'],
-                ['sale_starts_at / sale_ends_at', 'Sale window. Format Y-m-d H:i (e.g. 2026-08-01 00:00). Blank = no limit.'],
-                ['Accepted featured true values', '1, true, yes, Y'],
-                ['Featured default', 'Blank or other values are imported as false.'],
-                ['Duplicate SKU default', 'Skipped unless Update existing products is selected during import.'],
-                ['Variants format', 'JSON array of {name, sku, retail_price, wholesale_price, stock_status}. Use double quotes. Blank = no variants.'],
-                ['Variants example', '[{"name":"256GB","sku":"SKU-001-256","retail_price":19500,"wholesale_price":16200,"stock_status":"in_stock"}]'],
-                ['Variants — different prices', 'Every variant has its OWN retail_price / wholesale_price / sku / stock_status. Sizes, colors and connector types with different prices are fully supported (see row 3 of the Products sheet).'],
-                ['Variants — two dimensions', 'For connector + color (e.g. "Type C / Black") write one variant per combination, each with its own sku and price. The system also auto-generates combinations from the admin form Variant Presets.'],
-                ['Variant attributes (Specifications)', 'Each variant may carry an attributes array of {label, value} pairs — they appear on the product page Specifications tab (e.g. Battery: 300mAh, Water Resistance: IP68). See row 3 of the Products sheet.'],
-                ['Store assignment', 'The system always uses the current admin store. Do not add store_id.'],
-            ]);
-
-            $spreadsheet->setActiveSheetIndex(0);
-            (new Xlsx($spreadsheet))->save('php://output');
-            $spreadsheet->disconnectWorksheets();
-        }, 'product-import-template.xlsx', $headers);
+        ])->deleteFileAfterSend(true);
     }
 
     private function safeImportFilename(string $filename): string
