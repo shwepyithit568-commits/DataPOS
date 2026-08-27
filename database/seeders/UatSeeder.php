@@ -79,6 +79,13 @@ class UatSeeder extends Seeder
 
     private function createStore(Carbon $now): void
     {
+        // Idempotent: use existing store if already seeded
+        $existing = DB::table('stores')->where('slug', 'datapos-mobile')->first();
+        if ($existing) {
+            $this->storeId = $existing->id;
+            return;
+        }
+
         $this->storeId = DB::table('stores')->insertGetId([
             'name'             => 'DataPOS',
             'slug'             => 'datapos-mobile',
@@ -96,6 +103,11 @@ class UatSeeder extends Seeder
 
     private function createStorefrontSettings(Carbon $now): void
     {
+        // Idempotent: skip if already exists
+        if (DB::table('storefront_settings')->where('store_id', $this->storeId)->exists()) {
+            return;
+        }
+
         DB::table('storefront_settings')->insert([
             'store_id'         => $this->storeId,
             'store_name'       => 'DataPOS (အလင်းသစ် မိုဘိုင်း)',
@@ -119,6 +131,11 @@ class UatSeeder extends Seeder
 
     private function createHomeBanners(Carbon $now): void
     {
+        // Idempotent: skip if banners already seeded for this store
+        if (DB::table('home_banners')->where('store_id', $this->storeId)->exists()) {
+            return;
+        }
+
         $banners = [
             [
                 'store_id'   => $this->storeId,
@@ -199,10 +216,17 @@ class UatSeeder extends Seeder
         ];
 
         $ids = [];
+        $phones = array_column($users, 'phone');
+        $existing = DB::table('users')->whereIn('phone', $phones)->pluck('id', 'phone');
+
         foreach ($users as $user) {
-            $user['created_at'] = $now;
-            $user['updated_at'] = $now;
-            $ids[] = DB::table('users')->insertGetId($user);
+            if (isset($existing[$user['phone']])) {
+                $ids[] = $existing[$user['phone']];
+            } else {
+                $user['created_at'] = $now;
+                $user['updated_at'] = $now;
+                $ids[] = DB::table('users')->insertGetId($user);
+            }
         }
 
         $this->ownerId           = $ids[0];
@@ -233,7 +257,14 @@ class UatSeeder extends Seeder
             $row['store_id'] = $this->storeId;
             $row['created_at'] = $now;
             $row['updated_at'] = $now;
-            DB::table('store_user')->insert($row);
+            // Idempotent: skip if this user-store-role already exists
+            $alreadyExists = DB::table('store_user')
+                ->where('store_id', $row['store_id'])
+                ->where('user_id', $row['user_id'])
+                ->exists();
+            if (!$alreadyExists) {
+                DB::table('store_user')->insert($row);
+            }
         }
     }
 
@@ -243,14 +274,20 @@ class UatSeeder extends Seeder
 
     private function assignStoreBRoles(): void
     {
-        DB::table('store_user')->insert([
-            'store_id'    => $this->storeBId,
-            'user_id'     => $this->storeBManagerId,
-            'role'        => 'store_manager',
-            'status'      => 'active',
-            'created_at'  => Carbon::now(),
-            'updated_at'  => Carbon::now(),
-        ]);
+        $alreadyExists = DB::table('store_user')
+            ->where('store_id', $this->storeBId)
+            ->where('user_id', $this->storeBManagerId)
+            ->exists();
+        if (!$alreadyExists) {
+            DB::table('store_user')->insert([
+                'store_id'    => $this->storeBId,
+                'user_id'     => $this->storeBManagerId,
+                'role'        => 'store_manager',
+                'status'      => 'active',
+                'created_at'  => Carbon::now(),
+                'updated_at'  => Carbon::now(),
+            ]);
+        }
     }
 
     /* ------------------------------------------------------------------ */
@@ -270,15 +307,25 @@ class UatSeeder extends Seeder
         ];
 
         foreach ($categories as $cat) {
-            $this->categoryIds[] = DB::table('categories')->insertGetId([
-                'store_id'    => $this->storeId,
-                'name'        => $cat['name'],
-                'slug'        => $cat['slug'],
-                'description' => null,
-                'image_path'  => null,
-                'created_at'  => $now,
-                'updated_at'  => $now,
-            ]);
+            // Idempotent: reuse existing category
+            $existing = DB::table('categories')
+                ->where('store_id', $this->storeId)
+                ->where('slug', $cat['slug'])
+                ->first();
+
+            if ($existing) {
+                $this->categoryIds[] = $existing->id;
+            } else {
+                $this->categoryIds[] = DB::table('categories')->insertGetId([
+                    'store_id'    => $this->storeId,
+                    'name'        => $cat['name'],
+                    'slug'        => $cat['slug'],
+                    'description' => null,
+                    'image_path'  => null,
+                    'created_at'  => $now,
+                    'updated_at'  => $now,
+                ]);
+            }
         }
     }
 
@@ -299,14 +346,24 @@ class UatSeeder extends Seeder
         ];
 
         foreach ($brands as $brand) {
-            $this->brandIds[] = DB::table('brands')->insertGetId([
-                'store_id'   => $this->storeId,
-                'name'       => $brand['name'],
-                'slug'       => $brand['slug'],
-                'logo_path'  => null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+            // Idempotent: reuse existing brand
+            $existing = DB::table('brands')
+                ->where('store_id', $this->storeId)
+                ->where('slug', $brand['slug'])
+                ->first();
+
+            if ($existing) {
+                $this->brandIds[] = $existing->id;
+            } else {
+                $this->brandIds[] = DB::table('brands')->insertGetId([
+                    'store_id'   => $this->storeId,
+                    'name'       => $brand['name'],
+                    'slug'       => $brand['slug'],
+                    'logo_path'  => null,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
         }
     }
 
@@ -351,6 +408,10 @@ class UatSeeder extends Seeder
         ];
 
         foreach ($products as $p) {
+            // Idempotent: skip if product with this slug already exists in this store
+            if (DB::table('products')->where('store_id', $this->storeId)->where('slug', $p[1])->exists()) {
+                continue;
+            }
             DB::table('products')->insert([
                 'store_id'        => $this->storeId,
                 'category_id'     => $this->categoryIds[$p[2]],
@@ -576,6 +637,13 @@ class UatSeeder extends Seeder
 
     private function createStoreB(Carbon $now): void
     {
+        // Idempotent: use existing Store B if already seeded
+        $existing = DB::table('stores')->where('slug', 'uat-store-b')->first();
+        if ($existing) {
+            $this->storeBId = $existing->id;
+            return;
+        }
+
         $this->storeBId = DB::table('stores')->insertGetId([
             'name'             => 'UAT Test Store B',
             'slug'             => 'uat-store-b',
