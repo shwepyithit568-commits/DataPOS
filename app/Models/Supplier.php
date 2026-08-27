@@ -83,11 +83,15 @@ class Supplier extends Model
      */
     public function recalculateBalances(): void
     {
+        // total_credit = cumulative purchase cost for all received POs
         $credit = $this->purchaseOrders()
-            ->where('payment_status', '!=', 'paid')
-            ->sum('remaining_balance');
+            ->where('status', 'received')
+            ->sum('total_cost');
 
-        $repaid = $this->purchaseOrders()->sum('paid_amount');
+        // total_repaid = cumulative payments made against received POs
+        $repaid = $this->purchaseOrders()
+            ->where('status', 'received')
+            ->sum('paid_amount');
 
         $this->update([
             'total_credit' => $credit ?: 0,

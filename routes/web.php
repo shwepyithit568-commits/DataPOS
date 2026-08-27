@@ -993,6 +993,8 @@ Route::prefix('store/{store_slug}')
             Route::post('/purchases/{purchaseOrder}/cancel', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'cancel'])->name('pos.purchases.cancel');
             Route::post('/purchases/{purchaseOrder}/return', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'returnItems'])->name('pos.purchases.return');
             Route::post('/purchases/{purchaseOrder}/pay', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'pay'])->name('pos.purchases.pay');
+            Route::post('/purchases/{purchaseOrder}/vouchers', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'uploadVouchers'])->name('pos.purchases.upload-vouchers');
+            Route::delete('/purchases/{purchaseOrder}/vouchers/{index}', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'deleteVoucher'])->name('pos.purchases.delete-voucher');
 
             // ── Stock Transfers
             Route::get('/transfers', [\App\Http\Controllers\POS\TransferController::class, 'index'])->name('pos.transfers.index');

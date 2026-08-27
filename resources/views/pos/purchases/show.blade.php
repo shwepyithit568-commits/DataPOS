@@ -57,9 +57,10 @@
                  if (!this.retCanSubmit) return;
                  this.returnSubmitting = true;
                  this.$refs.returnForm.submit();
-             }
+             },
+             activeImage: null
          }"
-         @keydown.escape.window="payOpen = false; returnOpen = false">
+         @keydown.escape.window="payOpen = false; returnOpen = false; activeImage = null">
 
         {{-- Header --}}
         <div class="flex items-center justify-between gap-3">
@@ -293,11 +294,47 @@
                             </tr>
                         @endforeach
                     </tbody>
-                    <tfoot class="bg-slate-50 dark:bg-slate-800/60 text-sm">
-                        <tr>
-                            <td colspan="2" class="px-4 py-3 font-bold text-right">{{ __('messages.receiving_total') }}</td>
-                            <td class="px-4 py-3 text-right font-mono font-bold">{{ number_format((float) $po->total_quantity, 3) }}</td>
-                            <td colspan="2" class="px-4 py-3 text-right font-mono font-black text-base">Ks {{ number_format((float) $po->total_cost) }}</td>
+                    <tfoot class="bg-slate-50 dark:bg-slate-800/60 text-xs text-slate-600 dark:text-slate-300">
+                        {{-- Items Subtotal --}}
+                        @if ((float) $po->discount_amount > 0 || (float) $po->delivery_fee > 0)
+                            <tr class="border-t border-slate-200 dark:border-slate-700">
+                                <td colspan="2" class="px-4 py-2 font-bold text-right text-slate-500">{{ __('messages.po_subtotal') }}</td>
+                                <td class="px-4 py-2 text-right font-mono font-bold">{{ number_format((float) $po->total_quantity, 3) }}</td>
+                                <td colspan="2" class="px-4 py-2 text-right font-mono font-bold">Ks {{ number_format((float) ($po->subtotal > 0 ? $po->subtotal : $po->total_cost)) }}</td>
+                            </tr>
+                        @endif
+
+                        {{-- Trade Discount --}}
+                        @if ((float) $po->discount_amount > 0)
+                            <tr class="text-rose-600 dark:text-rose-400">
+                                <td colspan="4" class="px-4 py-1.5 font-bold text-right">
+                                    {{ __('messages.po_discount_amount') }} (-)
+                                </td>
+                                <td class="px-4 py-1.5 text-right font-mono font-bold">
+                                    - Ks {{ number_format((float) $po->discount_amount) }}
+                                </td>
+                            </tr>
+                        @endif
+
+                        {{-- Delivery Fee --}}
+                        @if ((float) $po->delivery_fee > 0)
+                            <tr class="text-amber-600 dark:text-amber-400">
+                                <td colspan="4" class="px-4 py-1.5 font-bold text-right">
+                                    {{ __('messages.po_delivery_fee') }} (+)
+                                </td>
+                                <td class="px-4 py-1.5 text-right font-mono font-bold">
+                                    + Ks {{ number_format((float) $po->delivery_fee) }}
+                                </td>
+                            </tr>
+                        @endif
+
+                        {{-- Grand Total --}}
+                        <tr class="border-t-2 border-slate-300 dark:border-slate-700 font-bold text-slate-900 dark:text-slate-100">
+                            <td colspan="2" class="px-4 py-3 font-black text-right text-sm">{{ __('messages.po_net_total') }}</td>
+                            <td class="px-4 py-3 text-right font-mono font-bold text-sm">{{ number_format((float) $po->total_quantity, 3) }}</td>
+                            <td colspan="2" class="px-4 py-3 text-right font-mono font-black text-base text-emerald-600 dark:text-emerald-400">
+                                Ks {{ number_format((float) $po->total_cost) }}
+                            </td>
                         </tr>
                     </tfoot>
                 </table>
@@ -326,11 +363,31 @@
                         </div>
                     </div>
                 @endforeach
-                <div class="px-4 py-3 bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between">
-                    <span class="text-sm font-bold">{{ __('messages.receiving_total') }}</span>
-                    <div class="text-right">
-                        <p class="text-[10px] text-slate-400 font-mono">{{ number_format((float) $po->total_quantity, 3) }} {{ __('messages.reports_units') }}</p>
-                        <p class="font-mono font-black text-base">Ks {{ number_format((float) $po->total_cost) }}</p>
+                <div class="px-4 py-3 bg-slate-50 dark:bg-slate-800/60 space-y-1">
+                    @if ((float) $po->discount_amount > 0 || (float) $po->delivery_fee > 0)
+                        <div class="flex items-center justify-between text-xs text-slate-500">
+                            <span>{{ __('messages.po_subtotal') }}</span>
+                            <span class="font-mono font-bold">Ks {{ number_format((float) ($po->subtotal > 0 ? $po->subtotal : $po->total_cost)) }}</span>
+                        </div>
+                    @endif
+                    @if ((float) $po->discount_amount > 0)
+                        <div class="flex items-center justify-between text-xs text-rose-600 font-bold">
+                            <span>{{ __('messages.po_discount_amount') }} (-)</span>
+                            <span class="font-mono">- Ks {{ number_format((float) $po->discount_amount) }}</span>
+                        </div>
+                    @endif
+                    @if ((float) $po->delivery_fee > 0)
+                        <div class="flex items-center justify-between text-xs text-amber-600 font-bold">
+                            <span>{{ __('messages.po_delivery_fee') }} (+)</span>
+                            <span class="font-mono">+ Ks {{ number_format((float) $po->delivery_fee) }}</span>
+                        </div>
+                    @endif
+                    <div class="flex items-center justify-between pt-1.5 border-t border-slate-200 dark:border-slate-700">
+                        <span class="text-sm font-black">{{ __('messages.po_net_total') }}</span>
+                        <div class="text-right">
+                            <p class="text-[10px] text-slate-400 font-mono">{{ number_format((float) $po->total_quantity, 3) }} {{ __('messages.reports_units') }}</p>
+                            <p class="font-mono font-black text-base text-emerald-600 dark:text-emerald-400">Ks {{ number_format((float) $po->total_cost) }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -348,6 +405,80 @@
                 </div>
             </div>
         @endif
+
+        {{-- ===== Voucher Photos & Attached Invoices ===== --}}
+        @php
+            $voucherImages = $po->voucher_images ?? [];
+        @endphp
+        <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-3">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 grid place-items-center text-xs font-black">📷</span>
+                    <h3 class="text-xs font-black uppercase tracking-wide text-slate-700 dark:text-slate-200">
+                        {{ __('messages.po_voucher_images') }}
+                    </h3>
+                    <span class="text-[11px] font-bold text-slate-400 font-mono">({{ count($voucherImages) }})</span>
+                </div>
+
+                {{-- Upload More Form Trigger --}}
+                <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id . '/vouchers') }}"
+                      enctype="multipart/form-data" class="flex items-center gap-2">
+                    @csrf
+                    <input type="file" name="voucher_images[]" multiple accept="image/*,.pdf" capture="environment"
+                           id="po-add-voucher-file" class="sr-only" onchange="this.form.submit()">
+                    <label for="po-add-voucher-file"
+                           class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 transition cursor-pointer flex items-center gap-1">
+                        <span>+</span>
+                        <span>{{ __('messages.po_add_more_vouchers') }}</span>
+                    </label>
+                </form>
+            </div>
+
+            @if (count($voucherImages) > 0)
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 pt-1">
+                    @foreach ($voucherImages as $vIdx => $vPath)
+                        @php
+                            $isPdf = str_ends_with(strtolower($vPath), '.pdf');
+                            $fullUrl = str_starts_with($vPath, 'http') ? $vPath : asset('storage/' . ltrim($vPath, '/'));
+                        @endphp
+                        <div class="relative group rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 overflow-hidden shadow-2xs aspect-square flex flex-col items-center justify-center p-1">
+                            @if ($isPdf)
+                                <a href="{{ $fullUrl }}" target="_blank" class="w-full h-full flex flex-col items-center justify-center text-center p-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                                    <span class="text-3xl">📄</span>
+                                    <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300 mt-1 truncate max-w-full">PDF Document</span>
+                                    <span class="text-[9px] text-sky-600 font-mono">Open →</span>
+                                </a>
+                            @else
+                                <img src="{{ $fullUrl }}" alt="Voucher {{ $vIdx + 1 }}"
+                                     @click="activeImage = '{{ $fullUrl }}'"
+                                     class="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition">
+                            @endif
+
+                            <div class="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/60 text-[9px] font-mono font-bold text-white">
+                                #{{ $vIdx + 1 }}
+                            </div>
+
+                            {{-- Delete Voucher Image Form --}}
+                            <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id . '/vouchers/' . $vIdx) }}"
+                                  onsubmit="return confirm('Delete this voucher image?')"
+                                  class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="w-6 h-6 rounded-md bg-rose-600 hover:bg-rose-700 text-white grid place-items-center text-[10px] shadow">
+                                    ✕
+                                </button>
+                            </form>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 py-6 text-center">
+                    <span class="text-2xl block opacity-40 mb-1">📷</span>
+                    <p class="text-xs font-bold text-slate-400">{{ __('messages.po_no_vouchers') }}</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.po_voucher_upload_hint') }}</p>
+                </div>
+            @endif
+        </div>
 
         {{-- ===== Payment summary (if received) ===== --}}
         @if ($po->isReceived())
@@ -595,6 +726,19 @@
                     </div>
                 </form>
             </div>
+            </div>
+        </div>
+
+        {{-- ===== Full-Screen Voucher Image Lightbox Modal ===== --}}
+        <div x-show="activeImage" x-cloak
+             class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs"
+             role="dialog" aria-modal="true">
+            <div class="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center">
+                <button type="button" @click="activeImage = null"
+                        class="absolute -top-10 right-0 text-white bg-slate-800/80 hover:bg-slate-700 rounded-full w-8 h-8 grid place-items-center text-sm font-bold shadow">
+                    ✕
+                </button>
+                <img :src="activeImage" class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl border border-slate-700 bg-slate-950">
             </div>
         </div>
     </div>

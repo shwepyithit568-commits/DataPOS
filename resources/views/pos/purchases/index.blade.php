@@ -1,233 +1,427 @@
 @extends('layouts.pos.app')
 
-@section('content')
-    <div class="mx-auto max-w-6xl px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+@section('title', __('messages.po_list_title') . ' - ' . $store->name)
 
-        {{-- Header --}}
-        <div class="flex items-center justify-between gap-3">
+@section('content')
+<div class="w-full space-y-2 sm:space-y-2.5"
+     x-data="{
+         search: '',
+         statusFilter: '{{ $status ?? '' }}',
+         viewMode: localStorage.getItem('pos_purchases_view_mode') || 'table',
+         matches(po) {
+             const q = this.search.toLowerCase().trim();
+             const matchesSearch = !q || (po.po_number && po.po_number.toLowerCase().includes(q)) || (po.supplier_name && po.supplier_name.toLowerCase().includes(q));
+             const matchesStatus = !this.statusFilter || po.status === this.statusFilter;
+             return matchesSearch && matchesStatus;
+         }
+     }"
+     @view-changed.window="viewMode = $event.detail; localStorage.setItem('pos_purchases_view_mode', $event.detail)">
+
+    {{-- 1. Top Header Banner --}}
+    <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <span class="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800 grid place-items-center text-sm font-black shrink-0">
+                🛒
+            </span>
             <div class="min-w-0">
-                <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">{{ __('messages.sidebar_purchases') }}</p>
-                <h1 class="text-lg sm:text-xl font-black mt-0.5 truncate">{{ __('messages.po_list_title') }}</h1>
+                <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 truncate">
+                    {{ __('messages.po_list_title') }}
+                </h1>
+                <p class="text-[11px] text-slate-400 font-mono truncate">
+                    {{ $store->name }} — {{ __('messages.receiving_subtitle') }}
+                </p>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
-                <a href="{{ url('/store/' . $store->slug . '/pos') }}"
-                   class="rounded-xl px-3 sm:px-4 py-2.5 text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition">
-                    ← <span class="hidden sm:inline">{{ __('messages.back_to_pos') }}</span>
-                </a>
-                <a href="{{ url('/store/' . $store->slug . '/pos/purchases/payables') }}"
-                   class="rounded-xl px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 hover:bg-amber-100 dark:hover:bg-amber-950/70 transition"
-                   title="{{ __('messages.payables_title') }}">
-                    <svg class="w-4 h-4 inline-block -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
-                    <span class="hidden md:inline">{{ __('messages.payables_title') }}</span>
-                </a>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap shrink-0">
+            <a href="{{ url('/store/' . $store->slug . '/pos/purchases/payables') }}"
+               class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition flex items-center gap-1.5 shadow-2xs">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                <span>{{ __('messages.payables_title') }}</span>
+            </a>
+            <a href="{{ url('/store/' . $store->slug . '/pos/purchases/returns') }}"
+               class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1.5 shadow-2xs">
+                <span>↩️</span>
+                <span>Returns</span>
+            </a>
+            <a href="{{ url('/store/' . $store->slug . '/pos/purchases/create') }}"
+               class="px-3.5 py-1.5 rounded-lg text-xs font-black bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white shadow-md shadow-sky-900/20 transition flex items-center gap-1.5 active:scale-95">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <span>+ {{ __('messages.po_new') }}</span>
+            </a>
+            <a href="{{ url('/store/' . $store->slug . '/pos') }}"
+               class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5 shadow-2xs">
+                <span>←</span>
+                <span>{{ __('messages.back_to_pos') }}</span>
+            </a>
+        </div>
+    </div>
+
+    {{-- Flash Notifications --}}
+    @if (session('success'))
+        <div class="p-2.5 sm:p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs text-emerald-700 dark:text-emerald-300 flex items-start gap-2 shadow-2xs">
+            <span class="text-sm font-bold shrink-0">✓</span>
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="p-2.5 sm:p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2 shadow-2xs">
+            <span class="text-sm font-bold shrink-0">⚠️</span>
+            <span>{{ session('error') }}</span>
+        </div>
+    @endif
+
+    {{-- 2. 4-Column Compact KPI Summary Cards --}}
+    @php
+        $totalOutstanding = $pos->sum(fn ($po) => (float) $po->remaining_balance);
+        $pendingAndOrdered = ($statusCounts['pending'] ?? 0) + ($statusCounts['ordered'] ?? 0);
+        $receivedCount = $statusCounts['received'] ?? 0;
+        $totalPOs = $statusCounts->sum();
+    @endphp
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
+        {{-- Card 1: Total POs --}}
+        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ __('messages.po_list_title') }}</span>
+                <span class="w-6 h-6 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 grid place-items-center text-xs">📋</span>
+            </div>
+            <div class="mt-1">
+                <p class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 font-mono">{{ number_format($totalPOs) }}</p>
+                <span class="text-[10px] text-slate-400 block mt-0.5">Total Orders</span>
+            </div>
+        </div>
+
+        {{-- Card 2: Pending / In-Progress --}}
+        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-amber-200/80 dark:border-amber-900/50 shadow-2xs flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">{{ __('messages.po_status_pending') }} / Ordered</span>
+                <span class="w-6 h-6 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 grid place-items-center text-xs">⏳</span>
+            </div>
+            <div class="mt-1">
+                <p class="text-base sm:text-lg font-black text-amber-600 dark:text-amber-400 font-mono">{{ number_format($pendingAndOrdered) }}</p>
+                <span class="text-[10px] text-slate-400 block mt-0.5">Pending Arrival</span>
+            </div>
+        </div>
+
+        {{-- Card 3: Received / Ingested --}}
+        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-emerald-200/80 dark:border-emerald-900/50 shadow-2xs flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{{ __('messages.po_status_received') }}</span>
+                <span class="w-6 h-6 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-xs">✓</span>
+            </div>
+            <div class="mt-1">
+                <p class="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">{{ number_format($receivedCount) }}</p>
+                <span class="text-[10px] text-slate-400 block mt-0.5">Completed Inbounds</span>
+            </div>
+        </div>
+
+        {{-- Card 4: Outstanding Payables --}}
+        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ __('messages.payables_title') }}</span>
+                <span class="w-6 h-6 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 grid place-items-center text-xs">💰</span>
+            </div>
+            <div class="mt-1">
+                <p class="text-base sm:text-lg font-black {{ $totalOutstanding > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100' }} font-mono truncate">
+                    Ks {{ number_format($totalOutstanding, 0) }}
+                </p>
+                <span class="text-[10px] text-slate-400 block mt-0.5">Unpaid Balance</span>
+            </div>
+        </div>
+    </div>
+
+    {{-- 3. Advanced Toolbar with Search, Status Filter Chips & View Mode Toggle --}}
+    <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 min-w-0">
+            {{-- Live Search Box --}}
+            <div class="relative flex-1 min-w-[200px] max-w-md">
+                <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8" stroke-width="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"/></svg>
+                </span>
+                <input type="text" x-model="search"
+                       placeholder="{{ __('messages.po_number') }} / {{ __('messages.po_supplier') }}..."
+                       class="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-sky-500 font-sans" />
+            </div>
+
+            {{-- Status Filter Chips --}}
+            @php
+                $statusTabs = [
+                    '' => ['label' => __('messages.po_filter_all'), 'count' => $totalPOs],
+                    'pending' => ['label' => __('messages.po_status_pending'), 'count' => $statusCounts['pending'] ?? 0],
+                    'ordered' => ['label' => __('messages.po_status_ordered'), 'count' => $statusCounts['ordered'] ?? 0],
+                    'received' => ['label' => __('messages.po_status_received'), 'count' => $statusCounts['received'] ?? 0],
+                    'cancelled' => ['label' => __('messages.po_status_cancelled'), 'count' => $statusCounts['cancelled'] ?? 0],
+                    'returned' => ['label' => __('messages.po_status_returned'), 'count' => $statusCounts['returned'] ?? 0],
+                ];
+            @endphp
+            <div class="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none shrink-0">
+                @foreach ($statusTabs as $k => $info)
+                    <button type="button" @click="statusFilter = '{{ $k }}'"
+                            class="px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer"
+                            :class="statusFilter === '{{ $k }}' ? 'bg-sky-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'">
+                        <span>{{ $info['label'] }}</span>
+                        <span class="px-1 py-0.2 rounded-full text-[10px] font-mono"
+                              :class="statusFilter === '{{ $k }}' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">
+                            {{ number_format($info['count']) }}
+                        </span>
+                    </button>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- View Mode Toggle --}}
+        <div class="flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 self-end md:self-auto shrink-0">
+            <button type="button" @click="viewMode = 'table'; localStorage.setItem('pos_purchases_view_mode', 'table')"
+                    class="px-2.5 py-1 rounded text-xs font-bold transition flex items-center gap-1"
+                    :class="viewMode === 'table' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                <span>Table</span>
+            </button>
+            <button type="button" @click="viewMode = 'cards'; localStorage.setItem('pos_purchases_view_mode', 'cards')"
+                    class="px-2.5 py-1 rounded text-xs font-bold transition flex items-center gap-1"
+                    :class="viewMode === 'cards' || viewMode === 'card' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                <span>Cards</span>
+            </button>
+        </div>
+    </div>
+
+    {{-- Floating Action Button for Mobile --}}
+    <a href="{{ url('/store/' . $store->slug . '/pos/purchases/create') }}"
+       class="fixed bottom-5 right-5 z-40 sm:hidden w-12 h-12 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-xl shadow-sky-900/40 flex items-center justify-center text-2xl font-bold active:scale-95 transition"
+       title="{{ __('messages.po_new') }}">
+        +
+    </a>
+
+    {{-- 4. Google Sheets Style Spreadsheet Table View --}}
+    <div x-show="viewMode === 'table'" class="w-full bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-lg shadow-2xs overflow-hidden transition">
+        <div class="overflow-x-auto max-h-[72vh] overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800">
+            <table class="w-full text-left text-xs border-collapse font-sans text-slate-700 dark:text-slate-200">
+                <thead class="sticky top-0 z-20 bg-slate-100 dark:bg-slate-800/95 backdrop-blur-xs border-b-2 border-slate-300 dark:border-slate-600 shadow-2xs select-none">
+                    <tr class="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider divide-x divide-slate-300 dark:divide-slate-700">
+                        <th class="py-2.5 px-3 min-w-[160px]">{{ __('messages.po_number') }}</th>
+                        <th class="py-2.5 px-3 min-w-[180px]">{{ __('messages.po_supplier') }}</th>
+                        <th class="py-2.5 px-3 text-center w-36">{{ __('messages.reports_status') }}</th>
+                        <th class="py-2.5 px-3 text-center w-24">{{ __('messages.reports_items') }}</th>
+                        <th class="py-2.5 px-3 text-right min-w-[130px]">{{ __('messages.reports_value') }}</th>
+                        <th class="py-2.5 px-3 text-right min-w-[130px]">{{ __('messages.receiving_total') }}</th>
+                        <th class="py-2.5 px-3 text-right w-28">{{ __('messages.actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200/80 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                    @forelse ($pos as $po)
+                        @php
+                            $poData = [
+                                'id' => $po->id,
+                                'po_number' => $po->po_number,
+                                'supplier_name' => $po->supplier?->name ?? '',
+                                'status' => $po->status,
+                            ];
+                        @endphp
+                        <tr x-show="matches({{ Js::from($poData) }})"
+                            class="divide-x divide-slate-200/80 dark:divide-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
+                            
+                            {{-- PO Number & Date --}}
+                            <td class="py-2.5 px-3">
+                                <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}" class="group block">
+                                    <span class="font-mono font-black text-sky-600 dark:text-sky-400 group-hover:underline text-xs sm:text-sm">
+                                        {{ $po->po_number }}
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 block mt-0.5 font-mono">
+                                        {{ $po->created_at->format('d M Y, H:i') }}
+                                    </span>
+                                </a>
+                            </td>
+
+                            {{-- Supplier --}}
+                            <td class="py-2.5 px-3">
+                                @if ($po->supplier)
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span class="shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white grid place-items-center font-black text-[10px] select-none shadow-2xs">
+                                            {{ mb_strtoupper(mb_substr(trim($po->supplier->name), 0, 1)) }}
+                                        </span>
+                                        <span class="font-bold text-slate-900 dark:text-slate-100 truncate text-xs" title="{{ $po->supplier->name }}">
+                                            {{ $po->supplier->name }}
+                                        </span>
+                                    </div>
+                                @else
+                                    <span class="text-slate-400 font-mono">—</span>
+                                @endif
+                            </td>
+
+                            {{-- Status Badges --}}
+                            <td class="py-2.5 px-3 text-center whitespace-nowrap">
+                                @php
+                                    $statusPill = match($po->status) {
+                                        'pending' => 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+                                        'ordered' => 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200 dark:border-sky-800',
+                                        'received' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+                                        'cancelled' => 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700',
+                                        'returned' => 'bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border-violet-200 dark:border-violet-800',
+                                        default => 'bg-slate-100 text-slate-600 border-slate-200'
+                                    };
+                                @endphp
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase border {{ $statusPill }}">
+                                    {{ __('messages.po_status_' . $po->status) }}
+                                </span>
+                                @if ($po->status === 'received')
+                                    @php
+                                        $payPill = match($po->payment_status) {
+                                            'paid' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
+                                            'partial' => 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
+                                            default => 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
+                                        };
+                                    @endphp
+                                    <span class="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold uppercase {{ $payPill }}">
+                                        {{ __('messages.po_payment_' . $po->payment_status) }}
+                                    </span>
+                                @endif
+                            </td>
+
+                            {{-- Items Count --}}
+                            <td class="py-2.5 px-3 text-center font-mono font-bold">
+                                <span class="inline-block px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                    {{ $po->items->count() }}
+                                </span>
+                            </td>
+
+                            {{-- Total Cost Valuation --}}
+                            <td class="py-2.5 px-3 text-right font-mono font-black text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                                Ks {{ number_format((float) $po->total_cost, 0) }}
+                            </td>
+
+                            {{-- Remaining Balance / Payables --}}
+                            <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                                @if ((float) $po->remaining_balance > 0)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-black font-mono">
+                                        Ks {{ number_format((float) $po->remaining_balance, 0) }}
+                                    </span>
+                                @else
+                                    <span class="text-xs text-slate-400 font-mono">—</span>
+                                @endif
+                            </td>
+
+                            {{-- Actions --}}
+                            <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                                <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}"
+                                   class="px-2.5 py-1 rounded text-xs font-bold bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/50 dark:hover:bg-sky-900/60 text-sky-600 dark:text-sky-300 transition inline-flex items-center gap-1 active:scale-95">
+                                    <span>{{ __('messages.po_view') }}</span>
+                                    <span>→</span>
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="p-8 text-center text-slate-400">
+                                <div class="text-3xl mb-2 opacity-55">🛒</div>
+                                <div class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.po_none') }}</div>
+                                <a href="{{ url('/store/' . $store->slug . '/pos/purchases/create') }}"
+                                   class="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 transition shadow-sm">
+                                    + {{ __('messages.po_new') }}
+                                </a>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- 5. Responsive Multi-Column Card Grid View --}}
+    <div x-show="viewMode === 'cards' || viewMode === 'card'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
+        @forelse ($pos as $po)
+            @php
+                $poData = [
+                    'id' => $po->id,
+                    'po_number' => $po->po_number,
+                    'supplier_name' => $po->supplier?->name ?? '',
+                    'status' => $po->status,
+                ];
+                $statusPill = match($po->status) {
+                    'pending' => 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+                    'ordered' => 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200 dark:border-sky-800',
+                    'received' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+                    'cancelled' => 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700',
+                    'returned' => 'bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border-violet-200 dark:border-violet-800',
+                    default => 'bg-slate-100 text-slate-600'
+                };
+            @endphp
+            <div x-show="matches({{ Js::from($poData) }})"
+                 class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs hover:border-sky-300 dark:hover:border-sky-600/50 hover:shadow-sm transition flex flex-col justify-between group">
+                
+                <div class="p-3 space-y-2.5">
+                    {{-- Card Header: PO # + Status Pill --}}
+                    <div class="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <div>
+                            <span class="font-mono font-black text-sky-600 dark:text-sky-400 text-sm block">
+                                {{ $po->po_number }}
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-mono block mt-0.5">
+                                {{ $po->created_at->format('d M Y, H:i') }}
+                            </span>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase border {{ $statusPill }} shrink-0">
+                            {{ __('messages.po_status_' . $po->status) }}
+                        </span>
+                    </div>
+
+                    {{-- Supplier Information --}}
+                    <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Supplier</span>
+                        @if ($po->supplier)
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <span class="shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white grid place-items-center font-black text-[9px] select-none shadow-2xs">
+                                    {{ mb_strtoupper(mb_substr(trim($po->supplier->name), 0, 1)) }}
+                                </span>
+                                <span class="font-bold text-xs text-slate-800 dark:text-slate-200 truncate" title="{{ $po->supplier->name }}">
+                                    {{ $po->supplier->name }}
+                                </span>
+                            </div>
+                        @else
+                            <span class="text-xs text-slate-400 font-mono">—</span>
+                        @endif
+                    </div>
+
+                    {{-- Numeric Comparison Metrics Box --}}
+                    <div class="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-lg border border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block uppercase font-bold">Items Qty</span>
+                            <span class="font-mono font-bold text-slate-700 dark:text-slate-300">{{ $po->items->count() }} lines</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-slate-400 block uppercase font-bold">Total Cost</span>
+                            <span class="font-mono font-black text-slate-900 dark:text-slate-100">Ks {{ number_format((float) $po->total_cost, 0) }}</span>
+                        </div>
+                    </div>
+
+                    @if ((float) $po->remaining_balance > 0)
+                        <div class="flex items-center justify-between text-xs px-1">
+                            <span class="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase">Payables:</span>
+                            <span class="font-mono font-black text-amber-600 dark:text-amber-400">Ks {{ number_format((float) $po->remaining_balance, 0) }}</span>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Card Footer Action --}}
+                <div class="p-2.5 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
+                    <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}"
+                       class="w-full text-center px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/60 dark:hover:bg-sky-900/60 text-sky-600 dark:text-sky-300 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                        <span>{{ __('messages.po_view') }}</span>
+                        <span>→</span>
+                    </a>
+                </div>
+            </div>
+        @empty
+            <div class="col-span-full bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 p-8 rounded-xl text-center text-slate-400 shadow-2xs">
+                <div class="text-3xl mb-2 opacity-55">🛒</div>
+                <div class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.po_none') }}</div>
                 <a href="{{ url('/store/' . $store->slug . '/pos/purchases/create') }}"
-                   class="rounded-xl px-3 sm:px-4 py-2.5 text-sm font-bold bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white shadow transition">
+                   class="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 transition shadow-sm">
                     + {{ __('messages.po_new') }}
                 </a>
             </div>
-        </div>
-
-        @if (session('success'))
-            <div class="rounded-xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-4 py-3 text-sm font-semibold">
-                ✅ {{ session('success') }}
-            </div>
-        @endif
-        @if (session('error'))
-            <div class="rounded-xl border border-rose-300 dark:border-rose-700 bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-300 px-4 py-3 text-sm font-semibold">
-                ⚠️ {{ session('error') }}
-            </div>
-        @endif
-
-        {{-- Summary stats (filtered set) --}}
-        @if ($pos->isNotEmpty())
-            @php
-                $outstanding = $pos->sum(fn ($po) => (float) $po->remaining_balance);
-                $pendingCount = $pos->where('status', 'pending')->count();
-            @endphp
-            <div class="grid grid-cols-3 gap-2 sm:gap-3">
-                <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
-                    <div class="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 grid place-items-center">
-                        <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z"/></svg>
-                    </div>
-                    <div class="min-w-0">
-                        <p class="text-lg sm:text-2xl font-black text-gray-900 dark:text-slate-100 leading-none">{{ number_format($pos->count()) }}</p>
-                        <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">{{ __('messages.po_list_title') }}</p>
-                    </div>
-                </div>
-                <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
-                    <div class="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 grid place-items-center">
-                        <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
-                    </div>
-                    <div class="min-w-0">
-                        <p class="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 leading-none">{{ number_format($pendingCount) }}</p>
-                        <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">{{ __('messages.po_status_pending') }}</p>
-                    </div>
-                </div>
-                <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
-                    <div class="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center">
-                        <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
-                    </div>
-                    <div class="min-w-0">
-                        <p class="text-sm sm:text-2xl font-black text-gray-900 dark:text-slate-100 leading-none truncate">Ks {{ number_format($outstanding, 0) }}</p>
-                        <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">{{ __('messages.payables_title') }}</p>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        {{-- Status filter pills with counts --}}
-        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            @php
-                $statuses = [
-                    '' => __('messages.po_filter_all'),
-                    'pending' => __('messages.po_status_pending'),
-                    'ordered' => __('messages.po_status_ordered'),
-                    'received' => __('messages.po_status_received'),
-                    'cancelled' => __('messages.po_status_cancelled'),
-                ];
-                $allCount = $statusCounts->sum();
-            @endphp
-            @foreach ($statuses as $val => $label)
-                <a href="{{ url('/store/' . $store->slug . '/pos/purchases' . ($val ? "?status={$val}" : '')) }}"
-                   class="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition
-                          {{ ($status ?? '') === $val ? 'bg-sky-600 text-white shadow' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700' }}">
-                    {{ $label }}
-                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black {{ ($status ?? '') === $val ? 'bg-white/25' : 'bg-slate-100 dark:bg-slate-700' }}"
-                    >{{ number_format($val === '' ? $allCount : ($statusCounts[$val] ?? 0)) }}</span>
-                </a>
-            @endforeach
-        </div>
-
-        {{-- PO list --}}
-        <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            @if ($pos->isEmpty())
-                {{-- Empty state --}}
-                <div class="py-14 text-center px-4">
-                    <div class="mx-auto w-14 h-14 rounded-2xl bg-sky-50 dark:bg-sky-950/40 grid place-items-center mb-3">
-                        <svg class="w-7 h-7 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z"/></svg>
-                    </div>
-                    <p class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ __('messages.po_none') }}</p>
-                    <a href="{{ url('/store/' . $store->slug . '/pos/purchases/create') }}"
-                       class="mt-4 inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-bold bg-sky-600 hover:bg-sky-500 text-white transition">
-                        + {{ __('messages.po_new') }}
-                    </a>
-                </div>
-            @else
-                @php
-                    $statusColors = [
-                        'pending' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-                        'ordered' => 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
-                        'received' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-                        'cancelled' => 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
-                        'returned' => 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
-                    ];
-                    $paymentColors = [
-                        'unpaid' => 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
-                        'partial' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-                        'paid' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-                    ];
-                @endphp
-
-                {{-- ===== Desktop: table ===== --}}
-                <div class="hidden md:block overflow-x-auto scrollbar-thin">
-                    <table class="w-full min-w-[760px] text-sm">
-                        <thead class="bg-slate-50 dark:bg-slate-800/60 text-xs text-slate-500 dark:text-slate-400">
-                            <tr>
-                                <th class="text-left px-4 py-3">{{ __('messages.po_number') }}</th>
-                                <th class="text-left px-4 py-3">{{ __('messages.po_supplier') }}</th>
-                                <th class="text-left px-4 py-3">{{ __('messages.reports_status') }}</th>
-                                <th class="text-right px-4 py-3">{{ __('messages.reports_items') }}</th>
-                                <th class="text-right px-4 py-3">{{ __('messages.reports_value') }}</th>
-                                <th class="text-right px-4 py-3">{{ __('messages.receiving_total') }}</th>
-                                <th class="text-right px-4 py-3"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                            @foreach ($pos as $po)
-                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
-                                    <td class="px-4 py-3">
-                                        <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}" class="group block">
-                                            <span class="block font-mono font-bold text-sky-600 dark:text-sky-400 group-hover:underline">{{ $po->po_number }}</span>
-                                            <span class="block text-[11px] text-slate-400 mt-0.5">{{ $po->created_at->format('d M Y, H:i') }}</span>
-                                        </a>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        @if ($po->supplier)
-                                            <div class="flex items-center gap-2 min-w-0">
-                                                <span class="shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 text-white grid place-items-center font-black text-[11px] select-none">{{ mb_strtoupper(mb_substr(trim($po->supplier->name), 0, 1)) }}</span>
-                                                <span class="font-semibold text-slate-700 dark:text-slate-200 truncate max-w-40" title="{{ $po->supplier->name }}">{{ $po->supplier->name }}</span>
-                                            </div>
-                                        @else
-                                            <span class="text-slate-400">—</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <span class="inline-block rounded-lg px-2 py-0.5 text-xs font-bold {{ $statusColors[$po->status] ?? '' }}">
-                                            {{ __('messages.po_status_' . $po->status) }}
-                                        </span>
-                                        @if ($po->status === 'received')
-                                            <span class="mt-1 inline-block ml-1 rounded-lg px-2 py-0.5 text-[10px] font-bold {{ $paymentColors[$po->payment_status] ?? '' }}">
-                                                {{ __('messages.po_payment_' . $po->payment_status) }}
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-3 text-right font-semibold">{{ $po->items->count() }}</td>
-                                    <td class="px-4 py-3 text-right font-mono font-bold whitespace-nowrap">Ks {{ number_format((float) $po->total_cost) }}</td>
-                                    <td class="px-4 py-3 text-right whitespace-nowrap">
-                                        @if ((float) $po->remaining_balance > 0)
-                                            <span class="font-mono font-bold text-amber-600 dark:text-amber-400">Ks {{ number_format((float) $po->remaining_balance) }}</span>
-                                        @else
-                                            <span class="text-slate-300 dark:text-slate-600">—</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-3 text-right">
-                                        <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}"
-                                           class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition">
-                                            {{ __('messages.po_view') }} →
-                                        </a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                {{-- ===== Mobile: cards ===== --}}
-                <div class="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
-                    @foreach ($pos as $po)
-                        <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}"
-                           class="block p-4 active:bg-slate-50 dark:active:bg-slate-800/60 transition">
-                            <div class="flex items-start justify-between gap-2">
-                                <div class="min-w-0">
-                                    <p class="font-mono font-bold text-sky-600 dark:text-sky-400 text-sm">{{ $po->po_number }}</p>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">{{ $po->created_at->format('d M Y, H:i') }} · {{ $po->supplier?->name ?? '—' }}</p>
-                                </div>
-                                <span class="shrink-0 rounded-lg px-2 py-0.5 text-xs font-bold {{ $statusColors[$po->status] ?? '' }}">
-                                    {{ __('messages.po_status_' . $po->status) }}
-                                </span>
-                            </div>
-                            <div class="mt-2.5 flex items-center justify-between gap-2">
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    <span class="rounded-lg px-2 py-0.5 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                                        {{ $po->items->count() }} {{ __('messages.reports_items') }}
-                                    </span>
-                                    @if ($po->status === 'received')
-                                        <span class="rounded-lg px-2 py-0.5 text-[10px] font-bold {{ $paymentColors[$po->payment_status] ?? '' }}">
-                                            {{ __('messages.po_payment_' . $po->payment_status) }}
-                                        </span>
-                                    @endif
-                                    @if ((float) $po->remaining_balance > 0)
-                                        <span class="rounded-lg px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                            Ks {{ number_format((float) $po->remaining_balance) }}
-                                        </span>
-                                    @endif
-                                </div>
-                                <p class="font-mono font-black text-sm whitespace-nowrap">Ks {{ number_format((float) $po->total_cost) }}</p>
-                            </div>
-                        </a>
-                    @endforeach
-                </div>
-            @endif
-        </div>
+        @endforelse
     </div>
+
+</div>
 @endsection

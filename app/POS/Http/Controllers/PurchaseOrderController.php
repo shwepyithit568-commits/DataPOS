@@ -94,7 +94,7 @@ class PurchaseOrderController extends Controller
         $balances = \App\POS\Models\InventoryBalance::where('store_id', $store->id)
             ->whereIn('product_id', $products->pluck('id'))
             ->groupBy('product_id')
-            ->selectRaw('product_id, SUM(quantity) as total')
+            ->selectRaw('product_id, SUM(quantity_on_hand) as total')
             ->pluck('total', 'product_id');
 
         return response()->json(['results' => $products->map(fn ($p) => [
@@ -124,8 +124,12 @@ class PurchaseOrderController extends Controller
             'supplier_id' => ['nullable', 'integer'],
             'reference' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'delivery_fee' => ['nullable', 'numeric', 'min:0'],
             'payment_status' => ['nullable', 'in:unpaid,partial,paid'],
             'paid_amount' => ['nullable', 'numeric', 'min:0'],
+            'voucher_images' => ['nullable', 'array'],
+            'voucher_images.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf,heic', 'max:10240'],
         ]);
 
         $payment = [];
@@ -136,6 +140,23 @@ class PurchaseOrderController extends Controller
             ];
         }
 
+        // Store multiple uploaded voucher/receipt images
+        $uploadedVouchers = [];
+        if ($request->hasFile('voucher_images')) {
+            foreach ($request->file('voucher_images') as $file) {
+                if ($file && $file->isValid()) {
+                    $path = $file->store("purchase_vouchers/{$store->id}", 'public');
+                    $uploadedVouchers[] = $path;
+                }
+            }
+        }
+
+        $adjustments = [
+            'discount_amount' => $data['discount_amount'] ?? '0',
+            'delivery_fee' => $data['delivery_fee'] ?? '0',
+            'voucher_images' => $uploadedVouchers,
+        ];
+
         try {
             $po = $this->purchaseOrders->create(
                 $store,
@@ -145,6 +166,7 @@ class PurchaseOrderController extends Controller
                 $data['notes'] ?? null,
                 $request->user(),
                 $payment,
+                $adjustments,
             );
         } catch (InventoryException $e) {
             return back()->withInput()->with('error', $e->getMessage());
@@ -152,6 +174,57 @@ class PurchaseOrderController extends Controller
 
         return redirect()->route('pos.purchases.show', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id])
             ->with('success', __('messages.po_created') . ' — ' . $po->po_number);
+    }
+
+    /** Upload additional voucher images to an existing PO. */
+    public function uploadVouchers(Request $request, StoreContext $context, string $store_slug, int $purchaseOrder): RedirectResponse
+    {
+        $store = $context->getStore();
+        $po = $this->purchaseOrders->findForStore($store, $purchaseOrder);
+
+        if (! $po) {
+            abort(404);
+        }
+
+        $request->validate([
+            'voucher_images' => ['required', 'array', 'min:1'],
+            'voucher_images.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf,heic', 'max:10240'],
+        ]);
+
+        $currentVouchers = is_array($po->voucher_images) ? $po->voucher_images : [];
+        if ($request->hasFile('voucher_images')) {
+            foreach ($request->file('voucher_images') as $file) {
+                if ($file && $file->isValid()) {
+                    $path = $file->store("purchase_vouchers/{$store->id}", 'public');
+                    $currentVouchers[] = $path;
+                }
+            }
+        }
+
+        $po->update(['voucher_images' => array_values($currentVouchers)]);
+
+        return back()->with('success', __('messages.po_voucher_uploaded_success'));
+    }
+
+    /** Delete a single voucher image from a PO. */
+    public function deleteVoucher(Request $request, StoreContext $context, string $store_slug, int $purchaseOrder, int $index): RedirectResponse
+    {
+        $store = $context->getStore();
+        $po = $this->purchaseOrders->findForStore($store, $purchaseOrder);
+
+        if (! $po) {
+            abort(404);
+        }
+
+        $currentVouchers = is_array($po->voucher_images) ? $po->voucher_images : [];
+        if (isset($currentVouchers[$index])) {
+            $pathToDelete = $currentVouchers[$index];
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($pathToDelete);
+            unset($currentVouchers[$index]);
+            $po->update(['voucher_images' => array_values($currentVouchers)]);
+        }
+
+        return back()->with('success', __('messages.po_voucher_deleted_success'));
     }
 
     /** PO detail page. */

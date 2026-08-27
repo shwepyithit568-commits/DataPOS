@@ -12,6 +12,15 @@
         'network' => __('messages.variant_preset_family_network'),
         'fashion' => __('messages.variant_preset_family_fashion'),
     ];
+
+    $familyFilterOptions = array_filter([
+        'mobile' => __('messages.variant_preset_family_mobile'),
+        'accessories' => __('messages.variant_preset_family_accessories'),
+        'cctv' => __('messages.variant_preset_family_cctv'),
+        'computer' => __('messages.variant_preset_family_computer'),
+        'network' => __('messages.variant_preset_family_network'),
+        'fashion' => __('messages.variant_preset_family_fashion'),
+    ]);
 @endphp
 
 <div class="w-full space-y-2 sm:space-y-2.5">
@@ -58,8 +67,6 @@
         formSortOrder: 0,
         formOptions: [{ name: '', sku_suffix: '', retail_price_adjustment: 0, wholesale_price_adjustment: 0, stock_status: 'in_stock' }],
         viewMode: localStorage.getItem('admin_view_mode') || 'table',
-        searchQuery: '',
-        familyFilter: '',
         saving: false,
         confirmTarget: null,
         deleting: false,
@@ -119,13 +126,6 @@
 
         closeConfirm() {
             this.confirmTarget = null;
-        },
-
-        matches(preset) {
-            const q = this.searchQuery.trim().toLowerCase();
-            const matchesSearch = !q || (preset.name && preset.name.toLowerCase().includes(q)) || (preset.options && JSON.stringify(preset.options).toLowerCase().includes(q));
-            const matchesFamily = !this.familyFilter || preset.category_family === this.familyFilter;
-            return matchesSearch && matchesFamily;
         }
     }"
     @open-variant-create.window="openCreate()"
@@ -134,50 +134,24 @@
     class="w-full space-y-2 sm:space-y-2.5">
 
         {{-- ============================================================
-             1. TOOLBAR AREA: Search, Family Filter, View Toggle
+             1. TOOLBAR AREA: Search, Family Filter, View Mode Toggle
              ============================================================ --}}
-        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div class="flex flex-wrap items-center gap-2 flex-1">
-                {{-- Search Box --}}
-                <div class="relative w-full sm:w-64">
-                    <input type="text" x-model="searchQuery" placeholder="{{ __('messages.variant_preset_search_placeholder') }}"
-                           class="w-full pl-8 pr-3 py-1.5 min-h-[36px] border border-slate-200 dark:border-slate-700 rounded-lg text-xs bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 outline-none focus:ring-2 focus:ring-violet-500/40" />
-                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                </div>
-
-                {{-- Family Filter --}}
-                <select x-model="familyFilter"
-                        class="border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 min-h-[36px] text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/40 cursor-pointer">
-                    @foreach ($familyOptions as $val => $label)
-                        <option value="{{ $val }}">{{ $label }}</option>
-                    @endforeach
-                </select>
-
-                {{-- Total Count Badge --}}
-                <span class="text-xs text-slate-400 font-mono hidden sm:inline">
-                    {{ number_format($presets->count()) }} Presets ({{ number_format($totalRows) }} Options)
-                </span>
-            </div>
-
-            {{-- View Toggle (Table / Card) --}}
-            <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5 shrink-0" role="group">
-                <button type="button"
-                    @click="viewMode = 'table'; localStorage.setItem('admin_view_mode', 'table'); $dispatch('view-changed', 'table')"
-                    :class="viewMode === 'table' ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-2xs font-black' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
-                    class="px-2 py-1 text-xs rounded-md transition flex items-center gap-1"
-                    title="Table View">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18M3 6h18v12H3z"/></svg>
-                    <span class="hidden sm:inline">Table</span>
-                </button>
-                <button type="button"
-                    @click="viewMode = 'card'; localStorage.setItem('admin_view_mode', 'card'); $dispatch('view-changed', 'card')"
-                    :class="(viewMode === 'card' || viewMode === 'cards') ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-2xs font-black' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
-                    class="px-2 py-1 text-xs rounded-md transition flex items-center gap-1"
-                    title="Cards View">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-                    <span class="hidden sm:inline">Cards</span>
-                </button>
-            </div>
+        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+            <x-admin.toolbar
+                :search="request('search', '')"
+                searchPlaceholder="{{ __('messages.variant_preset_search_placeholder') }}"
+                :sortOptions="[]"
+                :filters="[
+                    'family' => [
+                        'label' => __('messages.variant_preset_category_family'),
+                        'options' => $familyFilterOptions
+                    ]
+                ]"
+                :showViewToggle="true"
+                :showExportImport="false"
+                :totalCount="$presets->count()"
+                :paginator="null"
+            />
         </div>
 
         {{-- Floating Action Button for Mobile/Tablet Quick Add --}}
@@ -207,10 +181,8 @@
                         @forelse ($presets as $preset)
                             @php
                                 $optCount = count($preset->options ?? []);
-                                $inStockCount = collect($preset->options ?? [])->where('stock_status', 'in_stock')->count();
                             @endphp
-                            <tr x-show="matches({{ Js::from($preset) }})"
-                                class="divide-x divide-slate-200/80 dark:divide-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
+                            <tr class="divide-x divide-slate-200/80 dark:divide-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
                                 
                                 {{-- Name --}}
                                 <td class="py-2.5 px-3">
@@ -305,8 +277,7 @@
                 @php
                     $optCount = count($preset->options ?? []);
                 @endphp
-                <div x-show="matches({{ Js::from($preset) }})"
-                     class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs hover:border-violet-300 dark:hover:border-violet-600/50 hover:shadow-sm transition flex flex-col justify-between group">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs hover:border-violet-300 dark:hover:border-violet-600/50 hover:shadow-sm transition flex flex-col justify-between group">
                     
                     <div class="p-3 space-y-2">
                         {{-- Card Header: Icon + Category Family Pill --}}

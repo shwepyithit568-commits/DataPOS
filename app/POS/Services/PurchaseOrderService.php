@@ -64,6 +64,7 @@ class PurchaseOrderService
         ?string $notes = null,
         User $actor = null,
         array $payment = [],
+        array $adjustments = [],
     ): PurchaseOrder {
         if (empty($items)) {
             throw new InventoryException('A purchase order needs at least one line.');
@@ -71,7 +72,7 @@ class PurchaseOrderService
 
         $normalized = [];
         $totalQuantity = '0';
-        $totalCost = '0';
+        $subtotal = '0';
 
         foreach ($items as $i => $line) {
             $productId = (int) ($line['product_id'] ?? 0);
@@ -96,7 +97,7 @@ class PurchaseOrderService
 
             $lineTotal = bcmul($quantity, $unitCost, 2);
             $totalQuantity = bcadd($totalQuantity, $quantity, 3);
-            $totalCost = bcadd($totalCost, $lineTotal, 2);
+            $subtotal = bcadd($subtotal, $lineTotal, 2);
 
             $key = $productId . ':' . ($variantId ?? '0');
             if (isset($normalized[$key])) {
@@ -115,6 +116,20 @@ class PurchaseOrderService
 
         $normalized = array_values($normalized);
 
+        // Adjustments: Wholesale trade discount & delivery/freight charges.
+        $discountAmount = bccomp((string) ($adjustments['discount_amount'] ?? '0'), '0', 2) > 0
+            ? bcadd((string) $adjustments['discount_amount'], '0', 2) : '0';
+        $deliveryFee = bccomp((string) ($adjustments['delivery_fee'] ?? '0'), '0', 2) > 0
+            ? bcadd((string) $adjustments['delivery_fee'], '0', 2) : '0';
+        $voucherImages = is_array($adjustments['voucher_images'] ?? null)
+            ? array_values(array_filter($adjustments['voucher_images'])) : null;
+
+        $netTotal = bcadd(bcsub($subtotal, $discountAmount, 2), $deliveryFee, 2);
+        if (bccomp($netTotal, '0', 2) < 0) {
+            $netTotal = '0';
+        }
+        $totalCost = $netTotal;
+
         // Determine payment posture at creation (cash-on-delivery vs credit).
         $paymentStatus = $payment['payment_status'] ?? PurchaseOrder::PAYMENT_UNPAID;
         $paidUpFront = bccomp((string) ($payment['paid_amount'] ?? '0'), '0', 2) > 0;
@@ -128,7 +143,7 @@ class PurchaseOrderService
         }
         $remainingBalance = bcsub($totalCost, $paidAmount, 2);
 
-        return DB::transaction(function () use ($store, $normalized, $totalQuantity, $totalCost, $supplierId, $reference, $notes, $actor, $paymentStatus, $paidAmount, $remainingBalance) {
+        return DB::transaction(function () use ($store, $normalized, $totalQuantity, $subtotal, $discountAmount, $deliveryFee, $voucherImages, $totalCost, $supplierId, $reference, $notes, $actor, $paymentStatus, $paidAmount, $remainingBalance) {
             $po = PurchaseOrder::create([
                 'store_id' => $store->id,
                 'branch_id' => $this->storeLocations->defaultBranch($store)->id,
@@ -137,6 +152,10 @@ class PurchaseOrderService
                 'po_number' => $this->nextPoNumber($store),
                 'status' => 'pending',
                 'payment_status' => $paymentStatus,
+                'subtotal' => $subtotal,
+                'discount_amount' => $discountAmount,
+                'delivery_fee' => $deliveryFee,
+                'voucher_images' => $voucherImages,
                 'total_quantity' => $totalQuantity,
                 'total_cost' => $totalCost,
                 'paid_amount' => $paidAmount,

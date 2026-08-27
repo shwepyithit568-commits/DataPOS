@@ -45,12 +45,16 @@ class PurchaseOrder extends Model
         'po_number',
         'status',
         'payment_status',
+        'subtotal',
+        'discount_amount',
+        'delivery_fee',
         'total_quantity',
         'total_cost',
         'paid_amount',
         'remaining_balance',
         'reference',
         'notes',
+        'voucher_images',
         'ordered_at',
         'received_at',
         'cancelled_at',
@@ -58,14 +62,39 @@ class PurchaseOrder extends Model
     ];
 
     protected $casts = [
+        'subtotal' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'delivery_fee' => 'decimal:2',
         'total_quantity' => 'decimal:3',
         'total_cost' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'remaining_balance' => 'decimal:2',
+        'voucher_images' => 'array',
         'ordered_at' => 'datetime',
         'received_at' => 'datetime',
         'cancelled_at' => 'datetime',
     ];
+
+    /**
+     * Return full URLs for attached voucher photos / invoices.
+     *
+     * @return array<int, string>
+     */
+    public function getVoucherImageUrlsAttribute(): array
+    {
+        $images = $this->voucher_images ?? [];
+        if (! is_array($images)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(function ($path) {
+            if (! $path) return null;
+            if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                return $path;
+            }
+            return asset('storage/' . ltrim($path, '/'));
+        }, $images)));
+    }
 
     /* ------------------------------------------------------------------ */
     /*  Relationships                                                      */

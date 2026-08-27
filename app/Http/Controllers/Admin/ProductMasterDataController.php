@@ -266,11 +266,25 @@ class ProductMasterDataController extends Controller
     {
         AdminListReturn::capture($request, 'admin_variant_presets_return');
 
+        $query = VariantPreset::where('store_id', $storeId);
+
+        if ($request->filled('search')) {
+            $needle = mb_strtolower(trim((string) $request->search));
+            $query->where(function ($q) use ($needle) {
+                $q->where('name', 'like', "%{$needle}%")
+                  ->orWhere('options', 'like', "%{$needle}%");
+            });
+        }
+
+        if ($request->filled('family')) {
+            $query->where('category_family', $request->family);
+        }
+
+        $presets = $query->orderBy('sort_order')->orderBy('name')->get();
+
         return [
-            'presets' => VariantPreset::where('store_id', $storeId)
-                ->orderBy('sort_order')
-                ->orderBy('name')
-                ->get(),
+            'presets' => $presets,
+            'totalCount' => $presets->count(),
         ];
     }
 }
