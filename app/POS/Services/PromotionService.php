@@ -74,9 +74,11 @@ class PromotionService
 
         $sort = $filters['sort'] ?? 'newest';
         match ($sort) {
-            'name_asc' => $query->orderBy('name'),
-            'uses_desc' => $query->orderByDesc('used_count'),
-            default => $query->orderByDesc('created_at'),
+            'oldest'     => $query->orderBy('created_at', 'asc'),
+            'name_asc'   => $query->orderBy('name', 'asc'),
+            'uses_desc'  => $query->orderByDesc('used_count'),
+            'value_desc' => $query->orderByDesc('value'),
+            default      => $query->orderByDesc('created_at'),
         };
 
         return $query->paginate($perPage)->withQueryString();

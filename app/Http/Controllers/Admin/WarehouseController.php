@@ -17,19 +17,89 @@ class WarehouseController extends Controller
     public function index(Request $request, StoreContext $context): View
     {
         $store = $context->getStore();
-        $warehouses = Warehouse::where('store_id', $store->id)
+        $storeRouteParams = ['store_slug' => $store->slug];
+
+        $search = trim($request->input('search', ''));
+        $status = $request->input('status', '');
+        $branchId = $request->input('branch_id', '');
+        $sort = $request->input('sort', 'name');
+
+        $query = Warehouse::where('store_id', $store->id)
             ->with('branch')
-            ->orderBy('name')
-            ->get();
+            ->withCount(['balances as active_products_count' => function ($q) {
+                $q->where('quantity_on_hand', '>', 0);
+            }])
+            ->withSum(['balances as total_stock_quantity' => function ($q) {
+                $q->where('quantity_on_hand', '>', 0);
+            }], 'quantity_on_hand');
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        if ($status !== '' && $status !== null) {
+            if ($status === 'active' || $status === '1') {
+                $query->where('is_active', true);
+            } elseif ($status === 'inactive' || $status === '0') {
+                $query->where('is_active', false);
+            }
+        }
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+
+        switch ($sort) {
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
+                break;
+            case 'code_asc':
+                $query->orderBy('code', 'asc');
+                break;
+            case 'code_desc':
+                $query->orderBy('code', 'desc');
+                break;
+            case 'products_desc':
+                $query->orderByDesc('active_products_count');
+                break;
+            case 'stock_desc':
+                $query->orderByDesc('total_stock_quantity');
+                break;
+            case 'newest':
+                $query->orderBy('created_at', 'desc');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'name':
+            default:
+                $query->orderBy('name', 'asc');
+                break;
+        }
+
+        $warehouses = $query->get();
+
+        $stats = [
+            'total' => Warehouse::where('store_id', $store->id)->count(),
+            'active' => Warehouse::where('store_id', $store->id)->where('is_active', true)->count(),
+            'inactive' => Warehouse::where('store_id', $store->id)->where('is_active', false)->count(),
+            'branches' => Branch::where('store_id', $store->id)->count(),
+            'default_warehouse' => Warehouse::where('store_id', $store->id)->where('is_default', true)->value('name') ?? 'Default',
+        ];
 
         $branches = Branch::where('store_id', $store->id)->orderBy('name')->get();
 
-        // The _content partial builds store-scoped route URLs from
-        // $storeRouteParams (['store_slug' => ...]); pass it explicitly so the
-        // partial never depends on layout-scope variables leaking in.
-        $storeRouteParams = ['store_slug' => $store->slug];
+        $filters = [
+            'search' => $search,
+            'status' => $status,
+            'branch_id' => $branchId,
+            'sort' => $sort,
+        ];
 
-        return view('admin.warehouses.index', compact('store', 'warehouses', 'branches', 'storeRouteParams'));
+        return view('admin.warehouses.index', compact('store', 'warehouses', 'branches', 'storeRouteParams', 'stats', 'filters', 'search', 'status', 'sort'));
     }
 
     public function store(Request $request, StoreContext $context): RedirectResponse

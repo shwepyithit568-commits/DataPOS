@@ -38,6 +38,8 @@ class Product extends Model
         'warehouse_id',
         'supplier_id',
         'purchase_cost',
+        'service_duration',
+        'digital_delivery_method',
         'is_ecommerce',
     ];
 

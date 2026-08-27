@@ -260,7 +260,7 @@ class OrderController extends Controller
             abort(404, 'Order not found.');
         }
 
-        $order->load(['items']);
+        $order->load(['items', 'items.product']);
 
         if ($order->user_id) {
             if (!auth()->check() || auth()->id() !== $order->user_id) {

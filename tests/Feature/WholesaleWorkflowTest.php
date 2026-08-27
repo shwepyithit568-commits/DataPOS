@@ -124,4 +124,92 @@ class WholesaleWorkflowTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    public function test_manager_can_view_admin_wholesale_index_and_show(): void
+    {
+        $store = Store::create(['name' => 'Store Wholesale', 'slug' => 'store-wholesale']);
+        $store->setting()->create(['store_name' => 'Store Wholesale', 'default_language' => 'en']);
+
+        $manager = User::create([
+            'name' => 'Wholesale Manager',
+            'phone' => '09777777777',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $manager->stores()->attach($store->id, ['role' => 'store_manager', 'status' => 'active']);
+
+        $application = WholesaleApplication::create([
+            'store_id' => $store->id,
+            'user_id' => $manager->id,
+            'business_name' => 'Grand Tech Mobile',
+            'phone' => '09777777777',
+            'address' => 'Mandalay',
+            'status' => 'pending',
+            'notes' => 'Looking for wholesale bulk orders',
+        ]);
+
+        $responseIndex = $this->actingAs($manager)->get("/store/{$store->slug}/admin/wholesale/applications");
+        $responseIndex->assertStatus(200);
+        $responseIndex->assertSee('Grand Tech Mobile');
+
+        $responseShow = $this->actingAs($manager)->get("/store/{$store->slug}/admin/wholesale/applications/{$application->id}");
+        $responseShow->assertStatus(200);
+        $responseShow->assertSee('Grand Tech Mobile');
+        $responseShow->assertSee('Looking for wholesale bulk orders');
+    }
+
+    public function test_wholesale_admin_index_renders_in_all_locales_without_key_leaks(): void
+    {
+        $manager = User::create([
+            'name' => 'Manager Locale',
+            'phone' => '09666666666',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+
+        foreach (['en', 'my', 'zh_CN'] as $code) {
+            $store = Store::create(['name' => "Store {$code}", 'slug' => "store-wh-{$code}"]);
+            $store->setting()->create(['store_name' => "Store {$code}", 'default_language' => $code]);
+            $manager->stores()->attach($store->id, ['role' => 'store_manager', 'status' => 'active']);
+
+            $response = $this->actingAs($manager)->get("/store/{$store->slug}/admin/wholesale/applications");
+            $response->assertStatus(200);
+            $response->assertDontSee('messages.', false);
+        }
+    }
+
+    public function test_wholesale_export_csv(): void
+    {
+        $store = Store::create(['name' => 'Store Wh Export', 'slug' => 'store-wh-export']);
+        $store->setting()->create(['store_name' => 'Store Wh Export', 'default_language' => 'en']);
+
+        $manager = User::create([
+            'name' => 'Manager Export',
+            'phone' => '09555555555',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $manager->stores()->attach($store->id, ['role' => 'store_manager', 'status' => 'active']);
+
+        WholesaleApplication::create([
+            'store_id' => $store->id,
+            'user_id' => $manager->id,
+            'business_name' => 'Apex Mobile Distribution',
+            'phone' => '09555555555',
+            'address' => 'Yangon Downtown',
+            'status' => 'approved',
+            'notes' => 'Bulk phone distributor',
+        ]);
+
+        $response = $this->actingAs($manager)->get("/store/{$store->slug}/admin/wholesale/applications/export");
+        $response->assertOk();
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+        $csv = $response->streamedContent();
+
+        // Verify UTF-8 BOM and data
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $csv);
+        $this->assertStringContainsString('Wholesale Applications Report', $csv);
+        $this->assertStringContainsString('Apex Mobile Distribution', $csv);
+        $this->assertStringContainsString('APPROVED', $csv);
+    }
 }

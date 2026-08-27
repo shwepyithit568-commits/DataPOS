@@ -16,6 +16,7 @@ use App\POS\Models\ServiceSetting;
 use App\POS\Services\InventoryService;
 use App\Services\StoreContext;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -621,5 +622,64 @@ class ServiceJobController extends Controller
         }
 
         return $rows;
+    }
+
+    /**
+     * Quick-add a technician (staff user) for service job intake.
+     */
+    public function quickAddTechnician(Request $request, StoreContext $context): JsonResponse
+    {
+        $store = $context->getStore();
+        if (! $store) {
+            return response()->json(['success' => false, 'message' => 'Store not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'phone' => ['required', 'string', 'max:40'],
+        ]);
+
+        $phone = trim($validated['phone']);
+        $name = trim($validated['name']);
+
+        // Check if user with this phone exists
+        $user = User::where('phone', $phone)->first();
+
+        if (! $user) {
+            $user = User::create([
+                'name' => $name,
+                'phone' => $phone,
+                'password' => bcrypt('password123'),
+                'role' => 'customer',
+            ]);
+        } else {
+            if ($name !== '') {
+                $user->name = $name;
+                $user->save();
+            }
+        }
+
+        // Attach to store with staff role and active status
+        $currentMembership = $user->stores()->where('stores.id', $store->id)->first();
+        if (! $currentMembership) {
+            $user->stores()->attach($store->id, [
+                'role' => 'staff',
+                'status' => 'active',
+            ]);
+        } else {
+            $user->stores()->updateExistingPivot($store->id, [
+                'role' => 'staff',
+                'status' => 'active',
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'technician' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'phone' => $user->phone,
+            ],
+        ]);
     }
 }

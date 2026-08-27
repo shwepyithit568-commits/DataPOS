@@ -1614,6 +1614,44 @@
         <span id="push-notification-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-rose-500 text-white font-black text-[11px] flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-md">1</span>
     </button>
 
+    {{-- Web Push Notification Modal / Dialog --}}
+    <div id="push-notification-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-200" role="dialog" aria-modal="true">
+        <div class="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-slate-100 space-y-4">
+            <div class="flex items-start justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-950/70 text-violet-600 dark:text-violet-400 grid place-items-center text-lg font-bold shadow-xs">
+                        🔔
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black text-slate-900 dark:text-white">{{ __('messages.sidebar_push_notifications') }}</h3>
+                        <p id="push-modal-status-text" class="text-xs text-slate-500 dark:text-slate-400">အချိန်နှင့်တစ်ပြေးညီ သတင်းလွှာများ ရယူရန်</p>
+                    </div>
+                </div>
+                <button type="button" id="push-modal-close" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p class="font-bold text-slate-800 dark:text-slate-200 mb-1">📢 လက်ခံရရှိမည့် အသိပေးချက်များ:</p>
+                <ul class="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    <li>• အထူးလျှော့စျေးနှင့် ပရိုမိုးရှင်း အစီအစဉ်များ</li>
+                    <li>• ပစ္စည်းသစ် ရောက်ရှိကြောင်း သတင်းစကားများ</li>
+                    <li>• အော်ဒါနှင့် ငွေပေးချေမှု အခြေအနေ အပ်ဒိတ်များ</li>
+                </ul>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <button type="button" id="push-modal-action-btn" class="w-full py-2.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-700 active:scale-95 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <span>🔔 အသိပေးချက်များ ဖွင့်မည်</span>
+                </button>
+                <button type="button" id="push-modal-dismiss-btn" class="w-full py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition cursor-pointer">
+                    မလိုအပ်သေးပါ
+                </button>
+            </div>
+        </div>
+    </div>
+
     {{-- PWA install banner — appears after the 3rd visit when the browser
          offers installation (beforeinstallprompt); "Not now" dismisses
          permanently via localStorage. Sits above the mobile bottom nav. --}}

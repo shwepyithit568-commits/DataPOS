@@ -52,7 +52,7 @@ class ProductMasterPresetController extends Controller
             return response()->json([
                 'success' => true,
                 'preset' => $preset,
-                'message' => 'Master data preset saved successfully.',
+                'message' => __('messages.preset_created'),
             ]);
         }
 
@@ -66,7 +66,7 @@ class ProductMasterPresetController extends Controller
         };
 
         return redirect()->to(route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => $tab]))
-            ->with('success', 'Preset saved successfully.');
+            ->with('success', __('messages.preset_created'));
     }
 
     public function update(Request $request, string $store_slug, ProductMasterPreset $masterPreset, StoreContext $context): RedirectResponse|JsonResponse
@@ -112,7 +112,7 @@ class ProductMasterPresetController extends Controller
             return response()->json([
                 'success' => true,
                 'preset' => $masterPreset,
-                'message' => 'Preset updated successfully.',
+                'message' => __('messages.preset_updated'),
             ]);
         }
 
@@ -126,7 +126,7 @@ class ProductMasterPresetController extends Controller
         };
 
         return redirect()->to(route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => $tab]))
-            ->with('success', 'Preset updated successfully.');
+            ->with('success', __('messages.preset_updated'));
     }
 
     public function destroy(string $store_slug, ProductMasterPreset $masterPreset, StoreContext $context): RedirectResponse|JsonResponse
@@ -143,7 +143,7 @@ class ProductMasterPresetController extends Controller
         if (request()->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Preset deleted successfully.',
+                'message' => __('messages.preset_deleted'),
             ]);
         }
 
@@ -157,6 +157,6 @@ class ProductMasterPresetController extends Controller
         };
 
         return redirect()->to(route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => $tab]))
-            ->with('success', 'Preset deleted successfully.');
+            ->with('success', __('messages.preset_deleted'));
     }
 }

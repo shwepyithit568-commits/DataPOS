@@ -218,16 +218,16 @@ class StockLedgerService
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
 
             fputcsv($handle, [
-                'Date & Time',
-                'Product Name',
-                'SKU',
-                'Movement Type',
-                'Quantity Delta',
-                'Unit Cost (MMK)',
-                'Total Value (MMK)',
-                'Source / Reference',
-                'Posted By',
-                'Transaction ID',
+                __('messages.stock_ledger_date'),
+                __('messages.product'),
+                __('messages.sku'),
+                __('messages.stock_ledger_movement_type'),
+                __('messages.stock_ledger_delta_qty'),
+                __('messages.stock_ledger_unit_cost') . ' (MMK)',
+                __('messages.stock_ledger_total_value') . ' (MMK)',
+                __('messages.stock_ledger_reference'),
+                __('messages.stock_ledger_posted_by'),
+                __('messages.stock_ledger_transaction_id'),
             ]);
 
             foreach ($movements as $m) {
@@ -239,7 +239,7 @@ class StockLedgerService
                     $m->occurred_at ? $m->occurred_at->format('Y-m-d H:i:s') : '',
                     $m->product?->name ?? 'N/A',
                     $m->product?->sku ?? '-',
-                    $m->type()->label(),
+                    __('messages.movement_type_' . $m->movement_type),
                     $delta,
                     $cost,
                     $value,

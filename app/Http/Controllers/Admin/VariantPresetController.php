@@ -35,7 +35,7 @@ class VariantPresetController extends Controller
         ]);
 
         return redirect(AdminListReturn::resolve('admin_variant_presets_return', '/store/' . $store->slug . '/admin/variant-presets'))
-            ->with('success', 'Variant preset created successfully.');
+            ->with('success', __('messages.variant_preset_created'));
     }
 
     public function edit(string $store_slug, VariantPreset $variantPreset, StoreContext $context): View
@@ -67,7 +67,7 @@ class VariantPresetController extends Controller
         ]);
 
         return redirect(AdminListReturn::resolve('admin_variant_presets_return', '/store/' . $store->slug . '/admin/variant-presets'))
-            ->with('success', 'Variant preset updated successfully.');
+            ->with('success', __('messages.variant_preset_updated'));
     }
 
     public function destroy(string $store_slug, VariantPreset $variantPreset, StoreContext $context): RedirectResponse
@@ -78,7 +78,7 @@ class VariantPresetController extends Controller
         $variantPreset->delete();
 
         return redirect(AdminListReturn::resolve('admin_variant_presets_return', '/store/' . $store->slug . '/admin/variant-presets'))
-            ->with('success', 'Variant preset deleted successfully.');
+            ->with('success', __('messages.variant_preset_deleted'));
     }
 
     public function duplicate(string $store_slug, VariantPreset $variantPreset, StoreContext $context): RedirectResponse
@@ -95,7 +95,7 @@ class VariantPresetController extends Controller
         ]);
 
         return redirect('/store/' . $store->slug . '/admin/variant-presets/' . $copy->id . '/edit')
-            ->with('success', 'Variant preset duplicated. Review the copy and update the name if needed.');
+            ->with('success', __('messages.variant_preset_duplicated'));
     }
 
     public function move(Request $request, string $store_slug, VariantPreset $variantPreset, StoreContext $context): RedirectResponse
@@ -123,7 +123,7 @@ class VariantPresetController extends Controller
         }
 
         return redirect(AdminListReturn::resolve('admin_variant_presets_return', '/store/' . $store->slug . '/admin/variant-presets'))
-            ->with('success', 'Variant preset order updated.');
+            ->with('success', __('messages.variant_preset_order_updated'));
     }
 
     private function validatePreset(Request $request, int $storeId, ?int $ignoreId = null): array

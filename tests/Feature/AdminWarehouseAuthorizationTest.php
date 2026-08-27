@@ -179,4 +179,39 @@ class AdminWarehouseAuthorizationTest extends TestCase
 
         $this->assertDatabaseHas('warehouses', ['id' => $warehouseB->id]);
     }
+
+    public function test_manager_can_search_and_filter_warehouses_with_ui_metrics(): void
+    {
+        $store = $this->makeStore();
+        $manager = $this->makeUser('09700000001');
+        $this->attach($manager, $store, 'store_manager');
+
+        Warehouse::create([
+            'store_id' => $store->id,
+            'name' => 'Main North Warehouse',
+            'code' => 'WH-NORTH',
+            'is_active' => true,
+        ]);
+
+        Warehouse::create([
+            'store_id' => $store->id,
+            'name' => 'South Depot Location',
+            'code' => 'WH-SOUTH',
+            'is_active' => false,
+        ]);
+
+        // Search test
+        $responseSearch = $this->actingAs($manager)
+            ->get("/store/{$store->slug}/admin/warehouses?search=North");
+        $responseSearch->assertOk();
+        $responseSearch->assertSee('Main North Warehouse');
+        $responseSearch->assertDontSee('South Depot Location');
+
+        // Status filter test
+        $responseActive = $this->actingAs($manager)
+            ->get("/store/{$store->slug}/admin/warehouses?status=active");
+        $responseActive->assertOk();
+        $responseActive->assertSee('Main North Warehouse');
+        $responseActive->assertDontSee('South Depot Location');
+    }
 }

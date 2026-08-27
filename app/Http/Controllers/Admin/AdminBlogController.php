@@ -17,14 +17,17 @@ class AdminBlogController extends Controller
     public function index(Request $request, StoreContext $context): View
     {
         $store = $context->getStore();
+        abort_if(!$store, 404);
 
         $query = Post::where('store_id', $store->id);
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim((string) $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', '%' . $search . '%')
-                  ->orWhere('slug', 'like', '%' . $search . '%');
+                  ->orWhere('slug', 'like', '%' . $search . '%')
+                  ->orWhere('excerpt', 'like', '%' . $search . '%')
+                  ->orWhere('category', 'like', '%' . $search . '%');
             });
         }
 
@@ -36,17 +39,32 @@ class AdminBlogController extends Controller
             }
         }
 
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
         $sort = $request->input('sort', 'newest');
         match ($sort) {
             'oldest'     => $query->oldest(),
             'title_asc'  => $query->orderBy('title', 'asc'),
-            default      => $query->latest('published_at'),
+            default      => $query->latest('published_at')->latest('id'),
         };
 
-        $perPage = request('per_page') === 'all' ? 100000 : (int) request('per_page', 25);
+        $perPage = request('per_page') === 'all' ? 100000 : (int) request('per_page', 20);
         $posts = $query->paginate($perPage)->withQueryString();
 
-        return view('admin.blog.index', compact('store', 'posts'));
+        // Calculate KPI summary stats
+        $allPosts = Post::where('store_id', $store->id)->get();
+        $stats = [
+            'total'            => $allPosts->count(),
+            'published'        => $allPosts->where('is_published', true)->count(),
+            'draft'            => $allPosts->where('is_published', false)->count(),
+            'categories_count' => $allPosts->whereNotNull('category')->pluck('category')->unique()->count(),
+        ];
+
+        $categories = $allPosts->whereNotNull('category')->pluck('category')->unique()->values()->all();
+
+        return view('admin.blog.index', compact('store', 'posts', 'stats', 'categories'));
     }
 
     public function create(StoreContext $context): View

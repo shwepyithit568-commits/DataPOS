@@ -18,6 +18,7 @@ class ProductVariant extends Model
         'retail_price',
         'wholesale_price',
         'stock_status',
+        'quantity_on_hand',
         'image_path',
         'is_default',
         'sort_order',
@@ -26,6 +27,7 @@ class ProductVariant extends Model
     protected $casts = [
         'retail_price' => 'decimal:2',
         'wholesale_price' => 'decimal:2',
+        'quantity_on_hand' => 'decimal:3',
         'is_default' => 'boolean',
         'attributes' => 'array',
     ];

@@ -90,32 +90,41 @@ class InventoryValuationController extends Controller
             $handle = fopen('php://output', 'w');
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
 
-            fputcsv($handle, ['Inventory Valuation Report', $store->name]);
-            fputcsv($handle, ['Generated Date', now()->toFormattedDateString() . ' ' . now()->format('h:i A')]);
-            fputcsv($handle, ['Total Unique SKUs', $metrics['total_items_count']]);
-            fputcsv($handle, ['Total On-Hand Units', number_format($metrics['total_units'], 2)]);
-            fputcsv($handle, ['Total Inventory Value at Cost (Ks)', number_format($metrics['total_cost_value'], 2)]);
-            fputcsv($handle, ['Total Value at Retail Price (Ks)', number_format($metrics['total_retail_value'], 2)]);
-            fputcsv($handle, ['Total Value at Wholesale Price (Ks)', number_format($metrics['total_wholesale_value'], 2)]);
-            fputcsv($handle, ['Potential Gross Profit (Ks)', number_format($metrics['potential_profit'], 2)]);
-            fputcsv($handle, ['Potential Gross Margin %', $metrics['potential_margin'] . '%']);
+            fputcsv($handle, [__('messages.report_valuation_title'), $store->name]);
+            fputcsv($handle, [__('messages.export_date'), now()->toFormattedDateString() . ' ' . now()->format('h:i A')]);
+            fputcsv($handle, [__('messages.report_total_skus'), $metrics['total_items_count']]);
+            fputcsv($handle, [__('messages.report_total_onhand_units'), number_format($metrics['total_units'], 2)]);
+            fputcsv($handle, [__('messages.report_cost_value'), number_format($metrics['total_cost_value'], 2)]);
+            fputcsv($handle, [__('messages.report_retail_value'), number_format($metrics['total_retail_value'], 2)]);
+            fputcsv($handle, [__('messages.report_wholesale_value'), number_format($metrics['total_wholesale_value'], 2)]);
+            fputcsv($handle, [__('messages.report_potential_profit'), number_format($metrics['potential_profit'], 2)]);
+            fputcsv($handle, [__('messages.report_potential_margin'), $metrics['potential_margin'] . '%']);
             fputcsv($handle, []);
 
+            $stockStatusLabel = function (string $status): string {
+                return match ($status) {
+                    'in_stock' => __('messages.in_stock'),
+                    'low_stock' => __('messages.low_stock'),
+                    'out_of_stock' => __('messages.out_of_stock'),
+                    default => ucfirst(str_replace('_', ' ', $status)),
+                };
+            };
+
             fputcsv($handle, [
-                'SKU',
-                'Product Name',
-                'Category',
-                'Brand',
-                'On-Hand Qty',
-                'Unit Cost (Ks)',
-                'Total Cost Value (Ks)',
-                'Retail Price (Ks)',
-                'Total Retail Value (Ks)',
-                'Wholesale Price (Ks)',
-                'Total Wholesale Value (Ks)',
-                'Potential Profit (Ks)',
-                'Margin %',
-                'Stock Status',
+                __('messages.sku'),
+                __('messages.product'),
+                __('messages.category'),
+                __('messages.brand'),
+                __('messages.report_onhand_qty'),
+                __('messages.stock_ledger_unit_cost'),
+                __('messages.report_total_cost_value'),
+                __('messages.report_retail_price'),
+                __('messages.report_total_retail_value'),
+                __('messages.report_wholesale_price'),
+                __('messages.report_total_wholesale_value'),
+                __('messages.report_potential_profit'),
+                __('messages.report_gross_margin'),
+                __('messages.report_stock_status'),
             ]);
 
             foreach ($products as $p) {
@@ -133,7 +142,7 @@ class InventoryValuationController extends Controller
                     number_format($p->computed_wholesale_value, 2),
                     number_format($p->computed_profit, 2),
                     $p->computed_margin . '%',
-                    $p->stock_status ?? 'in_stock',
+                    $stockStatusLabel($p->stock_status ?? 'in_stock'),
                 ]);
             }
 

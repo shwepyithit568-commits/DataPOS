@@ -504,7 +504,7 @@
                                     @endif
                                     @if ($product->product_type && $product->product_type !== 'standard')
                                         <span class="text-[10px] font-bold uppercase tracking-wider px-1 py-0.2 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                                            {{ $product->product_type }}
+                                            {{ __("messages.product_type_" . $product->product_type) }}
                                         </span>
                                     @endif
                                 </div>
@@ -538,12 +538,19 @@
                                 @endif
                             </td>
 
-                            {{-- Col 8: Stock Status --}}
+                            {{-- Col 8: Stock Status (services & digital items are non-inventory) --}}
                             <td class="py-2 px-3 text-center">
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black {{ $product->stock_status === 'in_stock' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80' }}">
-                                    <span class="w-1.5 h-1.5 rounded-full {{ $product->stock_status === 'in_stock' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500' }}"></span>
-                                    <span>{{ $product->stock_status === 'in_stock' ? __('messages.in_stock') : __('messages.out_of_stock') }}</span>
-                                </span>
+                                @if (in_array($product->product_type, ['service', 'digital'], true))
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                        <span>—</span>
+                                        <span>{{ in_array($product->product_type, ['service'], true) ? __('messages.product_type_service_short') : __('messages.product_type_digital_short') }}</span>
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black {{ $product->stock_status === 'in_stock' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80' }}">
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $product->stock_status === 'in_stock' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500' }}"></span>
+                                        <span>{{ $product->stock_status === 'in_stock' ? __('messages.in_stock') : __('messages.out_of_stock') }}</span>
+                                    </span>
+                                @endif
                             </td>
 
                             {{-- Col 9: Online Toggle --}}

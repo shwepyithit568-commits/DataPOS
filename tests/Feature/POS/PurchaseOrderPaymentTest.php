@@ -298,7 +298,7 @@ class PurchaseOrderPaymentTest extends TestCase
         $this->service->applyPayment($po, ['amount' => '20000'], $actor);
 
         $supplier->refresh();
-        $this->assertSame('30000.00', (string) $supplier->total_credit);
+        $this->assertSame('30000.00', (string) $supplier->remaining_balance);
         $this->assertSame('20000.00', (string) $supplier->total_repaid);
     }
 
@@ -380,7 +380,7 @@ class PurchaseOrderPaymentTest extends TestCase
         $this->assertSame('30000.00', (string) $po2->fresh()->remaining_balance);
 
         $supplier->refresh();
-        $this->assertSame('30000.00', (string) $supplier->total_credit);
+        $this->assertSame('30000.00', (string) $supplier->remaining_balance);
         $this->assertSame('70000.00', (string) $supplier->total_repaid);
     }
 
@@ -598,7 +598,7 @@ class PurchaseOrderPaymentTest extends TestCase
         $this->assertSame('partial', $po->payment_status);
 
         $supplier->refresh();
-        $this->assertSame('20000.00', (string) $supplier->total_credit);
+        $this->assertSame('20000.00', (string) $supplier->remaining_balance);
     }
 
     public function test_http_pay_specific_po(): void
@@ -672,5 +672,33 @@ class PurchaseOrderPaymentTest extends TestCase
             ->assertSee(__('messages.payables_payment_summary'))
             ->assertSee('20,000')
             ->assertSee('30,000');
+    }
+
+    public function test_payables_export_csv(): void
+    {
+        $store = $this->makeStore();
+        $actor = $this->staff($store);
+        $product = $this->makeProduct($store);
+        $supplier = $this->makeSupplier($store);
+
+        $this->receivedPo($store, $actor, $product, '10', '5000', $supplier->id);
+
+        $response = $this->actingAs($actor)
+            ->get("/store/{$store->slug}/pos/purchases/payables/export");
+
+        $response->assertOk();
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class, $response->baseResponse);
+        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_admin_payables_redirects_to_pos_purchases_payables(): void
+    {
+        $store = $this->makeStore();
+        $actor = $this->staff($store);
+
+        $response = $this->actingAs($actor)
+            ->get("/store/{$store->slug}/admin/payables");
+
+        $response->assertRedirect(route('pos.purchases.payables', ['store_slug' => $store->slug]));
     }
 }

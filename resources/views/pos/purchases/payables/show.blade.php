@@ -1,6 +1,7 @@
-@extends('layouts.pos.app')
+@extends('layouts.admin.app')
 
-@section('title', $supplier->name . ' - ' . __('messages.payables_title') . ' - ' . $store->name)
+@section('title', $supplier->name . ' - ' . __('messages.sidebar_payables') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-2')
 
 @section('content')
 <div class="w-full space-y-2 sm:space-y-2.5"

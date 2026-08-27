@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ImportHistory;
 use App\Services\CustomerImportService;
 use App\Services\DebtOpeningImportService;
+use App\Services\DemoBusinessScenarioService;
 use App\Services\ProductImportService;
 use App\Services\StoreContext;
 use App\Services\SupplierImportService;
@@ -36,20 +37,29 @@ class PilotImportController extends Controller
         $tab = $this->tabFromRequest($request);
         $store = $context->getStore();
 
-        $histories = ImportHistory::where('store_id', $store->id)
-            ->where('type', $tab)
-            ->with('user')
-            ->latest()
-            ->take(10)
-            ->get();
+        $demoScenarios = app(DemoBusinessScenarioService::class)->scenarios();
+        $demoScenariosEnabled = app()->environment(['local', 'testing', 'uat']) && (bool) config('app.show_quick_login');
 
-        $summary = [
-            'total_imports' => ImportHistory::where('store_id', $store->id)->where('type', $tab)->count(),
-            'successful_rows' => ImportHistory::where('store_id', $store->id)->where('type', $tab)->sum('success_rows'),
-            'failed_rows' => ImportHistory::where('store_id', $store->id)->where('type', $tab)->sum('failed_rows'),
-        ];
+        return view('admin.pilot_import.index', compact('store', 'tab', 'demoScenarios', 'demoScenariosEnabled'));
+    }
 
-        return view('admin.pilot_import.index', compact('store', 'tab', 'histories', 'summary'));
+    public function createDemoScenario(
+        Request $request,
+        StoreContext $context,
+        DemoBusinessScenarioService $demoScenarios,
+        string $scenario
+    ): RedirectResponse {
+        try {
+            $result = $demoScenarios->create($scenario, $request->user());
+        } catch (\InvalidArgumentException|\RuntimeException $e) {
+            return back()->withErrors(['demo_scenario' => $e->getMessage()]);
+        }
+
+        $store = $result['store'];
+
+        return redirect()
+            ->route('store.admin.products.index', ['store_slug' => $store->slug])
+            ->with('success', "Demo store created/updated: {$store->name} ({$result['products']} products, {$result['warehouses']} warehouses, {$result['users']} quick-login users).");
     }
 
     public function import(Request $request, StoreContext $context): RedirectResponse

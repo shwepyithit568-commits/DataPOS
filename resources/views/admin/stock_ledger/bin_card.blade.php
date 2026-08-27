@@ -131,7 +131,7 @@
                 {{ number_format($binCardData['opening_balance'], 3) }}
             </div>
             <div class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">
-                Period Start Balance
+                {{ __('messages.stock_ledger_kpi_period_start') }}
             </div>
         </div>
 
@@ -145,7 +145,7 @@
                 +{{ number_format($binCardData['total_in'], 3) }}
             </div>
             <div class="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5 truncate">
-                Purchases, Returns, Adj.
+                {{ __('messages.stock_ledger_kpi_in') }}
             </div>
         </div>
 
@@ -159,7 +159,7 @@
                 -{{ number_format($binCardData['total_out'], 3) }}
             </div>
             <div class="text-[10px] text-rose-600/80 dark:text-rose-400/80 mt-0.5 truncate">
-                Sales, Transfers, Adj.
+                {{ __('messages.stock_ledger_kpi_out') }}
             </div>
         </div>
 
@@ -212,16 +212,16 @@
                                 @if($item['quantity_delta'] > 0)
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
                                         <span>📥</span>
-                                        <span>{{ $item['movement_label'] }}</span>
+                                        <span>{{ __('messages.movement_type_' . $item['movement_type']) }}</span>
                                     </span>
                                 @elseif($item['quantity_delta'] < 0)
                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-md bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
                                         <span>📤</span>
-                                        <span>{{ $item['movement_label'] }}</span>
+                                        <span>{{ __('messages.movement_type_' . $item['movement_type']) }}</span>
                                     </span>
                                 @else
                                     <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-bold rounded-md bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                        {{ $item['movement_label'] }}
+                                        {{ __('messages.movement_type_' . $item['movement_type']) }}
                                     </span>
                                 @endif
                             </td>

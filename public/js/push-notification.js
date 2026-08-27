@@ -2,16 +2,11 @@
  *
  * Responsibilities:
  *  - Read the VAPID public key from <meta name="vapid-public-key">.
- *  - Request notification permission (via the floating bell or the account
- *    preferences toggle), subscribe with the Push API, and POST the
- *    subscription to /api/push/subscribe.
+ *  - Request notification permission (via floating bell or modal),
+ *    subscribe with Push API, and POST the subscription to /api/push/subscribe.
  *  - Unsubscribe via DELETE /api/push/unsubscribe.
- *  - Persist the subscription to localStorage as a backup so we never
- *    re-prompt or re-subscribe on every page load.
- *  - Show the bell only after the visitor has browsed 5+ pages, hide it
- *    permanently once notifications are granted or denied.
- *
- * Loaded with `defer` from the storefront layout. No dependencies.
+ *  - Persist the subscription to localStorage as a backup.
+ *  - Provide instant UI feedback (toast/modal) on permission grant/deny.
  */
 (function () {
     'use strict';
@@ -21,10 +16,13 @@
     var LS_VIEWS = 'alinn_push_views';
     var LS_ENABLED = 'alinn_push_enabled';
 
-    var MIN_VIEWS = 5;
-
     var bell = document.getElementById('push-notification-bell');
     var bellBadge = document.getElementById('push-notification-badge');
+    var modal = document.getElementById('push-notification-modal');
+    var modalClose = document.getElementById('push-modal-close');
+    var modalDismiss = document.getElementById('push-modal-dismiss-btn');
+    var modalAction = document.getElementById('push-modal-action-btn');
+    var modalStatusText = document.getElementById('push-modal-status-text');
 
     function isSecureContext() {
         return window.isSecureContext ||
@@ -51,8 +49,7 @@
         return meta ? meta.getAttribute('content') : '';
     }
 
-    /* Convert a base64url-encoded VAPID key into a Uint8Array (the format the
-     * Push API's applicationServerKey expects). */
+    /* Convert a base64url-encoded VAPID key into a Uint8Array */
     function urlBase64ToUint8Array(base64String) {
         var padding = '='.repeat((4 - (base64String.length % 4)) % 4);
         var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -78,7 +75,7 @@
     function storeSubscription(sub) {
         try {
             localStorage.setItem(LS_SUBSCRIPTION, JSON.stringify(sub));
-        } catch (e) { /* storage full / blocked — non-fatal */ }
+        } catch (e) { /* storage blocked */ }
     }
 
     function clearStoredSubscription() {
@@ -93,29 +90,22 @@
         try { return localStorage.getItem(LS_DENIED) === '1'; } catch (e) { return false; }
     }
 
-    function countPageView() {
-        var views = 0;
-        try {
-            views = parseInt(localStorage.getItem(LS_VIEWS) || '0', 10);
-            if (isNaN(views)) views = 0;
-            views += 1;
-            localStorage.setItem(LS_VIEWS, String(views));
-        } catch (e) { views = MIN_VIEWS + 1; } // storage blocked → treat as browsed enough
-        return views;
-    }
-
     /* ---- subscription API ---- */
 
     function sendSubscriptionToServer(subscription, action) {
         var endpoint = subscription ? subscription.endpoint : '';
-        var keys = subscription && subscription.getKey
-            ? {
+        var keys = null;
+
+        if (subscription && typeof subscription.getKey === 'function') {
+            keys = {
                 p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh'))))
                     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
                 auth: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth'))))
                     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
-            }
-            : null;
+            };
+        } else if (subscription && subscription.keys) {
+            keys = subscription.keys;
+        }
 
         var url = '/api/push/subscribe';
         var method = 'POST';
@@ -160,13 +150,35 @@
         });
     }
 
+    function showToast(msg) {
+        var existing = document.getElementById('push-feedback-toast');
+        if (existing) existing.remove();
+
+        var toast = document.createElement('div');
+        toast.id = 'push-feedback-toast';
+        toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-2xl border border-slate-700 flex items-center gap-2 animate-bounce';
+        toast.innerHTML = '<span>🔔</span><span>' + msg + '</span>';
+        document.body.appendChild(toast);
+
+        setTimeout(function () {
+            if (toast && toast.parentNode) {
+                toast.style.transition = 'opacity 0.3s';
+                toast.style.opacity = '0';
+                setTimeout(function () { toast.remove(); }, 300);
+            }
+        }, 3000);
+    }
+
     async function enableNotifications() {
-        if (!isSupported()) return false;
+        if (!isSupported()) {
+            alert('သင့် Browser သည် Web Push Notification ကို Support မလုပ်ပါ (HTTPS သို့မဟုတ် localhost လိုအပ်ပါသည်)။');
+            return false;
+        }
 
         var permission = await Notification.requestPermission();
         if (permission !== 'granted') {
             try { localStorage.setItem(LS_DENIED, '1'); } catch (e) {}
-            hideBell();
+            alert('Notification permission ကို Allow မပေးထားပါသဖြင့် အသိပေးချက် ဖွင့်မရပါ။ Browser settings မှ Notification ဖွင့်ပေးပါ။');
             return false;
         }
 
@@ -177,22 +189,16 @@
         try { localStorage.setItem(LS_ENABLED, '1'); } catch (e) {}
         try { localStorage.removeItem(LS_DENIED); } catch (e) {}
 
-        await sendSubscriptionToServer(subscription, 'subscribe').catch(function () {
-            // The localStorage backup still exists; the server can be
-            // re-synced on the next page load.
-        });
+        await sendSubscriptionToServer(subscription, 'subscribe').catch(function () {});
 
-        hideBell();
         updateAccountToggle(true);
+        hideModal();
+        showToast('အသိပေးချက်များကို အောင်မြင်စွာ ဖွင့်ပြီးပါပြီ!');
         return true;
     }
 
     async function disableNotifications() {
-        // Capture the stored backup FIRST — it is our only record of the
-        // endpoint if the live PushSubscription is already gone, and we must
-        // not clear it before reading it.
         var stored = getStoredSubscription();
-
         var registration = null;
         try { registration = await navigator.serviceWorker.ready; } catch (e) {}
 
@@ -208,25 +214,56 @@
         clearStoredSubscription();
         try { localStorage.removeItem(LS_ENABLED); } catch (e) {}
 
-        // Report the removal even if the live PushSubscription was gone —
-        // the stored backup tells us the endpoint to remove server-side.
         if (stored && stored.endpoint) {
             await sendSubscriptionToServer({ endpoint: stored.endpoint }, 'unsubscribe').catch(function () {});
         }
 
         updateAccountToggle(false);
+        hideModal();
+        showToast('အသိပေးချက်များကို ပိတ်လိုက်ပါပြီ။');
         return true;
     }
 
-    /* ---- bell UI ---- */
+    /* ---- Modal Management ---- */
+
+    function showModal() {
+        if (!modal) {
+            // Fallback direct prompt if modal element is not in DOM
+            enableNotifications();
+            return;
+        }
+
+        var isAlreadyGranted = Notification.permission === 'granted';
+
+        if (modalStatusText) {
+            modalStatusText.textContent = isAlreadyGranted
+                ? '✅ အသိပေးချက်များ ဖွင့်ထားပြီးဖြစ်ပါသည်'
+                : 'အချိန်နှင့်တစ်ပြေးညီ သတင်းလွှာများ ရယူရန်';
+        }
+
+        if (modalAction) {
+            if (isAlreadyGranted) {
+                modalAction.innerHTML = '<span>🔕 အသိပေးချက်များ ပိတ်မည်</span>';
+                modalAction.className = 'w-full py-2.5 px-4 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer';
+                modalAction.onclick = function () { disableNotifications(); };
+            } else {
+                modalAction.innerHTML = '<span>🔔 အသိပေးချက်များ ဖွင့်မည်</span>';
+                modalAction.className = 'w-full py-2.5 px-4 rounded-xl bg-violet-600 hover:bg-violet-700 active:scale-95 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer';
+                modalAction.onclick = function () { enableNotifications(); };
+            }
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    function hideModal() {
+        if (modal) modal.classList.add('hidden');
+    }
+
+    /* ---- UI bindings ---- */
 
     function showBell() {
         if (!bell || isDenied()) return;
-        if (Notification.permission === 'granted') return; // already enabled
-        if (Notification.permission === 'denied') {
-            try { localStorage.setItem(LS_DENIED, '1'); } catch (e) {}
-            return;
-        }
         bell.classList.remove('hidden');
     }
 
@@ -243,21 +280,6 @@
             bellBadge.classList.add('hidden');
         }
     }
-
-    /* Read the unread count the service worker keeps in its push-unread cache. */
-    function refreshBadgeFromSw() {
-        if (!('caches' in window)) return;
-        caches.open('push-unread').then(function (cache) {
-            return cache.match('/push-unread/current');
-        }).then(function (res) {
-            if (!res) { setBadge(0); return; }
-            return res.text();
-        }).then(function (text) {
-            if (text !== undefined) setBadge(parseInt(text, 10) || 0);
-        }).catch(function () { setBadge(0); });
-    }
-
-    /* ---- account preferences toggle ---- */
 
     function updateAccountToggle(enabled) {
         var toggle = document.getElementById('push-prefs-toggle');
@@ -279,72 +301,34 @@
         }
     }
 
-    function wireAccountToggle() {
-        var toggle = document.getElementById('push-prefs-toggle');
-        if (!toggle) return;
-
-        toggle.addEventListener('change', function () {
-            var btn = toggle.closest('button');
-            if (btn) btn.disabled = true;
-            (toggle.checked ? enableNotifications() : disableNotifications())
-                .then(function () {
-                    updateAccountToggle(toggle.checked);
-                })
-                .catch(function () {
-                    updateAccountToggle(!toggle.checked);
-                })
-                .finally(function () {
-                    if (btn) btn.disabled = false;
-                });
-        });
-    }
-
-    /* ---- init ---- */
-
     function init() {
         if (!isSupported()) {
             hideBell();
             return;
         }
 
-        // Track page views to decide when the bell may appear.
-        var views = countPageView();
-
-        // Wire the account preferences toggle (page may or may not have it).
-        wireAccountToggle();
+        showBell();
         updateAccountToggle();
 
-        // Listen for unread-count updates broadcast by the service worker.
-        if (navigator.serviceWorker) {
-            navigator.serviceWorker.addEventListener('message', function (event) {
-                if (event.data && event.data.type === 'PUSH_UNREAD') {
-                    setBadge(event.data.count || 0);
-                }
-            });
-        }
-
-        refreshBadgeFromSw();
-
         if (bell) {
-            bell.addEventListener('click', function () {
-                enableNotifications();
+            bell.addEventListener('click', function (e) {
+                e.preventDefault();
+                showModal();
             });
         }
 
-        // The bell appears only after 5+ browsed pages and only while
-        // notifications are neither granted nor denied.
-        if (views >= MIN_VIEWS) {
-            showBell();
+        if (modalClose) modalClose.addEventListener('click', hideModal);
+        if (modalDismiss) modalDismiss.addEventListener('click', hideModal);
+        if (modal) {
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) hideModal();
+            });
         }
 
-        // Re-sync the stored subscription backup with the server once per
-        // session (covers the case where the first POST failed offline).
+        // Re-sync on reload if granted
         if (getStoredSubscription() && Notification.permission === 'granted') {
             sendSubscriptionToServer(getStoredSubscription(), 'subscribe').catch(function () {});
         }
-
-        // Sync the account toggle once subscription state is known.
-        setTimeout(function () { updateAccountToggle(); }, 300);
     }
 
     if (document.readyState === 'loading') {

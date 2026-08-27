@@ -597,8 +597,6 @@ class ProductController extends Controller
             'supplier_id'     => ['nullable', 'exists:suppliers,id'],
             'purchase_cost'   => ['nullable', 'numeric', 'min:0'],
             'initial_stock'   => ['nullable', 'numeric', 'min:0'],
-            'service_duration'=> ['nullable', 'string', 'max:100'],
-            'digital_delivery_method' => ['nullable', 'string', 'max:100'],
             'is_ecommerce'    => ['nullable', 'boolean'],
             'image'           => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
             'gallery_images'  => ['nullable', 'array', 'max:' . self::MAX_GALLERY_IMAGES],
@@ -617,7 +615,6 @@ class ProductController extends Controller
             'variants.*.retail_price'   => ['required', 'numeric', 'min:0'],
             'variants.*.wholesale_price'=> ['nullable', 'numeric', 'min:0'],
             'variants.*.stock_status'   => ['nullable', 'in:in_stock,out_of_stock'],
-            'variants.*.quantity_on_hand' => ['nullable', 'numeric', 'min:0'],
             'variants.*.is_default'     => ['nullable', 'boolean'],
             'variants.*.attributes'     => ['nullable', 'array', 'max:5'],
             'variants.*.attributes.*.label' => ['required', 'string', 'max:50'],
@@ -687,19 +684,12 @@ class ProductController extends Controller
             'warehouse_id'    => $validated['warehouse_id'] ?? null,
             'supplier_id'     => $validated['supplier_id'] ?? null,
             'purchase_cost'   => $validated['purchase_cost'] ?? null,
-            'service_duration'=> $validated['service_duration'] ?? null,
-            'digital_delivery_method' => $validated['digital_delivery_method'] ?? null,
             // Hidden 0-input + checkbox: boolean() reflects the checkbox state.
             'is_ecommerce'    => $request->boolean('is_ecommerce', true),
         ]);
 
         $this->storeGalleryImages($product, $request->file('gallery_images', []));
         $this->syncVariants($product, $validated['variants'] ?? null, $request->file('variants', []));
-
-        // Variant products: main stock is derived from per-variant quantities.
-        if (($validated['product_type'] ?? 'standard') === 'variant') {
-            $product->update(['stock_status' => $this->variantProductStockStatus($product)]);
-        }
 
         // Initial stock on create → one opening_balance ledger movement so the
         // product starts with real stock (valued at the purchase cost when set).
@@ -720,7 +710,7 @@ class ProductController extends Controller
         }
 
         return redirect(AdminListReturn::resolve('admin_products_return', '/store/' . $store->slug . '/admin/products'))
-            ->with('success', __('messages.product_created'));
+            ->with('success', 'Product created successfully.');
     }
 
     public function edit(string $store_slug, Product $product, StoreContext $context): View
@@ -774,8 +764,6 @@ class ProductController extends Controller
             'reorder_level'   => ['nullable', 'numeric', 'min:0'],
             'supplier_id'     => ['nullable', 'exists:suppliers,id'],
             'purchase_cost'   => ['nullable', 'numeric', 'min:0'],
-            'service_duration'=> ['nullable', 'string', 'max:100'],
-            'digital_delivery_method' => ['nullable', 'string', 'max:100'],
             'is_ecommerce'    => ['nullable', 'boolean'],
             'image'           => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
             'gallery_images'  => ['nullable', 'array', 'max:' . self::MAX_GALLERY_IMAGES],
@@ -794,7 +782,6 @@ class ProductController extends Controller
             'variants.*.retail_price'   => ['required', 'numeric', 'min:0'],
             'variants.*.wholesale_price'=> ['nullable', 'numeric', 'min:0'],
             'variants.*.stock_status'   => ['nullable', 'in:in_stock,out_of_stock'],
-            'variants.*.quantity_on_hand' => ['nullable', 'numeric', 'min:0'],
             'variants.*.is_default'     => ['nullable', 'boolean'],
             'variants.*.attributes'     => ['nullable', 'array', 'max:5'],
             'variants.*.attributes.*.label' => ['required', 'string', 'max:50'],
@@ -879,8 +866,6 @@ class ProductController extends Controller
             'reorder_level'   => $request->has('reorder_level') ? ($validated['reorder_level'] ?? null) : $product->reorder_level,
             'supplier_id'     => $request->has('supplier_id') ? ($validated['supplier_id'] ?? null) : $product->supplier_id,
             'purchase_cost'   => $request->has('purchase_cost') ? ($validated['purchase_cost'] ?? null) : $product->purchase_cost,
-            'service_duration'=> $request->has('service_duration') ? ($validated['service_duration'] ?? null) : $product->service_duration,
-            'digital_delivery_method' => $request->has('digital_delivery_method') ? ($validated['digital_delivery_method'] ?? null) : $product->digital_delivery_method,
             'is_ecommerce'    => $request->has('is_ecommerce') ? $request->boolean('is_ecommerce') : $product->is_ecommerce,
         ]);
 
@@ -890,13 +875,8 @@ class ProductController extends Controller
 
         $this->syncVariants($product, $validated['variants'] ?? null, $request->file('variants', []));
 
-        // Variant products: main stock is derived from per-variant quantities.
-        if (($validated['product_type'] ?? 'standard') === 'variant') {
-            $product->update(['stock_status' => $this->variantProductStockStatus($product)]);
-        }
-
         return redirect(AdminListReturn::resolve('admin_products_return', '/store/' . $store->slug . '/admin/products'))
-            ->with('success', __('messages.product_updated'));
+            ->with('success', 'Product updated successfully.');
     }
 
     public function uploadImages(Request $request, string $store_slug, Product $product, StoreContext $context): RedirectResponse
@@ -968,10 +948,7 @@ class ProductController extends Controller
                 'sku'             => $v['sku'] ?? null,
                 'retail_price'    => $v['retail_price'],
                 'wholesale_price' => !empty($v['wholesale_price']) ? $v['wholesale_price'] : null,
-                'stock_status'    => $this->variantStockStatus($v),
-                'quantity_on_hand'=> array_key_exists('quantity_on_hand', $v) && $v['quantity_on_hand'] !== '' && $v['quantity_on_hand'] !== null
-                    ? (float) $v['quantity_on_hand']
-                    : 0.0,
+                'stock_status'    => $v['stock_status'] ?? 'in_stock',
                 'sort_order'      => $i,
                 'is_default'      => false,
             ];
@@ -1009,38 +986,6 @@ class ProductController extends Controller
         if ($defaultId) {
             $product->variants()->where('id', $defaultId)->update(['is_default' => true]);
         }
-    }
-
-    /**
-     * A variant row's stock status: explicit quantity wins (qty > 0 ⇒ in
-     * stock), otherwise fall back to the submitted status.
-     */
-    private function variantStockStatus(array $v): string
-    {
-        if (array_key_exists('quantity_on_hand', $v) && $v['quantity_on_hand'] !== '' && $v['quantity_on_hand'] !== null) {
-            return (float) $v['quantity_on_hand'] > 0 ? 'in_stock' : 'out_of_stock';
-        }
-
-        return $v['stock_status'] ?? 'in_stock';
-    }
-
-    /**
-     * Main product stock for a variant product: in stock when any variant has
-     * a positive quantity on hand (falls back to legacy stock_status flags).
-     */
-    private function variantProductStockStatus(Product $product): string
-    {
-        $variants = $product->variants()->get(['quantity_on_hand', 'stock_status']);
-
-        foreach ($variants as $variant) {
-            if ((float) ($variant->quantity_on_hand ?? 0) > 0) {
-                return 'in_stock';
-            }
-        }
-
-        return $variants->contains(fn ($variant) => $variant->stock_status === 'in_stock')
-            ? 'in_stock'
-            : 'out_of_stock';
     }
 
     /**
@@ -1436,7 +1381,7 @@ class ProductController extends Controller
 
         $product->delete();
 
-        return back()->with('success', __('messages.product_deleted'));
+        return back()->with('success', 'Product deleted successfully.');
     }
 
     public function bulkStock(Request $request, string $store_slug, StoreContext $context): RedirectResponse

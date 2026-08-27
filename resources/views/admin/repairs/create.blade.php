@@ -1,5 +1,8 @@
 @extends('layouts.admin.app')
 
+@section('title', __('messages.repair_new_job') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-2')
+
 @section('content')
 @php
     $productOptions = $products->map(function ($p) {
@@ -28,7 +31,7 @@
     $statuses = $serviceSettings['status'] ?? collect();
 @endphp
 
-<div class="space-y-6 pb-12" x-data="repairTicketForm({
+<div class="w-full space-y-2.5 sm:space-y-3 pb-8" x-data="repairTicketForm({
     baseUrl: '{{ url('/store/' . $store->slug . '/admin') }}',
     csrf: '{{ csrf_token() }}',
     products: {{ $productOptions->toJson() }},
@@ -36,28 +39,36 @@
 })" x-init="init()">
 
     {{-- Top Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex items-center gap-3">
+    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+        <div class="flex items-center gap-2.5 min-w-0">
             <a href="{{ route('store.admin.repairs.index', $storeRouteParams) }}"
-               class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition grid place-items-center">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+               class="w-8 h-8 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition grid place-items-center shrink-0">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
-            <div>
-                <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-                    {{ __('messages.repair_new_job') }}
+            <div class="min-w-0">
+                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 text-[10px] sm:text-[11px] font-black uppercase tracking-wider border border-violet-100 dark:border-violet-900/60 mb-0.5">
+                    <span>🔧</span>
+                    <span>{{ __('messages.sidebar_repair_center') }}</span>
+                    <span class="text-slate-400 dark:text-slate-500">·</span>
+                    <span class="font-normal normal-case text-slate-500 dark:text-slate-400">Intake / Ticket Form</span>
+                </div>
+                <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                    <span>{{ __('messages.repair_new_job') }}</span>
                 </h1>
-                <p class="text-xs text-slate-500 dark:text-slate-400">{{ $store->name }} · {{ __('messages.sidebar_repair_center') }}</p>
+                <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                    {{ $store->name }} · {{ __('messages.sidebar_repair_center') }}
+                </p>
             </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 shrink-0">
             <a href="{{ route('store.admin.service_settings.index', $storeRouteParams) }}"
-               class="px-3.5 py-2 rounded-xl text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition flex items-center gap-1.5 shadow-sm">
+               class="px-2.5 py-1.5 rounded-md text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition flex items-center gap-1.5 shadow-2xs">
                 <span>⚙️</span>
                 <span>{{ __('messages.sidebar_service_settings') }}</span>
             </a>
         </div>
-    </div>
+    </header>
 
     @if ($errors->any())
         <div class="p-4 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-2xl text-xs font-bold text-rose-700 dark:text-rose-300 space-y-1">
@@ -222,15 +233,15 @@
                                     👨‍🔧 {{ __('messages.repair_technician') }}
                                 </label>
                                 <div class="flex items-center gap-1.5 min-w-0">
-                                    <select name="technician_id"
-                                            class="flex-1 min-w-0 w-full px-3 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs font-bold text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none truncate">
+                                    <select name="technician_id" x-ref="technicianSelect"
+                                            class="flex-1 min-w-0 w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs font-bold text-slate-800 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none truncate">
                                         <option value="">-- {{ __('messages.repair_unassigned') }} --</option>
                                         @foreach ($technicians as $tech)
                                             <option value="{{ $tech->id }}">{{ $tech->name }}</option>
                                         @endforeach
                                     </select>
-                                    <button type="button" @click="openQuickAdd('technician', '{{ __('messages.repair_technician') }}')"
-                                            class="w-9 h-9 shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm grid place-items-center shadow-sm transition"
+                                    <button type="button" @click="openTechnicianModal()"
+                                            class="w-9 h-9 shrink-0 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm grid place-items-center shadow-sm transition cursor-pointer"
                                             title="{{ __('messages.add_new') }}">+</button>
                                 </div>
                             </div>
@@ -740,6 +751,45 @@
         </div>
     </div>
 
+    {{-- Dedicated Quick-Add Technician Modal --}}
+    <div x-show="technicianModalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto"
+         @keydown.escape.window="technicianModalOpen = false" @click.self="technicianModalOpen = false">
+        <div class="relative w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-2xl space-y-3.5 text-slate-900 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">👨‍🔧</span>
+                    <h3 class="text-sm font-black text-slate-900 dark:text-white">+ {{ __('messages.repair_technician') }} (စက်ပြင်ပညာရှင်အသစ်)</h3>
+                </div>
+                <button type="button" @click="technicianModalOpen = false" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.name') }} <span class="text-rose-500">*</span></label>
+                    <input type="text" x-model="newTechnician.name" x-ref="newTechnicianName"
+                           placeholder="e.g. Ko Aung / Technician Name"
+                           class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.phone') }} <span class="text-rose-500">*</span></label>
+                    <input type="tel" x-model="newTechnician.phone"
+                           placeholder="09 123 456 789"
+                           class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div class="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" @click="technicianModalOpen = false"
+                            class="flex-1 py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition">{{ __('messages.cancel') }}</button>
+                    <button type="button" @click="submitNewTechnician()" :disabled="technicianModalBusy || !newTechnician.name.trim() || !newTechnician.phone.trim()"
+                            class="flex-1 py-2 rounded-lg text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs disabled:opacity-50 transition active:scale-95 cursor-pointer">
+                        <span x-text="technicianModalBusy ? '{{ __('messages.saving') }}' : '✓ {{ __('messages.save') }}'"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script nonce="{{ $cspNonce }}">
@@ -779,6 +829,14 @@ function repairTicketForm(config) {
             phone: '',
             type: 'retail_customer',
             address: ''
+        },
+
+        // Technician Modal state
+        technicianModalOpen: false,
+        technicianModalBusy: false,
+        newTechnician: {
+            name: '',
+            phone: ''
         },
 
         // Universal Master Settings Quick add modal state
@@ -932,12 +990,51 @@ function repairTicketForm(config) {
             document.getElementById('repairForm').submit();
         },
 
+        openTechnicianModal() {
+            this.newTechnician = { name: '', phone: '' };
+            this.technicianModalOpen = true;
+            this.$nextTick(() => this.$refs.newTechnicianName?.focus());
+        },
+
+        async submitNewTechnician() {
+            if (!this.newTechnician.name.trim() || !this.newTechnician.phone.trim() || this.technicianModalBusy) return;
+            this.technicianModalBusy = true;
+
+            try {
+                const res = await fetch('{{ route('store.admin.repairs.quick_add_technician', $storeRouteParams) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRF-TOKEN': this.csrf,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new URLSearchParams({
+                        name: this.newTechnician.name.trim(),
+                        phone: this.newTechnician.phone.trim()
+                    })
+                });
+                const data = await res.json();
+                if (data.success && data.technician) {
+                    const tech = data.technician;
+                    if (this.$refs.technicianSelect) {
+                        const opt = new Option(tech.name + (tech.phone ? ' (' + tech.phone + ')' : ''), tech.id, true, true);
+                        this.$refs.technicianSelect.add(opt);
+                    }
+                    this.technicianModalOpen = false;
+                } else if (data.message || data.error) {
+                    alert(data.message || data.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred while adding the technician.');
+            } finally {
+                this.technicianModalBusy = false;
+            }
+        },
+
         // Quick add handler for other master settings
         openQuickAdd(type, title) {
-            if (type === 'technician') {
-                alert('To add new technicians/staff, please manage Users & Staff under Store Settings.');
-                return;
-            }
             this.quickAddType = type;
             this.quickAddTitle = title;
             this.quickAddName = '';

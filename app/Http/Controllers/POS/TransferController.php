@@ -26,23 +26,92 @@ class TransferController extends Controller
         $storeRouteParams = $context->getRouteParams();
         $search = $request->input('search', '');
         $status = $request->input('status', '');
-        $sort = $request->input('sort', 'created_at');
-        $direction = $request->input('direction', 'desc');
+        $sort = $request->input('sort', 'newest');
+        $fromWarehouse = $request->input('from_warehouse_id', '');
+        $toWarehouse = $request->input('to_warehouse_id', '');
+        $dateFrom = $request->input('date_from', '');
+        $dateTo = $request->input('date_to', '');
         $perPage = (int) $request->input('per_page', 25);
+        if ($perPage <= 0 || $request->input('per_page') === 'all') {
+            $perPage = 1000;
+        }
+
+        $stats = [
+            'total' => StockTransfer::where('store_id', $store->id)->count(),
+            'pending' => StockTransfer::where('store_id', $store->id)->where('status', 'pending')->count(),
+            'in_transit' => StockTransfer::where('store_id', $store->id)->where('status', 'in_transit')->count(),
+            'completed' => StockTransfer::where('store_id', $store->id)->where('status', 'completed')->count(),
+            'cancelled' => StockTransfer::where('store_id', $store->id)->where('status', 'cancelled')->count(),
+        ];
+
+        $warehouses = Warehouse::where('store_id', $store->id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
         $query = StockTransfer::where('store_id', $store->id)
-            ->with(['fromWarehouse', 'toWarehouse', 'items.product']);
+            ->with(['fromWarehouse', 'toWarehouse', 'items.product', 'creator']);
 
         if ($search) {
-            $query->where('transfer_number', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('transfer_number', 'like', "%{$search}%")
+                  ->orWhere('notes', 'like', "%{$search}%");
+            });
         }
         if ($status) {
             $query->where('status', $status);
         }
+        if ($fromWarehouse) {
+            $query->where('from_warehouse_id', $fromWarehouse);
+        }
+        if ($toWarehouse) {
+            $query->where('to_warehouse_id', $toWarehouse);
+        }
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
 
-        $transfers = $query->orderBy($sort, $direction)->paginate($perPage);
+        switch ($sort) {
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'number_asc':
+                $query->orderBy('transfer_number', 'asc');
+                break;
+            case 'number_desc':
+                $query->orderBy('transfer_number', 'desc');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
 
-        return view('pos.transfers.index', compact('store', 'storeRouteParams', 'transfers', 'search', 'status'));
+        $transfers = $query->paginate($perPage)->withQueryString();
+
+        $filters = [
+            'search' => $search,
+            'status' => $status,
+            'sort' => $sort,
+            'from_warehouse_id' => $fromWarehouse,
+            'to_warehouse_id' => $toWarehouse,
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+        ];
+
+        return view('pos.transfers.index', compact(
+            'store',
+            'storeRouteParams',
+            'transfers',
+            'stats',
+            'warehouses',
+            'filters',
+            'search',
+            'status'
+        ));
     }
 
     public function create(StoreContext $context, string $store_slug): View
@@ -58,11 +127,14 @@ class TransferController extends Controller
         $products = InventoryBalance::where('store_id', $store->id)
             ->whereIn('warehouse_id', $warehouseIds)
             ->where('quantity_on_hand', '>', 0)
-            ->with('product')
+            ->with(['product.category', 'product.brand'])
             ->get()
             ->groupBy('warehouse_id');
 
-        return view('pos.transfers.create', compact('store', 'storeRouteParams', 'warehouses', 'products'));
+        $categories = \App\Models\Category::where('store_id', $store->id)->orderBy('name')->get();
+        $brands = \App\Models\Brand::where('store_id', $store->id)->orderBy('name')->get();
+
+        return view('pos.transfers.create', compact('store', 'storeRouteParams', 'warehouses', 'products', 'categories', 'brands'));
     }
 
     public function store(Request $request, StoreContext $context, string $store_slug): RedirectResponse

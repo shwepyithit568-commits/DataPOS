@@ -29,13 +29,71 @@ class CustomerReceivableController extends Controller
             abort(404);
         }
 
-        $search = $request->input('search');
-        $filter = $request->input('filter');
+        $search = trim((string) $request->input('search', $request->input('q', '')));
+        $filter = $request->input('filter', 'all');
+        $perPage = $request->input('per_page', 25);
+        $perPageCount = ($perPage === 'all' || (int) $perPage > 1000) ? 10000 : (int) $perPage;
 
         $summary = $this->debts->getReceivablesSummary($store);
-        $customers = $this->debts->listCustomersWithBalancesPaginated($store, $search, $filter, 15);
+        $customers = $this->debts->listCustomersWithBalancesPaginated($store, $search, $filter, $perPageCount);
+        $customers->appends($request->except('page'));
 
-        return view('admin.receivables.index', compact('store', 'summary', 'customers', 'search', 'filter'));
+        $exportUrl = route('store.admin.receivables.export', array_merge($context->getRouteParams(), request()->except(['page'])));
+
+        return view('admin.receivables.index', compact('store', 'summary', 'customers', 'search', 'filter', 'exportUrl'));
+    }
+
+    /**
+     * Export receivables as CSV with UTF-8 BOM.
+     */
+    public function exportCsv(StoreContext $context, Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $store = $context->getStore();
+        if (! $store) {
+            abort(404);
+        }
+
+        $search = trim((string) $request->input('search', $request->input('q', '')));
+        $filter = $request->input('filter', 'all');
+
+        $customers = $this->debts->listCustomersWithBalancesPaginated($store, $search, $filter, 10000);
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="receivables-' . now()->format('Ymd-His') . '.csv"',
+        ];
+
+        return response()->streamDownload(function () use ($customers) {
+            $stream = fopen('php://output', 'w');
+            fwrite($stream, "\xEF\xBB\xBF"); // UTF-8 BOM for Excel
+
+            fputcsv($stream, [
+                'Customer Name',
+                'Phone',
+                'Total Incurred (Ks)',
+                'Total Paid (Ks)',
+                'Outstanding Balance (Ks)',
+                'Status',
+                'Last Activity',
+            ]);
+
+            foreach ($customers as $cust) {
+                $bal = (float) $cust->balance;
+                $status = $bal > 0 ? 'Active Debt' : 'Settled';
+
+                fputcsv($stream, [
+                    $cust->name,
+                    $cust->phone ?? '',
+                    number_format((float) ($cust->total_debt_incurred ?? 0), 2),
+                    number_format((float) ($cust->total_collected ?? 0), 2),
+                    number_format($bal, 2),
+                    $status,
+                    $cust->last_activity ? \Carbon\Carbon::parse($cust->last_activity)->format('Y-m-d H:i') : '',
+                ]);
+            }
+
+            fclose($stream);
+        }, 'receivables-' . now()->format('Ymd-His') . '.csv', $headers);
     }
 
     /**

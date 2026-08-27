@@ -188,10 +188,12 @@ class PurchaseOrder extends Model
 
     /**
      * True when a payment can still be applied (has remaining balance).
+     * Pending/ordered/received POs are payable (credit accrues at creation), so
+     * only cancelled/returned POs can no longer receive a payment.
      */
     public function canReceivePayment(): bool
     {
-        return $this->isReceived()
+        return in_array($this->status, [self::STATUS_PENDING, self::STATUS_ORDERED, self::STATUS_RECEIVED], true)
             && in_array($this->payment_status, [self::PAYMENT_UNPAID, self::PAYMENT_PARTIAL], true)
             && bccomp((string) $this->remaining_balance, '0', 2) === 1;
     }

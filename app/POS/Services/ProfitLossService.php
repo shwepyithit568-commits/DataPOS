@@ -108,15 +108,42 @@ class ProfitLossService
         // Sort expenses by highest amount
         usort($expensesByCategory, fn($a, $b) => $b['amount'] <=> $a['amount']);
 
-        // ── 7. Net Profit & Margin ──
-        $netProfit = $grossProfit - $totalExpenses;
-        $netMargin = $netSales > 0 ? round(($netProfit / $netSales) * 100, 2) : 0.0;
+        // ── 7. Service & Repair Revenue (if applicable) ──
+        $serviceJobsQuery = \App\POS\Models\ServiceJob::where('store_id', $store->id)
+            ->whereBetween('created_at', [$start, $end]);
 
-        // ── 8. Operational Metrics ──
+        $serviceJobs = $serviceJobsQuery->with(['items', 'payments'])->get();
+        $serviceJobsCount = $serviceJobs->count();
+
+        $serviceRevenue = 0.0;
+        $servicePartsCost = 0.0;
+
+        foreach ($serviceJobs as $job) {
+            $finalCharge = (float) ($job->final_charge ?: $job->estimated_charge ?: 0);
+            $paid = (float) $job->payments->sum('amount');
+            // If job is delivered/ready, count final charge or paid amount
+            $serviceRevenue += max($paid, in_array($job->status, ['ready', 'delivered'], true) ? $finalCharge : $paid);
+            $servicePartsCost += (float) $job->items->where('type', 'part')->sum('cost');
+        }
+
+        $serviceGrossProfit = max(0, $serviceRevenue - $servicePartsCost);
+        $hasServices = ($serviceJobsCount > 0 || $serviceRevenue > 0);
+
+        // Combined Net Revenue & Combined COGS
+        $totalCombinedRevenue = $netSales + $serviceRevenue;
+        $totalCombinedCogs = $netCogs + $servicePartsCost;
+        $totalGrossProfit = $grossProfit + $serviceGrossProfit;
+
+        // ── 8. Net Profit & Margin ──
+        $netProfit = $totalGrossProfit - $totalExpenses;
+        $netMargin = $totalCombinedRevenue > 0 ? round(($netProfit / $totalCombinedRevenue) * 100, 2) : 0.0;
+        $grossMargin = $totalCombinedRevenue > 0 ? round(($totalGrossProfit / $totalCombinedRevenue) * 100, 2) : 0.0;
+
+        // ── 9. Operational Metrics ──
         $aov = $orderCount > 0 ? round($netSales / $orderCount, 2) : 0.0;
         $profitPerOrder = $orderCount > 0 ? round($netProfit / $orderCount, 2) : 0.0;
 
-        // ── 9. Top Profitable Products ──
+        // ── 10. Top Profitable Products ──
         $topProductsRaw = DB::table('pos_sale_items')
             ->whereIn('pos_sale_id', $saleIds)
             ->groupBy('product_name')
@@ -156,13 +183,25 @@ class ProfitLossService
                 'discounts' => $discounts,
                 'returns' => $returnsAmount,
                 'net_sales' => $netSales,
+                'service_revenue' => $serviceRevenue,
+                'total_revenue' => $totalCombinedRevenue,
             ],
             'cogs' => [
                 'gross_cogs' => $grossCogs,
                 'returns_cogs' => $returnsCogs,
                 'net_cogs' => $netCogs,
+                'service_parts_cost' => $servicePartsCost,
+                'total_cogs' => $totalCombinedCogs,
             ],
-            'gross_profit' => $grossProfit,
+            'services' => [
+                'has_services' => $hasServices,
+                'jobs_count' => $serviceJobsCount,
+                'revenue' => $serviceRevenue,
+                'parts_cost' => $servicePartsCost,
+                'gross_profit' => $serviceGrossProfit,
+                'margin' => $serviceRevenue > 0 ? round(($serviceGrossProfit / $serviceRevenue) * 100, 1) : 0.0,
+            ],
+            'gross_profit' => $totalGrossProfit,
             'gross_margin' => $grossMargin,
             'expenses' => [
                 'total' => $totalExpenses,

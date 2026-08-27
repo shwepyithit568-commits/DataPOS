@@ -179,7 +179,7 @@
                 <tr>
                     <td class="text-center" style="font-size: 9px; color: #94a3b8;">{{ $idx + 1 }}</td>
                     <td style="font-size: 9.5px;">{{ $row['occurred_at'] ? $row['occurred_at']->format('d/m/y H:i') : '-' }}</td>
-                    <td style="font-family: sans-serif; font-size: 10px; font-weight: 600;">{{ $row['movement_label'] }}</td>
+                    <td style="font-family: sans-serif; font-size: 10px; font-weight: 600;">{{ __('messages.movement_type_' . $row['movement_type']) }}</td>
                     <td style="font-family: sans-serif; font-size: 9.5px; color: #475569;">
                         {{ $row['source_type'] ? ucfirst($row['source_type']) . ($row['source_id'] ? " #{$row['source_id']}" : '') : '-' }}
                     </td>

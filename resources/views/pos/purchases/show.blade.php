@@ -1,4 +1,7 @@
-@extends('layouts.pos.app')
+@extends('layouts.admin.app')
+
+@section('title', ($po->po_number ?? 'Purchase Order') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-2')
 
 @php
     // Slim item payload for the return modal (no nested product blobs).
@@ -480,8 +483,9 @@
             @endif
         </div>
 
-        {{-- ===== Payment summary (if received) ===== --}}
-        @if ($po->isReceived())
+        {{-- Payment summary + Pay Now — visible for pending/ordered/received
+             POs (credit accrues at creation), hidden only for cancelled/returned. --}}
+        @if (! in_array($po->status, ['cancelled', 'returned'], true))
             @php $paidPct = (float) $po->total_cost > 0 ? min(100, ((float) $po->paid_amount / (float) $po->total_cost) * 100) : 0; @endphp
             <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-sm">
                 <div class="flex items-center justify-between gap-3 flex-wrap">

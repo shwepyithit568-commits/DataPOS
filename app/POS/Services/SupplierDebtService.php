@@ -41,11 +41,13 @@ class SupplierDebtService
         return Supplier::query()
             ->where('store_id', $store->id)
             ->whereHas('purchaseOrders', fn ($q) => $q
+                ->where('status', PurchaseOrder::STATUS_RECEIVED)
                 ->whereIn('payment_status', [PurchaseOrder::PAYMENT_UNPAID, PurchaseOrder::PAYMENT_PARTIAL])
                 ->where('remaining_balance', '>', 0)
             )
             ->with([
                 'purchaseOrders' => fn ($q) => $q
+                    ->where('status', PurchaseOrder::STATUS_RECEIVED)
                     ->whereIn('payment_status', [PurchaseOrder::PAYMENT_UNPAID, PurchaseOrder::PAYMENT_PARTIAL])
                     ->where('remaining_balance', '>', 0)
                     ->orderBy('created_at', 'asc')
@@ -73,8 +75,10 @@ class SupplierDebtService
      */
     public function getUnpaidOrders(Supplier $supplier): Collection
     {
+        // Include pending/ordered (credit accrues at creation) as well as
+        // received; only cancelled/returned POs no longer count toward payables.
         return $supplier->unpaidPurchaseOrders()
-            ->where('status', PurchaseOrder::STATUS_RECEIVED)
+            ->whereNotIn('status', [PurchaseOrder::STATUS_CANCELLED, PurchaseOrder::STATUS_RETURNED])
             ->with(['items.product', 'supplier'])
             ->get();
     }
@@ -128,9 +132,12 @@ class SupplierDebtService
      */
     public function recalculateSupplierBalances(Supplier $supplier): void
     {
+        // total_credit = full value of all active (non-cancelled/returned) POs,
+        // regardless of payment status — payments are tracked via total_repaid
+        // so balance = total_credit - total_repaid stays accurate.
         $credit = $supplier->purchaseOrders()
-            ->where('payment_status', '!=', PurchaseOrder::PAYMENT_PAID)
-            ->sum('remaining_balance');
+            ->whereNotIn('status', [PurchaseOrder::STATUS_CANCELLED, PurchaseOrder::STATUS_RETURNED])
+            ->sum('total_cost');
 
         $repaid = $supplier->purchaseOrders()->sum('paid_amount');
 

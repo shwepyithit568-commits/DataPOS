@@ -703,6 +703,70 @@ class AdminRepairCenterTest extends TestCase
         $response->assertSeeText('Battery replacement');
     }
 
+    public function test_quick_add_technician(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->postJson("/store/{$this->store->slug}/admin/repairs/quick-add-technician", [
+                'name' => 'Ko Kyaw Technician',
+                'phone' => '09988776655',
+            ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'technician' => [
+                'name' => 'Ko Kyaw Technician',
+                'phone' => '09988776655',
+            ],
+        ]);
+
+        $user = User::where('phone', '09988776655')->first();
+        $this->assertNotNull($user);
+        $this->assertTrue($this->store->users()->where('users.id', $user->id)->exists());
+    }
+
+    public function test_service_report_view_renders_200_with_metrics_and_jobs(): void
+    {
+        $this->makeJob(['contact_name' => 'Ko Kyaw', 'status' => 'delivered', 'final_charge' => '65000.00']);
+
+        $response = $this->actingAs($this->manager)->get(route('pos.reports.services', [
+            'store_slug' => $this->store->slug,
+            'preset' => 'this_month',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Ko Kyaw');
+        $response->assertSee('65,000');
+    }
+
+    public function test_service_report_export_csv(): void
+    {
+        $this->makeJob(['contact_name' => 'Ma Hla', 'status' => 'delivered', 'final_charge' => '30000.00']);
+
+        $response = $this->actingAs($this->manager)->get(route('pos.reports.services.export', [
+            'store_slug' => $this->store->slug,
+            'preset' => 'this_month',
+            'format' => 'csv',
+        ]));
+
+        $response->assertStatus(200);
+        $this->assertTrue($response->headers->contains('content-type', 'text/csv; charset=UTF-8'));
+    }
+
+    public function test_service_report_export_xlsx(): void
+    {
+        $this->makeJob(['contact_name' => 'U Ba', 'status' => 'ready', 'final_charge' => '40000.00']);
+
+        $response = $this->actingAs($this->manager)->get(route('pos.reports.services.export', [
+            'store_slug' => $this->store->slug,
+            'preset' => 'this_month',
+            'format' => 'xlsx',
+        ]));
+
+        $response->assertStatus(200);
+        $this->assertTrue($response->headers->contains('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'));
+    }
+
     private function makeProduct(array $overrides = []): Product
     {
         $name = $overrides['name'] ?? 'Part ' . \Illuminate\Support\Str::random(3);
@@ -736,3 +800,4 @@ class AdminRepairCenterTest extends TestCase
         return app(\App\POS\Services\InventoryService::class);
     }
 }
+

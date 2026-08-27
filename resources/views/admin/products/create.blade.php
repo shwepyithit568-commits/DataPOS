@@ -30,6 +30,9 @@
         productExtraCode: '',
         productColorCode: '',
         productNameInput: @js(old('name', '')),
+        // Once the user types a name manually, the Smart Name builder stops
+        // overwriting it (SKU auto-generation keeps working).
+        nameTouched: @js(old('name') !== null && old('name') !== ''),
         categories: {{ json_encode($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name, 'code' => $c->code, 'parent' => $c->parent?->name, 'parent_id' => $c->parent_id])) }},
         brands: {{ json_encode($brands->map(fn($b) => ['id' => $b->id, 'name' => $b->name, 'code' => $b->code])) }},
         suppliers: {{ json_encode($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])) }},
@@ -49,6 +52,7 @@
             'retail_price' => $v['retail_price'] ?? '',
             'wholesale_price' => $v['wholesale_price'] ?? '',
             'stock_status' => $v['stock_status'] ?? 'in_stock',
+            'quantity_on_hand' => $v['quantity_on_hand'] ?? 0,
             'is_default' => !empty($v['is_default']),
             'image_path' => $v['image_path'] ?? null,
             'image_preview' => null,
@@ -64,6 +68,9 @@
         productStock: '{{ old('stock_status', $product->stock_status) }}',
         recomputeSmartSkuAndName() {
             if (!this.autoSku) return;
+            // Services & digital items keep a manually typed name — don't
+            // rebuild it from brand/category parts.
+            if (this.productType === 'service' || this.productType === 'digital') return;
             const brandObj = this.brands.find(b => String(b.id) === String(this.selectedBrand));
             const catObj = this.categories.find(c => String(c.id) === String(this.selectedSubCategory || this.selectedMainCategory));
             
@@ -103,7 +110,7 @@
                 nameParts.push(this.productColorCode.trim());
             }
             
-            if (nameParts.length > 0) {
+            if (nameParts.length > 0 && !this.nameTouched) {
                 this.productNameInput = nameParts.join(' ');
             }
         },
@@ -170,7 +177,7 @@
             v.image_preview = evt.target.files[0] ? URL.createObjectURL(evt.target.files[0]) : null;
             v.remove_image = false;
         },
-        addVariant() { this.variants.push({ id: null, name: '', attributes: [], sku: '', retail_price: '', wholesale_price: '', stock_status: 'in_stock', is_default: false, image_path: null, image_preview: null, remove_image: false }); },
+        addVariant() { this.variants.push({ id: null, name: '', attributes: [], sku: '', retail_price: '', wholesale_price: '', stock_status: 'in_stock', quantity_on_hand: 0, is_default: false, image_path: null, image_preview: null, remove_image: false }); },
         removeVariant(i) { this.variants.splice(i, 1); },
         findVariantPreset(id) {
             return this.variantPresets.find((item) => String(item.id) === String(id));
@@ -233,6 +240,7 @@
                 retail_price: Math.max(0, base.retail + retailAdjustment).toFixed(2),
                 wholesale_price: Math.max(0, base.wholesale + wholesaleAdjustment).toFixed(2),
                 stock_status: stockStatus || 'in_stock',
+                quantity_on_hand: 0,
                 is_default: index === 0,
                 image_path: null,
                 image_preview: null,

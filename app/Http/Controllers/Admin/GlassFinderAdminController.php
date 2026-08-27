@@ -23,7 +23,17 @@ class GlassFinderAdminController extends Controller
     public function index(Request $request, StoreContext $context): View
     {
         $store = $context->getStore();
-        $query = GlassFinderItem::where('store_id', $store->id);
+        $baseQuery = GlassFinderItem::where('store_id', $store->id);
+
+        $stats = [
+            'total' => (clone $baseQuery)->count(),
+            'unique_codes' => (clone $baseQuery)->distinct('glass_code')->count('glass_code'),
+            'in_stock' => (clone $baseQuery)->where('stock_status', 'in_stock')->count(),
+            'out_of_stock' => (clone $baseQuery)->where('stock_status', 'out_of_stock')->count(),
+            'brands_count' => (clone $baseQuery)->distinct('brand')->count('brand'),
+        ];
+
+        $query = clone $baseQuery;
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -34,6 +44,10 @@ class GlassFinderAdminController extends Controller
             });
         }
 
+        if ($request->filled('brand')) {
+            $query->where('brand', $request->brand);
+        }
+
         if ($request->filled('stock_status')) {
             $query->where('stock_status', $request->stock_status);
         }
@@ -41,18 +55,27 @@ class GlassFinderAdminController extends Controller
         $sort = $request->input('sort', 'newest');
         if ($sort === 'oldest') {
             $query->oldest();
+        } elseif ($sort === 'code_asc') {
+            $query->orderBy('glass_code', 'asc');
+        } elseif ($sort === 'code_desc') {
+            $query->orderBy('glass_code', 'desc');
         } else {
             $query->latest();
         }
 
-        // Accordion layout: group by glass code (the primary key — matches the
-        // storefront "compatible models grouped by glass code"), code groups
-        // ordered A→Z, items keep the chosen sort inside each group.
-        $items = $query->get()
+        $allItems = $query->get();
+        $items = $allItems
             ->groupBy('glass_code')
             ->sortKeys(SORT_STRING | SORT_FLAG_CASE);
-        $totalCount = $items->flatten()->count();
-        $autoOpen = $request->filled('search') || $request->filled('stock_status');
+        $totalCount = $allItems->count();
+        $autoOpen = $request->filled('search') || $request->filled('stock_status') || $request->filled('brand');
+
+        $brands = GlassFinderItem::where('store_id', $store->id)
+            ->whereNotNull('brand')
+            ->distinct()
+            ->pluck('brand')
+            ->sort()
+            ->values();
 
         $histories = ImportHistory::where('store_id', $store->id)
             ->where('type', 'glass_finder')
@@ -65,7 +88,7 @@ class GlassFinderAdminController extends Controller
         // the user to the exact same search/filter state.
         AdminListReturn::capture($request, 'admin_glass_finder_return');
 
-        return view('admin.glass_finder.index', compact('store', 'items', 'totalCount', 'autoOpen', 'histories'));
+        return view('admin.glass_finder.index', compact('store', 'items', 'allItems', 'totalCount', 'autoOpen', 'histories', 'stats', 'brands'));
     }
 
     public function store(Request $request, StoreContext $context): RedirectResponse

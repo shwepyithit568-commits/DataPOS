@@ -58,6 +58,16 @@ class ProductSpecifications
             $data['warranty'] = $warranty;
         }
 
+        // Service/Labor items: how long the service takes (e.g. "30 min", "1 day").
+        if (($duration = trim((string) ($product->service_duration ?? ''))) !== '') {
+            $data['service_duration'] = $duration;
+        }
+
+        // Digital/Code items: how the code is delivered (SMS / Email / Viber…).
+        if (($delivery = trim((string) ($product->digital_delivery_method ?? ''))) !== '') {
+            $data['delivery_method'] = $delivery;
+        }
+
         if (($stock = self::stockLabel($product->stock_status)) !== null) {
             $data['stock'] = $stock;
         }
@@ -112,6 +122,8 @@ class ProductSpecifications
             'main_category' => __('messages.spec_main_category'),
             'sku' => __('messages.spec_sku'),
             'warranty' => __('messages.spec_warranty'),
+            'service_duration' => __('messages.spec_service_duration'),
+            'delivery_method' => __('messages.spec_delivery_method'),
             'stock' => __('messages.spec_stock_status'),
             'variant_names' => __('messages.spec_variant_name'),
             'variant_skus' => __('messages.spec_variant_sku'),

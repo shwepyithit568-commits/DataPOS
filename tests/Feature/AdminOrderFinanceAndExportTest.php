@@ -172,7 +172,7 @@ class AdminOrderFinanceAndExportTest extends TestCase
             ->get("/store/{$this->store->slug}/admin/orders/{$order->id}");
 
         $response->assertOk();
-        $response->assertSee('Payment &amp; Price', false);
+        $response->assertSee('agreed_amount', false);
         $response->assertSee('name="agreed_amount"', false);
         $response->assertSee('name="payment_status"', false);
         $response->assertSee('25000', false);

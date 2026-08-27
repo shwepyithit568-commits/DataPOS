@@ -146,13 +146,21 @@ class PushNotificationController extends Controller
             $type = null;
         }
 
+        $counts = [
+            'all' => PushNotificationLog::count(),
+            'order' => PushNotificationLog::where('type', PushNotificationLog::TYPE_ORDER)->count(),
+            'payment' => PushNotificationLog::where('type', PushNotificationLog::TYPE_PAYMENT)->count(),
+            'status' => PushNotificationLog::where('type', PushNotificationLog::TYPE_STATUS)->count(),
+            'system' => PushNotificationLog::where('type', PushNotificationLog::TYPE_SYSTEM)->count(),
+        ];
+
         $logs = PushNotificationLog::query()
             ->when($type, fn ($q) => $q->where('type', $type))
             ->latest('sent_at')
             ->limit(50)
             ->get();
 
-        return view('admin.push.history', compact('store', 'logs', 'type'));
+        return view('admin.push.history', compact('store', 'logs', 'type', 'counts'));
     }
 
     /**

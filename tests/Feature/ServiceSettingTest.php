@@ -133,4 +133,121 @@ class ServiceSettingTest extends TestCase
         $this->assertEquals(30000, $job->paidAmount());
         $this->assertEquals(55000, $job->outstanding());
     }
+
+    public function test_all_service_settings_tabs_render_successfully(): void
+    {
+        $tabs = ['brand', 'category', 'model', 'color', 'storage', 'defect', 'accessory', 'status'];
+
+        foreach ($tabs as $tab) {
+            $response = $this->actingAs($this->manager)
+                ->get("/store/{$this->store->slug}/admin/service-settings?tab={$tab}");
+
+            $response->assertStatus(200);
+        }
+    }
+
+    public function test_manager_can_update_service_setting(): void
+    {
+        $setting = ServiceSetting::firstOrCreate([
+            'store_id' => $this->store->id,
+            'type' => 'brand',
+            'name' => 'Xiaomi',
+        ]);
+
+        $response = $this->actingAs($this->manager)
+            ->put("/store/{$this->store->slug}/admin/service-settings/{$setting->id}", [
+                'name' => 'Xiaomi Pro',
+                'sort_order' => 10,
+                'is_active' => '1',
+            ]);
+
+        $response->assertRedirect("/store/{$this->store->slug}/admin/service-settings?tab=brand");
+
+        $setting->refresh();
+        $this->assertEquals('Xiaomi Pro', $setting->name);
+        $this->assertEquals(10, $setting->sort_order);
+    }
+
+    public function test_manager_can_delete_service_setting(): void
+    {
+        $setting = ServiceSetting::create([
+            'store_id' => $this->store->id,
+            'type' => 'color',
+            'name' => 'Rose Pink',
+        ]);
+
+        $response = $this->actingAs($this->manager)
+            ->delete("/store/{$this->store->slug}/admin/service-settings/{$setting->id}");
+
+        $response->assertRedirect("/store/{$this->store->slug}/admin/service-settings?tab=color");
+
+        $this->assertDatabaseMissing('service_settings', [
+            'id' => $setting->id,
+        ]);
+    }
+
+    public function test_service_settings_export_csv(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/service-settings/export?tab=brand");
+
+        $response->assertStatus(200);
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class, $response->baseResponse);
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_service_settings_download_template(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/service-settings/template?tab=brand");
+
+        $response->assertStatus(200);
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class, $response->baseResponse);
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_service_settings_import_csv(): void
+    {
+        $csvContent = "\xEF\xBB\xBFType,Name,Code,Parent Brand,Description,Sort Order,Status\n" .
+                      "brand,Motorola,MOTO,,Motorola Phones,3,Active\n" .
+                      "model,Moto G84,MG84,Motorola,5G OLED,1,Active\n";
+
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('service_settings.csv', $csvContent);
+
+        $response = $this->actingAs($this->manager)
+            ->post("/store/{$this->store->slug}/admin/service-settings/import", [
+                'file' => $file,
+                'tab'  => 'brand',
+            ]);
+
+        $response->assertRedirect("/store/{$this->store->slug}/admin/service-settings?tab=brand");
+
+        $this->assertDatabaseHas('service_settings', [
+            'store_id' => $this->store->id,
+            'type'     => 'brand',
+            'name'     => 'Motorola',
+        ]);
+
+        $this->assertDatabaseHas('service_settings', [
+            'store_id' => $this->store->id,
+            'type'     => 'model',
+            'name'     => 'Moto G84',
+        ]);
+    }
+
+    public function test_service_settings_renders_without_translation_key_leaks(): void
+    {
+        foreach (['en', 'my', 'zh'] as $locale) {
+            app()->setLocale($locale);
+            $response = $this->actingAs($this->manager)
+                ->get("/store/{$this->store->slug}/admin/service-settings?lang={$locale}");
+
+            $response->assertStatus(200);
+            $content = $response->getContent();
+            $this->assertFalse(
+                (bool) preg_match('/messages\.[a-zA-Z0-9_-]+/', $content),
+                "Found leaked translation key in locale [{$locale}] on admin/service-settings"
+            );
+        }
+    }
 }

@@ -491,9 +491,13 @@ Route::prefix('store/{store_slug}')
 
         // Customer Receivables & Debt Ledger Management (SoT §17)
         Route::get('/admin/receivables', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'index'])->name('store.admin.receivables.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/receivables/export', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'exportCsv'])->name('store.admin.receivables.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/receivables/{customer}', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'show'])->name('store.admin.receivables.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/receivables/{customer}/collect', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'collect'])->name('store.admin.receivables.collect')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/receivables/{customer}/statement', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'statement'])->name('store.admin.receivables.statement')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Supplier Payables (Accounts Payable)
+        Route::get('/admin/payables', fn (\App\Services\StoreContext $context) => redirect()->route('pos.purchases.payables', $context->getRouteParams()))->name('store.admin.payables.index')->middleware(\App\Http\Middleware\EnsureStoreAccess::class . ':store_manager,staff');
 
         // Profit & Loss Financial Statement (SoT §18)
         Route::get('/admin/profit-loss', [\App\Http\Controllers\Admin\ProfitLossController::class, 'index'])->name('store.admin.profit_loss.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -510,11 +514,15 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/repairs/{repair}/edit', [RepairController::class, 'edit'])->name('store.admin.repairs.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::put('/admin/repairs/{repair}', [RepairController::class, 'update'])->name('store.admin.repairs.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/repairs/{repair}/status', [RepairController::class, 'updateStatus'])->name('store.admin.repairs.status')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/repairs/quick-add-technician', [RepairController::class, 'quickAddTechnician'])->name('store.admin.repairs.quick_add_technician')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/repairs/{repair}/payments', [RepairController::class, 'addPayment'])->name('store.admin.repairs.payments.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/repairs/{repair}/items/{item}/deduct', [RepairController::class, 'deductItem'])->name('store.admin.repairs.items.deduct')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Service Settings / Repair Master Data (Tabs for statuses, brands, categories, models, colors, storage, defects, accessories)
         Route::get('/admin/service-settings', [ServiceSettingController::class, 'index'])->name('store.admin.service_settings.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/service-settings/export', [ServiceSettingController::class, 'export'])->name('store.admin.service_settings.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/service-settings/import', [ServiceSettingController::class, 'import'])->name('store.admin.service_settings.import')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/service-settings/template', [ServiceSettingController::class, 'downloadTemplate'])->name('store.admin.service_settings.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/service-settings', [ServiceSettingController::class, 'store'])->name('store.admin.service_settings.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/service-settings/quick-add', [ServiceSettingController::class, 'quickAdd'])->name('store.admin.service_settings.quick_add')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::put('/admin/service-settings/{service_setting}', [ServiceSettingController::class, 'update'])->name('store.admin.service_settings.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -536,6 +544,7 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/service-jobs/{job}/edit', [\App\Http\Controllers\Admin\ServiceJobController::class, 'edit'])->name('store.admin.service_jobs.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::put('/admin/service-jobs/{job}', [\App\Http\Controllers\Admin\ServiceJobController::class, 'update'])->name('store.admin.service_jobs.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/service-jobs/{job}/status', [\App\Http\Controllers\Admin\ServiceJobController::class, 'updateStatus'])->name('store.admin.service_jobs.status')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/service-jobs/quick-add-technician', [\App\Http\Controllers\Admin\ServiceJobController::class, 'quickAddTechnician'])->name('store.admin.service_jobs.quick_add_technician')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/service-jobs/{job}/payments', [\App\Http\Controllers\Admin\ServiceJobController::class, 'addPayment'])->name('store.admin.service_jobs.payments.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/service-jobs/{job}/items/{item}/deduct', [\App\Http\Controllers\Admin\ServiceJobController::class, 'deductItem'])->name('store.admin.service_jobs.items.deduct')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
@@ -707,6 +716,7 @@ Route::prefix('store/{store_slug}')
 
         // Pilot Data Import hub (products / customers / suppliers)
         Route::get('/admin/pilot-import/{tab?}', [PilotImportController::class, 'index'])->name('store.admin.pilot-import.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
+        Route::post('/admin/pilot-import/demo-scenarios/{scenario}', [PilotImportController::class, 'createDemoScenario'])->name('store.admin.pilot-import.demo-scenarios.store')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports']);
         Route::post('/admin/pilot-import/{tab}', [PilotImportController::class, 'import'])->name('store.admin.pilot-import.import')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports'])->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
         Route::post('/admin/pilot-import/{tab}/confirm', [PilotImportController::class, 'confirmImport'])->name('store.admin.pilot-import.confirm')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports'])->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
         Route::get('/admin/pilot-import/{tab}/template', [PilotImportController::class, 'downloadTemplate'])->name('store.admin.pilot-import.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
@@ -978,6 +988,7 @@ Route::prefix('store/{store_slug}')
 
             // Specific purchase routes — MUST come before {purchaseOrder} wildcard
             Route::get('/purchases/payables', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'payablesIndex'])->name('pos.purchases.payables');
+            Route::get('/purchases/payables/export', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'payablesExport'])->name('pos.purchases.payables.export');
             Route::get('/purchases/payables/{supplier}', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'payablesShow'])->name('pos.purchases.payables.show');
             Route::post('/purchases/payables/{supplier}/pay', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'payablesPay'])->name('pos.purchases.payables.pay');
             Route::get('/purchases/export', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'export'])->name('pos.purchases.export');

@@ -67,6 +67,15 @@
                             <span class="font-bold text-sm text-slate-800 dark:text-slate-200">{{ $item->product_name }}</span>
                             <span class="font-black text-sm text-violet-600 dark:text-violet-400 shrink-0">x{{ $item->quantity }}</span>
                         </div>
+                        @if ($item->variant_name && !str_contains((string) $item->product_name, (string) $item->variant_name))
+                            <div class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium">{{ $item->variant_name }}</div>
+                        @endif
+                        @if ($item->product && $item->product->product_type === 'service' && trim((string) $item->product->service_duration))
+                            <div class="mt-0.5 text-[11px] text-amber-600 dark:text-amber-400 font-bold">⏱️ {{ __('messages.product_form_service_duration') }}: {{ $item->product->service_duration }}</div>
+                        @endif
+                        @if ($item->product && $item->product->product_type === 'digital' && trim((string) $item->product->digital_delivery_method))
+                            <div class="mt-0.5 text-[11px] text-sky-600 dark:text-sky-400 font-bold">📲 {{ __('messages.product_form_digital_delivery_method') }}: {{ $item->product->digital_delivery_method }}</div>
+                        @endif
                         <div class="mt-1 text-right">
                             <span class="font-black text-base text-slate-900 dark:text-white">Ks {{ number_format($item->subtotal) }}</span>
                         </div>

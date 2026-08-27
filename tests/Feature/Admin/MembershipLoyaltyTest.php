@@ -193,4 +193,19 @@ class MembershipLoyaltyTest extends TestCase
             'membership_tier_id' => $gold->id,
         ]);
     }
+
+    public function test_membership_index_renders_in_all_supported_locales_without_key_leaks(): void
+    {
+        foreach (['en', 'my', 'zh_CN'] as $code) {
+            $store = Store::create(['name' => "Store Member {$code}", 'slug' => "store-mem-{$code}"]);
+            $store->setting()->create(['store_name' => "Store Member {$code}", 'default_language' => $code]);
+            $this->manager->stores()->attach($store->id, ['role' => 'store_manager', 'status' => 'active']);
+
+            $response = $this->actingAs($this->manager)
+                ->get("/store/{$store->slug}/admin/membership");
+
+            $response->assertStatus(200);
+            $response->assertDontSee('messages.', false);
+        }
+    }
 }

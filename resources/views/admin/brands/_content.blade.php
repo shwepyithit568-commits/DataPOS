@@ -191,10 +191,11 @@
                                             </button>
                                             @if ($brand->products_count > 0)
                                                 {{-- Blocked: brand is in use — show explanation + link to its products --}}
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 text-xs font-semibold"
+                                                <a href="{{ url('/store/' . $store->slug . '/admin/products?brand_id=' . $brand->id) }}"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 text-xs font-semibold hover:underline"
                                                     title="{{ __('messages.brand_delete_blocked', ['count' => $brand->products_count]) }}">
-                                                    <span>🔒</span> Used
-                                                </span>
+                                                    <span>🔒</span> {{ $brand->products_count }} {{ __('messages.products') }}
+                                                </a>
                                             @else
                                                 <button type="button" data-id="{{ $brand->id }}" data-name="{{ $brand->name }}"
                                                     @click="openConfirm($el)"

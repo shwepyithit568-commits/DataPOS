@@ -215,4 +215,47 @@ class CustomerReceivableTest extends TestCase
         $responseThermal->assertStatus(200);
         $responseThermal->assertSee('format-thermal');
     }
+
+    public function test_admin_can_export_receivables_csv(): void
+    {
+        $this->debtService->recordOpeningBalance(
+            store: $this->store,
+            customerId: $this->customer->id,
+            amount: '65000.00',
+            actor: $this->admin,
+        );
+
+        $response = $this->actingAs($this->admin)->get(route('store.admin.receivables.export', [
+            'store_slug' => $this->store->slug,
+        ]));
+
+        $response->assertStatus(200);
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class, $response->baseResponse);
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_receivables_index_renders_without_translation_key_leaks(): void
+    {
+        $this->debtService->recordOpeningBalance(
+            store: $this->store,
+            customerId: $this->customer->id,
+            amount: '65000.00',
+            actor: $this->admin,
+        );
+
+        foreach (['en', 'my', 'zh'] as $locale) {
+            app()->setLocale($locale);
+            $response = $this->actingAs($this->admin)->get(route('store.admin.receivables.index', [
+                'store_slug' => $this->store->slug,
+                'lang' => $locale,
+            ]));
+
+            $response->assertStatus(200);
+            $content = $response->getContent();
+            $this->assertFalse(
+                (bool) preg_match('/messages\.[a-zA-Z0-9_-]+/', $content),
+                "Found leaked translation key in locale [{$locale}] on admin/receivables"
+            );
+        }
+    }
 }

@@ -140,20 +140,17 @@
                 </div>
                 <div class="grid grid-cols-2 gap-1.5">
                     @foreach ($quickLoginUsers as $ql)
-                        <form method="POST" action="{{ route('quick-login') }}">
-                            @csrf
-                            <input type="hidden" name="phone" value="{{ $ql['phone'] }}" />
-                            <button type="submit"
-                                class="w-full text-left px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/40 hover:border-sky-300 dark:hover:border-sky-700 transition text-xs group"
-                            >
-                                <span class="font-bold text-slate-700 dark:text-slate-300 group-hover:text-sky-700 dark:group-hover:text-sky-300 block truncate">
-                                    {{ $ql['name'] }}
-                                </span>
-                                <span class="font-mono text-[10px] text-slate-400 dark:text-slate-500">
-                                    {{ $ql['phone'] }}
-                                </span>
-                            </button>
-                        </form>
+                        <button type="submit"
+                            form="quick-login-{{ $ql['id'] }}"
+                            class="w-full text-left px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-950/40 hover:border-sky-300 dark:hover:border-sky-700 transition text-xs group"
+                        >
+                            <span class="font-bold text-slate-700 dark:text-slate-300 group-hover:text-sky-700 dark:group-hover:text-sky-300 block truncate">
+                                {{ $ql['name'] }}
+                            </span>
+                            <span class="font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                                {{ $ql['phone'] }}
+                            </span>
+                        </button>
                     @endforeach
                 </div>
             </div>
@@ -172,6 +169,15 @@
             </a>
         </div>
     </form>
+
+    @if (!empty($quickLoginUsers))
+        @foreach ($quickLoginUsers as $ql)
+            <form id="quick-login-{{ $ql['id'] }}" method="POST" action="{{ route('quick-login') }}" class="hidden">
+                @csrf
+                <input type="hidden" name="phone" value="{{ $ql['phone'] }}" />
+            </form>
+        @endforeach
+    @endif
 </div>
 
 {{-- Footer --}}

@@ -21,27 +21,27 @@
                 'icon' => '🏷️',
             ],
             'connectors' => [
-                'label' => 'Connectors & Specs',
+                'label' => __('messages.master_data_tab_connectors'),
                 'count' => $summary['connectors'] ?? 0,
                 'icon' => '🔌',
             ],
             'colors' => [
-                'label' => 'Color Codes',
+                'label' => __('messages.master_data_tab_colors'),
                 'count' => $summary['colors'] ?? 0,
                 'icon' => '🎨',
             ],
             'shelves' => [
-                'label' => 'Shelf / Locations',
+                'label' => __('messages.master_data_tab_shelves'),
                 'count' => $summary['shelves'] ?? 0,
                 'icon' => '🗄️',
             ],
             'warranties' => [
-                'label' => 'Warranty Presets',
+                'label' => __('messages.master_data_tab_warranties'),
                 'count' => $summary['warranties'] ?? 0,
                 'icon' => '🛡️',
             ],
             'return-policies' => [
-                'label' => 'Return Policies',
+                'label' => __('messages.master_data_tab_return_policies'),
                 'count' => $summary['return_policies'] ?? 0,
                 'icon' => '🔄',
             ],
@@ -107,7 +107,7 @@
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
-                    <span>+ Add {{ $tabs[$activeTab]['label'] ?? 'Item' }}</span>
+                    <span>+ {{ __('messages.preset_add_item') }}</span>
                 </button>
             @endif
 

@@ -3,14 +3,22 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Store;
 use App\POS\Models\Expense;
 use App\POS\Models\ExpenseCategory;
 use App\Services\StoreContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExpenseController extends Controller
@@ -29,11 +37,11 @@ class ExpenseController extends Controller
         $store = $context->getStore();
         $storeRouteParams = $context->getRouteParams();
 
+        [$fromDate, $toDate, $preset] = $this->resolveDateRange($request);
+
         $search = trim((string) $request->query('search', ''));
         $categoryId = $request->query('category_id');
         $paymentMethod = $request->query('payment_method');
-        $dateFrom = $request->query('expense_date_from', $request->query('date_from'));
-        $dateTo = $request->query('expense_date_to', $request->query('date_to'));
         $sort = (string) $request->query('sort', 'newest');
         $perPageParam = $request->query('per_page', '25');
         $perPage = $perPageParam === 'all' ? 1000 : max(10, min(100, (int) $perPageParam));
@@ -63,12 +71,12 @@ class ExpenseController extends Controller
             $query->where('payment_method', $paymentMethod);
         }
 
-        if (! empty($dateFrom)) {
-            $query->whereDate('expense_date', '>=', $dateFrom);
+        if ($fromDate) {
+            $query->whereDate('expense_date', '>=', $fromDate->toDateString());
         }
 
-        if (! empty($dateTo)) {
-            $query->whereDate('expense_date', '<=', $dateTo);
+        if ($toDate) {
+            $query->whereDate('expense_date', '<=', $toDate->toDateString());
         }
 
         match ($sort) {
@@ -131,6 +139,30 @@ class ExpenseController extends Controller
             'top_category_amount'  => $topCategoryAmount,
         ];
 
+        $exportXlsxUrl = route('store.admin.expenses.export', array_merge($storeRouteParams, array_filter([
+            'search' => $search,
+            'sort' => $sort,
+            'category_id' => $categoryId,
+            'payment_method' => $paymentMethod,
+            'preset' => $preset,
+            'date_from' => $fromDate?->toDateString(),
+            'date_to' => $toDate?->toDateString(),
+            'format' => 'xlsx',
+        ])));
+
+        $exportCsvUrl = route('store.admin.expenses.export', array_merge($storeRouteParams, array_filter([
+            'search' => $search,
+            'sort' => $sort,
+            'category_id' => $categoryId,
+            'payment_method' => $paymentMethod,
+            'preset' => $preset,
+            'date_from' => $fromDate?->toDateString(),
+            'date_to' => $toDate?->toDateString(),
+            'format' => 'csv',
+        ])));
+
+        $exportBaseUrl = route('store.admin.expenses.export', array_merge($storeRouteParams, request()->except(['page', 'format'])));
+
         return view('admin.expenses.index', compact(
             'store',
             'storeRouteParams',
@@ -141,9 +173,13 @@ class ExpenseController extends Controller
             'search',
             'categoryId',
             'paymentMethod',
-            'dateFrom',
-            'dateTo',
-            'sort'
+            'fromDate',
+            'toDate',
+            'preset',
+            'sort',
+            'exportBaseUrl',
+            'exportXlsxUrl',
+            'exportCsvUrl'
         ));
     }
 
@@ -218,8 +254,7 @@ class ExpenseController extends Controller
         ]);
 
         $attachmentPath = $expenseModel->attachment_path;
-
-        if ($request->boolean('remove_attachment') && $attachmentPath) {
+        if (! empty($validated['remove_attachment']) && $attachmentPath) {
             Storage::disk('public')->delete($attachmentPath);
             $attachmentPath = null;
         }
@@ -248,7 +283,7 @@ class ExpenseController extends Controller
             ->with('success', __('messages.expense_updated_success'));
     }
 
-    public function destroy(StoreContext $context, string $store_slug, int|string $expense): RedirectResponse
+    public function destroy(Request $request, StoreContext $context, string $store_slug, int|string $expense): RedirectResponse
     {
         $store = $context->getStore();
         $storeRouteParams = $context->getRouteParams();
@@ -266,15 +301,15 @@ class ExpenseController extends Controller
             ->with('success', __('messages.expense_deleted_success'));
     }
 
-    public function export(Request $request, StoreContext $context): StreamedResponse
+    public function export(Request $request, StoreContext $context): BinaryFileResponse|StreamedResponse
     {
         $store = $context->getStore();
 
+        [$fromDate, $toDate, $preset] = $this->resolveDateRange($request);
         $search = trim((string) $request->query('search', ''));
         $categoryId = $request->query('category_id');
         $paymentMethod = $request->query('payment_method');
-        $dateFrom = $request->query('expense_date_from', $request->query('date_from'));
-        $dateTo = $request->query('expense_date_to', $request->query('date_to'));
+        $format = $request->query('format', 'xlsx');
 
         $query = Expense::with(['category', 'recorder'])
             ->where('store_id', $store->id);
@@ -297,21 +332,154 @@ class ExpenseController extends Controller
             $query->where('payment_method', $paymentMethod);
         }
 
-        if (! empty($dateFrom)) {
-            $query->whereDate('expense_date', '>=', $dateFrom);
+        if ($fromDate) {
+            $query->whereDate('expense_date', '>=', $fromDate->toDateString());
         }
 
-        if (! empty($dateTo)) {
-            $query->whereDate('expense_date', '<=', $dateTo);
+        if ($toDate) {
+            $query->whereDate('expense_date', '<=', $toDate->toDateString());
         }
 
         $expenses = $query->orderBy('expense_date', 'desc')->orderBy('id', 'desc')->get();
 
+        if ($format === 'csv') {
+            return $this->exportCsv($store, $expenses);
+        }
+
+        return $this->exportXlsx($store, $expenses, $fromDate, $toDate);
+    }
+
+    /**
+     * Export Expenses as Formatted Excel (.xlsx).
+     */
+    private function exportXlsx(Store $store, $expenses, ?Carbon $fromDate, ?Carbon $toDate): BinaryFileResponse
+    {
+        $filename = 'Expenses_' . $store->slug . '_' . now()->format('Ymd_His') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_exp_');
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Expenses');
+
+        // Header Title Block
+        $sheet->setCellValue('A1', $store->name . ' - ' . __('messages.expenses_title'));
+        $periodText = ($fromDate && $toDate)
+            ? $fromDate->format('d/m/Y') . ' - ' . $toDate->format('d/m/Y')
+            : __('messages.all');
+        $sheet->setCellValue('A2', __('messages.period') . ': ' . $periodText);
+        $sheet->setCellValue('A3', __('messages.export_date') . ': ' . now()->format('d/m/Y h:i A') . ' | Total Count: ' . $expenses->count());
+
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('1E1B4B');
+        $sheet->getStyle('A2:A3')->getFont()->setSize(10)->getColor()->setRGB('64748B');
+
+        // Summary Box
+        $totalSum = (float) $expenses->sum('amount');
+        $sheet->setCellValue('A5', __('messages.expenses_total_filtered') . ': ' . number_format($totalSum, 2) . ' MMK');
+        $sheet->getStyle('A5:D5')->getFont()->setBold(true)->setSize(11);
+        $sheet->getStyle('A5:D5')->applyFromArray([
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'F1F5F9'],
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'CBD5E1']],
+            ],
+        ]);
+
+        $row = 7;
+
+        // Table Header
+        $headers = [
+            'A' => __('messages.report_voucher_no') ?? 'Voucher No',
+            'B' => __('messages.stock_ledger_date') ?? 'Date',
+            'C' => __('messages.title') ?? 'Title',
+            'D' => __('messages.category') ?? 'Category',
+            'E' => __('messages.subtotal') ?? 'Amount (MMK)',
+            'F' => __('messages.reports_payment_method') ?? 'Payment Method',
+            'G' => __('messages.expense_paid_to') ?? 'Paid To',
+            'H' => __('messages.expense_reference_no') ?? 'Reference No',
+            'I' => __('messages.expense_recorded_by') ?? 'Recorded By',
+            'J' => __('messages.notes') ?? 'Notes',
+        ];
+
+        foreach ($headers as $col => $title) {
+            $sheet->setCellValue("{$col}{$row}", $title);
+        }
+
+        $sheet->getStyle("A{$row}:J{$row}")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '059669'], // Emerald 600
+            ],
+            'alignment' => [
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet->getStyle("E{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getRowDimension($row)->setRowHeight(22);
+
+        $row++;
+
+        foreach ($expenses as $exp) {
+            $sheet->setCellValue("A{$row}", $exp->expense_number);
+            $sheet->setCellValue("B{$row}", $exp->expense_date?->format('d/m/Y'));
+            $sheet->setCellValue("C{$row}", $exp->title);
+            $sheet->setCellValue("D{$row}", $exp->category?->name ?? '—');
+            $sheet->setCellValue("E{$row}", (float) $exp->amount);
+            $sheet->setCellValue("F{$row}", strtoupper($exp->payment_method));
+            $sheet->setCellValue("G{$row}", $exp->paid_to ?? '-');
+            $sheet->setCellValue("H{$row}", $exp->reference_no ?? '-');
+            $sheet->setCellValue("I{$row}", $exp->recorder?->name ?? '-');
+            $sheet->setCellValue("J{$row}", $exp->notes ?? '');
+
+            $sheet->getStyle("E{$row}")->getNumberFormat()->setFormatCode('#,##0.00');
+
+            if ($row % 2 === 0) {
+                $sheet->getStyle("A{$row}:J{$row}")->applyFromArray([
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F8FAFC']],
+                ]);
+            }
+
+            $row++;
+        }
+
+        // Totals Row
+        $sheet->setCellValue("A{$row}", __('messages.total'));
+        $sheet->setCellValue("E{$row}", $totalSum);
+
+        $sheet->getStyle("A{$row}:J{$row}")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => '065F46']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'ECFDF5']],
+            'borders' => [
+                'top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '10B981']],
+                'bottom' => ['borderStyle' => Border::BORDER_DOUBLE, 'color' => ['rgb' => '10B981']],
+            ],
+        ]);
+        $sheet->getStyle("E{$row}")->getNumberFormat()->setFormatCode('#,##0.00');
+
+        // Auto-fit columns
+        foreach (range('A', 'J') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Export Expenses as CSV with UTF-8 BOM.
+     */
+    private function exportCsv(Store $store, $expenses): StreamedResponse
+    {
         $filename = 'expenses_' . $store->slug . '_' . now()->format('Y-m-d_His') . '.csv';
 
         return response()->streamDownload(function () use ($expenses) {
             $handle = fopen('php://output', 'w');
-            // Add UTF-8 BOM for Excel compatibility with Myanmar unicode text
             fputs($handle, "\xEF\xBB\xBF");
 
             fputcsv($handle, [
@@ -335,7 +503,7 @@ class ExpenseController extends Controller
                     $exp->title,
                     $exp->category?->name ?? '—',
                     $exp->category?->code ?? '—',
-                    number_format($exp->amount, 2, '.', ''),
+                    number_format((float) $exp->amount, 2, '.', ''),
                     strtoupper($exp->payment_method),
                     $exp->paid_to ?? '',
                     $exp->reference_no ?? '',
@@ -349,5 +517,41 @@ class ExpenseController extends Controller
             'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
+    }
+
+    /**
+     * Resolve date presets for expenses.
+     */
+    protected function resolveDateRange(Request $request): array
+    {
+        $preset = $request->query('preset');
+        $now = today();
+
+        if ($preset) {
+            return match ($preset) {
+                'today' => [$now->copy(), $now->copy(), 'today'],
+                'yesterday' => [$now->copy()->subDay(), $now->copy()->subDay(), 'yesterday'],
+                'this_week' => [$now->copy()->startOfWeek(), $now->copy()->endOfWeek(), 'this_week'],
+                'this_month' => [$now->copy()->startOfMonth(), $now->copy()->endOfMonth(), 'this_month'],
+                'last_month' => [$now->copy()->subMonth()->startOfMonth(), $now->copy()->subMonth()->endOfMonth(), 'last_month'],
+                'this_year' => [$now->copy()->startOfYear(), $now->copy()->endOfYear(), 'this_year'],
+                'all' => [null, null, 'all'],
+                default => [null, null, 'all'],
+            };
+        }
+
+        $dateFrom = $request->filled('date_from')
+            ? Carbon::parse($request->input('date_from'))
+            : ($request->filled('expense_date_from') ? Carbon::parse($request->input('expense_date_from')) : null);
+
+        $dateTo = $request->filled('date_to')
+            ? Carbon::parse($request->input('date_to'))
+            : ($request->filled('expense_date_to') ? Carbon::parse($request->input('expense_date_to')) : null);
+
+        if ($dateFrom || $dateTo) {
+            return [$dateFrom, $dateTo, 'custom'];
+        }
+
+        return [null, null, 'all'];
     }
 }

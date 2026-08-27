@@ -1,6 +1,7 @@
-@extends('layouts.pos.app')
+@extends('layouts.admin.app')
 
-@section('title', __('messages.po_create_title') . ' - ' . $store->name)
+@section('title', __('messages.po_create_title') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-2')
 
 @section('content')
 <div class="w-full space-y-2 sm:space-y-2.5"
@@ -17,7 +18,26 @@
          supplierName: '',
          discountAmount: 0,
          deliveryFee: 0,
+         paymentMode: 'credit',
+         paidAmount: 0,
          voucherPreviews: [],
+         get effectivePaid() {
+             const total = this.netTotal;
+             if (this.paymentMode !== 'cash') return 0;
+             let amt = parseFloat(this.paidAmount) || 0;
+             if (amt <= 0) amt = total;
+             return Math.min(Math.max(0, amt), total);
+         },
+         get paidStatus() {
+             if (this.paymentMode !== 'cash') return '';
+             return this.effectivePaid >= this.netTotal ? 'paid' : 'partial';
+         },
+         setPaymentMode(mode) {
+             this.paymentMode = mode;
+             if (mode === 'cash' && (!this.paidAmount || this.paidAmount <= 0)) {
+                 this.paidAmount = this.netTotal;
+             }
+         },
          get canSearch() { return this.q.trim() !== '' || this.filterBrand !== '' || this.filterCategory !== ''; },
          async search(open = true) {
              if (!this.canSearch) { this.results = []; this.open = false; this.searched = false; return; }
@@ -267,6 +287,47 @@
                         </label>
                     </div>
                 </div>
+            </div>
+
+            {{-- Row 3: Payment Terms (Paid-now / Credit) --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                {{-- Payment Mode Toggle: Cash (paid now) vs Credit --}}
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        💳 {{ __('messages.po_payment_mode') }}
+                    </label>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" @click="setPaymentMode('cash')"
+                                :class="paymentMode === 'cash' ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700'"
+                                class="flex-1 px-3 py-2 rounded-lg text-xs font-bold border transition flex items-center justify-center gap-1.5">
+                            <span>💰</span>
+                            <span>{{ __('messages.po_paid_now') }}</span>
+                        </button>
+                        <button type="button" @click="setPaymentMode('credit')"
+                                :class="paymentMode === 'credit' ? 'bg-amber-500 text-white border-amber-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700'"
+                                class="flex-1 px-3 py-2 rounded-lg text-xs font-bold border transition flex items-center justify-center gap-1.5">
+                            <span>🕐</span>
+                            <span>{{ __('messages.po_credit') }}</span>
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1"
+                       x-text="paymentMode === 'cash' ? '{{ __('messages.po_paid_now_hint') }}' : '{{ __('messages.po_credit_hint') }}'"></p>
+                </div>
+
+                {{-- Paid Amount (only when cash/paid-now) --}}
+                <div x-show="paymentMode === 'cash'" x-cloak>
+                    <label for="po-paid-amount" class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-1 flex items-center justify-between">
+                        <span>{{ __('messages.po_paid_amount') }} (Ks)</span>
+                        <span class="text-[10px] font-normal text-slate-400">(≤ {{ __('messages.po_net_total') }})</span>
+                    </label>
+                    <input id="po-paid-amount" type="number" inputmode="decimal" min="0" step="any"
+                           x-model.number="paidAmount" placeholder="0"
+                           class="w-full rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                {{-- Hidden payment fields submitted only when paid-now --}}
+                <input type="hidden" name="payment_status" :value="paidStatus">
+                <input type="hidden" name="paid_amount" :value="effectivePaid">
             </div>
 
             {{-- Voucher Previews Carousel / Grid (If files selected) --}}

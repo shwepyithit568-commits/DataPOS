@@ -18,12 +18,53 @@ class HomeBannerController extends Controller
     public function index(Request $request, StoreContext $context): View
     {
         $store = $context->getStore();
+        abort_if(!$store, 404);
+
         $currentPage = $request->query('page', 'home');
-        $banners = $store->homeBanners()->where('page', $currentPage)->get();
+
+        $query = $store->homeBanners();
+
+        if ($currentPage !== 'all') {
+            $query->where('page', $currentPage);
+        }
+
+        if ($search = trim((string) $request->input('search', ''))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('link_url', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+
+        $sort = $request->input('sort', 'sort_order');
+        match ($sort) {
+            'newest'     => $query->latest(),
+            'oldest'     => $query->oldest(),
+            'title_asc'  => $query->orderBy('title', 'asc'),
+            default      => $query->orderBy('sort_order', 'asc')->latest(),
+        };
+
+        $banners = $query->get();
+
+        // Calculate summary KPI stats for the store
+        $allBanners = $store->homeBanners()->get();
+        $stats = [
+            'total'        => $allBanners->count(),
+            'active'       => $allBanners->where('is_active', true)->count(),
+            'hidden'       => $allBanners->where('is_active', false)->count(),
+            'home'         => $allBanners->where('page', 'home')->count(),
+            'glass_finder' => $allBanners->where('page', 'glass_finder')->count(),
+        ];
 
         AdminListReturn::capture($request, 'admin_banners_return');
 
-        return view('admin.banners.index', compact('store', 'banners', 'currentPage'));
+        $imageMaxMb = self::IMAGE_MAX_KB / 1024;
+
+        return view('admin.banners.index', compact('store', 'banners', 'currentPage', 'stats', 'imageMaxMb', 'search', 'sort'));
     }
 
     public function store(Request $request, StoreContext $context): RedirectResponse

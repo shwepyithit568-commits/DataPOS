@@ -89,22 +89,33 @@ class SalesAnalyticsController extends Controller
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
 
             // Header summary
-            fputcsv($handle, ['Sales Analytics Report', $store->name]);
-            fputcsv($handle, ['Period', $from->toFormattedDateString() . ' to ' . $to->toFormattedDateString()]);
-            fputcsv($handle, ['Gross Sales (Ks)', number_format($report['kpi']['gross_sales'], 2)]);
-            fputcsv($handle, ['Discounts Given (Ks)', number_format($report['kpi']['discounts'], 2)]);
-            fputcsv($handle, ['Net Sales (Ks)', number_format($report['kpi']['net_sales'], 2)]);
-            fputcsv($handle, ['Estimated COGS (Ks)', number_format($report['kpi']['total_cost'], 2)]);
-            fputcsv($handle, ['Gross Profit (Ks)', number_format($report['kpi']['gross_profit'], 2)]);
-            fputcsv($handle, ['Gross Margin (%)', $report['kpi']['gross_margin'] . '%']);
-            fputcsv($handle, ['Total Invoices/Orders', $report['kpi']['total_orders']]);
-            fputcsv($handle, ['Total Items Sold', $report['kpi']['total_items']]);
-            fputcsv($handle, ['Average Order Value (Ks)', number_format($report['kpi']['aov'], 2)]);
+            fputcsv($handle, [__('messages.report_analytics_title'), $store->name]);
+            fputcsv($handle, [__('messages.report_period'), $from->toFormattedDateString() . ' to ' . $to->toFormattedDateString()]);
+            fputcsv($handle, [__('messages.report_gross_sales'), number_format($report['kpi']['gross_sales'], 2)]);
+            fputcsv($handle, [__('messages.report_discounts_given'), number_format($report['kpi']['discounts'], 2)]);
+            fputcsv($handle, [__('messages.report_net_sales'), number_format($report['kpi']['net_sales'], 2)]);
+            fputcsv($handle, [__('messages.report_estimated_cogs'), number_format($report['kpi']['total_cost'], 2)]);
+            fputcsv($handle, [__('messages.report_gross_profit'), number_format($report['kpi']['gross_profit'], 2)]);
+            fputcsv($handle, [__('messages.report_gross_margin'), $report['kpi']['gross_margin'] . '%']);
+            fputcsv($handle, [__('messages.report_total_orders'), $report['kpi']['total_orders']]);
+            fputcsv($handle, [__('messages.report_total_items_sold'), $report['kpi']['total_items']]);
+            fputcsv($handle, [__('messages.report_aov'), number_format($report['kpi']['aov'], 2)]);
             fputcsv($handle, []);
 
             // Top Products Section
-            fputcsv($handle, ['--- TOP SELLING PRODUCTS ---']);
-            fputcsv($handle, ['Rank', 'Product Name', 'SKU', 'Category', 'Brand', 'Units Sold', 'Revenue (Ks)', 'Cost (Ks)', 'Profit (Ks)', 'Margin (%)']);
+            fputcsv($handle, [__('messages.report_top_products')]);
+            fputcsv($handle, [
+                __('messages.report_rank'),
+                __('messages.product'),
+                __('messages.sku'),
+                __('messages.category'),
+                __('messages.brand'),
+                __('messages.report_units_sold'),
+                __('messages.report_total_revenue'),
+                __('messages.report_total_cost'),
+                __('messages.profit'),
+                __('messages.report_gross_margin'),
+            ]);
             foreach ($report['top_products'] as $idx => $p) {
                 fputcsv($handle, [
                     $idx + 1,
@@ -123,8 +134,15 @@ class SalesAnalyticsController extends Controller
 
             // Cashier Section
             if (!empty($report['cashier_performance'])) {
-                fputcsv($handle, ['--- CASHIER / STAFF PERFORMANCE ---']);
-                fputcsv($handle, ['Cashier Name', 'Email', 'Receipts Count', 'Total Sales (Ks)', 'Discounts (Ks)', 'AOV (Ks)']);
+                fputcsv($handle, [__('messages.report_cashier_performance')]);
+                fputcsv($handle, [
+                    __('messages.report_cashier_name'),
+                    __('messages.report_email'),
+                    __('messages.report_receipts_count'),
+                    __('messages.report_total_sales'),
+                    __('messages.report_discounts_kpi'),
+                    __('messages.report_aov'),
+                ]);
                 foreach ($report['cashier_performance'] as $c) {
                     fputcsv($handle, [
                         $c['name'],
@@ -139,8 +157,15 @@ class SalesAnalyticsController extends Controller
             }
 
             // Daily Sales Timeline
-            fputcsv($handle, ['--- DAILY SALES TIMELINE ---']);
-            fputcsv($handle, ['Date', 'Day', 'Total Revenue (Ks)', 'POS Revenue (Ks)', 'Web Revenue (Ks)', 'Orders Count']);
+            fputcsv($handle, [__('messages.report_daily_timeline')]);
+            fputcsv($handle, [
+                __('messages.order_date'),
+                __('messages.report_day'),
+                __('messages.report_total_revenue'),
+                __('messages.report_pos_revenue'),
+                __('messages.report_web_revenue'),
+                __('messages.report_orders_count'),
+            ]);
             foreach ($report['timeline']['series'] as $t) {
                 fputcsv($handle, [
                     $t['date'],

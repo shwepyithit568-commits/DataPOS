@@ -1,6 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.membership_title') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-2')
 
 @section('content')
 <script nonce="{{ $cspNonce }}">
@@ -80,110 +81,122 @@ window.membershipHubData = function () {
 };
 </script>
 
-<div class="w-full space-y-5 sm:space-y-6" x-data="membershipHubData()">
+<div class="w-full space-y-2 sm:space-y-2.5" x-data="membershipHubData()">
 
     {{-- ============================================================
-         PAGE HEADER
+         1. TOP PAGE HEADER — Eyebrow, Title, Context & Add Tier Action
          ============================================================ --}}
-    <div class="admin-page-header">
+    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
         <div class="min-w-0">
-            <p class="text-[11px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                {{ __('messages.sidebar_customers') ?? 'Customer Loyalty & Retention' }}
-            </p>
-            <h1 class="admin-page-title mt-0.5">
-                {{ __('messages.membership_title') }}
+            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 text-[10px] sm:text-[11px] font-black uppercase tracking-wider border border-violet-100 dark:border-violet-900/60 mb-0.5">
+                <span>👑</span>
+                <span>{{ __('messages.sidebar_membership') }}</span>
+                <span class="text-slate-400 dark:text-slate-500">·</span>
+                <span class="font-normal normal-case text-slate-500 dark:text-slate-400">Customer Loyalty & VIP Tiers</span>
+            </div>
+            <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                <span>{{ __('messages.membership_title') }}</span>
             </h1>
-            <p class="admin-page-sub mt-1">
+            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                 {{ $store->name }} · {{ __('messages.membership_subtitle') }}
             </p>
         </div>
-        <div class="flex flex-wrap items-center gap-2 shrink-0">
-            {{-- Add New Tier Trigger --}}
+
+        <div class="flex items-center gap-2 shrink-0">
             <button type="button"
                     @click="showAddTierModal = true"
-                    class="admin-primary-btn bg-violet-600 hover:bg-violet-500">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
+                    class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-black bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition flex items-center gap-1.5 active:scale-95 cursor-pointer">
+                <span class="text-sm leading-none">+</span>
                 <span>{{ __('messages.membership_add_tier') }}</span>
             </button>
         </div>
-    </div>
+    </header>
 
     {{-- Flash Notifications & Errors --}}
     @if (session('success'))
-        <div class="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl text-sm text-emerald-800 dark:text-emerald-200 flex items-center gap-3">
-            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span class="font-medium">{{ session('success') }}</span>
+        <div class="w-full p-2.5 sm:p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
+            <span>✅</span>
+            <span>{{ session('success') }}</span>
         </div>
     @endif
     @if ($errors->any())
-        <div class="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl text-sm text-rose-800 dark:text-rose-200">
+        <div class="w-full p-2.5 sm:p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-800 dark:text-rose-300 space-y-1 shadow-2xs">
+            <div class="font-black flex items-center gap-1.5">
+                <span>⚠️</span>
+                <span>{{ __('messages.validation_error') }}:</span>
+            </div>
             @foreach ($errors->all() as $err)
-                <p>{{ $err }}</p>
+                <p class="ml-4">• {{ $err }}</p>
             @endforeach
         </div>
     @endif
 
     {{-- ============================================================
-         SUMMARY STATS HAIRLINE GRID
+         2. 4 KEY KPI STAT CARDS
          ============================================================ --}}
-    <div class="admin-hairline-grid grid-cols-2 sm:grid-cols-4">
-        {{-- 1. Total Registered Members --}}
-        <div class="admin-hairline-cell bg-violet-50/30 dark:bg-violet-950/20">
-            <div class="admin-stat-label text-violet-600 dark:text-violet-400">{{ __('messages.membership_total_members') }}</div>
-            <div class="admin-stat-value text-violet-700 dark:text-violet-300 font-mono">
-                {{ number_format($stats['total_members']) }}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
+        {{-- Total Registered Members --}}
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-violet-600 dark:text-violet-400 truncate">{{ __('messages.membership_total_members') }}</span>
+                <span class="text-xs">👥</span>
             </div>
-            <div class="admin-stat-sub text-slate-500">Registered Customers</div>
+            <div class="text-lg sm:text-2xl font-black text-violet-700 dark:text-violet-300 mt-1 font-mono tracking-tight">{{ number_format($stats['total_members']) }}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Registered Customers</div>
         </div>
 
-        {{-- 2. Active VIP Tiers --}}
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label text-blue-600 dark:text-blue-400">{{ __('messages.membership_active_tiers') }}</div>
-            <div class="admin-stat-value text-blue-600 dark:text-blue-400 font-mono">
-                {{ $stats['active_tiers'] }}
+        {{-- Active VIP Tiers --}}
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-blue-600 dark:text-blue-400 truncate">{{ __('messages.membership_active_tiers') }}</span>
+                <span class="text-xs">🏆</span>
             </div>
-            <div class="admin-stat-sub text-slate-400">Progression Levels</div>
+            <div class="text-lg sm:text-2xl font-black text-blue-600 dark:text-blue-400 mt-1 font-mono tracking-tight">{{ $stats['active_tiers'] }}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Progression Levels</div>
         </div>
 
-        {{-- 3. Points in Circulation --}}
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label text-amber-600 dark:text-amber-400">{{ __('messages.membership_points_circulation') }}</div>
-            <div class="admin-stat-value text-amber-600 dark:text-amber-400 font-mono">
-                {{ number_format($stats['points_in_circulation']) }} Pts
+        {{-- Points in Circulation --}}
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 truncate">{{ __('messages.membership_points_circulation') }}</span>
+                <span class="text-xs">🪙</span>
             </div>
-            <div class="admin-stat-sub text-slate-400">Customer Balance</div>
+            <div class="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 mt-1 font-mono tracking-tight">{{ number_format($stats['points_in_circulation']) }} <span class="text-xs font-normal">Pts</span></div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Customer Balance</div>
         </div>
 
-        {{-- 4. Total Points Redeemed --}}
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label text-emerald-600 dark:text-emerald-400">{{ __('messages.membership_points_redeemed') }}</div>
-            <div class="admin-stat-value text-emerald-600 dark:text-emerald-400 font-mono">
-                {{ number_format($stats['total_points_redeemed']) }} Pts
+        {{-- Total Points Redeemed --}}
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 truncate">{{ __('messages.membership_points_redeemed') }}</span>
+                <span class="text-xs">🎁</span>
             </div>
-            <div class="admin-stat-sub text-slate-400">Claimed Rewards</div>
+            <div class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono tracking-tight">{{ number_format($stats['total_points_redeemed']) }} <span class="text-xs font-normal">Pts</span></div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Claimed Rewards</div>
         </div>
     </div>
 
     {{-- ============================================================
-         MEMBERSHIP TIERS GALLERY
+         3. MEMBERSHIP TIERS GALLERY
          ============================================================ --}}
-    <div class="space-y-3">
-        <h2 class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
-            VIP Membership Tiers & Benefits ({{ count($tiers) }})
-        </h2>
+    <div class="space-y-2">
+        <div class="flex items-center justify-between px-1">
+            <h2 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>⭐</span>
+                <span>VIP Membership Tiers & Privileges ({{ count($tiers) }})</span>
+            </h2>
+        </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
             @foreach($tiers as $tier)
                 @php
                     $colors = match($tier->badge_color) {
-                        'blue' => 'border-blue-300 dark:border-blue-800/80 bg-blue-50/20 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300',
-                        'amber' => 'border-amber-300 dark:border-amber-800/80 bg-amber-50/20 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300',
-                        'purple' => 'border-purple-300 dark:border-purple-800/80 bg-purple-50/20 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300',
-                        'emerald' => 'border-emerald-300 dark:border-emerald-800/80 bg-emerald-50/20 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300',
-                        'rose' => 'border-rose-300 dark:border-rose-800/80 bg-rose-50/20 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300',
-                        default => 'border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300',
+                        'blue' => 'border-blue-200 dark:border-blue-800/60 bg-blue-50/20 dark:bg-blue-950/20',
+                        'amber' => 'border-amber-200 dark:border-amber-800/60 bg-amber-50/20 dark:bg-amber-950/20',
+                        'purple' => 'border-purple-200 dark:border-purple-800/60 bg-purple-50/20 dark:bg-purple-950/20',
+                        'emerald' => 'border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/20 dark:bg-emerald-950/20',
+                        'rose' => 'border-rose-200 dark:border-rose-800/60 bg-rose-50/20 dark:bg-rose-950/20',
+                        default => 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900',
                     };
                     $badgePill = match($tier->badge_color) {
                         'blue' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200',
@@ -195,51 +208,51 @@ window.membershipHubData = function () {
                     };
                 @endphp
 
-                <div class="rounded-3xl border {{ $colors }} p-5 shadow-sm flex flex-col justify-between space-y-4 transition hover:shadow-md">
+                <div class="rounded-lg border {{ $colors }} p-3 shadow-2xs flex flex-col justify-between space-y-3 transition hover:border-slate-300 dark:hover:border-slate-700">
                     <div>
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="px-2.5 py-0.5 rounded-full text-xs font-black font-mono {{ $badgePill }}">
+                        <div class="flex items-center justify-between gap-1.5">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-black font-mono {{ $badgePill }}">
                                 {{ $tier->code }}
                             </span>
                             @if($tier->is_default)
-                                <span class="text-[11px] font-black text-amber-500 flex items-center gap-0.5">
+                                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
                                     ★ Default
                                 </span>
                             @endif
                         </div>
 
-                        <h3 class="text-base font-extrabold text-slate-900 dark:text-slate-100 mt-2 font-outfit">
+                        <h3 class="text-sm font-black text-slate-900 dark:text-slate-100 mt-1.5 truncate">
                             {{ $tier->name }}
                         </h3>
 
                         {{-- Tier Benefits List --}}
-                        <div class="mt-3 space-y-2 text-xs">
-                            <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                        <div class="mt-2 space-y-1.5 text-xs">
+                            <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                                 <span>Min Spend:</span>
-                                <strong class="font-mono text-slate-900 dark:text-slate-100">{{ number_format($tier->min_spending) }} Ks</strong>
+                                <strong class="font-mono text-slate-900 dark:text-slate-100 text-[11px]">{{ number_format($tier->min_spending) }} Ks</strong>
                             </div>
-                            <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                            <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                                 <span>VIP Discount:</span>
-                                <strong class="font-mono text-emerald-600 dark:text-emerald-400">{{ $tier->discount_percent }}% Off</strong>
+                                <strong class="font-mono text-emerald-600 dark:text-emerald-400 text-[11px]">{{ $tier->discount_percent }}% Off</strong>
                             </div>
-                            <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
+                            <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
                                 <span>Point Multiplier:</span>
-                                <strong class="font-mono text-violet-600 dark:text-violet-400">{{ $tier->point_multiplier }}x Pts</strong>
+                                <strong class="font-mono text-violet-600 dark:text-violet-400 text-[11px]">{{ $tier->point_multiplier }}x Pts</strong>
                             </div>
-                            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-slate-500">
+                            <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-slate-400 text-[11px]">
                                 <span>Members:</span>
-                                <span class="font-bold">{{ number_format($tier->members_count ?? 0) }}</span>
+                                <span class="font-bold text-slate-700 dark:text-slate-300 font-mono">{{ number_format($tier->members_count ?? 0) }}</span>
                             </div>
                         </div>
                     </div>
 
                     {{-- Actions --}}
-                    <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-1">
+                    <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-1">
                         <button type="button"
                                 @click="openEditTier({{ $tier->id }}, '{{ addslashes($tier->name) }}', '{{ $tier->code }}', {{ $tier->min_spending }}, {{ $tier->discount_percent }}, {{ $tier->point_multiplier }}, '{{ $tier->badge_color }}', {{ $tier->is_active ? 'true' : 'false' }})"
-                                class="p-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                                class="px-2 py-1 text-xs font-bold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                                 title="Edit Tier">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            Edit
                         </button>
 
                         @if(!$tier->is_default)
@@ -247,9 +260,9 @@ window.membershipHubData = function () {
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"
-                                        class="p-1.5 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                                        class="px-2 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-md transition cursor-pointer"
                                         title="Delete Tier">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    Delete
                                 </button>
                             </form>
                         @endif
@@ -260,28 +273,29 @@ window.membershipHubData = function () {
     </div>
 
     {{-- ============================================================
-         CUSTOMER MEMBERS & LOYALTY DIRECTORY TABLE
+         4. CUSTOMER MEMBERS & LOYALTY DIRECTORY TABLE
          ============================================================ --}}
-    <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-lg shadow-2xs overflow-hidden transition space-y-0">
+        <div class="p-2.5 sm:p-3 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
             <div>
-                <h2 class="text-sm font-extrabold text-slate-900 dark:text-slate-100 font-outfit">
-                    {{ __('messages.membership_members_directory') }}
+                <h2 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <span>👥</span>
+                    <span>{{ __('messages.membership_members_directory') }}</span>
                 </h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p class="text-[11px] text-slate-400 mt-0.5">
                     Customer loyalty balances, VIP tier progression, and manual reward adjustments
                 </p>
             </div>
 
             {{-- Filter Bar --}}
-            <form method="GET" action="{{ route('store.admin.membership.index', ['store_slug' => $store->slug]) }}" class="flex flex-wrap items-center gap-2">
+            <form method="GET" action="{{ route('store.admin.membership.index', ['store_slug' => $store->slug]) }}" class="flex flex-wrap items-center gap-1.5">
                 <input type="text"
                        name="search"
                        value="{{ request('search') }}"
                        placeholder="Search name, phone..."
-                       class="px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500">
+                       class="px-2.5 py-1 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
 
-                <select name="tier_id" class="px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold">
+                <select name="tier_id" class="px-2.5 py-1 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold">
                     <option value="">All VIP Tiers</option>
                     @foreach($tiers as $t)
                         <option value="{{ $t->id }}" {{ request('tier_id') == $t->id ? 'selected' : '' }}>
@@ -290,25 +304,25 @@ window.membershipHubData = function () {
                     @endforeach
                 </select>
 
-                <button type="submit" class="px-3.5 py-1.5 bg-violet-600 text-white rounded-xl text-xs font-bold hover:bg-violet-500 transition">
+                <button type="submit" class="px-3 py-1 bg-violet-600 text-white rounded-md text-xs font-bold hover:bg-violet-700 transition active:scale-95 cursor-pointer shadow-2xs">
                     Filter
                 </button>
             </form>
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead>
-                    <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-mono uppercase">
-                        <th class="pb-3">Customer</th>
-                        <th class="pb-3">Contact</th>
-                        <th class="pb-3">VIP Membership Tier</th>
-                        <th class="pb-3 text-right">Points Balance</th>
-                        <th class="pb-3 text-right">Lifetime Spend</th>
-                        <th class="pb-3 text-right">Actions</th>
+            <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300 min-w-[650px]">
+                <thead class="bg-slate-50 dark:bg-slate-800/80 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                    <tr>
+                        <th class="p-2.5">Customer</th>
+                        <th class="p-2.5">Contact</th>
+                        <th class="p-2.5">VIP Membership Tier</th>
+                        <th class="p-2.5 text-right">{{ __('messages.membership_current_points') }}</th>
+                        <th class="p-2.5 text-right">{{ __('messages.membership_total_spend') }}</th>
+                        <th class="p-2.5 text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                     @forelse($members as $m)
                         @php
                             $tierColor = match($m->tier_color) {
@@ -320,59 +334,59 @@ window.membershipHubData = function () {
                                 default => 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
                             };
                         @endphp
-                        <tr>
+                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
                             {{-- Customer Name --}}
-                            <td class="py-3">
+                            <td class="p-2.5">
                                 <div class="font-bold text-slate-900 dark:text-slate-100">{{ $m->name }}</div>
                                 <span class="text-[10px] text-slate-400">{{ ucfirst($m->customer_role ?? 'Customer') }}</span>
                             </td>
 
                             {{-- Contact --}}
-                            <td class="py-3 font-mono text-slate-600 dark:text-slate-300">
+                            <td class="p-2.5 font-mono text-slate-600 dark:text-slate-300">
                                 {{ $m->phone ?? $m->email ?? '-' }}
                             </td>
 
                             {{-- Current Tier Badge --}}
-                            <td class="py-3">
+                            <td class="p-2.5">
                                 @if($m->tier_name)
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black font-mono {{ $tierColor }}">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black font-mono {{ $tierColor }}">
                                         {{ $m->tier_name }}
                                         @if($m->tier_discount > 0)
-                                            <span class="text-[10px] opacity-80">({{ $m->tier_discount }}% off)</span>
+                                            <span class="text-[9px] opacity-80">({{ $m->tier_discount }}% off)</span>
                                         @endif
                                     </span>
                                 @else
-                                    <span class="text-slate-400">Standard Member</span>
+                                    <span class="text-slate-400 text-[11px]">Standard Member</span>
                                 @endif
                             </td>
 
                             {{-- Points Balance --}}
-                            <td class="py-3 text-right">
-                                <span class="font-mono text-sm font-black text-amber-600 dark:text-amber-400">
+                            <td class="p-2.5 text-right">
+                                <span class="font-mono text-xs font-black text-amber-600 dark:text-amber-400">
                                     {{ number_format($m->loyalty_points) }}
                                 </span>
                                 <span class="text-[10px] text-slate-400 ml-0.5">Pts</span>
                             </td>
 
                             {{-- Lifetime Spend --}}
-                            <td class="py-3 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
+                            <td class="p-2.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
                                 {{ number_format($m->total_spent) }} Ks
                             </td>
 
                             {{-- Quick Actions --}}
-                            <td class="py-3 text-right">
-                                <div class="flex items-center justify-end gap-1.5">
+                            <td class="p-2.5 text-right">
+                                <div class="flex items-center justify-end gap-1">
                                     {{-- Adjust Points --}}
                                     <button type="button"
                                             @click="openAdjustPoints({{ $m->id }}, '{{ addslashes($m->name) }}', {{ $m->loyalty_points }})"
-                                            class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 transition">
+                                            class="px-2 py-1 rounded-md text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 transition cursor-pointer">
                                         {{ __('messages.membership_adjust_points') }}
                                     </button>
 
                                     {{-- Change Tier --}}
                                     <button type="button"
                                             @click="openAssignTier({{ $m->id }}, '{{ addslashes($m->name) }}', {{ $m->membership_tier_id ?? 'null' }})"
-                                            class="px-2.5 py-1 rounded-xl text-xs font-bold bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/60 hover:bg-violet-100 transition">
+                                            class="px-2 py-1 rounded-md text-[11px] font-bold bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/60 hover:bg-violet-100 transition cursor-pointer">
                                         {{ __('messages.membership_assign_tier') }}
                                     </button>
                                 </div>
@@ -380,7 +394,7 @@ window.membershipHubData = function () {
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-8 text-center text-slate-400">
+                            <td colspan="6" class="p-8 text-center text-slate-400 dark:text-slate-500 text-xs font-bold">
                                 No registered customer members found.
                             </td>
                         </tr>
@@ -390,7 +404,7 @@ window.membershipHubData = function () {
         </div>
 
         @if($members->hasPages())
-            <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div class="p-2.5 border-t border-slate-100 dark:border-slate-800">
                 {{ $members->links() }}
             </div>
         @endif
@@ -400,51 +414,52 @@ window.membershipHubData = function () {
          MODAL 1: ADD TIER
          ============================================================ --}}
     <div x-show="showAddTierModal"
-         x-transition.opacity
-         class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-         style="display: none;">
-        <div @click.away="showAddTierModal = false"
-             class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
-            <div class="flex justify-between items-center">
-                <h3 class="text-base font-black text-slate-900 dark:text-slate-100 font-outfit">
-                    {{ __('messages.membership_add_tier') }}
+         x-cloak
+         @click.self="showAddTierModal = false"
+         @keydown.escape.window="showAddTierModal = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-2xl space-y-3.5 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <h3 class="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <span>👑</span>
+                    <span>{{ __('messages.membership_add_tier') }}</span>
                 </h3>
-                <button type="button" @click="showAddTierModal = false" class="text-slate-400 hover:text-slate-600">✕</button>
+                <button type="button" @click="showAddTierModal = false" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
             </div>
 
-            <form method="POST" action="{{ route('store.admin.membership.tiers.store', ['store_slug' => $store->slug]) }}" class="space-y-4 text-xs">
+            <form method="POST" action="{{ route('store.admin.membership.tiers.store', ['store_slug' => $store->slug]) }}" class="space-y-3 text-xs">
                 @csrf
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-2.5">
                     <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.membership_tier_name') }} *</label>
-                        <input type="text" name="name" required placeholder="e.g. Diamond VIP" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                        <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_tier_name') }} *</label>
+                        <input type="text" name="name" required placeholder="e.g. Diamond VIP" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
                     </div>
                     <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.membership_tier_code') }} *</label>
-                        <input type="text" name="code" required placeholder="e.g. DIAMOND" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.membership_min_spending') }} *</label>
-                    <input type="number" step="1000" min="0" name="min_spending" required placeholder="e.g. 5000000" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.membership_discount_percent') }} *</label>
-                        <input type="number" step="0.5" min="0" max="100" name="discount_percent" required placeholder="e.g. 15" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.membership_point_multiplier') }} *</label>
-                        <input type="number" step="0.1" min="0.1" max="10" name="point_multiplier" required value="2.0" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                        <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_tier_code') }} *</label>
+                        <input type="text" name="code" required placeholder="e.g. DIAMOND" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.membership_badge_color') }}</label>
-                    <select name="badge_color" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                    <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_min_spending') }} *</label>
+                    <input type="number" step="1000" min="0" name="min_spending" required placeholder="e.g. 5000000" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_discount_percent') }} *</label>
+                        <input type="number" step="0.5" min="0" max="100" name="discount_percent" required placeholder="e.g. 15" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_point_multiplier') }} *</label>
+                        <input type="number" step="0.1" min="0.1" max="10" name="point_multiplier" required value="2.0" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_badge_color') }}</label>
+                    <select name="badge_color" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
                         <option value="slate">Slate (Default)</option>
                         <option value="blue">Blue (Silver Theme)</option>
                         <option value="amber">Amber (Gold Theme)</option>
@@ -454,9 +469,9 @@ window.membershipHubData = function () {
                     </select>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="showAddTierModal = false" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-violet-600 text-white font-bold shadow-md">Create Tier</button>
+                <div class="flex justify-end gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" @click="showAddTierModal = false" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">Create Tier</button>
                 </div>
             </form>
         </div>
@@ -466,54 +481,55 @@ window.membershipHubData = function () {
          MODAL 2: EDIT TIER
          ============================================================ --}}
     <div x-show="showEditTierModal"
-         x-transition.opacity
-         class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-         style="display: none;">
-        <div @click.away="showEditTierModal = false"
-             class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
-            <div class="flex justify-between items-center">
-                <h3 class="text-base font-black text-slate-900 dark:text-slate-100 font-outfit">
-                    Edit Tier: <span x-text="editingTier.name" class="text-violet-600"></span>
+         x-cloak
+         @click.self="showEditTierModal = false"
+         @keydown.escape.window="showEditTierModal = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-2xl space-y-3.5 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <h3 class="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <span>✏️</span>
+                    <span>Edit Tier: <span x-text="editingTier.name" class="text-violet-600 dark:text-violet-400"></span></span>
                 </h3>
-                <button type="button" @click="showEditTierModal = false" class="text-slate-400 hover:text-slate-600">✕</button>
+                <button type="button" @click="showEditTierModal = false" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
             </div>
 
             <form method="POST"
                   :action="'{{ url('/store/' . $store->slug . '/admin/membership/tiers') }}/' + editingTier.id"
-                  class="space-y-4 text-xs">
+                  class="space-y-3 text-xs">
                 @csrf
                 @method('PUT')
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-2.5">
                     <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.membership_tier_name') }} *</label>
-                        <input type="text" name="name" x-model="editingTier.name" required class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                        <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_tier_name') }} *</label>
+                        <input type="text" name="name" x-model="editingTier.name" required class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
                     </div>
                     <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.membership_tier_code') }} *</label>
-                        <input type="text" name="code" x-model="editingTier.code" required class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.membership_min_spending') }} *</label>
-                    <input type="number" step="1000" min="0" name="min_spending" x-model="editingTier.min_spending" required class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.membership_discount_percent') }} *</label>
-                        <input type="number" step="0.5" min="0" max="100" name="discount_percent" x-model="editingTier.discount_percent" required class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.membership_point_multiplier') }} *</label>
-                        <input type="number" step="0.1" min="0.1" max="10" name="point_multiplier" x-model="editingTier.point_multiplier" required class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                        <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_tier_code') }} *</label>
+                        <input type="text" name="code" x-model="editingTier.code" required class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.membership_badge_color') }}</label>
-                    <select name="badge_color" x-model="editingTier.badge_color" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                    <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_min_spending') }} *</label>
+                    <input type="number" step="1000" min="0" name="min_spending" x-model="editingTier.min_spending" required class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_discount_percent') }} *</label>
+                        <input type="number" step="0.5" min="0" max="100" name="discount_percent" x-model="editingTier.discount_percent" required class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_point_multiplier') }} *</label>
+                        <input type="number" step="0.1" min="0.1" max="10" name="point_multiplier" x-model="editingTier.point_multiplier" required class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_badge_color') }}</label>
+                    <select name="badge_color" x-model="editingTier.badge_color" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
                         <option value="slate">Slate (Default)</option>
                         <option value="blue">Blue (Silver Theme)</option>
                         <option value="amber">Amber (Gold Theme)</option>
@@ -523,14 +539,14 @@ window.membershipHubData = function () {
                     </select>
                 </div>
 
-                <div class="flex items-center gap-2 pt-2">
-                    <input type="checkbox" name="is_active" value="1" :checked="editingTier.is_active == 1" class="w-4 h-4 rounded text-violet-600">
-                    <span class="font-bold text-slate-800 dark:text-slate-200">Active VIP Tier</span>
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" name="is_active" value="1" :checked="editingTier.is_active == 1" class="w-4 h-4 rounded text-violet-600 focus:ring-violet-500">
+                    <span class="font-bold text-slate-700 dark:text-slate-300">Active VIP Tier</span>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="showEditTierModal = false" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-violet-600 text-white font-bold shadow-md">Update Tier</button>
+                <div class="flex justify-end gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" @click="showEditTierModal = false" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">Update Tier</button>
                 </div>
             </form>
         </div>
@@ -540,50 +556,51 @@ window.membershipHubData = function () {
          MODAL 3: ADJUST LOYALTY POINTS
          ============================================================ --}}
     <div x-show="showAdjustPointsModal"
-         x-transition.opacity
-         class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-         style="display: none;">
-        <div @click.away="showAdjustPointsModal = false"
-             class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
-            <div class="flex justify-between items-center">
-                <h3 class="text-base font-black text-slate-900 dark:text-slate-100 font-outfit">
-                    Adjust Points: <span x-text="adjustTarget.customer_name" class="text-amber-600"></span>
+         x-cloak
+         @click.self="showAdjustPointsModal = false"
+         @keydown.escape.window="showAdjustPointsModal = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-2xl space-y-3.5 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <h3 class="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <span>🪙</span>
+                    <span>Adjust Points: <span x-text="adjustTarget.customer_name" class="text-amber-600 dark:text-amber-400"></span></span>
                 </h3>
-                <button type="button" @click="showAdjustPointsModal = false" class="text-slate-400 hover:text-slate-600">✕</button>
+                <button type="button" @click="showAdjustPointsModal = false" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
             </div>
 
-            <form method="POST" action="{{ route('store.admin.membership.adjust_points', ['store_slug' => $store->slug]) }}" class="space-y-4 text-xs">
+            <form method="POST" action="{{ route('store.admin.membership.adjust_points', ['store_slug' => $store->slug]) }}" class="space-y-3 text-xs">
                 @csrf
                 <input type="hidden" name="customer_id" :value="adjustTarget.customer_id">
 
-                <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 rounded-2xl flex justify-between items-center">
+                <div class="p-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 rounded-lg flex justify-between items-center">
                     <span class="text-slate-600 dark:text-slate-400">Current Points Balance:</span>
-                    <strong class="font-mono text-base font-black text-amber-600 dark:text-amber-400" x-text="Number(adjustTarget.current_points).toLocaleString() + ' Pts'"></strong>
+                    <strong class="font-mono text-sm font-black text-amber-600 dark:text-amber-400" x-text="Number(adjustTarget.current_points).toLocaleString() + ' Pts'"></strong>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-2.5">
                     <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Adjustment Type *</label>
-                        <select name="type" x-model="adjustTarget.type" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                        <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">Adjustment Type *</label>
+                        <select name="type" x-model="adjustTarget.type" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
                             <option value="bonus">Grant Bonus (+)</option>
                             <option value="adjusted">Correction Adjustment (+/-)</option>
                             <option value="redeemed">Manual Redeem (-)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Points Amount *</label>
-                        <input type="number" name="points" x-model="adjustTarget.points" required class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                        <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">Points Amount *</label>
+                        <input type="number" name="points" x-model="adjustTarget.points" required class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Reason / Notes</label>
-                    <input type="text" name="notes" x-model="adjustTarget.notes" placeholder="e.g. Birthday reward, store promotion" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                    <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">Reason / Notes</label>
+                    <input type="text" name="notes" x-model="adjustTarget.notes" placeholder="e.g. Birthday reward, store promotion" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
                 </div>
 
-                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="showAdjustPointsModal = false" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-amber-600 text-white font-bold shadow-md">Apply Points</button>
+                <div class="flex justify-end gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" @click="showAdjustPointsModal = false" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">Apply Points</button>
                 </div>
             </form>
         </div>
@@ -593,25 +610,26 @@ window.membershipHubData = function () {
          MODAL 4: ASSIGN MEMBERSHIP TIER
          ============================================================ --}}
     <div x-show="showAssignTierModal"
-         x-transition.opacity
-         class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-         style="display: none;">
-        <div @click.away="showAssignTierModal = false"
-             class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
-            <div class="flex justify-between items-center">
-                <h3 class="text-base font-black text-slate-900 dark:text-slate-100 font-outfit">
-                    Change VIP Tier: <span x-text="assignTarget.customer_name" class="text-violet-600"></span>
+         x-cloak
+         @click.self="showAssignTierModal = false"
+         @keydown.escape.window="showAssignTierModal = false"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-2xl space-y-3.5 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                <h3 class="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <span>🏆</span>
+                    <span>Change VIP Tier: <span x-text="assignTarget.customer_name" class="text-violet-600 dark:text-violet-400"></span></span>
                 </h3>
-                <button type="button" @click="showAssignTierModal = false" class="text-slate-400 hover:text-slate-600">✕</button>
+                <button type="button" @click="showAssignTierModal = false" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
             </div>
 
-            <form method="POST" action="{{ route('store.admin.membership.assign_tier', ['store_slug' => $store->slug]) }}" class="space-y-4 text-xs">
+            <form method="POST" action="{{ route('store.admin.membership.assign_tier', ['store_slug' => $store->slug]) }}" class="space-y-3 text-xs">
                 @csrf
                 <input type="hidden" name="customer_id" :value="assignTarget.customer_id">
 
                 <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Select Membership Tier *</label>
-                    <select name="tier_id" x-model="assignTarget.new_tier_id" required class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+                    <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">Select Membership Tier *</label>
+                    <select name="tier_id" x-model="assignTarget.new_tier_id" required class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
                         @foreach($tiers as $t)
                             <option value="{{ $t->id }}">
                                 {{ $t->name }} ({{ $t->code }}) — {{ $t->discount_percent }}% Off
@@ -620,9 +638,9 @@ window.membershipHubData = function () {
                     </select>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="showAssignTierModal = false" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-violet-600 text-white font-bold shadow-md">Assign Tier</button>
+                <div class="flex justify-end gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" @click="showAssignTierModal = false" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">Assign Tier</button>
                 </div>
             </form>
         </div>

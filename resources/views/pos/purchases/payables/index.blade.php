@@ -1,6 +1,7 @@
-@extends('layouts.pos.app')
+@extends('layouts.admin.app')
 
-@section('title', __('messages.payables_title') . ' - ' . $store->name)
+@section('title', __('messages.sidebar_payables') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-2')
 
 @section('content')
 @php
@@ -75,9 +76,14 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap shrink-0">
-            <a href="{{ url('/store/' . $store->slug . '/pos/purchases/export?format=excel') }}"
+            <a href="{{ route('pos.purchases.payables.export', ['store_slug' => $store->slug]) }}"
                class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition flex items-center gap-1 shadow-2xs">
                 <span>📊</span>
+                <span>{{ __('messages.export') ?? 'Export' }} CSV</span>
+            </a>
+            <a href="{{ url('/store/' . $store->slug . '/pos/purchases/export?format=excel') }}"
+               class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 dark:hover:bg-violet-900/50 transition flex items-center gap-1 shadow-2xs">
+                <span>📁</span>
                 <span>{{ __('messages.export_excel') }}</span>
             </a>
             <a href="{{ url('/store/' . $store->slug . '/pos/purchases/export?format=pdf') }}"

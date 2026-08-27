@@ -150,7 +150,7 @@
         }
 
         .sign-box {
-            width: 200px;
+            width: 220px;
             text-align: center;
         }
 
@@ -215,6 +215,9 @@
         <div class="header-section">
             <div>
                 <div class="store-title">{{ $store->name }}</div>
+                @if(isset($selectedBranch) && $selectedBranch)
+                    <div class="store-sub font-bold text-indigo-700">🏢 {{ $selectedBranch->name }}</div>
+                @endif
                 @if($store->setting?->phone)
                     <div class="store-sub">📞 {{ $store->setting->phone }}</div>
                 @endif
@@ -235,8 +238,8 @@
                 <strong>{{ $statement['period']['label'] }}</strong>
             </div>
             <div>
-                <span style="color: #64748b;">Currency:</span>
-                <strong>Myanmar Kyat (MMK)</strong>
+                <span style="color: #64748b;">{{ __('messages.currency') ?? 'Currency' }}:</span>
+                <strong>{{ __('messages.currency_mmk') }}</strong>
             </div>
         </div>
 
@@ -244,73 +247,80 @@
         <table class="income-table">
             <thead>
                 <tr>
-                    <th>Account / Particulars</th>
-                    <th class="font-mono" style="width: 160px;">Amount (MMK)</th>
-                    <th class="font-mono" style="width: 160px;">Total (MMK)</th>
+                    <th>{{ __('messages.account_particulars') }}</th>
+                    <th class="font-mono" style="width: 160px;">{{ __('messages.amount_mmk') }}</th>
+                    <th class="font-mono" style="width: 160px;">{{ __('messages.total_mmk') }}</th>
                 </tr>
             </thead>
             <tbody>
                 {{-- 1. REVENUE --}}
                 <tr class="section-header">
-                    <td colspan="3">1. REVENUE (အရောင်းရငွေများ)</td>
+                    <td colspan="3">1. REVENUE ({{ __('messages.pl_revenue') }})</td>
                 </tr>
                 <tr>
-                    <td class="indent">Gross Sales (စုစုပေါင်း အရောင်းရငွေ)</td>
+                    <td class="indent">{{ __('messages.pl_gross_sales') }}</td>
                     <td class="font-mono">{{ number_format($statement['revenue']['gross_sales'], 0) }}</td>
                     <td></td>
                 </tr>
                 @if($statement['revenue']['discounts'] > 0)
                     <tr>
-                        <td class="indent">Less: Sales Discounts Allowed (လျော့စျေးများ)</td>
+                        <td class="indent">Less: {{ __('messages.pl_discounts_given') }}</td>
                         <td class="font-mono" style="color: #e11d48;">- {{ number_format($statement['revenue']['discounts'], 0) }}</td>
                         <td></td>
                     </tr>
                 @endif
-                @if($statement['revenue']['returns'] > 0)
+                @if(!empty($statement['services']['has_services']))
                     <tr>
-                        <td class="indent">Less: Sales Returns & Refunds (ပြန်အမ်းငွေများ)</td>
-                        <td class="font-mono" style="color: #e11d48;">- {{ number_format($statement['revenue']['returns'], 0) }}</td>
+                        <td class="indent">Add: {{ __('messages.pl_service_repair_revenue') }} ({{ $statement['services']['jobs_count'] }} Jobs)</td>
+                        <td class="font-mono" style="color: #4338ca;">+ {{ number_format($statement['services']['revenue'], 0) }}</td>
                         <td></td>
                     </tr>
                 @endif
                 <tr class="subtotal-row">
-                    <td><strong>NET SALES REVENUE (အသားတင် အရောင်းရငွေ)</strong></td>
+                    <td><strong>{{ !empty($statement['services']['has_services']) ? __('messages.pl_total_combined_revenue') : __('messages.pl_net_revenue') }}</strong></td>
                     <td></td>
-                    <td class="font-mono" style="font-weight: 800; color: #0284c7;">{{ number_format($statement['revenue']['net_sales'], 0) }}</td>
+                    <td class="font-mono" style="font-weight: 800; color: #0284c7;">{{ number_format($statement['revenue']['total_revenue'] ?? $statement['revenue']['net_sales'], 0) }}</td>
                 </tr>
 
                 {{-- 2. COST OF GOODS SOLD --}}
                 <tr class="section-header">
-                    <td colspan="3">2. COST OF GOODS SOLD (ရောင်းရသော ပစ္စည်းများ၏ အရင်းစရိတ်)</td>
+                    <td colspan="3">2. COST OF GOODS SOLD ({{ __('messages.pl_cost_of_goods_sold') }})</td>
                 </tr>
                 <tr>
-                    <td class="indent">Cost of Sales (ကုန်ပစ္စည်းအရင်းစရိတ်)</td>
+                    <td class="indent">{{ __('messages.pl_gross_cogs') }}</td>
                     <td class="font-mono">{{ number_format($statement['cogs']['gross_cogs'], 0) }}</td>
                     <td></td>
                 </tr>
                 @if($statement['cogs']['returns_cogs'] > 0)
                     <tr>
-                        <td class="indent">Less: Cost of Returned Goods (ပြန်သွင်းအရင်း)</td>
+                        <td class="indent">Less: {{ __('messages.pl_returned_goods_cost') }}</td>
                         <td class="font-mono" style="color: #059669;">- {{ number_format($statement['cogs']['returns_cogs'], 0) }}</td>
                         <td></td>
                     </tr>
                 @endif
+                @if(!empty($statement['services']['has_services']) && $statement['services']['parts_cost'] > 0)
+                    <tr>
+                        <td class="indent">Add: {{ __('messages.pl_spare_parts_cost') }}</td>
+                        <td class="font-mono" style="color: #d97706;">+ {{ number_format($statement['services']['parts_cost'], 0) }}</td>
+                        <td></td>
+                    </tr>
+                @endif
                 <tr class="subtotal-row">
-                    <td><strong>NET COST OF GOODS SOLD (အသားတင် ပစ္စည်းအရင်း)</strong></td>
+                    <td><strong>{{ !empty($statement['services']['has_services']) ? __('messages.pl_total_combined_cogs') : __('messages.pl_net_cogs') }}</strong></td>
                     <td></td>
-                    <td class="font-mono" style="font-weight: 800; color: #d97706;">{{ number_format($statement['cogs']['net_cogs'], 0) }}</td>
+                    <td class="font-mono" style="font-weight: 800; color: #d97706;">{{ number_format($statement['cogs']['total_cogs'] ?? $statement['cogs']['net_cogs'], 0) }}</td>
                 </tr>
 
                 {{-- 3. GROSS PROFIT --}}
                 <tr class="major-row">
-                    <td>GROSS PROFIT (စုစုပေါင်း အကြမ်းအမြတ်) [Margin: {{ $statement['gross_margin'] }}%]</td>
+                    <td>3. GROSS PROFIT ({{ __('messages.pl_gross_profit') }}) [{{ __('messages.pl_gross_margin') }}: {{ $statement['gross_margin'] }}%]</td>
                     <td></td>
                     <td class="font-mono">{{ number_format($statement['gross_profit'], 0) }}</td>
                 </tr>
 
                 {{-- 4. OPERATING EXPENSES --}}
                 <tr class="section-header">
-                    <td colspan="3">4. OPERATING EXPENSES (ဆိုင်လည်ပတ်စရိတ်များ)</td>
+                    <td colspan="3">4. OPERATING EXPENSES ({{ __('messages.pl_operating_expenses') }})</td>
                 </tr>
                 @forelse ($statement['expenses']['by_category'] as $cat)
                     <tr>
@@ -320,13 +330,13 @@
                     </tr>
                 @empty
                     <tr>
-                        <td class="indent" style="color: #94a3b8; font-style: italic;">No recorded operating expenses in this period</td>
+                        <td class="indent" style="color: #94a3b8; font-style: italic;">{{ __('messages.no_expenses_in_period') }}</td>
                         <td></td>
                         <td></td>
                     </tr>
                 @endforelse
                 <tr class="subtotal-row">
-                    <td><strong>TOTAL OPERATING EXPENSES (စုစုပေါင်း လည်ပတ်စရိတ်)</strong></td>
+                    <td><strong>{{ __('messages.pl_total_operating_expenses') }}</strong></td>
                     <td></td>
                     <td class="font-mono" style="font-weight: 800; color: #e11d48;">{{ number_format($statement['expenses']['total'], 0) }}</td>
                 </tr>
@@ -335,8 +345,8 @@
                 @php $isProf = $statement['net_profit'] >= 0; @endphp
                 <tr class="{{ $isProf ? 'net-profit-row' : 'net-loss-row' }}">
                     <td>
-                        {{ $isProf ? 'NET OPERATING PROFIT (အသားတင် အမြတ်)' : 'NET OPERATING LOSS (အသားတင် အရှုံး)' }}
-                        <span style="font-size: 11px; font-weight: normal; margin-left: 8px;">[Net Margin: {{ $statement['net_margin'] }}%]</span>
+                        {{ $isProf ? __('messages.pl_net_profit') : __('messages.pl_net_loss') }}
+                        <span style="font-size: 11px; font-weight: normal; margin-left: 8px;">[{{ __('messages.pl_net_margin') }}: {{ $statement['net_margin'] }}%]</span>
                     </td>
                     <td></td>
                     <td class="font-mono">{{ number_format($statement['net_profit'], 0) }}</td>
@@ -348,22 +358,23 @@
         <div class="signatures">
             <div class="sign-box">
                 <div class="sign-line"></div>
-                <div style="font-size: 11px; color: #64748b;">Prepared By (စာရင်းကိုင်)</div>
+                <div style="font-size: 11px; color: #64748b;">{{ __('messages.prepared_by') }}</div>
             </div>
             <div class="sign-box">
                 <div class="sign-line"></div>
-                <div style="font-size: 11px; color: #64748b;">Audited / Store Manager</div>
+                <div style="font-size: 11px; color: #64748b;">{{ __('messages.audited_by') }}</div>
             </div>
             <div class="sign-box">
                 <div class="sign-line"></div>
-                <div style="font-size: 11px; color: #64748b;">Managing Director / Owner</div>
+                <div style="font-size: 11px; color: #64748b;">{{ __('messages.approved_by') }}</div>
             </div>
         </div>
 
         <div style="text-align: center; margin-top: 30px; font-size: 10px; color: #94a3b8;">
-            Generated by {{ config('app.name', 'DataPOS') }} Enterprise POS System • {{ now()->format('Y-m-d H:i:s') }}
+            {{ __('messages.generated_system_footnote') }} • {{ now()->format('Y-m-d H:i:s') }}
         </div>
     </div>
 
 </body>
 </html>
+

@@ -182,6 +182,16 @@ class PurchaseOrderService
                 $po->supplier->increment('total_repaid', $paidAmount);
             }
 
+            // The full PO value becomes supplier credit immediately — pending /
+            // ordered POs count toward the supplier's payables right away (not
+            // deferred until the goods are received). Up-front payments are
+            // tracked separately via total_repaid, so the supplier's standing
+            // balance = total_credit - total_repaid stays accurate. Cancellation
+            // or a purchase return reverses this via decrement below.
+            if ($po->supplier_id && bccomp($totalCost, '0', 2) > 0) {
+                $po->supplier->increment('total_credit', $totalCost);
+            }
+
             AuditLog::write(
                 storeId: $store->id,
                 action: 'purchase_order_created',
@@ -263,7 +273,7 @@ class PurchaseOrderService
             if (! isset($balanceBefore[$key])) {
                 $qty = \App\POS\Models\InventoryBalance::where('store_id', $store->id)
                     ->where('product_id', $key)
-                    ->sum('quantity');
+                    ->sum('quantity_on_hand');
                 $balanceBefore[$key] = bcadd((string) $qty, '0', 3);
             }
         }
@@ -291,10 +301,8 @@ class PurchaseOrderService
                 'received_at' => now(),
             ]);
 
-            // Outstanding balance becomes supplier debt on receipt.
-            if ($po->supplier_id && bccomp((string) $po->remaining_balance, '0', 2) > 0) {
-                $po->supplier->increment('total_credit', $po->remaining_balance);
-            }
+            // NOTE: supplier credit is accrued at PO creation (see create());
+            // receiving does not increment it again to avoid double-counting.
 
             // Refresh product.purchase_cost using weighted-average costing.
             // Formula:
@@ -372,6 +380,13 @@ class PurchaseOrderService
         // Reverse any up-front payment credited to the supplier.
         if ($po->supplier_id && bccomp((string) $po->paid_amount, '0', 2) > 0) {
             $po->supplier->decrement('total_repaid', $po->paid_amount);
+        }
+
+        // Reverse the full credit accrued when the PO was created (create()
+        // increments total_credit by the full total_cost), since the PO is now
+        // voided and no longer owed.
+        if ($po->supplier_id && bccomp((string) $po->total_cost, '0', 2) > 0) {
+            $po->supplier->decrement('total_credit', $po->total_cost);
         }
 
         $po->update([
@@ -613,7 +628,7 @@ class PurchaseOrderService
     public function applyPayment(PurchaseOrder $po, array $payment, User $actor): PurchaseOrder
     {
         if (! $po->isReceived()) {
-            throw new InventoryException("PO {$po->po_number} must be received before payments are applied.");
+            throw new InventoryException("PO {$po->po_number} must be received before applying payment (current status: {$po->status}).");
         }
 
         $amount = bcadd((string) ($payment['amount'] ?? '0'), '0', 2);
@@ -634,7 +649,9 @@ class PurchaseOrderService
             $po->update(['payment_status' => $newStatus]);
 
             if ($po->supplier_id) {
-                $po->supplier->decrement('total_credit', $amount);
+                // total_credit holds the full PO value accrued at creation; a
+                // payment only moves money from the payable — never decrement
+                // credit here or it double-counts against total_repaid.
                 $po->supplier->increment('total_repaid', $amount);
             }
 
@@ -673,8 +690,10 @@ class PurchaseOrderService
         $applied = [];
 
         return DB::transaction(function () use ($supplier, $amount, $actor, $reference, &$applied, &$remaining) {
+            // FIFO across all still-owed POs (pending/ordered/received); credit
+            // accrues at creation, so pending & ordered POs are payable too.
             $unpaid = $supplier->unpaidPurchaseOrders()
-                ->where('status', PurchaseOrder::STATUS_RECEIVED)
+                ->whereNotIn('status', [PurchaseOrder::STATUS_CANCELLED, PurchaseOrder::STATUS_RETURNED])
                 ->get();
 
             foreach ($unpaid as $po) {
@@ -694,7 +713,9 @@ class PurchaseOrderService
                         : PurchaseOrder::PAYMENT_PARTIAL,
                 ]);
 
-                $supplier->decrement('total_credit', $toApply);
+                // total_credit holds the full PO value accrued at creation; a
+                // payment only moves money from the payable — never decrement
+                // credit here or it double-counts against total_repaid.
                 $supplier->increment('total_repaid', $toApply);
 
                 $remaining = bcsub($remaining, $toApply, 2);

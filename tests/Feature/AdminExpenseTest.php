@@ -290,10 +290,30 @@ class AdminExpenseTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->manager)
-            ->get("/store/{$this->store->slug}/admin/expenses/export");
+            ->get("/store/{$this->store->slug}/admin/expenses/export?format=csv");
 
         $response->assertOk();
         $this->assertTrue(str_contains($response->headers->get('content-type'), 'text/csv'));
+    }
+
+    public function test_manager_can_export_expenses_xlsx(): void
+    {
+        Expense::create([
+            'store_id' => $this->store->id,
+            'expense_category_id' => $this->category->id,
+            'expense_number' => 'EXP-20260823-0001',
+            'title' => 'Printer Paper & Toner',
+            'amount' => 85000.00,
+            'expense_date' => '2026-08-23',
+            'payment_method' => 'cash',
+            'paid_to' => 'City Mart Stationery',
+        ]);
+
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/expenses/export?format=xlsx");
+
+        $response->assertOk();
+        $this->assertTrue($response->headers->contains('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'));
     }
 
     public function test_coming_soon_registry_no_longer_contains_expenses(): void

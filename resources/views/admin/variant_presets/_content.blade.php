@@ -172,8 +172,8 @@
                             <th class="py-2.5 px-3 min-w-[180px]">{{ __('messages.variant_preset_name') }}</th>
                             <th class="py-2.5 px-3 min-w-[120px]">{{ __('messages.variant_preset_category_family') }}</th>
                             <th class="py-2.5 px-3 text-center w-20">{{ __('messages.variant_preset_rows') }}</th>
-                            <th class="py-2.5 px-3 min-w-[280px]">Options Preview / Pricing</th>
-                            <th class="py-2.5 px-3 text-center w-24">Reorder</th>
+                            <th class="py-2.5 px-3 min-w-[280px]">{{ __('messages.variant_preset_col_options_preview') }}</th>
+                            <th class="py-2.5 px-3 text-center w-24">{{ __('messages.variant_preset_col_reorder') }}</th>
                             <th class="py-2.5 px-3 text-right w-36">{{ __('messages.variant_preset_col_actions') }}</th>
                         </tr>
                     </thead>
@@ -225,12 +225,12 @@
                                         <form method="POST" action="{{ route('store.admin.variant-presets.move', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}">
                                             @csrf
                                             <input type="hidden" name="direction" value="up" />
-                                            <button type="submit" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 text-xs" title="Move Up">▲</button>
+                                            <button type="submit" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 text-xs" title="{{ __('messages.variant_preset_move_up') }}">▲</button>
                                         </form>
                                         <form method="POST" action="{{ route('store.admin.variant-presets.move', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}">
                                             @csrf
                                             <input type="hidden" name="direction" value="down" />
-                                            <button type="submit" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 text-xs" title="Move Down">▼</button>
+                                            <button type="submit" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 text-xs" title="{{ __('messages.variant_preset_move_down') }}">▼</button>
                                         </form>
                                     </div>
                                 </td>
@@ -240,11 +240,11 @@
                                     <div class="inline-flex items-center gap-1">
                                         <button type="button" @click="openEdit({{ Js::from($preset) }})"
                                             class="px-2 py-1 rounded text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition flex items-center gap-1">
-                                            <span>✏️</span> {{ __('messages.edit') }}
+                                            <span>✏️</span> {{ __('messages.variant_preset_edit') }}
                                         </button>
                                         <form method="POST" action="{{ route('store.admin.variant-presets.duplicate', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}" class="inline">
                                             @csrf
-                                            <button type="submit" class="px-2 py-1 rounded text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition" title="Duplicate">
+                                            <button type="submit" class="px-2 py-1 rounded text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition" title="{{ __('messages.variant_preset_duplicate') }}">
                                                 📑
                                             </button>
                                         </form>
@@ -290,7 +290,7 @@
                             </div>
 
                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
-                                {{ $optCount }} Options
+                                {{ __('messages.variant_preset_options_count', ['count' => $optCount]) }}
                             </span>
                         </div>
 
@@ -319,11 +319,11 @@
                         <div class="inline-flex items-center gap-1">
                             <button type="button" @click="openEdit({{ Js::from($preset) }})"
                                 class="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition flex items-center gap-1">
-                                <span>✏️</span> Edit
+                                <span>✏️</span> {{ __('messages.variant_preset_edit') }}
                             </button>
                             <form method="POST" action="{{ route('store.admin.variant-presets.duplicate', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}" class="inline">
                                 @csrf
-                                <button type="submit" class="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition" title="Duplicate">
+                                <button type="submit" class="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition" title="{{ __('messages.variant_preset_duplicate') }}">
                                     📑
                                 </button>
                             </form>
@@ -333,12 +333,12 @@
                             <form method="POST" action="{{ route('store.admin.variant-presets.move', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}" class="inline">
                                 @csrf
                                 <input type="hidden" name="direction" value="up" />
-                                <button type="submit" class="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs" title="Move Up">▲</button>
+                                <button type="submit" class="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs" title="{{ __('messages.variant_preset_move_up') }}">▲</button>
                             </form>
                             <form method="POST" action="{{ route('store.admin.variant-presets.move', ['store_slug' => $store->slug, 'variantPreset' => $preset]) }}" class="inline">
                                 @csrf
                                 <input type="hidden" name="direction" value="down" />
-                                <button type="submit" class="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs" title="Move Down">▼</button>
+                                <button type="submit" class="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-xs" title="{{ __('messages.variant_preset_move_down') }}">▼</button>
                             </form>
                             <button type="button" @click="openConfirm({{ Js::from($preset) }})"
                                 class="px-2 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-bold transition active:scale-95" title="Delete">
@@ -412,31 +412,31 @@
                                 <template x-for="(opt, idx) in formOptions" :key="idx">
                                     <div class="grid grid-cols-1 sm:grid-cols-[1.5fr_1fr_1fr_1fr_1.2fr_auto] gap-2 items-center bg-slate-50/50 dark:bg-slate-850 p-2 rounded-lg border border-slate-200/60 dark:border-slate-800">
                                         <div>
-                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">Option Name *</label>
+                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">{{ __('messages.variant_preset_option_name') }} *</label>
                                             <input type="text" :name="'options[' + idx + '][name]'" x-model="opt.name" required placeholder="e.g. 256GB"
                                                 class="w-full rounded border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500" />
                                         </div>
                                         <div>
-                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">SKU Suffix</label>
+                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">{{ __('messages.variant_preset_sku_suffix') }}</label>
                                             <input type="text" :name="'options[' + idx + '][sku_suffix]'" x-model="opt.sku_suffix" placeholder="256"
                                                 class="w-full rounded border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-xs font-mono bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500" />
                                         </div>
                                         <div>
-                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">Retail Adj (+/-)</label>
+                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">{{ __('messages.variant_preset_retail_adjustment') }}</label>
                                             <input type="number" step="0.01" :name="'options[' + idx + '][retail_price_adjustment]'" x-model="opt.retail_price_adjustment"
                                                 class="w-full rounded border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-xs font-mono bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500" />
                                         </div>
                                         <div>
-                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">Wholesale Adj</label>
+                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">{{ __('messages.variant_preset_wholesale_adjustment') }}</label>
                                             <input type="number" step="0.01" :name="'options[' + idx + '][wholesale_price_adjustment]'" x-model="opt.wholesale_price_adjustment"
                                                 class="w-full rounded border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-xs font-mono bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500" />
                                         </div>
                                         <div>
-                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">Stock</label>
+                                            <label class="block sm:hidden text-[10px] font-bold text-slate-400">{{ __('messages.variant_preset_stock') }}</label>
                                             <select :name="'options[' + idx + '][stock_status]'" x-model="opt.stock_status"
                                                 class="w-full rounded border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-violet-500">
-                                                <option value="in_stock">In Stock</option>
-                                                <option value="out_of_stock">Out of Stock</option>
+                                                <option value="in_stock">{{ __('messages.in_stock') }}</option>
+                                                <option value="out_of_stock">{{ __('messages.out_of_stock') }}</option>
                                             </select>
                                         </div>
                                         <div>
@@ -463,7 +463,7 @@
                                 </span>
                                 <span x-show="saving" class="inline-flex items-center gap-2">
                                     <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                                    <span>Saving...</span>
+                                    <span>{{ __('messages.saving') }}</span>
                                 </span>
                             </button>
                         </div>
@@ -482,9 +482,8 @@
                     <div class="text-center space-y-2">
                         <div class="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 grid place-items-center text-xl mx-auto">🗑️</div>
                         <h4 class="text-sm font-black text-slate-900 dark:text-slate-100">{{ __('messages.variant_preset_delete') }}</h4>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">
-                            Are you sure you want to delete <strong class="text-slate-900 dark:text-slate-100" x-text="confirmTarget?.name"></strong>?
-                        </p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.variant_preset_delete_confirm') }}</p>
+                        <p class="text-xs font-bold text-slate-900 dark:text-slate-100" x-text="confirmTarget?.name"></p>
                     </div>
 
                     <form method="POST"
@@ -499,7 +498,7 @@
                             <button type="submit" :disabled="deleting"
                                 class="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-md shadow-rose-500/20 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
                                 <span x-show="!deleting">{{ __('messages.delete') }}</span>
-                                <span x-show="deleting">Deleting...</span>
+                                <span x-show="deleting">{{ __('messages.deleting') }}</span>
                             </button>
                         </div>
                     </form>

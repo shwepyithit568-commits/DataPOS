@@ -28,11 +28,13 @@ class PromotionController extends Controller
         $store = $context->getStore();
         abort_if(!$store, 404);
 
+        $limit = $request->input('limit') === 'all' ? 1000 : (int) $request->input('limit', 20);
         $stats      = $this->promotionService->getSummaryStats($store);
-        $promotions = $this->promotionService->getPromotions($store, $request->all(), 15);
+        $promotions = $this->promotionService->getPromotions($store, $request->all(), $limit);
         $categories = Category::where('store_id', $store->id)->orderBy('name')->get(['id', 'name']);
+        $products   = Product::where('store_id', $store->id)->orderBy('name')->take(200)->get(['id', 'name', 'retail_price']);
 
-        return view('admin.promotions.index', compact('store', 'stats', 'promotions', 'categories'));
+        return view('admin.promotions.index', compact('store', 'stats', 'promotions', 'categories', 'products'));
     }
 
     /**

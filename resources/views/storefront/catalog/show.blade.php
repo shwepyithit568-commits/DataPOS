@@ -518,6 +518,30 @@
                     </template>
                 </div>
 
+                {{-- Service / Digital details — shown prominently so shoppers know
+                     how long a labor/service item takes or how a digital code is
+                     delivered before they order. Escaped plain text only. --}}
+                @php
+                    $hasServiceDuration = trim((string) $product->service_duration) !== '';
+                    $hasDeliveryMethod  = trim((string) $product->digital_delivery_method) !== '';
+                @endphp
+                @if ($hasServiceDuration || $hasDeliveryMethod)
+                    <div class="space-y-2 sm:space-y-2.5 text-xs pt-0.5 sm:pt-1">
+                        @if ($hasServiceDuration && $product->product_type === 'service')
+                            <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 p-2.5 sm:p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/40">
+                                <span class="font-bold text-amber-900 dark:text-amber-300 text-sm shrink-0">⏱️ {{ __('messages.product_form_service_duration') }}:</span>
+                                <p class="text-slate-700 dark:text-slate-300 text-xs sm:text-xs leading-relaxed">{{ $product->service_duration }}</p>
+                            </div>
+                        @endif
+                        @if ($hasDeliveryMethod && $product->product_type === 'digital')
+                            <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 p-2.5 sm:p-3 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/40">
+                                <span class="font-bold text-sky-800 dark:text-sky-300 text-sm shrink-0">📲 {{ __('messages.product_form_digital_delivery_method') }}:</span>
+                                <p class="text-slate-700 dark:text-slate-300 text-xs sm:text-xs leading-relaxed">{{ $product->digital_delivery_method }}</p>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
                 {{-- Warranty & Return Policy Info — recommended order: Stock above,
                      actions below. Warranty shows inline; Return Policy is a
                      collapsible disclosure (collapsed by default so long policies

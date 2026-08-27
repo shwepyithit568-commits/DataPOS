@@ -249,6 +249,12 @@
                             @elseif ($item->variant_sku)
                                 <div class="item-variant">{{ $item->variant_sku }}</div>
                             @endif
+                            @if ($item->product && $item->product->product_type === 'service' && trim((string) $item->product->service_duration))
+                                <div class="item-variant" style="color:#b45309;">⏱️ {{ __('messages.product_form_service_duration') }}: {{ $item->product->service_duration }}</div>
+                            @endif
+                            @if ($item->product && $item->product->product_type === 'digital' && trim((string) $item->product->digital_delivery_method))
+                                <div class="item-variant" style="color:#0369a1;">📲 {{ __('messages.product_form_digital_delivery_method') }}: {{ $item->product->digital_delivery_method }}</div>
+                            @endif
                         </td>
                         <td class="center">{{ $item->quantity }}</td>
                         <td class="num">Ks {{ number_format((float) $item->unit_price) }}</td>

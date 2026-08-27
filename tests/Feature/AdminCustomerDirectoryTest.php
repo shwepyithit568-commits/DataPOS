@@ -195,4 +195,20 @@ class AdminCustomerDirectoryTest extends TestCase
             $response->assertDontSee('messages.', false);
         }
     }
+
+    public function test_customer_directory_export_csv(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/customers/export");
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+        $csv = $response->streamedContent();
+
+        // Verify UTF-8 BOM
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $csv);
+        $this->assertStringContainsString('Customer Directory', $csv);
+        $this->assertStringContainsString('Aung Retail', $csv);
+        $this->assertStringContainsString('Moe Wholesale', $csv);
+    }
 }

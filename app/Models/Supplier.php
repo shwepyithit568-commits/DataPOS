@@ -55,6 +55,7 @@ class Supplier extends Model
     public function unpaidPurchaseOrders(): HasMany
     {
         return $this->hasMany(\App\POS\Models\PurchaseOrder::class)
+            ->where('status', 'received')
             ->whereIn('payment_status', ['unpaid', 'partial'])
             ->where('remaining_balance', '>', 0)
             ->orderBy('created_at', 'asc');

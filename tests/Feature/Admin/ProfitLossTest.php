@@ -144,9 +144,53 @@ class ProfitLossTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('store.admin.profit_loss.export', [
             'store_slug' => $this->store->slug,
             'preset' => 'this_month',
+            'format' => 'csv',
         ]));
 
         $response->assertStatus(200);
         $this->assertTrue($response->headers->contains('content-type', 'text/csv; charset=UTF-8'));
     }
+
+    public function test_profit_loss_export_xlsx_downloads_valid_file(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('store.admin.profit_loss.export', [
+            'store_slug' => $this->store->slug,
+            'preset' => 'this_month',
+            'format' => 'xlsx',
+        ]));
+
+        $response->assertStatus(200);
+        $this->assertTrue($response->headers->contains('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'));
+    }
+
+    public function test_profit_loss_service_includes_service_jobs_when_present(): void
+    {
+        // Create a completed service job with charge
+        $job = \App\POS\Models\ServiceJob::create([
+            'store_id' => $this->store->id,
+            'job_number' => 'SVC-20260828-0001',
+            'contact_name' => 'Ko Aung',
+            'contact_phone' => '0912345678',
+            'device_type' => 'Smartphone',
+            'reported_problem' => 'Screen Broken',
+            'status' => 'delivered',
+            'final_charge' => 45000,
+            'created_by' => $this->admin->id,
+        ]);
+
+        \App\POS\Models\ServiceJobPayment::create([
+            'service_job_id' => $job->id,
+            'method' => 'cash',
+            'amount' => 45000,
+            'created_by' => $this->admin->id,
+        ]);
+
+        $service = app(ProfitLossService::class);
+        $statement = $service->generateStatement($this->store, now()->startOfMonth(), now()->endOfMonth());
+
+        $this->assertTrue($statement['services']['has_services']);
+        $this->assertEquals(45000, $statement['services']['revenue']);
+        $this->assertGreaterThanOrEqual(45000, $statement['revenue']['total_revenue']);
+    }
 }
+

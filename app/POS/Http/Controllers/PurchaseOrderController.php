@@ -397,6 +397,45 @@ class PurchaseOrderController extends Controller
         return view('pos.purchases.payables.index', compact('store', 'suppliers', 'totalOutstanding'));
     }
 
+    /** Export payables list as CSV with UTF-8 BOM. */
+    public function payablesExport(StoreContext $context): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $store = $context->getStore();
+        $suppliers = $this->supplierDebt->listSuppliersWithBalances($store);
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="payables-' . now()->format('Ymd-His') . '.csv"',
+        ];
+
+        return response()->streamDownload(function () use ($suppliers) {
+            $stream = fopen('php://output', 'w');
+            fwrite($stream, "\xEF\xBB\xBF"); // UTF-8 BOM for Excel
+
+            fputcsv($stream, [
+                __('messages.report_supplier_name'),
+                __('messages.report_contact_person'),
+                __('messages.phone'),
+                __('messages.report_unpaid_po_count'),
+                __('messages.report_outstanding_debt'),
+                __('messages.report_oldest_unpaid_date'),
+            ]);
+
+            foreach ($suppliers as $s) {
+                fputcsv($stream, [
+                    $s['supplier']->name,
+                    $s['supplier']->contact_person ?? '',
+                    $s['supplier']->phone ?? '',
+                    $s['unpaid_count'],
+                    number_format((float) $s['balance'], 2),
+                    $s['oldest_unpaid_date'] ? $s['oldest_unpaid_date']->format('Y-m-d') : '',
+                ]);
+            }
+
+            fclose($stream);
+        }, 'payables-' . now()->format('Ymd-His') . '.csv', $headers);
+    }
+
     /** Supplier detail: unpaid POs + payment history. */
     public function payablesShow(StoreContext $context, string $store_slug, int $supplier): View
     {
@@ -469,14 +508,42 @@ class PurchaseOrderController extends Controller
     private function exportExcel(\App\Models\Store $store, $pos)
     {
         $csv = fopen('php://temp', 'r+');
-        fputcsv($csv, ['PO Number', 'Supplier', 'Status', 'Payment', 'Total Cost', 'Paid', 'Balance', 'Created']);
+        fputcsv($csv, [
+            __('messages.report_po_number'),
+            __('messages.report_supplier_name'),
+            __('messages.status'),
+            __('messages.payment_status'),
+            __('messages.report_total_cost'),
+            __('messages.report_paid'),
+            __('messages.report_balance'),
+            __('messages.report_created'),
+        ]);
+
+        $poStatusLabel = function (string $status): string {
+            return match ($status) {
+                'pending' => __('messages.po_status_pending'),
+                'ordered' => __('messages.po_status_ordered'),
+                'received' => __('messages.po_status_received'),
+                'cancelled' => __('messages.po_status_cancelled'),
+                'returned' => __('messages.po_status_returned'),
+                default => ucfirst($status),
+            };
+        };
+        $poPaymentLabel = function (string $status): string {
+            return match ($status) {
+                'unpaid' => __('messages.po_payment_unpaid'),
+                'partial' => __('messages.po_payment_partial'),
+                'paid' => __('messages.po_payment_paid'),
+                default => ucfirst($status),
+            };
+        };
 
         foreach ($pos as $po) {
             fputcsv($csv, [
                 $po->po_number,
                 $po->supplier?->name ?? '-',
-                $po->status,
-                $po->payment_status,
+                $poStatusLabel($po->status),
+                $poPaymentLabel($po->payment_status),
                 $po->total_cost,
                 $po->paid_amount,
                 $po->remaining_balance,

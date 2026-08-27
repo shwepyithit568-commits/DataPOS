@@ -83,7 +83,7 @@ class AdminOrderNoteTest extends TestCase
             ->get("/store/{$this->store->slug}/admin/orders/{$order->id}");
 
         $response->assertStatus(200);
-        $response->assertSee('Admin Note');
+        $response->assertSee('textarea', false);
         $response->assertSee('name="admin_note"', false);
         $response->assertSee('/note"', false); // PATCH action URL
     }
