@@ -82,6 +82,18 @@ class PosReturnService
         return number_format((float) $total, 2, '.', '');
     }
 
+    /**
+     * The credit portion of the sale still available to refund (credit paid
+     * on the sale minus credit already returned). The refund form caps its
+     * credit field with this so the cashier cannot over-refund the receivable.
+     */
+    public function refundableCreditTotal(Store $store, PosSale $sale): string
+    {
+        $saleCredit = (string) ($sale->payments->firstWhere('method', 'credit')?->amount ?? '0');
+
+        return bcsub($saleCredit, $this->refundedCreditTotal($store, $sale), 2);
+    }
+
     /* ------------------------------------------------------------------ */
     /*  Posting (atomic)                                                   */
     /* ------------------------------------------------------------------ */
@@ -128,8 +140,11 @@ class PosReturnService
             throw new InventoryException('Select at least one item to return.');
         }
 
-        // Already-returned quantities per line (prevents double-returning).
+        // Already-returned quantities per line (prevents double-returning
+        // across documents) — plus a running tally for THIS request, so the
+        // same sale line cannot be submitted twice and return more than sold.
         $already = $this->refundedQuantities($store, $sale);
+        $inRequest = [];
 
         $sale->loadMissing(['items', 'payments']);
         $resolved = [];
@@ -145,13 +160,18 @@ class PosReturnService
                 throw new InventoryException("Return quantity for '{$saleItem->product_name}' must be positive.");
             }
 
-            $refundable = bcsub((string) $saleItem->quantity, $already[$saleItem->id] ?? '0', 3);
+            // Refundable = sold − already returned (posted docs) − returned
+            // earlier in THIS request. A duplicate line row then hits the cap
+            // instead of silently returning the same units twice.
+            $requested = $inRequest[$saleItem->id] ?? '0';
+            $refundable = bcsub(bcsub((string) $saleItem->quantity, $already[$saleItem->id] ?? '0', 3), $requested, 3);
             if (bccomp($quantity, $refundable, 3) > 0) {
                 throw new InventoryException(
                     "Cannot return more than the refundable quantity for '{$saleItem->product_name}' "
                     . "(refundable: " . rtrim(rtrim($refundable, '0'), '.') . ').'
                 );
             }
+            $inRequest[$saleItem->id] = bcadd($requested, $quantity, 3);
 
             $lineTotal = bcmul((string) $saleItem->unit_price, $quantity, 2);
             $returnTotal = bcadd($returnTotal, $lineTotal, 2);
@@ -172,6 +192,10 @@ class PosReturnService
         $refundTotal = '0';
         $cashRefund = '0';
         $creditRefund = '0';
+        // Remaining credit portion of the sale (credit paid − credit already
+        // refunded on earlier returns); every credit refund is capped by it.
+        $saleCredit = (string) ($sale->payments->firstWhere('method', 'credit')?->amount ?? '0');
+        $creditLeft = bcsub($saleCredit, $this->refundedCreditTotal($store, $sale), 2);
         foreach ($refunds as $refund) {
             $method = (string) $refund['method'];
             if (! in_array($method, ['cash', 'credit'], true)) {
@@ -188,8 +212,6 @@ class PosReturnService
                 }
                 $cashRefund = bcadd($cashRefund, $amount, 2);
             } else {
-                $saleCredit = (string) ($sale->payments->firstWhere('method', 'credit')?->amount ?? '0');
-                $creditLeft = bcsub($saleCredit, $this->refundedCreditTotal($store, $sale), 2);
                 if (bccomp($amount, $creditLeft, 2) > 0) {
                     throw new InventoryException(
                         'Credit refund exceeds the sale\'s remaining credit portion (Ks '
@@ -200,6 +222,17 @@ class PosReturnService
             }
 
             $refundTotal = bcadd($refundTotal, $amount, 2);
+        }
+
+        // Aggregate cap: several credit rows in ONE request each pass the
+        // per-row check against the same remaining credit, so the running
+        // total must be re-validated — otherwise a crafted request can refund
+        // more credit than the sale ever carried (receivable goes negative).
+        if (bccomp($creditRefund, $creditLeft, 2) > 0) {
+            throw new InventoryException(
+                'Credit refunds exceed the sale\'s remaining credit portion (Ks '
+                . rtrim(rtrim($creditLeft, '0'), '.') . ').'
+            );
         }
 
         if (bccomp($refundTotal, $returnTotal, 2) !== 0) {

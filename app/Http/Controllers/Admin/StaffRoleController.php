@@ -201,13 +201,47 @@ class StaffRoleController extends Controller
     }
 
     /**
-     * Assign a role to a staff member.
+     * Assign a role to a staff member (select existing standard/custom role OR create & assign custom role).
      */
     public function assignStaff(Request $request, StoreContext $context, string $store_slug = ''): RedirectResponse
     {
         $store = $context->getStore();
         if (! $store) {
             abort(404);
+        }
+
+        $actionMode = $request->input('action_mode', 'select');
+
+        if ($actionMode === 'create_and_assign') {
+            $validated = $request->validate([
+                'user_id'          => 'required|integer',
+                'role_name'        => 'required|string|max:100',
+                'role_description' => 'nullable|string|max:500',
+                'role_color'       => 'nullable|string|max:20',
+                'role_permissions' => 'nullable|array',
+                'role_permissions.*' => 'string',
+            ]);
+
+            $baseSlug = Str::slug($validated['role_name']) ?: 'custom-role';
+            $uniqueSlug = $baseSlug . '-' . Str::lower(Str::random(4));
+
+            $newRole = StaffRole::create([
+                'store_id'    => $store->id,
+                'name'        => $validated['role_name'],
+                'slug'        => $uniqueSlug,
+                'description' => $validated['role_description'] ?? null,
+                'color'       => $validated['role_color'] ?? '#0284c7',
+                'permissions' => $validated['role_permissions'] ?? [],
+                'is_system'   => false,
+                'is_active'   => true,
+            ]);
+
+            DB::table('store_user')
+                ->where('store_id', $store->id)
+                ->where('user_id', $validated['user_id'])
+                ->update(['staff_role_id' => $newRole->id]);
+
+            return back()->with('success', __('messages.staff_role_assigned_success') . ' (' . $newRole->name . ')');
         }
 
         $validated = $request->validate([

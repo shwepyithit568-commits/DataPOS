@@ -435,7 +435,9 @@ class ProductCatalogTest extends TestCase
     public function test_admin_can_manage_variant_presets_and_product_form_lists_them(): void
     {
         $store = Store::create(['name' => 'Store Main', 'slug' => 'store-main']);
+        $store->setting()->create(['store_name' => 'Store Main', 'default_language' => 'en']);
         $otherStore = Store::create(['name' => 'Other Store', 'slug' => 'other-store']);
+        $otherStore->setting()->create(['store_name' => 'Other Store', 'default_language' => 'en']);
 
         $manager = User::create([
             'name' => 'Manager',
@@ -491,12 +493,12 @@ class ProductCatalogTest extends TestCase
         $form->assertSee('Generate Combinations');
         $form->assertDontSee('Hidden Other Store Preset');
 
-        $settings = $this->actingAs($manager)->get('/store/store-main/admin/variant-presets');
+        $settings = $this->actingAs($manager)->withSession(['locale' => 'en'])->get('/store/store-main/admin/variant-presets');
         $settings->assertStatus(200);
         $settings->assertSee('Duplicate');
         $settings->assertSee('Move Up');
         $settings->assertSee('Move Down');
-        $settings->assertSee('View Rows');
+        $settings->assertSee('128GB');
         $settings->assertSee('Mobile');
 
         $duplicate = $this->actingAs($manager)

@@ -52,9 +52,9 @@ class PosReportController extends Controller
     }
 
     /**
-     * Export POS Sales as CSV.
+     * Export POS Sales as Excel (.xlsx) or CSV (.csv).
      */
-    public function exportSales(Request $request, StoreContext $context): StreamedResponse
+    public function exportSales(Request $request, StoreContext $context): BinaryFileResponse|StreamedResponse
     {
         $store = $context->getStore();
         if (! $store) {
@@ -63,9 +63,22 @@ class PosReportController extends Controller
 
         [$from, $to, $preset] = $this->resolveDateRange($request);
         $cashierId = $request->filled('cashier_id') ? (int) $request->input('cashier_id') : null;
+        $format = $request->query('format', 'csv');
 
         $report = $this->reports->salesReport($store, $from, $to, $cashierId);
 
+        if ($format === 'xlsx') {
+            return $this->exportSalesXlsx($store, $report, $from, $to);
+        }
+
+        return $this->exportSalesCsv($store, $report, $from, $to);
+    }
+
+    /**
+     * Export Sales as CSV.
+     */
+    private function exportSalesCsv(Store $store, array $report, Carbon $from, Carbon $to): StreamedResponse
+    {
         $filename = 'sales-report-' . $store->slug . '-' . $from->format('Ymd') . '-to-' . $to->format('Ymd') . '.csv';
 
         return response()->streamDownload(function () use ($report, $from, $to, $store) {
@@ -74,18 +87,16 @@ class PosReportController extends Controller
 
             fputcsv($handle, [__('messages.reports_sales'), $store->name]);
             fputcsv($handle, [__('messages.report_period'), $from->toFormattedDateString() . ' to ' . $to->toFormattedDateString()]);
-            fputcsv($handle, [__('messages.reports_total_sales'), number_format($report['total_sales'], 2)]);
-            fputcsv($handle, [__('messages.reports_total_orders'), $report['total_orders']]);
-            fputcsv($handle, [__('messages.reports_total_discount'), number_format($report['total_discount'], 2)]);
-            fputcsv($handle, [__('messages.reports_total_tax'), number_format($report['total_tax'], 2)]);
-            fputcsv($handle, [__('messages.reports_net_sales'), number_format($report['net_sales'], 2)]);
+            fputcsv($handle, [__('messages.reports_total_sales'), number_format((float) ($report['total'] ?? $report['total_sales'] ?? 0), 2)]);
+            fputcsv($handle, [__('messages.reports_total_orders'), $report['count'] ?? $report['total_orders'] ?? 0]);
             fputcsv($handle, []);
 
             fputcsv($handle, [
-                __('messages.invoice_no'),
+                __('messages.receipt'),
                 __('messages.reports_date'),
                 __('messages.cashier'),
                 __('messages.customer'),
+                __('messages.reports_items'),
                 __('messages.subtotal'),
                 __('messages.discount'),
                 __('messages.tax'),
@@ -95,15 +106,16 @@ class PosReportController extends Controller
             ]);
             foreach ($report['sales'] as $sale) {
                 fputcsv($handle, [
-                    $sale->invoice_no,
+                    $sale->receipt_number ?: $sale->invoice_no,
                     $sale->posted_at?->format('Y-m-d H:i'),
-                    $sale->creator?->name ?? '-',
+                    $sale->cashier?->name ?? $sale->creator?->name ?? '-',
                     $sale->customer?->name ?? __('messages.reports_walk_in_customer'),
+                    $sale->items->sum('quantity'),
                     number_format((float) $sale->subtotal, 2),
                     number_format((float) $sale->discount, 2),
                     number_format((float) $sale->tax, 2),
                     number_format((float) $sale->total, 2),
-                    $sale->payment_method,
+                    $sale->payments->pluck('method')->implode(', ') ?: ($sale->payment_method ?? '-'),
                     $sale->status,
                 ]);
             }
@@ -113,6 +125,121 @@ class PosReportController extends Controller
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
+    }
+
+    /**
+     * Export Sales as Excel (.xlsx).
+     */
+    private function exportSalesXlsx(Store $store, array $report, Carbon $from, Carbon $to): BinaryFileResponse
+    {
+        $filename = 'Sales_Report_' . $store->slug . '_' . $from->format('Ymd') . '_' . $to->format('Ymd') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_sales_');
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Sales Report');
+
+        // Header Title Block
+        $sheet->setCellValue('A1', $store->name . ' - ' . __('messages.reports_sales'));
+        $sheet->setCellValue('A2', __('messages.period') . ': ' . $from->format('d/m/Y') . ' - ' . $to->format('d/m/Y'));
+        $sheet->setCellValue('A3', __('messages.export_date') . ': ' . now()->format('d/m/Y h:i A') . ' | Currency: MMK');
+
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('0369A1');
+        $sheet->getStyle('A2:A3')->getFont()->setSize(10)->getColor()->setRGB('64748B');
+
+        // Summary KPI Box
+        $totalSales = (float) ($report['total'] ?? $report['total_sales'] ?? 0);
+        $totalOrders = (int) ($report['count'] ?? $report['total_orders'] ?? 0);
+        $totalItems = (int) $report['sales']->sum(fn($s) => $s->items->sum('quantity'));
+        $aov = $totalOrders > 0 ? round($totalSales / $totalOrders, 2) : 0;
+
+        $sheet->setCellValue('A5', __('messages.reports_grand_total') . ': ' . number_format($totalSales, 0) . ' MMK');
+        $sheet->setCellValue('B5', __('messages.reports_sale_count') . ': ' . $totalOrders);
+        $sheet->setCellValue('C5', __('messages.items_sold') . ': ' . $totalItems);
+        $sheet->setCellValue('D5', __('messages.aov_metric') . ': ' . number_format($aov, 0) . ' MMK');
+
+        $sheet->getStyle('A5:D5')->getFont()->setBold(true)->setSize(10);
+        $sheet->getStyle('A5:D5')->applyFromArray([
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'F0F9FF'],
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'BAE6FD']],
+            ],
+        ]);
+
+        $row = 8;
+        $headers = [
+            'A' => __('messages.receipt'),
+            'B' => __('messages.reports_date'),
+            'C' => __('messages.cashier'),
+            'D' => __('messages.customer'),
+            'E' => __('messages.reports_items'),
+            'F' => __('messages.subtotal'),
+            'G' => __('messages.discount'),
+            'H' => __('messages.tax'),
+            'I' => __('messages.total'),
+            'J' => __('messages.reports_payment_method'),
+            'K' => __('messages.status'),
+        ];
+
+        foreach ($headers as $col => $title) {
+            $sheet->setCellValue("{$col}{$row}", $title);
+        }
+
+        $sheet->getStyle("A{$row}:K{$row}")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '0284C7'],
+            ],
+            'alignment' => [
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet->getStyle("E{$row}:I{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getRowDimension($row)->setRowHeight(22);
+
+        $row++;
+
+        foreach ($report['sales'] as $sale) {
+            $sheet->setCellValue("A{$row}", $sale->receipt_number ?: $sale->invoice_no);
+            $sheet->setCellValue("B{$row}", $sale->posted_at?->format('d/m/Y H:i'));
+            $sheet->setCellValue("C{$row}", $sale->cashier?->name ?? $sale->creator?->name ?? '—');
+            $sheet->setCellValue("D{$row}", $sale->customer?->name ?? 'Walk-in Customer');
+            $sheet->setCellValue("E{$row}", $sale->items->sum('quantity'));
+            $sheet->setCellValue("F{$row}", (float) $sale->subtotal);
+            $sheet->setCellValue("G{$row}", (float) $sale->discount);
+            $sheet->setCellValue("H{$row}", (float) $sale->tax);
+            $sheet->setCellValue("I{$row}", (float) $sale->total);
+            $sheet->setCellValue("J{$row}", $sale->payments->pluck('method')->implode(', ') ?: ($sale->payment_method ?? '-'));
+            $sheet->setCellValue("K{$row}", ucfirst($sale->status));
+
+            $sheet->getStyle("F{$row}:I{$row}")->getNumberFormat()->setFormatCode('#,##0.00');
+            $sheet->getStyle("E{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+            if ($row % 2 === 0) {
+                $sheet->getStyle("A{$row}:K{$row}")->applyFromArray([
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'F8FAFC'],
+                    ],
+                ]);
+            }
+            $row++;
+        }
+
+        foreach (range('A', 'K') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     /**
@@ -132,6 +259,197 @@ class PosReportController extends Controller
     }
 
     /**
+     * Export Cash Drawer Report as Excel (.xlsx) or CSV (.csv).
+     */
+    public function exportCash(Request $request, StoreContext $context): BinaryFileResponse|StreamedResponse
+    {
+        $store = $context->getStore();
+        if (! $store) {
+            abort(404);
+        }
+
+        [$from, $to, $preset] = $this->resolveDateRange($request);
+        $format = $request->query('format', 'xlsx');
+        $report = $this->reports->cashReport($store, $from, $to);
+
+        if ($format === 'csv') {
+            return $this->exportCashCsv($store, $report, $from, $to);
+        }
+
+        return $this->exportCashXlsx($store, $report, $from, $to);
+    }
+
+    /**
+     * Export Cash Report as CSV.
+     */
+    private function exportCashCsv(Store $store, array $report, Carbon $from, Carbon $to): StreamedResponse
+    {
+        $filename = 'cash-drawer-report-' . $store->slug . '-' . $from->format('Ymd') . '-to-' . $to->format('Ymd') . '.csv';
+
+        return response()->streamDownload(function () use ($report, $from, $to, $store) {
+            $handle = fopen('php://output', 'w');
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($handle, [__('messages.reports_cash'), $store->name]);
+            fputcsv($handle, [__('messages.report_period'), $from->format('d/m/Y') . ' - ' . $to->format('d/m/Y')]);
+            fputcsv($handle, [__('messages.reports_shift_count'), $report['shift_count']]);
+            fputcsv($handle, [__('messages.expected_cash'), number_format((float) $report['expected'], 2)]);
+            fputcsv($handle, [__('messages.actual_cash'), number_format((float) $report['actual'], 2)]);
+            fputcsv($handle, [__('messages.difference'), number_format((float) $report['difference'], 2)]);
+            fputcsv($handle, []);
+
+            fputcsv($handle, [
+                __('messages.register'),
+                __('messages.cashier'),
+                __('messages.opening_cash'),
+                __('messages.cash_sales'),
+                __('messages.cash_refunds'),
+                __('messages.cash_in_out'),
+                __('messages.expected_cash'),
+                __('messages.actual'),
+                __('messages.difference'),
+                __('messages.status'),
+            ]);
+
+            foreach ($report['shifts'] as $shift) {
+                fputcsv($handle, [
+                    $shift->register_name,
+                    $shift->cashier?->name ?? '—',
+                    number_format((float) $shift->opening_cash, 2),
+                    number_format((float) $shift->cash_sales, 2),
+                    number_format((float) $shift->cash_refunds, 2),
+                    '+' . number_format((float) $shift->cash_in, 2) . ' / -' . number_format((float) $shift->cash_out, 2),
+                    $shift->expected_closing_amount !== null ? number_format((float) $shift->expected_closing_amount, 2) : '—',
+                    $shift->actual_closing_amount !== null ? number_format((float) $shift->actual_closing_amount, 2) : '—',
+                    $shift->difference !== null ? number_format((float) $shift->difference, 2) : '—',
+                    $shift->status,
+                ]);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
+    /**
+     * Export Cash Report as Excel (.xlsx).
+     */
+    private function exportCashXlsx(Store $store, array $report, Carbon $from, Carbon $to): BinaryFileResponse
+    {
+        $filename = 'Cash_Report_' . $store->slug . '_' . $from->format('Ymd') . '_' . $to->format('Ymd') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_cash_');
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Cash Drawer');
+
+        // Header Title Block
+        $sheet->setCellValue('A1', $store->name . ' - ' . __('messages.reports_cash'));
+        $sheet->setCellValue('A2', __('messages.period') . ': ' . $from->format('d/m/Y') . ' - ' . $to->format('d/m/Y'));
+        $sheet->setCellValue('A3', __('messages.export_date') . ': ' . now()->format('d/m/Y h:i A') . ' | Currency: MMK');
+
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('065F46');
+        $sheet->getStyle('A2:A3')->getFont()->setSize(10)->getColor()->setRGB('64748B');
+
+        // Summary KPI Box
+        $sheet->setCellValue('A5', __('messages.reports_shift_count') . ': ' . $report['shift_count']);
+        $sheet->setCellValue('B5', __('messages.expected_cash') . ': ' . number_format((float) $report['expected'], 0) . ' MMK');
+        $sheet->setCellValue('C5', __('messages.actual_cash') . ': ' . number_format((float) $report['actual'], 0) . ' MMK');
+        $sheet->setCellValue('D5', __('messages.difference') . ': ' . number_format((float) $report['difference'], 0) . ' MMK');
+
+        $sheet->getStyle('A5:D5')->getFont()->setBold(true)->setSize(10);
+        $sheet->getStyle('A5:D5')->applyFromArray([
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'ECFDF5'],
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'A7F3D0']],
+            ],
+        ]);
+
+        $row = 8;
+        $headers = [
+            'A' => __('messages.register'),
+            'B' => __('messages.cashier'),
+            'C' => __('messages.opening_cash'),
+            'D' => __('messages.cash_sales'),
+            'E' => __('messages.cash_refunds'),
+            'F' => __('messages.cash_in_out'),
+            'G' => __('messages.expected_cash'),
+            'H' => __('messages.actual'),
+            'I' => __('messages.difference'),
+            'J' => __('messages.status'),
+        ];
+
+        foreach ($headers as $col => $title) {
+            $sheet->setCellValue("{$col}{$row}", $title);
+        }
+
+        $sheet->getStyle("A{$row}:J{$row}")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '059669'],
+            ],
+            'alignment' => [
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet->getStyle("C{$row}:I{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getRowDimension($row)->setRowHeight(22);
+
+        $row++;
+
+        foreach ($report['shifts'] as $shift) {
+            $sheet->setCellValue("A{$row}", $shift->register_name);
+            $sheet->setCellValue("B{$row}", $shift->cashier?->name ?? '—');
+            $sheet->setCellValue("C{$row}", (float) $shift->opening_cash);
+            $sheet->setCellValue("D{$row}", (float) $shift->cash_sales);
+            $sheet->setCellValue("E{$row}", (float) $shift->cash_refunds);
+            $sheet->setCellValue("F{$row}", '+' . number_format((float) $shift->cash_in, 0) . ' / -' . number_format((float) $shift->cash_out, 0));
+            $sheet->setCellValue("G{$row}", $shift->expected_closing_amount !== null ? (float) $shift->expected_closing_amount : '—');
+            $sheet->setCellValue("H{$row}", $shift->actual_closing_amount !== null ? (float) $shift->actual_closing_amount : '—');
+            $sheet->setCellValue("I{$row}", $shift->difference !== null ? (float) $shift->difference : '—');
+            $sheet->setCellValue("J{$row}", ucfirst($shift->status));
+
+            $sheet->getStyle("C{$row}:E{$row}")->getNumberFormat()->setFormatCode('#,##0.00');
+            if ($shift->expected_closing_amount !== null) {
+                $sheet->getStyle("G{$row}")->getNumberFormat()->setFormatCode('#,##0.00');
+            }
+            if ($shift->actual_closing_amount !== null) {
+                $sheet->getStyle("H{$row}")->getNumberFormat()->setFormatCode('#,##0.00');
+            }
+            if ($shift->difference !== null) {
+                $sheet->getStyle("I{$row}")->getNumberFormat()->setFormatCode('#,##0.00');
+            }
+
+            if ($row % 2 === 0) {
+                $sheet->getStyle("A{$row}:J{$row}")->applyFromArray([
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'F8FAFC'],
+                    ],
+                ]);
+            }
+            $row++;
+        }
+
+        foreach (range('A', 'J') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
      * Stock / Inventory Report.
      */
     public function stock(Request $request, StoreContext $context): View
@@ -141,11 +459,229 @@ class PosReportController extends Controller
             abort(404);
         }
 
-        $search = $request->input('search');
-        $lowStockOnly = $request->boolean('low_stock');
-        $report = $this->reports->stockReport($store, $search, $lowStockOnly);
+        $search = $request->input('q') ?? $request->input('search');
+        $report = $this->reports->stockReport($store, $search);
 
         return view('pos.reports.stock', compact('store', 'report'));
+    }
+
+    /**
+     * Export Stock / Inventory Report as Excel (.xlsx) or CSV (.csv).
+     */
+    public function exportStock(Request $request, StoreContext $context): BinaryFileResponse|StreamedResponse
+    {
+        $store = $context->getStore();
+        if (! $store) {
+            abort(404);
+        }
+
+        $search = $request->input('q') ?? $request->input('search');
+        $format = $request->query('format', 'xlsx');
+        $report = $this->reports->stockReport($store, $search);
+
+        if ($format === 'csv') {
+            return $this->exportStockCsv($store, $report);
+        }
+
+        return $this->exportStockXlsx($store, $report);
+    }
+
+    /**
+     * Export Stock Report as CSV.
+     */
+    private function exportStockCsv(Store $store, array $report): StreamedResponse
+    {
+        $filename = 'stock-valuation-report-' . $store->slug . '-' . now()->format('Ymd') . '.csv';
+
+        return response()->streamDownload(function () use ($report, $store) {
+            $handle = fopen('php://output', 'w');
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($handle, [__('messages.reports_stock'), $store->name]);
+            fputcsv($handle, [__('messages.export_date'), now()->format('d/m/Y H:i')]);
+            fputcsv($handle, [__('messages.reports_stock_total_skus'), count($report['rows'])]);
+            fputcsv($handle, [__('messages.reports_total_units'), number_format((float) $report['total_units'], 3)]);
+            fputcsv($handle, [__('messages.reports_stock_value'), number_format((float) $report['total_value'], 2)]);
+            fputcsv($handle, []);
+
+            fputcsv($handle, [
+                '#',
+                __('messages.product'),
+                __('messages.category'),
+                __('messages.sku'),
+                __('messages.status'),
+                __('messages.on_hand_qty'),
+                __('messages.average_cost'),
+                __('messages.stock_value'),
+            ]);
+
+            foreach ($report['rows'] as $index => $row) {
+                $qty = (float) $row['quantity_on_hand'];
+                $status = $qty > 5 ? __('messages.reports_stock_in_stock') : ($qty > 0 ? __('messages.low_stock') : __('messages.reports_stock_out_of_stock'));
+
+                fputcsv($handle, [
+                    $index + 1,
+                    $row['product']?->name ?? '—',
+                    $row['product']?->category?->name ?? '—',
+                    $row['product']?->sku ?: '—',
+                    $status,
+                    number_format($qty, 3),
+                    number_format((float) $row['unit_cost_avg'], 2),
+                    number_format((float) $row['value'], 2),
+                ]);
+            }
+
+            fputcsv($handle, []);
+            fputcsv($handle, [
+                '',
+                __('messages.total'),
+                '',
+                '',
+                '',
+                number_format((float) $report['total_units'], 3),
+                '',
+                number_format((float) $report['total_value'], 2),
+            ]);
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
+    /**
+     * Export Stock Report as Excel (.xlsx).
+     */
+    private function exportStockXlsx(Store $store, array $report): BinaryFileResponse
+    {
+        $filename = 'Stock_Valuation_Report_' . $store->slug . '_' . now()->format('Ymd') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_stock_');
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Stock Balance');
+
+        // Header Title Block
+        $sheet->setCellValue('A1', $store->name . ' - ' . __('messages.sidebar_stock_balance'));
+        $sheet->setCellValue('A2', __('messages.export_date') . ': ' . now()->format('d/m/Y h:i A') . ' | Currency: MMK');
+
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('92400E');
+        $sheet->getStyle('A2')->getFont()->setSize(10)->getColor()->setRGB('64748B');
+
+        // Summary KPI Box
+        $zeroStockCount = $report['rows']->filter(fn($r) => (float)$r['quantity_on_hand'] <= 0)->count();
+
+        $sheet->setCellValue('A4', __('messages.reports_stock_total_skus') . ': ' . count($report['rows']));
+        $sheet->setCellValue('B4', __('messages.reports_total_units') . ': ' . number_format((float) $report['total_units'], 3));
+        $sheet->setCellValue('C4', __('messages.reports_stock_value') . ': ' . number_format((float) $report['total_value'], 0) . ' MMK');
+        $sheet->setCellValue('D4', __('messages.reports_stock_low_stock') . ': ' . $zeroStockCount);
+
+        $sheet->getStyle('A4:D4')->getFont()->setBold(true)->setSize(10);
+        $sheet->getStyle('A4:D4')->applyFromArray([
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FEF3C7'],
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'FCD34D']],
+            ],
+        ]);
+
+        $row = 7;
+        $headers = [
+            'A' => '#',
+            'B' => __('messages.product'),
+            'C' => __('messages.category'),
+            'D' => __('messages.sku'),
+            'E' => __('messages.status'),
+            'F' => __('messages.on_hand_qty'),
+            'G' => __('messages.average_cost'),
+            'H' => __('messages.stock_value'),
+        ];
+
+        foreach ($headers as $col => $title) {
+            $sheet->setCellValue("{$col}{$row}", $title);
+        }
+
+        $sheet->getStyle("A{$row}:H{$row}")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'D97706'],
+            ],
+            'alignment' => [
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet->getStyle("F{$row}:H{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getRowDimension($row)->setRowHeight(22);
+
+        $row++;
+
+        foreach ($report['rows'] as $index => $item) {
+            $qty = (float) $item['quantity_on_hand'];
+            $cost = (float) $item['unit_cost_avg'];
+            $val = (float) $item['value'];
+            $status = $qty > 5 ? __('messages.reports_stock_in_stock') : ($qty > 0 ? __('messages.low_stock') : __('messages.reports_stock_out_of_stock'));
+
+            $sheet->setCellValue("A{$row}", $index + 1);
+            $sheet->setCellValue("B{$row}", $item['product']?->name ?? '—');
+            $sheet->setCellValue("C{$row}", $item['product']?->category?->name ?? '—');
+            $sheet->setCellValue("D{$row}", $item['product']?->sku ?: '—');
+            $sheet->setCellValue("E{$row}", $status);
+            $sheet->setCellValue("F{$row}", $qty);
+            $sheet->setCellValue("G{$row}", $cost);
+            $sheet->setCellValue("H{$row}", $val);
+
+            $sheet->getStyle("F{$row}")->getNumberFormat()->setFormatCode('#,##0.000');
+            $sheet->getStyle("G{$row}:H{$row}")->getNumberFormat()->setFormatCode('#,##0.00');
+
+            if ($row % 2 === 0) {
+                $sheet->getStyle("A{$row}:H{$row}")->applyFromArray([
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'FFFBEB'],
+                    ],
+                ]);
+            }
+            $row++;
+        }
+
+        // Totals Footer Row
+        $sheet->setCellValue("A{$row}", '');
+        $sheet->setCellValue("B{$row}", __('messages.total'));
+        $sheet->setCellValue("C{$row}", '');
+        $sheet->setCellValue("D{$row}", '');
+        $sheet->setCellValue("E{$row}", '');
+        $sheet->setCellValue("F{$row}", (float) $report['total_units']);
+        $sheet->setCellValue("G{$row}", '');
+        $sheet->setCellValue("H{$row}", (float) $report['total_value']);
+
+        $sheet->getStyle("A{$row}:H{$row}")->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FEF3C7'],
+            ],
+            'borders' => [
+                'top' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['rgb' => 'D97706']],
+                'bottom' => ['borderStyle' => Border::BORDER_DOUBLE, 'color' => ['rgb' => 'D97706']],
+            ],
+        ]);
+        $sheet->getStyle("F{$row}")->getNumberFormat()->setFormatCode('#,##0.000');
+        $sheet->getStyle("H{$row}")->getNumberFormat()->setFormatCode('#,##0.00');
+
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     /**

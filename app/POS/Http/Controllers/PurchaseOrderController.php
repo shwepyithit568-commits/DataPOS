@@ -67,9 +67,9 @@ class PurchaseOrderController extends Controller
     public function productSearch(Request $request, StoreContext $context): \Illuminate\Http\JsonResponse
     {
         $store = $context->getStore();
-        $query = trim((string) $request->get('q', ''));
-        $brandId = $request->get('brand_id');
-        $categoryId = $request->get('category_id');
+        $query = trim((string) $request->input('q', ''));
+        $brandId = $request->input('brand_id');
+        $categoryId = $request->input('category_id');
 
         $products = \App\Models\Product::query()
             ->where('store_id', $store->id)
@@ -119,15 +119,17 @@ class PurchaseOrderController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer'],
             'items.*.product_variant_id' => ['nullable', 'integer'],
-            'items.*.quantity' => ['required', 'numeric', 'gt:0'],
-            'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
+            // decimal (not plain numeric): the PO service does bcmath, which
+            // throws a ValueError on scientific notation ("1e3").
+            'items.*.quantity' => ['required', 'decimal:0,3', 'gt:0'],
+            'items.*.unit_cost' => ['required', 'decimal:0,2', 'min:0'],
             'supplier_id' => ['nullable', 'integer'],
             'reference' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
-            'discount_amount' => ['nullable', 'numeric', 'min:0'],
-            'delivery_fee' => ['nullable', 'numeric', 'min:0'],
+            'discount_amount' => ['nullable', 'decimal:0,2', 'min:0'],
+            'delivery_fee' => ['nullable', 'decimal:0,2', 'min:0'],
             'payment_status' => ['nullable', 'in:unpaid,partial,paid'],
-            'paid_amount' => ['nullable', 'numeric', 'min:0'],
+            'paid_amount' => ['nullable', 'decimal:0,2', 'min:0'],
             'voucher_images' => ['nullable', 'array'],
             'voucher_images.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf,heic', 'max:10240'],
         ]);
@@ -341,7 +343,7 @@ class PurchaseOrderController extends Controller
             });
         }
 
-        $sort = $request->get('sort', 'newest');
+        $sort = $request->input('sort', 'newest');
         match ($sort) {
             'oldest'    => $query->oldest(),
             'highest'   => $query->orderBy('total_cost', 'desc'),
@@ -363,14 +365,14 @@ class PurchaseOrderController extends Controller
 
         if (! $po) {
             abort(404);
-        }
-
-        $data = $request->validate([
-            'amount' => ['required', 'numeric', 'gt:0'],
+        }        $data = $request->validate([
+            'amount' => ['required', 'decimal:0,2', 'gt:0'],
             'reference' => ['nullable', 'string', 'max:100'],
         ]);
 
         try {
+
+
             $this->purchaseOrders->applyPayment($po, [
                 'amount' => $data['amount'],
                 'reference' => $data['reference'] ?? null,
@@ -460,14 +462,14 @@ class PurchaseOrderController extends Controller
 
         if (! $supplier) {
             abort(404);
-        }
-
-        $data = $request->validate([
-            'amount' => ['required', 'numeric', 'gt:0'],
+        }        $data = $request->validate([
+            'amount' => ['required', 'decimal:0,2', 'gt:0'],
             'reference' => ['nullable', 'string', 'max:100'],
         ]);
 
         try {
+
+
             $result = $this->supplierDebt->paySupplierGeneral(
                 $supplier,
                 (string) $data['amount'],
@@ -505,7 +507,7 @@ class PurchaseOrderController extends Controller
         return $this->exportExcel($store, $pos);
     }
 
-    private function exportExcel(\App\Models\Store $store, $pos)
+    private function exportExcel(Store $store, $pos)
     {
         $csv = fopen('php://temp', 'r+');
         fputcsv($csv, [
@@ -563,7 +565,7 @@ class PurchaseOrderController extends Controller
     }
 
     /** Returns print-optimized HTML (can be printed to PDF from browser). */
-    private function exportHtmlForPdf(\App\Models\Store $store, $pos, $status = null)
+    private function exportHtmlForPdf(Store $store, $pos, $status = null)
     {
         $html = view('pos.purchases.export_pdf', compact('store', 'pos', 'status'))->render();
 

@@ -42,7 +42,7 @@
         . ($store?->name ?? config('app.name')) . " မှာ အောက်ပါပစ္စည်းကို အော်ဒါတင်ချင်ပါတယ်။\n\n"
         . "ပစ္စည်း: {$product->name}\n"
         . "SKU: " . ($product->sku ?: '-') . "\n"
-        . "ဈေးနှုန်း: Ks " . number_format($effectivePrice) . "\n"
+        . "ဈေးနှုန်း: " . format_currency($effectivePrice, $store) . "\n"
         . "လင့်ခ်: {$productUrl}";
     $directViberUrl = \App\Support\ContactLinkBuilder::viberChatUrl($storeSetting?->viber_number, $directOrderText);
     // iOS swap must carry the same draft — viber://contact can't hold a draft,
@@ -53,7 +53,7 @@
     // rebuild the message (with the selected variant) as the shopper switches.
     $directViberNumber = \App\Support\ContactLinkBuilder::normalizeMyanmarPhone($storeSetting?->viber_number);
     $directTelegramUser = \App\Support\ContactLinkBuilder::telegramUsername($storeSetting?->telegram_username);
-    $shareText = $product->name . ' — Ks ' . number_format($effectivePrice) . ' — ' . ($store?->name ?? config('app.name'));
+    $shareText = $product->name . ' — ' . format_currency($effectivePrice, $store) . ' — ' . ($store?->name ?? config('app.name'));
 @endphp
 
 <div class="w-full mx-auto space-y-1 sm:space-y-1.5 lg:space-y-2 pb-[70px] md:pb-0"
@@ -105,7 +105,7 @@
                 + this.storeName + ' မှာ အောက်ပါပစ္စည်းကို အော်ဒါတင်ချင်ပါတယ်။\n\n'
                 + 'ပစ္စည်း: ' + this.orderName + '\n'
                 + 'SKU: ' + (this.orderSku || '-') + '\n'
-                + 'ဈေးနှုန်း: Ks ' + this.fmt(this.price) + '\n'
+                + 'ဈေးနှုန်း: ' + this.fmt(this.price) + '\n'
                 + 'လင့်ခ်: ' + this.productUrl;
         },
         // Use the canonical JS helper (mirrors ContactLinkBuilder) so the URL
@@ -122,7 +122,7 @@
         get inStock() { return this.selected ? this.selected.stock_status === 'in_stock' : {{ $product->stock_status === 'in_stock' ? 'true' : 'false' }}; },
         get onSale() { return !this.isWholesale && this.baseOld !== null && this.baseOld > this.price; },
         get discountPct() { if (!this.onSale) return 0; return Math.round(((this.baseOld - this.price) / this.baseOld) * 100); },
-        fmt(n) { return Number(n).toLocaleString('en-US'); },
+        fmt(n) { return (typeof window.formatCurrency === 'function') ? window.formatCurrency(n) : Number(n).toLocaleString('en-US'); },
 
         // --- Viber Order Modal state ---
         viberModalOpen: false,
@@ -402,11 +402,11 @@
                         {{-- Old price + % OFF when on sale --}}
                         <template x-if="onSale">
                             <div class="flex items-center gap-1.5">
-                                <span class="text-xs sm:text-sm text-slate-600 dark:text-slate-500 line-through decoration-rose-500 decoration-2 shrink-0" x-text="'Ks ' + fmt(baseOld)"></span>
+                                <span class="text-xs sm:text-sm text-slate-600 dark:text-slate-500 line-through decoration-rose-500 decoration-2 shrink-0" x-text="fmt(baseOld)"></span>
                                 <span class="inline-block text-xs sm:text-xs font-black px-2 py-0.5 rounded-full bg-rose-500 text-white shadow-sm shadow-rose-500/40" x-text="'-' + discountPct + '%'"></span>
                             </div>
                         </template>
-                        <div class="text-lg sm:text-2xl lg:text-3xl font-black text-sky-700 dark:text-sky-400 font-outfit shrink-0" x-text="'Ks ' + fmt(price)">Ks {{ number_format($effectivePrice) }}</div>
+                        <div class="text-lg sm:text-2xl lg:text-3xl font-black text-sky-700 dark:text-sky-400 font-outfit shrink-0" x-text="fmt(price)">{{ format_currency($effectivePrice, $store) }}</div>
                     </div>
 
                     {{-- Variant selector — grouped by attribute when available, flat pill fallback otherwise --}}

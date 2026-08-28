@@ -116,7 +116,10 @@ class InventoryAdjustmentController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer'],
             'items.*.product_variant_id' => ['nullable', 'integer'],
-            'items.*.quantity' => ['required', 'numeric', 'not_in:0'],
+            // decimal (not plain numeric): bcmath throws a ValueError on
+            // scientific notation ("1e3"). Sign is allowed (negative = count
+            // down), which the decimal rule permits.
+            'items.*.quantity' => ['required', 'decimal:0,3', 'not_in:0'],
             'items.*.reason' => ['required', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);

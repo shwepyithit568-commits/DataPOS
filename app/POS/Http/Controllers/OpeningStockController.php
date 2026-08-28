@@ -52,8 +52,10 @@ class OpeningStockController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer'],
             'items.*.product_variant_id' => ['nullable', 'integer'],
-            'items.*.quantity' => ['required', 'numeric', 'gt:0'],
-            'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
+            // decimal (not plain numeric): the service does bcmath, which
+            // throws a ValueError on scientific notation ("1e3").
+            'items.*.quantity' => ['required', 'decimal:0,3', 'gt:0'],
+            'items.*.unit_cost' => ['required', 'decimal:0,2', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 

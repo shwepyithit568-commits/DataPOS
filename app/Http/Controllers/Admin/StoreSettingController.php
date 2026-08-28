@@ -27,7 +27,7 @@ class StoreSettingController extends Controller
      *   footer        — combined live preview of the storefront footer (read-only)
      *   pos           — POS behaviour (held-sale auto-expiry window)
      */
-    private const SECTIONS = ['general', 'appearance', 'contact', 'delivery', 'how-to-order', 'footer', 'pos'];
+    private const SECTIONS = ['general', 'currency', 'appearance', 'contact', 'delivery', 'how-to-order', 'footer', 'pos'];
 
     public function edit(Request $request, StoreContext $context): View
     {
@@ -49,6 +49,18 @@ class StoreSettingController extends Controller
         $section = $request->input('section', 'general');
 
         $validated = match ($section) {
+            'currency' => $request->validate([
+                'currency_settings'                    => ['nullable', 'array'],
+                'currency_settings.currency_code'      => ['nullable', 'string', 'max:10'],
+                'currency_settings.currency_name'      => ['nullable', 'string', 'max:50'],
+                'currency_settings.currency_symbol'    => ['nullable', 'string', 'max:20'],
+                'currency_settings.symbol_position'    => ['nullable', 'string', Rule::in(['after_space', 'after_tight', 'before_space', 'before_tight'])],
+                'currency_settings.decimal_places'     => ['nullable', 'integer', 'min:0', 'max:4'],
+                'currency_settings.decimal_separator'  => ['nullable', 'string', Rule::in(['.', ','])],
+                'currency_settings.thousand_separator' => ['nullable', 'string', Rule::in([',', '.', 'space', 'none'])],
+                'currency_settings.negative_format'    => ['nullable', 'string', Rule::in(['minus', 'parentheses', 'dr_cr'])],
+                'currency_settings.show_symbol'        => ['nullable', 'boolean'],
+            ]),
             'appearance' => $request->validate([
                 'theme_preset'        => ['nullable', 'string', Rule::in(array_keys(\App\Models\StorefrontSetting::THEME_PRESETS))],
                 'theme_primary_color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
@@ -101,9 +113,37 @@ class StoreSettingController extends Controller
             ]),
             'pos' => $request->validate([
                 // Hours before a held sale is auto-voided; blank = 24h default, 0 = disabled.
-                'pos_hold_expiry_hours' => ['nullable', 'integer', 'min:0', 'max:720'],
+                'pos_hold_expiry_hours'      => ['nullable', 'integer', 'min:0', 'max:720'],
                 // Price-override discount % that needs a manager PIN; blank/0 = off.
                 'pos_override_pin_threshold' => ['nullable', 'integer', 'min:0', 'max:100'],
+                'pos_settings'               => ['nullable', 'array'],
+                'pos_settings.paper_size'    => ['nullable', 'string', Rule::in(['80mm', '58mm', 'a4', 'a5'])],
+                'pos_settings.receipt_header' => ['nullable', 'string', 'max:150'],
+                'pos_settings.receipt_subtitle' => ['nullable', 'string', 'max:255'],
+                'pos_settings.receipt_footer' => ['nullable', 'string', 'max:500'],
+                'pos_settings.auto_print'    => ['nullable', 'boolean'],
+                'pos_settings.show_tax_id'   => ['nullable', 'boolean'],
+                'pos_settings.tax_id_number' => ['nullable', 'string', 'max:50'],
+                'pos_settings.show_cashier'  => ['nullable', 'boolean'],
+                'pos_settings.show_customer_info' => ['nullable', 'boolean'],
+                'pos_settings.show_qr'       => ['nullable', 'boolean'],
+                'pos_settings.qr_type'       => ['nullable', 'string', Rule::in(['storefront', 'custom'])],
+                'pos_settings.custom_qr_url' => ['nullable', 'string', 'max:500'],
+                'pos_settings.auto_open_drawer' => ['nullable', 'boolean'],
+                'pos_settings.require_opening_float' => ['nullable', 'boolean'],
+                'pos_settings.blind_closing' => ['nullable', 'boolean'],
+                'pos_settings.allow_price_edit' => ['nullable', 'boolean'],
+                'pos_settings.max_item_discount_pct' => ['nullable', 'integer', 'min:0', 'max:100'],
+                'pos_settings.max_cart_discount_pct' => ['nullable', 'integer', 'min:0', 'max:100'],
+                'pos_settings.require_pin_to_void' => ['nullable', 'boolean'],
+                'pos_settings.require_pin_for_return' => ['nullable', 'boolean'],
+                'pos_settings.enable_tax'    => ['nullable', 'boolean'],
+                'pos_settings.default_tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+                'pos_settings.tax_type'      => ['nullable', 'string', Rule::in(['exclusive', 'inclusive'])],
+                'pos_settings.cash_rounding' => ['nullable', 'string', Rule::in(['none', 'round_10', 'round_50', 'round_100'])],
+                'pos_settings.barcode_auto_add' => ['nullable', 'boolean'],
+                'pos_settings.enable_sound_fx' => ['nullable', 'boolean'],
+                'pos_settings.allow_negative_stock' => ['nullable', 'boolean'],
             ]),
             default => $request->validate([
                 'store_name' => ['required', 'string', 'max:255'],
@@ -214,6 +254,56 @@ class StoreSettingController extends Controller
                 $validated['chat_button_icon_path'] = null;
             }
             unset($validated['chat_button_icon_image']);
+        }
+
+        // ---- POS Configuration Settings Sanitization ----
+        if ($section === 'pos') {
+            $rawPos = $request->input('pos_settings', []);
+            $validated['pos_settings'] = [
+                'paper_size'            => $rawPos['paper_size'] ?? '80mm',
+                'receipt_header'        => trim((string) ($rawPos['receipt_header'] ?? '')),
+                'receipt_subtitle'      => trim((string) ($rawPos['receipt_subtitle'] ?? '')),
+                'receipt_footer'        => trim((string) ($rawPos['receipt_footer'] ?? '')),
+                'auto_print'            => ! empty($rawPos['auto_print']),
+                'show_tax_id'           => ! empty($rawPos['show_tax_id']),
+                'tax_id_number'         => trim((string) ($rawPos['tax_id_number'] ?? '')),
+                'show_cashier'          => ! empty($rawPos['show_cashier']),
+                'show_customer_info'    => ! empty($rawPos['show_customer_info']),
+                'show_qr'               => ! empty($rawPos['show_qr']),
+                'qr_type'               => $rawPos['qr_type'] ?? 'storefront',
+                'custom_qr_url'         => trim((string) ($rawPos['custom_qr_url'] ?? '')),
+                'auto_open_drawer'      => ! empty($rawPos['auto_open_drawer']),
+                'require_opening_float' => ! empty($rawPos['require_opening_float']),
+                'blind_closing'         => ! empty($rawPos['blind_closing']),
+                'allow_price_edit'      => ! empty($rawPos['allow_price_edit']),
+                'max_item_discount_pct' => ($rawPos['max_item_discount_pct'] ?? '') !== '' ? (int) $rawPos['max_item_discount_pct'] : null,
+                'max_cart_discount_pct' => ($rawPos['max_cart_discount_pct'] ?? '') !== '' ? (int) $rawPos['max_cart_discount_pct'] : null,
+                'require_pin_to_void'   => ! empty($rawPos['require_pin_to_void']),
+                'require_pin_for_return'=> ! empty($rawPos['require_pin_for_return']),
+                'enable_tax'            => ! empty($rawPos['enable_tax']),
+                'default_tax_rate'      => ($rawPos['default_tax_rate'] ?? '') !== '' ? (float) $rawPos['default_tax_rate'] : 0,
+                'tax_type'              => $rawPos['tax_type'] ?? 'exclusive',
+                'cash_rounding'         => $rawPos['cash_rounding'] ?? 'none',
+                'barcode_auto_add'      => ! empty($rawPos['barcode_auto_add']),
+                'enable_sound_fx'       => ! empty($rawPos['enable_sound_fx']),
+                'allow_negative_stock'  => ! empty($rawPos['allow_negative_stock']),
+            ];
+        }
+
+        // ---- Currency & Accounting Format Settings Sanitization ----
+        if ($section === 'currency') {
+            $rawCurr = $request->input('currency_settings', []);
+            $validated['currency_settings'] = [
+                'currency_code'      => strtoupper(trim((string) ($rawCurr['currency_code'] ?? 'MMK'))),
+                'currency_name'      => trim((string) ($rawCurr['currency_name'] ?? 'Myanmar Kyat')),
+                'currency_symbol'    => trim((string) ($rawCurr['currency_symbol'] ?? 'Ks')),
+                'symbol_position'    => $rawCurr['symbol_position'] ?? 'after_space',
+                'decimal_places'     => isset($rawCurr['decimal_places']) ? (int) $rawCurr['decimal_places'] : 0,
+                'decimal_separator'  => $rawCurr['decimal_separator'] ?? '.',
+                'thousand_separator' => $rawCurr['thousand_separator'] ?? ',',
+                'negative_format'    => $rawCurr['negative_format'] ?? 'minus',
+                'show_symbol'        => ! empty($rawCurr['show_symbol']),
+            ];
         }
 
         // ---- Brand assets (Storefront / Admin / Favicon) with safe sequencing ----

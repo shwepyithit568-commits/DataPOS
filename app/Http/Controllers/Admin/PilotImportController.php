@@ -37,10 +37,23 @@ class PilotImportController extends Controller
         $tab = $this->tabFromRequest($request);
         $store = $context->getStore();
 
+        $histories = ImportHistory::where('store_id', $store->id)
+            ->where('type', $tab)
+            ->with('user')
+            ->latest()
+            ->take(10)
+            ->get();
+
+        $summary = [
+            'total_imports' => ImportHistory::where('store_id', $store->id)->where('type', $tab)->count(),
+            'successful_rows' => ImportHistory::where('store_id', $store->id)->where('type', $tab)->sum('success_rows'),
+            'failed_rows' => ImportHistory::where('store_id', $store->id)->where('type', $tab)->sum('failed_rows'),
+        ];
+
         $demoScenarios = app(DemoBusinessScenarioService::class)->scenarios();
         $demoScenariosEnabled = app()->environment(['local', 'testing', 'uat']) && (bool) config('app.show_quick_login');
 
-        return view('admin.pilot_import.index', compact('store', 'tab', 'demoScenarios', 'demoScenariosEnabled'));
+        return view('admin.pilot_import.index', compact('store', 'tab', 'histories', 'summary', 'demoScenarios', 'demoScenariosEnabled'));
     }
 
     public function createDemoScenario(

@@ -1,6 +1,6 @@
 @extends('layouts.admin.app')
 
-@section('title', __('messages.blog_title') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('title', __('messages.blog_admin_title') . ' - ' . ($store->name ?? 'DataPOS'))
 @section('main_padding', 'p-2')
 
 @php
@@ -50,10 +50,10 @@
                 <span class="font-normal normal-case text-slate-500 dark:text-slate-400">Content Studio & SEO</span>
             </div>
             <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                {{ __('messages.blog_title') }}
+                {{ __('messages.blog_admin_title') }}
             </h1>
             <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {{ $store->name }} · {{ __('messages.blog_subtitle') }}
+                {{ $store->name }} · {{ __('messages.blog_admin_subtitle') }}
             </p>
         </div>
 
@@ -83,7 +83,7 @@
     {{-- ============================================================
          KPI STAT CARDS — 4 responsive interactive cards
          ============================================================ --}}
-    <div class="w-full grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5" role="list" aria-label="{{ __('messages.blog_title') }}">
+    <div class="w-full grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5" role="list" aria-label="{{ __('messages.blog_admin_title') }}">
         {{-- Total Posts --}}
         <a href="{{ $clearFiltersUrl }}" role="listitem"
            class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['total'] }}">
@@ -294,7 +294,7 @@
                                     <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
                                         <span class="text-xl">📝</span>
                                     </div>
-                                    <p class="font-bold text-xs text-slate-700 dark:text-slate-300">{{ __('messages.blog_empty') }}</p>
+                                    <p class="font-bold text-xs text-slate-700 dark:text-slate-300">{{ __('messages.blog_admin_empty') }}</p>
                                     <p class="text-[11px] text-slate-400">{{ __('messages.blog_empty_desc') }}</p>
                                     <a href="{{ $clearFiltersUrl }}" class="inline-block text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline">
                                         {{ __('messages.clear_all') }}
@@ -391,7 +391,7 @@
                     <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
                         <span class="text-xl">📝</span>
                     </div>
-                    <p class="font-bold text-xs text-slate-700 dark:text-slate-300">{{ __('messages.blog_empty') }}</p>
+                    <p class="font-bold text-xs text-slate-700 dark:text-slate-300">{{ __('messages.blog_admin_empty') }}</p>
                     <p class="text-[11px] text-slate-400">{{ __('messages.blog_empty_desc') }}</p>
                     <a href="{{ $clearFiltersUrl }}" class="inline-block text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline">
                         {{ __('messages.clear_all') }}

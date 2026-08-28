@@ -268,7 +268,7 @@
                                 @foreach ($parentChildren as $child)
                                     <tr id="cat-row-t-{{ $child->id }}" data-cat-row="{{ $child->id }}"
                                         x-show="isOpen({{ $parent->id }})" x-cloak
-                                        class="divide-x divide-slate-200/60 dark:divide-slate-800/80 bg-slate-50/60 dark:bg-slate-850/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 transition {{ $highlightCategory && (int) $highlightCategory === (int) $child->id ? 'bg-violet-50/60 dark:bg-violet-950/20 ring-2 ring-violet-400/70' : '' }}">
+                                        class="divide-x divide-slate-200/60 dark:divide-slate-800/80 bg-slate-50/60 dark:bg-slate-900/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 transition {{ $highlightCategory && (int) $highlightCategory === (int) $child->id ? 'bg-violet-50/60 dark:bg-violet-950/20 ring-2 ring-violet-400/70' : '' }}">
                                         
                                         {{-- Indented Icon --}}
                                         <td class="py-2 px-3 text-center pl-6">

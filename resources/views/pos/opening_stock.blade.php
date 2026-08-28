@@ -567,7 +567,7 @@
 
                         <div class="space-y-3">
                             <template x-for="(r, i) in rows" :key="i">
-                                <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-2.5 relative bg-slate-50/50 dark:bg-slate-850">
+                                <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-2.5 relative bg-slate-50/50 dark:bg-slate-900/70">
                                     <button type="button" @click="removeRow(i)" x-show="rows.length > 1"
                                             class="absolute top-2.5 right-2.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 p-1 rounded-lg text-xs">✕</button>
 

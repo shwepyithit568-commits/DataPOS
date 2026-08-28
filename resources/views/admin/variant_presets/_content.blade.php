@@ -1,6 +1,7 @@
 @php
-    $totalRows = $presets->sum(fn ($preset) => count($preset->options ?? []));
-    $stockRows = $presets->sum(fn ($preset) => collect($preset->options ?? [])->where('stock_status', 'in_stock')->count());
+    $presetCollection = collect($presets ?? []);
+    $totalRows = $presetCollection->sum(fn ($preset) => count(data_get($preset, 'options', [])));
+    $stockRows = $presetCollection->sum(fn ($preset) => collect(data_get($preset, 'options', []))->where('stock_status', 'in_stock')->count());
     $outRows = max(0, $totalRows - $stockRows);
 
     $familyOptions = [
@@ -149,7 +150,7 @@
                 ]"
                 :showViewToggle="true"
                 :showExportImport="false"
-                :totalCount="$presets->count()"
+                :totalCount="$presetCollection->count()"
                 :paginator="null"
             />
         </div>
@@ -410,7 +411,7 @@
 
                             <div class="max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 p-2 space-y-2">
                                 <template x-for="(opt, idx) in formOptions" :key="idx">
-                                    <div class="grid grid-cols-1 sm:grid-cols-[1.5fr_1fr_1fr_1fr_1.2fr_auto] gap-2 items-center bg-slate-50/50 dark:bg-slate-850 p-2 rounded-lg border border-slate-200/60 dark:border-slate-800">
+                                    <div class="grid grid-cols-1 sm:grid-cols-[1.5fr_1fr_1fr_1fr_1.2fr_auto] gap-2 items-center bg-slate-50/50 dark:bg-slate-900/60 p-2 rounded-lg border border-slate-200/60 dark:border-slate-800">
                                         <div>
                                             <label class="block sm:hidden text-[10px] font-bold text-slate-400">{{ __('messages.variant_preset_option_name') }} *</label>
                                             <input type="text" :name="'options[' + idx + '][name]'" x-model="opt.name" required placeholder="e.g. 256GB"

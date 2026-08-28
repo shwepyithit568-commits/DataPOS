@@ -51,7 +51,7 @@
             </div>
             <div class="flex justify-between py-2 items-center">
                 <span class="font-bold text-slate-600 dark:text-slate-300">{{ __('messages.total_amount') }}</span>
-                <span class="font-black text-violet-600 dark:text-violet-400 font-outfit text-xl">Ks {{ number_format($order->total_amount) }}</span>
+                <span class="font-black text-violet-600 dark:text-violet-400 font-outfit text-xl">{{ format_currency($order->total_amount, $store ?? null) }}</span>
             </div>
         </div>
 
@@ -77,7 +77,7 @@
                             <div class="mt-0.5 text-[11px] text-sky-600 dark:text-sky-400 font-bold">📲 {{ __('messages.product_form_digital_delivery_method') }}: {{ $item->product->digital_delivery_method }}</div>
                         @endif
                         <div class="mt-1 text-right">
-                            <span class="font-black text-base text-slate-900 dark:text-white">Ks {{ number_format($item->subtotal) }}</span>
+                            <span class="font-black text-base text-slate-900 dark:text-white">{{ format_currency($item->subtotal, $store ?? null) }}</span>
                         </div>
                     </div>
                 @endforeach

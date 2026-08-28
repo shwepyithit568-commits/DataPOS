@@ -65,10 +65,55 @@ class PosReportsRevampTest extends TestCase
     public function test_pos_sales_report_csv_export(): void
     {
         $response = $this->actingAs($this->manager)
-            ->get("/store/{$this->store->slug}/pos/reports/sales/export?preset=today");
+            ->get("/store/{$this->store->slug}/pos/reports/sales/export?preset=today&format=csv");
 
         $response->assertOk();
         $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_pos_sales_report_xlsx_export(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/pos/reports/sales/export?preset=today&format=xlsx");
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    public function test_pos_cash_report_csv_export(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/pos/reports/cash/export?preset=today&format=csv");
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_pos_cash_report_xlsx_export(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/pos/reports/cash/export?preset=today&format=xlsx");
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    public function test_pos_stock_report_csv_export(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/pos/reports/stock/export?format=csv");
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_pos_stock_report_xlsx_export(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/pos/reports/stock/export?format=xlsx");
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
     public function test_pos_service_jobs_report_renders_with_kpis(): void
@@ -103,10 +148,25 @@ class PosReportsRevampTest extends TestCase
 
     public function test_pos_service_jobs_report_csv_export(): void
     {
-        $response = $this->actingAs($this->manager)
+        // Default format is xlsx (the report revamp) — the CSV variant is an
+        // explicit opt-in via ?format=csv.
+        $xlsx = $this->actingAs($this->manager)
             ->get("/store/{$this->store->slug}/pos/reports/services/export?preset=today");
+        $xlsx->assertOk();
+        $xlsx->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        $csv = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/pos/reports/services/export?preset=today&format=csv");
+        $csv->assertOk();
+        $csv->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_pos_service_jobs_report_xlsx_export(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/pos/reports/services/export?preset=today&format=xlsx");
 
         $response->assertOk();
-        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 }

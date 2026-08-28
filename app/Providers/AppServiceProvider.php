@@ -90,5 +90,13 @@ class AppServiceProvider extends ServiceProvider
                 'adminCurrentStoreRole' => $role,
             ]);
         });
+
+        // Register custom Blade directives for system-wide currency formatting
+        \Illuminate\Support\Facades\Blade::directive('currency', function ($expression) {
+            return "<?php echo format_currency({$expression}); ?>";
+        });
+        \Illuminate\Support\Facades\Blade::directive('money', function ($expression) {
+            return "<?php echo format_currency({$expression}); ?>";
+        });
     }
 }

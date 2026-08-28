@@ -197,6 +197,11 @@ class PosSaleService
         return 'pos.cart_customer.' . $store->id;
     }
 
+    private function resumedSaleKey(Store $store): string
+    {
+        return 'pos.resumed_sale.' . $store->id;
+    }
+
     /**
      * True when the user is an active retail/wholesale customer of this store
      * (the same membership rule post() enforces — never cross-store).
@@ -413,6 +418,7 @@ class PosSaleService
     {
         session()->forget($this->cartKey($store));
         session()->forget($this->cartCustomerKey($store));
+        session()->forget($this->resumedSaleKey($store));
     }
 
     /**
@@ -573,6 +579,10 @@ class PosSaleService
      * on every cart-state read so a stale hold leaves the list without a cron).
      * They are marked 'voided' with a note so the audit trail is kept and they
      * cannot be recalled anymore. A store window of 0 disables auto-expiry.
+     *
+     * 'resumed' rows are expired too: a sale recalled into the cart but never
+     * posted (cashier cleared the cart / walked away) would otherwise linger
+     * forever as a zombie that no list ever shows.
      */
     public function expireStaleHolds(Store $store, ?int $olderThanHours = null): int
     {
@@ -585,7 +595,7 @@ class PosSaleService
 
         $stale = PosSale::query()
             ->where('store_id', $store->id)
-            ->where('status', 'held')
+            ->whereIn('status', ['held', 'resumed'])
             ->where('created_at', '<', $cutoff)
             ->get();
 
@@ -593,7 +603,9 @@ class PosSaleService
             $sale->update([
                 'status' => 'voided',
                 'voided_at' => now(),
-                'notes' => trim(($sale->notes ?? '') . ' Expired — held over ' . $olderThanHours . 'h, auto-voided at ' . now()->format('Y-m-d H:i')),
+                'notes' => trim(($sale->notes ?? '') . ($sale->status === 'resumed'
+                    ? ' Abandoned — resumed over ' . $olderThanHours . 'h without posting, auto-voided at '
+                    : ' Expired — held over ' . $olderThanHours . 'h, auto-voided at ') . now()->format('Y-m-d H:i')),
             ]);
         }
 
@@ -610,6 +622,11 @@ class PosSaleService
         if ($lines === []) {
             throw new InventoryException('Cart is empty — nothing to hold.');
         }
+
+        // A fresh hold breaks the resume link: the cart came from a recalled
+        // sale, but holding it again starts a NEW held row — the session must
+        // no longer point at the old 'resumed' record.
+        session()->forget($this->resumedSaleKey($store));
 
         return DB::transaction(function () use ($store, $lines, $actor, $shift) {
             $subtotal = '0';
@@ -658,6 +675,12 @@ class PosSaleService
             throw new InventoryException('This held sale cannot be resumed.');
         }
 
+        // Resuming REPLACES the active cart with the held sale's lines — never
+        // let that silently discard a cart the cashier already priced.
+        if ($this->cartLines($store) !== []) {
+            throw new InventoryException('The cart already has items — post, hold or clear it before resuming a held sale.');
+        }
+
         $lines = [];
         foreach ($sale->items as $item) {
             $lines[] = [
@@ -679,7 +702,35 @@ class PosSaleService
             'notes' => trim(($sale->notes ?? '') . ' Resumed by ' . ($actor?->name ?? 'unknown') . ' at ' . now()->format('Y-m-d H:i')),
         ]);
 
+        // Remember which row this cart came from so posting (which the UI does
+        // without the sale id) reuses THE SAME row instead of orphaning a
+        // 'resumed' record that can never be closed.
+        session([$this->resumedSaleKey($store) => $sale->id]);
+
         session([$this->cartKey($store) => $lines]);
+    }
+
+    /**
+     * The held sale the cashier most recently recalled via resume(), when it
+     * is still in the 'resumed' state. The controller uses it on post() so the
+     * resumed row transitions to 'posted' instead of being orphaned. A stale
+     * key (row posted / voided / expired / cross-store meanwhile) clears itself.
+     */
+    public function sessionResumedSale(Store $store): ?PosSale
+    {
+        $id = (int) session()->get($this->resumedSaleKey($store), 0);
+        if ($id <= 0) {
+            return null;
+        }
+
+        $sale = PosSale::find($id);
+        if (! $sale || (int) $sale->store_id !== (int) $store->id || $sale->status !== 'resumed') {
+            session()->forget($this->resumedSaleKey($store));
+
+            return null;
+        }
+
+        return $sale;
     }
 
     public function voidHeld(Store $store, PosSale $sale, User $actor): void

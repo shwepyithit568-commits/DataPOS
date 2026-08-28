@@ -288,7 +288,7 @@ class PosSaleController extends Controller
         }
 
         $data = $request->validate([
-            'amount' => ['required', 'numeric', 'gt:0'],
+            'amount' => ['required', 'decimal:0,2', 'gt:0'],
             'notes' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -329,7 +329,9 @@ class PosSaleController extends Controller
         $data = $request->validate([
             'product_id' => ['required', 'integer'],
             'product_variant_id' => ['nullable', 'integer'],
-            'quantity' => ['required', 'numeric', 'min:0.001'],
+            // decimal rule (not plain numeric): rejects scientific notation so
+            // the bcmath math below never hits a ValueError (1e3 → 500).
+            'quantity' => ['required', 'decimal:0,3', 'min:0.001'],
         ]);
 
         try {
@@ -346,7 +348,7 @@ class PosSaleController extends Controller
         $store = $context->getStore();
 
         $data = $request->validate([
-            'quantity' => ['required', 'numeric', 'min:0.001'],
+            'quantity' => ['required', 'decimal:0,3', 'min:0.001'],
         ]);
 
         try {
@@ -392,7 +394,9 @@ class PosSaleController extends Controller
         $raw = trim((string) ($data['unit_price'] ?? ''));
         $unitPrice = $raw === '' ? null : $raw;
 
-        if ($unitPrice !== null && (! is_numeric($unitPrice) || bccomp($unitPrice, '0', 2) < 0)) {
+        // Plain-decimal only: is_numeric accepts scientific notation ("1e3")
+        // which makes the bcmath comparison below throw a ValueError (500).
+        if ($unitPrice !== null && (! preg_match('/^\d+(\.\d{1,2})?$/', $unitPrice) || bccomp($unitPrice, '0', 2) < 0)) {
             return $this->jsonOrRedirect($request, $store, null, __('messages.pos_price_invalid'));
         }
 
@@ -641,7 +645,9 @@ class PosSaleController extends Controller
         $data = $request->validate([
             'payments' => ['required', 'array', 'min:1'],
             'payments.*.method' => ['required', 'string', 'in:cash,kpay,wavepay,cb_pay,mmqr,credit'],
-            'payments.*.amount' => ['nullable', 'numeric', 'min:0'], // empty = unused method, dropped in the service
+            // decimal (not plain numeric): bcmath throws on scientific notation
+            // ("1e3") — the rule rejects it before it ever reaches a bc* call.
+            'payments.*.amount' => ['nullable', 'decimal:0,2', 'min:0'], // empty = unused method, dropped in the service
             'customer_id' => ['nullable', 'integer', 'exists:users,id'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'web_order_id' => ['nullable', 'integer', 'exists:orders,id'],
@@ -660,7 +666,10 @@ class PosSaleController extends Controller
                 ])->all();
             } else {
                 $lines = $this->sales->cartLines($store);
-                $sale = null;
+                // The UI posts without the sale id, so a sale recalled via
+                // resume() is threaded through the session — the SAME row is
+                // reused and marked posted, never orphaned as 'resumed'.
+                $sale = $this->sales->sessionResumedSale($store);
             }
 
             $posted = $this->sales->post(

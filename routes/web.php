@@ -462,7 +462,7 @@ Route::prefix('store/{store_slug}')
         // Admin Store Settings CRUD (split into sidebar sections: general /
         // contact / delivery / how-to-order — see StoreSettingController)
         Route::get('/admin/settings', [StoreSettingController::class, 'edit'])->name('store.admin.settings.edit')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::get('/admin/settings/{section}', [StoreSettingController::class, 'edit'])->name('store.admin.settings.section')->middleware(EnsureStoreAccess::class . ':store_manager')->whereIn('section', ['general', 'appearance', 'contact', 'delivery', 'how-to-order', 'footer', 'pos']);
+        Route::get('/admin/settings/{section}', [StoreSettingController::class, 'edit'])->name('store.admin.settings.section')->middleware(EnsureStoreAccess::class . ':store_manager')->whereIn('section', ['general', 'currency', 'appearance', 'contact', 'delivery', 'how-to-order', 'footer', 'pos']);
         Route::post('/admin/settings', [StoreSettingController::class, 'update'])->middleware(EnsureStoreAccess::class . ':store_manager');
 
         // Structured payment / delivery method CRUD (store-scoped; managed from
@@ -497,7 +497,7 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/receivables/{customer}/statement', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'statement'])->name('store.admin.receivables.statement')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Supplier Payables (Accounts Payable)
-        Route::get('/admin/payables', fn (\App\Services\StoreContext $context) => redirect()->route('pos.purchases.payables', $context->getRouteParams()))->name('store.admin.payables.index')->middleware(\App\Http\Middleware\EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/payables', fn (StoreContext $context) => redirect()->route('pos.purchases.payables', $context->getRouteParams()))->name('store.admin.payables.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Profit & Loss Financial Statement (SoT §18)
         Route::get('/admin/profit-loss', [\App\Http\Controllers\Admin\ProfitLossController::class, 'index'])->name('store.admin.profit_loss.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -979,7 +979,9 @@ Route::prefix('store/{store_slug}')
             Route::get('/reports/sales', [\App\POS\Http\Controllers\PosReportController::class, 'sales'])->name('pos.reports.sales');
             Route::get('/reports/sales/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportSales'])->name('pos.reports.sales.export');
             Route::get('/reports/cash', [\App\POS\Http\Controllers\PosReportController::class, 'cash'])->name('pos.reports.cash');
+            Route::get('/reports/cash/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportCash'])->name('pos.reports.cash.export');
             Route::get('/reports/stock', [\App\POS\Http\Controllers\PosReportController::class, 'stock'])->name('pos.reports.stock');
+            Route::get('/reports/stock/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportStock'])->name('pos.reports.stock.export');
             Route::get('/reports/services', [\App\POS\Http\Controllers\PosReportController::class, 'services'])->name('pos.reports.services');
             Route::get('/reports/services/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportServices'])->name('pos.reports.services.export');
 

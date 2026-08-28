@@ -63,19 +63,19 @@
         <div class="mt-1.5 flex items-baseline flex-wrap gap-x-1.5 gap-y-0.5">
             @if ($isWholesaleApproved && $wholesalePrice > 0)
                 <span class="text-sm font-black text-emerald-700 dark:text-emerald-400">
-                    {{ __('messages.wholesale') }}: Ks {{ number_format($wholesalePrice) }}
+                    {{ __('messages.wholesale') }}: {{ format_currency($wholesalePrice, $store) }}
                 </span>
             @else
                 @if ($showRetailSale && $product->old_price)
                     <span class="text-xs text-slate-600 dark:text-slate-500 line-through decoration-rose-500 decoration-2">
-                        Ks {{ number_format($product->old_price) }}
+                        {{ format_currency($product->old_price, $store) }}
                     </span>
                     <span class="px-1.5 py-0.5 rounded-md text-xs font-black bg-rose-500 text-white shadow-sm shadow-rose-500/40">
                         -{{ $product->discountPercent() }}%
                     </span>
                 @endif
                 <span class="text-base font-black text-sky-700 dark:text-sky-400 font-outfit leading-tight">
-                    Ks {{ number_format($retailPrice) }}
+                    {{ format_currency($retailPrice, $store) }}
                 </span>
             @endif
         </div>

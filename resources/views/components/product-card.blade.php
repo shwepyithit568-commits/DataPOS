@@ -240,7 +240,7 @@
                 <div class="flex flex-row items-baseline justify-between gap-2">
                     <div class="flex items-center space-x-1.5 min-w-0">
                         <span class="text-sm font-black text-emerald-700 dark:text-emerald-400">
-                            {{ __('messages.wholesale') }}: Ks {{ number_format($wholesalePrice) }}
+                            {{ __('messages.wholesale') }}: {{ format_currency($wholesalePrice, $store) }}
                         </span>
                     </div>
                 </div>
@@ -251,7 +251,7 @@
                         <div class="text-xs font-bold text-slate-500 dark:text-slate-600">{{ __('messages.price') }}</div>
                         @if ($showRetailSale)
                             <div class="text-xs text-slate-600 dark:text-slate-500 line-through decoration-rose-500 decoration-2 shrink-0">
-                                Ks {{ number_format($product->old_price) }}
+                                {{ format_currency($product->old_price, $store) }}
                             </div>
                             <span class="shrink-0 px-1.5 py-0.5 rounded-md text-xs font-black bg-rose-500 text-white shadow-sm shadow-rose-500/40">
                                 -{{ $product->discountPercent() }}%
@@ -259,7 +259,7 @@
                         @endif
                     </div>
                     <div class="text-base font-black text-sky-700 dark:text-sky-400 font-outfit leading-tight">
-                        Ks {{ number_format($retailPrice) }}
+                        {{ format_currency($retailPrice, $store) }}
                     </div>
                 </div>
                 @if ($showRetailSale && $product->saleWindowLabel())

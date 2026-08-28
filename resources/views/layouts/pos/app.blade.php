@@ -13,6 +13,7 @@
             document.documentElement.classList.remove('dark');
         }
     </script>
+    <x-currency-js-init :store="$store ?? null" />
     @vite(['resources/css/admin.css', 'resources/js/app-admin.js'])
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-gray-900 dark:text-slate-100 font-sans antialiased min-h-dvh flex flex-col transition-colors duration-200"

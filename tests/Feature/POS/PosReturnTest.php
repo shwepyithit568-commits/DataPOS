@@ -369,6 +369,97 @@ class PosReturnTest extends TestCase
         );
     }
 
+    public function test_credit_refund_rows_cannot_exceed_remaining_credit_in_one_request(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        // 10,000 fully on credit → receivable 10,000, remaining credit 10,000.
+        $sale = $this->postedSale($store, $cashier, 10000, '1', credit: true);
+        $this->assertSame('10000.00', $this->debts->balanceFor($store->id, $sale->customer_id));
+
+        // Two credit rows each pass the per-row check (7,000 and 4,000 are
+        // both ≤ 10,000) — the AGGREGATE (11,000 > 10,000) must be rejected.
+        try {
+            $this->returns->post(
+                $store,
+                $sale,
+                $this->saleItems($sale),
+                [
+                    ['method' => 'credit', 'amount' => '7000'],
+                    ['method' => 'credit', 'amount' => '4000'],
+                ],
+                $cashier,
+                $this->shifts->openShiftFor($store, $cashier),
+            );
+            $this->fail('Expected aggregate credit-refund exception.');
+        } catch (InventoryException $e) {
+            $this->assertStringContainsString('remaining credit portion', $e->getMessage());
+        }
+
+        // Nothing posted: no return doc, receivable untouched, sale still posted.
+        $this->assertSame(0, PosReturn::count());
+        $this->assertSame('10000.00', $this->debts->balanceFor($store->id, $sale->customer_id));
+        $this->assertSame('posted', $sale->refresh()->status);
+    }
+
+    public function test_credit_refund_split_within_remaining_credit_is_allowed(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $sale = $this->postedSale($store, $cashier, 10000, '1', credit: true);
+
+        // 6,000 + 4,000 = 10,000 — exactly the remaining credit, allowed.
+        $refund = $this->returns->post(
+            $store,
+            $sale,
+            $this->saleItems($sale),
+            [
+                ['method' => 'credit', 'amount' => '6000'],
+                ['method' => 'credit', 'amount' => '4000'],
+            ],
+            $cashier,
+            $this->shifts->openShiftFor($store, $cashier),
+        );
+
+        $this->assertSame('10000.00', (string) $refund->total);
+        $this->assertSame('0.00', $this->debts->balanceFor($store->id, $sale->customer_id));
+        $this->assertSame('refunded', $sale->refresh()->status);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Same-line duplicate rows in one request                            */
+    /* ------------------------------------------------------------------ */
+
+    public function test_same_sale_line_cannot_be_returned_twice_in_one_request(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $sale = $this->postedSale($store, $cashier, 10000, '2');
+        $item = $sale->items->first();
+
+        try {
+            $this->returns->post(
+                $store,
+                $sale,
+                [
+                    ['pos_sale_item_id' => $item->id, 'quantity' => '2'],
+                    ['pos_sale_item_id' => $item->id, 'quantity' => '1'], // 3 > 2 refundable
+                ],
+                [['method' => 'cash', 'amount' => '30000']],
+                $cashier,
+                $this->shifts->openShiftFor($store, $cashier),
+            );
+            $this->fail('Expected refundable-quantity exception.');
+        } catch (InventoryException $e) {
+            $this->assertStringContainsString('refundable quantity', $e->getMessage());
+        }
+
+        // No trace: no return doc, stock unchanged, sale untouched.
+        $this->assertSame(0, PosReturn::count());
+        $this->assertSame('8.000', $this->inventory->totalOnHand($store->id, $item->product_id));
+        $this->assertSame('posted', $sale->refresh()->status);
+    }
+
     /* ------------------------------------------------------------------ */
     /*  Idempotency + cross-store                                          */
     /* ------------------------------------------------------------------ */

@@ -45,6 +45,8 @@ class StorefrontSetting extends Model
         'default_language',
         'pos_hold_expiry_hours',
         'pos_override_pin_threshold',
+        'pos_settings',
+        'currency_settings',
         'how_to_intro',
         'how_to_steps',
         'how_to_videos',
@@ -62,6 +64,8 @@ class StorefrontSetting extends Model
         'how_to_steps' => 'array',
         'how_to_videos' => 'array',
         'chat_channels' => 'array',
+        'pos_settings' => 'array',
+        'currency_settings' => 'array',
         'map_enabled' => 'boolean',
         'map_embed_enabled' => 'boolean',
         'map_latitude' => 'float',
@@ -69,6 +73,32 @@ class StorefrontSetting extends Model
         'pos_hold_expiry_hours' => 'integer',
         'pos_override_pin_threshold' => 'integer',
     ];
+
+    /**
+     * Get a granular POS configuration setting with default fallback.
+     */
+    public function getPosSetting(string $key, mixed $default = null): mixed
+    {
+        $settings = $this->pos_settings ?? [];
+        return data_get($settings, $key, $default);
+    }
+
+    /**
+     * Get a granular Currency & Accounting format setting with default fallback.
+     */
+    public function getCurrencySetting(string $key, mixed $default = null): mixed
+    {
+        $settings = $this->currency_settings ?? [];
+        return data_get($settings, $key, $default);
+    }
+
+    /**
+     * Format an amount using this store's configured currency/accounting rules.
+     */
+    public function formatCurrency(float|int|string|null $amount): string
+    {
+        return \App\Support\CurrencyFormatter::format($amount, $this->currency_settings ?? []);
+    }
 
     /**
      * POS held-sale auto-expiry window in hours for this store. Falls back

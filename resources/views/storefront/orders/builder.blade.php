@@ -58,7 +58,7 @@
                                 <div class="min-w-0">
                                     <h4 class="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white truncate" x-text="item.name"></h4>
                                     <p class="text-xs font-mono text-slate-500 dark:text-slate-600" x-text="'SKU: ' + (item.sku || 'N/A')"></p>
-                                    <p class="text-xs font-black text-sky-600 dark:text-sky-400 font-outfit" x-text="'Ks ' + (item.price * item.quantity).toLocaleString()"></p>
+                                    <p class="text-xs font-black text-sky-600 dark:text-sky-400 font-outfit" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(item.price * item.quantity) : 'Ks ' + (item.price * item.quantity).toLocaleString()"></p>
                                 </div>
                             </div>
 
@@ -78,7 +78,7 @@
                 {{-- Price Total Box --}}
                 <div class="pt-4 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-sm font-bold">
                     <span class="text-slate-700 dark:text-slate-300">{{ __('messages.total_amount') }}:</span>
-                    <span class="text-xl font-black text-sky-600 dark:text-sky-400 font-outfit" x-text="'Ks ' + ($store.orderBuilder ? $store.orderBuilder.totalAmount.toLocaleString() : 0)"></span>
+                    <span class="text-xl font-black text-sky-600 dark:text-sky-400 font-outfit" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency($store.orderBuilder ? $store.orderBuilder.totalAmount : 0) : 'Ks ' + ($store.orderBuilder ? $store.orderBuilder.totalAmount.toLocaleString() : 0)"></span>
                 </div>
             </div>
         </div>

@@ -186,6 +186,7 @@ class StockCountService
             throw new InventoryException('Cannot update a closed or cancelled stock count session.');
         }
 
+        /** @var StockCountLine $line */
         $line = StockCountLine::where('stock_count_id', $session->id)
             ->where('id', $lineId)
             ->firstOrFail();
@@ -211,6 +212,7 @@ class StockCountService
                     continue;
                 }
 
+                /** @var StockCountLine|null $line */
                 $line = StockCountLine::where('stock_count_id', $session->id)
                     ->where('id', (int) $item['id'])
                     ->first();

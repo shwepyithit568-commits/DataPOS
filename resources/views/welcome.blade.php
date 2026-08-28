@@ -463,9 +463,9 @@
                             <h3 class="text-xs font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 group-hover:text-sky-600 transition-colors font-myanmar">{{ $deal->name }}</h3>
                             <div class="pt-1.5">
                                 @if ($deal->old_price)
-                                    <span class="text-[11px] text-slate-500 line-through decoration-rose-500 block">Ks {{ number_format($deal->old_price) }}</span>
+                                    <span class="text-[11px] text-slate-500 line-through decoration-rose-500 block">{{ format_currency($deal->old_price, $store) }}</span>
                                 @endif
-                                <span class="text-xs sm:text-sm font-black text-rose-600 dark:text-rose-400">Ks {{ number_format($deal->retail_price) }}</span>
+                                <span class="text-xs sm:text-sm font-black text-rose-600 dark:text-rose-400">{{ format_currency($deal->retail_price, $store) }}</span>
                             </div>
                         </div>
                     </a>

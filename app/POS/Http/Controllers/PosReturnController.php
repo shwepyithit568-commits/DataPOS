@@ -43,9 +43,12 @@ class PosReturnController extends Controller
 
         $sale->load(['items', 'payments', 'cashier', 'customer']);
         $refunded = $this->returns->refundedQuantities($store, $sale);
+        // Remaining credit portion of the sale — the refund form caps its
+        // credit field with this (over-refunding the receivable is blocked).
+        $creditLeft = $this->returns->refundableCreditTotal($store, $sale);
         $shift = $this->shifts->openShiftFor($store, $request->user());
 
-        return view('pos.refund', compact('store', 'sale', 'refunded', 'shift'));
+        return view('pos.refund', compact('store', 'sale', 'refunded', 'creditLeft', 'shift'));
     }
 
     public function store(Request $request, string $store_slug, PosSale $sale, StoreContext $context): RedirectResponse
@@ -61,10 +64,12 @@ class PosReturnController extends Controller
         $data = $request->validate([
             'items' => ['required', 'array', 'min:1'],
             'items.*.pos_sale_item_id' => ['required', 'integer'],
-            'items.*.quantity' => ['required', 'numeric', 'gt:0'],
+            // decimal (not plain numeric): bcmath throws on scientific
+            // notation ("1e3") — block it here so the return math never 500s.
+            'items.*.quantity' => ['required', 'decimal:0,3', 'gt:0'],
             'refunds' => ['required', 'array', 'min:1'],
             'refunds.*.method' => ['required', 'string', 'in:cash,credit'],
-            'refunds.*.amount' => ['nullable', 'numeric', 'min:0'],
+            'refunds.*.amount' => ['nullable', 'decimal:0,2', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 

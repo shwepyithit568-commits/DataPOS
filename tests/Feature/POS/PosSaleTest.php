@@ -481,6 +481,35 @@ class PosSaleTest extends TestCase
         $this->assertSame('held', $kept->refresh()->status);
     }
 
+    public function test_abandoned_resumed_sales_are_auto_expired(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, ['retail_price' => 25000]);
+        $this->seedStock($store, $product, '5');
+        $shift = $this->openShift($store, $cashier);
+
+        $this->sales->addToCart($store, $product->id, null, '1');
+        $held = $this->sales->holdCart($store, $cashier, $shift);
+        $this->sales->resumeHeld($store, $held);
+        $held->forceFill(['created_at' => now()->subDays(2)])->save();
+
+        // A recalled-but-never-posted sale ages out of the window too — it
+        // would otherwise linger as a zombie row no list ever shows.
+        $expired = $this->sales->expireStaleHolds($store, 24);
+        $this->assertSame(1, $expired);
+        $this->assertSame('voided', $held->refresh()->status);
+        $this->assertNotNull($held->voided_at);
+        $this->assertStringContainsString('Abandoned', $held->notes);
+
+        // A resumed sale inside the window is kept.
+        $this->sales->addToCart($store, $product->id, null, '1');
+        $fresh = $this->sales->holdCart($store, $cashier, $shift);
+        $this->sales->resumeHeld($store, $fresh);
+        $this->assertSame(0, $this->sales->expireStaleHolds($store));
+        $this->assertSame('resumed', $fresh->refresh()->status);
+    }
+
     public function test_void_held_sale_marks_voided_without_stock_impact(): void
     {
         $store = $this->makeStore();

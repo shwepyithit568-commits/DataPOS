@@ -47,11 +47,13 @@ class DailyClosingController extends Controller
 
         $data = $request->validate([
             'business_date' => ['required', 'date', 'before_or_equal:today'],
-            'counted.cash' => ['required', 'numeric', 'min:0'],
-            'counted.kpay' => ['nullable', 'numeric', 'min:0'],
-            'counted.wavepay' => ['nullable', 'numeric', 'min:0'],
-            'counted.cb_pay' => ['nullable', 'numeric', 'min:0'],
-            'counted.mmqr' => ['nullable', 'numeric', 'min:0'],
+            // decimal (not plain numeric): the closing service compares with
+            // bcmath, which throws a ValueError on scientific notation ("1e3").
+            'counted.cash' => ['required', 'decimal:0,2', 'min:0'],
+            'counted.kpay' => ['nullable', 'decimal:0,2', 'min:0'],
+            'counted.wavepay' => ['nullable', 'decimal:0,2', 'min:0'],
+            'counted.cb_pay' => ['nullable', 'decimal:0,2', 'min:0'],
+            'counted.mmqr' => ['nullable', 'decimal:0,2', 'min:0'],
             'explanation' => ['nullable', 'string', 'max:2000'],
         ]);
 

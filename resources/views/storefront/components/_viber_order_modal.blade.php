@@ -54,11 +54,11 @@
                     </div>
                     <div class="flex items-center justify-between text-xs">
                         <span class="font-bold text-slate-600 dark:text-slate-400">{{ __('messages.unit_price') }}</span>
-                        <span class="font-bold text-slate-900 dark:text-white">Ks <span x-text="$store.viberModal.fmt($store.viberModal.price || 0)"></span></span>
+                        <span class="font-bold text-slate-900 dark:text-white" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency($store.viberModal.price || 0) : 'Ks ' + ($store.viberModal.price || 0)"></span>
                     </div>
                     <div class="flex items-center justify-between text-xs">
                         <span class="font-black text-slate-900 dark:text-white">{{ __('messages.total_price') }}</span>
-                        <span class="font-black text-violet-600 dark:text-violet-400">Ks <span x-text="$store.viberModal.fmt(($store.viberModal.price || 0) * ($store.viberModal.qty || 1))"></span></span>
+                        <span class="font-black text-violet-600 dark:text-violet-400" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(($store.viberModal.price || 0) * ($store.viberModal.qty || 1)) : 'Ks ' + (($store.viberModal.price || 0) * ($store.viberModal.qty || 1))"></span>
                     </div>
                 </div>
 

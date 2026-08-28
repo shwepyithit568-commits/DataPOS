@@ -28,25 +28,24 @@
          ============================================================ --}}
     <div class="p-2.5 sm:p-3.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 transition">
         <div class="min-w-0">
-            <div class="flex items-center gap-1.5 mb-0.5">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
-                    <span>📋</span>
-                    <span>{{ __('messages.sidebar_stock_count') }}</span>
-                </span>
-                <span class="text-slate-300 dark:text-slate-700">/</span>
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">{{ $store->name }}</span>
+            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/60 border border-violet-200/80 dark:border-violet-800 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
+                <span>📋 {{ __('messages.sidebar_stock_count') }}</span>
+                <span class="text-violet-400">·</span>
+                <span>{{ $store->name }}</span>
             </div>
-            <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <span>{{ __('messages.stock_count_new_session') }}</span>
+            <h1 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-slate-100 font-outfit mt-0.5 truncate">
+                {{ __('messages.stock_count_new_session') }}
             </h1>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{{ __('messages.stock_count_sub') }}</p>
+            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                {{ __('messages.stock_count_sub') }}
+            </p>
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
             <a href="{{ route('store.admin.stock_count.index', ['store_slug' => $store->slug]) }}"
                class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5 shadow-2xs">
                 <span>←</span>
-                <span>{{ __('messages.back') ?? 'Back to Sessions' }}</span>
+                <span>{{ __('messages.back') }}</span>
             </a>
         </div>
     </div>
@@ -83,7 +82,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {{-- All Products Option Card --}}
-                <label :class="scope === 'all' ? 'border-violet-600 bg-violet-50/60 dark:border-violet-500 dark:bg-violet-950/40 ring-2 ring-violet-500/20' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:border-slate-300 dark:hover:border-slate-700'"
+                <label :class="scope === 'all' ? 'border-violet-600 bg-violet-50/70 dark:border-violet-500 dark:bg-violet-950/50 ring-2 ring-violet-500/20' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700'"
                        class="relative flex items-start p-3 rounded-lg border cursor-pointer transition select-none shadow-2xs">
                     <input type="radio" name="scope" value="all" x-model="scope" class="sr-only">
                     <div class="flex items-center h-5">
@@ -102,7 +101,7 @@
                 </label>
 
                 {{-- By Category Option Card --}}
-                <label :class="scope === 'category' ? 'border-violet-600 bg-violet-50/60 dark:border-violet-500 dark:bg-violet-950/40 ring-2 ring-violet-500/20' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:border-slate-300 dark:hover:border-slate-700'"
+                <label :class="scope === 'category' ? 'border-violet-600 bg-violet-50/70 dark:border-violet-500 dark:bg-violet-950/50 ring-2 ring-violet-500/20' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700'"
                        class="relative flex items-start p-3 rounded-lg border cursor-pointer transition select-none shadow-2xs">
                     <input type="radio" name="scope" value="category" x-model="scope" class="sr-only">
                     <div class="flex items-center h-5">
@@ -124,7 +123,7 @@
             {{-- Category Selector Grid (Only when scope === 'category') --}}
             <div x-show="scope === 'category'"
                  x-collapse
-                 class="space-y-2.5 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 mt-2">
+                 class="space-y-2.5 p-3 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/70 mt-2">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 dark:border-slate-700 pb-2">
                     <div class="flex items-center gap-2">
                         <label class="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
@@ -138,32 +137,32 @@
                     <div class="flex items-center gap-2">
                         <input type="text"
                                x-model="categorySearch"
-                               placeholder="Search categories..."
+                               placeholder="{{ __('messages.search_categories') }}"
                                class="px-2.5 py-1 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500">
                         <button type="button"
                                 @click="selectAll()"
-                                class="px-2 py-1 text-[11px] font-bold rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300">
-                            Select All
+                                class="px-2 py-1 text-[11px] font-bold rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition">
+                            {{ __('messages.select_all') }}
                         </button>
                         <button type="button"
                                 @click="deselectAll()"
-                                class="px-2 py-1 text-[11px] font-bold rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300">
-                            Clear
+                                class="px-2 py-1 text-[11px] font-bold rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition">
+                            {{ __('messages.deselect_all') }}
                         </button>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-1">
                     <template x-for="cat in filteredCategories()" :key="cat.id">
-                        <label class="flex items-center gap-2 p-2 rounded-lg border cursor-pointer text-xs transition"
-                               :class="selectedCategories.includes(cat.id) ? 'border-violet-500 bg-violet-50/50 dark:bg-violet-950/30' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750'">
+                        <label class="flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer text-xs transition select-none"
+                               :class="selectedCategories.includes(cat.id) ? 'border-violet-500 bg-violet-50/70 dark:border-violet-500 dark:bg-violet-950/50' : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700/60'">
                             <input type="checkbox"
                                    name="category_ids[]"
                                    :value="cat.id"
                                    x-model="selectedCategories"
                                    class="w-4 h-4 rounded text-violet-600 focus:ring-violet-500 border-slate-300 dark:border-slate-600">
                             <span class="font-bold text-slate-900 dark:text-slate-100 truncate flex-1" x-text="cat.name"></span>
-                            <span class="text-[10px] font-mono text-slate-400" x-text="'(' + cat.products_count + ')'"></span>
+                            <span class="text-[10px] font-mono text-slate-400 dark:text-slate-400" x-text="'(' + cat.products_count + ')'"></span>
                         </label>
                     </template>
                 </div>
@@ -183,13 +182,13 @@
                 {{-- Warehouse Selector --}}
                 <div>
                     <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        {{ __('messages.warehouse') }} <span class="text-slate-400">(သိုလှောင်ရုံ)</span>
+                        {{ __('messages.warehouse') }}
                     </label>
                     <select name="warehouse_id"
                             class="w-full px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 shadow-2xs">
                         @foreach($warehouses as $warehouse)
                             <option value="{{ $warehouse->id }}" {{ $warehouse->is_default ? 'selected' : '' }}>
-                                {{ $warehouse->name }} {{ $warehouse->is_default ? '(Default)' : '' }}
+                                {{ $warehouse->name }} {{ $warehouse->is_default ? '(' . __('messages.default') . ')' : '' }}
                             </option>
                         @endforeach
                     </select>
@@ -198,11 +197,11 @@
                 {{-- Branch Selector --}}
                 <div>
                     <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        {{ __('messages.branch') }} <span class="text-slate-400">(ဆိုင်ခွဲ)</span>
+                        {{ __('messages.branch') }}
                     </label>
                     <select name="branch_id"
                             class="w-full px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 shadow-2xs">
-                        <option value="">{{ __('messages.all_branches') ?? 'Main Store Branch' }}</option>
+                        <option value="">{{ __('messages.main_branch') }}</option>
                         @foreach($branches as $branch)
                             <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                         @endforeach

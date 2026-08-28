@@ -722,4 +722,99 @@ class PosUiEndpointsTest extends TestCase
         $response->assertJsonPath('cart.lines.0.unit_price', '5000.00');
         $response->assertJsonPath('cart.lines.0.approved_by', null);
     }
+
+    /* ------------------------------------------------------------------ */
+    /*  Resume → post keeps ONE row (the UI posts without the sale id)     */
+    /* ------------------------------------------------------------------ */
+
+    public function test_resume_then_post_reuses_the_resumed_row_via_http(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $this->actingAs($cashier);
+        $product = $this->makeProduct($store, ['retail_price' => 20000]);
+        $this->seedStock($store, $product, '5');
+        $this->shifts->openShift($store, ['register_name' => 'REG-1', 'opening_cash' => 0], $cashier);
+
+        $this->postJson("/store/{$store->slug}/pos/cart", ['product_id' => $product->id, 'quantity' => '1'])->assertOk();
+        $this->postJson("/store/{$store->slug}/pos/hold")->assertOk();
+        $sale = PosSale::where('store_id', $store->id)->where('status', 'held')->latest('id')->first();
+        $this->assertNotNull($sale);
+
+        // Resume exactly like the UI does — the sale becomes 'resumed'.
+        $this->postJson("/store/{$store->slug}/pos/resume/{$sale->id}")->assertOk();
+        $this->assertSame('resumed', $sale->refresh()->status);
+
+        // Checkout posts to /pos/post WITHOUT the sale id (the UI form).
+        $this->post("/store/{$store->slug}/pos/post", [
+            'payments' => [['method' => 'cash', 'amount' => '20000']],
+        ])->assertRedirect()->assertSessionHas('success');
+
+        // THE SAME row is reused and marked posted — no orphaned 'resumed'
+        // record is left behind (regression: the old flow created a second
+        // row and stranded the resumed one forever).
+        $this->assertSame('posted', $sale->refresh()->status);
+        $this->assertNotNull($sale->receipt_number);
+        $this->assertSame(0, PosSale::where('store_id', $store->id)->where('status', 'resumed')->count());
+        $this->assertSame(1, PosSale::where('store_id', $store->id)->where('status', 'posted')->count());
+        $this->assertSame('4.000', $this->inventory->totalOnHand($store->id, $product->id));
+    }
+
+    public function test_resume_into_a_non_empty_cart_is_rejected(): void
+    {
+        $store = $this->makeStore();
+        $this->actingAs($this->staff($store));
+        $product = $this->makeProduct($store, ['retail_price' => 20000]);
+        $this->seedStock($store, $product, '5');
+
+        // Hold a 2-unit sale…
+        $this->postJson("/store/{$store->slug}/pos/cart", ['product_id' => $product->id, 'quantity' => '2'])->assertOk();
+        $this->postJson("/store/{$store->slug}/pos/hold")->assertOk();
+        $sale = PosSale::where('store_id', $store->id)->where('status', 'held')->latest('id')->first();
+
+        // …then start a fresh cart. Resuming must NOT silently discard it.
+        $this->postJson("/store/{$store->slug}/pos/cart", ['product_id' => $product->id, 'quantity' => '1'])->assertOk();
+        $resumed = $this->postJson("/store/{$store->slug}/pos/resume/{$sale->id}");
+        $resumed->assertStatus(422);
+        $this->assertSame('held', $sale->refresh()->status); // untouched
+
+        // Clearing the cart first makes the resume succeed.
+        $this->postJson("/store/{$store->slug}/pos/cart/clear")->assertOk();
+        $this->postJson("/store/{$store->slug}/pos/resume/{$sale->id}")->assertOk();
+        $this->assertSame('resumed', $sale->refresh()->status);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  bcmath-safe numbers (scientific notation must 422, not 500)        */
+    /* ------------------------------------------------------------------ */
+
+    public function test_scientific_notation_quantity_and_amounts_are_rejected(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $this->actingAs($cashier);
+        $product = $this->makeProduct($store, ['retail_price' => 20000]);
+        $this->seedStock($store, $product, '5');
+        $this->shifts->openShift($store, ['register_name' => 'REG-1', 'opening_cash' => 0], $cashier);
+
+        // Quantity: 'numeric' accepts 1e3, bcmath throws ValueError → 500.
+        $this->postJson("/store/{$store->slug}/pos/cart", ['product_id' => $product->id, 'quantity' => '1e3'])
+            ->assertStatus(422);
+
+        // A normal line, then a scientific-notation payment amount.
+        $this->postJson("/store/{$store->slug}/pos/cart", ['product_id' => $product->id, 'quantity' => '1'])->assertOk();
+        $this->post("/store/{$store->slug}/pos/post", [
+            'payments' => [['method' => 'cash', 'amount' => '2e3']],
+        ])->assertSessionHasErrors('payments.0.amount');
+
+        // Price override with scientific notation is rejected as invalid too.
+        $this->postJson("/store/{$store->slug}/pos/cart/0/price", ['unit_price' => '5e2'])
+            ->assertStatus(422)
+            ->assertJsonPath('error', __('messages.pos_price_invalid'));
+
+        // The cart still works with normal decimals afterwards.
+        $this->post("/store/{$store->slug}/pos/post", [
+            'payments' => [['method' => 'cash', 'amount' => '20000']],
+        ])->assertRedirect()->assertSessionHas('success');
+    }
 }

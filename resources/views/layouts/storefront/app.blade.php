@@ -75,6 +75,7 @@
         }
     })();
     </script>
+    <x-currency-js-init :store="$activeStoreContext" />
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -1322,7 +1323,7 @@
                 <span class="text-xs font-black text-slate-900 dark:text-white font-outfit tracking-wide group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors">
                     {{ __('messages.order_builder') }}
                 </span>
-                <span class="text-xs font-extrabold text-sky-700 dark:text-sky-400 font-mono" x-text="'Ks ' + ($store.orderBuilder ? $store.orderBuilder.totalAmount.toLocaleString() : 0)"></span>
+                <span class="text-xs font-extrabold text-sky-700 dark:text-sky-400 font-mono" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency($store.orderBuilder ? $store.orderBuilder.totalAmount : 0) : 'Ks ' + ($store.orderBuilder ? $store.orderBuilder.totalAmount.toLocaleString() : 0)"></span>
             </div>
         </a>
     </div>

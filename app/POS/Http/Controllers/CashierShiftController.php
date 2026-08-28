@@ -68,7 +68,10 @@ class CashierShiftController extends Controller
 
         $data = $request->validate([
             'register_name' => ['required', 'string', 'max:100'],
-            'opening_cash' => ['nullable', 'numeric', 'min:0'],
+            // decimal (not plain numeric): bcmath rejects scientific notation
+            // ("1e3") with a ValueError — this rule blocks it before the shift
+            // service's bc* calls ever see it.
+            'opening_cash' => ['nullable', 'decimal:0,2', 'min:0'],
             'branch_id' => ['nullable', 'integer'],
         ]);
 
@@ -89,7 +92,7 @@ class CashierShiftController extends Controller
 
         $data = $request->validate([
             'type' => ['required', 'in:cash_in,cash_out'],
-            'amount' => ['required', 'numeric', 'gt:0'],
+            'amount' => ['required', 'decimal:0,2', 'gt:0'],
             'reason' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -108,7 +111,7 @@ class CashierShiftController extends Controller
         $this->authorizeShift($shift, $store);
 
         $data = $request->validate([
-            'actual_closing_amount' => ['required', 'numeric', 'min:0'],
+            'actual_closing_amount' => ['required', 'decimal:0,2', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'manager_approval' => ['nullable', 'boolean'],
         ]);

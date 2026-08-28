@@ -149,6 +149,32 @@ class StaffRoleTest extends TestCase
         ]);
     }
 
+    public function test_manager_can_create_and_assign_custom_role_on_the_fly(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->post("/store/{$this->store->slug}/admin/security/roles/assign-staff", [
+                'user_id'          => $this->staff->id,
+                'action_mode'      => 'create_and_assign',
+                'role_name'        => 'Custom Junior Cashier',
+                'role_description' => 'Tailored specifically for Staff Ko Ko',
+                'role_color'       => '#10b981',
+                'role_permissions' => ['pos_sales.view', 'pos_sales.edit', 'products.view'],
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $createdRole = StaffRole::where('store_id', $this->store->id)->where('name', 'Custom Junior Cashier')->firstOrFail();
+        $this->assertFalse($createdRole->is_system);
+        $this->assertEquals(['pos_sales.view', 'pos_sales.edit', 'products.view'], $createdRole->permissions);
+
+        $this->assertDatabaseHas('store_user', [
+            'store_id'      => $this->store->id,
+            'user_id'       => $this->staff->id,
+            'staff_role_id' => $createdRole->id,
+        ]);
+    }
+
     public function test_staff_roles_export_and_isolation(): void
     {
         StaffRole::create([
