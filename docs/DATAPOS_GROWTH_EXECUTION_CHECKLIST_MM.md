@@ -181,15 +181,17 @@
 
 > **Entry Gate:** Tier A Editions များ တည်ငြိမ်ပြီး ဆေးဆိုင်/စိုက်ပျိုးရေးဆိုင် Customer လိုအပ်ချက် အတည်ပြုပြီးမှ စတင်မည်။
 
-- [ ] **၆.၁ Multi-UOM (Unit of Measurement) Conversion Foundation**
-  - [ ] ဥပမာ - ၁ ဖာ = ၁၀ ကတ် = ၁၀၀ လုံး (Packing Unit & Base Unit တွက်ချက်မှု)
-- [ ] **၆.၂ Batch & Lot Tracking Data Model**
-  - [ ] Batch Number, Manufacture Date, Expiration Date
-- [ ] **၆.၃ FEFO (First-Expired, First-Out) Inventory Issuing Policy**
-  - [ ] သက်တမ်းကုန်ခါနီး ပစ္စည်းများအား အရင်ရောင်းချစေခြင်း။
-  - [ ] သက်တမ်းကုန်ပြီး ပစ္စည်းများအား POS အရောင်းတွင် အလိုအလျောက် ပိတ်ပင်ခြင်း (Server-enforced Blocking)။
-- [ ] **၆.၄ Batch-Aware Inbound, Returns, Transfers & Recall Reports**
-- [ ] **၆.၅ Pharmacy & Agriculture Demo Profiles and Verification Tests**
+- [x] **၆.၁ Multi-UOM (Unit of Measurement) Conversion Foundation**
+  - [x] ဥပမာ - ၁ ဖာ = ၁၀ ကတ် = ၁၀၀ လုံး (Packing Unit & Base Unit တွက်ချက်မှု `ProductUnit`, `UnitConversionService`)
+- [x] **၆.၂ Batch & Lot Tracking Data Model**
+  - [x] Batch Number, Manufacture Date, Expiration Date (`ProductBatch`)
+- [x] **၆.၃ FEFO (First-Expired, First-Out) Inventory Issuing Policy**
+  - [x] သက်တမ်းကုန်ခါနီး ပစ္စည်းများအား အရင်ရောင်းချစေခြင်း (`BatchTrackingService::allocateFefoBatches`)။
+  - [x] သက်တမ်းကုန်ပြီး ပစ္စည်းများအား POS အရောင်းတွင် အလိုအလျောက် ပိတ်ပင်ခြင်း (`BatchTrackingService::validateBatchForSale`)။
+- [x] **၆.၄ Batch-Aware Inbound, Returns, Transfers & Recall Reports**
+  - [x] 30-Day Expiring Soon Alert Query & Batch Recall Tracing Report (`BatchTrackingService::getBatchRecallReport`)။
+- [x] **၆.၅ Pharmacy & Agriculture Demo Profiles and Verification Tests**
+  - [x] `tests/Feature/POS/BatchExpiryAndMultiUomTest.php` (5 passed tests)။
 
 ---
 

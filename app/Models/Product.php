@@ -107,6 +107,16 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class)->orderBy('sort_order')->orderBy('id');
     }
 
+    public function units(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductUnit::class)->orderBy('conversion_factor', 'asc');
+    }
+
+    public function batches(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductBatch::class)->orderBy('expiration_date', 'asc');
+    }
+
     /**
      * The default variant (for the price/SKU shown on cards & list pages).
      */
