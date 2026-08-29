@@ -1,5 +1,5 @@
 # DataPOS — Production Readiness & Quality Assurance Master Checklist
-**Document Version:** 2.0.0 — Agent-Verifiable Edition  
+**Document Version:** 2.1.0 — Expanded with Toolbar, Export/PDF, Finance, L10n, Dark Mode Sections  
 **Target:** Production Launch & Commercial Deployment Readiness for Myanmar SME Market  
 **System Stack:** Laravel 12 + Alpine.js + Vanilla CSS + ESC/POS Thermal Printing  
 **Architecture Rule:** Single Codebase | Multi-Store Tenant Isolated | No Livewire | No jQuery  
@@ -24,7 +24,12 @@
 9. [Section H — Performance & Low-End Device Testing](#section-h--performance--low-end-device-testing)
 10. [Section I — Localization & Typography](#section-i--localization--typography)
 11. [Section J — Pilot Store Validation (Must Pass Before Sales)](#section-j--pilot-store-validation-must-pass-before-sales)
-12. [Final Sign-Off Checklist](#final-sign-off-checklist)
+12. [**Section K — Admin Toolbar Consistency Audit**](#section-k--admin-toolbar-consistency-audit)
+13. [**Section L — Import / Export / PDF Matrix**](#section-l--import--export--pdf-matrix)
+14. [**Section M — Inventory, Debt & Finance Deep Audit**](#section-m--inventory-debt--finance-deep-audit)
+15. [**Section N — Localization Key Coverage Audit**](#section-n--localization-key-coverage-audit)
+16. [**Section O — Dark Mode & Light Mode Full Audit**](#section-o--dark-mode--light-mode-full-audit)
+17. [Final Sign-Off Checklist](#final-sign-off-checklist)
 
 ---
 
@@ -570,9 +575,320 @@ ls -la headers.txt .freebuff-preview.log 2>&1 | grep "No such file"
 
 ---
 
+---
+
+## Section K — Admin Toolbar Consistency Audit
+
+> **Background:** DataPOS တွင် shared `<x-admin.toolbar>` component တစ်ခု ရှိပြီး Search, Filter, Sort, ViewToggle (Table/Card), Export (Excel+CSV), Import, Pagination ပါဝင်သည်။ ဒီ Section တွင် module တစ်ခုချင်းစီ ဒီ Toolbar ကို မှန်မှန်ကန်ကန် သုံးနေမနေ စစ်ဆေးသည်။
+
+### K.1 Toolbar Component Architecture
+- [x] `resources/views/components/admin/toolbar.blade.php` — Shared toolbar component ရှိပြီး
+- [x] Props: `search`, `filters`, `sort`, `viewMode`, `exportUrl`, `importUrl`, `paginator`, `bulkActions` — configurable ဖြစ်ပြီး
+- [x] Toolbar container — `rounded-xl bg-white/95 dark:bg-slate-900/95` dark mode support ပါဝင်ပြီး
+- [x] Export dropdown modal — Excel (.xlsx) + CSV (.csv) format choices
+- [ ] **Toolbar `exportUrl` filter carryover:** Export ခလုတ်နှိပ်သောအခါ ယခုစိစစ်ထားသော search/filter params ကို export URL ထဲ carryover ဖြစ်ကြောင်း verify (ဥပမာ — Status=Completed filter ထားပြီး Export နှိပ်ပါက Completed orders သာ export ဖြစ်ကြောင်း)
+
+### K.2 Per-Module Toolbar Presence Audit
+
+> **Verification Method:** Browser တွင် module list page ကိုဖွင့်ပြီး Toolbar (Search + Filter + Export) ပြသနေမနေ စစ်ဆေးရမည်။
+
+| Module | Route | Search | Filter | Sort | Export | Import | Pagination | Status |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|---|
+| Products | `/admin/products` | [ ] | [ ] | [ ] | [x] | [x] | [ ] | ⚠️ Verify |
+| Customers | `/admin/customers` | [ ] | [ ] | [ ] | [x] | [ ] | [ ] | ⚠️ Verify |
+| Suppliers | `/admin/suppliers` | [ ] | [ ] | [ ] | [x] | [x] | [ ] | ⚠️ Verify |
+| Orders | `/admin/orders` | [ ] | [ ] | [ ] | [x] | [ ] | [ ] | ⚠️ Verify |
+| Repairs | `/admin/repairs` | [ ] | [ ] | [ ] | [x] | [ ] | [ ] | ⚠️ Verify |
+| Service Jobs | `/admin/service-jobs` | [ ] | [ ] | [ ] | [x] | [ ] | [ ] | ⚠️ Verify |
+| Expenses | `/admin/expenses` | [ ] | [ ] | [ ] | [x] | [ ] | [ ] | ⚠️ Verify |
+| Transactions | `/admin/transactions` | [ ] | [ ] | [ ] | [x] | [ ] | [ ] | ⚠️ Verify |
+| Receivables | `/admin/receivables` | [ ] | [ ] | [ ] | [x] | [ ] | [ ] | ⚠️ Verify |
+| Inventory Valuation | `/admin/inventory-valuation` | [ ] | [ ] | [ ] | [x] | [ ] | [ ] | ⚠️ Verify |
+| Debt Aging | `/admin/debt-aging` | [ ] | [ ] | [ ] | [x] | [ ] | [ ] | ⚠️ Verify |
+| Purchases | `/pos/purchases` | [ ] | [ ] | [ ] | [x] | [ ] | [ ] | ⚠️ Verify |
+| POS Sales Report | `/pos/reports/sales` | [ ] | [ ] | [ ] | [x] | [ ] | [ ] | ⚠️ Verify |
+| Audit Logs | `/admin/security/audit-logs` | [ ] | [ ] | [ ] | [x] | [ ] | [ ] | ⚠️ Verify |
+
+### K.3 Toolbar Behavior Consistency
+- [ ] **Search debounce:** ← အားလုံး ≥ 300ms debounce ပါဝင်ကြောင်း (not instant request per keystroke)
+- [ ] **Clear search (X button):** Search input ဘေးတွင် clear ခလုတ် ပေါ်ပြနေကြောင်း တိုင်းထည့်ပြောင်းလဲသည်ပါ
+- [ ] **Active filter pill display:** Filter ရွေးလျှင် pill badge အဖြစ် toolbar အောက်တွင် ပြသကြောင်း
+- [ ] **Filter clear:** Filter pill ပေါ်က X ကို နှိပ်ပါက filter ရှင်းပြီး list refresh ဖြစ်ကြောင်း
+- [ ] **Per-page selector:** Paginator ရှိသော pages တွင် 25/50/100/All selector ပေါ်နေကြောင်း
+- [ ] **Pagination URL preservation:** Page change သောအခါ current search/filter params ကျန်ရှိနေကြောင်း
+- [ ] **View mode (Table/Card) — localStorage persistence:** Page reload ပြန်ဝင်ပါကလည်း ရွေးထားသော view mode ကျန်ရှိနေကြောင်း
+
+---
+
+## Section L — Import / Export / PDF Matrix
+
+> **Background:** Module တစ်ခုချင်းစီ မည်သည့် format ဖြင့် Export/Import/Print ပြုလုပ်နိုင်သည်ကို စစ်ဆေးရမည်။
+> **Verification:** Actual download ပြုလုပ်ပြီး file ကို Excel/LibreOffice/Notepad တွင် ဖွင့်ကြည့်ပြီး Myanmar content မပျက်ကြောင်း (UTF-8 BOM) verify ဖြစ်ရမည်။
+
+### L.1 Export / Import Matrix Per Module
+
+| Module | XLSX Export | CSV Export | PDF/Print | Import | Thermal Print |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Products | [ ] | [ ] | — | [ ] | — |
+| Customers | [ ] | [ ] | — | — | — |
+| Suppliers | [ ] | [ ] | — | [ ] | — |
+| Orders | [ ] | [ ] | [ ] PDF Invoice | — | — |
+| Purchases | [ ] | [ ] | [ ] Purchase Slip | — | — |
+| Receivables | [ ] | [ ] | [ ] Debt Statement | — | — |
+| Supplier Payables | [ ] | [ ] | [ ] Payable Statement | — | — |
+| Profit & Loss | [ ] | [ ] | [ ] P&L Statement | — | — |
+| Inventory Valuation | [ ] | [ ] | [ ] Inventory Statement | — | — |
+| Debt Aging Report | [ ] | [ ] | [ ] Aging Statement | — | — |
+| Sales Report | [ ] | [ ] | — | — | — |
+| Stock Report | [ ] | [ ] | — | — | — |
+| Cash Report | [ ] | [ ] | — | — | [ ] Closing Slip |
+| Service Report | [ ] | [ ] | — | — | — |
+| Audit Logs | [ ] | [ ] | — | — | — |
+| Roles/Users | [ ] | [ ] | — | — | — |
+| Wholesale Applications | — | — | [ ] Approval Slip | — | — |
+| POS Receipt (Sale) | — | — | — | — | [ ] 58mm / 80mm |
+| POS Receipt (Return) | — | — | — | — | [ ] 58mm / 80mm |
+| Repair Intake Slip | — | — | — | — | [ ] 58mm / 80mm |
+| Stock Count Sheet | — | [ ] | [ ] Physical Count Sheet | — | — |
+| Customer Debt Receipt | — | — | — | — | [ ] 80mm |
+
+### L.2 Excel Export Quality Gates
+
+**Per exported XLSX file, verify:**
+- [ ] Myanmar text renders correctly in Excel (not garbled boxes)
+- [ ] Column widths auto-fit to content (`columnAutoSize`)
+- [ ] Header row has distinct styling (bold / colored background)
+- [ ] Numeric columns (MMK amounts) are right-aligned and formatted with commas
+- [ ] Date columns display `dd/mm/yyyy` format (Myanmar preference)
+- [ ] Empty cells are blank (not "null" string)
+- [ ] File opens without "Repair file" warning in Excel
+
+### L.3 CSV Export Quality Gates
+- [ ] UTF-8 BOM (`EF BB BF`) present — prevents garbled Myanmar in Excel on Windows
+- [ ] Myanmar text visible when opened in Notepad/LibreOffice
+- [ ] Comma-separated correctly (no unescaped commas inside quoted fields)
+- [ ] Newline handling correct (CRLF for Windows compatibility)
+
+### L.4 PDF / Browser Print Quality Gates
+
+**Print pages needing `@media print` CSS verification:**
+- [ ] `admin/profit_loss/statement.blade.php` — A4 print, clean layout, no navbar
+- [ ] `admin/orders/invoice.blade.php` — A4 invoice, header/footer/items/total correct
+- [ ] `admin/receivables` debt statement — A4 or 80mm print
+- [ ] `admin/debt_aging` aging statement — A4 print
+- [ ] `admin/inventory_valuation` — A4 print
+- [ ] `admin/wholesale/print.blade.php` — Wholesale approval slip
+- [ ] `pos/purchases/show.blade.php` — Purchase receipt
+
+**Print criteria (each page):**
+- [ ] `@media print` — sidebar/navbar/buttons hidden
+- [ ] Myanmar font renders on print preview (Padauk/Pyidaungsu)
+- [ ] Page breaks at sensible points (`page-break-inside: avoid` for table rows)
+- [ ] No orphan single-row on last page
+- [ ] Company name / Store name / Date / Invoice No clearly visible
+
+### L.5 Thermal Print Template Quality Gates
+
+**For each Thermal Print layout (58mm/80mm):**
+- [ ] Myanmar store name prints without boxes
+- [ ] Item names with Myanmar characters wrap correctly at 32 chars (58mm) / 48 chars (80mm)
+- [ ] Total/Change displayed prominently (bold/larger size)
+- [ ] QR code (if enabled) prints with correct size and scans with phone camera
+- [ ] ESC/POS cut command at end of receipt
+- [ ] No extra blank lines before cut
+
+---
+
+## Section M — Inventory, Debt & Finance Deep Audit
+
+> **Goal:** ငွေကြေး, အကြွေး, စတော့ calculation တိကျမှုကို End-to-End trace လုပ်ပြီး verify ပြုလုပ်ရမည်။
+
+### M.1 Inventory Ledger Integrity
+
+**Trail Test — Product တစ်ခု lifecycle trace:**
+```
+Opening Stock → Purchase Receive → Sale → Return → Adjustment → Transfer → Stock Count
+```
+- [ ] **Opening stock = base:** Product `opening_qty = 50` ဖြင့် စတင်ပြီး ledger first entry verify
+- [ ] **Purchase +10:** GRN receive 10 units → ledger `+10` entry, balance `= 60`
+- [ ] **Sale -3:** POS sell 3 units → ledger `-3`, balance `= 57`
+- [ ] **Return +2:** Customer return 2 → ledger `+2`, balance `= 59`
+- [ ] **Damage adjustment -1:** Stock adjust (Damage) → ledger `-1`, balance `= 58`
+- [ ] **Transfer -5:** Branch A → Branch B transfer 5 → Branch A `-5`, Branch B `+5`
+- [ ] **Stock count reconcile:** Physical count = 53, system = 53 → ကွာဟချက် 0 confirm
+- [ ] **All movements in stock_ledger view:** Bin card `/admin/stock-ledger` တွင် ဒီ movements အားလုံး timeline ဖြင့် ပြသပေးကြောင်း verify
+
+### M.2 Customer Debt (Receivables) Integrity
+
+**FIFO Debt Trail Test:**
+- [ ] **Debt creation:** POS sale with Debt Credit payment `30,000 ကျပ်` → customer debt `30,000` ဖြစ်ကြောင်း
+- [ ] **Partial collection:** Collect `10,000` → remaining debt `20,000` ဖြင့် ledger update ဖြစ်ကြောင်း
+- [ ] **Multiple debts FIFO:** Customer debt Invoice A=`20,000`, Invoice B=`15,000`; collect `25,000` → FIFO: Invoice A fully paid, Invoice B `10,000` remaining
+- [ ] **Debt aging buckets:** 31-day old debt → `31-60 days` bucket တွင် ပါဝင်ကြောင်း
+- [ ] **Debt receipt print:** Collect payment ပြီးသောအခါ Thermal receipt/PDF statement ထုတ်နိုင်ကြောင်း
+- [ ] **Cross-store debt isolation:** Store A customer ၏ debt ကို Store B admin မမြင်ရကြောင်း
+
+### M.3 Supplier Payables Integrity
+
+**FIFO Payable Trail Test:**
+- [ ] **Payable creation:** Purchase Order receive → supplier payable `amount` ဖြစ်ကြောင်း
+- [ ] **Payment settlement:** Pay supplier `X ကျပ်` → payable reduces by `X`, history recorded
+- [ ] **FIFO order:** Oldest payable ကို ဦးစွာ settle ဖြစ်ကြောင်း
+- [ ] **Purchase return credit:** Supplier return → payable reduces or credit note created
+- [ ] **Aging report:** Overdue payables 90+ days → flagged in report
+
+### M.4 Profit & Loss Calculation Integrity
+
+**Formula Verification (spot check with manual calculator):**
+```
+Gross Revenue = Sum of all sale amounts in period
+COGS = Sum of (qty × cost_price) for sold items
+Gross Profit = Gross Revenue - COGS
+Expenses = Sum of all expense entries in period
+Net Profit = Gross Profit - Expenses
+```
+- [ ] **Gross Revenue accuracy:** P&L report total vs manual sum of sales report for same date range — must match
+- [ ] **COGS accuracy:** 5 random products — `qty_sold × cost_price` manual check vs report COGS
+- [ ] **Expense inclusion:** Create `10,000` expense in period, verify P&L expenses increase by `10,000`
+- [ ] **Returns deduction:** Process return — verify P&L revenue decreases correctly
+- [ ] **Date range filter:** P&L for `01/08/2026 - 31/08/2026` includes only August transactions
+- [ ] **Bcmath precision:** No floating-point rounding error in totals (e.g., `7,499.9999` must not appear)
+
+### M.5 Cash Drawer & Shift Integrity
+
+- [ ] **Opening float recorded:** Cashier enters `50,000 ကျပ်` float → audit_log entry exists
+- [ ] **Cash in = opening + cash sales - cash withdrawals:** Formula verify at shift end
+- [ ] **Discrepancy calculation:** Expected `85,000`, Counted `84,500` → Discrepancy `-500 ကျပ်`
+- [ ] **KPay/Wave separate from cash drawer:** Digital payments do NOT add to cash drawer balance
+- [ ] **Closing slip accuracy:** Slip totals match screen totals
+- [ ] **Shift history:** Previous shifts viewable with their opening/closing amounts
+
+### M.6 Exchange Rate & Landed Cost
+
+- [ ] **Rate update:** Admin update USD rate from `2,100` to `2,150` → new purchases use `2,150`
+- [ ] **Landed cost calculator:** Import product at USD `50` + `2,150 rate` + `5% duty` → MMK cost `113,625 ကျပ်` (verify formula)
+- [ ] **Old transactions:** Rate change does NOT retroactively change old purchase costs
+
+---
+
+## Section N — Localization Key Coverage Audit
+
+> **Background:** EN/MY/ZH all have **3,173 keys** (0 missing). However **31 keys** have identical EN=MY values — likely untranslated Myanmar labels.
+
+### N.1 Current Language Coverage Status
+
+| Language | Total Keys | Missing Keys | Likely Untranslated | Status |
+|---|---|---|---|---|
+| English (en) | 3,173 | — (baseline) | — | ✅ Complete |
+| Myanmar (my) | 3,173 | 0 | **31 keys** | ⚠️ Review needed |
+| Chinese (zh_CN) | 3,173 | 0 | Unknown | ⚠️ Review needed |
+
+**Verification command:**
+```bash
+php -r "
+  error_reporting(0);
+  \$en=include 'lang/en/messages.php';
+  \$my=include 'lang/my/messages.php';
+  \$miss=array_diff_key(\$en,\$my);
+  echo 'Missing in MY: '.count(\$miss).PHP_EOL;
+  \$unt=array_filter(\$en, fn(\$v,\$k)=>isset(\$my[\$k])&&\$my[\$k]===\$v&&is_string(\$v)&&preg_match('/[a-zA-Z]/',\$v),ARRAY_FILTER_USE_BOTH);
+  echo 'Same as EN: '.count(\$unt).PHP_EOL;
+" 2>/dev/null
+```
+
+### N.2 Known Untranslated Keys (31 items — Requires Myanmar Translation)
+
+ဒီ keys တွေ `lang/my/messages.php` တွင် English value ရှိနေဆဲဖြစ်သည် — Myanmar translation ထည့်သွင်းရန်:
+
+- [ ] `viber_telegram_chat` — value: `"Viber / Telegram Chat"` → Myanmar equivalent
+- [ ] `backup_zip_btn`, `backup_sql_btn`, `backup_sqlite_btn` — Backup button labels
+- [ ] `backup_format_zip`, `backup_format_sql`, `backup_format_sqlite` — Format names
+- [ ] `theme_preview_label` — Theme preview button label
+- [ ] `payment_wavepay`, `payment_cb_pay`, `payment_mmqr` — Payment method names (may be OK as brand names)
+- [ ] `facebook`, `youtube`, `tiktok` — Social platform names (brand names — OK to keep)
+- [ ] `promotion_code` — Promotion code label
+- [ ] Remaining 20 keys — Review and translate or mark as accepted brand names
+
+**Action Required:**
+- [ ] Review all 31 keys — mark as `[Accepted Brand Name]` or translate to Myanmar
+- [ ] Run verification command after fix — result must show `Same as EN: 0` (excluding brand names)
+
+### N.3 Localization Key Usage Audit
+
+- [ ] **No raw English strings in Blade views:** `grep -rn '"[A-Z][a-z]' resources/views/` — zero hardcoded English UI strings (not using `__()`)
+- [ ] **Validation messages:** `lang/my/validation.php` — all common validation messages translated
+- [ ] **Auth messages:** `lang/my/auth.php` — login/logout/reset password messages in Myanmar
+- [ ] **Pagination:** `lang/my/pagination.php` — previous/next links in Myanmar ("ယခင်" / "နောက်")
+- [ ] **ZH locale completeness:** If Chinese language is offered to customers, verify zh_CN translations are not placeholders
+
+### N.4 Runtime Localization Test
+
+- [ ] **Language switcher works:** Switch EN → MY → ZH and back — all labels change correctly
+- [ ] **Session persistence:** Language setting persists across page loads and browser restart
+- [ ] **Flash messages:** Success/Error toasts display in selected language
+- [ ] **Validation errors:** Form submission failure shows Myanmar validation messages (not Laravel default English)
+- [ ] **Storefront language:** Customer-facing storefront pages respect selected locale
+
+---
+
+## Section O — Dark Mode & Light Mode Full Audit
+
+> **Background:** DataPOS သည် Tailwind `dark:` class system ကို အသုံးပြုသည်။ Theme ၅ မျိုး (Marketplace Pro, Retail Trust, Emerald Fresh, Midnight Tech, Sunset Warm) ရှိပြီး Dark/Light toggle feature ပါဝင်သည်။
+
+### O.1 Dark Mode Toggle Mechanism
+- [ ] **Toggle control location:** Admin settings / POS counter ဆက်တင်တွင် Dark↔Light mode toggle ရွှေ့ပြောင်းနိုင်သော button ရှိပြီး (**ရှာ၍မတွေ့ပါက ဦးစွာ implement လုပ်ရမည်**)
+- [ ] **localStorage persistence:** Dark mode ရွေးထားပါက browser reload ပြန်ဝင်လည်း dark mode ဆက်ရှိကြောင်း
+- [ ] **Transition smooth:** Light ↔ Dark ပြောင်းသောအခါ CSS transition ≤ 200ms (not instant flicker)
+- [ ] **No flash of wrong theme (FOUT):** Page load ချိန်တွင် Light mode ဖြင့် flash ဖြစ်ပြီးမှ Dark mode ကူးသွားခြင်း မရှိကြောင်း (`<html class="dark">` ကို server/localStorage မှ JS ဖြင့် early-apply ဖြစ်ကြောင်း)
+
+### O.2 Admin Panel Dark Mode Coverage
+
+**စစ်ဆေးရမည့် CSS class pattern:** `dark:bg-*`, `dark:text-*`, `dark:border-*`
+
+| Admin Page | Light Mode | Dark Mode | Contrast OK | Status |
+|---|:---:|:---:|:---:|---|
+| Dashboard / Home | [ ] | [ ] | [ ] | ⚠️ Verify |
+| Products List | [ ] | [ ] | [ ] | ⚠️ Verify |
+| POS Counter | [ ] | [ ] | [ ] | ⚠️ Verify |
+| Modals (any) | [ ] | [ ] | [ ] | ⚠️ Verify |
+| Forms (create/edit) | [ ] | [ ] | [ ] | ⚠️ Verify |
+| Tables (all) | [ ] | [ ] | [ ] | ⚠️ Verify |
+| Charts/Analytics | [ ] | [ ] | [ ] | ⚠️ Verify |
+| Repair/Service Jobs | [ ] | [ ] | [ ] | ⚠️ Verify |
+| Settings Pages | [ ] | [ ] | [ ] | ⚠️ Verify |
+| Toolbar Component | [x] | [x] | [ ] | ✅ Built-in |
+| Sidebar Navigation | [ ] | [ ] | [ ] | ⚠️ Verify |
+| Admin Alerts/Toasts | [ ] | [ ] | [ ] | ⚠️ Verify |
+
+### O.3 Dark Mode Specific Issues to Check
+
+- [ ] **White background leaks:** Dark mode တွင် `bg-white` class ကို `dark:bg-slate-900` မပါဘဲ သုံးနေသော elements ကြောင့် bright white box ပေါ်မလာကြောင်း
+- [ ] **Text contrast (WCAG AA):** Dark background ပေါ်တွင် text contrast ratio ≥ 4.5:1 ဖြစ်ကြောင်း — Chrome DevTools Accessibility panel ဖြင့် spot check
+- [ ] **Icon visibility:** SVG icon stroke colors dark mode တွင် `dark:text-*` class မပါဘဲ invisible မဖြစ်ကြောင်း
+- [ ] **Input field backgrounds:** Form inputs dark mode တွင် `dark:bg-slate-800 dark:text-slate-100` ဖြင့် readable ဖြစ်ကြောင်း
+- [ ] **Placeholder text:** Input placeholder dark mode တွင် `dark:placeholder-slate-400` ဖြင့် too dark မဖြစ်ကြောင်း
+- [ ] **Border visibility:** Borders dark mode တွင် `dark:border-slate-700` ဖြင့် visible ဖြစ်ကြောင်း (not invisible white on black)
+- [ ] **Badge/Pill colors:** Status badges (green/red/yellow) dark mode တွင် background + text ကြည်လင်ကြောင်း
+- [ ] **Chart colors:** Analytics charts dark mode တွင် axis labels + grid lines readable ဖြစ်ကြောင်း
+
+### O.4 Storefront Dark Mode (if applicable)
+- [ ] Customer-facing storefront dark mode — theme preset ၅ ခုအတွက် dark variant ရှိမရှိ confirm
+- [ ] `Midnight Tech` theme — OLED-friendly dark mode ဖြင့် correct contrast
+- [ ] `Marketplace Pro` dark mode — product cards readable
+- [ ] Storefront dark preference follows OS preference (`prefers-color-scheme: dark`) — စစ်ဆေးကြောင်း
+
+### O.5 POS Counter Dark Mode (High Priority for Cashier UX)
+- [ ] **Daylight High-Contrast (Light) mode:** POS counter outdoor ဆိုင်တွင် bright sunlight ဝင်နေချိန် numbers readable ဖြစ်ကြောင်း
+- [ ] **OLED Dark mode:** POS counter night shift / dimly-lit ဆိုင်တွင် eye-strain နည်းကြောင်း
+- [ ] **1-tap toggle:** Cashier ကို settings သွားစရာမလိုဘဲ POS header ဖြင့်သာ mode ပြောင်းနိုင်ကြောင်း (**မရှိပါက implement လုပ်ရမည်**)
+- [ ] **Cart item readability:** Dark mode POS cart တွင် product name + price + qty ကြည်လင်ကြောင်း
+- [ ] **Keyboard shortcuts:** Dark mode toggle keyboard shortcut (`Ctrl+D` သို့မဟုတ် `F11`) ပါဝင်ကြောင်း (optional enhancement)
+
+---
+
 ## Final Sign-Off Checklist
 
-> **Platform Owner မှ Production Launch ကို approve မပြုမီ ဒီ checklist ၁၀ ချက်လုံး ပြည့်ရမည်။**
+> **Platform Owner မှ Production Launch ကို approve မပြုမီ ဒီ checklist ၁၅ ချက်လုံး ပြည့်ရမည်။**
 
 | # | Gate | Status |
 |---|---|---|
@@ -586,13 +902,19 @@ ls -la headers.txt .freebuff-preview.log 2>&1 | grep "No such file"
 | 8 | Myanmar UX: All labels Myanmar, MMK formatted, font renders (Section I) | [ ] |
 | 9 | Pilot Store: Day 1 full workflow complete without critical errors (Section J.2) | [ ] |
 | 10 | Owner Sign-off: Pilot store owner approves for daily use (Section J.4) | [ ] |
+| 11 | Toolbar: All list pages have consistent Search/Filter/Export/Pagination (Section K) | [ ] |
+| 12 | Export/PDF: XLSX+CSV Myanmar text correct, PDF print clean on all report pages (Section L) | [ ] |
+| 13 | Finance Integrity: Inventory ledger + Debt FIFO + P&L formula spot-checked (Section M) | [ ] |
+| 14 | Localization: 31 untranslated keys resolved, no raw English strings in views (Section N) | [ ] |
+| 15 | Dark/Light Mode: All admin pages + POS counter pass contrast audit (Section O) | [ ] |
 
 **Launch Decision:**
-- 10/10 ✅ → **Production Launch ကို ခွင့်ပြုသည်**
-- < 10/10 → **ကျန်ရှိသော items ကို Fix ပြုလုပ်ပြီးမှ recheck ပြုလုပ်ရမည်**
+- 15/15 ✅ → **Production Launch ကို ခွင့်ပြုသည်**
+- 13-14/15 → **Minor issues — fix within 2 days, recheck**
+- < 13/15 → **ကျန်ရှိသော items ကို Fix ပြုလုပ်ပြီးမှ recheck ပြုလုပ်ရမည်**
 
 ---
 
-*Version 2.0.0 — Upgraded by Tech Buddy for DataPOS Production Launch Quality Assurance.*  
+*Version 2.1.0 — Expanded by Tech Buddy: Toolbar Consistency + Export/PDF Matrix + Finance Deep Audit + Localization + Dark Mode.*  
 *ဒီ Checklist ကို AI Agent တစ်ခုက Verification ပြုလုပ်ရာတွင် ကိုးကား (Reference) ဖြစ်နိုင်ရန် ဒီဇိုင်းဆွဲထားသည်။*  
 *Section J (Pilot Validation) ကို AI မစစ်ဆေးနိုင်ပါ — Human စစ်ဆေးမှသာ မှန်ကန်မည်ဖြစ်သည်။*
