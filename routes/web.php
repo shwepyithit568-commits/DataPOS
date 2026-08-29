@@ -96,8 +96,8 @@ Route::get('/store/{store_slug}/orders/{order}/confirmation', [OrderController::
     ->name('orders.confirmation');
 
 // Customer Glass Finder Routes
-Route::get('/glass-finder', [GlassFinderController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class]);
-Route::post('/glass-finder/favorite', [GlassFinderController::class, 'toggleFavorite'])->middleware('throttle:glass_finder_favorite');
+Route::get('/glass-finder', [GlassFinderController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.glass_finder']);
+Route::post('/glass-finder/favorite', [GlassFinderController::class, 'toggleFavorite'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.glass_finder', 'throttle:glass_finder_favorite']);
 
 // Customer Service Job Live Tracking Routes (Login-free status tracking via token or lookup)
 Route::get('/service-tracking', [\App\Http\Controllers\Storefront\ServiceTrackingController::class, 'index'])
@@ -116,7 +116,7 @@ Route::get('/blog/{slug}', [BlogController::class, 'show'])->middleware([Resolve
 
 // Customer Wholesale Application Routes
 Route::prefix('store/{store_slug}')
-    ->middleware([ResolveStoreContext::class, SetLocale::class, 'auth'])
+    ->middleware([ResolveStoreContext::class, SetLocale::class, 'auth', 'store.capability:commerce.wholesale_pricing'])
     ->group(function () {
         Route::get('/wholesale/apply', [WholesaleController::class, 'create']);
         Route::post('/wholesale/apply', [WholesaleController::class, 'store'])->middleware('throttle:5,1');
@@ -279,11 +279,13 @@ Route::prefix('store/{store_slug}')
         Route::put('/admin/customers/{customer}', [CustomerDirectoryController::class, 'update'])->name('store.admin.customers.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Customer Receivables & Debt Ledger Management (SoT §17)
-        Route::get('/admin/receivables', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'index'])->name('store.admin.receivables.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/receivables/export', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'exportCsv'])->name('store.admin.receivables.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/receivables/{customer}', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'show'])->name('store.admin.receivables.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/receivables/{customer}/collect', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'collect'])->name('store.admin.receivables.collect')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/receivables/{customer}/statement', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'statement'])->name('store.admin.receivables.statement')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::middleware('store.capability:commerce.customer_debt')->group(function () {
+            Route::get('/admin/receivables', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'index'])->name('store.admin.receivables.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/receivables/export', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'exportCsv'])->name('store.admin.receivables.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/receivables/{customer}', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'show'])->name('store.admin.receivables.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/receivables/{customer}/collect', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'collect'])->name('store.admin.receivables.collect')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/receivables/{customer}/statement', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'statement'])->name('store.admin.receivables.statement')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        });
 
         // Supplier Payables (Accounts Payable)
         Route::get('/admin/payables', fn (StoreContext $context) => redirect()->route('pos.purchases.payables', $context->getRouteParams()))->name('store.admin.payables.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -294,48 +296,50 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/profit-loss/export', [\App\Http\Controllers\Admin\ProfitLossController::class, 'export'])->name('store.admin.profit_loss.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Repair Center / Service Jobs (SoT §16)
-        Route::get('/admin/repairs', [RepairController::class, 'index'])->name('store.admin.repairs.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/repairs/export', [RepairController::class, 'export'])->name('store.admin.repairs.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/repairs/create', [RepairController::class, 'create'])->name('store.admin.repairs.create')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/repairs', [RepairController::class, 'store'])->name('store.admin.repairs.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/repairs/{repair}', [RepairController::class, 'show'])->name('store.admin.repairs.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/repairs/{repair}/print', [RepairController::class, 'printTicket'])->name('store.admin.repairs.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/repairs/{repair}/edit', [RepairController::class, 'edit'])->name('store.admin.repairs.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::put('/admin/repairs/{repair}', [RepairController::class, 'update'])->name('store.admin.repairs.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/repairs/{repair}/status', [RepairController::class, 'updateStatus'])->name('store.admin.repairs.status')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/repairs/quick-add-technician', [RepairController::class, 'quickAddTechnician'])->name('store.admin.repairs.quick_add_technician')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/repairs/{repair}/payments', [RepairController::class, 'addPayment'])->name('store.admin.repairs.payments.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/repairs/{repair}/items/{item}/deduct', [RepairController::class, 'deductItem'])->name('store.admin.repairs.items.deduct')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::middleware('store.capability:service.repair_jobs')->group(function () {
+            Route::get('/admin/repairs', [RepairController::class, 'index'])->name('store.admin.repairs.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/repairs/export', [RepairController::class, 'export'])->name('store.admin.repairs.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/repairs/create', [RepairController::class, 'create'])->name('store.admin.repairs.create')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/repairs', [RepairController::class, 'store'])->name('store.admin.repairs.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/repairs/{repair}', [RepairController::class, 'show'])->name('store.admin.repairs.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/repairs/{repair}/print', [RepairController::class, 'printTicket'])->name('store.admin.repairs.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/repairs/{repair}/edit', [RepairController::class, 'edit'])->name('store.admin.repairs.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::put('/admin/repairs/{repair}', [RepairController::class, 'update'])->name('store.admin.repairs.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/repairs/{repair}/status', [RepairController::class, 'updateStatus'])->name('store.admin.repairs.status')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/repairs/quick-add-technician', [RepairController::class, 'quickAddTechnician'])->name('store.admin.repairs.quick_add_technician')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/repairs/{repair}/payments', [RepairController::class, 'addPayment'])->name('store.admin.repairs.payments.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/repairs/{repair}/items/{item}/deduct', [RepairController::class, 'deductItem'])->name('store.admin.repairs.items.deduct')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
-        // Service Settings / Repair Master Data (Tabs for statuses, brands, categories, models, colors, storage, defects, accessories)
-        Route::get('/admin/service-settings', [ServiceSettingController::class, 'index'])->name('store.admin.service_settings.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/service-settings/export', [ServiceSettingController::class, 'export'])->name('store.admin.service_settings.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/service-settings/import', [ServiceSettingController::class, 'import'])->name('store.admin.service_settings.import')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/service-settings/template', [ServiceSettingController::class, 'downloadTemplate'])->name('store.admin.service_settings.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/service-settings', [ServiceSettingController::class, 'store'])->name('store.admin.service_settings.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/service-settings/quick-add', [ServiceSettingController::class, 'quickAdd'])->name('store.admin.service_settings.quick_add')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::put('/admin/service-settings/{service_setting}', [ServiceSettingController::class, 'update'])->name('store.admin.service_settings.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::delete('/admin/service-settings/{service_setting}', [ServiceSettingController::class, 'destroy'])->name('store.admin.service_settings.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            // Service Settings / Repair Master Data (Tabs for statuses, brands, categories, models, colors, storage, defects, accessories)
+            Route::get('/admin/service-settings', [ServiceSettingController::class, 'index'])->name('store.admin.service_settings.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/service-settings/export', [ServiceSettingController::class, 'export'])->name('store.admin.service_settings.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/service-settings/import', [ServiceSettingController::class, 'import'])->name('store.admin.service_settings.import')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/service-settings/template', [ServiceSettingController::class, 'downloadTemplate'])->name('store.admin.service_settings.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/service-settings', [ServiceSettingController::class, 'store'])->name('store.admin.service_settings.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/service-settings/quick-add', [ServiceSettingController::class, 'quickAdd'])->name('store.admin.service_settings.quick_add')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::put('/admin/service-settings/{service_setting}', [ServiceSettingController::class, 'update'])->name('store.admin.service_settings.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::delete('/admin/service-settings/{service_setting}', [ServiceSettingController::class, 'destroy'])->name('store.admin.service_settings.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
-        // Spare Parts Used in Repairs (Service Consumption & Stock Tracking)
-        Route::get('/admin/spare-parts', [SparePartController::class, 'index'])->name('store.admin.spare_parts.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/spare-parts/export', [SparePartController::class, 'export'])->name('store.admin.spare_parts.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/spare-parts/{item}/deduct', [SparePartController::class, 'deductItem'])->name('store.admin.spare_parts.deduct')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            // Spare Parts Used in Repairs (Service Consumption & Stock Tracking)
+            Route::get('/admin/spare-parts', [SparePartController::class, 'index'])->name('store.admin.spare_parts.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/spare-parts/export', [SparePartController::class, 'export'])->name('store.admin.spare_parts.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/spare-parts/{item}/deduct', [SparePartController::class, 'deductItem'])->name('store.admin.spare_parts.deduct')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
-        // Service Jobs (Computer / CCTV / Network — SoT §16-B)
-        // SVC-YYYYMMDD-#### numbering, tracking_token for customer page.
-        Route::get('/admin/service-jobs', [\App\Http\Controllers\Admin\ServiceJobController::class, 'index'])->name('store.admin.service_jobs.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/service-jobs/export', [\App\Http\Controllers\Admin\ServiceJobController::class, 'export'])->name('store.admin.service_jobs.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/service-jobs/create', [\App\Http\Controllers\Admin\ServiceJobController::class, 'create'])->name('store.admin.service_jobs.create')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/service-jobs', [\App\Http\Controllers\Admin\ServiceJobController::class, 'store'])->name('store.admin.service_jobs.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/service-jobs/{job}', [\App\Http\Controllers\Admin\ServiceJobController::class, 'show'])->name('store.admin.service_jobs.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/service-jobs/{job}/print', [\App\Http\Controllers\Admin\ServiceJobController::class, 'printTicket'])->name('store.admin.service_jobs.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/service-jobs/{job}/edit', [\App\Http\Controllers\Admin\ServiceJobController::class, 'edit'])->name('store.admin.service_jobs.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::put('/admin/service-jobs/{job}', [\App\Http\Controllers\Admin\ServiceJobController::class, 'update'])->name('store.admin.service_jobs.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/service-jobs/{job}/status', [\App\Http\Controllers\Admin\ServiceJobController::class, 'updateStatus'])->name('store.admin.service_jobs.status')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/service-jobs/quick-add-technician', [\App\Http\Controllers\Admin\ServiceJobController::class, 'quickAddTechnician'])->name('store.admin.service_jobs.quick_add_technician')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/service-jobs/{job}/payments', [\App\Http\Controllers\Admin\ServiceJobController::class, 'addPayment'])->name('store.admin.service_jobs.payments.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/service-jobs/{job}/items/{item}/deduct', [\App\Http\Controllers\Admin\ServiceJobController::class, 'deductItem'])->name('store.admin.service_jobs.items.deduct')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            // Service Jobs (Computer / CCTV / Network — SoT §16-B)
+            // SVC-YYYYMMDD-#### numbering, tracking_token for customer page.
+            Route::get('/admin/service-jobs', [\App\Http\Controllers\Admin\ServiceJobController::class, 'index'])->name('store.admin.service_jobs.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/service-jobs/export', [\App\Http\Controllers\Admin\ServiceJobController::class, 'export'])->name('store.admin.service_jobs.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/service-jobs/create', [\App\Http\Controllers\Admin\ServiceJobController::class, 'create'])->name('store.admin.service_jobs.create')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/service-jobs', [\App\Http\Controllers\Admin\ServiceJobController::class, 'store'])->name('store.admin.service_jobs.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/service-jobs/{job}', [\App\Http\Controllers\Admin\ServiceJobController::class, 'show'])->name('store.admin.service_jobs.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/service-jobs/{job}/print', [\App\Http\Controllers\Admin\ServiceJobController::class, 'printTicket'])->name('store.admin.service_jobs.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/service-jobs/{job}/edit', [\App\Http\Controllers\Admin\ServiceJobController::class, 'edit'])->name('store.admin.service_jobs.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::put('/admin/service-jobs/{job}', [\App\Http\Controllers\Admin\ServiceJobController::class, 'update'])->name('store.admin.service_jobs.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/service-jobs/{job}/status', [\App\Http\Controllers\Admin\ServiceJobController::class, 'updateStatus'])->name('store.admin.service_jobs.status')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/service-jobs/quick-add-technician', [\App\Http\Controllers\Admin\ServiceJobController::class, 'quickAddTechnician'])->name('store.admin.service_jobs.quick_add_technician')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/service-jobs/{job}/payments', [\App\Http\Controllers\Admin\ServiceJobController::class, 'addPayment'])->name('store.admin.service_jobs.payments.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/service-jobs/{job}/items/{item}/deduct', [\App\Http\Controllers\Admin\ServiceJobController::class, 'deductItem'])->name('store.admin.service_jobs.items.deduct')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        });
 
         // Expense Categories CRUD
         Route::get('/admin/expense-categories', [ExpenseCategoryController::class, 'index'])->name('store.admin.expense_categories.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -514,22 +518,26 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/pilot-import/{tab}/template', [PilotImportController::class, 'downloadTemplate'])->name('store.admin.pilot-import.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
 
         // Barcode & QR Label Printing Management
-        Route::get('/admin/barcode', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'index'])->name('store.admin.barcode.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/barcode/search', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'search'])->name('store.admin.barcode.search')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/barcode/print', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'print'])->name('store.admin.barcode.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/barcode/templates', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'saveTemplate'])->name('store.admin.barcode.templates.save')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::delete('/admin/barcode/templates/{id}', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'deleteTemplate'])->name('store.admin.barcode.templates.delete')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::middleware('store.capability:catalog.barcode_printing')->group(function () {
+            Route::get('/admin/barcode', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'index'])->name('store.admin.barcode.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/barcode/search', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'search'])->name('store.admin.barcode.search')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/barcode/print', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'print'])->name('store.admin.barcode.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/barcode/templates', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'saveTemplate'])->name('store.admin.barcode.templates.save')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::delete('/admin/barcode/templates/{id}', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'deleteTemplate'])->name('store.admin.barcode.templates.delete')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        });
 
         // Warranty & Serial / IMEI Tracker (SoT §19)
-        Route::get('/admin/warranty', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'index'])->name('store.admin.warranty.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/warranty/quick-scan', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'quickScan'])->name('store.admin.warranty.quick_scan')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/warranty/create', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'create'])->name('store.admin.warranty.create')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/warranty', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'store'])->name('store.admin.warranty.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/warranty/{warranty}', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'show'])->name('store.admin.warranty.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/warranty/{warranty}/edit', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'edit'])->name('store.admin.warranty.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::put('/admin/warranty/{warranty}', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'update'])->name('store.admin.warranty.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/warranty/{warranty}/claim', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'claim'])->name('store.admin.warranty.claim')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/warranty/{warranty}/certificate', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'certificate'])->name('store.admin.warranty.certificate')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::middleware('store.capability:service.warranty_tracking')->group(function () {
+            Route::get('/admin/warranty', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'index'])->name('store.admin.warranty.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/warranty/quick-scan', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'quickScan'])->name('store.admin.warranty.quick_scan')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/warranty/create', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'create'])->name('store.admin.warranty.create')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/warranty', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'store'])->name('store.admin.warranty.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/warranty/{warranty}', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'show'])->name('store.admin.warranty.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/warranty/{warranty}/edit', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'edit'])->name('store.admin.warranty.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::put('/admin/warranty/{warranty}', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'update'])->name('store.admin.warranty.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/warranty/{warranty}/claim', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'claim'])->name('store.admin.warranty.claim')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/warranty/{warranty}/certificate', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'certificate'])->name('store.admin.warranty.certificate')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        });
 
         // Physical Stock Count & Inventory Audit (sidebar_stock_count)
         Route::get('/admin/stock-count', [\App\Http\Controllers\Admin\StockCountController::class, 'index'])->name('store.admin.stock_count.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -550,10 +558,12 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/stock-ledger/print-bin-card/{product}', [\App\Http\Controllers\Admin\StockLedgerController::class, 'printBinCard'])->name('store.admin.stock_ledger.print_bin_card')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Bulk Price Wizard (sidebar_price_wizard)
-        Route::get('/admin/price-wizard', [\App\Http\Controllers\Admin\BulkPriceWizardController::class, 'index'])->name('store.admin.price_wizard.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/price-wizard/calculate', [\App\Http\Controllers\Admin\BulkPriceWizardController::class, 'calculate'])->name('store.admin.price_wizard.calculate')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/price-wizard/apply', [\App\Http\Controllers\Admin\BulkPriceWizardController::class, 'apply'])->name('store.admin.price_wizard.apply')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/price-wizard/export', [\App\Http\Controllers\Admin\BulkPriceWizardController::class, 'export'])->name('store.admin.price_wizard.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::middleware('store.capability:catalog.price_wizard')->group(function () {
+            Route::get('/admin/price-wizard', [\App\Http\Controllers\Admin\BulkPriceWizardController::class, 'index'])->name('store.admin.price_wizard.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/price-wizard/calculate', [\App\Http\Controllers\Admin\BulkPriceWizardController::class, 'calculate'])->name('store.admin.price_wizard.calculate')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/price-wizard/apply', [\App\Http\Controllers\Admin\BulkPriceWizardController::class, 'apply'])->name('store.admin.price_wizard.apply')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/price-wizard/export', [\App\Http\Controllers\Admin\BulkPriceWizardController::class, 'export'])->name('store.admin.price_wizard.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        });
 
         // Cash & Bank Transactions Register (sidebar_transactions)
         Route::get('/admin/transactions', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'index'])->name('store.admin.transactions.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -583,14 +593,16 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/vouchers/{voucher}/preview', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'preview'])->name('store.admin.vouchers.preview')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Multi-Branch Management (sidebar_branches)
-        Route::get('/admin/branches', [\App\Http\Controllers\Admin\BranchManagementController::class, 'index'])->name('store.admin.branches.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/branches/create', [\App\Http\Controllers\Admin\BranchManagementController::class, 'create'])->name('store.admin.branches.create')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::post('/admin/branches', [\App\Http\Controllers\Admin\BranchManagementController::class, 'store'])->name('store.admin.branches.store')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::get('/admin/branches/{branch}', [\App\Http\Controllers\Admin\BranchManagementController::class, 'show'])->name('store.admin.branches.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/branches/{branch}/edit', [\App\Http\Controllers\Admin\BranchManagementController::class, 'edit'])->name('store.admin.branches.edit')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::put('/admin/branches/{branch}', [\App\Http\Controllers\Admin\BranchManagementController::class, 'update'])->name('store.admin.branches.update')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::delete('/admin/branches/{branch}', [\App\Http\Controllers\Admin\BranchManagementController::class, 'destroy'])->name('store.admin.branches.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::post('/admin/branches/{branch}/set-default', [\App\Http\Controllers\Admin\BranchManagementController::class, 'setDefault'])->name('store.admin.branches.set_default')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::middleware('store.capability:operations.branches')->group(function () {
+            Route::get('/admin/branches', [\App\Http\Controllers\Admin\BranchManagementController::class, 'index'])->name('store.admin.branches.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/branches/create', [\App\Http\Controllers\Admin\BranchManagementController::class, 'create'])->name('store.admin.branches.create')->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::post('/admin/branches', [\App\Http\Controllers\Admin\BranchManagementController::class, 'store'])->name('store.admin.branches.store')->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::get('/admin/branches/{branch}', [\App\Http\Controllers\Admin\BranchManagementController::class, 'show'])->name('store.admin.branches.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/branches/{branch}/edit', [\App\Http\Controllers\Admin\BranchManagementController::class, 'edit'])->name('store.admin.branches.edit')->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::put('/admin/branches/{branch}', [\App\Http\Controllers\Admin\BranchManagementController::class, 'update'])->name('store.admin.branches.update')->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::delete('/admin/branches/{branch}', [\App\Http\Controllers\Admin\BranchManagementController::class, 'destroy'])->name('store.admin.branches.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::post('/admin/branches/{branch}/set-default', [\App\Http\Controllers\Admin\BranchManagementController::class, 'setDefault'])->name('store.admin.branches.set_default')->middleware(EnsureStoreAccess::class . ':store_manager');
+        });
 
         // Currency Exchange Rates (sidebar_exchange_rates)
         Route::get('/admin/exchange-rates', [\App\Http\Controllers\Admin\CurrencyExchangeController::class, 'index'])->name('store.admin.exchange_rates.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -601,12 +613,14 @@ Route::prefix('store/{store_slug}')
         Route::delete('/admin/exchange-rates/{currency}', [\App\Http\Controllers\Admin\CurrencyExchangeController::class, 'destroy'])->name('store.admin.exchange_rates.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
 
         // Membership Tier & Loyalty Points (sidebar_membership)
-        Route::get('/admin/membership', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'index'])->name('store.admin.membership.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/membership/tiers', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'storeTier'])->name('store.admin.membership.tiers.store')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::put('/admin/membership/tiers/{tier}', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'updateTier'])->name('store.admin.membership.tiers.update')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::delete('/admin/membership/tiers/{tier}', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'destroyTier'])->name('store.admin.membership.tiers.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::post('/admin/membership/adjust-points', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'adjustPoints'])->name('store.admin.membership.adjust_points')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::post('/admin/membership/assign-tier', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'assignTier'])->name('store.admin.membership.assign_tier')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::middleware('store.capability:commerce.loyalty_points')->group(function () {
+            Route::get('/admin/membership', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'index'])->name('store.admin.membership.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/membership/tiers', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'storeTier'])->name('store.admin.membership.tiers.store')->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::put('/admin/membership/tiers/{tier}', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'updateTier'])->name('store.admin.membership.tiers.update')->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::delete('/admin/membership/tiers/{tier}', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'destroyTier'])->name('store.admin.membership.tiers.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::post('/admin/membership/adjust-points', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'adjustPoints'])->name('store.admin.membership.adjust_points')->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::post('/admin/membership/assign-tier', [\App\Http\Controllers\Admin\MembershipLoyaltyController::class, 'assignTier'])->name('store.admin.membership.assign_tier')->middleware(EnsureStoreAccess::class . ':store_manager');
+        });
 
         // Promotions & Coupon Engine (sidebar_promotions)
         Route::get('/admin/promotions', [\App\Http\Controllers\Admin\PromotionController::class, 'index'])->name('store.admin.promotions.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -624,13 +638,15 @@ Route::prefix('store/{store_slug}')
         Route::post('/admin/web-products/bulk-featured', [\App\Http\Controllers\Admin\WebProductController::class, 'bulkFeatured'])->name('store.admin.web_products.bulk_featured')->middleware(EnsureStoreAccess::class . ':store_manager');
 
         // Mobile E-Load & Bill Register (sidebar_eload)
-        Route::get('/admin/eload', [\App\Http\Controllers\Admin\EloadController::class, 'index'])->name('store.admin.eload.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/eload', [\App\Http\Controllers\Admin\EloadController::class, 'store'])->name('store.admin.eload.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/eload/refill', [\App\Http\Controllers\Admin\EloadController::class, 'refill'])->name('store.admin.eload.refill')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/eload/accounts', [\App\Http\Controllers\Admin\EloadController::class, 'saveAccount'])->name('store.admin.eload.accounts.store')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::delete('/admin/eload/accounts/{id}', [\App\Http\Controllers\Admin\EloadController::class, 'deleteAccount'])->name('store.admin.eload.accounts.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::patch('/admin/eload/transactions/{id}/status', [\App\Http\Controllers\Admin\EloadController::class, 'updateStatus'])->name('store.admin.eload.status')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::get('/admin/eload/transactions/{id}/slip', [\App\Http\Controllers\Admin\EloadController::class, 'printSlip'])->name('store.admin.eload.slip')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::middleware('store.capability:operations.eload')->group(function () {
+            Route::get('/admin/eload', [\App\Http\Controllers\Admin\EloadController::class, 'index'])->name('store.admin.eload.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/eload', [\App\Http\Controllers\Admin\EloadController::class, 'store'])->name('store.admin.eload.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/eload/refill', [\App\Http\Controllers\Admin\EloadController::class, 'refill'])->name('store.admin.eload.refill')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/eload/accounts', [\App\Http\Controllers\Admin\EloadController::class, 'saveAccount'])->name('store.admin.eload.accounts.store')->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::delete('/admin/eload/accounts/{id}', [\App\Http\Controllers\Admin\EloadController::class, 'deleteAccount'])->name('store.admin.eload.accounts.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::patch('/admin/eload/transactions/{id}/status', [\App\Http\Controllers\Admin\EloadController::class, 'updateStatus'])->name('store.admin.eload.status')->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::get('/admin/eload/transactions/{id}/slip', [\App\Http\Controllers\Admin\EloadController::class, 'printSlip'])->name('store.admin.eload.slip')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        });
 
         // Sales Analytics & Deep Charts (sidebar_sales_analytics)
         Route::get('/admin/reports/sales-analytics', [\App\Http\Controllers\Admin\SalesAnalyticsController::class, 'index'])->name('store.admin.sales_analytics.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -695,23 +711,27 @@ Route::prefix('store/{store_slug}')
 
 
         // Admin Wholesale Applications Management
-        Route::get('/admin/wholesale/applications/export', [WholesaleAdminController::class, 'export'])->name('store.admin.wholesale.applications.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/wholesale/applications', [WholesaleAdminController::class, 'index'])->name('store.admin.wholesale.applications.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/wholesale/applications/{application}', [WholesaleAdminController::class, 'show'])->name('store.admin.wholesale.applications.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/wholesale/applications/{application}/print', [WholesaleAdminController::class, 'print'])->name('store.admin.wholesale.applications.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::patch('/admin/wholesale/applications/{application}', [WholesaleAdminController::class, 'updateStatus'])->name('store.admin.wholesale.applications.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::delete('/admin/wholesale/applications/{application}', [WholesaleAdminController::class, 'destroy'])->name('store.admin.wholesale.applications.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::middleware('store.capability:commerce.wholesale_pricing')->group(function () {
+            Route::get('/admin/wholesale/applications/export', [WholesaleAdminController::class, 'export'])->name('store.admin.wholesale.applications.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/wholesale/applications', [WholesaleAdminController::class, 'index'])->name('store.admin.wholesale.applications.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/wholesale/applications/{application}', [WholesaleAdminController::class, 'show'])->name('store.admin.wholesale.applications.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/wholesale/applications/{application}/print', [WholesaleAdminController::class, 'print'])->name('store.admin.wholesale.applications.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::patch('/admin/wholesale/applications/{application}', [WholesaleAdminController::class, 'updateStatus'])->name('store.admin.wholesale.applications.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::delete('/admin/wholesale/applications/{application}', [WholesaleAdminController::class, 'destroy'])->name('store.admin.wholesale.applications.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+        });
 
 
         // Admin Glass Finder Management
-        Route::get('/admin/glass-finder', [GlassFinderAdminController::class, 'index'])->name('store.admin.glass-finder.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/glass-finder', [GlassFinderAdminController::class, 'store'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/glass-finder/{item}/edit', [GlassFinderAdminController::class, 'edit'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::put('/admin/glass-finder/{item}', [GlassFinderAdminController::class, 'update'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/glass-finder/import/template', [GlassFinderAdminController::class, 'downloadImportTemplate'])->name('store.admin.glass-finder.import.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/glass-finder/import', [GlassFinderAdminController::class, 'import'])->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports']);
-        Route::post('/admin/glass-finder/import/confirm', [GlassFinderAdminController::class, 'confirmImport'])->name('store.admin.glass-finder.import.confirm')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports']);
-        Route::delete('/admin/glass-finder/{item}', [GlassFinderAdminController::class, 'destroy'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::middleware('store.capability:storefront.glass_finder')->group(function () {
+            Route::get('/admin/glass-finder', [GlassFinderAdminController::class, 'index'])->name('store.admin.glass-finder.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/glass-finder', [GlassFinderAdminController::class, 'store'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/glass-finder/{item}/edit', [GlassFinderAdminController::class, 'edit'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::put('/admin/glass-finder/{item}', [GlassFinderAdminController::class, 'update'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/glass-finder/import/template', [GlassFinderAdminController::class, 'downloadImportTemplate'])->name('store.admin.glass-finder.import.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::post('/admin/glass-finder/import', [GlassFinderAdminController::class, 'import'])->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports']);
+            Route::post('/admin/glass-finder/import/confirm', [GlassFinderAdminController::class, 'confirmImport'])->name('store.admin.glass-finder.import.confirm')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports']);
+            Route::delete('/admin/glass-finder/{item}', [GlassFinderAdminController::class, 'destroy'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        });
 
         // Admin Order Requests Management
         Route::get('/admin/orders', [OrderAdminController::class, 'index'])->name('store.admin.orders.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');

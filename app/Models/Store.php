@@ -13,6 +13,9 @@ class Store extends Model
     protected $fillable = [
         'name',
         'business_type',
+        'business_profile',
+        'operation_mode',
+        'capabilities_override',
         'slug',
         'viber_number',
         'telegram_username',
@@ -21,8 +24,9 @@ class Store extends Model
     ];
 
     protected $casts = [
-        'is_active'  => 'boolean',
-        'is_primary' => 'boolean',
+        'is_active'              => 'boolean',
+        'is_primary'             => 'boolean',
+        'capabilities_override'  => 'array',
     ];
 
     public function users(): BelongsToMany
@@ -84,5 +88,85 @@ class Store extends Model
     public function defaultWarehouse(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(\App\POS\Models\Warehouse::class)->where('is_default', true);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Business Profile & Capabilities (Phase 1 Foundation)               */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Get the standardized business profile of this store.
+     */
+    public function getBusinessProfile(): string
+    {
+        return \App\BusinessProfiles\BusinessProfileRegistry::resolveProfile(
+            $this->business_profile,
+            $this->business_type
+        );
+    }
+
+    /**
+     * Get the operation mode (omnichannel vs pos_only).
+     */
+    public function getOperationMode(): string
+    {
+        return $this->operation_mode ?: \App\BusinessProfiles\BusinessProfile::MODE_OMNICHANNEL;
+    }
+
+    /**
+     * Determine if this store is running in POS-only mode.
+     */
+    public function isPosOnly(): bool
+    {
+        return $this->getOperationMode() === \App\BusinessProfiles\BusinessProfile::MODE_POS_ONLY;
+    }
+
+    /**
+     * Determine if this store is running in Omnichannel mode (POS + Storefront).
+     */
+    public function isOmnichannel(): bool
+    {
+        return $this->getOperationMode() === \App\BusinessProfiles\BusinessProfile::MODE_OMNICHANNEL;
+    }
+
+    /**
+     * Resolve effective capabilities list for this store.
+     *
+     * @return array<string, bool> Map of capability identifier to boolean state
+     */
+    public function getCapabilities(): array
+    {
+        $profile = $this->getBusinessProfile();
+        $defaultList = \App\BusinessProfiles\BusinessProfileRegistry::getDefaultCapabilities($profile);
+
+        $capabilities = [];
+        foreach ($defaultList as $cap) {
+            $capabilities[$cap] = true;
+        }
+
+        // Apply operation mode constraints (POS-Only disables public ecommerce by default)
+        if ($this->isPosOnly()) {
+            $capabilities[\App\Capabilities\Capability::STOREFRONT_ECOMMERCE] = false;
+            $capabilities[\App\Capabilities\Capability::STOREFRONT_ONLINE_ORDERING] = false;
+        }
+
+        // Apply custom overrides stored on the store record (if any)
+        if (is_array($this->capabilities_override)) {
+            foreach ($this->capabilities_override as $cap => $enabled) {
+                $capabilities[$cap] = (bool) $enabled;
+            }
+        }
+
+        return $capabilities;
+    }
+
+    /**
+     * Determine if the store has a specific capability enabled.
+     */
+    public function hasCapability(string $capability): bool
+    {
+        $caps = $this->getCapabilities();
+
+        return !empty($caps[$capability]);
     }
 }

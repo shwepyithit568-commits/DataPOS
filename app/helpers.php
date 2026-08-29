@@ -25,3 +25,25 @@ if (! function_exists('format_currency')) {
         return CurrencyFormatter::format($amount, $currencySettings);
     }
 }
+
+if (! function_exists('store_can')) {
+    /**
+     * Determine if the current active store has a specific capability.
+     */
+    function store_can(string $capability, ?Store $store = null): bool
+    {
+        if (! $store && app()->bound(StoreContext::class)) {
+            try {
+                $store = app(StoreContext::class)->getStore();
+            } catch (\Throwable) {
+                $store = null;
+            }
+        }
+
+        if (! $store) {
+            return false;
+        }
+
+        return $store->hasCapability($capability);
+    }
+}

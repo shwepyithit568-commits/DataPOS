@@ -53,4 +53,30 @@ class StoreContext
 
         return [];
     }
+
+    /**
+     * Determine if active store has the given capability.
+     */
+    public function hasCapability(string $capability): bool
+    {
+        if (! $this->activeStore) {
+            return false;
+        }
+
+        return $this->activeStore->hasCapability($capability);
+    }
+
+    /**
+     * Get all active store capabilities.
+     *
+     * @return array<string, bool>
+     */
+    public function getCapabilities(): array
+    {
+        if (! $this->activeStore) {
+            return [];
+        }
+
+        return $this->activeStore->getCapabilities();
+    }
 }

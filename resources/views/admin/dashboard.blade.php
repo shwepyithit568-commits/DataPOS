@@ -48,8 +48,12 @@
     <div class="flex flex-wrap items-center gap-2">
         <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}" class="admin-primary-btn">{{ __('messages.add_product') }}</a>
         <a href="{{ route('store.admin.orders.index', ['store_slug' => $store->slug]) }}" class="admin-secondary-btn">{{ __('messages.manage_orders') }}</a>
-        <a href="{{ route('store.admin.wholesale.applications.index', ['store_slug' => $store->slug]) }}" class="admin-secondary-btn">{{ __('messages.wholesale_apps') }}</a>
-        <a href="{{ route('store.admin.glass-finder.index', ['store_slug' => $store->slug]) }}" class="admin-secondary-btn">{{ __('messages.glass_finder') }}</a>
+        @if (store_can('commerce.wholesale_pricing', $store))
+            <a href="{{ route('store.admin.wholesale.applications.index', ['store_slug' => $store->slug]) }}" class="admin-secondary-btn">{{ __('messages.wholesale_apps') }}</a>
+        @endif
+        @if (store_can('storefront.glass_finder', $store))
+            <a href="{{ route('store.admin.glass-finder.index', ['store_slug' => $store->slug]) }}" class="admin-secondary-btn">{{ __('messages.glass_finder') }}</a>
+        @endif
         @if ($canManageSettings)
             <a href="{{ route('store.admin.settings.edit', ['store_slug' => $store->slug]) }}" class="admin-secondary-btn">{{ __('messages.store_settings') }}</a>
         @endif
@@ -206,11 +210,13 @@
                 <div class="admin-stat-value">{{ number_format($outOfStockProducts) }}</div>
                 <div class="admin-stat-sub">Needs restocking</div>
             </div>
-            <div class="admin-hairline-cell">
-                <div class="admin-stat-label">Glass Finder Items</div>
-                <div class="admin-stat-value">{{ number_format($glassFinderItems) }}</div>
-                <div class="admin-stat-sub">Lookup database</div>
-            </div>
+            @if (store_can('storefront.glass_finder', $store))
+                <div class="admin-hairline-cell">
+                    <div class="admin-stat-label">Glass Finder Items</div>
+                    <div class="admin-stat-value">{{ number_format($glassFinderItems) }}</div>
+                    <div class="admin-stat-sub">Lookup database</div>
+                </div>
+            @endif
         </div>
     </section>
 
@@ -221,14 +227,16 @@
             <span class="admin-section-sub">Wholesale pipeline and annual revenue</span>
         </div>
         <div class="admin-hairline-grid grid-cols-2">
-            <div class="admin-hairline-cell">
-                <div class="admin-stat-label">
-                    <span class="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true"></span>
-                    Pending Wholesale
+            @if (store_can('commerce.wholesale_pricing', $store))
+                <div class="admin-hairline-cell">
+                    <div class="admin-stat-label">
+                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true"></span>
+                        Pending Wholesale
+                    </div>
+                    <div class="admin-stat-value" data-pending-wholesale-stat>{{ number_format($pendingWholesale) }}</div>
+                    <div class="admin-stat-sub">Applications to review</div>
                 </div>
-                <div class="admin-stat-value" data-pending-wholesale-stat>{{ number_format($pendingWholesale) }}</div>
-                <div class="admin-stat-sub">Applications to review</div>
-            </div>
+            @endif
             <div class="admin-hairline-cell">
                 <div class="admin-stat-label">Year Revenue</div>
                 <div class="admin-stat-value">Ks {{ number_format($yearRevenue) }}</div>

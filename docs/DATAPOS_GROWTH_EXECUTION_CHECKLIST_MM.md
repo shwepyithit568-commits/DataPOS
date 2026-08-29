@@ -66,32 +66,32 @@
 
 > **ရည်ရွယ်ချက်:** Feature များကို UI hide/show သာမက Server-side Middleware, Policies နှင့် အမှန်တကယ် စစ်ဆေးသော Capability စနစ် တည်ဆောက်ရန်။
 
-- [ ] **၁.၁ Capability Registry & Definition (`App\Capabilities\CapabilityRegistry`)**
-  - [ ] Storefront & Ecommerce: `storefront.ecommerce`, `storefront.online_ordering`, `storefront.customer_portal`
-  - [ ] Catalog: `catalog.variants`, `catalog.custom_fields`
-  - [ ] Inventory: `inventory.serial_tracking`, `inventory.batch_tracking`, `inventory.expiry_tracking`, `inventory.multi_uom`
-  - [ ] Service: `service.repair_jobs`, `service.warranty_tracking`
-  - [ ] Commerce: `commerce.wholesale_pricing`, `commerce.customer_debt`
-  - [ ] Operations: `operations.branches`, `operations.warehouses`, `operations.cashier_shifts`, `pos.tablet_mobile_mode`
-- [ ] **၁.၂ Business Profile & Operation Mode Registry (`App\BusinessProfiles\BusinessProfileRegistry`)**
-  - [ ] Profile: `mobile_electronics` (Variants, Serials, Warranty, Repairs, Wholesale)
-  - [ ] Profile: `general_retail` (Barcode POS, Variants, Wholesale, Cashier Shifts)
-  - [ ] Profile: `repair_service` (Repair Jobs, Warranty, Spare Parts, Customer Debt)
-  - [ ] Operation Modes:
+- [x] **၁.၁ Capability Registry & Definition (`App\Capabilities\CapabilityRegistry`)**
+  - [x] Storefront & Ecommerce: `storefront.ecommerce`, `storefront.online_ordering`, `storefront.customer_portal`
+  - [x] Catalog: `catalog.variants`, `catalog.custom_fields`
+  - [x] Inventory: `inventory.serial_tracking`, `inventory.batch_tracking`, `inventory.expiry_tracking`, `inventory.multi_uom`
+  - [x] Service: `service.repair_jobs`, `service.warranty_tracking`
+  - [x] Commerce: `commerce.wholesale_pricing`, `commerce.customer_debt`
+  - [x] Operations: `operations.branches`, `operations.warehouses`, `operations.cashier_shifts`, `pos.tablet_mobile_mode`
+- [x] **၁.၂ Business Profile & Operation Mode Registry (`App\BusinessProfiles\BusinessProfileRegistry`)**
+  - [x] Profile: `mobile_electronics` (Variants, Serials, Warranty, Repairs, Wholesale)
+  - [x] Profile: `general_retail` (Barcode POS, Variants, Wholesale, Cashier Shifts)
+  - [x] Profile: `repair_service` (Repair Jobs, Warranty, Spare Parts, Customer Debt)
+  - [x] Operation Modes:
     - 📱 **POS-Only Mode (In-Store Counter / Tablet / Phone):** Online eCommerce မသုံးဘဲ ဆိုင်တွင်း POS ရောင်းချမှု သီးသန့်သုံးမည့် ဆိုင်များအတွက် (Public Web Catalog ပိတ်ထားပြီး Phone/Tablet ဖြင့် တိုက်ရိုက် POS ဝင်သုံးနိုင်သည်)။
     - 🌐 **Omnichannel Mode (POS + Web Storefront):** ဆိုင်တွင်း POS အရောင်းရော အွန်လိုင်း ဝဘ်ဆိုက်ပါ တွဲဖက်သုံးမည့် ဆိုင်များအတွက်။
-- [ ] **၁.၃ Store Capability Resolver & Context Integration (`App\Services\StoreContext`)**
-  - [ ] Store Model သို့ `business_profile` attribute သတ်မှတ်ခြင်း (Default: `mobile_electronics` သို့မဟုတ် `general_retail`)။
-  - [ ] `hasCapability(string $capability): bool` helper method ထည့်သွင်းခြင်း။
-- [ ] **၁.၄ Server-Side Enforcement Middleware (`CheckStoreCapability`)**
-  - [ ] Route များတွင် `middleware('store.capability:service.repair_jobs')` စသည်ဖြင့် ကာကွယ်ခြင်း။
-  - [ ] Capability ပိတ်ထားသော Route ကို URL တိုက်ရိုက်ခေါ်ပါက `403 Forbidden` ပြသခြင်း။
-- [ ] **၁.၅ Admin Navigation & Sidebar Dynamic Filtering**
-  - [ ] Sidebar Menu များတွင် `@if(store_can('service.repair_jobs'))` စသည်ဖြင့် သက်ဆိုင်ရာ Menu သာ ဖော်ပြခြင်း။
-- [ ] **၁.၆ Automated Feature Tests**
-  - [ ] `test_disabled_capability_route_aborts_403()`
-  - [ ] `test_store_profile_resolves_correct_capabilities()`
-  - [ ] `test_cross_store_cannot_access_unauthorized_capability_modules()`
+- [x] **၁.၃ Store Capability Resolver & Context Integration (`App\Services\StoreContext`)**
+  - [x] Store Model သို့ `business_profile` attribute သတ်မှတ်ခြင်း (Default: `mobile_electronics` သို့မဟုတ် `general_retail`)။
+  - [x] `hasCapability(string $capability): bool` helper method ထည့်သွင်းခြင်း။
+- [x] **၁.၄ Server-Side Enforcement Middleware (`CheckStoreCapability`)**
+  - [x] Route များတွင် `middleware('store.capability:service.repair_jobs')` စသည်ဖြင့် ကာကွယ်ခြင်း။
+  - [x] Capability ပိတ်ထားသော Route ကို URL တိုက်ရိုက်ခေါ်ပါက `403 Forbidden` ပြသခြင်း။
+- [x] **၁.၅ Admin Navigation & Sidebar Dynamic Filtering**
+  - [x] Sidebar Menu များတွင် `@if(store_can('service.repair_jobs'))` စသည်ဖြင့် သက်ဆိုင်ရာ Menu သာ ဖော်ပြခြင်း။
+- [x] **၁.၆ Automated Feature Tests**
+  - [x] `test_disabled_capability_route_aborts_403()`
+  - [x] `test_store_profile_resolves_correct_capabilities()`
+  - [x] `test_cross_store_cannot_access_unauthorized_capability_modules()`
 
 ---
 

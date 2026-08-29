@@ -342,13 +342,15 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    @php $isEload = request()->routeIs('store.admin.eload.*') || request()->is('store/*/admin/eload*'); @endphp
-                    <x-admin.nav-link :href="route('store.admin.eload.index', $storeRouteParams)" route-name="store.admin.eload.index" :active="$isEload" :label="__('messages.sidebar_eload')">
-                        <x-slot:icon>
-                            {{-- Phone / topup signal icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2zM12 7v4m-2-2h4"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
+                    @if (store_can('operations.eload', $activeStore))
+                        @php $isEload = request()->routeIs('store.admin.eload.*') || request()->is('store/*/admin/eload*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.eload.index', $storeRouteParams)" route-name="store.admin.eload.index" :active="$isEload" :label="__('messages.sidebar_eload')">
+                            <x-slot:icon>
+                                {{-- Phone / topup signal icon --}}
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2zM12 7v4m-2-2h4"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    @endif
                 </x-admin.nav-group>
 
                 <x-admin.nav-group name="inventory" :label="__('messages.sidebar_inventory')" icon-class="bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"><!-- SIDEBAR_MARKER_2026 -->
@@ -373,29 +375,35 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    @php $isBarcode = request()->is('store/*/admin/barcode*'); @endphp
-                    <x-admin.nav-link :href="route('store.admin.barcode.index', $storeRouteParams)" route-name="store.admin.barcode.index" :active="$isBarcode" :label="__('messages.sidebar_barcode')">
-                        <x-slot:icon>
-                            {{-- Barcode scan icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-16v16M4 4v16m4-16v16m8-16v16"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
+                    @if (store_can('catalog.barcode_printing', $activeStore))
+                        @php $isBarcode = request()->is('store/*/admin/barcode*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.barcode.index', $storeRouteParams)" route-name="store.admin.barcode.index" :active="$isBarcode" :label="__('messages.sidebar_barcode')">
+                            <x-slot:icon>
+                                {{-- Barcode scan icon --}}
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-16v16M4 4v16m4-16v16m8-16v16"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    @endif
 
-                    @php $isPriceWizard = request()->is('store/*/admin/price-wizard*'); @endphp
-                    <x-admin.nav-link :href="route('store.admin.price_wizard.index', $storeRouteParams)" route-name="store.admin.price_wizard.index" :active="$isPriceWizard" :label="__('messages.sidebar_price_wizard')">
-                        <x-slot:icon>
-                            {{-- Wand / Magic calculator icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
+                    @if (store_can('catalog.price_wizard', $activeStore))
+                        @php $isPriceWizard = request()->is('store/*/admin/price-wizard*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.price_wizard.index', $storeRouteParams)" route-name="store.admin.price_wizard.index" :active="$isPriceWizard" :label="__('messages.sidebar_price_wizard')">
+                            <x-slot:icon>
+                                {{-- Wand / Magic calculator icon --}}
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    @endif
 
-                    @php $isWarranty = request()->is('store/*/admin/warranty*'); @endphp
-                    <x-admin.nav-link :href="route('store.admin.warranty.index', $storeRouteParams)" route-name="store.admin.warranty.index" :active="$isWarranty" :label="__('messages.sidebar_warranty')">
-                        <x-slot:icon>
-                            {{-- Shield check warranty icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
+                    @if (store_can('service.warranty_tracking', $activeStore))
+                        @php $isWarranty = request()->is('store/*/admin/warranty*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.warranty.index', $storeRouteParams)" route-name="store.admin.warranty.index" :active="$isWarranty" :label="__('messages.sidebar_warranty')">
+                            <x-slot:icon>
+                                {{-- Shield check warranty icon --}}
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    @endif
 
                     @php $isStockLedger = request()->is('store/*/admin/stock-ledger*'); @endphp
                     <x-admin.nav-link :href="route('store.admin.stock_ledger.index', $storeRouteParams)" route-name="store.admin.stock_ledger.index" :active="$isStockLedger" :label="__('messages.sidebar_stock_ledger')">
@@ -485,18 +493,22 @@
                             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 7h20M2 7v10a2 2 0 002 2h16a2 2 0 002-2V7M10 11h4M10 15h2"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
-                    @php $isTransfers = request()->is('store/*/pos/transfers*'); @endphp
-                    <x-admin.nav-link :href="route('pos.transfers.index', $storeRouteParams)" route-name="pos.transfers.index" :active="$isTransfers" :label="__('messages.sidebar_transfers')">
-                        <x-slot:icon>
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
-                    @php $isWarehouses = request()->is('store/*/admin/warehouses*'); @endphp
-                    <x-admin.nav-link :href="route('store.admin.warehouses.index', $storeRouteParams)" route-name="store.admin.warehouses.index" :active="$isWarehouses" :label="__('messages.sidebar_warehouses')">
-                        <x-slot:icon>
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
+                    @if (store_can('inventory.transfers', $activeStore))
+                        @php $isTransfers = request()->is('store/*/pos/transfers*'); @endphp
+                        <x-admin.nav-link :href="route('pos.transfers.index', $storeRouteParams)" route-name="pos.transfers.index" :active="$isTransfers" :label="__('messages.sidebar_transfers')">
+                            <x-slot:icon>
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    @endif
+                    @if (store_can('operations.warehouses', $activeStore))
+                        @php $isWarehouses = request()->is('store/*/admin/warehouses*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.warehouses.index', $storeRouteParams)" route-name="store.admin.warehouses.index" :active="$isWarehouses" :label="__('messages.sidebar_warehouses')">
+                            <x-slot:icon>
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    @endif
                 </x-admin.nav-group>
 
                 <x-admin.nav-group name="ecommerce" :label="__('messages.sidebar_ecommerce')" icon-class="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
@@ -544,13 +556,15 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    @php $isReviews = request()->is('store/*/admin/reviews*'); @endphp
-                    <x-admin.nav-link :href="url('/store/' . ($activeStore->slug ?? '') . '/admin/reviews')" :active="$isReviews" :label="__('messages.product_reviews')" route-name="store.admin.reviews.index">
-                        <x-slot:icon>
-                            {{-- Star icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 16.9 6.6 19.8l1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
+                    @if (store_can('storefront.reviews', $activeStore))
+                        @php $isReviews = request()->is('store/*/admin/reviews*'); @endphp
+                        <x-admin.nav-link :href="url('/store/' . ($activeStore->slug ?? '') . '/admin/reviews')" :active="$isReviews" :label="__('messages.product_reviews')" route-name="store.admin.reviews.index">
+                            <x-slot:icon>
+                                {{-- Star icon --}}
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 16.9 6.6 19.8l1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    @endif
 
                     @php $isBanners = request()->is('store/*/admin/banners*'); @endphp
                     <x-admin.nav-link :href="route('store.admin.banners.index', $storeRouteParams)" route-name="store.admin.banners.index" :active="$isBanners" :label="__('messages.home_banners')">
@@ -560,21 +574,25 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    @php $isBlog = request()->is('store/*/admin/blog*'); @endphp
-                    <x-admin.nav-link :href="route('store.admin.blog.index', $storeRouteParams)" :active="$isBlog" :label="__('messages.blog_posts')" route-name="store.admin.blog.index">
-                        <x-slot:icon>
-                            {{-- Document-lines icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16v14H4V5Zm4 4h8M8 13h8M8 17h5"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
+                    @if (store_can('storefront.blog', $activeStore))
+                        @php $isBlog = request()->is('store/*/admin/blog*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.blog.index', $storeRouteParams)" :active="$isBlog" :label="__('messages.blog_posts')" route-name="store.admin.blog.index">
+                            <x-slot:icon>
+                                {{-- Document-lines icon --}}
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16v14H4V5Zm4 4h8M8 13h8M8 17h5"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    @endif
 
-                    @php $isGlass = request()->is('store/*/admin/glass-finder*'); @endphp
-                    <x-admin.nav-link :href="route('store.admin.glass-finder.index', $storeRouteParams)" route-name="store.admin.glass-finder.index" :active="$isGlass" :label="__('messages.glass_finder')">
-                        <x-slot:icon>
-                            {{-- Magnifier icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
+                    @if (store_can('storefront.glass_finder', $activeStore))
+                        @php $isGlass = request()->is('store/*/admin/glass-finder*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.glass-finder.index', $storeRouteParams)" route-name="store.admin.glass-finder.index" :active="$isGlass" :label="__('messages.glass_finder')">
+                            <x-slot:icon>
+                                {{-- Magnifier icon --}}
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    @endif
 
                     @php $isPush = request()->is('store/*/admin/push') || request()->is('store/*/admin/push?*'); @endphp
                     <x-admin.nav-link :href="route('store.admin.push.index', $storeRouteParams)" route-name="store.admin.push.index" :active="$isPush" :label="__('messages.sidebar_web_push')">
@@ -607,57 +625,65 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    @php $isReceivables = request()->is('store/*/admin/receivables*'); @endphp
-                    <x-admin.nav-link :href="route('store.admin.receivables.index', $storeRouteParams)" route-name="store.admin.receivables.index" :active="$isReceivables" :label="__('messages.sidebar_receivables')">
-                        <x-slot:icon>
-                            {{-- Receipt / debt collection icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
+                    @if (store_can('commerce.customer_debt', $activeStore))
+                        @php $isReceivables = request()->is('store/*/admin/receivables*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.receivables.index', $storeRouteParams)" route-name="store.admin.receivables.index" :active="$isReceivables" :label="__('messages.sidebar_receivables')">
+                            <x-slot:icon>
+                                {{-- Receipt / debt collection icon --}}
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    @endif
 
-                    @php $isWholesale = request()->is('store/*/admin/wholesale*'); @endphp
-                    <x-admin.nav-link :href="route('store.admin.wholesale.applications.index', $storeRouteParams)" route-name="store.admin.wholesale.applications.index" :active="$isWholesale" :label="__('messages.wholesale_applications')">
-                        <x-slot:icon>
-                            {{-- Envelope/document-check icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6V5a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v1m-9 4h14M5 6h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
+                    @if (store_can('commerce.wholesale_pricing', $activeStore))
+                        @php $isWholesale = request()->is('store/*/admin/wholesale*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.wholesale.applications.index', $storeRouteParams)" route-name="store.admin.wholesale.applications.index" :active="$isWholesale" :label="__('messages.wholesale_applications')">
+                            <x-slot:icon>
+                                {{-- Envelope/document-check icon --}}
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6V5a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v1m-9 4h14M5 6h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    @endif
 
-                    @php $isMembership = request()->is('store/*/admin/membership*'); @endphp
-                    <x-admin.nav-link :href="route('store.admin.membership.index', $storeRouteParams)" route-name="store.admin.membership.index" :active="$isMembership" :label="__('messages.sidebar_membership')">
-                        <x-slot:icon>
-                            {{-- VIP Crown / Medal Icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
+                    @if (store_can('commerce.loyalty_points', $activeStore))
+                        @php $isMembership = request()->is('store/*/admin/membership*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.membership.index', $storeRouteParams)" route-name="store.admin.membership.index" :active="$isMembership" :label="__('messages.sidebar_membership')">
+                            <x-slot:icon>
+                                {{-- VIP Crown / Medal Icon --}}
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    @endif
                 </x-admin.nav-group>
 
-                <x-admin.nav-group name="service" :label="__('messages.sidebar_service')" icon-class="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
-                    <x-slot:icon>
-                        {{-- Wrench / build icon --}}
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3 2.4-2.4Z"/></svg>
-                    </x-slot:icon>
+                @if (store_can('service.repair_jobs', $activeStore))
+                    <x-admin.nav-group name="service" :label="__('messages.sidebar_service')" icon-class="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
+                        <x-slot:icon>
+                            {{-- Wrench / build icon --}}
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3 2.4-2.4Z"/></svg>
+                        </x-slot:icon>
 
-                    @php $isRepairs = request()->is('store/*/admin/repairs*') || request()->is('store/*/admin/service-jobs*'); @endphp
-                    <x-admin.nav-link :href="route('store.admin.repairs.index', $storeRouteParams)" route-name="store.admin.repairs.index" :active="$isRepairs" :label="__('messages.sidebar_repair_center')">
-                        <x-slot:icon>
-                            {{-- Wrench icon --}}
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3 2.4-2.4Z"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
-                    @php $isSpareParts = request()->is('store/*/admin/spare-parts*'); @endphp
-                    <x-admin.nav-link :href="route('store.admin.spare_parts.index', $storeRouteParams)" route-name="store.admin.spare_parts.index" :active="$isSpareParts" :label="__('messages.sidebar_spare_parts')">
-                        <x-slot:icon>
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
-                    @php $isServiceSettings = request()->is('store/*/admin/service-settings*'); @endphp
-                    <x-admin.nav-link :href="route('store.admin.service_settings.index', $storeRouteParams)" route-name="store.admin.service_settings.index" :active="$isServiceSettings" :label="__('messages.sidebar_service_settings')">
-                        <x-slot:icon>
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                        </x-slot:icon>
-                    </x-admin.nav-link>
-                </x-admin.nav-group>
+                        @php $isRepairs = request()->is('store/*/admin/repairs*') || request()->is('store/*/admin/service-jobs*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.repairs.index', $storeRouteParams)" route-name="store.admin.repairs.index" :active="$isRepairs" :label="__('messages.sidebar_repair_center')">
+                            <x-slot:icon>
+                                {{-- Wrench icon --}}
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3 2.4-2.4Z"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                        @php $isSpareParts = request()->is('store/*/admin/spare-parts*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.spare_parts.index', $storeRouteParams)" route-name="store.admin.spare_parts.index" :active="$isSpareParts" :label="__('messages.sidebar_spare_parts')">
+                            <x-slot:icon>
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                        @php $isServiceSettings = request()->is('store/*/admin/service-settings*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.service_settings.index', $storeRouteParams)" route-name="store.admin.service_settings.index" :active="$isServiceSettings" :label="__('messages.sidebar_service_settings')">
+                            <x-slot:icon>
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    </x-admin.nav-group>
+                @endif
 
                 <x-admin.nav-group name="finance" :label="__('messages.sidebar_finance')" icon-class="bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300">
                     <x-slot:icon>
@@ -855,13 +881,15 @@
                             </x-slot:icon>
                         </x-admin.nav-link>
 
-                        @php $isBranches = request()->is('store/*/admin/branches*'); @endphp
-                        <x-admin.nav-link :href="route('store.admin.branches.index', $storeRouteParams)" route-name="store.admin.branches.index" :active="$isBranches" :label="__('messages.sidebar_branches')">
-                            <x-slot:icon>
-                                {{-- Branch / Location Multi-Store Icon --}}
-                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7H3l2-4h14l2 4M5 21V10.85M19 21V10.85M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/></svg>
-                            </x-slot:icon>
-                        </x-admin.nav-link>
+                        @if (store_can('operations.branches', $activeStore))
+                            @php $isBranches = request()->is('store/*/admin/branches*'); @endphp
+                            <x-admin.nav-link :href="route('store.admin.branches.index', $storeRouteParams)" route-name="store.admin.branches.index" :active="$isBranches" :label="__('messages.sidebar_branches')">
+                                <x-slot:icon>
+                                    {{-- Branch / Location Multi-Store Icon --}}
+                                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7H3l2-4h14l2 4M5 21V10.85M19 21V10.85M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/></svg>
+                                </x-slot:icon>
+                            </x-admin.nav-link>
+                        @endif
                         @php $isPrinters = request()->is('store/*/admin/printers*'); @endphp
                         <x-admin.nav-link :href="route('store.admin.printers.index', $storeRouteParams)" route-name="store.admin.printers.index" :active="$isPrinters" :label="__('messages.sidebar_printers')">
                             <x-slot:icon>

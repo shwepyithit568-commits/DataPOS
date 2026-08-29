@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'set.locale' => \App\Http\Middleware\SetLocale::class,
             'platform_owner' => \App\Http\Middleware\EnsurePlatformOwner::class,
             'cache.public_page' => \App\Http\Middleware\CachePublicPage::class,
+            'store.capability' => \App\Http\Middleware\CheckStoreCapability::class,
         ]);
 
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
