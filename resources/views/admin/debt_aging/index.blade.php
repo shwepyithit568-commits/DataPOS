@@ -81,7 +81,7 @@
                 <h3 class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight tabular-nums">
                     Ks {{ number_format($metrics['bucket_0_30']) }}
                 </h3>
-                <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">{{ $metrics['pct_current'] }}% of total debt</p>
+                <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">{{ $metrics['pct_current'] }}% {{ __('messages.debt_aging_pct_of_total') }}</p>
             </div>
             <span class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
                 🟢
@@ -95,7 +95,7 @@
                 <h3 class="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight tabular-nums">
                     Ks {{ number_format($metrics['bucket_31_60']) }}
                 </h3>
-                <p class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">Need Reminder / Notice</p>
+                <p class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">{{ __('messages.debt_aging_need_reminder') }}</p>
             </div>
             <span class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
                 🟡
@@ -109,7 +109,7 @@
                 <h3 class="text-xl sm:text-2xl font-black text-rose-700 dark:text-rose-400 font-mono tracking-tight tabular-nums">
                     Ks {{ number_format($metrics['bucket_61_90'] + $metrics['bucket_90_plus']) }}
                 </h3>
-                <p class="text-[11px] text-rose-600 dark:text-rose-400 font-bold mt-0.5">{{ $metrics['high_risk_debtors'] }} High Risk Debtors</p>
+                <p class="text-[11px] text-rose-600 dark:text-rose-400 font-bold mt-0.5">{{ $metrics['high_risk_debtors'] }} {{ __('messages.debt_aging_high_risk') }}</p>
             </div>
             <span class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
                 🔴
@@ -127,23 +127,23 @@
         @endphp
         <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-3">
             <div class="flex items-center justify-between text-xs">
-                <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Receivables Aging Health Overview</span>
+                <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">{{ __('messages.debt_aging_health_overview') }}</span>
                 <span class="font-mono text-slate-400 font-bold">100% (Ks {{ number_format($metrics['total_outstanding']) }})</span>
             </div>
             
             {{-- Multi-colored segmented progress bar --}}
             <div class="w-full h-3 rounded-full overflow-hidden flex bg-slate-100 dark:bg-slate-800">
                 @if ($p0 > 0)
-                    <div class="bg-emerald-500 h-full transition-all" style="width: {{ $p0 }}%" title="0-30 Days: {{ $p0 }}%"></div>
+                    <div class="bg-emerald-500 h-full transition-all" style="width: {{ $p0 }}%" title="{{ __('messages.debt_aging_col_0_30') }}: {{ $p0 }}%"></div>
                 @endif
                 @if ($p30 > 0)
-                    <div class="bg-amber-500 h-full transition-all" style="width: {{ $p30 }}%" title="31-60 Days: {{ $p30 }}%"></div>
+                    <div class="bg-amber-500 h-full transition-all" style="width: {{ $p30 }}%" title="{{ __('messages.debt_aging_col_31_60') }}: {{ $p30 }}%"></div>
                 @endif
                 @if ($p60 > 0)
-                    <div class="bg-orange-500 h-full transition-all" style="width: {{ $p60 }}%" title="61-90 Days: {{ $p60 }}%"></div>
+                    <div class="bg-orange-500 h-full transition-all" style="width: {{ $p60 }}%" title="{{ __('messages.debt_aging_col_61_90') }}: {{ $p60 }}%"></div>
                 @endif
                 @if ($p90 > 0)
-                    <div class="bg-rose-600 h-full transition-all" style="width: {{ $p90 }}%" title="90+ Days: {{ $p90 }}%"></div>
+                    <div class="bg-rose-600 h-full transition-all" style="width: {{ $p90 }}%" title="{{ __('messages.debt_aging_col_90_plus') }}: {{ $p90 }}%"></div>
                 @endif
             </div>
 
@@ -151,19 +151,19 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
                 <div class="flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
-                    <span class="text-slate-600 dark:text-slate-400">0-30d: <strong>{{ $p0 }}%</strong></span>
+                    <span class="text-slate-600 dark:text-slate-400">{{ __('messages.debt_aging_days_30') }} <strong>{{ $p0 }}%</strong></span>
                 </div>
                 <div class="flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0"></span>
-                    <span class="text-slate-600 dark:text-slate-400">31-60d: <strong>{{ $p30 }}%</strong></span>
+                    <span class="text-slate-600 dark:text-slate-400">{{ __('messages.debt_aging_days_60') }} <strong>{{ $p30 }}%</strong></span>
                 </div>
                 <div class="flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-orange-500 flex-shrink-0"></span>
-                    <span class="text-slate-600 dark:text-slate-400">61-90d: <strong>{{ $p60 }}%</strong></span>
+                    <span class="text-slate-600 dark:text-slate-400">{{ __('messages.debt_aging_days_90') }} <strong>{{ $p60 }}%</strong></span>
                 </div>
                 <div class="flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-rose-600 flex-shrink-0"></span>
-                    <span class="text-slate-600 dark:text-slate-400">90d+: <strong>{{ $p90 }}%</strong></span>
+                    <span class="text-slate-600 dark:text-slate-400">{{ __('messages.debt_aging_days_90p') }} <strong>{{ $p90 }}%</strong></span>
                 </div>
             </div>
         </div>
@@ -216,7 +216,7 @@
         :exportUrl="$exportUrl"
         :totalCount="$customers instanceof \Illuminate\Pagination\LengthAwarePaginator ? $customers->total() : $customers->count()"
         :paginator="$customers instanceof \Illuminate\Pagination\LengthAwarePaginator ? $customers : null"
-        :perPageOptions="[25 => '25', 50 => '50', 100 => '100', 'all' => 'All']"
+        :perPageOptions="[25 => '25', 50 => '50', 100 => '100', 'all' => __('messages.all')]"
     />
 
     {{-- 5. Card Grid View --}}
@@ -251,25 +251,25 @@
 
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                            <span class="text-slate-400 block text-[10px] font-bold">0-30 Days</span>
+                            <span class="text-slate-400 block text-[10px] font-bold">{{ __('messages.debt_aging_col_0_30') }}</span>
                             <span class="font-mono font-bold text-slate-700 dark:text-slate-300">
                                 Ks {{ number_format($c['bucket_0_30']) }}
                             </span>
                         </div>
                         <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                            <span class="text-slate-400 block text-[10px] font-bold">31-60 Days</span>
+                            <span class="text-slate-400 block text-[10px] font-bold">{{ __('messages.debt_aging_col_31_60') }}</span>
                             <span class="font-mono font-bold text-slate-700 dark:text-slate-300">
                                 Ks {{ number_format($c['bucket_31_60']) }}
                             </span>
                         </div>
                         <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                            <span class="text-slate-400 block text-[10px] font-bold">61-90 Days</span>
+                            <span class="text-slate-400 block text-[10px] font-bold">{{ __('messages.debt_aging_col_61_90') }}</span>
                             <span class="font-mono font-bold text-orange-600 dark:text-orange-400">
                                 Ks {{ number_format($c['bucket_61_90']) }}
                             </span>
                         </div>
                         <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                            <span class="text-slate-400 block text-[10px] font-bold">90+ Days</span>
+                            <span class="text-slate-400 block text-[10px] font-bold">{{ __('messages.debt_aging_col_90_plus') }}</span>
                             <span class="font-mono font-bold text-rose-600 dark:text-rose-400">
                                 Ks {{ number_format($c['bucket_90_plus']) }}
                             </span>
@@ -278,7 +278,7 @@
                 </div>
 
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                    <span class="text-[11px] text-slate-400">Overdue: <strong>{{ $c['max_overdue_days'] }} days</strong></span>
+                    <span class="text-[11px] text-slate-400">{{ __('messages.debt_aging_overdue') }} <strong>{{ $c['max_overdue_days'] }} {{ __('messages.debt_aging_days_unit') }}</strong></span>
                     <button type="button" @click="openReminder({{ json_encode(['name' => $c['customer_name'], 'phone' => $c['customer_phone'], 'due' => $c['total_due'], 'days' => $c['max_overdue_days']]) }})"
                             class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/60 dark:text-amber-300 transition flex items-center gap-1">
                         <span>💬</span>
@@ -299,15 +299,15 @@
             <table class="w-full text-left text-xs">
                 <thead>
                     <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                        <th class="py-3.5 px-4">Customer</th>
+                        <th class="py-3.5 px-4">{{ __('messages.debt_aging_col_customer') }}</th>
                         <th class="py-3.5 px-4 text-right">{{ __('messages.debt_aging_total_receivables') }}</th>
-                        <th class="py-3.5 px-4 text-right">0 - 30 Days</th>
-                        <th class="py-3.5 px-4 text-right">31 - 60 Days</th>
-                        <th class="py-3.5 px-4 text-right">61 - 90 Days</th>
-                        <th class="py-3.5 px-4 text-right">90+ Days</th>
-                        <th class="py-3.5 px-4 text-center">Overdue Days</th>
-                        <th class="py-3.5 px-4 text-center">Risk Level</th>
-                        <th class="py-3.5 px-4 text-right">Actions</th>
+                        <th class="py-3.5 px-4 text-right">{{ __('messages.debt_aging_col_0_30') }}</th>
+                        <th class="py-3.5 px-4 text-right">{{ __('messages.debt_aging_col_31_60') }}</th>
+                        <th class="py-3.5 px-4 text-right">{{ __('messages.debt_aging_col_61_90') }}</th>
+                        <th class="py-3.5 px-4 text-right">{{ __('messages.debt_aging_col_90_plus') }}</th>
+                        <th class="py-3.5 px-4 text-center">{{ __('messages.debt_aging_col_overdue_days') }}</th>
+                        <th class="py-3.5 px-4 text-center">{{ __('messages.debt_aging_col_risk') }}</th>
+                        <th class="py-3.5 px-4 text-right">{{ __('messages.debt_aging_col_actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -337,7 +337,7 @@
                                 {{ $c['bucket_90_plus'] > 0 ? 'Ks ' . number_format($c['bucket_90_plus']) : '-' }}
                             </td>
                             <td class="py-3.5 px-4 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
-                                {{ $c['max_overdue_days'] }} days
+                                {{ $c['max_overdue_days'] }} {{ __('messages.debt_aging_days_unit') }}
                             </td>
                             <td class="py-3.5 px-4 text-center">
                                 <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider
@@ -352,7 +352,7 @@
                                 <button type="button" @click="openReminder({{ json_encode(['name' => $c['customer_name'], 'phone' => $c['customer_phone'], 'due' => $c['total_due'], 'days' => $c['max_overdue_days']]) }})"
                                         class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/60 dark:text-amber-300 transition inline-flex items-center gap-1">
                                     <span>💬</span>
-                                    <span>Reminder</span>
+                                    <span>{{ __('messages.debt_aging_reminder_btn') }}</span>
                                 </button>
                             </td>
                         </tr>
@@ -374,14 +374,14 @@
             <div class="flex items-center justify-between">
                 <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
                     <span>💬</span>
-                    <span>Payment Reminder Template</span>
+                    <span>{{ __('messages.debt_aging_reminder_modal_title') }}</span>
                 </h3>
                 <button type="button" @click="reminderModalOpen = false" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
             </div>
 
             <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 text-xs font-medium text-slate-700 dark:text-slate-300 space-y-2 border border-slate-100 dark:border-slate-700">
-                <p><strong>Customer:</strong> <span x-text="reminderCustomer.name"></span> (<span x-text="reminderCustomer.phone"></span>)</p>
-                <p><strong>Outstanding Balance:</strong> Ks <span class="font-bold text-rose-600 font-mono" x-text="Number(reminderCustomer.due).toLocaleString()"></span></p>
+                <p><strong>{{ __('messages.debt_aging_reminder_customer') }}</strong> <span x-text="reminderCustomer.name"></span> (<span x-text="reminderCustomer.phone"></span>)</p>
+                <p><strong>{{ __('messages.debt_aging_reminder_balance') }}</strong> Ks <span class="font-bold text-rose-600 font-mono" x-text="Number(reminderCustomer.due).toLocaleString()"></span></p>
                 <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 font-sans leading-relaxed text-slate-600 dark:text-slate-300">
                     မင်္ဂလာပါ <span class="font-bold" x-text="reminderCustomer.name"></span> ခင်ဗျာ - <strong>{{ $store->name }}</strong> မှ လူကြီးမင်း၏ ကျန်ရှိသော အကြွေးငွေ ကျပ် <strong class="text-rose-600" x-text="Number(reminderCustomer.due).toLocaleString()"></strong> အား အဆင်ပြေသည့်အချိန်တွင် လာရောက်ရှင်းလင်းပေးပါရန် လေးစားစွာ အသိပေးအပ်ပါသည်ခင်ဗျာ။
                 </div>
@@ -389,11 +389,11 @@
 
             <div class="flex items-center justify-end gap-2 pt-2">
                 <button type="button" @click="reminderModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
-                    Cancel
+                    {{ __('messages.debt_aging_reminder_cancel') }}
                 </button>
                 <button type="button" @click="copyReminderText()" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 transition flex items-center gap-1.5">
                     <span>📋</span>
-                    <span>Copy Message Text</span>
+                    <span>{{ __('messages.debt_aging_reminder_copy') }}</span>
                 </button>
             </div>
         </div>

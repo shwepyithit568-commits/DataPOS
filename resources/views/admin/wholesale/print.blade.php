@@ -11,7 +11,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="robots" content="noindex,nofollow">
-    <title>Wholesale Application #{{ $application->id }} — {{ $store->name }}</title>
+    <title>{{ __('messages.wholesale_app_title') }} #{{ $application->id }} — {{ $store->name }}</title>
     <style>
         @if ($myanmarFontUrl)
         @font-face {
@@ -114,11 +114,11 @@
 
     <div class="toolbar no-print">
         <a href="{{ route('store.admin.wholesale.applications.show', $storeRouteParams + ['application' => $application->id]) }}" class="back">
-            ← ပြန်သွားရန် (Back to Application)
+            ← {{ __('messages.wholesale_back_to_application') }}
         </a>
         <button onclick="window.print()">
             <span>🖨</span>
-            <span>Print Application Slip (စာရွက်ထုတ်မည်)</span>
+            <span>{{ __('messages.wholesale_print_slip') }}</span>
         </button>
     </div>
 
@@ -127,70 +127,70 @@
         <div class="header">
             <div class="brand">
                 <div class="store-name">{{ $store->name }}</div>
-                <div class="store-sub">Wholesale Membership Application & Verification Slip</div>
+                <div class="store-sub">{{ __('messages.wholesale_slip_sub') }}</div>
                 @if ($setting && $setting->phone)
-                    <div style="font-size: 10px; color: #64748b; margin-top: 4px;">Phone: {{ $setting->phone }}</div>
+                    <div style="font-size: 10px; color: #64748b; margin-top: 4px;">{{ __('messages.wholesale_phone') }} {{ $setting->phone }}</div>
                 @endif
                 @if ($setting && $setting->address)
-                    <div style="font-size: 10px; color: #64748b;">Address: {{ $setting->address }}</div>
+                    <div style="font-size: 10px; color: #64748b;">{{ __('messages.wholesale_address') }} {{ $setting->address }}</div>
                 @endif
             </div>
             <div class="doc-title">
-                <h1>Wholesale Application</h1>
+                <h1>{{ __('messages.wholesale_app_title') }}</h1>
                 <div class="app-no">APP-{{ str_pad($application->id, 5, '0', STR_PAD_LEFT) }}</div>
-                <div class="date">Date: {{ $application->created_at->format('d M Y, h:i A') }}</div>
+                <div class="date">{{ __('messages.wholesale_date') }} {{ $application->created_at->format('d M Y, h:i A') }}</div>
             </div>
         </div>
 
         {{-- Status Banner --}}
         <div class="status-banner status-{{ $application->status }}">
             <div>
-                Application Status: <strong>{{ strtoupper($application->status) }}</strong>
+                {{ __('messages.wholesale_status_label') }} <strong>{{ strtoupper($application->status) }}</strong>
             </div>
             <div>
                 @if ($application->status === 'approved')
-                    ✓ Authorized Wholesale Tier Access
+                    ✓ {{ __('messages.wholesale_approved') }}
                 @elseif ($application->status === 'pending')
-                    ⏳ Awaiting Verification
+                    ⏳ {{ __('messages.wholesale_pending') }}
                 @elseif ($application->status === 'rejected')
-                    ✕ Application Declined
+                    ✕ {{ __('messages.wholesale_rejected') }}
                 @else
-                    ⊘ Account Suspended
+                    ⊘ {{ __('messages.wholesale_suspended') }}
                 @endif
             </div>
         </div>
 
         {{-- Business & Applicant Information --}}
-        <div class="section-title">လုပ်ငန်းနှင့် လျှောက်ထားသူ အချက်အလက် (Business & Applicant Information)</div>
+        <div class="section-title">{{ __('messages.wholesale_business_info') }}</div>
         <div class="grid-2">
             <div class="field-box">
-                <div class="field-label">Business / Shop Name (လုပ်ငန်းအမည်)</div>
+                <div class="field-label">{{ __('messages.wholesale_business_name') }}</div>
                 <div class="field-val">{{ $application->business_name }}</div>
             </div>
             <div class="field-box">
-                <div class="field-label">Applicant Name (လျှောက်ထားသူ)</div>
-                <div class="field-val">{{ $application->user?->name ?? 'Guest Applicant' }}</div>
+                <div class="field-label">{{ __('messages.wholesale_applicant_name') }}</div>
+                <div class="field-val">{{ $application->user?->name ?? __('messages.wholesale_guest_applicant') }}</div>
             </div>
             <div class="field-box">
-                <div class="field-label">Contact Phone (ဆက်သွယ်ရန်ဖုန်း)</div>
+                <div class="field-label">{{ __('messages.wholesale_contact_phone') }}</div>
                 <div class="field-val">{{ $application->phone }}</div>
             </div>
             <div class="field-box">
-                <div class="field-label">Member User ID</div>
+                <div class="field-label">{{ __('messages.wholesale_member_user_id') }}</div>
                 <div class="field-val">#{{ $application->user_id ?? 'N/A' }}</div>
             </div>
         </div>
 
         @if ($application->address)
             <div class="field-box" style="margin-top: 12px;">
-                <div class="field-label">Business Address (လုပ်ငန်းလိပ်စာ)</div>
+                <div class="field-label">{{ __('messages.wholesale_business_address') }}</div>
                 <div class="field-val">{{ $application->address }}</div>
             </div>
         @endif
 
         {{-- Applicant Note --}}
         @if ($application->notes)
-            <div class="section-title">Applicant Note (ဖောက်သည်၏ မှတ်ချက်)</div>
+            <div class="section-title">{{ __('messages.wholesale_applicant_note') }}</div>
             <div class="notes-box">
                 {{ $application->notes }}
             </div>
@@ -198,7 +198,7 @@
 
         {{-- Admin Internal Note / Verification --}}
         @if ($application->admin_note)
-            <div class="section-title">Store Verification & Decision Note (ဆိုင်တွင်းစစ်ဆေးချက်)</div>
+            <div class="section-title">{{ __('messages.wholesale_verification_note') }}</div>
             <div class="notes-box" style="background: #fdf4ff; border-color: #f0abfc; color: #86198f;">
                 {{ $application->admin_note }}
             </div>
@@ -207,15 +207,15 @@
         {{-- Signatures --}}
         <div class="signatures">
             <div class="sign-box">
-                <div class="sign-line">Applicant Signature<br>(လျှောက်ထားသူ လက်မှတ်)</div>
+                <div class="sign-line">{{ __('messages.wholesale_applicant_sign') }}</div>
             </div>
             <div class="sign-box">
-                <div class="sign-line">Authorized Manager<br>(စိစစ်ခွင့်ပြုသူ လက်မှတ်)</div>
+                <div class="sign-line">{{ __('messages.wholesale_manager_sign') }}</div>
             </div>
         </div>
 
         <div class="footer">
-            Generated on {{ now()->format('d M Y, h:i A') }} · {{ $store->name }} DataPOS Wholesale Management System
+            {{ __('messages.wholesale_generated_on') }} {{ now()->format('d M Y, h:i A') }} · {{ $store->name }} DataPOS Wholesale Management System
         </div>
     </div>
 

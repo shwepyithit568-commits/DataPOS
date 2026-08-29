@@ -13,7 +13,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="robots" content="noindex,nofollow">
-    <title>Invoice {{ $order->order_number }} — {{ $store->name }}</title>
+    <title>{{ __('messages.invoice_title') }} {{ $order->order_number }} — {{ $store->name }}</title>
     <style>
         /* ---- Burmese font (subset woff2 shipped with the app build) ---- */
         @if ($myanmarFontUrl)
@@ -155,8 +155,8 @@
 </head>
 <body>
     <div class="toolbar no-print">
-        <a class="back" href="{{ url('/store/' . $store->slug . '/admin/orders/' . $order->id) }}">← Back to Order</a>
-        <button data-print>🖨️ Print / Save PDF</button>
+        <a class="back" href="{{ url('/store/' . $store->slug . '/admin/orders/' . $order->id) }}">← {{ __('messages.invoice_back_to_order') }}</a>
+        <button data-print>🖨️ {{ __('messages.invoice_print') }}</button>
         <span class="hint">PDF သိမ်းရာတွင် More settings → Headers and footers ကို ပိတ်ပါ။</span>
     </div>
 
@@ -171,22 +171,22 @@
 
                 <div class="invoice-contact">
                     @if ($setting?->address)
-                        <div class="row"><span class="k">Address:</span><span class="v">{{ $setting->address }}</span></div>
+                        <div class="row"><span class="k">{{ __('messages.invoice_address') }}</span><span class="v">{{ $setting->address }}</span></div>
                     @endif
                     @if ($setting?->phone)
-                        <div class="row"><span class="k">Phone:</span><span class="v">{{ $setting->phone }}</span></div>
+                        <div class="row"><span class="k">{{ __('messages.invoice_phone') }}</span><span class="v">{{ $setting->phone }}</span></div>
                     @endif
                     @if ($setting?->viber_number)
-                        <div class="row"><span class="k">Viber:</span><span class="v">{{ $setting->viber_number }}</span></div>
+                        <div class="row"><span class="k">{{ __('messages.invoice_viber') }}</span><span class="v">{{ $setting->viber_number }}</span></div>
                     @endif
                     @if ($setting?->telegram_username)
-                        <div class="row"><span class="k">Telegram:</span><span class="v">{{ $setting->telegram_username }}</span></div>
+                        <div class="row"><span class="k">{{ __('messages.invoice_telegram') }}</span><span class="v">{{ $setting->telegram_username }}</span></div>
                     @endif
                 </div>
             </div>
 
             <div class="invoice-title">
-                <h1>INVOICE</h1>
+                <h1>{{ __('messages.invoice_title') }}</h1>
                 <div class="no">{{ $order->order_number }}</div>
                 <div class="date">{{ $order->created_at->format('F j, Y · h:i A') }}</div>
             </div>
@@ -194,15 +194,15 @@
 
         <div class="party-grid">
             <div class="party-block">
-                <h3>Billed To</h3>
+                <h3>{{ __('messages.invoice_billed_to') }}</h3>
                 @if ($order->customer_name)
                     <div class="line"><span class="k">{{ $order->customer_name }}</span></div>
                 @endif
                 @if ($order->customer_phone)
-                    <div class="line"><span class="k">Phone:</span> {{ $order->customer_phone }}</div>
+                    <div class="line"><span class="k">{{ __('messages.invoice_phone') }}</span> {{ $order->customer_phone }}</div>
                 @endif
                 @if ($order->customer_address)
-                    <div class="line"><span class="k">Address:</span> {{ $order->customer_address }}</div>
+                    <div class="line"><span class="k">{{ __('messages.invoice_address') }}</span> {{ $order->customer_address }}</div>
                 @endif
                 @if ($order->contact_channel && $order->contact_identifier && $order->contact_identifier !== $order->customer_phone)
                     <div class="line"><span class="k">{{ ucfirst(str_replace('_', ' ', $order->contact_channel)) }}:</span> {{ $order->contact_identifier }}</div>
@@ -210,13 +210,13 @@
             </div>
 
             <div class="party-block">
-                <h3>Status</h3>
+                <h3>{{ __('messages.invoice_status') }}</h3>
                 <div class="status-pills">
                     <span class="pill {{ $order->status }}">{{ str_replace('_', ' ', $order->status) }}</span>
-                    <span class="pill {{ $order->payment_status }}">Payment: {{ $order->payment_status }}</span>
+                    <span class="pill {{ $order->payment_status }}">{{ __('messages.invoice_payment') }} {{ $order->payment_status }}</span>
                 </div>
                 @if ($order->customer_note)
-                    <div class="note-box"><span class="k">Customer note:</span> {{ $order->customer_note }}</div>
+                    <div class="note-box"><span class="k">{{ __('messages.invoice_customer_note') }}</span> {{ $order->customer_note }}</div>
                 @endif
             </div>
         </div>
@@ -232,10 +232,10 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Item</th>
-                    <th class="center">Qty</th>
-                    <th class="num">Unit Price</th>
-                    <th class="num">Amount</th>
+                    <th>{{ __('messages.invoice_col_item') }}</th>
+                    <th class="center">{{ __('messages.invoice_col_qty') }}</th>
+                    <th class="num">{{ __('messages.invoice_col_unit_price') }}</th>
+                    <th class="num">{{ __('messages.invoice_col_amount') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -266,11 +266,11 @@
 
         <div class="totals">
             @if ($order->agreed_amount !== null)
-                <div class="row"><span class="k">Original Total</span><span class="v">Ks {{ number_format((float) $order->total_amount) }}</span></div>
-                <div class="row"><span class="k">Agreed Amount</span><span class="v">Ks {{ number_format((float) $order->agreed_amount) }}</span></div>
-                <div class="grand"><span>Total Due</span><span class="v">Ks {{ number_format((float) $order->agreed_amount) }}</span></div>
+                <div class="row"><span class="k">{{ __('messages.invoice_original_total') }}</span><span class="v">Ks {{ number_format((float) $order->total_amount) }}</span></div>
+                <div class="row"><span class="k">{{ __('messages.invoice_agreed_amount') }}</span><span class="v">Ks {{ number_format((float) $order->agreed_amount) }}</span></div>
+                <div class="grand"><span>{{ __('messages.invoice_total_due') }}</span><span class="v">Ks {{ number_format((float) $order->agreed_amount) }}</span></div>
             @else
-                <div class="grand"><span>Total Due</span><span class="v">Ks {{ number_format((float) $order->total_amount) }}</span></div>
+                <div class="grand"><span>{{ __('messages.invoice_total_due') }}</span><span class="v">Ks {{ number_format((float) $order->total_amount) }}</span></div>
             @endif
         </div>
 
