@@ -198,8 +198,8 @@
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                         </svg>
-                        <span x-show="submitting" x-cloak>{{ __('messages.settings_saving') }}</span>
-                        <span x-show="!submitting">💾 {{ __('messages.save') }} {{ $sectionTitles[$section] }}</span>
+                        <span x-show="submitting" x-cloak>{{ $section === 'appearance' ? 'Publishing...' : __('messages.settings_saving') }}</span>
+                        <span x-show="!submitting">💾 {{ $section === 'appearance' ? 'Publish Theme' : __('messages.save') . ' ' . $sectionTitles[$section] }}</span>
                     </button>
                 </div>
             </form>
@@ -213,5 +213,61 @@
             </div>
         @endif
     </main>
+
+    @if ($section === 'appearance')
+        <section class="w-full rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6" aria-labelledby="theme-history-title">
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <h2 id="theme-history-title" class="text-sm font-black text-slate-900 dark:text-white">Published Theme History</h2>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">ယခင် Publish လုပ်ထားသော Theme ကို အတိအကျ ပြန်ထားနိုင်ပါသည်။ Rollback လုပ်ခြင်းကိုလည်း revision အသစ်အဖြစ် မှတ်တမ်းတင်ပါမည်။</p>
+                </div>
+                <span class="text-[11px] font-bold text-slate-400">Latest 10 revisions</span>
+            </div>
+
+            @if ($themeRevisions->isEmpty())
+                <div class="mt-4 rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                    Theme ကို ပထမဆုံး Publish လုပ်ပြီးပါက history ကို ဒီနေရာတွင် တွေ့ရပါမည်။
+                </div>
+            @else
+                <div class="mt-4 overflow-x-auto">
+                    <table class="min-w-full text-left text-xs">
+                        <thead class="border-b border-slate-200 text-[11px] uppercase text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                            <tr>
+                                <th class="px-3 py-2 font-black">Revision</th>
+                                <th class="px-3 py-2 font-black">Theme</th>
+                                <th class="px-3 py-2 font-black">Action</th>
+                                <th class="px-3 py-2 font-black">Published by</th>
+                                <th class="px-3 py-2 font-black">Date</th>
+                                <th class="px-3 py-2 text-right font-black">Restore</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                            @foreach ($themeRevisions as $index => $revision)
+                                <tr>
+                                    <td class="whitespace-nowrap px-3 py-3 font-black text-slate-800 dark:text-slate-100">#{{ $revision->revision_number }} {{ $index === 0 ? '(Current)' : '' }}</td>
+                                    <td class="whitespace-nowrap px-3 py-3 text-slate-600 dark:text-slate-300">{{ str($revision->theme_config['theme_preset'] ?? 'default')->replace('_', ' ')->title() }}</td>
+                                    <td class="whitespace-nowrap px-3 py-3 text-slate-600 dark:text-slate-300">{{ ucfirst($revision->action) }}</td>
+                                    <td class="whitespace-nowrap px-3 py-3 text-slate-600 dark:text-slate-300">{{ $revision->actor?->name ?? 'System' }}</td>
+                                    <td class="whitespace-nowrap px-3 py-3 text-slate-500 dark:text-slate-400">{{ $revision->created_at?->format('Y-m-d H:i') }}</td>
+                                    <td class="px-3 py-3 text-right">
+                                        @if ($index !== 0)
+                                            <form method="POST" action="{{ route('store.admin.settings.appearance.rollback', ['store_slug' => $store->slug, 'revision' => $revision->id]) }}">
+                                                @csrf
+                                                <button type="submit" class="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 font-black text-slate-700 transition hover:border-violet-400 hover:text-violet-700 dark:border-slate-600 dark:text-slate-200 dark:hover:border-violet-500 dark:hover:text-violet-300">
+                                                    Restore
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Active</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </section>
+    @endif
 </div>
 @endsection

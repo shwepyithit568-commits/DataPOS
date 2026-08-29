@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Role;
 use App\Models\Store;
+use App\Models\StoreThemeRevision;
 use App\Models\StorefrontSetting;
 use App\Models\User;
 use App\Themes\ThemeRegistry;
@@ -101,6 +102,117 @@ class ThemeEngineTest extends TestCase
             'font_preset'         => 'inter',
             'grid_density'        => 'comfortable',
         ]);
+
+        $this->assertDatabaseHas('store_theme_revisions', [
+            'store_id' => $this->store->id,
+            'revision_number' => 1,
+            'action' => 'baseline',
+        ]);
+        $this->assertDatabaseHas('store_theme_revisions', [
+            'store_id' => $this->store->id,
+            'revision_number' => 2,
+            'action' => 'publish',
+            'actor_id' => $this->manager->id,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'store_id' => $this->store->id,
+            'action' => 'store_theme_publish',
+            'actor_id' => $this->manager->id,
+        ]);
+    }
+
+    public function test_manager_can_restore_an_exact_previous_theme_as_a_new_revision(): void
+    {
+        StorefrontSetting::create([
+            'store_id' => $this->store->id,
+            'store_name' => $this->store->name,
+            'theme_preset' => 'marketplace_pro',
+            'theme_primary_color' => '#0ea5e9',
+            'theme_accent_color' => '#7c3aed',
+            'font_preset' => 'outfit',
+            'grid_density' => 'compact',
+        ]);
+
+        $this->actingAs($this->manager)->post('/store/' . $this->store->slug . '/admin/settings', [
+            'section' => 'appearance',
+            'theme_preset' => 'retail_trust',
+            'theme_primary_color' => '#1d4ed8',
+            'theme_accent_color' => '#d97706',
+            'font_preset' => 'inter',
+            'grid_density' => 'comfortable',
+        ])->assertSessionHasNoErrors();
+
+        $baseline = StoreThemeRevision::where('store_id', $this->store->id)
+            ->where('action', 'baseline')
+            ->firstOrFail();
+
+        $response = $this->actingAs($this->manager)->post(route(
+            'store.admin.settings.appearance.rollback',
+            ['store_slug' => $this->store->slug, 'revision' => $baseline->id],
+        ));
+
+        $response->assertRedirect()->assertSessionHasNoErrors();
+        $setting = $this->store->setting()->firstOrFail();
+        $this->assertSame('marketplace_pro', $setting->theme_preset);
+        $this->assertSame('#0ea5e9', $setting->theme_primary_color);
+        $this->assertSame('#7c3aed', $setting->theme_accent_color);
+        $this->assertSame('outfit', $setting->font_preset);
+        $this->assertSame('compact', $setting->grid_density);
+
+        $this->assertDatabaseHas('store_theme_revisions', [
+            'store_id' => $this->store->id,
+            'revision_number' => 3,
+            'action' => 'rollback',
+            'source_revision_id' => $baseline->id,
+            'actor_id' => $this->manager->id,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'store_id' => $this->store->id,
+            'action' => 'store_theme_rollback',
+        ]);
+    }
+
+    public function test_manager_cannot_restore_another_stores_revision(): void
+    {
+        $otherStore = Store::create([
+            'slug' => 'revision-owner',
+            'name' => 'Revision Owner',
+            'is_active' => true,
+        ]);
+        $revision = StoreThemeRevision::create([
+            'store_id' => $otherStore->id,
+            'revision_number' => 1,
+            'theme_config' => ['theme_preset' => 'retail_trust'],
+            'action' => 'baseline',
+        ]);
+
+        $this->actingAs($this->manager)
+            ->post(route('store.admin.settings.appearance.rollback', [
+                'store_slug' => $this->store->slug,
+                'revision' => $revision->id,
+            ]))
+            ->assertNotFound();
+    }
+
+    public function test_appearance_page_lists_revision_history(): void
+    {
+        StoreThemeRevision::create([
+            'store_id' => $this->store->id,
+            'revision_number' => 1,
+            'theme_config' => ['theme_preset' => 'retail_trust'],
+            'action' => 'publish',
+            'actor_id' => $this->manager->id,
+        ]);
+
+        $this->actingAs($this->manager)
+            ->get(route('store.admin.settings.section', [
+                'store_slug' => $this->store->slug,
+                'section' => 'appearance',
+            ]))
+            ->assertOk()
+            ->assertSee('Published Theme History')
+            ->assertSee('Retail Trust')
+            ->assertSee('Theme Manager');
     }
 
     public function test_storefront_renders_updated_css_variables_and_font(): void

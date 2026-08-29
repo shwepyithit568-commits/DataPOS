@@ -259,6 +259,9 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/theme', fn (string $store_slug) => redirect()->route('store.admin.settings.section', ['store_slug' => $store_slug, 'section' => 'appearance']))->name('store.admin.theme.index')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::get('/admin/export-data', [StoreSettingController::class, 'exportData'])->name('store.admin.settings.export-data')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::post('/admin/settings', [StoreSettingController::class, 'update'])->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/settings/appearance/revisions/{revision}/rollback', [StoreSettingController::class, 'rollbackTheme'])
+            ->name('store.admin.settings.appearance.rollback')
+            ->middleware(EnsureStoreAccess::class . ':store_manager');
 
         // Structured payment / delivery method CRUD (store-scoped; managed from
         // the Delivery & Payment settings page)

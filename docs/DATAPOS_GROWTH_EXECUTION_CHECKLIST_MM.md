@@ -176,10 +176,12 @@ One Repository
 - [x] Grid Density Layout Mappings (compact, comfortable, spacious)
 
 ### ၃.၂ Theme Configuration & Publishing
-- [x] Draft/Published theme configuration per store
+- [x] Published theme configuration per store
+- [ ] Draft configuration isolated from the public storefront
 - [x] Color/logo/font/banner customization (CSS Custom Properties)
-- [x] Publish transaction & cache invalidation
-- [ ] **Revision History & Rollback:** Theme ကိုပြောင်းပြီးပါက ယခင် published revision သို့ ပြန် rollback ပြုလုပ်နိုင်ခြင်း
+- [x] Publish transaction with audit logging
+- [ ] Published storefront response cache invalidation (response cache စတင်အသုံးပြုသည့်အခါ ထည့်ရန်)
+- [x] **Revision History & Rollback:** Theme ကိုပြောင်းပြီးပါက ယခင် published revision သို့ ပြန် rollback ပြုလုပ်နိုင်ခြင်း
 
 ### ၃.၃ Storefront Appearance Settings UI
 - [x] Admin Appearance Settings (`admin/settings/sections/appearance.blade.php`) — Preset, Font, Density, Colors ရွေးချယ်နိုင်ခြင်း
@@ -192,13 +194,13 @@ One Repository
 
 ### ၃.၅ Verification
 - [x] `tests/Feature/Admin/StorefrontThemeEngineTest.php` (5 passed tests)
-- [x] One store can preview without affecting public storefront
+- [ ] One store can preview without affecting public storefront (isolated draft preview မရှိသေးပါ)
 - [x] Publishing one store never changes another store
 - [ ] **Mobile viewport has no horizontal overflow/overlap — ကျန်ရှိ Themes (Emerald Fresh, Midnight Tech, Sunset Warm) အတွက် Browser viewport test ပြုလုပ်ရန်**
 - [x] Git tag: `v1.3.0-theme-engine-mvp`
 
 ### Phase 3 Exit Criteria (ကျန်ရှိသောအပိုင်းများ)
-- [ ] Rollback restores exact previous published revision
+- [x] Rollback restores exact previous published revision
 - [ ] Both themes pass all customer-facing storefront routes
 - [ ] Mobile viewport: no horizontal overflow on all 5 themes
 - [ ] Theme selection survives app restart/deploy

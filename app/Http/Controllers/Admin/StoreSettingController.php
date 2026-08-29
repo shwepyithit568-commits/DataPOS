@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\StoreDeliveryMethod;
 use App\Models\StorePaymentMethod;
+use App\Models\StoreThemeRevision;
 use App\Models\StorefrontSetting;
+use App\Services\ThemePublisher;
 use App\Support\ImageOptimizer;
 use App\Services\StoreContext;
 use App\Support\StorefrontAsset;
@@ -43,11 +45,14 @@ class StoreSettingController extends Controller
 
         $store = $context->getStore();
         $setting = $store->setting ?? new StorefrontSetting(['store_id' => $store->id, 'store_name' => $store->name]);
+        $themeRevisions = $section === 'appearance'
+            ? $store->themeRevisions()->with('actor:id,name')->limit(10)->get()
+            : collect();
 
-        return view('admin.settings.edit', compact('store', 'setting', 'section'));
+        return view('admin.settings.edit', compact('store', 'setting', 'section', 'themeRevisions'));
     }
 
-    public function update(Request $request, StoreContext $context): RedirectResponse
+    public function update(Request $request, StoreContext $context, ThemePublisher $themePublisher): RedirectResponse
     {
         $store = $context->getStore();
         $section = $request->input('section', 'general');
@@ -167,6 +172,12 @@ class StoreSettingController extends Controller
                 'default_language' => ['required', Rule::in(array_keys(config('localization.supported', [])))],
             ]),
         };
+
+        if ($section === 'appearance') {
+            $themePublisher->publish($store, $validated, $request->user(), $request->ip());
+
+            return back()->with('success', 'Storefront theme published successfully. A rollback revision was saved.');
+        }
 
         // Drop empty repeater rows (fully blank steps / videos) before saving.
         if ($section === 'how-to-order') {
@@ -392,6 +403,19 @@ class StoreSettingController extends Controller
         }
 
         return back()->with('success', 'Storefront settings updated successfully.');
+    }
+
+    public function rollbackTheme(
+        Request $request,
+        StoreContext $context,
+        string $store_slug,
+        ThemePublisher $themePublisher,
+        StoreThemeRevision $revision,
+    ): RedirectResponse {
+        $store = $context->getStore();
+        $themePublisher->rollback($store, $revision, $request->user(), $request->ip());
+
+        return back()->with('success', "Theme revision #{$revision->revision_number} restored successfully.");
     }
 
     // ---------------------------------------------------------------------

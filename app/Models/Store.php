@@ -51,6 +51,11 @@ class Store extends Model
         return $this->hasOne(StorefrontSetting::class);
     }
 
+    public function themeRevisions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StoreThemeRevision::class)->latest('revision_number');
+    }
+
     public function homeBanners(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(HomeBanner::class)->orderBy('sort_order', 'asc');
