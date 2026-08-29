@@ -452,7 +452,7 @@
 
     {{-- Top utility bar (tablet/desktop only — scrolls away; contact info + account) --}}
     <div class="hidden md:block border-b border-slate-200/60 dark:border-slate-800/60 bg-white/95 dark:bg-slate-900/95 backdrop-blur">
-        <div class="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 h-9 flex items-center justify-between gap-4 text-xs font-semibold text-slate-500 dark:text-slate-600">
+        <div class="w-full px-3 sm:px-5 lg:px-8 h-9 flex items-center justify-between gap-4 text-xs font-semibold text-slate-500 dark:text-slate-600">
             <div class="flex items-center gap-4 min-w-0">
                 @if ($setting?->phone)
                     <a href="tel:{{ $setting->phone }}" class="flex items-center gap-1.5 whitespace-nowrap hover:text-sky-600 dark:hover:text-sky-400 transition">
@@ -516,7 +516,7 @@
     {{-- Header --}}
     <header x-data="{ searchOpen: false }" class="sticky top-0 border-b border-white/50 shadow-sm dark:border-slate-800/80" :class="mobileMenuOpen ? 'z-[70]' : 'z-30'" @click.outside="searchOpen = false">
         <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur sf-header-main">
-        <div class="max-w-7xl mx-auto px-1 sm:px-5 lg:px-8 h-16 sm:h-[4.5rem] flex items-center gap-1.5 sm:gap-3 relative">
+        <div class="w-full px-1 sm:px-5 lg:px-8 h-16 sm:h-[4.5rem] flex items-center gap-1.5 sm:gap-3 relative">
             {{-- Left: Category menu (Linn IT Mart style icon button) --}}
             <div class="flex shrink-0 items-center">
 
@@ -690,8 +690,9 @@
                 @endif
             </div>
 
-            {{-- Center: Shop logo (flex-1 keeps it centered between the left/right action groups; truncates on small screens) --}}
-            <a href="{{ $homeUrl }}" class="sf-brand-link flex min-w-0 flex-1 items-center justify-center group transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]">
+            {{-- Shop logo (mobile: centered via flex-1; desktop: left-aligned so the
+                 big inline search bar takes the center — Shopee/Lazada marketplace look) --}}
+            <a href="{{ $homeUrl }}" class="sf-brand-link flex min-w-0 flex-1 items-center justify-center lg:flex-none lg:justify-start lg:pr-3 group transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]">
                 @if (!empty(($setting ?? null)?->storefrontLogo()))
                     <img
                         src="{{ asset('storage/' . $setting->storefrontLogo()) }}"
@@ -716,6 +717,26 @@
                 @endif
             </a>
 
+            {{-- Inline search bar (Shopee/Lazada style) — desktop only. Mobile uses
+                 the search icon → slide-down panel (and the hamburger menu). --}}
+            <div class="hidden lg:block min-w-0 flex-1 px-4">
+                <form action="{{ url('/products') }}" method="GET"
+                      x-data="searchSuggestions('{{ $activeStoreSlug }}', '{{ url('/products/suggestions') }}', { categories: '{{ __('messages.categories') }}', brands: '{{ __('messages.brands') }}', products: '{{ __('messages.products') }}', trending: '{{ __('messages.trending_searches') }}' })"
+                      @click.outside="open = false"
+                      class="relative flex items-center gap-1.5 rounded-full border-2 border-sky-500 bg-white py-1 pl-3 pr-1.5 shadow-sm transition focus-within:ring-2 focus-within:ring-sky-500/30 dark:border-sky-600 dark:bg-slate-800">
+                    <input type="hidden" name="store_slug" value="{{ $activeStoreSlug }}">
+                    <svg class="h-5 w-5 shrink-0 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" name="search" id="header-search-input" x-model="query" @input="onInput()" @focus="onFocus()" @keydown="onKeydown($event)" autocomplete="off" placeholder="{{ __('messages.search_products') }}" class="w-full min-w-0 bg-transparent px-1 text-sm outline-none text-slate-700 placeholder:text-slate-400 dark:text-slate-200 dark:placeholder:text-slate-500" role="combobox" aria-expanded="open ? 'true' : 'false'" aria-autocomplete="list" aria-controls="search-suggestions-panel" :aria-activedescendant="activeId() || undefined">
+                    <button type="submit" class="shrink-0 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-5 py-1.5 text-xs font-extrabold text-white shadow-sm shadow-sky-500/20 transition active:scale-95">
+                        {{ __('messages.search') }}
+                    </button>
+
+                    @include('storefront.components.search-suggestions-dropdown')
+                </form>
+            </div>
+
             {{-- Right Header Actions --}}
             <div class="flex shrink-0 items-center gap-1 sm:gap-1.5 lg:gap-2">
                 {{-- Search icon button (opens full-width search bar below the header) --}}
@@ -725,7 +746,7 @@
                     :aria-expanded="searchOpen ? 'true' : 'false'"
                     aria-label="{{ __('messages.search_products') }}"
                     title="{{ __('messages.search_products') }}"
-                    class="hidden lg:inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-sky-300"
+                    class="lg:hidden inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-sky-300"
                 >
                     <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -964,7 +985,7 @@
         {{-- Row 2 (desktop only): Navigation — variant from the active theme's
              approved composition (T5): 'pill' | 'underline' --}}
         <div class="hidden lg:block border-t border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 sf-desktop-nav-row">
-            <div class="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            <div class="w-full px-3 sm:px-5 lg:px-8 py-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
                 @include('storefront.components.nav-' . $navStyle)
             </div>
         </div>
@@ -983,7 +1004,7 @@
             x-data="searchSuggestions('{{ $activeStoreSlug }}', '{{ url('/products/suggestions') }}', { categories: '{{ __('messages.categories') }}', brands: '{{ __('messages.brands') }}', products: '{{ __('messages.products') }}', trending: '{{ __('messages.trending_searches') }}' })"
             @click.outside="open = false"
         >
-            <div class="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+            <div class="w-full px-4 py-3 sm:px-6 lg:px-8">
                 <form action="{{ url('/products') }}" method="GET" class="relative flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-2 text-xs shadow-sm transition focus-within:border-sky-500 focus-within:ring-1 focus-within:ring-sky-500/30 dark:border-slate-600 dark:bg-slate-800 sm:text-sm">
                     <input type="hidden" name="store_slug" value="{{ $activeStoreSlug }}">
                     <svg class="h-4 w-4 shrink-0 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -997,143 +1018,7 @@
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
 
-                    {{-- Live search suggestions dropdown (categories · brands · products) --}}
-                    <div
-                        id="desktop-search-suggestions"
-                        x-show="open"
-                        x-cloak
-                        x-transition:enter="transition ease-out duration-150"
-                        x-transition:enter-start="opacity-0 -translate-y-1"
-                        x-transition:enter-end="opacity-100 translate-y-0"
-                        x-transition:leave="transition ease-in duration-100"
-                        x-transition:leave-start="opacity-100"
-                        x-transition:leave-end="opacity-0"
-                        class="absolute left-0 right-0 top-full z-50 mt-2 max-h-[70vh] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-800"
-                        role="listbox"
-                    >
-                        {{-- Trending searches (chips, shown before the user types) --}}
-                        <template x-if="query.trim().length === 0 && trending.length > 0">
-                            <div class="border-b border-slate-100 dark:border-slate-700/60">
-                                <x-search-section-header>
-                                    <span x-text="labels.trending"></span>
-                                </x-search-section-header>
-                                <div class="flex flex-wrap gap-2 px-3 py-2.5" role="group" :aria-label="labels.trending">
-                                    <template x-for="t in trending" :key="t.type + '-' + t.label">
-                                        <button
-                                            type="button"
-                                            @click="pickTrending(t)"
-                                            class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-600 active:scale-95 dark:border-slate-600 dark:bg-slate-700/60 dark:text-slate-200 dark:hover:border-sky-500/60 dark:hover:bg-slate-600 dark:hover:text-sky-300"
-                                        >
-                                            <span aria-hidden="true" x-text="t.type === 'category' ? '🗂️' : '🏷️'"></span>
-                                            <span class="max-w-[10rem] truncate" x-text="t.label"></span>
-                                        </button>
-                                    </template>
-                                </div>
-                            </div>
-                        </template>
-
-                        {{-- Categories section --}}
-                        <template x-if="categories.length > 0">
-                            <div>
-                                <x-search-section-header>
-                                    <span x-text="labels.categories"></span> (<span x-text="categories.length"></span>)
-                                </x-search-section-header>
-                                <template x-for="c in categories" :key="'c' + c.id">
-                                    <a
-                                        :id="'sug-c-' + c.id"
-                                        :href="c.url"
-                                        @click="open = false"
-                                        @mouseenter="activeIndex = c._i"
-                                        :class="activeIndex === c._i ? 'bg-sky-50 dark:bg-slate-700' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'"
-                                        class="flex items-center gap-3 border-b border-slate-100 px-3 py-2.5 transition last:border-0 dark:border-slate-700/60"
-                                        role="option"
-                                        :aria-selected="activeIndex === c._i ? 'true' : 'false'"
-                                    >
-                                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base dark:bg-slate-700" aria-hidden="true">
-                                            <span x-text="c.icon || '🗂️'"></span>
-                                        </span>
-                                        <span class="min-w-0 flex-1">
-                                            <span class="block truncate text-xs font-bold text-slate-800 dark:text-slate-100" x-text="c.name"></span>
-                                            <span class="mt-0.5 block text-[11px] font-semibold text-slate-400 dark:text-slate-500">
-                                                <span x-text="c.count"></span> <span>{{ __('messages.products') }}</span>
-                                            </span>
-                                        </span>
-                                        <svg class="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                    </a>
-                                </template>
-                            </div>
-                        </template>
-
-                        {{-- Brands section --}}
-                        <template x-if="brands.length > 0">
-                            <div>
-                                <x-search-section-header>
-                                    <span x-text="labels.brands"></span> (<span x-text="brands.length"></span>)
-                                </x-search-section-header>
-                                <template x-for="b in brands" :key="'b' + b.id">
-                                    <a
-                                        :id="'sug-b-' + b.id"
-                                        :href="b.url"
-                                        @click="open = false"
-                                        @mouseenter="activeIndex = b._i"
-                                        :class="activeIndex === b._i ? 'bg-sky-50 dark:bg-slate-700' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'"
-                                        class="flex items-center gap-3 border-b border-slate-100 px-3 py-2.5 transition last:border-0 dark:border-slate-700/60"
-                                        role="option"
-                                        :aria-selected="activeIndex === b._i ? 'true' : 'false'"
-                                    >
-                                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base dark:bg-slate-700" aria-hidden="true">🏷️</span>
-                                        <span class="min-w-0 flex-1">
-                                            <span class="block truncate text-xs font-bold text-slate-800 dark:text-slate-100" x-text="b.name"></span>
-                                            <span class="mt-0.5 block text-[11px] font-semibold text-slate-400 dark:text-slate-500">
-                                                <span x-text="b.count"></span> <span>{{ __('messages.products') }}</span>
-                                            </span>
-                                        </span>
-                                        <svg class="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                    </a>
-                                </template>
-                            </div>
-                        </template>
-
-                        {{-- Products section --}}
-                        <template x-if="products.length > 0">
-                            <div>
-                                <x-search-section-header>
-                                    <span x-text="labels.products"></span> (<span x-text="products.length"></span>)
-                                </x-search-section-header>
-                                <template x-for="p in products" :key="'p' + p.id">
-                                    <a
-                                        :id="'sug-p-' + p.id"
-                                        :href="p.url"
-                                        @click="open = false"
-                                        @mouseenter="activeIndex = p._i"
-                                        :class="activeIndex === p._i ? 'bg-sky-50 dark:bg-slate-700' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'"
-                                        class="flex items-center gap-3 border-b border-slate-100 px-3 py-2.5 transition last:border-0 dark:border-slate-700/60"
-                                        role="option"
-                                        :aria-selected="activeIndex === p._i ? 'true' : 'false'"
-                                    >
-                                        <img :src="p.image" alt="" loading="lazy" decoding="async" class="h-11 w-11 shrink-0 rounded-lg bg-slate-100 object-cover dark:bg-slate-700" x-show="p.image">
-                                        <span x-show="!p.image" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg dark:bg-slate-700" aria-hidden="true">📦</span>
-                                        <span class="min-w-0 flex-1">
-                                            <span class="block truncate text-xs font-bold text-slate-800 dark:text-slate-100" x-text="p.name"></span>
-                                            <span class="mt-0.5 block text-sm font-black text-rose-600 dark:text-rose-400">
-                                                <span x-text="p.price"></span>
-                                                <span x-show="p.old_price" class="ml-1.5 align-middle text-[11px] font-semibold text-slate-400 line-through dark:text-slate-500" x-text="p.old_price"></span>
-                                            </span>
-                                        </span>
-                                        <svg class="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                    </a>
-                                </template>
-                            </div>
-                        </template>
-
-                        <div x-show="loading" class="px-4 py-3.5 text-center text-xs font-bold text-slate-400 dark:text-slate-500">
-                            <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-sky-500 border-t-transparent align-middle"></span>
-                            <span class="ml-1.5 align-middle">{{ __('messages.loading') }}</span>
-                        </div>
-                        <div x-show="!loading && !hasAny() && query.trim().length > 0" class="px-4 py-3.5 text-center text-xs font-bold text-slate-400 dark:text-slate-500">
-                            {{ __('messages.no_products_found') }}
-                        </div>
-                    </div>
+                    @include('storefront.components.search-suggestions-dropdown')
                 </form>
             </div>
         </div>
@@ -1252,7 +1137,7 @@
 
     {{-- Main Content Container (mobile: tight 4px gutters for a full-width feel; desktop keeps comfortable padding) --}}
     @php $mainPad = $__env->hasSection('noMainPadding') ? 'pt-0 pb-6' : 'py-6'; @endphp
-    <main class="max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 {{ $mainPad }} relative z-10">
+    <main class="w-full px-1 sm:px-5 lg:px-8 {{ $mainPad }} relative z-10">
         {{ $slot ?? '' }}
         @yield('content')
     </main>
