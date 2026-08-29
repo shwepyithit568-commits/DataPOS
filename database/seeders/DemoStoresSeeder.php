@@ -212,7 +212,7 @@ class DemoStoresSeeder extends Seeder
             $storeStaff = $this->getStorePersonnel($slug, $users);
 
             // Seed Sample Debts for Wholesale and Retail Customers
-            if (! empty($storeStaff['wholesale'])) {
+            if (!empty($storeStaff['wholesale'])) {
                 $debtService->recordOpeningBalance(
                     $store,
                     $storeStaff['wholesale']->id,
@@ -222,7 +222,7 @@ class DemoStoresSeeder extends Seeder
                     "demo:debt:wholesale:{$store->id}"
                 );
             }
-            if (! empty($storeStaff['retail'])) {
+            if (!empty($storeStaff['retail'])) {
                 $debtService->recordOpeningBalance(
                     $store,
                     $storeStaff['retail']->id,
@@ -655,7 +655,8 @@ class DemoStoresSeeder extends Seeder
 
     private function seedSampleOrders(Store $store, array $storeStaff, array $products): void
     {
-        if (empty($products)) return;
+        if (empty($products))
+            return;
 
         $p1 = $products[0];
         $p2 = $products[1] ?? $products[0];
@@ -738,7 +739,8 @@ class DemoStoresSeeder extends Seeder
 
     private function seedSamplePosSales(Store $store, array $storeStaff, array $products, Branch $branch): void
     {
-        if (!Schema::hasTable('pos_sales') || empty($products)) return;
+        if (!Schema::hasTable('pos_sales') || empty($products))
+            return;
 
         $cashierUser = $storeStaff['cashier'] ?? $storeStaff['manager'];
         $retailUser = $storeStaff['retail'] ?? $storeStaff['owner'];
@@ -786,7 +788,7 @@ class DemoStoresSeeder extends Seeder
             // 1. Diamond Stone Agricultural Inputs & Fertilizer
             'diamond-stone-agri' => [
                 'store' => [
-                    'name' => 'Diamond Stone စိုက်ပျိုးရေးနှင့် မြေသြဇာ အရောင်းဆိုင်',
+                    'name' => 'Agriculture and fertilizer store',
                     'business_type' => 'agriculture_inputs',
                     'phone' => '09778899111',
                     'viber_number' => '09778899111',
@@ -913,7 +915,7 @@ class DemoStoresSeeder extends Seeder
             // 4. Shwe Pyi Thit Mobile & Service
             'mobile-sale-service' => [
                 'store' => [
-                    'name' => 'ရွှေပြည်သစ် မိုဘိုင်းအရောင်းနှင့် စက်ပြင် ဝန်ဆောင်မှုဆိုင်',
+                    'name' => ' Mobile & Service',
                     'business_type' => 'mobile_sale_service',
                     'phone' => '09556677888',
                     'viber_number' => '09556677888',
@@ -951,7 +953,7 @@ class DemoStoresSeeder extends Seeder
             // 5. Shwe Thitsar Pharmacy & Healthcare
             'pharmacy' => [
                 'store' => [
-                    'name' => 'ရွှေမင်္ဂလာ ဆေးဝါးနှင့် ကျန်းမာရေးပစ္စည်း အရောင်းဆိုင်',
+                    'name' => 'Pharmacy & Healthcare',
                     'business_type' => 'pharmacy',
                     'phone' => '09334455666',
                     'viber_number' => '09334455666',
@@ -988,7 +990,7 @@ class DemoStoresSeeder extends Seeder
             // 6. Si Taw Gyi Food Bar & Restaurant
             'si-taw-gyi-food-bar' => [
                 'store' => [
-                    'name' => 'စည်တော်ကြီး အစားအသောက်နှင့် အဖျော်ယမကာဆိုင်',
+                    'name' => ' Food Bar & Restaurant',
                     'business_type' => 'restaurant',
                     'phone' => '09667788999',
                     'viber_number' => '09667788999',
