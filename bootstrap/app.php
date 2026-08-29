@@ -20,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        // Clear the request-scoped ThemeContext preview override after every
+        // response so it can never leak across requests in long-running
+        // runtimes (Octane) or feature tests.
+        $middleware->append(\App\Http\Middleware\ResetThemePreview::class);
     })
     ->withCommands([
         \App\POS\Console\InventoryReconcileCommand::class,

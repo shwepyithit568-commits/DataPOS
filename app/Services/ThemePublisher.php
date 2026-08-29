@@ -2,36 +2,32 @@
 
 namespace App\Services;
 
+use App\Events\ThemeRevisionCommitted;
 use App\Models\AuditLog;
 use App\Models\Store;
 use App\Models\StorefrontSetting;
 use App\Models\StoreThemeRevision;
 use App\Models\User;
-use App\Themes\ThemeRegistry;
+use App\Themes\ThemeConfig;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 class ThemePublisher
 {
-    public const THEME_FIELDS = [
-        'theme_preset',
-        'theme_primary_color',
-        'theme_accent_color',
-        'theme_header_bg',
-        'theme_body_bg',
-        'theme_glow_style',
-        'theme_dark_mode',
-        'font_preset',
-        'grid_density',
-    ];
+    /**
+     * The 9 canonical theme field names persisted in storefront_settings.
+     */
+    public const THEME_FIELDS = ThemeConfig::SAFE_KEYS;
 
-    /** @param array<string, mixed> $config */
+    /**
+     * Validate, normalize, and publish a theme config for the given store.
+     *
+     * @param array<string, mixed> $config Raw user input — unknown keys are discarded.
+     */
     public function publish(Store $store, array $config, ?User $actor = null, ?string $ipAddress = null): StoreThemeRevision
     {
-        $validated = $this->validate($config);
+        $themeConfig = ThemeConfig::fromArray($config);
 
-        return DB::transaction(function () use ($store, $validated, $actor, $ipAddress) {
+        $revision = DB::transaction(function () use ($store, $themeConfig, $actor, $ipAddress) {
             $setting = StorefrontSetting::query()
                 ->where('store_id', $store->id)
                 ->lockForUpdate()
@@ -39,12 +35,14 @@ class ThemePublisher
 
             if (! $setting) {
                 $setting = StorefrontSetting::create([
-                    'store_id' => $store->id,
+                    'store_id'   => $store->id,
                     'store_name' => $store->name,
                 ]);
             }
 
-            $current = $this->snapshot($setting);
+            // Capture the baseline snapshot (before applying new config)
+            $baseline = ThemeConfig::fromSetting($setting);
+
             $latest = StoreThemeRevision::query()
                 ->where('store_id', $store->id)
                 ->lockForUpdate()
@@ -53,41 +51,54 @@ class ThemePublisher
 
             $nextNumber = ($latest?->revision_number ?? 0) + 1;
 
+            // First-ever publish: record a baseline revision first
             if (! $latest) {
                 StoreThemeRevision::create([
-                    'store_id' => $store->id,
+                    'store_id'        => $store->id,
                     'revision_number' => $nextNumber++,
-                    'theme_config' => $current,
-                    'action' => 'baseline',
-                    'actor_id' => $actor?->id,
-                    'created_at' => now(),
+                    'theme_config'    => $baseline->toRevisionSnapshot(),
+                    'action'          => 'baseline',
+                    'actor_id'        => $actor?->id,
+                    'created_at'      => now(),
                 ]);
             }
 
-            $published = array_replace($current, $validated);
-            $setting->fill($published)->save();
+            // Apply the new canonical config to the setting
+            $setting->fill($themeConfig->toArray())->save();
 
             $revision = StoreThemeRevision::create([
-                'store_id' => $store->id,
+                'store_id'        => $store->id,
                 'revision_number' => $nextNumber,
-                'theme_config' => $this->snapshot($setting),
-                'action' => 'publish',
-                'actor_id' => $actor?->id,
-                'created_at' => now(),
+                'theme_config'    => ThemeConfig::fromSetting($setting)->toRevisionSnapshot(),
+                'action'          => 'publish',
+                'actor_id'        => $actor?->id,
+                'created_at'      => now(),
             ]);
 
             $this->audit($store, $revision, $actor, $ipAddress);
 
             return $revision;
         });
+
+        // After commit: notify listeners (cache invalidation) — failures here
+        // must never roll back or undo the already-persisted publish.
+        ThemeRevisionCommitted::dispatch($store, $revision, 'publish', $actor);
+
+        return $revision;
     }
 
+    /**
+     * Roll back the store's published theme to an exact previous revision.
+     * Creates a new revision row; never mutates existing history.
+     */
     public function rollback(Store $store, StoreThemeRevision $source, ?User $actor = null, ?string $ipAddress = null): StoreThemeRevision
     {
         abort_unless($source->store_id === $store->id, 404);
-        $validated = $this->validate($source->theme_config);
 
-        return DB::transaction(function () use ($store, $source, $validated, $actor, $ipAddress) {
+        // Normalize the snapshot being restored (handles legacy/unknown keys in old revisions)
+        $themeConfig = ThemeConfig::fromArray($source->theme_config);
+
+        $revision = DB::transaction(function () use ($store, $source, $themeConfig, $actor, $ipAddress) {
             $setting = StorefrontSetting::query()
                 ->where('store_id', $store->id)
                 ->lockForUpdate()
@@ -99,59 +110,53 @@ class ThemePublisher
                 ->latest('revision_number')
                 ->firstOrFail();
 
-            $setting->fill($validated)->save();
+            $setting->fill($themeConfig->toArray())->save();
 
             $revision = StoreThemeRevision::create([
-                'store_id' => $store->id,
-                'revision_number' => $latest->revision_number + 1,
-                'theme_config' => $this->snapshot($setting),
-                'action' => 'rollback',
-                'source_revision_id' => $source->id,
-                'actor_id' => $actor?->id,
-                'created_at' => now(),
+                'store_id'          => $store->id,
+                'revision_number'   => $latest->revision_number + 1,
+                'theme_config'      => ThemeConfig::fromSetting($setting)->toRevisionSnapshot(),
+                'action'            => 'rollback',
+                'source_revision_id'=> $source->id,
+                'actor_id'          => $actor?->id,
+                'created_at'        => now(),
             ]);
 
             $this->audit($store, $revision, $actor, $ipAddress);
 
             return $revision;
         });
+
+        // After commit: notify listeners (cache invalidation) — failures here
+        // must never roll back or undo the already-persisted rollback.
+        ThemeRevisionCommitted::dispatch($store, $revision, 'rollback', $actor);
+
+        return $revision;
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Create a canonical snapshot array from a StorefrontSetting model.
+     * Kept for backward compatibility with any callers; internally delegates to ThemeConfig.
+     *
+     * @return array<string, mixed>
+     */
     public function snapshot(StorefrontSetting $setting): array
     {
-        return collect(self::THEME_FIELDS)
-            ->mapWithKeys(fn (string $field) => [$field => $setting->{$field}])
-            ->all();
-    }
-
-    /** @param array<string, mixed> $config @return array<string, mixed> */
-    private function validate(array $config): array
-    {
-        return Validator::make($config, [
-            'theme_preset' => ['nullable', 'string', Rule::in(array_keys(StorefrontSetting::THEME_PRESETS))],
-            'theme_primary_color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'theme_accent_color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'theme_header_bg' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'theme_body_bg' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'theme_glow_style' => ['nullable', Rule::in(['vivid', 'subtle', 'none'])],
-            'theme_dark_mode' => ['nullable', Rule::in(['auto', 'light', 'dark'])],
-            'font_preset' => ['nullable', Rule::in(array_keys(ThemeRegistry::FONT_PRESETS))],
-            'grid_density' => ['nullable', Rule::in(array_keys(ThemeRegistry::GRID_DENSITIES))],
-        ])->validate();
+        return ThemeConfig::fromSetting($setting)->toRevisionSnapshot();
     }
 
     private function audit(Store $store, StoreThemeRevision $revision, ?User $actor, ?string $ipAddress): void
     {
         AuditLog::write(
             $store->id,
-            'store_theme_'.$revision->action,
+            'store_theme_' . $revision->action,
             'store_theme_revisions',
             $revision->id,
             [
-                'revision_number' => $revision->revision_number,
+                'revision_number'    => $revision->revision_number,
                 'source_revision_id' => $revision->source_revision_id,
-                'theme_preset' => $revision->theme_config['theme_preset'] ?? null,
+                'theme_preset'       => $revision->theme_config['theme_preset'] ?? null,
+                'schema_version'     => $revision->theme_config['schema_version'] ?? null,
             ],
             $actor?->id,
             $ipAddress,

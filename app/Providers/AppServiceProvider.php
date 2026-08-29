@@ -20,6 +20,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Services\StoreContext::class, function () {
             return new \App\Services\StoreContext();
         });
+
+        // Request-scoped theme override for the storefront preview (T3).
+        // Scoped binding = fresh instance per request, so a draft set by the
+        // preview route can never leak into other requests (Octane-safe).
+        $this->app->scoped(\App\Themes\ThemeContext::class);
     }
 
     /**

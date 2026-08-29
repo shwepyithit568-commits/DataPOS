@@ -70,23 +70,34 @@
             this.syncing = false;
         }
     }
-}" class="inline-flex items-center gap-2">
-    {{-- Status Pill --}}
-    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-tight transition shadow-xs"
-         :class="{
-             'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800': online && !syncing && pendingCount === 0 && failedCount === 0,
-             'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 animate-pulse': syncing || pendingCount > 0,
-             'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800': !online || failedCount > 0
-         }"
-         :title="online ? '{{ __('messages.sync_online') ?? 'Online — System is synced' }}' : '{{ __('messages.sync_offline') ?? 'Offline — Transactions queued locally' }}'">
+}" class="inline-flex items-center">
+    {{-- Status Pill (Clickable to trigger sync) --}}
+    <button type="button"
+            @click="syncNow()"
+            :disabled="syncing"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-tight transition shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-emerald-500 disabled:cursor-not-allowed"
+            :class="{
+                'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-950/60': online && !syncing && pendingCount === 0 && failedCount === 0,
+                'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 animate-pulse': syncing || pendingCount > 0,
+                'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-950/60': !online || failedCount > 0
+            }"
+            :title="online ? (syncing ? '{{ __('messages.sync_in_progress') ?? 'Syncing...' }}' : '{{ __('messages.sync_online') ?? 'Online — Click to sync' }}') : '{{ __('messages.sync_offline') ?? 'Offline — Transactions queued locally' }}'">
         
-        {{-- Status Dot --}}
-        <span class="w-2 h-2 rounded-full"
-              :class="{
-                  'bg-emerald-500 shadow-emerald-500/50 shadow-xs': online && !syncing && pendingCount === 0 && failedCount === 0,
-                  'bg-amber-500': syncing || pendingCount > 0,
-                  'bg-rose-500': !online || failedCount > 0
-              }"></span>
+        {{-- Status Dot / Spinner --}}
+        <template x-if="syncing">
+            <svg class="w-2.5 h-2.5 animate-spin text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+        </template>
+        <template x-if="!syncing">
+            <span class="w-2 h-2 rounded-full"
+                  :class="{
+                      'bg-emerald-500 shadow-emerald-500/50 shadow-xs': online && pendingCount === 0 && failedCount === 0,
+                      'bg-amber-500': pendingCount > 0,
+                      'bg-rose-500': !online || failedCount > 0
+                  }"></span>
+        </template>
 
         <span x-show="online && !syncing && pendingCount === 0 && failedCount === 0" class="hidden sm:inline">
             {{ __('messages.sync_online') ?? 'Online' }}
@@ -99,17 +110,5 @@
             {{ __('messages.sync_offline') ?? 'Offline' }}
         </span>
         <span x-show="failedCount > 0" class="text-rose-600 font-bold" x-text="'(' + failedCount + ' failed)'"></span>
-    </div>
-
-    {{-- Manual Sync Trigger Button --}}
-    <button type="button"
-            @click="syncNow()"
-            :disabled="syncing"
-            title="{{ __('messages.sync_now') ?? 'Sync Now' }}"
-            class="inline-flex items-center justify-center h-7 w-7 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition disabled:opacity-50"
-            :class="{ 'animate-spin': syncing }">
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
     </button>
 </div>

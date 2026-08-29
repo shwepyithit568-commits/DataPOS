@@ -22,7 +22,9 @@ use App\Http\Controllers\Admin\RepairController;
 use App\Http\Controllers\Admin\ServiceSettingController;
 use App\Http\Controllers\Admin\SparePartController;
 use App\Http\Controllers\Admin\StoreManagementController;
+use App\Http\Controllers\Admin\ThemeGovernanceController;
 use App\Http\Controllers\Admin\StoreSettingController;
+use App\Http\Controllers\Admin\AppearanceDraftController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\WarehouseController;
 use App\Http\Controllers\Admin\UserManagementController;
@@ -221,6 +223,10 @@ Route::middleware(['auth', SetLocale::class, 'platform_owner'])->prefix('admin')
     Route::delete('/stores/{store}/force', [StoreManagementController::class, 'forceDestroy'])->name('admin.stores.force-destroy');
     Route::post('/stores/{store}/activate', [StoreManagementController::class, 'activate'])->name('admin.stores.activate');
 
+    // Platform-level Theme Governance (T7): theme lifecycle management
+    Route::get('/theme-governance', [ThemeGovernanceController::class, 'index'])->name('admin.theme-governance.index');
+    Route::post('/theme-governance', [ThemeGovernanceController::class, 'update'])->name('admin.theme-governance.update');
+
     // Support Mode for Platform Owners
     Route::post('/support-mode/enter', [\App\Http\Controllers\Admin\SupportModeController::class, 'enter'])->name('admin.support-mode.enter');
     Route::post('/support-mode/exit', [\App\Http\Controllers\Admin\SupportModeController::class, 'exit'])->name('admin.support-mode.exit');
@@ -262,6 +268,24 @@ Route::prefix('store/{store_slug}')
         Route::post('/admin/settings/appearance/revisions/{revision}/rollback', [StoreSettingController::class, 'rollbackTheme'])
             ->name('store.admin.settings.appearance.rollback')
             ->middleware(EnsureStoreAccess::class . ':store_manager');
+
+        // Theme Draft API — draft save, publish, and discard (JSON endpoints)
+        // These are deliberately separate from the form-based settings routes so
+        // the draft path and the published-settings path never share a code route.
+        Route::middleware(EnsureStoreAccess::class . ':store_manager')->group(function () {
+            Route::get('/admin/appearance/draft',    [AppearanceDraftController::class, 'show'])
+                ->name('store.admin.appearance.draft.show');
+            Route::post('/admin/appearance/draft',   [AppearanceDraftController::class, 'save'])
+                ->name('store.admin.appearance.draft.save');
+            Route::post('/admin/appearance/publish', [AppearanceDraftController::class, 'publish'])
+                ->name('store.admin.appearance.publish');
+            Route::delete('/admin/appearance/draft', [AppearanceDraftController::class, 'discard'])
+                ->name('store.admin.appearance.draft.discard');
+            // Isolated preview — renders the production storefront with the draft
+            // config (no-store/private/noindex), never touching the live storefront.
+            Route::get('/admin/appearance/preview', [AppearanceDraftController::class, 'preview'])
+                ->name('store.admin.appearance.preview');
+        });
 
         // Structured payment / delivery method CRUD (store-scoped; managed from
         // the Delivery & Payment settings page)

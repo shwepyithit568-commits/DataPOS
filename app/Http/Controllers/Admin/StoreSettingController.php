@@ -7,6 +7,7 @@ use App\Models\StoreDeliveryMethod;
 use App\Models\StorePaymentMethod;
 use App\Models\StoreThemeRevision;
 use App\Models\StorefrontSetting;
+use App\Services\ThemeDraftService;
 use App\Services\ThemePublisher;
 use App\Support\ImageOptimizer;
 use App\Services\StoreContext;
@@ -74,17 +75,7 @@ class StoreSettingController extends Controller
                 'currency_settings.negative_format'    => ['nullable', 'string', Rule::in(['minus', 'parentheses', 'dr_cr'])],
                 'currency_settings.show_symbol'        => ['nullable', 'boolean'],
             ]),
-            'appearance' => $request->validate([
-                'theme_preset'        => ['nullable', 'string', Rule::in(array_keys(\App\Models\StorefrontSetting::THEME_PRESETS))],
-                'theme_primary_color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-                'theme_accent_color'  => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-                'theme_header_bg'     => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-                'theme_body_bg'       => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-                'theme_glow_style'    => ['nullable', 'string', Rule::in(['vivid', 'subtle', 'none'])],
-                'theme_dark_mode'     => ['nullable', 'string', Rule::in(['auto', 'light', 'dark'])],
-                'font_preset'         => ['nullable', 'string', Rule::in(array_keys(\App\Themes\ThemeRegistry::FONT_PRESETS))],
-                'grid_density'        => ['nullable', 'string', Rule::in(array_keys(\App\Themes\ThemeRegistry::GRID_DENSITIES))],
-            ]),
+            'appearance' => $request->only(\App\Themes\ThemeConfig::SAFE_KEYS),
             'contact' => $request->validate([
                 'phone' => ['nullable', 'string', 'max:50'],
                 'viber_number' => ['nullable', 'string', 'max:50'],
@@ -410,10 +401,16 @@ class StoreSettingController extends Controller
         StoreContext $context,
         string $store_slug,
         ThemePublisher $themePublisher,
+        ThemeDraftService $themeDraftService,
         StoreThemeRevision $revision,
     ): RedirectResponse {
         $store = $context->getStore();
         $themePublisher->rollback($store, $revision, $request->user(), $request->ip());
+
+        // Per ThemePlan §8.4: after a rollback the editor must restart from the
+        // restored state (and any in-flight tab saves get rejected via the
+        // bumped lock_version).
+        $themeDraftService->resetToPublished($store, $request->user());
 
         return back()->with('success', "Theme revision #{$revision->revision_number} restored successfully.");
     }

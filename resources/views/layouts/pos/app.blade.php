@@ -7,26 +7,47 @@
     <title>POS - {{ $store->name }}</title>
     <meta name="theme-color" content="#2563eb">
     <script nonce="{{ $cspNonce }}">
-        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+        // POS personal display mode (T8) — per-device preference, fully
+        // independent of the storefront published theme:
+        //   standard_light | high_contrast_daylight | oled_dark
+        (function () {
+            var mode = localStorage.getItem('posDisplayMode') || 'standard_light';
+            var root = document.documentElement;
+            root.classList.toggle('dark', mode === 'oled_dark');
+            root.classList.toggle('pos-oled', mode === 'oled_dark');
+            root.classList.toggle('pos-hc', mode === 'high_contrast_daylight');
+        })();
     </script>
     <x-currency-js-init :store="$store ?? null" />
     @vite(['resources/css/admin.css', 'resources/js/app-admin.js'])
+    <style>
+        {{-- POS personal mode polish (T8). Semantic colors stay system-controlled. --}}
+        /* High-contrast daylight: pure-white surfaces, near-black text, stronger borders */
+        html.pos-hc body { background-color: #ffffff !important; color: #0f172a !important; }
+        html.pos-hc .bg-white { background-color: #ffffff !important; }
+        html.pos-hc .border-slate-200, html.pos-hc .border-slate-300 { border-color: #94a3b8 !important; }
+        /* OLED dark: deepest surfaces become pure black (saves OLED pixels) */
+        html.pos-oled body { background-color: #000000 !important; }
+        html.pos-oled .dark\:bg-slate-950 { background-color: #000000 !important; }
+    </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-gray-900 dark:text-slate-100 font-sans antialiased min-h-dvh flex flex-col transition-colors duration-200"
     x-data="{
-        darkMode: localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
-        toggleDarkMode() {
-            this.darkMode = !this.darkMode;
-            localStorage.setItem('theme', this.darkMode ? 'dark' : 'light');
-            if (this.darkMode) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+        posMode: localStorage.getItem('posDisplayMode') || 'standard_light',
+        posMenuOpen: false,
+        togglePosMenu() {
+            // Defer to next tick so the opening click does not immediately hit
+            // the dropdown's @click.outside (classic Alpine gotcha).
+            this.$nextTick(() => { this.posMenuOpen = !this.posMenuOpen; });
+        },
+        setPosMode(mode) {
+            this.posMode = mode;
+            localStorage.setItem('posDisplayMode', mode);
+            var root = document.documentElement;
+            root.classList.toggle('dark', mode === 'oled_dark');
+            root.classList.toggle('pos-oled', mode === 'oled_dark');
+            root.classList.toggle('pos-hc', mode === 'high_contrast_daylight');
+            this.posMenuOpen = false;
         },
         calculatorOpen: false,
         calcDisplay: '0',
@@ -159,19 +180,53 @@
                 {{-- Language Switcher --}}
                 <x-language-switcher id="pos-header" />
 
-                {{-- Dark / Light Mode Switcher --}}
-                <button @click="toggleDarkMode()" type="button"
-                        class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm"
-                        :aria-label="darkMode ? 'Switch to light mode' : 'Switch to dark mode'"
-                        :title="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">
-                    <svg x-show="!darkMode" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.8A8.5 8.5 0 1111.2 3a6.5 6.5 0 009.8 9.8z" />
-                    </svg>
-                    <svg x-show="darkMode" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" x-cloak>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36-6.36-1.42 1.42M7.06 16.94l-1.42 1.42m12.72 0-1.42-1.42M7.06 7.06 5.64 5.64" />
-                        <circle cx="12" cy="12" r="4" stroke-width="2" />
-                    </svg>
-                </button>
+                {{-- Personal display mode (T8): standard light / high-contrast daylight / OLED dark --}}
+                <div class="relative" @click.outside="posMenuOpen = false">
+                    <button @click="togglePosMenu()" type="button"
+                            class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm"
+                            :aria-label="'POS display mode: ' + posMode"
+                            :title="'POS display mode: ' + posMode">
+                        <svg x-show="posMode === 'standard_light'" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36-6.36-1.42 1.42M7.06 16.94l-1.42 1.42m12.72 0-1.42-1.42M7.06 7.06 5.64 5.64" />
+                            <circle cx="12" cy="12" r="4" stroke-width="2" />
+                        </svg>
+                        <svg x-show="posMode === 'high_contrast_daylight'" x-cloak class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M3 12h18M5.64 5.64l12.72 12.72M18.36 5.64 5.64 18.36" />
+                        </svg>
+                        <svg x-show="posMode === 'oled_dark'" x-cloak class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.8A8.5 8.5 0 1111.2 3a6.5 6.5 0 009.8 9.8z" />
+                        </svg>
+                    </button>
+
+                    <div x-show="posMenuOpen" x-cloak
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-100"
+                         x-transition:leave-start="opacity-100 scale-100"
+                         x-transition:leave-end="opacity-0 scale-95"
+                         class="absolute right-0 top-full mt-2 z-50 w-52 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl py-1 text-slate-700 dark:text-slate-200"
+                         role="menu" aria-label="POS display mode">
+                        <button type="button" @click="setPosMode('standard_light')" role="menuitem"
+                                class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-left hover:bg-slate-100 dark:hover:bg-slate-700"
+                                :class="posMode === 'standard_light' ? 'text-sky-600 dark:text-sky-400' : ''">
+                            <span class="text-base">☀️</span> <span>Standard Light</span>
+                            <span x-show="posMode === 'standard_light'" class="ml-auto text-sky-500">✓</span>
+                        </button>
+                        <button type="button" @click="setPosMode('high_contrast_daylight')" role="menuitem"
+                                class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-left hover:bg-slate-100 dark:hover:bg-slate-700"
+                                :class="posMode === 'high_contrast_daylight' ? 'text-sky-600 dark:text-sky-400' : ''">
+                            <span class="text-base">🔆</span> <span>High-Contrast Daylight</span>
+                            <span x-show="posMode === 'high_contrast_daylight'" class="ml-auto text-sky-500">✓</span>
+                        </button>
+                        <button type="button" @click="setPosMode('oled_dark')" role="menuitem"
+                                class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-left hover:bg-slate-100 dark:hover:bg-slate-700"
+                                :class="posMode === 'oled_dark' ? 'text-sky-600 dark:text-sky-400' : ''">
+                            <span class="text-base">🌙</span> <span>OLED Dark</span>
+                            <span x-show="posMode === 'oled_dark'" class="ml-auto text-sky-500">✓</span>
+                        </button>
+                    </div>
+                </div>
 
                 {{-- Calculator button --}}
                 <button type="button" @click="openCalculator()"

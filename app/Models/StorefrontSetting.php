@@ -225,6 +225,8 @@ class StorefrontSetting extends Model
 
     /**
      * Named preset → HEX defaults map (kept for backwards compatibility).
+     * @deprecated Use ThemeRegistry::allValidIds() for the allow-list or ThemeConfig::fromArray() for normalization.
+     *             Kept for backward compatibility with Blade templates that reference preset colors directly.
      */
     public const THEME_PRESETS = [
         'sky'             => ['primary' => '#0ea5e9', 'accent' => '#7c3aed', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
@@ -237,7 +239,8 @@ class StorefrontSetting extends Model
         'emerald_fresh'   => ['primary' => '#10b981', 'accent' => '#f59e0b', 'header_bg' => '#ffffff', 'body_bg' => '#f0fdf4', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
         'midnight_tech'   => ['primary' => '#38bdf8', 'accent' => '#fb923c', 'header_bg' => '#0f172a', 'body_bg' => '#0f172a', 'glow_style' => 'vivid', 'dark_mode' => 'dark'],
         'sunset_warm'     => ['primary' => '#e11d48', 'accent' => '#f59e0b', 'header_bg' => '#fff1f2', 'body_bg' => '#fff5f6', 'glow_style' => 'subtle', 'dark_mode' => 'auto'],
-        'custom'          => ['primary' => '#0ea5e9', 'accent' => '#7c3aed', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
+        // 'custom' is intentionally absent — custom color stores are handled by per-column overrides
+        // in themeColors() and resolved by ThemeConfig::fromArray() at publish time.
     ];
 
     /**

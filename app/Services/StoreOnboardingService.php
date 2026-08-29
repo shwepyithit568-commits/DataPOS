@@ -24,7 +24,6 @@ class StoreOnboardingService
             'name_mm'      => 'ဖုန်း၊ ကွန်ပျူတာနှင့် လျှပ်စစ်ပစ္စည်း အရောင်း/ပြင်ဆိုင်',
             'description'  => 'Equipped with Glass Finder, IMEI tracking, Repair jobs, and Wholesale workflows.',
             'profile'      => 'mobile_electronics',
-            'theme_preset' => 'marketplace_pro',
             'font_preset'  => 'outfit',
             'grid_density' => 'compact',
             'categories'   => [
@@ -41,7 +40,6 @@ class StoreOnboardingService
             'name_mm'      => 'ကုန်စုံဆိုင်၊ လူသုံးကုန်နှင့် နေ့စဉ်သုံး လက်လီ/လက်ကား',
             'description'  => 'Optimized for marts, grocery stores, daily retail with fast barcode scanning and customer loyalty.',
             'profile'      => 'general_retail',
-            'theme_preset' => 'retail_trust',
             'font_preset'  => 'inter',
             'grid_density' => 'comfortable',
             'categories'   => [
@@ -58,7 +56,6 @@ class StoreOnboardingService
             'name_mm'      => 'ဆေးဆိုင်နှင့် ကျန်းမာရေး အထောက်အကူပြုပစ္စည်း',
             'description'  => 'Configured for pharmacies, drug stores, and clinics with medical batches and unit sales.',
             'profile'      => 'pharmacy',
-            'theme_preset' => 'emerald_fresh',
             'font_preset'  => 'inter',
             'grid_density' => 'compact',
             'categories'   => [
@@ -87,7 +84,11 @@ class StoreOnboardingService
         $editionKey = $data['edition'] ?? 'mobile_electronics';
         $edition = self::EDITIONS[$editionKey] ?? self::EDITIONS['mobile_electronics'];
 
-        return DB::transaction(function () use ($data, $edition) {
+        // Recommended theme comes from the business profile (ThemePlan §7),
+        // never from the edition key — single source of truth (T6).
+        $themePreset = \App\Themes\ThemeRecommendation::recommendForProfile($edition['profile']);
+
+        return DB::transaction(function () use ($data, $edition, $themePreset) {
             // 1. Create Store Record
             $store = Store::create([
                 'name'              => trim($data['name']),
@@ -103,7 +104,7 @@ class StoreOnboardingService
             $this->locationService->ensureDefaults($store);
 
             // 3. Create Storefront Settings
-            $themeColors = \App\Themes\ThemeRegistry::get($edition['theme_preset'])->colors;
+            $themeColors = \App\Themes\ThemeRegistry::get($themePreset)->colors;
             StorefrontSetting::create([
                 'store_id'            => $store->id,
                 'store_name'          => trim($data['name']),
@@ -115,7 +116,7 @@ class StoreOnboardingService
                 'delivery_info'       => $data['delivery_info'] ?? null,
                 'payment_info'        => $data['payment_info'] ?? null,
                 'default_language'    => $data['default_language'] ?? 'my',
-                'theme_preset'        => $edition['theme_preset'],
+                'theme_preset'        => $themePreset,
                 'theme_primary_color' => $themeColors['primary'],
                 'theme_accent_color'  => $themeColors['accent'],
                 'theme_header_bg'     => $themeColors['header_bg'],

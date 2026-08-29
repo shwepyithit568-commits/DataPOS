@@ -251,4 +251,83 @@ class ThemeEngineTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    // -------------------------------------------------------------------------
+    // T1 Contract Hardening tests (added 2026-08-29)
+    // -------------------------------------------------------------------------
+
+    public function test_unknown_keys_in_publish_do_not_reach_revision_json(): void
+    {
+        $this->actingAs($this->manager)
+            ->post('/store/' . $this->store->slug . '/admin/settings', [
+                'section'        => 'appearance',
+                'theme_preset'   => 'retail_trust',
+                'evil_script'    => '<script>alert(1)</script>',
+                'layout_variant' => 'hacked_layout',
+                '__proto__'      => 'polluted',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $revision = StoreThemeRevision::where('store_id', $this->store->id)
+            ->where('action', 'publish')
+            ->firstOrFail();
+
+        $this->assertArrayNotHasKey('evil_script',    $revision->theme_config);
+        $this->assertArrayNotHasKey('layout_variant', $revision->theme_config);
+        $this->assertArrayNotHasKey('__proto__',      $revision->theme_config);
+        // Exactly 11 keys: 9 safe tokens + schema_version + theme_version
+        $this->assertCount(11, $revision->theme_config);
+        $this->assertSame(\App\Themes\ThemeConfig::SCHEMA_VERSION, $revision->theme_config['schema_version']);
+        $this->assertSame('1', $revision->theme_config['theme_version']);
+    }
+
+    public function test_uppercase_color_is_normalized_to_lowercase_in_revision_json(): void
+    {
+        $this->actingAs($this->manager)
+            ->post('/store/' . $this->store->slug . '/admin/settings', [
+                'section'             => 'appearance',
+                'theme_preset'        => 'retail_trust',
+                'theme_primary_color' => '#1D4ED8',  // uppercase
+                'theme_accent_color'  => '#D97706',  // uppercase
+            ])
+            ->assertSessionHasNoErrors();
+
+        $revision = StoreThemeRevision::where('store_id', $this->store->id)
+            ->where('action', 'publish')
+            ->firstOrFail();
+
+        $this->assertSame('#1d4ed8', $revision->theme_config['theme_primary_color']);
+        $this->assertSame('#d97706', $revision->theme_config['theme_accent_color']);
+    }
+
+    public function test_revision_snapshot_includes_schema_version(): void
+    {
+        $this->actingAs($this->manager)
+            ->post('/store/' . $this->store->slug . '/admin/settings', [
+                'section'      => 'appearance',
+                'theme_preset' => 'retail_trust',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $revision = StoreThemeRevision::where('store_id', $this->store->id)
+            ->where('action', 'publish')
+            ->firstOrFail();
+
+        $this->assertArrayHasKey('schema_version', $revision->theme_config);
+        $this->assertSame(\App\Themes\ThemeConfig::SCHEMA_VERSION, $revision->theme_config['schema_version']);
+    }
+
+    public function test_legacy_preset_id_is_resolved_and_saved_as_canonical_id(): void
+    {
+        // 'sky' is a legacy alias for 'marketplace_pro'
+        $this->actingAs($this->manager)
+            ->post('/store/' . $this->store->slug . '/admin/settings', [
+                'section'      => 'appearance',
+                'theme_preset' => 'sky',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $setting = StorefrontSetting::where('store_id', $this->store->id)->firstOrFail();
+        $this->assertSame('marketplace_pro', $setting->theme_preset);
+    }
 }

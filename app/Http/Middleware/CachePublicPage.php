@@ -49,7 +49,16 @@ class CachePublicPage
             $content = preg_replace("/(cardKey: ')(c\d+-[A-Za-z0-9]{6})/", '$1RANDOM', $content);
             $etag = '"' . md5((string) $content) . '"';
             $response->headers->set('ETag', $etag);
-            $response->headers->set('Cache-Control', 'private, max-age=60, must-revalidate');
+
+            // Immediately after a theme publish/rollback the target store's
+            // pages revalidate on every visit for a short window (max-age=0),
+            // so the new theme propagates without waiting out max-age=60.
+            // Other stores and normal steady-state visits keep max-age=60.
+            $storeId = app(\App\Services\StoreContext::class)->getStoreId();
+            $bumped = $storeId !== null
+                ? \Illuminate\Support\Facades\Cache::has(\App\Listeners\InvalidateStorefrontCache::bumpKey($storeId))
+                : false;
+            $response->headers->set('Cache-Control', 'private, max-age=' . ($bumped ? '0' : '60') . ', must-revalidate');
 
             // Laravel never calls Symfony's Response::prepare(), so conditional
             // GET is not handled automatically — return the 304 ourselves when

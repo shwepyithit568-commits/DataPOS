@@ -5,6 +5,33 @@
     $setting            = $activeStoreContext?->setting ?? $setting ?? null;
     $storeDisplayName   = $setting?->store_name ?? $activeStoreContext?->name ?? config('app.name');
     $sfColors           = $setting?->themeColors() ?? ['primary' => '#0ea5e9', 'accent' => '#7c3aed', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'vivid', 'dark_mode' => 'auto'];
+
+    // Draft-preview override (T3): the authenticated preview route injects the
+    // store's draft ThemeConfig here. When present, render those tokens instead
+    // of the published ones. storefront_settings is NEVER modified — anonymous
+    // requests always resolve the published config because ThemeContext is
+    // request-scoped and only the preview route sets it.
+    $previewConfig = app(\App\Themes\ThemeContext::class)->activeConfig();
+    if ($previewConfig) {
+        $sfColors = [
+            'primary'    => $previewConfig->themePrimaryColor,
+            'accent'     => $previewConfig->themeAccentColor,
+            'header_bg'  => $previewConfig->themeHeaderBg,
+            'body_bg'    => $previewConfig->themeBodyBg,
+            'glow_style' => $previewConfig->themeGlowStyle,
+            'dark_mode'  => $previewConfig->themeDarkMode,
+        ];
+    }
+
+    // Approved layout-component variants for the active theme (T5). In draft
+    // preview the draft's preset drives them, so the preview reflects the
+    // component composition too — never an arbitrary store-owner value.
+    $activeThemePreset = $previewConfig?->themePreset
+        ?? $setting?->theme_preset
+        ?? \App\Themes\ThemeRegistry::getDefault()->id;
+    $navStyle      = \App\Themes\ThemeComponents::resolve($activeThemePreset, 'nav_style');
+    $headerVariant = \App\Themes\ThemeComponents::resolve($activeThemePreset, 'header_variant');
+
     $sfDarkMode         = $sfColors['dark_mode'] ?? 'auto';
 
     // Check luminance of header background to automatically ensure high-contrast text & icons
@@ -150,7 +177,12 @@
         $sfGlowStyle = $sfColors['glow_style'] ?? 'vivid';
         $glowLightOp = $sfGlowStyle === 'subtle' ? '0.07' : ($sfGlowStyle === 'none' ? '0' : '0.20');
         $glowDarkOp  = $sfGlowStyle === 'subtle' ? '0.09' : ($sfGlowStyle === 'none' ? '0' : '0.25');
-        $fontFamilyCss = ($setting ?? null)?->fontFamilyCss() ?? "'Outfit', 'Pyidaungsu', system-ui, sans-serif";
+        if ($previewConfig ?? null) {
+            $fontFamilyCss = \App\Themes\ThemeRegistry::FONT_PRESETS[$previewConfig->fontPreset]['css']
+                ?? \App\Themes\ThemeRegistry::FONT_PRESETS['outfit']['css'];
+        } else {
+            $fontFamilyCss = ($setting ?? null)?->fontFamilyCss() ?? "'Outfit', 'Pyidaungsu', system-ui, sans-serif";
+        }
     @endphp
     <style>
         :root {
@@ -674,7 +706,10 @@
                             </svg>
                         </div>
                         <div class="flex flex-col leading-tight min-w-0">
-                            <span class="max-w-[5rem] sm:max-w-[8rem] truncate font-outfit text-sm sm:text-base font-black leading-tight tracking-tight text-slate-900 transition-colors group-hover:text-sky-600 dark:text-white dark:group-hover:text-sky-400 lg:max-w-[13rem] lg:text-lg">{{ $storeDisplayName }}</span>
+                            <span class="flex items-center min-w-0">
+                                <span class="max-w-[5rem] sm:max-w-[8rem] truncate font-outfit text-sm sm:text-base font-black leading-tight tracking-tight text-slate-900 transition-colors group-hover:text-sky-600 dark:text-white dark:group-hover:text-sky-400 lg:max-w-[13rem] lg:text-lg">{{ $storeDisplayName }}</span>
+                                @include('storefront.components.header-accent-' . $headerVariant)
+                            </span>
                             <span class="max-w-[5rem] sm:max-w-[8rem] truncate text-xs font-extrabold leading-none text-sky-600 dark:text-sky-400 lg:max-w-[13rem]">{{ $setting?->tagline ?: __('messages.default_tagline') }}</span>
                         </div>
                     </div>
@@ -926,38 +961,11 @@
             </div>
         </div>
 
-        {{-- Row 2 (desktop only): Navigation (Linn IT Mart style) --}}
+        {{-- Row 2 (desktop only): Navigation — variant from the active theme's
+             approved composition (T5): 'pill' | 'underline' --}}
         <div class="hidden lg:block border-t border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 sf-desktop-nav-row">
             <div class="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-                {{-- Desktop Navigation --}}
-                <nav aria-label="Storefront primary navigation" class="sf-primary-nav flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white p-1 text-sm font-extrabold shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                    <a href="{{ $homeUrl }}" class="rounded-xl px-3 py-2 transition {{ $isHome ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">{{ __('messages.home') }}</a>
-                    <a href="{{ $productsUrl }}" class="rounded-xl px-3 py-2 transition {{ $isProducts ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">{{ __('messages.products') }}</a>
-                    @if (store_can('storefront.glass_finder', $activeStoreContext))
-                        <a href="{{ $glassFinderUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isGlassFinder ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
-                            <span aria-hidden="true">📱</span>
-                            <span>{{ __('messages.glass_finder') }}</span>
-                        </a>
-                    @endif
-                    @if (store_can('service.repair_jobs', $activeStoreContext))
-                        <a href="{{ $serviceTrackingUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isServiceTracking ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
-                            <span aria-hidden="true">🔧</span>
-                            <span>{{ __('messages.nav_service_track') }}</span>
-                        </a>
-                    @endif
-                    @if (store_can('storefront.online_ordering', $activeStoreContext))
-                        <a href="{{ $howToOrderUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isHowToOrder ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
-                            <span aria-hidden="true">📖</span>
-                            <span>{{ __('messages.how_to_order') }}</span>
-                        </a>
-                    @endif
-                    @if (store_can('storefront.blog', $activeStoreContext))
-                        <a href="{{ $blogUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isBlog ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
-                            <span aria-hidden="true">📝</span>
-                            <span>{{ __('messages.blog') }}</span>
-                        </a>
-                    @endif
-                </nav>
+                @include('storefront.components.nav-' . $navStyle)
             </div>
         </div>
 

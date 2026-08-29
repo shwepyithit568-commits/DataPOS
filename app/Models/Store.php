@@ -56,6 +56,14 @@ class Store extends Model
         return $this->hasMany(StoreThemeRevision::class)->latest('revision_number');
     }
 
+    /**
+     * The store's one active theme draft (isolated from the published storefront).
+     */
+    public function themeDraft(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(StoreThemeDraft::class);
+    }
+
     public function homeBanners(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(HomeBanner::class)->orderBy('sort_order', 'asc');

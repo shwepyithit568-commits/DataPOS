@@ -61,6 +61,15 @@ class SecurityHeaders
         // Allow that origin here or every injected stylesheet/script/font is
         // refused ('self' only covers the app origin). Production keeps the
         // strict 'self'-only policy because the condition never matches there.
+        // frame-ancestors: 'none' everywhere EXCEPT the theme preview response,
+        // which must be framable by the same-origin admin Appearance page. The
+        // preview controller opts in by setting the request attribute
+        // 'theme_preview_frame', and only then do we relax to 'self' (same
+        // origin — cross-origin framing stays blocked everywhere).
+        $frameAncestors = $request->attributes->get('theme_preview_frame', false)
+            ? "'self'"
+            : "'none'";
+
         $devSrc = '';
         $devConnect = '';
         if (app()->environment('local') && file_exists(public_path('hot'))) {
@@ -77,7 +86,7 @@ class SecurityHeaders
             . "font-src 'self'{$devSrc}; "
             . "connect-src 'self'{$devSrc}{$devConnect}; "
             . "frame-src 'self' https://www.google.com https://maps.google.com https://www.youtube.com; "
-            . "frame-ancestors 'none'; "
+            . "frame-ancestors {$frameAncestors}; "
             . "form-action 'self'; "
             . "base-uri 'self'; "
             . "object-src 'none'"

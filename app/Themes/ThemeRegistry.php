@@ -13,7 +13,10 @@ class ThemeRegistry
      *     description: string,
      *     colors: array<string, string>,
      *     default_font: string,
-     *     default_density: string
+     *     default_density: string,
+     *     version: string,
+     *     status: string,
+     *     replacement_id: string|null
      * }>
      */
     protected static array $themes = [
@@ -24,6 +27,9 @@ class ThemeRegistry
             'colors'          => ['primary' => '#0ea5e9', 'accent' => '#7c3aed', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
             'default_font'    => 'outfit',
             'default_density' => 'compact',
+            'version'         => '1',
+            'status'          => 'active',
+            'replacement_id'  => null,
         ],
         'retail_trust' => [
             'name_en'         => 'Retail Trust',
@@ -32,6 +38,9 @@ class ThemeRegistry
             'colors'          => ['primary' => '#2563eb', 'accent' => '#f59e0b', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'subtle', 'dark_mode' => 'auto'],
             'default_font'    => 'inter',
             'default_density' => 'comfortable',
+            'version'         => '1',
+            'status'          => 'active',
+            'replacement_id'  => null,
         ],
         'emerald_fresh' => [
             'name_en'         => 'Emerald Fresh',
@@ -40,6 +49,9 @@ class ThemeRegistry
             'colors'          => ['primary' => '#10b981', 'accent' => '#f59e0b', 'header_bg' => '#ffffff', 'body_bg' => '#f0fdf4', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
             'default_font'    => 'inter',
             'default_density' => 'compact',
+            'version'         => '1',
+            'status'          => 'active',
+            'replacement_id'  => null,
         ],
         'midnight_tech' => [
             'name_en'         => 'Midnight Tech',
@@ -48,6 +60,9 @@ class ThemeRegistry
             'colors'          => ['primary' => '#38bdf8', 'accent' => '#fb923c', 'header_bg' => '#0f172a', 'body_bg' => '#0f172a', 'glow_style' => 'vivid', 'dark_mode' => 'dark'],
             'default_font'    => 'outfit',
             'default_density' => 'compact',
+            'version'         => '1',
+            'status'          => 'active',
+            'replacement_id'  => null,
         ],
         'sunset_warm' => [
             'name_en'         => 'Sunset Warm',
@@ -56,6 +71,9 @@ class ThemeRegistry
             'colors'          => ['primary' => '#e11d48', 'accent' => '#f59e0b', 'header_bg' => '#fff1f2', 'body_bg' => '#fff5f6', 'glow_style' => 'subtle', 'dark_mode' => 'auto'],
             'default_font'    => 'outfit',
             'default_density' => 'comfortable',
+            'version'         => '1',
+            'status'          => 'active',
+            'replacement_id'  => null,
         ],
     ];
 
@@ -104,7 +122,10 @@ class ThemeRegistry
                 description: $data['description'],
                 colors: $data['colors'],
                 defaultFont: $data['default_font'],
-                defaultDensity: $data['default_density']
+                defaultDensity: $data['default_density'],
+                version: $data['version'] ?? '1',
+                status: $data['status'] ?? 'active',
+                replacementId: $data['replacement_id'] ?? null
             );
         }
         return $manifests;
@@ -128,7 +149,10 @@ class ThemeRegistry
                 description: $data['description'],
                 colors: $data['colors'],
                 defaultFont: $data['default_font'],
-                defaultDensity: $data['default_density']
+                defaultDensity: $data['default_density'],
+                version: $data['version'] ?? '1',
+                status: $data['status'] ?? 'active',
+                replacementId: $data['replacement_id'] ?? null
             );
         }
 
@@ -145,7 +169,8 @@ class ThemeRegistry
             description: $data['description'],
             colors: $data['colors'],
             defaultFont: $data['default_font'],
-            defaultDensity: $data['default_density']
+            defaultDensity: $data['default_density'],
+            version: $data['version'] ?? '1'
         );
     }
 
@@ -161,5 +186,30 @@ class ThemeRegistry
     public static function ids(): array
     {
         return array_keys(self::$themes);
+    }
+
+    /**
+     * Expose the legacy-alias map so external code (Blade, ThemeConfig DTO)
+     * can reuse the same mapping without duplication.
+     *
+     * @return array<string, string>
+     */
+    public static function legacyMap(): array
+    {
+        return self::$legacyMap;
+    }
+
+    /**
+     * All valid preset IDs: current IDs + legacy aliases.
+     * Use this as the full allow-list for form/validation purposes.
+     *
+     * @return list<string>
+     */
+    public static function allValidIds(): array
+    {
+        return array_unique(array_merge(
+            array_keys(self::$themes),
+            array_keys(self::$legacyMap),
+        ));
     }
 }

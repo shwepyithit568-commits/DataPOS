@@ -12,6 +12,13 @@ class ThemeManifest
      * @param array<string, string> $colors [primary, accent, header_bg, body_bg, glow_style, dark_mode]
      * @param string $defaultFont
      * @param string $defaultDensity
+     * @param string $version Bundle version — recorded in every published revision
+     *                        snapshot so future manifest changes can be detected
+     *                        and migrated additively (see ThemePlan §5.3).
+     * @param string $status Lifecycle: active | deprecated | hidden (T7).
+     *                        Existing stores keep rendering deprecated/hidden
+     *                        themes; only NEW selection is affected.
+     * @param string|null $replacementId Recommended replacement when deprecated.
      */
     public function __construct(
         public readonly string $id,
@@ -20,7 +27,10 @@ class ThemeManifest
         public readonly string $description,
         public readonly array $colors,
         public readonly string $defaultFont = 'outfit',
-        public readonly string $defaultDensity = 'compact'
+        public readonly string $defaultDensity = 'compact',
+        public readonly string $version = '1',
+        public readonly string $status = 'active',
+        public readonly ?string $replacementId = null,
     ) {}
 
     public function primaryColor(): string

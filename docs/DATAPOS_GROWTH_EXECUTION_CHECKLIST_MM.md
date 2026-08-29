@@ -177,24 +177,24 @@ One Repository
 
 ### ၃.၂ Theme Configuration & Publishing
 - [x] Published theme configuration per store
-- [ ] Draft configuration isolated from the public storefront
+- [x] **Draft configuration isolated from the public storefront** — `store_theme_drafts` table + `ThemeDraftService` (2026-08-29, T2 complete): draft save က published `storefront_settings` ကို ဘယ်တော့မှ မပြောင်းပါ
 - [x] Color/logo/font/banner customization (CSS Custom Properties)
 - [x] Publish transaction with audit logging
-- [ ] Published storefront response cache invalidation (response cache စတင်အသုံးပြုသည့်အခါ ထည့်ရန်)
-- [x] **Revision History & Rollback:** Theme ကိုပြောင်းပြီးပါက ယခင် published revision သို့ ပြန် rollback ပြုလုပ်နိုင်ခြင်း
+- [x] **Published storefront response cache invalidation** — publish/rollback commit ပြီးတိုင်း target store ရဲ့ public pages ကို `max-age=0` revalidation window (90s) ဖြင့် ချက်ချင်းအသစ်ပြသည် (`ThemeRevisionCommitted` event + `InvalidateStorefrontCache` listener; `Cache::flush()` မသုံး — 2026-08-29, T4)
+- [x] **Revision History & Rollback:** Theme ကိုပြောင်းပြီးပါက ယခင် published revision သို့ ပြန် rollback ပြုလုပ်နိုင်ခြင်း — rollback ပြီးတိုင်း draft ကိုလည်း restored state မှ reset လုပ်သည်
 
 ### ၃.၃ Storefront Appearance Settings UI
 - [x] Admin Appearance Settings (`admin/settings/sections/appearance.blade.php`) — Preset, Font, Density, Colors ရွေးချယ်နိုင်ခြင်း
-- [ ] **Real-time Live Preview:** Settings တွင် အရောင်/ဖောင့်ပြောင်းလျှင် Save မလုပ်မီ Storefront/POS မည်သို့ပြောင်းသွားမည်ကို ချက်ချင်းမြင်သည့် Live Preview Panel
-- [ ] **Mobile Preview Viewport:** Desktop/Tablet/Mobile ခလုတ်ဖြင့် preview size ပြောင်းကြည့်နိုင်ခြင်း
+- [x] **Real-time Live Preview:** Settings တွင် အရောင်/ဖောင့်ပြောင်းလျှင် Draft autosave → Preview auto-reload ဖြင့် Save/Publish မလုပ်မီ Storefront မည်သို့ပြောင်းသွားမည်ကို ချက်ချင်းမြင်နိုင်ခြင်း (T3, 2026-08-29)
+- [x] **Mobile Preview Viewport:** Desktop (1440) / Tablet (768) / Mobile (390) ခလုတ်ဖြင့် preview size ပြောင်းကြည့်နိုင်ခြင်း (T3, 2026-08-29)
 
 ### ၃.၄ Theme Polish & Integration
-- [ ] **Admin Dashboard Brand Accent Sync:** ဆိုင်၏ Industry Theme အလိုက် Admin Sidebar/Buttons/Badges အရောင် လိုက်ညီသော Brand Accent ပြောင်းပေးခြင်း
-- [ ] **POS Counter High-Contrast & Dark Mode Toggle:** ဆိုင်ရှင်/Cashier ၁-ချက်နှိပ်ရုံဖြင့် Daylight High-Contrast ↔ OLED Dark Mode ပြောင်းနိုင်ခြင်း
+- [x] **Admin Dashboard Brand Accent Sync:** ဆိုင်၏ Industry Theme အလိုက် Admin Sidebar active link ၏ Brand Accent ပြောင်းပေးခြင်း — `--admin-accent` (store theme primary), semantic colors မပြောင်း (2026-08-30, T8)
+- [x] **POS Counter High-Contrast & Dark Mode Toggle:** Cashier ၁-ချက်နှိပ်ရုံဖြင့် Standard Light ↔ High-Contrast Daylight ↔ OLED Dark Mode ပြောင်းနိုင်ခြင်း — per-device localStorage persistence (2026-08-30, T8)
 
 ### ၃.၅ Verification
-- [x] `tests/Feature/Admin/StorefrontThemeEngineTest.php` (5 passed tests)
-- [ ] One store can preview without affecting public storefront (isolated draft preview မရှိသေးပါ)
+- [x] `tests/Feature/Admin/StorefrontThemeEngineTest.php` (12 passed tests) + `tests/Feature/Admin/ThemeDraftTest.php` (19 tests) + `tests/Feature/Admin/ThemePreviewTest.php` (7 tests) + `tests/Feature/Admin/ThemeCacheInvalidationTest.php` (5 tests) + `tests/Feature/Admin/ThemeOnboardingRecommendationTest.php` (7 tests) + `tests/Feature/Admin/ThemeGovernanceTest.php` (11 tests) + `tests/Feature/Admin/ThemeAdminPosPolishTest.php` (5 tests) + `tests/Unit/Themes/ThemeConfigTest.php` (19 tests) + `tests/Unit/Themes/ThemeComponentsTest.php` (5 tests) + `tests/Feature/Storefront/ThemeComponentRenderTest.php` (4 tests) — total 94 theme-related tests, full suite 1553 tests pass (2026-08-30)
+- [x] One store can preview without affecting public storefront — Real Isolated Preview (T3 complete, 2026-08-29): draft config ကို request-scoped `ThemeContext` ဖြင့် inject; anonymous Customer က published revision ကို ဆက်မြင်သည်
 - [x] Publishing one store never changes another store
 - [ ] **Mobile viewport has no horizontal overflow/overlap — ကျန်ရှိ Themes (Emerald Fresh, Midnight Tech, Sunset Warm) အတွက် Browser viewport test ပြုလုပ်ရန်**
 - [x] Git tag: `v1.3.0-theme-engine-mvp`
@@ -437,7 +437,7 @@ One Repository
 - [x] Destructive actions have explicit confirmation
 - [x] Forms preserve input after validation failure
 - [x] Empty states tell the user what action is possible
-- [ ] Theme preview never modifies live storefront
+- [x] Theme preview never modifies live storefront — Draft save သည် published `storefront_settings` ကို မပြောင်းပါ (T2 complete, 2026-08-29)
 - [x] Admin navigation shows only relevant capabilities
 
 ---
@@ -449,7 +449,7 @@ One Repository
 | Phase 0 — Baseline | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Phase 1 — Capability | ✅ | ✅ | ✅ | — | ✅ |
 | Phase 2 — Decoupling | ✅ | ✅ | ✅ | — | ✅ |
-| Phase 3 — Theme Engine | ✅ | ⚠️ Partial | ⚠️ Partial | — | ⚠️ |
+| Phase 3 — Theme Engine | ✅ | ✅ | ⚠️ (display mode done) | — | ⚠️ |
 | Phase 4 — Tier A | ✅ | ⚠️ Partial | ⚠️ Partial | ⚠️ Partial | ❌ |
 | Phase 5 — Cloud | ✅ | ⚠️ Partial | — | — | ⚠️ |
 | Phase 6 — Batch/UOM | ✅ | ❌ | ❌ | ❌ | ❌ |

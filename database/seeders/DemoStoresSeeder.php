@@ -76,6 +76,9 @@ class DemoStoresSeeder extends Seeder
             $scenarioService->cleanStoreData($store);
 
             // Ensure Storefront Setting
+            // Demo provisioning applies the profile-recommended theme (T6) so
+            // each demo storefront opens with its suggested design; the owner
+            // can still switch to any active theme later.
             StorefrontSetting::updateOrCreate(
                 ['store_id' => $store->id],
                 array_merge([
@@ -88,6 +91,7 @@ class DemoStoresSeeder extends Seeder
                     'address' => $data['setting']['address'] ?? 'ရန်ကုန်မြို့၊ မြန်မာနိုင်ငံ။',
                     'default_language' => 'my',
                     'currency_symbol' => 'Ks',
+                    'theme_preset' => \App\Themes\ThemeRecommendation::recommendForDemoBusinessType($data['store']['business_type']),
                     'chat_button_enabled' => true,
                     'chat_button_label' => 'စုံစမ်းရန်',
                     'chat_button_icon' => 'viber',

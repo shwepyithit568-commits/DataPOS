@@ -4,7 +4,7 @@
 > **Project:** DataPOS single-codebase multi-tenant platform  
 > **Primary users:** Platform Owner, Store Owner/Manager, Customer  
 > **Target market:** Myanmar SMEs using low-to-mid-range devices and unstable internet  
-> **Last verified against repository:** 2026-08-29
+> **Last verified against repository:** 2026-08-30 (T1 ✅ + T2 ✅ + T3 ✅ + T4 ✅ + T5 ✅ + T6 ✅ + T7 ✅ + T8 ✅ — 94 theme tests pass; full suite 1553 tests / 6639 assertions pass; browser QA on datapos-mobile)
 
 ---
 
@@ -66,32 +66,188 @@ Theme အသစ် register/deploy လုပ်ခြင်းသည် Platform
 
 ## 4. လက်ရှိ Repository အခြေအနေ
 
-### 4.1 ရှိပြီးသား
+> **Last verified:** 2026-08-30 — T1 (Contract Hardening) + T2 (Persistent Draft) + T3 (Real Isolated Preview) + T4 (Publish/Rollback Integration) + T5 (Layout Bundle Componentization) + T6 (Business Onboarding Recommendation) + T7 (Platform Theme Governance) + T8 (Admin/POS Polish) ပြီးစီး။ Theme suites 94 tests + full suite 1553 tests pass + browser QA အတည်ပြုပြီး
 
-- `App\Themes\ThemeRegistry` နှင့် `ThemeManifest`
-- Curated presets: `marketplace_pro`, `retail_trust`, `emerald_fresh`, `midnight_tech`, `sunset_warm`
-- Font presets: `outfit`, `inter`, `pyidaungsu`, `padauk`, `system`
-- Grid densities: `compact`, `comfortable`
-- Store-specific published fields in `storefront_settings`
-- CSS custom properties မှတစ်ဆင့် color/font rendering
-- `ThemePublisher` transaction-based publish
-- Immutable `store_theme_revisions`
-- Exact rollback, cross-store protection နှင့် audit logging
-- Appearance Settings page နှင့် local component preview
+### 4.1 ရှိပြီးသော (Verified)
+
+**Theme Registry & Manifest**
+- `App\Themes\ThemeRegistry` နှင့် `App\Themes\ThemeManifest` — ရှိပြီး အသုံးပြုနိုင်
+- Curated presets (5): `marketplace_pro`, `retail_trust`, `emerald_fresh`, `midnight_tech`, `sunset_warm`
+- Legacy ID aliases: `sky → marketplace_pro`, `midnight → midnight_tech`, `emerald → emerald_fresh`, `rose → sunset_warm`, `violet → marketplace_pro`, `custom → marketplace_pro`
+- Font presets (5): `outfit`, `inter`, `pyidaungsu`, `padauk`, `system` — Myanmar system font fallback ပါ
+- Grid densities (2): `compact`, `comfortable`
+
+**Published State & Validation**
+- Published theme fields 9 ခု `storefront_settings` ထဲတွင်ရှိ (`theme_preset`, `theme_primary_color`, `theme_accent_color`, `theme_header_bg`, `theme_body_bg`, `theme_glow_style`, `theme_dark_mode`, `font_preset`, `grid_density`)
+- CSS custom properties (`--sf-primary`, `--sf-accent`, `--sf-font-family` etc.) Storefront ထဲ inline render လုပ်ပြီး
+- Validation — **single source** `App\Themes\ThemeConfig` DTO (T1 ✅): Controller နှင့် ThemePublisher နှစ်နေရာလုံးက `ThemeConfig::fromArray()` သို့ delegate လုပ်သည်။ Duplicate validation ဖျက်ပြီးပြီ
+- Revision snapshot တွင် `schema_version` + `theme_version` ပါ (T1 ✅) — future manifest/config migrations အတွက် strategy သတ်မှတ်ပြီး
+
+**Persistent Draft (T2 ✅)**
+- `store_theme_drafts` table: `store_id` (unique FK), `theme_config` (complete 9-field snapshot JSON), `base_revision_id` (nullable FK), `updated_by` (nullable FK), `lock_version` (unsigned, default 1)
+- `ThemeDraftService` — getOrCreate / save (optimistic lock) / publish (base-revision conflict check) / discard / resetToPublished
+- `ThemeDraftConflictException` — transaction ထဲ throw → transaction အပြင် audit → HTTP 409
+- **Draft save က `storefront_settings` ကို ဘယ်တော့မှ မပြောင်းပါ** — Customer storefront က draft ကို ဖတ်စရာမလို (structural isolation ✓)
+- Publish conflict / stale lock / discard ကို audit log (`store_theme_draft_conflict`, `store_theme_draft_discard`) ရေးသည် (Plan §12)
+- Rollback ပြီးတိုင်း draft ကို restored state မှ reset လုပ်သည် (Plan §8.4)
+- Appearance editor က draft-based fetch API (`/admin/appearance/draft` JSON endpoints) သုံးပြီး settings `<form>` နှင့် ခွဲထားသည် — Enter-key ဖြင့် legacy direct-publish bypass မဖြစ်နိုင်
+
+**Real Isolated Preview (T3 ✅)**
+- `App\Themes\ThemeContext` — request-scoped draft-config override holder (scoped container binding)
+- `ResetThemePreview` global after-middleware — override ကို response အပြီး clear လုပ်ပြီး Octane/feature-test များတွင် request တစ်ခုမှ တစ်ခုသို့ leak မဖြစ်စေရ (test က ဒီ bug ကို ဖမ်းမိပြီး ပြင်ထားသည်)
+- `GET /store/{slug}/admin/appearance/preview` — `EnsureStoreAccess:store_manager` auth-gated, `Cache-Control: no-store, private`, `X-Robots-Tag: noindex, nofollow`
+- CSP framing (browser QA ဖြင့် ရှာတွေ့ပြီး ပြင်ထားသည်): preview response တွင်သာ `frame-ancestors 'self'` (same-origin admin page တွင် iframe ဖွင့်နိုင်) — တခြား page အားလုံး `frame-ancestors 'none'` ဆက်ထား; `SecurityHeaders` သည် `theme_preview_frame` request attribute ကို စစ်သည်
+- Production Storefront pipeline ပြန်သုံးသည် — `HomeController@index` ကို delegate လုပ်ပြီး draft tokens ဖြင့် render (static mockup မဟုတ်)
+- Storefront layout သည် `ThemeContext::activeConfig()` ရှိလျှင် draft tokens (colors + font) ကို CSS custom properties အဖြစ် ထုတ်သည် — published `storefront_settings` ကို ဘယ်တော့မှ မပြောင်းပါ
+- Appearance UI — Desktop (1440) / Tablet (768) / Mobile (390) segmented viewport toggle + Refresh button + loading overlay (8s fallback) + draft autosave ပြီးတိုင်း preview auto-reload
+
+**Publish/Rollback Integration (T4 ✅)**
+- `App\Events\ThemeRevisionCommitted` — publish/rollback commit ပြီးမှသာ dispatch (transaction အပြင်မှာ — listener failure က publish ကို မပြန်လှန်နိုင်)
+- `App\Listeners\InvalidateStorefrontCache` — target store အတွက်သာ `storefront:theme:bumped:{store_id}` marker ထား (90s window); `Cache::flush()` မသုံး; key scheme က future server-side response cache (`storefront:page:{store_id}:*`) အတွက် hook ဖြစ်
+- `CachePublicPage` — marker ရှိလျှင် target store ရဲ့ public pages ကို `max-age=0, must-revalidate` (immediate revalidation) — browser QA ဖြင့် အတည်ပြု: publish ပြီးချင်း new theme ချက်ချင်းပေါ် (max-age=60 stale window မရှိတော့); တခြား store / steady-state က max-age=60 ဆက်ထား
+- Publish failure atomicity — transaction ထဲ failure ဖြစ်ရင် published config + revision history + audit log + cache marker အားလုံး မပြောင်း (test ဖြင့် အတည်ပြု)
+- Publish confirmation modal — "ယခု Published: Revision #N → Publish ပါက #N+1" details ပြသည်
+- Stale draft conflict rejection (409) + rollback→draft reset — T2 မှာ ပြီးပြီးသား (T4 flow နှင့် ပေါင်းစပ်ထား)
+
+**Layout Bundle Componentization (T5 ✅)**
+- `App\Themes\ThemeComponents` — platform-controlled component registry: theme bundle → approved variant composition (header_variant, nav_style, product_card_variant, footer_variant)
+- Approved mapping: `marketplace_pro`/`emerald_fresh` → compact card + pill nav; `retail_trust` → compact card + underline nav; `midnight_tech` → showcase card + underline nav + premium header; `sunset_warm` → showcase card + pill nav
+- `x-product-card` → thin dispatcher → `components/product-card-variants/{variant}` (compact = glued grid, showcase = padded/centered); callers မပြောင်း — data contract တူ၊ presentation သာ ကွဲ
+- Nav partials `storefront/components/nav-pill` / `nav-underline` (capability-aware links တူညီ) + header accent partial (premium = PRO chip)
+- Legacy/unknown theme id → canonical composition; unknown component/variant → safe default (missing-content fallback) — Store Owner က arbitrary variant မရွေးနိုင်
+- No theme-specific queries — registry သည် static; variant partials က already-loaded data ကိုသာ သုံး
+- Preview ကလည်း draft preset ၏ composition ကို reflect (layout က `previewConfig->themePreset` ဖြင့် resolve)
+
+**Business Onboarding Recommendation (T6 ✅)**
+- `App\Themes\ThemeRecommendation` — profile → recommended theme (plan §7): mobile_electronics→marketplace_pro, general_retail→retail_trust, repair_service→retail_trust, pharmacy→emerald_fresh, agriculture→retail_trust, food_beverage→sunset_warm, unknown→marketplace_pro (safe default)
+- `StoreOnboardingService::provisionStore` — edition arrays မှ duplicate theme_preset ဖယ်ပြီး recommendation ကို single source အဖြစ်သုံး (edition profile မှ resolve)
+- Demo seeder — demo provisioning တိုင်း `recommendForDemoBusinessType()` ဖြင့် recommended theme ထည့် (mobile_sale_service→marketplace_pro, pharmacy→emerald_fresh, restaurant→sunset_warm, agriculture_inputs→retail_trust …)
+- **Existing stores ကို ဘယ်တော့မှ silently မပြောင်း** — recommendation ကို provisioning မှာသာ ခေါ်; test ဖြင့် အတည်ပြု
+- **Owner က နောက်ပိုင်း မည်သည့် active theme ကိုမဆို ပြောင်းနိုင်** — recommendation သည် default သာ၊ authorization မဟုတ် (test: pharmacy store → marketplace_pro publish အောင်မြင်)
+
+**Platform Theme Governance (T7 ✅)**
+- ThemeManifest/ThemeRegistry — `status` (active|deprecated|hidden) + `replacementId` fields (all 5 themes active by default)
+- `theme_governance` table + `ThemeGovernance` model + `ThemeGovernanceService` — DB-backed lifecycle overrides (static manifest is baseline)
+- Lifecycle rules: **deprecated/hidden themes က existing stores အတွက် အမြဲ renderable + publishable (ဘယ်တော့မှ မချိုး)**; hidden → appearance picker မှ ပျောက် + onboarding မှာ မရွေး; deprecated → picker တွင် ⚠️ badge + replacement လမ်းညွှန်
+- `Admin\ThemeGovernanceController` + `admin/theme-governance` page (Platform Owner only) — theme list (en/mm name, id, version, swatches), status + replacement dropdown per theme, sidebar link
+- Every lifecycle change audited — `theme_lifecycle_change` (actor, from/to status, from/to replacement)
+- Onboarding recommendation returns ACTIVE themes only — hidden/deprecated recommended → active replacement → default (fallback chain)
+
+**Admin/POS Polish (T8 ✅)**
+- Restrained Admin brand accent — admin layout `<html>` တွင် `--admin-accent` (store theme primary) + active sidebar nav link ကိုသာ accent အဖြစ်သုံး; semantic danger/success/warning colors က system-controlled ဆက်ဖြစ် (Plan §11)
+- POS personal display mode — `standard_light` / `high_contrast_daylight` / `oled_dark` dropdown (header button; open state `$nextTick`-deferred so the opening click does not immediately hit `@click.outside` — same fix as the publish modal)
+- Per-device localStorage persistence (`posDisplayMode`) — reload ပြီးတာနဲ့ auto-apply (browser QA ဖြင့် အတည်ပြု)
+- `pos-hc` (white surfaces, near-black text, stronger borders) + `pos-oled` (pure-black backgrounds) CSS overrides — restrained
+- **Storefront published theme/revision နှင့် လုံးဝသီးခြား** — POS page တွင် `--sf-*` tokens မပါ; storefront theme publish က POS preference ကို မပြောင်း (test + browser QA)
+- Admin logo sync က ရှိပြီးသား (`adminLogo()`)
+
+**ThemePublisher (transaction-based)**
+- `DB::transaction` ဖြင့် `storefront_settings` lock + save + revision create
+- Baseline revision auto-create (first publish)
+- Publish / Rollback / Audit — atomic
+- Rollback: source revision owner (store_id) check ပါ
+- `AuditLog::write` ဖြင့် `store_theme_publish` / `store_theme_rollback` action မှတ်
+
+**Revision History**
+- `store_theme_revisions` table: `id`, `store_id` (FK+cascade), `revision_number`, `theme_config` (JSON), `action`, `source_revision_id` (nullable FK self), `actor_id` (nullable FK users), `created_at`
+- Unique constraint: `(store_id, revision_number)` — concurrent race protection
+- Index: `(store_id, created_at)`
+- Row ကို delete/update မလုပ်ဘဲ rollback တိုင်း revision အသစ်ဖန်တီး → immutable ✓
+- Snapshot တိုင်းတွင် `schema_version` (config shape) + `theme_version` (theme bundle) ပါ — old rows များကို `ThemeConfig::fromArray()` က normalize လုပ်နိုင်
+
+**Admin UI**
+- Appearance Settings page — theme/color/font/density ပြင်နိုင် (draft-based)
+- Draft Status badge (✅ Saved / 🔵 Unsaved / Saving… / ⚠️ Conflict / Publishing…) + Save Draft + Publish Live buttons
+- Publish confirmation modal + conflict warning banner
+- Published Theme History list (actor name ပါ) + Rollback button
+- Cross-store guard: `StoreContext` middleware + `abort_unless(source->store_id === $store->id)` service check
+- **Publish/Modal click fix (2026-08-30):** modal/dropdown open state ကို `$nextTick` ဖြင့် defer လုပ်ထားသည် — opening click ကိုက modal ၏ `@click.outside` က ပိတ်ပစ်သည့် classic Alpine gotcha ကို ဖြေရှင်းထား (browser QA ဖြင့် အတည်ပြု: real click → modal ပွင့်ပြီး နေ → publish အောင်မြင်)
+
+**Tests (Verified Green — 2026-08-29)**
+- `ThemeConfigTest` (Unit) — 19 tests: canonical 9-field snapshot, unknown-key rejection, color normalization/expansion/fallback, enum/font/density validation, legacy alias resolution, schema+theme version snapshot, determinism
+- `ThemeDraftTest` (Feature) — 19 tests: draft seeding, save-never-touches-published, optimistic lock (stale → 409), cross-store isolation, publish-from-draft, base-revision conflict → 409, discard + reseed, rollback reset, staff 403, cross-store API 403, conflict flag on GET, conflict + discard audited
+- `ThemeEngineTest` (Feature) — 12 tests: registry, appearance page, publish flow, rollback exact-snapshot, cross-store 404/403, storefront CSS vars, unknown-key purge, lowercase normalization, schema_version, legacy alias
+- `ThemePreviewTest` (Feature) — 7 tests: draft tokens + no-store/noindex headers, draft visible in preview while anonymous storefront keeps published, preview-without-draft uses published, staff 403, cross-store 403, preview allows same-origin framing, regular pages keep frame-ancestors 'none'
+- `ThemeCacheInvalidationTest` (Feature) — 5 tests: publish/rollback set target-store-only revalidation marker, storefront max-age=0 after publish (other store keeps 60), marker expiry restores 60, publish failure atomicity (config + history + audit + marker unchanged)
+- `ThemeComponentsTest` (Unit) — 5 tests: per-theme composition, legacy id canonicalization, unknown theme/component → safe defaults, approved variants only
+- `ThemeComponentRenderTest` (Feature) — 4 tests: midnight_tech renders showcase card + underline nav + premium accent; marketplace_pro renders compact card + pill nav + no accent; legacy 'midnight' uses canonical composition; unknown preset falls back to compact
+- `ThemeOnboardingRecommendationTest` (Feature) — 7 tests: plan §7 mapping, unknown profile → safe default, demo business types, pharmacy/general_retail provisioning applies recommended theme, existing stores untouched, owner can switch to any active theme after provisioning
+- `ThemeGovernanceTest` (Feature) — 11 tests: default statuses, override persistence + audit, invalid status/replacement rejected, hidden excluded from selectable, hidden disappears from picker, deprecated stays renderable/publishable + badge, onboarding avoids hidden, governance page platform-owner-only (403), HTTP update audited
+- `ThemeAdminPosPolishTest` (Feature) — 5 tests: admin brand accent from store theme primary, manifest fallback, no storefront tokens leak into admin, POS 3-mode dropdown present + localStorage key, POS independent of storefront theme publish
+- Full regression suite — **1553 passed / 6639 assertions**
 
 ### 4.2 မပြီးသေးသောအပိုင်း
 
-- Published state နှင့်သီးခြားဖြစ်သော persistent Draft
-- Real Storefront rendering ကိုသုံးသော isolated preview
-- Desktop/Tablet/Mobile preview controls
-- Draft conflict/version detection
-- Theme manifest version compatibility
-- All-theme/all-route browser regression matrix
-- POS personal contrast/dark-mode preference
-- Platform Owner theme lifecycle UI
-- Response cache စတင်အသုံးပြုပါက targeted invalidation
+**T1 (✅ Complete — 2026-08-29)**
+- ✅ Theme config typed DTO / value object — `App\Themes\ThemeConfig` (canonical 9-field snapshot, unknown keys discard + debug log)
+- ✅ Single canonical validation source — Controller `$request->only(ThemeConfig::SAFE_KEYS)` + `ThemePublisher::publish()` + `ThemeDraftService::save()` အားလုံး `ThemeConfig::fromArray()` မှတစ်ဆင့်
+- ✅ `schema_version` + `theme_version` strategy — `ThemeConfig::SCHEMA_VERSION = 1`၊ manifest `version` field ပါ၊ revision snapshot ထဲ နှစ်ခုလုံး မှတ်တမ်းတင်
+- ✅ `unknown key` → reject/log behavior — `ThemeConfig::fromArray()` မှ discard + `Log::debug`
+- ✅ Legacy ID migration/fallback — `$legacyMap` + `allValidIds()`
+- ✅ Token validation (color/font/density) unit tests — `ThemeConfigTest` (19 tests)
+
+**T2 (✅ Complete — 2026-08-29)**
+- ✅ Persistent Draft (`store_theme_drafts` table) — migration + `StoreThemeDraft` model
+- ✅ `ThemeDraftService` create/update/reset/discard + `AppearanceDraftController` JSON API
+- ✅ Optimistic locking (`lock_version`) — stale → HTTP 409
+- ✅ Base revision conflict detection — 409 + conflict flag on GET /draft
+- ✅ Store-scoped draft routes + authorization — `EnsureStoreAccess:store_manager` + cross-store 403 tests
+- ✅ Draft saved/failed/conflict/publishing UI states — badge, banner, modal, autosave
+
+**T3 (✅ Complete — 2026-08-29)**
+- ✅ Request-scoped `ThemeContext` + `ResetThemePreview` after-middleware (cross-request leak protected)
+- ✅ Authenticated no-store/private/noindex preview route — `GET /admin/appearance/preview`
+- ✅ Production Storefront components reuse — `HomeController@index` delegate + draft tokens via CSS vars
+- ✅ Desktop/Tablet/Mobile viewport controls — segmented toggle + Refresh + loading overlay
+- ✅ Draft token changes visible without publish — autosave → preview auto-reload
+- ✅ CSP framing — preview response တွင်သာ `frame-ancestors 'self'` (browser QA ဖြင့် ရှာတွေ့ပြီး ပြင်ထား)
+
+**T4 (✅ Complete — 2026-08-29)**
+- ✅ Publish directly from selected draft version — draft → publish flow (T2/T3 နှင့် ပေါင်းစပ်)
+- ✅ Stale draft conflict rejection — base-revision conflict → 409 (T2)
+- ✅ Commit-after cache/event handling — `ThemeRevisionCommitted` event + target-store `max-age=0` window; `Cache::flush()` မသုံး
+- ✅ Rollback/draft reconciliation — rollback ပြီးတိုင်း draft reset (T2)
+- ✅ Confirmation UI + actor/revision details — modal တွင် "ယခု Published: #N → #N+1" ပြသည်
+- ✅ Publish failure atomicity — transaction failure က config/history/audit/marker အားလုံး မပြောင်း (test)
+
+**T5 (✅ Complete — 2026-08-29)**
+- ✅ Common Storefront data/view-model contract — `x-product-card` API မပြောင်း; variant partials က loaded data သာ သုံး
+- ✅ Header/navigation/product-card component variants — registry + approved partials
+- ✅ Five bundles mapped to approved component variants — `ThemeComponents::composition()`
+- ✅ Capability-aware optional sections — nav/footer links တွင် `store_can()` ဆက်သုံး (variant နှစ်ခုလုံး)
+- ✅ No theme-specific catalog/price/stock queries — static registry + shared data
+- ✅ Missing content/asset fallback — unknown variant → safe default; product-image fallback ဆက်ရှိ
+
+**T6 (✅ Complete — 2026-08-29)**
+- ✅ BusinessProfile → recommended theme mapping — `ThemeRecommendation` (plan §7)
+- ✅ Apply only during new store/demo provisioning — `StoreOnboardingService` + demo seeder
+- ✅ Existing stores are not silently changed — test ဖြင့် အတည်ပြု
+- ✅ Owner may choose any active theme afterward — recommendation သည် default သာ
+- ✅ Unknown/new profile gets safe default — `marketplace_pro`
+
+**T7 (✅ Complete — 2026-08-29)**
+- ✅ Platform Owner theme list/status/version UI — `admin/theme-governance` + sidebar link
+- ✅ Active/deprecated/hidden lifecycle — DB-backed overrides (`theme_governance`), audited
+- ✅ Deprecation does not break stores already using theme — deprecated/hidden themes renderable + publishable (test)
+- ✅ Migration/fallback path before removal — replacement dropdown + deprecated badge + onboarding fallback chain
+- ✅ Preview image နှင့် Myanmar/English metadata — name_en/name_mm/description ရှိပြီးသား (preview image က manifest ထဲ မထည့်ရသေးသော future item)
+
+**T8 (✅ Complete — 2026-08-30)**
+- ✅ Restrained Admin brand accent option — `--admin-accent` (store theme primary) → active sidebar link
+- ✅ POS personal high-contrast/daylight/OLED preference — 3-mode dropdown + per-device localStorage
+- ✅ Semantic colors remain system-controlled — danger/success/warning ကို Store Owner customization မလုပ်
+- ✅ Storefront published theme/revision နှင့် POS preference သီးခြား — `--sf-*` tokens POS တွင် မပါ; publish က preference မပြောင်း
+- ✅ Device preference persistence — localStorage `posDisplayMode` (reload auto-apply)
+
+**T9 (မစလျှင် — Production Verification)**
+- ❌ All 5 themes × mobile/tablet/desktop browser regression matrix — manual QA ကျန်
+- ❌ Myanmar/English × home/catalog/product/search/cart/order/how-to-order/contact routes
+- ❌ Empty/small/40+/promotion/missing-image datasets + slow network/low-end device smoke test
+- ❌ Cross-store isolation + publish/rollback/concurrency/failure suite (feature tests ရှိပြီးသား — browser matrix ကျန်)
+- ❌ Deployment restart persistence
 
 **အရေးကြီး:** Local color mockup ရှိခြင်းကို isolated Storefront Preview ပြီးပြီဟု မသတ်မှတ်ရ။
+T2–T4 ပြီးသွားပြီ — Draft isolation + Real Preview + commit-after cache invalidation + publish/rollback atomicity အားလုံး browser QA နှင့် tests ဖြင့် အတည်ပြုပြီး။
 
 ---
 
@@ -402,86 +558,104 @@ Storefront branding ကို POS/Admin တစ်ခုလုံးသို့ 
 
 ### Phase T1 — Contract Hardening
 
-- [ ] Theme config DTO/value object သို့ typed normalizer တည်ဆောက်ရန်
-- [ ] Single canonical validation rule source သို့ controller/service duplication ဖယ်ရန်
-- [ ] `schema_version` နှင့် `theme_version` strategy သတ်မှတ်ရန်
-- [ ] Existing legacy IDs migration/fallback tests ဖြည့်ရန်
-- [ ] All token defaults/unknown key behavior test လုပ်ရန်
+> **Status (2026-08-29):** ✅ Complete — ThemeConfig DTO single source, tests green
+
+- [x] Theme config typed DTO/value object တည်ဆောက်ရန် — `App\Themes\ThemeConfig` (canonical 9-field snapshot)
+- [x] Single canonical validation rule source — Controller `$request->only(ThemeConfig::SAFE_KEYS)` + `ThemePublisher::publish()` အားလုံး `ThemeConfig::fromArray()` မှတစ်ဆင့်
+- [x] Unknown keys: reject + log strategy implement — discard + `Log::debug` (silently persist မလုပ်တော့)
+- [x] `schema_version` + `theme_version` fields strategy — `SCHEMA_VERSION=1` + manifest `version`, revision snapshot တွင် နှစ်ခုလုံး ပါ
+- [x] ~~Legacy IDs migration/fallback~~ — `$legacyMap` + `allValidIds()` + `ThemeConfigTest` verified
+- [x] ~~Token defaults/unknown key behavior test~~ — `ThemeConfigTest` (21 unit tests) standalone ဖြည့်ပြီး
 
 **Exit:** Same input always resolves to one complete canonical snapshot; invalid/unknown values cannot reach rendering.
 
 ### Phase T2 — Persistent Draft & Conflict Safety
 
-- [ ] `store_theme_drafts` migration/model/relationship
-- [ ] `ThemeDraftService` create/update/reset
-- [ ] Optimistic locking via `lock_version`
-- [ ] Base revision conflict detection
-- [ ] Store-scoped draft routes and authorization
-- [ ] Draft saved/failed/conflict UI states
+> **Status (2026-08-29):** ✅ Complete — draft isolation, optimistic lock, conflict detection, UI states, tests green
 
-**Exit:** Store A draft never changes Store A published page or any Store B data.
+- [x] `store_theme_drafts` migration/model/relationship
+- [x] `ThemeDraftService` create/update/reset/discard + `AppearanceDraftController` JSON API
+- [x] Optimistic locking via `lock_version` (stale → 409)
+- [x] Base revision conflict detection (409 + GET /draft conflict flag)
+- [x] Store-scoped draft routes and authorization (`EnsureStoreAccess:store_manager` + cross-store 403)
+- [x] Draft saved/failed/conflict/publishing UI states (badge + banner + publish modal + autosave)
+- [x] Rollback → draft reset reconciliation (Plan §8.4) + draft conflict/discard audit (Plan §12)
+
+**Exit:** Store A draft never changes Store A published page or any Store B data. — ✅ verified by `ThemeDraftTest` (19 tests)
 
 ### Phase T3 — Real Isolated Preview
 
-- [ ] Request-scoped `ThemeContext`
-- [ ] Authenticated/no-store preview route
-- [ ] Production Storefront components and real demo/current data reuse
-- [ ] Desktop/Tablet/Mobile segmented viewport controls
-- [ ] Preview loading, empty and error states
-- [ ] Draft token changes visible without publish
+> **Status (2026-08-29):** ✅ Complete — request-scoped override, auth-gated no-store route, production components reuse, viewport controls, tests green
 
-**Exit:** Owner previews all customer-facing routes while anonymous Customer continues seeing exact published revision.
+- [x] Request-scoped `ThemeContext` + `ResetThemePreview` after-middleware (cross-request leak protected)
+- [x] Authenticated/no-store preview route (`/admin/appearance/preview` — `no-store, private` + `X-Robots-Tag: noindex, nofollow`)
+- [x] Production Storefront components and real demo/current data reuse — `HomeController@index` delegate, draft tokens via CSS custom properties
+- [x] Desktop/Tablet/Mobile segmented viewport controls (1440 / 768 / 390)
+- [x] Preview loading state (overlay + 8s fallback); empty states come from the real storefront; error → iframe timeout fallback
+- [x] Draft token changes visible without publish — autosave → preview auto-reload
+
+**Exit:** Owner previews all customer-facing routes while anonymous Customer continues seeing exact published revision. — ✅ verified by `ThemePreviewTest` (7 tests) + layout override + browser QA
 
 ### Phase T4 — Publish/Rollback Integration Completion
 
-- [ ] Publish directly from selected draft version
-- [ ] Stale draft conflict rejection
-- [ ] Commit-after cache/event handling
-- [ ] Rollback/draft reconciliation
-- [ ] Confirmation UI and actor/revision details
-- [ ] Publish failure leaves published config and revision history unchanged
+> **Status (2026-08-29):** ✅ Complete — commit-after cache invalidation, publish failure atomicity, confirmation UI, tests green
 
-**Exit:** Atomic publish/rollback verified under concurrent and failure tests.
+- [x] Publish directly from selected draft version — draft → publish flow (T2/T3)
+- [x] Stale draft conflict rejection — base-revision conflict → 409 + audit (T2)
+- [x] Commit-after cache/event handling — `ThemeRevisionCommitted` event → target-store `max-age=0` revalidation window (90s); key `storefront:theme:bumped:{store_id}`; `Cache::flush()` မသုံး
+- [x] Rollback/draft reconciliation — rollback ပြီးတိုင်း draft reset (T2)
+- [x] Confirmation UI and actor/revision details — modal တွင် current revision → next revision ပြသည်
+- [x] Publish failure leaves published config and revision history unchanged — `ThemeCacheInvalidationTest` (failure injection: config + revisions + audit + marker အားလုံး မပြောင်း)
+
+**Exit:** Atomic publish/rollback verified under concurrent and failure tests. — ✅ verified by `ThemeCacheInvalidationTest` (5 tests) + browser QA (publish → max-age=0 + new theme live; rollback → max-age=0 + restored)
 
 ### Phase T5 — Layout Bundle Componentization
 
-- [ ] Common Storefront data/view-model contract
-- [ ] Header/navigation/home/footer/product-card component registry
-- [ ] Five bundles mapped to approved component variants
-- [ ] Capability-aware optional sections
-- [ ] No theme-specific catalog/price/stock queries
-- [ ] Missing content/asset fallback
+> **Status (2026-08-29):** ✅ Complete — approved component registry, product-card/nav/header variants, tests + browser QA green
 
-**Exit:** Five themes produce meaningfully different whole-store layouts without duplicating business logic.
+- [x] Common Storefront data/view-model contract — `x-product-card` API unchanged; variant partials consume already-loaded data only
+- [x] Header/navigation/home/footer/product-card component registry — `App\Themes\ThemeComponents`
+- [x] Five bundles mapped to approved component variants — composition table
+- [x] Capability-aware optional sections — `store_can()` gating identical across variants
+- [x] No theme-specific catalog/price/stock queries — static registry + shared view data
+- [x] Missing content/asset fallback — unknown variant/component → safe default; image fallback
+
+**Exit:** Five themes produce meaningfully different whole-store layouts without duplicating business logic. — ✅ verified by `ThemeComponentsTest` (5) + `ThemeComponentRenderTest` (4) + browser QA (marketplace_pro compact/pill vs midnight_tech showcase/underline/premium)
 
 ### Phase T6 — Business Onboarding Recommendation
 
-- [ ] BusinessProfile → recommended theme mapping
-- [ ] Apply only during new store/demo provisioning
-- [ ] Existing stores are not silently changed
-- [ ] Owner may choose any active theme afterward
-- [ ] Unknown/new profile gets safe default
+> **Status (2026-08-29):** ✅ Complete — profile mapping, provisioning-only application, safe defaults, tests green
 
-**Exit:** Every supported profile starts presentably while remaining theme-independent.
+- [x] BusinessProfile → recommended theme mapping — `ThemeRecommendation` (plan §7)
+- [x] Apply only during new store/demo provisioning — `StoreOnboardingService` + demo seeder
+- [x] Existing stores are not silently changed — verified by test
+- [x] Owner may choose any active theme afterward — recommendation is a default, not an authorization rule
+- [x] Unknown/new profile gets safe default — `marketplace_pro`
+
+**Exit:** Every supported profile starts presentably while remaining theme-independent. — ✅ verified by `ThemeOnboardingRecommendationTest` (7 tests)
 
 ### Phase T7 — Platform Theme Governance
 
-- [ ] Platform Owner theme list/status/version UI
-- [ ] Active/deprecated/hidden lifecycle
-- [ ] Deprecation does not break stores already using theme
-- [ ] Migration/fallback path before removal
-- [ ] Preview image and Myanmar/English metadata
+> **Status (2026-08-29):** ✅ Complete — lifecycle UI, DB-backed overrides, audited, existing stores never break
 
-**Exit:** Theme lifecycle can be managed without Store Owner code/file access and without breaking existing stores.
+- [x] Platform Owner theme list/status/version UI — `admin/theme-governance` + sidebar link (en/mm name, id, version, swatches)
+- [x] Active/deprecated/hidden lifecycle — `theme_governance` DB overrides + `ThemeGovernanceService`
+- [x] Deprecation does not break stores already using theme — deprecated/hidden renderable + publishable (test)
+- [x] Migration/fallback path before removal — replacement dropdown + deprecated badge + onboarding fallback chain
+- [ ] Preview image (manifest `preview_image` — name_en/name_mm/description ရှိပြီးသား; preview image က future item)
+
+**Exit:** Theme lifecycle can be managed without Store Owner code/file access and without breaking existing stores. — ✅ verified by `ThemeGovernanceTest` (11 tests) + browser QA (hidden theme disappears from picker; platform-only 403)
 
 ### Phase T8 — Admin/POS Polish
 
-- [ ] Restrained Admin brand accent option
-- [ ] POS personal high-contrast/daylight/OLED preference
-- [ ] Semantic colors remain system-controlled
-- [ ] Device/user preference persistence
+> **Status (2026-08-30):** ✅ Complete — restrained admin accent, POS 3-mode preference, semantic colors system-controlled, tests + browser QA green
 
-**Exit:** Branding is visible but operational readability and safety remain consistent.
+- [x] Restrained Admin brand accent option — `--admin-accent` (store theme primary) → active sidebar link only
+- [x] POS personal high-contrast/daylight/OLED preference — `standard_light` / `high_contrast_daylight` / `oled_dark` dropdown
+- [x] Semantic colors remain system-controlled — danger/success/warning untouched; `--sf-*` never leaks into admin/POS
+- [x] Device preference persistence — localStorage `posDisplayMode`, reload auto-apply (browser QA verified)
+
+**Exit:** Branding is visible but operational readability and safety remain consistent. — ✅ verified by `ThemeAdminPosPolishTest` (5 tests) + browser QA (accent #0ea5e9 on active link; OLED/high-contrast modes apply + persist; POS independent of storefront publish)
 
 ### Phase T9 — Production Verification
 
@@ -619,14 +793,16 @@ Recommended Next Step:
 
 ## 19. Immediate Next Work
 
-နောက် Agent သည် **Phase T1 — Contract Hardening** ကိုအရင်လုပ်ရမည်။ T1 ပြီးမှ **Phase T2 — Persistent Draft & Conflict Safety** သို့ဆက်သွားရမည်။
+> **2026-08-30 update:** T1 ✅ + T2 ✅ + T3 ✅ + T4 ✅ + T5 ✅ + T6 ✅ + T7 ✅ + T8 ✅ ပြီးစီးပြီ။ 94 theme tests + full suite 1553 tests pass + browser QA (datapos-mobile) အတည်ပြုပြီး။ Theme Engine implementation phases အားလုံး (T1–T8) ပြီးပြီ — ကျန်တာ **T9 — Production Verification** (browser regression matrix) ဖြစ်သည်။
 
-Priority order:
+### T9 — Production Verification (နောက်တစ်ဆင့်)
 
-1. Canonical Theme Config validation/normalization source တစ်ခုတည်းတည်ဆောက်ရန်။
-2. Existing controller နှင့် `ThemePublisher` ကို ထို contract အသုံးပြုစေရန်။
-3. Complete snapshot/unknown key/legacy ID tests ဖြည့်ရန်။
-4. ပြီးမှ `store_theme_drafts` နှင့် optimistic locking တည်ဆောက်ရန်။
+1. All 5 themes × mobile (390) / tablet (768) / desktop (1440) browser regression — no horizontal overflow, no overlap, no console errors
+2. Myanmar/English × home/catalog/product/search/cart/order/how-to-order/contact routes
+3. Dataset scenarios: empty, small, 40+ products, promotions, missing images
+4. Slow network + low-end device smoke test (Myanmar 2G/3G conditions)
+5. Cross-store isolation + publish/rollback/concurrency/failure suite (feature tests ရှိပြီးသား — browser ဖြင့် ပြန်အတည်ပြု)
+6. Deployment restart persistence — theme selection survives restart
 
-ဤအစီအစဉ်သည် invalid/partial config များကို draft/revision ထဲသို့ မရောက်စေဘဲ နောက်အဆင့် Preview နှင့် Layout Bundle များအတွက် ခိုင်မာသော foundation ဖြစ်စေမည်။
+**မှတ်ချက်:** T1–T8 ပြီးပြီမို့ draft JSON schema ကို finalize လုပ်ထားပြီးပြီ — draft သည် `ThemeConfig::toArray()` 9-field canonical snapshot ဖြစ်သည်။
 

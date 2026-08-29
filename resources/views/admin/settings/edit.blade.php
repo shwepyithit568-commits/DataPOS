@@ -175,7 +175,16 @@
 
     {{-- 4. Full-Width Form Panel for Active Section --}}
     <main class="w-full">
-        @if ($section !== 'delivery' && $section !== 'footer')
+        @if ($section === 'appearance')
+            {{-- Appearance uses the fetch-based Draft API (AppearanceDraftController)
+                 with its own Save Draft / Publish Live buttons. It is deliberately
+                 NOT wrapped in the settings <form>: an Enter-key submission inside
+                 the colour inputs must never reach the legacy direct-publish route
+                 and bypass the draft conflict checks. --}}
+            <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+                @include('admin.settings.sections.' . $sectionPartial)
+            </div>
+        @elseif ($section !== 'delivery' && $section !== 'footer')
             <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/settings') }}" enctype="multipart/form-data"
                   class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden"
                   x-data="{ submitting: false }"
@@ -187,7 +196,7 @@
                     @include('admin.settings.sections.' . $sectionPartial)
                 </div>
 
-                {{-- Form Footer Action Bar --}}
+                {{-- Form Footer Action Bar for standard settings sections --}}
                 <div class="border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 px-4 py-3.5 sm:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <p class="text-[11px] text-slate-500 dark:text-slate-400">
                         {{ __('messages.settings_fields_note') }}
@@ -198,8 +207,8 @@
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                         </svg>
-                        <span x-show="submitting" x-cloak>{{ $section === 'appearance' ? 'Publishing...' : __('messages.settings_saving') }}</span>
-                        <span x-show="!submitting">💾 {{ $section === 'appearance' ? 'Publish Theme' : __('messages.save') . ' ' . $sectionTitles[$section] }}</span>
+                        <span x-show="submitting" x-cloak>{{ __('messages.settings_saving') }}</span>
+                        <span x-show="!submitting">💾 {{ __('messages.save') . ' ' . $sectionTitles[$section] }}</span>
                     </button>
                 </div>
             </form>
@@ -215,50 +224,79 @@
     </main>
 
     @if ($section === 'appearance')
-        <section class="w-full rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6" aria-labelledby="theme-history-title">
-            <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <h2 id="theme-history-title" class="text-sm font-black text-slate-900 dark:text-white">Published Theme History</h2>
-                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">ယခင် Publish လုပ်ထားသော Theme ကို အတိအကျ ပြန်ထားနိုင်ပါသည်။ Rollback လုပ်ခြင်းကိုလည်း revision အသစ်အဖြစ် မှတ်တမ်းတင်ပါမည်။</p>
+        <section class="w-full rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 space-y-3" aria-labelledby="theme-history-title">
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 grid place-items-center text-sm font-bold">
+                        🕒
+                    </span>
+                    <div>
+                        <h2 id="theme-history-title" class="text-sm font-black text-slate-900 dark:text-white">Published Theme History</h2>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">ယခင် Publish လုပ်ထားသော Theme များကို အချိန်မရွေး ပြန်လည်ထားရှိ (Rollback) နိုင်ပါသည်။</p>
+                    </div>
                 </div>
-                <span class="text-[11px] font-bold text-slate-400">Latest 10 revisions</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 self-start sm:self-auto">
+                    Latest 10 revisions
+                </span>
             </div>
 
             @if ($themeRevisions->isEmpty())
-                <div class="mt-4 rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                    Theme ကို ပထမဆုံး Publish လုပ်ပြီးပါက history ကို ဒီနေရာတွင် တွေ့ရပါမည်။
+                <div class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+                    Theme ကို ပထမဆုံး Publish လုပ်ပြီးပါက history မှတ်တမ်းများကို ဒီနေရာတွင် တွေ့ရပါမည်။
                 </div>
             @else
-                <div class="mt-4 overflow-x-auto">
+                <div class="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
                     <table class="min-w-full text-left text-xs">
-                        <thead class="border-b border-slate-200 text-[11px] uppercase text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                        <thead class="bg-slate-50 dark:bg-slate-800/80 text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
                             <tr>
-                                <th class="px-3 py-2 font-black">Revision</th>
-                                <th class="px-3 py-2 font-black">Theme</th>
-                                <th class="px-3 py-2 font-black">Action</th>
-                                <th class="px-3 py-2 font-black">Published by</th>
-                                <th class="px-3 py-2 font-black">Date</th>
-                                <th class="px-3 py-2 text-right font-black">Restore</th>
+                                <th class="px-3.5 py-2.5">Revision</th>
+                                <th class="px-3.5 py-2.5">Theme Palette</th>
+                                <th class="px-3.5 py-2.5">Action</th>
+                                <th class="px-3.5 py-2.5">Published by</th>
+                                <th class="px-3.5 py-2.5">Date & Time</th>
+                                <th class="px-3.5 py-2.5 text-right font-black">Restore</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                             @foreach ($themeRevisions as $index => $revision)
-                                <tr>
-                                    <td class="whitespace-nowrap px-3 py-3 font-black text-slate-800 dark:text-slate-100">#{{ $revision->revision_number }} {{ $index === 0 ? '(Current)' : '' }}</td>
-                                    <td class="whitespace-nowrap px-3 py-3 text-slate-600 dark:text-slate-300">{{ str($revision->theme_config['theme_preset'] ?? 'default')->replace('_', ' ')->title() }}</td>
-                                    <td class="whitespace-nowrap px-3 py-3 text-slate-600 dark:text-slate-300">{{ ucfirst($revision->action) }}</td>
-                                    <td class="whitespace-nowrap px-3 py-3 text-slate-600 dark:text-slate-300">{{ $revision->actor?->name ?? 'System' }}</td>
-                                    <td class="whitespace-nowrap px-3 py-3 text-slate-500 dark:text-slate-400">{{ $revision->created_at?->format('Y-m-d H:i') }}</td>
-                                    <td class="px-3 py-3 text-right">
+                                <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                                    <td class="whitespace-nowrap px-3.5 py-3 font-mono font-bold text-slate-800 dark:text-slate-100">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-xs border border-slate-200/60 dark:border-slate-700">
+                                                #{{ $revision->revision_number }}
+                                            </span>
+                                            @if ($index === 0)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                    Current
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3.5 py-3 font-bold text-slate-700 dark:text-slate-200">
+                                        {{ str($revision->theme_config['theme_preset'] ?? 'default')->replace('_', ' ')->title() }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-3.5 py-3 text-slate-600 dark:text-slate-300">
+                                        <span class="px-2 py-0.5 rounded-md text-[11px] font-bold {{ $revision->action === 'rollback' ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' }}">
+                                            {{ ucfirst($revision->action) }}
+                                        </span>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3.5 py-3 text-slate-600 dark:text-slate-300">
+                                        {{ $revision->actor?->name ?? 'System' }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-3.5 py-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                                        {{ $revision->created_at?->format('Y-m-d H:i') }}
+                                    </td>
+                                    <td class="px-3.5 py-3 text-right">
                                         @if ($index !== 0)
                                             <form method="POST" action="{{ route('store.admin.settings.appearance.rollback', ['store_slug' => $store->slug, 'revision' => $revision->id]) }}">
                                                 @csrf
-                                                <button type="submit" class="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 font-black text-slate-700 transition hover:border-violet-400 hover:text-violet-700 dark:border-slate-600 dark:text-slate-200 dark:hover:border-violet-500 dark:hover:text-violet-300">
+                                                <button type="submit" class="min-h-8 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-1 text-xs font-black text-slate-700 dark:text-slate-200 transition hover:border-violet-400 hover:text-violet-700 dark:hover:border-violet-500 dark:hover:text-violet-300 shadow-xs cursor-pointer active:scale-95">
                                                     Restore
                                                 </button>
                                             </form>
                                         @else
-                                            <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Active</span>
+                                            <span class="text-xs font-black text-emerald-600 dark:text-emerald-400">✓ Active</span>
                                         @endif
                                     </td>
                                 </tr>

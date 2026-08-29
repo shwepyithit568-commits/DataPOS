@@ -19,8 +19,25 @@
         $appleTouchHref = $dedicatedFavicon
             ? asset('storage/' . $dedicatedFavicon)
             : asset('apple-touch-icon.png');
+
+        // Restrained brand accent (T8): the active sidebar link follows the
+        // store's theme primary color. Semantic (danger/success/warning) colors
+        // stay system-controlled — branding never overrides operational signals.
+        $headSetting = ($headStore ?? null)?->setting;
+        $adminAccent = $headSetting?->theme_primary_color
+            ?: ($headSetting
+                ? \App\Themes\ThemeRegistry::get($headSetting->theme_preset)->primaryColor()
+                : '#7c3aed');
     @endphp
     @vite(['resources/css/admin.css', 'resources/js/app-admin.js'])
+    <style>
+        :root { --admin-accent: {{ $adminAccent }}; }
+        /* Restrained: only the active sidebar nav link uses the brand accent */
+        aside a.bg-violet-600,
+        aside a.bg-violet-600:hover {
+            background-color: var(--admin-accent) !important;
+        }
+    </style>
     {{-- Preload the three WOFF2 fonts so text renders without font-swap CLS. --}}
     <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/assets/fonts/Roboto-Regular.woff2') }}">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/assets/fonts/NotoSansMyanmar-Regular.woff2') }}">
@@ -298,6 +315,18 @@
                         :label="__('messages.store_management')">
                         <x-slot:icon>
                             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21V8l9-5 9 5v13M9 21v-6h6v6M3 21h18"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+                </div>
+                @php $isThemeGovernance = request()->is('admin/theme-governance*'); @endphp
+                <div>
+                    <x-admin.nav-link variant="main"
+                        :href="route('admin.theme-governance.index')"
+                        route-name="admin.theme-governance.index"
+                        :active="$isThemeGovernance"
+                        :label="__('messages.theme_governance')">
+                        <x-slot:icon>
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
                 </div>
@@ -1012,13 +1041,16 @@
                                 {{ __('messages.view_commerce') }}
                             </a>
                         @endif
+
                         <button type="button" role="menuitem" @click="moreOpen = false; window.location.reload()"
                             class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
-                            <svg class="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 6v5h-5M4 18v-5h5" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.1 9a7 7 0 0 1 11.5-2.6L20 8.8M4 15.2l2.4 2.4A7 7 0 0 0 17.9 15" />
+                            <svg class="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                                <path d="M21 3v5h-5"/>
+                                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                                <path d="M3 21v-5h5"/>
                             </svg>
-                            {{ __('messages.reload_page') }}
+                            <span>{{ __('messages.reload_page') }}</span>
                         </button>
                         <button type="button" role="menuitem" @click="moreOpen = false; openCalculator()"
                             class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
@@ -1050,7 +1082,8 @@
                 @if ($hasStoreContext)
                     <a href="{{ url('/store/' . $currentSlug) }}" target="_blank" rel="noopener noreferrer"
                         class="hidden sm:inline-flex h-11 w-11 sm:h-10 sm:w-10 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-300 dark:hover:bg-emerald-500/25 transition items-center justify-center focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        aria-label="{{ __('messages.view_commerce') }}">
+                        aria-label="{{ __('messages.view_commerce') }}"
+                        title="{{ __('messages.view_commerce') }}">
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.5 5 5h14l2 5.5M4 10.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.5M3 10.5h18M8 21v-6h8v6" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 5v5.5m5-5.5v5.5M17 5v5.5" />
@@ -1059,17 +1092,21 @@
                 @endif
 
                 <button @click="window.location.reload()" type="button"
-                    class="hidden sm:inline-flex h-11 w-11 sm:h-10 sm:w-10 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 transition items-center justify-center focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    aria-label="{{ __('messages.reload_page') }}">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 6v5h-5M4 18v-5h5" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.1 9a7 7 0 0 1 11.5-2.6L20 8.8M4 15.2l2.4 2.4A7 7 0 0 0 17.9 15" />
+                    class="hidden sm:inline-flex h-11 w-11 sm:h-10 sm:w-10 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white transition items-center justify-center focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    aria-label="{{ __('messages.reload_page') }}"
+                    title="{{ __('messages.reload_page') }}">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                        <path d="M3 21v-5h5"/>
                     </svg>
                 </button>
 
                 <button @click="openCalculator()" type="button"
                     class="h-11 w-11 sm:h-10 sm:w-10 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:hover:bg-blue-500/25 transition inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    aria-label="{{ __('messages.calculator') }}">
+                    aria-label="{{ __('messages.calculator') }}"
+                    title="{{ __('messages.calculator') }}">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                         <rect x="5" y="3" width="14" height="18" rx="2" stroke-width="2" />
                         <path stroke-linecap="round" stroke-width="2" d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01" />
@@ -1088,13 +1125,102 @@
                     </svg>
                 </button>
 
-                <span class="hidden sm:inline-block text-xs font-semibold text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 px-2.5 py-1.5 rounded-lg border dark:border-slate-600 max-w-[140px] truncate">
-                    {{ auth()->user()?->name }}
-                </span>
-                <form method="POST" action="{{ route('logout') }}" class="inline">
-                    @csrf
-                    <button type="submit" class="min-h-11 inline-flex items-center text-xs text-red-600 dark:text-red-400 font-semibold hover:underline whitespace-nowrap px-1">{{ __('messages.logout') }}</button>
-                </form>
+                {{-- User Profile Dropdown Menu --}}
+                <div class="relative" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false" @keydown.escape.window="userMenuOpen = false">
+                    <button type="button" @click="userMenuOpen = !userMenuOpen"
+                        class="h-11 w-11 sm:h-10 sm:w-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/80 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-violet-500 border border-slate-200/80 dark:border-slate-600 shadow-sm flex-shrink-0"
+                        :aria-expanded="userMenuOpen.toString()"
+                        aria-haspopup="menu"
+                        aria-label="{{ auth()->user()?->name ?? 'User Profile' }}">
+                        <div class="h-7 w-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                            @if(auth()->user()?->name)
+                                {{ mb_substr(auth()->user()->name, 0, 1) }}
+                            @else
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                            @endif
+                        </div>
+                    </button>
+
+                    <div x-show="userMenuOpen"
+                        x-transition:enter="transition ease-out duration-150"
+                        x-transition:enter-start="opacity-0 scale-95 transform"
+                        x-transition:enter-end="opacity-100 scale-100 transform"
+                        x-transition:leave="transition ease-in duration-100"
+                        x-transition:leave-start="opacity-100 scale-100 transform"
+                        x-transition:leave-end="opacity-0 scale-95 transform"
+                        x-cloak
+                        class="absolute right-0 top-full z-50 mt-2 w-64 sm:w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900"
+                        role="menu"
+                        aria-label="{{ __('messages.admin_panel') }}">
+
+                        {{-- User Header Details --}}
+                        <div class="px-3 py-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl mb-1 border border-slate-100 dark:border-slate-800">
+                            <div class="flex items-center gap-3">
+                                <div class="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 text-white flex items-center justify-center font-bold text-sm shadow">
+                                    @if(auth()->user()?->name)
+                                        {{ mb_substr(auth()->user()->name, 0, 1) }}
+                                    @else
+                                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                                            <circle cx="12" cy="7" r="4"/>
+                                        </svg>
+                                    @endif
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
+                                        {{ auth()->user()?->name ?? 'User' }}
+                                    </p>
+                                    <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                        @if(auth()->user()?->isPlatformOwner())
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">
+                                                Super Admin
+                                            </span>
+                                        @elseif(isset($activeStore) && auth()->user()?->getStoreRole($activeStore->id))
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300 capitalize">
+                                                {{ str_replace('_', ' ', auth()->user()->getStoreRole($activeStore->id)) }}
+                                            </span>
+                                        @endif
+                                        @if(auth()->user()?->phone)
+                                            <span class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                                {{ auth()->user()->phone }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Quick link if authorized for user management --}}
+                        @if ($hasStoreContext && auth()->user()?->hasStoreRole($activeStore->id, ['store_owner']))
+                            <a href="{{ route('store.admin.users.index', $storeRouteParams) }}" role="menuitem" @click="userMenuOpen = false"
+                                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                                <svg class="h-4 w-4 text-slate-500 dark:text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                                <span>{{ __('messages.user_management') ?? 'User Management' }}</span>
+                            </a>
+                        @endif
+
+                        {{-- Logout Form / Button --}}
+                        <div class="pt-1 mt-1 border-t border-slate-100 dark:border-slate-800">
+                            <form method="POST" action="{{ route('logout') }}" class="w-full">
+                                @csrf
+                                <button type="submit" role="menuitem"
+                                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition">
+                                    <svg class="h-4 w-4 text-red-500 dark:text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                        <polyline points="16 17 21 12 16 7"/>
+                                        <line x1="21" y1="12" x2="9" y2="12"/>
+                                    </svg>
+                                    <span>{{ __('messages.logout') }}</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
 
