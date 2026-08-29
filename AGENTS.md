@@ -57,3 +57,15 @@ Boss runs a technology business in Myanmar covering:
 - Don't exfiltrate private business data
 - Ask before destructive actions (deleting files, overwriting configs)
 - Prefer `trash` over `rm` — recoverable beats gone forever
+
+## Strict Engineering Craftsmanship Policy (အပေါ်ယံမလုပ်ရ — စစ်မှန်သော လုပ်ငန်းခွင်သုံး စံသတ်မှတ်ချက်)
+
+- **No Skin-Deep Implementations (အပေါ်ယံ သဘောမျိုး မလုပ်ရ):** Database table, Model, Service သို့မဟုတ် Feature Test သက်သက် ရေးရုံဖြင့် အလုပ်တစ်ခုကို "ပြီးစီးပါပြီ (Done)" ဟု ဘယ်တော့မှ မကြေညာရ။
+- **End-to-End Production Standard (အစအဆုံး အပြည့်အစုံ ပါဝင်ရမည်):** Feature တစ်ခု ပြီးမြောက်ရန် အောက်ပါ ၆ ချက်လုံး မဖြစ်မနေ ပြည့်စုံရမည်-
+  1. **Database & Migrations:** စနစ်ကျသော Schema, Foreign Keys, Indexes
+  2. **Domain Service & Logic:** Ledger integrity, Bcmath MMK precision, Strict Server-Side Validation
+  3. **Admin Management UI:** စာရင်းသွင်း/ပြင်/ဖျက် (CRUD), Filter, Search, Mobile-responsive UI
+  4. **POS Counter Experience:** Cashier စတင်အသုံးပြုနိုင်မည့် Cart interaction, Live UI widgets, Modal Dialogs, Barcode Scanning
+  5. **Printing & Hardware:** 58mm/80mm ESC/POS Thermal Receipt, Barcode generation
+  6. **Audit & Safety:** Double-entry ledger, AuditLog, Cross-store isolation
+- **Honest Status Reporting (ရိုးသားစွာ အစီရင်ခံခြင်း):** UI သို့မဟုတ် POS Counter အသုံးမပြုနိုင်သေးပါက "Backend Foundation အဆင့်သာ ပြီးသေးသည်၊ POS/Admin UI ချိတ်ဆက်ရန် ကျန်သေးသည်" ဟု ပွင့်လင်းရိုးသားစွာ အတိအလင်း တင်ပြရမည်။
