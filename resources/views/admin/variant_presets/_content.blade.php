@@ -149,7 +149,9 @@
                     ]
                 ]"
                 :showViewToggle="true"
-                :showExportImport="false"
+                :showExportImport="true"
+                :exportUrl="url('/store/' . $store->slug . '/admin/variant-presets/export')"
+                :importUrl="url('/store/' . $store->slug . '/admin/variant-presets/import')"
                 :totalCount="$presetCollection->count()"
                 :paginator="null"
             />

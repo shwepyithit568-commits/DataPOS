@@ -93,7 +93,7 @@
                 </div>
                 <button type="submit"
                     class="inline-flex min-h-12 items-center rounded-xl bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-70">
-                    <span>Add Payment Method</span>
+                    <span>{{ __('messages.add_payment_method') }}</span>
                 </button>
             </form>
         </div>
@@ -221,7 +221,7 @@
                     </label>
                 </div>
                 <button type="submit" class="inline-flex min-h-12 items-center rounded-xl bg-sky-600 px-5 py-3 text-sm font-black text-white shadow-sm hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:opacity-70">
-                    <span>Add Delivery Method</span>
+                    <span>{{ __('messages.add_delivery_method') }}</span>
                 </button>
             </form>
         </div>

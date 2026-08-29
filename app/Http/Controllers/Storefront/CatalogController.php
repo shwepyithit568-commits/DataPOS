@@ -188,7 +188,7 @@ class CatalogController extends Controller
         // chips, so answer with an empty payload instead of a 404 that only adds
         // console noise. An explicitly requested unknown store slug is still
         // rejected earlier by the ResolveStoreContext middleware (404).
-        if (! $store) {
+        if (! $store || ! $store->hasCapability('storefront.ecommerce')) {
             return response()->json([
                 'trending' => [],
                 'categories' => [],

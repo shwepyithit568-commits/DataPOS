@@ -139,7 +139,7 @@
                 </div>
                 <div class="mt-1">
                     <p class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 font-mono">{{ number_format($totalRequests) }}</p>
-                    <span class="text-[10px] text-slate-400 block mt-0.5">Total Opening Requests</span>
+                    <span class="text-[10px] text-slate-400 block mt-0.5">{{ __('messages.total_opening_requests') }}</span>
                 </div>
             </div>
 
@@ -151,7 +151,7 @@
                 </div>
                 <div class="mt-1">
                     <p class="text-base sm:text-lg font-black text-amber-600 dark:text-amber-400 font-mono">{{ number_format($pendingCount) }}</p>
-                    <span class="text-[10px] text-slate-400 block mt-0.5">Pending Review</span>
+                    <span class="text-[10px] text-slate-400 block mt-0.5">{{ __('messages.opening_stock_pending') }}</span>
                 </div>
             </div>
 
@@ -163,21 +163,21 @@
                 </div>
                 <div class="mt-1">
                     <p class="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">{{ number_format($approvedCount) }}</p>
-                    <span class="text-[10px] text-slate-400 block mt-0.5">Approved & Ingested</span>
+                    <span class="text-[10px] text-slate-400 block mt-0.5">{{ __('messages.opening_stock_approved') }}</span>
                 </div>
             </div>
 
             {{-- Card 4: Total Approved Valuation --}}
             <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
                 <div class="flex items-center justify-between">
-                    <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Valuation</span>
+                    <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ __('messages.valuation_total') ?? 'စုစုပေါင်း တန်ဖိုး' }}</span>
                     <span class="w-6 h-6 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 grid place-items-center text-xs">💰</span>
                 </div>
                 <div class="mt-1">
                     <p class="text-base sm:text-lg font-black font-mono text-emerald-600 dark:text-emerald-400 truncate">
                         Ks {{ number_format($totalValuation, 0) }}
                     </p>
-                    <span class="text-[10px] text-slate-400 block mt-0.5">Approved Valuation</span>
+                    <span class="text-[10px] text-slate-400 block mt-0.5">{{ __('messages.opening_stock_approved') }}</span>
                 </div>
             </div>
         </div>

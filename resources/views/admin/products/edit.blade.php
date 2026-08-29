@@ -480,6 +480,7 @@
                     <div class="flex items-center justify-between pt-1">
                         @if (!$img->is_primary && $product->image_path !== $img->image_path)
                             <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id . '/images/' . $img->id . '/primary') }}">
+                                @csrf
                                 <button type="submit" class="text-[11px] text-violet-600 dark:text-violet-400 hover:underline font-bold">{{ __('messages.product_form_set_primary') }}</button>
                             </form>
                         @else

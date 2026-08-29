@@ -93,7 +93,7 @@
             <button type="button" @click="openCreate('{{ $selectedType ?: 'model' }}')"
                     class="px-3.5 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs shadow-sm transition flex items-center gap-1 shrink-0">
                 <span>+</span>
-                <span>Add Code Preset</span>
+                <span>{{ __('messages.add_code_preset') }}</span>
             </button>
         </div>
     </div>

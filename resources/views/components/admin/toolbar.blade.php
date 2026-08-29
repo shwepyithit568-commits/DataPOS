@@ -252,8 +252,14 @@
             @endif
             @if ($exportUrl)
                 @php
-                    $xlsxUrl = str_contains($exportUrl, '?') ? $exportUrl . '&format=xlsx' : $exportUrl . '?format=xlsx';
-                    $csvUrl = str_contains($exportUrl, '?') ? $exportUrl . '&format=csv' : $exportUrl . '?format=csv';
+                    $currentQueryParams = request()->except(['page', 'format']);
+                    $baseExportUrl = $exportUrl;
+                    if (!empty($currentQueryParams)) {
+                        $separator = str_contains($baseExportUrl, '?') ? '&' : '?';
+                        $baseExportUrl .= $separator . http_build_query($currentQueryParams);
+                    }
+                    $xlsxUrl = str_contains($baseExportUrl, '?') ? $baseExportUrl . '&format=xlsx' : $baseExportUrl . '?format=xlsx';
+                    $csvUrl = str_contains($baseExportUrl, '?') ? $baseExportUrl . '&format=csv' : $baseExportUrl . '?format=csv';
                 @endphp
                 <div class="relative shrink-0 inline-flex items-center" x-data="{ exportModalOpen: false }">
                     <div class="inline-flex items-stretch rounded-lg bg-violet-600 text-white shadow-xs overflow-hidden border border-violet-600 min-h-[36px]">
@@ -298,7 +304,7 @@
                                         <span class="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-950/80 text-violet-600 dark:text-violet-400 grid place-items-center text-sm shadow-inner">📤</span>
                                         <div>
                                             <h3 class="text-sm font-black text-slate-900 dark:text-slate-100">{{ __('messages.export') }}</h3>
-                                            <p class="text-[11px] text-slate-400">Select export file format</p>
+                                            <p class="text-[11px] text-slate-400">{{ __('messages.export_modal_subtitle') }}</p>
                                         </div>
                                     </div>
                                     <button type="button" @click="exportModalOpen = false"
@@ -317,11 +323,11 @@
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <div class="flex items-center gap-1.5">
-                                                <span class="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-300">Microsoft Excel (.xlsx)</span>
-                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Recommended</span>
+                                                <span class="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-300">{{ __('messages.export_excel_format') }}</span>
+                                                <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">{{ __('messages.export_recommended') }}</span>
                                             </div>
                                             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                                                Full styling, column auto-fit, header colors & ready for print/share.
+                                                {{ __('messages.export_excel_desc') }}
                                             </p>
                                         </div>
                                         <svg class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 shrink-0 group-hover:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -337,11 +343,11 @@
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <div class="flex items-center gap-1.5">
-                                                <span class="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-sky-700 dark:group-hover:text-sky-300">CSV Document (.csv)</span>
+                                                <span class="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-sky-700 dark:group-hover:text-sky-300">{{ __('messages.export_csv_format') }}</span>
                                                 <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300">UTF-8</span>
                                             </div>
                                             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                                                Universal lightweight format for POS import, bulk editing & migration.
+                                                {{ __('messages.export_csv_desc') }}
                                             </p>
                                         </div>
                                         <svg class="w-4 h-4 text-slate-400 group-hover:text-sky-600 shrink-0 group-hover:translate-x-0.5 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">

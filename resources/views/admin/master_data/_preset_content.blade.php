@@ -95,7 +95,9 @@ class="space-y-2 sm:space-y-2.5">
             :sortOptions="[]"
             :filters="[]"
             :showViewToggle="true"
-            :showExportImport="false"
+            :showExportImport="true"
+            :exportUrl="url('/store/' . $store->slug . '/admin/product-master-presets/export?type=' . $presetType)"
+            :importUrl="url('/store/' . $store->slug . '/admin/product-master-presets/import?type=' . $presetType)"
             :totalCount="$presetList->total()"
             :paginator="$presetList"
         />

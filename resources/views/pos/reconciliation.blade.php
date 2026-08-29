@@ -123,14 +123,14 @@
                     <p class="text-base sm:text-lg font-black font-mono {{ $totalDiff != 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400' }}">
                         {{ $totalDiff > 0 ? '+' : '' }}{{ number_format($totalDiff, 3) }}
                     </p>
-                    <span class="text-[10px] text-slate-400 block mt-0.5">Net Stock Variance</span>
+                    <span class="text-[10px] text-slate-400 block mt-0.5">{{ __('messages.net_stock_variance') }}</span>
                 </div>
             </div>
 
             {{-- Card 4: Audit Status --}}
             <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
                 <div class="flex items-center justify-between">
-                    <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">Audit Status</span>
+                    <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ __('messages.audit_status') }}</span>
                     <span class="w-6 h-6 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 grid place-items-center text-xs">🛡️</span>
                 </div>
                 <div class="mt-1">

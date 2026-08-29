@@ -11,7 +11,7 @@
             <a href="{{ route('store.admin.branches.index', ['store_slug' => $store->slug]) }}"
                class="text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 mb-1">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                <span>Back to Branches</span>
+                <span>{{ __('messages.back_to_branches') }}</span>
             </a>
             <div class="flex items-center gap-2">
                 <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 font-outfit">

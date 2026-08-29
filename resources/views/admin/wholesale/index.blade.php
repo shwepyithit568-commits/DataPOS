@@ -38,7 +38,7 @@
             <a href="{{ $exportUrl }}"
                class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1.5 active:scale-95 shadow-2xs">
                 <span>📊</span>
-                <span>Export CSV</span>
+                <span>{{ __('messages.export_csv_button') }}</span>
             </a>
             <a href="{{ route('store.admin.orders.index', $storeRouteParams) }}"
                class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs transition flex items-center gap-1.5 active:scale-95">

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\SyncApiController;
 use App\Http\Controllers\PushNotificationController;
 use Illuminate\Support\Facades\Route;
 
@@ -8,10 +9,7 @@ use Illuminate\Support\Facades\Route;
 | API Routes
 |--------------------------------------------------------------------------
 |
-| Push-subscription endpoints used by the storefront's service worker and by
-| the admin push-management page. These are same-origin JSON endpoints, so
-| they reuse the `web` middleware group (session auth + CSRF) instead of the
-| stateless `api` group — consistent with the rest of this session-based app.
+| Push-subscription endpoints and Offline-to-Cloud Auto Sync API endpoints.
 |
 */
 
@@ -24,4 +22,18 @@ Route::middleware(['web'])->prefix('push')->group(function () {
 
     // Send a test notification to all subscribers (admin only).
     Route::post('/test', [PushNotificationController::class, 'test']);
+});
+
+Route::prefix('v1/store/{slug}/sync')->group(function () {
+    // Batch ingest offline operational records
+    Route::post('/push', [SyncApiController::class, 'push']);
+
+    // Delta pull for products, categories, customers
+    Route::get('/pull', [SyncApiController::class, 'pull']);
+
+    // Live sync status and health stats
+    Route::get('/status', [SyncApiController::class, 'status']);
+
+    // Trigger immediate sync
+    Route::post('/trigger', [SyncApiController::class, 'trigger']);
 });

@@ -230,7 +230,7 @@
             <a href="{{ $exportUrl }}"
                class="px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 shadow-sm">
                 <span>📊</span>
-                <span>Export CSV</span>
+                <span>{{ __('messages.export_csv_button') }}</span>
             </a>
 
             <button type="button" @click.stop="openCreateModal()"

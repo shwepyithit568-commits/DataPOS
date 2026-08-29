@@ -187,35 +187,76 @@ class BrandController extends Controller
      * Stream the store's brand list as an Excel-friendly CSV (round-trips
      * through the brand importer — edit offline, re-import).
      */
-    public function export(StoreContext $context): StreamedResponse
+    public function export(Request $request, StoreContext $context): \Symfony\Component\HttpFoundation\BinaryFileResponse|StreamedResponse
     {
         $store = $context->getStore();
+        $format = strtolower((string) $request->query('format', 'csv'));
 
         $brands = Brand::where('store_id', $store->id)
             ->orderBy('name')
             ->get(['name', 'slug']);
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="brands-' . now()->format('Ymd-His') . '.csv"',
-        ];
+        if ($format === 'csv') {
+            $headers = [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="brands-' . now()->format('Ymd-His') . '.csv"',
+            ];
 
-        return response()->streamDownload(function () use ($brands) {
-            $stream = fopen('php://output', 'w');
+            return response()->streamDownload(function () use ($brands) {
+                $stream = fopen('php://output', 'w');
+                fwrite($stream, "\xEF\xBB\xBF");
+                fputcsv($stream, ['Name', 'Slug']);
 
-            // UTF-8 BOM so Excel opens the file with correct encoding
-            fwrite($stream, "\xEF\xBB\xBF");
-            fputcsv($stream, ['Name', 'Slug']);
+                foreach ($brands as $brand) {
+                    fputcsv($stream, [
+                        $this->csvCell($brand->name),
+                        $this->csvCell($brand->slug),
+                    ]);
+                }
 
-            foreach ($brands as $brand) {
-                fputcsv($stream, [
-                    $this->csvCell($brand->name),
-                    $this->csvCell($brand->slug),
-                ]);
-            }
+                fclose($stream);
+            }, 'brands-' . now()->format('Ymd-His') . '.csv', $headers);
+        }
 
-            fclose($stream);
-        }, 'brands-' . now()->format('Ymd-His') . '.csv', $headers);
+        $filename = 'Brands_' . $store->slug . '_' . now()->format('Ymd_His') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_brand_');
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Brands');
+
+        $sheet->setCellValue('A1', $store->name . ' - Brands Export');
+        $sheet->setCellValue('A2', 'Export Date: ' . now()->format('d/m/Y h:i A') . ' | Total Count: ' . $brands->count());
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('4C1D95');
+        $sheet->getStyle('A2')->getFont()->setSize(10)->getColor()->setRGB('64748B');
+
+        $row = 4;
+        $headers = ['A' => 'Name', 'B' => 'Slug'];
+        foreach ($headers as $col => $title) {
+            $sheet->setCellValue("{$col}{$row}", $title);
+        }
+        $sheet->getStyle("A{$row}:B{$row}")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '6D28D9']],
+        ]);
+
+        $row++;
+        foreach ($brands as $brand) {
+            $sheet->setCellValue("A{$row}", $brand->name);
+            $sheet->setCellValue("B{$row}", $brand->slug);
+            $row++;
+        }
+
+        foreach (range('A', 'B') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     public function importForm(StoreContext $context): View

@@ -53,13 +53,13 @@
         </div>
 
         <div class="flex items-center justify-between pt-4 border-t border-slate-200/60 dark:border-slate-800/60">
-            <span class="font-bold text-slate-800 dark:text-slate-200 text-sm">Total Amount:</span>
+            <span class="font-bold text-slate-800 dark:text-slate-200 text-sm">{{ __('messages.total_amount') ?? 'စုစုပေါင်း ကျသင့်ငွေ' }}:</span>
             <span class="text-2xl font-black text-violet-600 dark:text-violet-400 font-outfit">Ks {{ number_format($order->total_amount) }}</span>
         </div>
 
         <div class="pt-2">
             <a href="{{ url('/account/orders') }}" class="text-xs text-violet-600 dark:text-violet-400 font-bold hover:underline">
-                &larr; Back to Order History
+                &larr; {{ __('messages.back_to_orders') }}
             </a>
         </div>
     </div>

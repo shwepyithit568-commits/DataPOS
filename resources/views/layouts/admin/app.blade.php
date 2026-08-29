@@ -211,7 +211,7 @@
             financeOpen: {{ Str::contains($currentPath, ['expenses', 'expense-categories', 'receivables', 'payables', 'profit-loss', 'transactions']) ? 'true' : 'false' }},
             reportsOpen: {{ ((Str::contains($currentPath, ['pos/reports/sales', 'pos/reports/cash', 'pos/reports/services', 'sales-analytics', 'inventory-valuation', 'debt-aging', 'aging-report'])) && !Str::contains($currentPath, 'pos/reports/stock')) ? 'true' : 'false' }},
             securityOpen: {{ Str::contains($currentPath, ['security', 'roles', 'users', 'audit-logs']) ? 'true' : 'false' }},
-            maintenanceOpen: {{ Str::contains($currentPath, ['alerts', 'database', 'backups', 'pilot-import', 'import-history']) ? 'true' : 'false' }},
+            maintenanceOpen: {{ Str::contains($currentPath, ['alerts', 'database', 'backups', 'pilot-import', 'import-history', 'admin/sync']) ? 'true' : 'false' }},
             setupOpen: {{ (Str::contains($currentPath, ['settings', 'branches', 'printers', 'vouchers', 'exchange-rates']) && !Str::contains($currentPath, 'service-settings')) ? 'true' : 'false' }},
 
             closeGroups() {
@@ -841,6 +841,15 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
+                    {{-- Offline Sync Manager --}}
+                    @php $isSyncManager = request()->routeIs('store.admin.sync.*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.sync.index', $storeRouteParams)" route-name="store.admin.sync.index" :active="$isSyncManager" :label="__('messages.sync_manager')">
+                        <x-slot:icon>
+                            {{-- Refresh / Sync Arrow icon --}}
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
                     @php $isBackups = request()->is('store/*/admin/backups*'); @endphp
                     <x-admin.nav-link :href="route('store.admin.backups.index', $storeRouteParams)" route-name="store.admin.backups.index" :active="$isBackups" :label="__('messages.backups')">
                         <x-slot:icon>
@@ -972,6 +981,10 @@
             </div>
 
             <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                @if ($hasStoreContext)
+                    <x-sync-status-widget :store="$activeStore" />
+                @endif
+
                 {{-- Language switcher: inline on sm+ (mobile lives inside the More menu) --}}
                 <div class="hidden sm:block">
                     <x-language-switcher id="admin-header" />
@@ -1182,5 +1195,8 @@
             });
         })();
     </script>
+
+    {{-- Reusable Confirmation Modal & Form Submit Protection --}}
+    <x-admin.confirm-modal />
 </body>
 </html>

@@ -31,6 +31,7 @@ class PosSale extends Model
         'discount',
         'tax',
         'total',
+        'client_transaction_id',
         'notes',
         'posted_at',
         'refunded_at',

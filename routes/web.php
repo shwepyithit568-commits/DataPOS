@@ -65,7 +65,7 @@ Route::get('/store/{store_slug}', [HomeController::class, 'index'])
 Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
 Route::get('/products', [CatalogController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.ecommerce'])->middleware('cache.public_page');
-Route::get('/products/suggestions', [CatalogController::class, 'suggestions'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.ecommerce', 'throttle:60,1']);
+Route::get('/products/suggestions', [CatalogController::class, 'suggestions'])->middleware([ResolveStoreContext::class, SetLocale::class, 'throttle:60,1']);
 Route::get('/store/{store_slug}/product/{slug}', [CatalogController::class, 'show'])->name('storefront.product')->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.ecommerce'])->middleware('cache.public_page');
 
 // AliExpress-style two-pane category browser (left rail + brands/sub-categories panel)
@@ -412,6 +412,11 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/brands/import-template', [BrandController::class, 'downloadImportTemplate'])->name('store.admin.brands.import.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Admin Variant Presets
+        Route::get('/admin/variant-presets/export', [VariantPresetController::class, 'export'])->name('store.admin.variant-presets.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/variant-presets/import', [VariantPresetController::class, 'importForm'])->name('store.admin.variant-presets.import')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/variant-presets/import', [VariantPresetController::class, 'import'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/variant-presets/import/confirm', [VariantPresetController::class, 'confirmImport'])->name('store.admin.variant-presets.import.confirm')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/variant-presets/import-template', [VariantPresetController::class, 'downloadImportTemplate'])->name('store.admin.variant-presets.import.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/variant-presets', [VariantPresetController::class, 'index'])->name('store.admin.variant-presets.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/variant-presets', [VariantPresetController::class, 'store'])->name('store.admin.variant-presets.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/variant-presets/{variantPreset}/edit', [VariantPresetController::class, 'edit'])->name('store.admin.variant-presets.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -421,6 +426,11 @@ Route::prefix('store/{store_slug}')
         Route::delete('/admin/variant-presets/{variantPreset}', [VariantPresetController::class, 'destroy'])->name('store.admin.variant-presets.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Admin Master Presets (Connectors, Colors, Shelf Locations, Warranties, Return Policies)
+        Route::get('/admin/product-master-presets/export', [\App\Http\Controllers\Admin\ProductMasterPresetController::class, 'export'])->name('store.admin.product-master-presets.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/product-master-presets/import', [\App\Http\Controllers\Admin\ProductMasterPresetController::class, 'importForm'])->name('store.admin.product-master-presets.import')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/product-master-presets/import', [\App\Http\Controllers\Admin\ProductMasterPresetController::class, 'import'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/product-master-presets/import/confirm', [\App\Http\Controllers\Admin\ProductMasterPresetController::class, 'confirmImport'])->name('store.admin.product-master-presets.import.confirm')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/product-master-presets/import-template', [\App\Http\Controllers\Admin\ProductMasterPresetController::class, 'downloadImportTemplate'])->name('store.admin.product-master-presets.import.template')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/product-master-presets', [\App\Http\Controllers\Admin\ProductMasterPresetController::class, 'store'])->name('store.admin.product-master-presets.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::put('/admin/product-master-presets/{masterPreset}', [\App\Http\Controllers\Admin\ProductMasterPresetController::class, 'update'])->name('store.admin.product-master-presets.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::delete('/admin/product-master-presets/{masterPreset}', [\App\Http\Controllers\Admin\ProductMasterPresetController::class, 'destroy'])->name('store.admin.product-master-presets.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -698,6 +708,11 @@ Route::prefix('store/{store_slug}')
         // Database backups & restore
         Route::get('/admin/backups', [BackupController::class, 'index'])->name('store.admin.backups.index')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::post('/admin/backups', [BackupController::class, 'store'])->name('store.admin.backups.store')->middleware(EnsureStoreAccess::class . ':store_manager');
+
+        // Offline-to-Cloud Sync Manager & Outbox Queue
+        Route::get('/admin/sync', [\App\Http\Controllers\Admin\SyncAdminController::class, 'index'])->name('store.admin.sync.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/sync/retry/{id}', [\App\Http\Controllers\Admin\SyncAdminController::class, 'retry'])->name('store.admin.sync.retry')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/sync/retry-all', [\App\Http\Controllers\Admin\SyncAdminController::class, 'retryAll'])->name('store.admin.sync.retry_all')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/backups/{file}/download', [BackupController::class, 'download'])->name('store.admin.backups.download')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::delete('/admin/backups/{file}', [BackupController::class, 'destroy'])->name('store.admin.backups.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::post('/admin/backups/restore', [BackupController::class, 'restore'])->name('store.admin.backups.restore')->middleware(EnsureStoreAccess::class . ':store_manager');

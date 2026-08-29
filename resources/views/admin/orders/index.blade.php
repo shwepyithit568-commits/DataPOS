@@ -57,7 +57,7 @@
                 <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 14l5-5 5 5M12 3v12"/>
                 </svg>
-                <span>Export CSV</span>
+                <span>{{ __('messages.export_csv_button') }}</span>
             </a>
             <a href="{{ route('pos.index', $storeRouteParams) }}" target="_blank"
                class="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-2xs transition flex items-center gap-1.5 active:scale-95">

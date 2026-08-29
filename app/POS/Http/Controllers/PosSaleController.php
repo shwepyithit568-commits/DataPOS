@@ -741,6 +741,11 @@ class PosSaleController extends Controller
 
         $printCount = $printed + $reprinted + 1;
 
-        return view('pos.receipt', compact('store', 'sale', 'printCount', 'isReprint'));
+        $voucherTemplate = app(\App\POS\Services\VoucherTemplateService::class)->getActiveTemplate(
+            $store,
+            $request->input('paper_size', '80mm')
+        );
+
+        return view('pos.receipt', compact('store', 'sale', 'printCount', 'isReprint', 'voucherTemplate'));
     }
 }

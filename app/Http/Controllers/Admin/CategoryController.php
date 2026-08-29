@@ -133,39 +133,83 @@ class CategoryController extends Controller
      * through the category importer — the parent column references a Main
      * category by name or slug).
      */
-    public function export(StoreContext $context): StreamedResponse
+    public function export(Request $request, StoreContext $context): \Symfony\Component\HttpFoundation\BinaryFileResponse|StreamedResponse
     {
         $store = $context->getStore();
+        $format = strtolower((string) $request->query('format', 'csv'));
 
         $categories = Category::where('store_id', $store->id)
             ->with('parent')
             ->orderBy('name')
             ->get();
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="categories-' . now()->format('Ymd-His') . '.csv"',
-        ];
+        if ($format === 'csv') {
+            $headers = [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="categories-' . now()->format('Ymd-His') . '.csv"',
+            ];
 
-        return response()->streamDownload(function () use ($categories) {
-            $stream = fopen('php://output', 'w');
+            return response()->streamDownload(function () use ($categories) {
+                $stream = fopen('php://output', 'w');
+                fwrite($stream, "\xEF\xBB\xBF");
+                fputcsv($stream, ['Name', 'Slug', 'Parent', 'Description', 'Icon']);
 
-            // UTF-8 BOM so Excel opens the file with correct encoding
-            fwrite($stream, "\xEF\xBB\xBF");
-            fputcsv($stream, ['Name', 'Slug', 'Parent', 'Description', 'Icon']);
+                foreach ($categories as $category) {
+                    fputcsv($stream, [
+                        $this->csvCell($category->name),
+                        $this->csvCell($category->slug),
+                        $this->csvCell($category->parent?->name ?? ''),
+                        $this->csvCell($category->description ?? ''),
+                        $this->csvCell($category->icon ?? ''),
+                    ]);
+                }
 
-            foreach ($categories as $category) {
-                fputcsv($stream, [
-                    $this->csvCell($category->name),
-                    $this->csvCell($category->slug),
-                    $this->csvCell($category->parent?->name ?? ''),
-                    $this->csvCell($category->description ?? ''),
-                    $this->csvCell($category->icon ?? ''),
-                ]);
-            }
+                fclose($stream);
+            }, 'categories-' . now()->format('Ymd-His') . '.csv', $headers);
+        }
 
-            fclose($stream);
-        }, 'categories-' . now()->format('Ymd-His') . '.csv', $headers);
+        $filename = 'Categories_' . $store->slug . '_' . now()->format('Ymd_His') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_cat_');
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Categories');
+
+        $sheet->setCellValue('A1', $store->name . ' - Categories Export');
+        $sheet->setCellValue('A2', 'Export Date: ' . now()->format('d/m/Y h:i A') . ' | Total Count: ' . $categories->count());
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('4C1D95');
+        $sheet->getStyle('A2')->getFont()->setSize(10)->getColor()->setRGB('64748B');
+
+        $row = 4;
+        $headers = ['A' => 'Name', 'B' => 'Slug', 'C' => 'Parent', 'D' => 'Description', 'E' => 'Icon'];
+        foreach ($headers as $col => $title) {
+            $sheet->setCellValue("{$col}{$row}", $title);
+        }
+        $sheet->getStyle("A{$row}:E{$row}")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '6D28D9']],
+        ]);
+
+        $row++;
+        foreach ($categories as $cat) {
+            $sheet->setCellValue("A{$row}", $cat->name);
+            $sheet->setCellValue("B{$row}", $cat->slug);
+            $sheet->setCellValue("C{$row}", $cat->parent?->name ?? '');
+            $sheet->setCellValue("D{$row}", $cat->description ?? '');
+            $sheet->setCellValue("E{$row}", $cat->icon ?? '');
+            $row++;
+        }
+
+        foreach (range('A', 'E') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     public function importForm(StoreContext $context): View

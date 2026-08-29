@@ -437,7 +437,7 @@
                  class="rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 py-8 text-center bg-slate-50/50 dark:bg-slate-900/30">
                 <div class="text-2xl mb-1 opacity-50">🛒</div>
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('messages.receiving_product_placeholder') }}</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">Type barcode, SKU or product name above to add items to this PO</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.po_scan_prompt') }}</p>
             </div>
 
             {{-- Line Items Table --}}
@@ -509,13 +509,13 @@
                 </div>
                 <template x-if="discountAmount > 0">
                     <div class="border-l border-slate-200 dark:border-slate-700 pl-3">
-                        <span class="text-[10px] uppercase font-bold text-rose-500 block">Discount (-)</span>
+                        <span class="text-[10px] uppercase font-bold text-rose-500 block">{{ __('messages.discount') }} (-)</span>
                         <span class="text-xs sm:text-sm font-bold text-rose-600 font-mono" x-text="'- Ks ' + fmt(discountAmount)"></span>
                     </div>
                 </template>
                 <template x-if="deliveryFee > 0">
                     <div class="border-l border-slate-200 dark:border-slate-700 pl-3">
-                        <span class="text-[10px] uppercase font-bold text-amber-500 block">Delivery (+)</span>
+                        <span class="text-[10px] uppercase font-bold text-amber-500 block">{{ __('messages.delivery') ?? 'ပို့ဆောင်ခ' }} (+)</span>
                         <span class="text-xs sm:text-sm font-bold text-amber-600 font-mono" x-text="'+ Ks ' + fmt(deliveryFee)"></span>
                     </div>
                 </template>

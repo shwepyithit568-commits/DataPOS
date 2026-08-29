@@ -387,7 +387,7 @@
                  class="rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 py-8 text-center bg-slate-50/50 dark:bg-slate-900/30">
                 <div class="text-2xl mb-1 opacity-50">🛒</div>
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('messages.receiving_product_placeholder') ?? 'Search and add products to transfer' }}</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">Type barcode, SKU or product name above to add items to this transfer</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.transfer_scan_prompt') }}</p>
             </div>
 
             {{-- Line Items Table --}}

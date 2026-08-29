@@ -245,24 +245,24 @@
                     <span class="value">{{ $warranty->product_name }}</span>
                 </div>
                 <div class="row">
-                    <span class="label">Serial Number:</span>
+                    <span class="label">{{ __('messages.serial_number_label') }}</span>
                     <span class="value font-mono">{{ $warranty->serial_number }}</span>
                 </div>
                 @if($warranty->imei_primary)
                     <div class="row">
-                        <span class="label">Primary IMEI:</span>
+                        <span class="label">{{ __('messages.primary_imei_label') }}</span>
                         <span class="value font-mono">{{ $warranty->imei_primary }}</span>
                     </div>
                 @endif
                 @if($warranty->imei_secondary)
                     <div class="row">
-                        <span class="label">Secondary IMEI:</span>
+                        <span class="label">{{ __('messages.secondary_imei_label') }}</span>
                         <span class="value font-mono">{{ $warranty->imei_secondary }}</span>
                     </div>
                 @endif
                 @if($warranty->invoice_number)
                     <div class="row">
-                        <span class="label">Invoice No:</span>
+                        <span class="label">{{ __('messages.invoice_no_label') }}</span>
                         <span class="value font-mono">#{{ $warranty->invoice_number }}</span>
                     </div>
                 @endif
@@ -306,7 +306,7 @@
             </div>
             <div class="sign-box">
                 <div class="sign-line"></div>
-                <div style="font-size: 11px; color: #64748b;">Authorized Store Stamp / Signature</div>
+                <div style="font-size: 11px; color: #64748b;">{{ __('messages.auth_store_stamp_sig') }}</div>
             </div>
         </div>
     </div>

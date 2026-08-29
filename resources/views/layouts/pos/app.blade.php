@@ -141,6 +141,9 @@
             </div>
 
             <div class="flex items-center gap-2">
+                @if (isset($store))
+                    <x-sync-status-widget :store="$store" />
+                @endif
                 {{-- Mobile: time only --}}
                 <div x-data="{
                         t: '',
@@ -286,5 +289,7 @@
         </div>
     </div>
 
+    {{-- Reusable Confirmation Modal & Form Submit Protection --}}
+    <x-admin.confirm-modal />
 </body>
 </html>

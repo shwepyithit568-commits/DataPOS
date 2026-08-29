@@ -132,24 +132,24 @@
                     <span class="font-bold text-slate-900 dark:text-slate-100 text-right">{{ $warranty->product_name }}</span>
                 </div>
                 <div class="pt-1.5 flex justify-between">
-                    <span class="text-slate-500">Serial Number (SN):</span>
+                    <span class="text-slate-500">{{ __('messages.serial_number_label') }}</span>
                     <span class="font-mono font-bold text-violet-600 dark:text-violet-400">{{ $warranty->serial_number }}</span>
                 </div>
                 @if($warranty->imei_primary)
                     <div class="pt-1.5 flex justify-between">
-                        <span class="text-slate-500">Primary IMEI:</span>
+                        <span class="text-slate-500">{{ __('messages.primary_imei_label') }}</span>
                         <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $warranty->imei_primary }}</span>
                     </div>
                 @endif
                 @if($warranty->imei_secondary)
                     <div class="pt-1.5 flex justify-between">
-                        <span class="text-slate-500">Secondary IMEI:</span>
+                        <span class="text-slate-500">{{ __('messages.secondary_imei_label') }}</span>
                         <span class="font-mono text-slate-700 dark:text-slate-300">{{ $warranty->imei_secondary }}</span>
                     </div>
                 @endif
                 @if($warranty->invoice_number)
                     <div class="pt-1.5 flex justify-between">
-                        <span class="text-slate-500">Invoice / Receipt:</span>
+                        <span class="text-slate-500">{{ __('messages.invoice_no_label') }}</span>
                         <span class="font-mono font-bold text-slate-800 dark:text-slate-200">#{{ $warranty->invoice_number }}</span>
                     </div>
                 @endif
@@ -176,8 +176,8 @@
                     <span class="font-semibold text-slate-800 dark:text-slate-200">{{ $warranty->warranty_duration_months }} Months</span>
                 </div>
                 <div class="pt-1.5 flex justify-between">
-                    <span class="text-slate-500">Claim History Count:</span>
-                    <span class="font-bold {{ $warranty->claim_count > 0 ? 'text-indigo-600' : 'text-slate-400' }}">{{ $warranty->claim_count }} claims</span>
+                    <span class="text-slate-500">{{ __('messages.claims_count') ?? 'ပြင်ဆင်မှတ်တမ်း အကြိမ်:' }}</span>
+                    <span class="font-bold {{ $warranty->claim_count > 0 ? 'text-indigo-600' : 'text-slate-400' }}">{{ $warranty->claim_count }}</span>
                 </div>
             </div>
 
@@ -201,11 +201,11 @@
                 <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider">
                     {{ __('messages.linked_service_history') }}
                 </h3>
-                <p class="text-[11px] text-slate-400">Past repair tickets and service jobs logged for this Serial / IMEI</p>
+                <p class="text-[11px] text-slate-400">{{ __('messages.past_repair_tickets_logged') }}</p>
             </div>
             <a href="{{ route('store.admin.repairs.create', ['store_slug' => $store->slug, 'imei_serial' => $warranty->serial_number]) }}"
                class="text-xs font-bold text-violet-600 hover:text-violet-500">
-                + Create Repair Ticket
+                + {{ __('messages.repairs_add_new') ?? 'ပြင်ဆင်မှုလက်မှတ်ဖွင့်မည်' }}
             </a>
         </div>
 

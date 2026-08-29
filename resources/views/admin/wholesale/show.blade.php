@@ -23,7 +23,7 @@
             <div class="min-w-0">
                 <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 text-[10px] sm:text-[11px] font-black uppercase tracking-wider border border-indigo-100 dark:border-indigo-900/60 mb-0.5">
                     <span>💼</span>
-                    <span>Wholesale Application</span>
+                    <span>{{ __('messages.wholesale_application') ?? 'လက်ကား လျှောက်ထားလွှာ' }}</span>
                     <span class="text-slate-400 dark:text-slate-500">·</span>
                     <span class="font-normal normal-case text-slate-500 dark:text-slate-400">ID #{{ $application->id }}</span>
                 </div>
@@ -48,7 +48,7 @@
             <a href="{{ route('store.admin.wholesale.applications.print', array_merge($storeRouteParams, ['application' => $application->id])) }}" target="_blank"
                class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1.5 active:scale-95 shadow-2xs">
                 <span>🧾</span>
-                <span>Print Slip</span>
+                <span>{{ __('messages.print_slip') ?? 'ဘောက်ချာ ထုတ်မည်' }}</span>
             </a>
 
             @if (auth()->user()->isPlatformOwner() || auth()->user()->hasStoreRole($store->id, ['store_manager']))

@@ -140,19 +140,36 @@
             margin-top: 12px;
         }
         .btn-print-box {
-            max-width: 300px;
+            max-width: 380px;
             margin: 20px auto 0 auto;
-            text-align: center;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
         }
-        .btn-print {
-            background: #7c3aed;
-            color: #fff;
-            padding: 10px 24px;
+        .btn-print, .btn-pdf, .btn-close {
+            flex: 1;
+            padding: 10px 14px;
             border-radius: 8px;
             font-weight: bold;
             border: none;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
+            text-align: center;
+            text-decoration: none;
+            transition: transform 0.1s ease;
+        }
+        .btn-print:active, .btn-pdf:active, .btn-close:active { transform: scale(0.97); }
+        .btn-print {
+            background: #0284c7;
+            color: #fff;
+        }
+        .btn-pdf {
+            background: #7c3aed;
+            color: #fff;
+        }
+        .btn-close {
+            background: #e2e8f0;
+            color: #334155;
         }
         @media print {
             body {
@@ -315,9 +332,26 @@
 
 <div class="btn-print-box">
     <button type="button" class="btn-print" onclick="window.print()">
-        🖨️ Print Sample Voucher
+        🖨️ {{ __('messages.print') ?? 'Print Sample' }}
+    </button>
+    <button type="button" class="btn-pdf" onclick="saveAsPdf()">
+        📥 {{ __('messages.export_pdf') ?? 'Save PDF' }}
+    </button>
+    <button type="button" class="btn-close" onclick="window.close()">
+        ✕ {{ __('messages.close') ?? 'Close' }}
     </button>
 </div>
+
+<script>
+    function saveAsPdf() {
+        var oldTitle = document.title;
+        document.title = 'Voucher_{{ $template->name }}_{{ $template->paper_size }}.pdf';
+        window.print();
+        setTimeout(function() {
+            document.title = oldTitle;
+        }, 1000);
+    }
+</script>
 
 </body>
 </html>
