@@ -175,6 +175,57 @@ class StoreCapabilityEnforcementTest extends TestCase
         $response->assertStatus(403);
     }
 
+    public function test_public_storefront_routes_enforce_their_capabilities(): void
+    {
+        $store = $this->createTestStore([
+            'slug' => 'restricted-public-store',
+            'capabilities_override' => [
+                Capability::STOREFRONT_ECOMMERCE => false,
+                Capability::STOREFRONT_ONLINE_ORDERING => false,
+                Capability::STOREFRONT_CUSTOMER_PORTAL => false,
+                Capability::STOREFRONT_BLOG => false,
+                Capability::STOREFRONT_REVIEWS => false,
+                Capability::SERVICE_REPAIR_JOBS => false,
+            ],
+        ]);
+        $customer = User::factory()->create();
+
+        $this->get('/products?store_slug=' . $store->slug)->assertForbidden();
+        $this->get('/browse?store_slug=' . $store->slug)->assertForbidden();
+        $this->get('/store/' . $store->slug . '/product/missing-product')->assertForbidden();
+        $this->get('/order-builder?store_slug=' . $store->slug)->assertForbidden();
+        $this->get('/how-to-order?store_slug=' . $store->slug)->assertForbidden();
+        $this->post('/store/' . $store->slug . '/orders', [])->assertForbidden();
+        $this->actingAs($customer)->get('/account?store_slug=' . $store->slug)->assertForbidden();
+        $this->get('/blog?store_slug=' . $store->slug)->assertForbidden();
+        $this->get('/blog/missing-post?store_slug=' . $store->slug)->assertForbidden();
+        $this->get('/service-tracking?store_slug=' . $store->slug)->assertForbidden();
+        $this->get('/store/' . $store->slug . '/track/service')->assertForbidden();
+        $this->post('/store/' . $store->slug . '/product/missing-product/reviews', [])->assertForbidden();
+    }
+
+    public function test_storefront_hides_links_for_disabled_customer_features(): void
+    {
+        $store = $this->createTestStore([
+            'slug' => 'restricted-navigation-store',
+            'capabilities_override' => [
+                Capability::STOREFRONT_ONLINE_ORDERING => false,
+                Capability::STOREFRONT_CUSTOMER_PORTAL => false,
+                Capability::STOREFRONT_BLOG => false,
+                Capability::SERVICE_REPAIR_JOBS => false,
+            ],
+        ]);
+
+        $response = $this->get('/store/' . $store->slug);
+
+        $response->assertOk();
+        $response->assertDontSee('/how-to-order?store_slug=' . $store->slug, false);
+        $response->assertDontSee('/order-builder?store_slug=' . $store->slug, false);
+        $response->assertDontSee('/account?store_slug=' . $store->slug, false);
+        $response->assertDontSee('/blog?store_slug=' . $store->slug, false);
+        $response->assertDontSee('/service-tracking?store_slug=' . $store->slug, false);
+    }
+
     public function test_admin_sidebar_respects_store_capabilities(): void
     {
         $mobileStore = $this->createTestStore([

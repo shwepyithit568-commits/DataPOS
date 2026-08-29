@@ -121,10 +121,12 @@
                     </h3>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-1 gap-2 sm:gap-1.5 pt-1">
-                    <a href="{{ $howToOrderUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
-                        <span>📖</span>
-                        <span>{{ __('messages.how_to_order') }}</span>
-                    </a>
+                    @if (store_can('storefront.online_ordering', $store))
+                        <a href="{{ $howToOrderUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
+                            <span>📖</span>
+                            <span>{{ __('messages.how_to_order') }}</span>
+                        </a>
+                    @endif
                     @if (store_can('service.repair_jobs', $store))
                         <a href="{{ $serviceTrackingUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-violet-50/60 sm:bg-transparent dark:bg-violet-950/30 sm:dark:bg-transparent border border-violet-200/60 sm:border-0 dark:border-violet-800/60 {{ $linkStyle }} font-bold text-violet-700 dark:text-violet-400 hover:text-violet-900">
                             <span>🔧</span>
@@ -141,10 +143,12 @@
                         <span>🛍️</span>
                         <span>{{ __('messages.products') }}</span>
                     </a>
-                    <a href="{{ $accountUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
-                        <span>👤</span>
-                        <span>{{ __('messages.account') }}</span>
-                    </a>
+                    @if (store_can('storefront.customer_portal', $store))
+                        <a href="{{ $accountUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
+                            <span>👤</span>
+                            <span>{{ __('messages.account') }}</span>
+                        </a>
+                    @endif
                     @if (store_can('storefront.blog', $store))
                         <a href="{{ $blogUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
                             <span>📰</span>

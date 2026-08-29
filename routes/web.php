@@ -64,19 +64,19 @@ Route::get('/store/{store_slug}', [HomeController::class, 'index'])
 
 Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
-Route::get('/products', [CatalogController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page');
-Route::get('/products/suggestions', [CatalogController::class, 'suggestions'])->middleware([ResolveStoreContext::class, SetLocale::class, 'throttle:60,1']);
-Route::get('/store/{store_slug}/product/{slug}', [CatalogController::class, 'show'])->name('storefront.product')->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page');
+Route::get('/products', [CatalogController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.ecommerce'])->middleware('cache.public_page');
+Route::get('/products/suggestions', [CatalogController::class, 'suggestions'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.ecommerce', 'throttle:60,1']);
+Route::get('/store/{store_slug}/product/{slug}', [CatalogController::class, 'show'])->name('storefront.product')->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.ecommerce'])->middleware('cache.public_page');
 
 // AliExpress-style two-pane category browser (left rail + brands/sub-categories panel)
-Route::get('/browse', [BrowseController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page');
+Route::get('/browse', [BrowseController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.ecommerce'])->middleware('cache.public_page');
 
 // Customer product review submission (guest friendly — name + optional phone)
 Route::post('/store/{store_slug}/product/{slug}/reviews', [ReviewController::class, 'store'])
-    ->middleware([ResolveStoreContext::class, SetLocale::class, 'throttle:reviews']);
+    ->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.reviews', 'throttle:reviews']);
 
 // Customer Account System Routes (Protected by Auth)
-Route::middleware(['auth', ResolveStoreContext::class, SetLocale::class])->group(function () {
+Route::middleware(['auth', ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.customer_portal'])->group(function () {
     Route::get('/account', [AccountController::class, 'index']);
     Route::get('/account/orders', [AccountController::class, 'orders']);
     Route::get('/account/orders/{order}', [AccountController::class, 'showOrder']);
@@ -84,15 +84,15 @@ Route::middleware(['auth', ResolveStoreContext::class, SetLocale::class])->group
 });
 
 // Customer Order Request Route (Supports Guest & Authenticated Users)
-Route::get('/order-builder', [OrderController::class, 'builder'])->middleware([ResolveStoreContext::class, SetLocale::class]);
-Route::post('/store/{store_slug}/orders', [OrderController::class, 'store'])->middleware([ResolveStoreContext::class, SetLocale::class, 'throttle:orders']);
+Route::get('/order-builder', [OrderController::class, 'builder'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.online_ordering']);
+Route::post('/store/{store_slug}/orders', [OrderController::class, 'store'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.online_ordering', 'throttle:orders']);
 
 // Customer "How to Order / Contact" static guide page
-Route::get('/how-to-order', [HowToOrderController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class]);
+Route::get('/how-to-order', [HowToOrderController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.online_ordering']);
 
 // Order Confirmation Page (after successful order placement)
 Route::get('/store/{store_slug}/orders/{order}/confirmation', [OrderController::class, 'confirmation'])
-    ->middleware([ResolveStoreContext::class, SetLocale::class])
+    ->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.online_ordering'])
     ->name('orders.confirmation');
 
 // Customer Glass Finder Routes
@@ -101,18 +101,18 @@ Route::post('/glass-finder/favorite', [GlassFinderController::class, 'toggleFavo
 
 // Customer Service Job Live Tracking Routes (Login-free status tracking via token or lookup)
 Route::get('/service-tracking', [\App\Http\Controllers\Storefront\ServiceTrackingController::class, 'index'])
-    ->middleware([ResolveStoreContext::class, SetLocale::class])
+    ->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:service.repair_jobs'])
     ->name('storefront.service.track.index');
 Route::get('/store/{store_slug}/track/service', [\App\Http\Controllers\Storefront\ServiceTrackingController::class, 'index'])
-    ->middleware([ResolveStoreContext::class, SetLocale::class])
+    ->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:service.repair_jobs'])
     ->name('storefront.service.track.store');
 Route::get('/store/{store_slug}/track/service/{token}', [\App\Http\Controllers\Storefront\ServiceTrackingController::class, 'show'])
-    ->middleware([ResolveStoreContext::class, SetLocale::class])
+    ->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:service.repair_jobs'])
     ->name('storefront.service.track.token');
 
 // Public Blog Routes
-Route::get('/blog', [BlogController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class]);
-Route::get('/blog/{slug}', [BlogController::class, 'show'])->middleware([ResolveStoreContext::class, SetLocale::class]);
+Route::get('/blog', [BlogController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.blog']);
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.blog']);
 
 // Customer Wholesale Application Routes
 Route::prefix('store/{store_slug}')

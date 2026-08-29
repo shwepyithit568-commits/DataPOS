@@ -237,9 +237,11 @@
 
                 <div class="mt-3 flex gap-2">
                     @auth
+                        @if (store_can('storefront.customer_portal', $store))
                         <a href="{{ url('/account?store_slug=' . $storeSlug) }}" class="flex-1 py-2 px-2.5 rounded-xl bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 text-xs font-extrabold text-center hover:bg-sky-100 transition font-myanmar">
                             👤 {{ __('messages.account_and_orders') }}
                         </a>
+                        @endif
                     @else
                         <a href="{{ route('login') }}" class="flex-1 py-2 px-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-sky-600 text-white text-xs font-bold text-center hover:brightness-110 shadow-2xs transition font-myanmar">
                             {{ __('messages.login') }}
@@ -324,10 +326,12 @@
                 <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate w-full font-myanmar">{{ __('messages.nav_service_track') }}</span>
             </a>
         @endif
-        <a href="{{ url('/how-to-order?store_slug=' . $storeSlug) }}" class="flex-1 min-w-[4rem] flex flex-col items-center gap-1 p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
-            <span class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base shrink-0">📖</span>
-            <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate w-full font-myanmar">{{ __('messages.how_to_order') }}</span>
-        </a>
+        @if (store_can('storefront.online_ordering', $store))
+            <a href="{{ url('/how-to-order?store_slug=' . $storeSlug) }}" class="flex-1 min-w-[4rem] flex flex-col items-center gap-1 p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
+                <span class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base shrink-0">📖</span>
+                <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate w-full font-myanmar">{{ __('messages.how_to_order') }}</span>
+            </a>
+        @endif
         <a href="{{ url('/browse?store_slug=' . $storeSlug) }}" class="flex-1 min-w-[4rem] flex flex-col items-center gap-1 p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
             <span class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-base shrink-0">🗂️</span>
             <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate w-full font-myanmar">{{ __('messages.categories') }}</span>
@@ -338,7 +342,7 @@
                 <span class="w-9 h-9 rounded-xl bg-fuchsia-50 dark:bg-fuchsia-950/60 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center text-lg shrink-0">💬</span>
                 <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate w-full font-myanmar">{{ __('messages.contact') }}</span>
             </a>
-        @else
+        @elseif (store_can('storefront.customer_portal', $store))
             <a href="{{ url('/account?store_slug=' . $storeSlug) }}" class="flex flex-col items-center gap-1 p-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
                 <span class="w-9 h-9 rounded-xl bg-fuchsia-50 dark:bg-fuchsia-950/60 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center text-lg shrink-0">👤</span>
                 <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate w-full font-myanmar">{{ __('messages.account') }}</span>

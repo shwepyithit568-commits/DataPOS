@@ -454,10 +454,12 @@
             </div>
             <div class="flex items-center gap-4 shrink-0">
                 @auth
+                    @if (store_can('storefront.customer_portal', $activeStoreContext))
                     <a href="{{ $accountUrl }}" class="flex items-center gap-1.5 whitespace-nowrap hover:text-sky-600 dark:hover:text-sky-400 transition">
                         <span aria-hidden="true">👤</span>
                         <span class="max-w-[10rem] truncate">{{ auth()->user()->name }}</span>
                     </a>
+                    @endif
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="flex items-center gap-1.5 whitespace-nowrap hover:text-rose-600 dark:hover:text-rose-400 transition">
@@ -707,12 +709,14 @@
                 <x-language-switcher id="storefront-header" />
 
                 {{-- Compact Cart Icon with Badge (hidden on mobile — cart is in the bottom nav) --}}
+                @if (store_can('storefront.online_ordering', $activeStoreContext))
                 <a href="{{ $orderBuilderUrl }}" class="group relative hidden md:flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700" title="{{ __('messages.order_builder') }}">
                     <svg class="h-4 w-4 text-slate-700 transition-colors group-hover:text-sky-500 dark:text-slate-200 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
                     <span x-show="$store.orderBuilder && $store.orderBuilder.totalCount > 0" class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] sm:min-w-[20px] sm:h-[20px] px-1 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white font-black text-xs sm:text-xs flex items-center justify-center shadow-md shadow-sky-500/30" x-text="$store.orderBuilder ? $store.orderBuilder.totalCount : 0"></span>
                 </a>
+                @endif
 
                 {{-- Dark Mode Toggle (compact icon — visible on all viewports) --}}
                 <button @click="toggleDarkMode()" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700/80 dark:bg-slate-800 dark:text-amber-400 dark:hover:bg-slate-700" title="{{ __('messages.theme_toggle') }}">
@@ -941,10 +945,12 @@
                             <span>{{ __('messages.nav_service_track') }}</span>
                         </a>
                     @endif
-                    <a href="{{ $howToOrderUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isHowToOrder ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
-                        <span aria-hidden="true">📖</span>
-                        <span>{{ __('messages.how_to_order') }}</span>
-                    </a>
+                    @if (store_can('storefront.online_ordering', $activeStoreContext))
+                        <a href="{{ $howToOrderUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isHowToOrder ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
+                            <span aria-hidden="true">📖</span>
+                            <span>{{ __('messages.how_to_order') }}</span>
+                        </a>
+                    @endif
                     @if (store_can('storefront.blog', $activeStoreContext))
                         <a href="{{ $blogUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isBlog ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
                             <span aria-hidden="true">📝</span>
@@ -1169,10 +1175,12 @@
                 <div class="flex items-center gap-2">
                     {{-- Account / Login --}}
                     @auth
+                        @if (store_can('storefront.customer_portal', $activeStoreContext))
                         <a href="{{ $accountUrl }}" @click="mobileMenuOpen = false" class="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl border border-violet-400 bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3 text-sm font-extrabold text-white shadow-md shadow-sky-500/20 transition hover:brightness-110 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-sky-500/60">
                             <span aria-hidden="true">👤</span>
                             <span class="flex-1 truncate text-left">{{ auth()->user()->name }}</span>
                         </a>
+                        @endif
                     @else
                         <a href="{{ route('login') }}" @click="mobileMenuOpen = false" class="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3 text-sm font-extrabold text-white shadow-md shadow-sky-500/20 transition hover:brightness-110 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-sky-500/60">
                             <span aria-hidden="true">🔑</span>
@@ -1207,10 +1215,12 @@
                             <span>{{ __('messages.nav_service_track') }}</span>
                         </a>
                     @endif
-                    <a href="{{ $howToOrderUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isHowToOrder ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
-                        <span aria-hidden="true">📖</span>
-                        <span>{{ __('messages.how_to_order') }}</span>
-                    </a>
+                    @if (store_can('storefront.online_ordering', $activeStoreContext))
+                        <a href="{{ $howToOrderUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isHowToOrder ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
+                            <span aria-hidden="true">📖</span>
+                            <span>{{ __('messages.how_to_order') }}</span>
+                        </a>
+                    @endif
                     @if (store_can('storefront.blog', $activeStoreContext))
                         <a href="{{ $blogUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isBlog ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
                             <span aria-hidden="true">📝</span>
@@ -1245,7 +1255,7 @@
         :store-display-name="$storeDisplayName"
         :store-slug="$activeStoreSlug"
     />
-    @if (!($hideFloatingFabs ?? false))
+    @if (!($hideFloatingFabs ?? false) && store_can('storefront.online_ordering', $activeStoreContext))
     <div
         x-show="$store.orderBuilder && $store.orderBuilder.totalCount > 0"
         x-transition:enter="transition ease-out duration-300 transform"
@@ -1403,6 +1413,7 @@
                 <span class="text-xs font-bold tracking-tight {{ $isBrowse ? 'font-black' : '' }}">{{ __('messages.categories') }}</span>
             </a>
         @endif
+        @if (store_can('storefront.online_ordering', $activeStoreContext))
         <a href="{{ $orderBuilderUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isOrderBuilder ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
             <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl relative transition-all duration-200 {{ $isOrderBuilder ? 'bg-gradient-to-br from-rose-500 to-red-500 text-white shadow-lg shadow-rose-500/40 scale-110' : 'bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 group-hover:bg-rose-200 dark:group-hover:bg-rose-900/60' }}">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>
@@ -1412,6 +1423,8 @@
             </span>
             <span class="text-xs font-bold tracking-tight {{ $isOrderBuilder ? 'font-black' : '' }}">{{ __('messages.nav_cart') }}</span>
         </a>
+        @endif
+        @if (store_can('storefront.customer_portal', $activeStoreContext))
         @auth
             <a href="{{ $accountUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isAccount ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
                 <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isAccount ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/40 scale-110' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/60' }}">
@@ -1427,6 +1440,7 @@
                 <span class="text-xs font-bold tracking-tight {{ $isAccount ? 'font-black' : '' }}">{{ __('messages.login') }}</span>
             </a>
         @endauth
+        @endif
     </div>
 
     {{-- Floating Contact Button (mobile) — opens popup listing the chat/social channels Admin configured --}}

@@ -41,7 +41,15 @@ class CheckStoreCapability
             }
         }
 
-        if (! $store || ! $store->hasCapability($capability)) {
+        if (! $store) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Store not found.'], 404);
+            }
+
+            abort(404, 'Store not found.');
+        }
+
+        if (! $store->hasCapability($capability)) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message'    => 'This feature is not enabled for your store profile.',
