@@ -36,44 +36,19 @@ class StoreManagementController extends Controller
 
     public function create(): View
     {
-        return view('admin.stores.create');
+        $editions = \App\Services\StoreOnboardingService::EDITIONS;
+        return view('admin.stores.create', compact('editions'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, \App\Services\StoreOnboardingService $onboardingService): RedirectResponse
     {
         $validated = $this->validateStore($request);
 
-        DB::transaction(function () use ($validated) {
-            $store = Store::create([
-                'name' => trim($validated['name']),
-                'slug' => trim($validated['slug']),
-                'viber_number' => $validated['viber_number'] ?? null,
-                'telegram_username' => $validated['telegram_username'] ?? null,
-                'is_active' => $validated['is_active'] ?? true,
-                'is_primary' => $validated['is_primary'] ?? false,
-            ]);
+        $store = $onboardingService->provisionStore($validated);
 
-            // Single-primary rule: creating/flagging a primary demotes all others.
-            if ($store->is_primary) {
-                $this->demoteOtherPrimaries($store->id);
-            }
-
-            // Every store gets a default branch + warehouse automatically (target-design §2.11).
-            app(\App\POS\Services\StoreLocationService::class)->ensureDefaults($store);
-
-            StorefrontSetting::create([
-                'store_id' => $store->id,
-                'store_name' => trim($validated['name']),
-                'phone' => $validated['phone'] ?? null,
-                'viber_number' => $validated['viber_number'] ?? null,
-                'telegram_username' => $validated['telegram_username'] ?? null,
-                'address' => $validated['address'] ?? null,
-                'opening_hours' => $validated['opening_hours'] ?? null,
-                'delivery_info' => $validated['delivery_info'] ?? null,
-                'payment_info' => $validated['payment_info'] ?? null,
-                'default_language' => $validated['default_language'],
-            ]);
-        });
+        if ($store->is_primary) {
+            $this->demoteOtherPrimaries($store->id);
+        }
 
         return redirect()
             ->route('admin.stores.index')
@@ -264,6 +239,11 @@ class StoreManagementController extends Controller
             'opening_hours' => ['nullable', 'string', 'max:255'],
             'delivery_info' => ['nullable', 'string'],
             'payment_info' => ['nullable', 'string'],
+            'edition' => ['nullable', 'string', Rule::in(array_keys(\App\Services\StoreOnboardingService::EDITIONS))],
+            'owner_name' => ['nullable', 'string', 'max:100'],
+            'owner_phone' => ['nullable', 'string', 'max:50', 'regex:/^(\+?95|09)[0-9]{7,11}$/'],
+            'owner_password' => ['nullable', 'string', 'min:6'],
+            'owner_pos_pin' => ['nullable', 'string', 'min:4', 'max:8'],
             'default_language' => ['required', Rule::in(array_keys(config('localization.supported', [])))],
             'is_active' => ['nullable', 'boolean'],
             'is_primary' => ['nullable', 'boolean'],

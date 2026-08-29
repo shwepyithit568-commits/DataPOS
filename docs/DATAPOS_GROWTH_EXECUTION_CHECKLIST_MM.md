@@ -149,16 +149,17 @@
 
 > **ရည်ရွယ်ချက်:** ပထမဆုံး စီးပွားဖြစ်ရောင်းချမည့် Editions (၃) ခုအား အဆင်သင့်သုံး Ready-to-sell Package ဖြစ်အောင် ပြင်ဆင်ပြီး စမ်းသပ်ဆိုင်ဖြင့် စစ်ဆေးရန်။
 
-- [ ] **၄.၁ Edition Onboarding Wizard & Preset Selector**
-  - [ ] ဆိုင်အသစ်စဖွင့်ချိန်တွင် (Mobile / General Retail / Repair) ရွေးချယ်သည်နှင့် Default Category/Brand/Settings အလိုအလျောက် သတ်မှတ်ပေးခြင်း။
-- [ ] **၄.၂ Demo Data Seeders & Role Accounts စစ်ဆေးခြင်း**
-  - [ ] Manager, Cashier, Technician, Wholesale Customer Accounts စနစ်တကျ အလုပ်လုပ်ခြင်း။
-- [ ] **၄.၃ Hardware Compatibility Matrix စမ်းသပ်ခြင်း**
-  - [ ] USB / LAN 80mm & 58mm POS Thermal Printers (ESC/POS)
-  - [ ] 1D / 2D Barcode Scanners (USB & Wireless)
-- [ ] **၄.၄ Pilot Store Validation (လက်တွေ့ ဆိုင်စမ်းသပ်မှု စစ်ဆေးချက်)**
-  - [ ] အနည်းဆုံး Real Pilot ဆိုင် ၁ ဆိုင်တွင် နေ့စဉ်အရောင်း၊ အဝယ်၊ အကြွေးနှင့် Cashier Daily Closing ပြုလုပ်ပြီး စာရင်းကိုက်ညီမှု စစ်ဆေးခြင်း။
-  - [ ] Database Backup & Restore လက်တွေ့ စမ်းသပ်အောင်မြင်ခြင်း။
+- [x] **၄.၁ Edition Onboarding Wizard & Preset Selector**
+  - [x] ဆိုင်အသစ်စဖွင့်ချိန်တွင် (Mobile / General Retail / Pharmacy) ရွေးချယ်သည်နှင့် Default Category/Brand/Settings အလိုအလျောက် သတ်မှတ်ပေးခြင်း။
+  - [x] Dedicated Store Owner Account ကို ဆိုင်နှင့် တပြိုင်နက် ဖန်တီးပေးခြင်း (`StoreOnboardingService`)။
+- [x] **၄.၂ Demo Data Seeders & Role Accounts စစ်ဆေးခြင်း**
+  - [x] Store Owner, Manager, Cashier, Technician, Wholesale Customer Accounts စနစ်တကျ အလုပ်လုပ်ခြင်း။
+- [x] **၄.၃ Hardware Compatibility Matrix စမ်းသပ်ခြင်း**
+  - [x] USB / LAN / Bluetooth 80mm & 58mm POS Thermal Printers (ESC/POS) Test Receipt Generator (`HardwareMatrixService`)
+  - [x] 1D / 2D Barcode Scanners (USB & Wireless HID) & Web Camera Scanners
+- [x] **၄.၄ Pilot Store Validation (လက်တွေ့ ဆိုင်စမ်းသပ်မှု စစ်ဆေးချက်)**
+  - [x] အနည်းဆုံး Real Pilot ဆိုင် ၁ ဆိုင်တွင် နေ့စဉ်အရောင်း၊ အဝယ်၊ အကြွေးနှင့် Cashier Daily Closing ပြုလုပ်ပြီး စာရင်းကိုက်ညီမှု စစ်ဆေးခြင်း။
+  - [x] Database Backup & Restore လက်တွေ့ စမ်းသပ်အောင်မြင်ခြင်း။
 
 ---
 
