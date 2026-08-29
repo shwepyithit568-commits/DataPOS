@@ -9,20 +9,21 @@
     }
 
     $tmpl = $voucherTemplate ?? null;
-    $paperSize = $tmpl?->paper_size ?? '80mm';
-    $fontSize = $tmpl?->font_size ?? 'medium';
+    $paperSize = data_get($tmpl, 'paper_size', '80mm');
+    $fontSize = data_get($tmpl, 'font_size', 'medium');
     $is58 = $paperSize === '58mm';
-    $showLogo = $tmpl ? (bool)$tmpl->show_logo : true;
-    $showQr = $tmpl ? (bool)$tmpl->show_qr : false;
-    $showBarcode = $tmpl ? (bool)$tmpl->show_barcode : false;
-    $showCustomer = $tmpl ? (bool)$tmpl->show_customer_info : true;
-    $showCashier = $tmpl ? (bool)$tmpl->show_cashier_name : true;
-    $headerTitle = !empty($tmpl?->header_title) ? $tmpl->header_title : $store->name;
-    $headerSubtitle = $tmpl?->header_subtitle ?? null;
-    $address = $tmpl?->address ?? ($store->address ?? null);
-    $phone = $tmpl?->phone ?? ($store->viber_number ? 'Viber: ' . $store->viber_number : ($store->phone ?? null));
-    $footerGreeting = $tmpl?->footer_greeting ?? __('messages.thank_you_purchase');
-    $footerPolicy = $tmpl?->footer_policy ?? null;
+    $showLogo = (bool) data_get($tmpl, 'show_logo', true);
+    $showQr = (bool) data_get($tmpl, 'show_qr', false);
+    $showBarcode = (bool) data_get($tmpl, 'show_barcode', false);
+    $showCustomer = (bool) data_get($tmpl, 'show_customer_info', true);
+    $showCashier = (bool) data_get($tmpl, 'show_cashier_name', true);
+    $headerTitle = data_get($tmpl, 'header_title') ?: $store->name;
+    $headerSubtitle = data_get($tmpl, 'header_subtitle');
+    $address = data_get($tmpl, 'address') ?: ($store->address ?? null);
+    $phone = data_get($tmpl, 'phone') ?: ($store->viber_number ? 'Viber: ' . $store->viber_number : ($store->phone ?? null));
+    $footerGreeting = data_get($tmpl, 'footer_greeting') ?: __('messages.thank_you_purchase');
+    $footerPolicy = data_get($tmpl, 'footer_policy');
+    $qrLabel = data_get($tmpl, 'qr_label') ?: 'Scan to pay with KPay / Wave';
 
     $logoUrl = null;
     if ($showLogo) {
@@ -277,7 +278,7 @@
                 <div class="qr-box">
                     <span>📱 QR PAY</span>
                 </div>
-                <div class="qr-label">{{ $tmpl?->qr_label ?? 'Scan to pay with KPay / Wave' }}</div>
+                <div class="qr-label">{{ $qrLabel }}</div>
             </div>
         @endif
 

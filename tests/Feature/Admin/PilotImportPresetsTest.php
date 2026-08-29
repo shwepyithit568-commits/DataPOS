@@ -99,7 +99,7 @@ class PilotImportPresetsTest extends TestCase
         ])->assertRedirect();
 
         $this->assertSame('products/customer-photo.webp', $product->fresh()->image_path);
-        Storage::disk('public')->assertExists('products/customer-photo.webp');
+        $this->assertTrue(Storage::disk('public')->exists('products/customer-photo.webp'));
     }
 
     public function test_manager_can_apply_demo_store_identity_explicitly(): void
@@ -183,6 +183,6 @@ class PilotImportPresetsTest extends TestCase
         $this->assertSame(0, \App\Models\Order::where('store_id', $this->store->id)->count());
         $this->assertSame(0, \App\Models\OrderItem::where('order_id', $order->id)->count());
         $this->assertSame(0, HomeBanner::where('store_id', $this->store->id)->where('image_path', 'like', "demo-stores/{$this->store->id}/%")->count());
-        Storage::disk('public')->assertMissing("demo-stores/{$this->store->id}");
+        $this->assertFalse(Storage::disk('public')->exists("demo-stores/{$this->store->id}"));
     }
 }
