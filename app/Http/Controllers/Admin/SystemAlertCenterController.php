@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Store;
 use App\Models\Supplier;
 use App\Models\WholesaleApplication;
 use App\POS\Models\PurchaseOrder;
 use App\Services\StoreContext;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -28,6 +30,73 @@ class SystemAlertCenterController extends Controller
         $tab = $request->query('tab', 'low_stock');
 
         // 1. Low Stock & Out of Stock Products
+        $lowStockProducts = $this->getLowStockProducts($store);
+
+        // 2. Pending Online Orders
+        $pendingOrders = Order::where('store_id', $store->id)
+            ->where('status', 'pending_contact')
+            ->latest('created_at')
+            ->get();
+
+        // 3. Pending Wholesale Applications
+        $pendingWholesale = WholesaleApplication::where('store_id', $store->id)
+            ->where('status', 'pending')
+            ->latest('created_at')
+            ->get();
+
+        // 4. Overdue Debts (Suppliers & Customers > 30 days)
+        $overdueDebts = $this->getOverdueDebts($store, $storeRouteParams);
+
+        // 5. Security Alerts & Access Events (Last 7 days)
+        $securityAlerts = $this->getSecurityAlerts($store);
+
+        // 6. Today's Business Performance Summary
+        $todayOrders = Order::where('store_id', $store->id)
+            ->whereDate('created_at', today())
+            ->get();
+
+        $todaySalesCount = $todayOrders->count();
+        $todayRevenue = (float) $todayOrders
+            ->whereIn('status', ['confirmed', 'delivered'])
+            ->sum(fn ($o) => $o->agreed_amount ?? $o->total_amount);
+
+        // Stats summary
+        $criticalAlertsCount = count($lowStockProducts) + count($pendingOrders) + count($pendingWholesale) + count($overdueDebts);
+
+        $stats = [
+            'critical_total'     => $criticalAlertsCount,
+            'low_stock_count'    => count($lowStockProducts),
+            'pending_orders'     => count($pendingOrders),
+            'pending_wholesale'  => count($pendingWholesale),
+            'overdue_debt_count' => count($overdueDebts),
+            'security_warnings'  => count($securityAlerts),
+            'today_sales'        => $todayRevenue,
+            'today_orders_count' => $todaySalesCount,
+        ];
+
+        $setting = $store->setting;
+
+        return view('admin.alerts.index', compact(
+            'store',
+            'storeRouteParams',
+            'stats',
+            'tab',
+            'lowStockProducts',
+            'pendingOrders',
+            'pendingWholesale',
+            'overdueDebts',
+            'securityAlerts',
+            'setting'
+        ));
+    }
+
+    /**
+     * Get low stock and out-of-stock products for the store.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getLowStockProducts(Store $store): array
+    {
         $allProducts = Product::where('store_id', $store->id)
             ->with(['inventoryBalances', 'category'])
             ->get();
@@ -58,19 +127,17 @@ class SystemAlertCenterController extends Controller
         // Sort low stock items: lowest stock quantity first
         usort($lowStockProducts, fn ($a, $b) => $a['stock_quantity'] <=> $b['stock_quantity']);
 
-        // 2. Pending Online Orders
-        $pendingOrders = Order::where('store_id', $store->id)
-            ->where('status', 'pending_contact')
-            ->latest('created_at')
-            ->get();
+        return $lowStockProducts;
+    }
 
-        // 3. Pending Wholesale Applications
-        $pendingWholesale = WholesaleApplication::where('store_id', $store->id)
-            ->where('status', 'pending')
-            ->latest('created_at')
-            ->get();
-
-        // 4. Overdue Debts (Suppliers & Customers > 30 days)
+    /**
+     * Get overdue payables and receivables exceeding 30 days.
+     *
+     * @param array<string, mixed> $storeRouteParams
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getOverdueDebts(Store $store, array $storeRouteParams): array
+    {
         $overdueDebts = [];
 
         // Supplier Payables
@@ -133,52 +200,22 @@ class SystemAlertCenterController extends Controller
         // Sort overdue debts by amount descending
         usort($overdueDebts, fn ($a, $b) => $b['amount'] <=> $a['amount']);
 
-        // 5. Security Alerts & Access Events (Last 7 days)
-        $securityAlerts = AuditLog::where('store_id', $store->id)
+        return $overdueDebts;
+    }
+
+    /**
+     * Get security audit logs from the past 7 days.
+     *
+     * @return Collection<int, AuditLog>
+     */
+    protected function getSecurityAlerts(Store $store): Collection
+    {
+        return AuditLog::where('store_id', $store->id)
             ->whereIn('action', ['pos_pin_failed', 'staff_role_deleted', 'staff_role_updated', 'inventory_adjustment_voided', 'bulk_price_updated'])
             ->with('actor')
             ->where('created_at', '>=', now()->subDays(7))
             ->latest('created_at')
             ->get();
-
-        // 6. Today's Business Performance Summary
-        $todayOrders = Order::where('store_id', $store->id)
-            ->whereDate('created_at', today())
-            ->get();
-
-        $todaySalesCount = $todayOrders->count();
-        $todayRevenue = (float) $todayOrders
-            ->whereIn('status', ['confirmed', 'delivered'])
-            ->sum(fn ($o) => $o->agreed_amount ?? $o->total_amount);
-
-        // Stats summary
-        $criticalAlertsCount = count($lowStockProducts) + count($pendingOrders) + count($pendingWholesale) + count($overdueDebts);
-
-        $stats = [
-            'critical_total'     => $criticalAlertsCount,
-            'low_stock_count'    => count($lowStockProducts),
-            'pending_orders'     => count($pendingOrders),
-            'pending_wholesale'  => count($pendingWholesale),
-            'overdue_debt_count' => count($overdueDebts),
-            'security_warnings'  => count($securityAlerts),
-            'today_sales'        => $todayRevenue,
-            'today_orders_count' => $todaySalesCount,
-        ];
-
-        $setting = $store->setting;
-
-        return view('admin.alerts.index', compact(
-            'store',
-            'storeRouteParams',
-            'stats',
-            'tab',
-            'lowStockProducts',
-            'pendingOrders',
-            'pendingWholesale',
-            'overdueDebts',
-            'securityAlerts',
-            'setting'
-        ));
     }
 
     /**
