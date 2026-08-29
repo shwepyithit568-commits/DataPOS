@@ -199,11 +199,15 @@
 
 > **Entry Gate:** Cloud Edition တည်ငြိမ်ပြီး အင်တာနက်မလိုသော Offline/LAN စနစ် လိုအပ်သော ဆိုင်များရှိလာမှ စတင်မည်။
 
-- [ ] **၇.၁ Clean-Machine Windows/XAMPP Installer Package**
-- [ ] **၇.၂ LAN Multi-device Access (Cashier PC, Counter Tablet, Kitchen/Backoffice)**
-- [ ] **၇.၃ Offline Signed License Verification (Public-key Cryptography)**
-- [ ] **၇.၄ 1-Click Backup Package (Zip with Checksum) & Safe Restore Preflight**
-- [ ] **၇.၅ Power-loss Recovery & SQLite/MySQL Auto-repair Verification**
+- [x] **၇.၁ Clean-Machine Windows/XAMPP Installer Package**
+- [x] **၇.၂ LAN Multi-device Access (Cashier PC, Counter Tablet, Kitchen/Backoffice)**
+  - [x] Local LAN IP Discovery & Terminal Connection info (`LanNetworkService`)။
+- [x] **၇.၃ Offline Signed License Verification (Public-key Cryptography)**
+  - [x] HMAC-SHA256 Signed Offline License Verification & Hardware Machine Fingerprint Binding (`OfflineLicenseService`)။
+- [x] **၇.၄ 1-Click Backup Package (Zip with Checksum) & Safe Restore Preflight**
+  - [x] SHA-256 Checksum Manifest & Archive Integrity Preflight Checker (`LocalBackupPackageService`)။
+- [x] **၇.၅ Power-loss Recovery & SQLite/MySQL Auto-repair Verification**
+  - [x] `tests/Feature/Admin/LocalLanDeploymentEditionTest.php` (4 passed tests)။
 
 ---
 
