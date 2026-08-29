@@ -58,6 +58,8 @@ class StorefrontSetting extends Model
         'theme_body_bg',
         'theme_glow_style',
         'theme_dark_mode',
+        'font_preset',
+        'grid_density',
     ];
 
     protected $casts = [
@@ -222,23 +224,47 @@ class StorefrontSetting extends Model
     // -------------------------------------------------------------------------
 
     /**
-     * Named preset → HEX defaults map.
-     * Each preset returns [primary, accent, header_bg].
+     * Named preset → HEX defaults map (kept for backwards compatibility).
      */
     public const THEME_PRESETS = [
-        // Template 1: Cloud White — clean, AliExpress-style
-        'sky'      => ['primary' => '#0ea5e9', 'accent' => '#7c3aed', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
-        // Template 2: Midnight Dark — premium tech, dark header
-        'midnight' => ['primary' => '#38bdf8', 'accent' => '#fb923c', 'header_bg' => '#0f172a', 'body_bg' => '#0f172a', 'glow_style' => 'vivid', 'dark_mode' => 'dark'],
-        // Template 3: Emerald Fresh — natural, trustworthy
-        'emerald'  => ['primary' => '#10b981', 'accent' => '#f59e0b', 'header_bg' => '#ffffff', 'body_bg' => '#f0fdf4', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
-        // Template 4: Sunset Rose — warm, feminine
-        'rose'     => ['primary' => '#e11d48', 'accent' => '#f59e0b', 'header_bg' => '#fff1f2', 'body_bg' => '#fff5f6', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
-        // Template 5: Royal Violet — luxury, bold dark header
-        'violet'   => ['primary' => '#7c3aed', 'accent' => '#10b981', 'header_bg' => '#1e1b4b', 'body_bg' => '#faf5ff', 'glow_style' => 'vivid', 'dark_mode' => 'dark'],
-        // Custom — user-defined colours; uses sky defaults as fallback
-        'custom'   => ['primary' => '#0ea5e9', 'accent' => '#7c3aed', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
+        'sky'             => ['primary' => '#0ea5e9', 'accent' => '#7c3aed', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
+        'midnight'        => ['primary' => '#38bdf8', 'accent' => '#fb923c', 'header_bg' => '#0f172a', 'body_bg' => '#0f172a', 'glow_style' => 'vivid', 'dark_mode' => 'dark'],
+        'emerald'         => ['primary' => '#10b981', 'accent' => '#f59e0b', 'header_bg' => '#ffffff', 'body_bg' => '#f0fdf4', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
+        'rose'            => ['primary' => '#e11d48', 'accent' => '#f59e0b', 'header_bg' => '#fff1f2', 'body_bg' => '#fff5f6', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
+        'violet'          => ['primary' => '#7c3aed', 'accent' => '#10b981', 'header_bg' => '#1e1b4b', 'body_bg' => '#faf5ff', 'glow_style' => 'vivid', 'dark_mode' => 'dark'],
+        'marketplace_pro' => ['primary' => '#0ea5e9', 'accent' => '#7c3aed', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
+        'retail_trust'    => ['primary' => '#2563eb', 'accent' => '#f59e0b', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'subtle', 'dark_mode' => 'auto'],
+        'emerald_fresh'   => ['primary' => '#10b981', 'accent' => '#f59e0b', 'header_bg' => '#ffffff', 'body_bg' => '#f0fdf4', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
+        'midnight_tech'   => ['primary' => '#38bdf8', 'accent' => '#fb923c', 'header_bg' => '#0f172a', 'body_bg' => '#0f172a', 'glow_style' => 'vivid', 'dark_mode' => 'dark'],
+        'sunset_warm'     => ['primary' => '#e11d48', 'accent' => '#f59e0b', 'header_bg' => '#fff1f2', 'body_bg' => '#fff5f6', 'glow_style' => 'subtle', 'dark_mode' => 'auto'],
+        'custom'          => ['primary' => '#0ea5e9', 'accent' => '#7c3aed', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
     ];
+
+    /**
+     * Get the active ThemeManifest instance for this store.
+     */
+    public function themeManifest(): \App\Themes\ThemeManifest
+    {
+        return \App\Themes\ThemeRegistry::get($this->theme_preset);
+    }
+
+    /**
+     * Get the CSS font-family stack for storefront typography.
+     */
+    public function fontFamilyCss(): string
+    {
+        $preset = $this->font_preset ?? $this->themeManifest()->defaultFont;
+        return \App\Themes\ThemeRegistry::FONT_PRESETS[$preset]['css'] ?? \App\Themes\ThemeRegistry::FONT_PRESETS['outfit']['css'];
+    }
+
+    /**
+     * Get the Tailwind CSS grid class for product lists.
+     */
+    public function gridDensityClass(): string
+    {
+        $density = $this->grid_density ?? $this->themeManifest()->defaultDensity;
+        return \App\Themes\ThemeRegistry::GRID_DENSITIES[$density]['class'] ?? \App\Themes\ThemeRegistry::GRID_DENSITIES['compact']['class'];
+    }
 
     /**
      * Resolved theme colours for the active storefront.
@@ -247,8 +273,8 @@ class StorefrontSetting extends Model
      */
     public function themeColors(): array
     {
-        $preset   = $this->theme_preset ?? 'sky';
-        $defaults = self::THEME_PRESETS[$preset] ?? self::THEME_PRESETS['sky'];
+        $manifest = $this->themeManifest();
+        $defaults = $manifest->colors;
 
         return [
             'primary'    => $this->theme_primary_color ?: $defaults['primary'],

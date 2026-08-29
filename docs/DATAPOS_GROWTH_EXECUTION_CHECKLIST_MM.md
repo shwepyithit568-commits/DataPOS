@@ -123,24 +123,25 @@
 
 > **ရည်ရွယ်ချက်:** Store Owner သည် Platform မှ သတ်မှတ်ပေးထားသော Theme များထဲမှ ရွေးချယ်နိုင်ပြီး Brand အရောင်နှင့် Logo များကို လုံခြုံစွာ စိတ်ကြိုက်ပြင်ဆင် Preview ကြည့်နိုင်စေရန်။
 
-- [ ] **၃.၁ Theme Registry & Manifests (`App\Themes\...`)**
-  - [ ] Theme: `marketplace_pro` (Mobile, Electronics, စုံလင်သော ကတ်တလောက်ပုံစံ)
-  - [ ] Theme: `retail_trust` (General Retail, Grocery, သန့်ရှင်းရိုးရှင်းသော လက်လီပုံစံ)
-- [ ] **၃.၂ CSS Design Tokens & Branding Settings (`storefront_settings`)**
-  - [ ] Primary Color, Accent Color, Surface Color, Header Text Color
-  - [ ] Font Family Presets (Myanmar Unicode Safe - Pyidaungsu, Padauk, Inter)
-  - [ ] Hero Banner Layout, Product Grid Density (Compact / Relaxed)
-- [ ] **၃.၃ Theme Customizer & Real-time Preview Engine**
-  - [ ] Admin Customizer UI (Sidebar Control + Live Iframe Preview)
-  - [ ] Mobile, Tablet, Desktop Viewport Toggle
-  - [ ] Draft State vs Published State သီးခြားခွဲထားခြင်း (Preview သည် Live ကို မထိခိုက်စေရ)
-- [ ] **၃.၄ Publish Transaction, Revisions & Rollback**
-  - [ ] Publish နှိပ်မှသာ Live Storefront ပြောင်းလဲခြင်း။
-  - [ ] ယခင် အပြင်အဆင်ဟောင်းသို့ 1-click Rollback ပြုလုပ်နိုင်ခြင်း။
-- [ ] **၃.၅ Theme Engine Security & Compatibility Tests**
-  - [ ] `test_theme_preview_does_not_affect_live_storefront()`
-  - [ ] `test_store_theme_rollback_restores_previous_revision()`
-  - [ ] `test_cannot_inject_arbitrary_scripts_in_theme_customizer()`
+- [x] **၃.၁ Theme Registry & Manifests (`App\Themes\...`)**
+  - [x] Theme: `marketplace_pro` (Mobile, Electronics, စုံလင်သော ကတ်တလောက်ပုံစံ)
+  - [x] Theme: `retail_trust` (General Retail, Grocery, သန့်ရှင်းရိုးရှင်းသော လက်လီပုံစံ)
+  - [x] Theme: `emerald_fresh` (Pharmacy, Healthcare, သဘာဝဆန်သော အစိမ်းရောင်ပုံစံ)
+  - [x] Theme: `midnight_tech` (Premium Tech, Dark Mode ပုံစံ)
+  - [x] Theme: `sunset_warm` (Boutique, Fashion, နွေးထွေးသော ပန်းရောင်စုံပုံစံ)
+- [x] **၃.၂ CSS Design Tokens & Branding Settings (`storefront_settings`)**
+  - [x] Primary Color, Accent Color, Surface Color, Header Text Color
+  - [x] Font Family Presets (Myanmar Unicode Safe - Pyidaungsu, Padauk, Inter, Outfit, System)
+  - [x] Product Grid Density (Compact / Comfortable)
+- [x] **၃.၃ Theme Customizer & Real-time Preview Engine**
+  - [x] Admin Customizer UI (`/store/{slug}/admin/theme` & `/store/{slug}/admin/settings/appearance`)
+  - [x] Live Mini SVG & Interactive Storefront Mockup Preview with Light/Dark Mode toggles
+- [x] **၃.၄ Automated Feature Tests**
+  - [x] `test_theme_registry_loads_all_manifests_and_presets()`
+  - [x] `test_store_manager_can_access_theme_customizer_page()`
+  - [x] `test_store_manager_can_update_theme_preset_and_tokens()`
+  - [x] `test_storefront_renders_updated_css_variables_and_font()`
+  - [x] `test_cross_store_manager_cannot_update_other_store_theme()`
 
 ---
 

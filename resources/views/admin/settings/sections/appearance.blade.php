@@ -14,8 +14,8 @@
 
     // 5 visual templates + 'custom' fallback with body_bg, glow_style, and dark_mode
     $templates = [
-        'sky' => [
-            'name'        => 'Cloud White',
+        'marketplace_pro' => [
+            'name'        => 'Marketplace Pro (Cloud White)',
             'desc'        => 'ရှင်းလင်းသောဖြူ၊ Sky Blue နှင့် Violet',
             'primary'     => '#0ea5e9',
             'accent'      => '#7c3aed',
@@ -26,20 +26,20 @@
             'badge'       => 'Popular',
             'badge_color' => 'bg-sky-500',
         ],
-        'midnight' => [
-            'name'        => 'Midnight Dark',
-            'desc'        => 'Premium မဲ၊ Cyan နှင့် Orange accent',
-            'primary'     => '#38bdf8',
-            'accent'      => '#fb923c',
-            'header_bg'   => '#0f172a',
-            'body_bg'     => '#0f172a',
-            'glow_style'  => 'vivid',
-            'dark_mode'   => 'dark',
-            'badge'       => 'Premium',
-            'badge_color' => 'bg-slate-700',
+        'retail_trust' => [
+            'name'        => 'Retail Trust (Clean Blue)',
+            'desc'        => 'သန့်ရှင်းရိုးရှင်းသော Royal Blue နှင့် Amber',
+            'primary'     => '#2563eb',
+            'accent'      => '#f59e0b',
+            'header_bg'   => '#ffffff',
+            'body_bg'     => '#f8fafc',
+            'glow_style'  => 'subtle',
+            'dark_mode'   => 'auto',
+            'badge'       => 'General Retail',
+            'badge_color' => 'bg-blue-600',
         ],
-        'emerald' => [
-            'name'        => 'Emerald Fresh',
+        'emerald_fresh' => [
+            'name'        => 'Emerald Fresh (Healthcare)',
             'desc'        => 'သဘာ၀ဆန်သော Green နှင့် Amber',
             'primary'     => '#10b981',
             'accent'      => '#f59e0b',
@@ -47,36 +47,36 @@
             'body_bg'     => '#f0fdf4',
             'glow_style'  => 'vivid',
             'dark_mode'   => 'auto',
-            'badge'       => null,
-            'badge_color' => null,
+            'badge'       => 'Pharmacy',
+            'badge_color' => 'bg-emerald-600',
         ],
-        'rose' => [
-            'name'        => 'Sunset Rose',
+        'midnight_tech' => [
+            'name'        => 'Midnight Tech (Dark Mode)',
+            'desc'        => 'Premium မဲ၊ Cyan နှင့် Orange accent',
+            'primary'     => '#38bdf8',
+            'accent'      => '#fb923c',
+            'header_bg'   => '#0f172a',
+            'body_bg'     => '#0f172a',
+            'glow_style'  => 'vivid',
+            'dark_mode'   => 'dark',
+            'badge'       => 'Premium Tech',
+            'badge_color' => 'bg-slate-700',
+        ],
+        'sunset_warm' => [
+            'name'        => 'Sunset Warm (Boutique)',
             'desc'        => 'နွေးထွေးသော Rose Red နှင့် Gold',
             'primary'     => '#e11d48',
             'accent'      => '#f59e0b',
             'header_bg'   => '#fff1f2',
             'body_bg'     => '#fff5f6',
-            'glow_style'  => 'vivid',
+            'glow_style'  => 'subtle',
             'dark_mode'   => 'auto',
-            'badge'       => null,
-            'badge_color' => null,
-        ],
-        'violet' => [
-            'name'        => 'Royal Violet',
-            'desc'        => 'ဘုန်းကြီးသောမဲ Violet နှင့် Emerald',
-            'primary'     => '#7c3aed',
-            'accent'      => '#10b981',
-            'header_bg'   => '#1e1b4b',
-            'body_bg'     => '#faf5ff',
-            'glow_style'  => 'vivid',
-            'dark_mode'   => 'dark',
-            'badge'       => 'Luxury',
-            'badge_color' => 'bg-violet-600',
+            'badge'       => 'Fashion',
+            'badge_color' => 'bg-rose-500',
         ],
         'custom' => [
-            'name'        => 'Custom',
-            'desc'        => 'မိမိကိုယ်ပိုင် color ရွေးချယ်',
+            'name'        => 'Custom Color Scheme',
+            'desc'        => 'မိမိကိုယ်ပိုင် Brand Color ရွေးချယ်မည်',
             'primary'     => $colors['primary'],
             'accent'      => $colors['accent'],
             'header_bg'   => $colors['header_bg'],
@@ -87,6 +87,12 @@
             'badge_color' => null,
         ],
     ];
+
+    // Normalize legacy keys
+    $legacyMap = ['sky' => 'marketplace_pro', 'midnight' => 'midnight_tech', 'emerald' => 'emerald_fresh', 'rose' => 'sunset_warm', 'violet' => 'marketplace_pro'];
+    if (isset($legacyMap[$currentPreset])) {
+        $currentPreset = $legacyMap[$currentPreset];
+    }
 
     // If preset not in our template list, treat as custom
     if (!array_key_exists($currentPreset, $templates)) {
@@ -619,6 +625,52 @@ window.sfThemeFactory = function () {
                     </div>
                     <span class="text-[10px] opacity-70">{{ $item['desc'] }}</span>
                 </button>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- ══════════════════════════════════════════════════════
+         STEP 5 — Font Family & Typography Preset
+    ══════════════════════════════════════════════════════ --}}
+    <div class="px-4 py-6 sm:px-6">
+        <p class="mb-3 text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-violet-600 text-xs font-black text-white">5</span>
+            Storefront Typography & Font Presets (စာလုံးဖောင့်ပုံစံ)
+        </p>
+        <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">ဝဘ်ဆိုက်စာမျက်နှာများအတွက် မြန်မာ/အင်္ဂလိပ် ဖောင့်စနစ်ကို စိတ်ကြိုက်ရွေးချယ်နိုင်ပါသည်။</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            @foreach (\App\Themes\ThemeRegistry::FONT_PRESETS as $fKey => $fItem)
+                <label class="flex items-start gap-3 p-3.5 rounded-2xl border cursor-pointer transition shadow-2xs {{ ($setting->font_preset ?? 'outfit') === $fKey ? 'border-violet-500 bg-violet-50/60 dark:bg-violet-950/40 ring-2 ring-violet-500/30' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 hover:bg-slate-50' }}">
+                    <input type="radio" name="font_preset" value="{{ $fKey }}" {{ ($setting->font_preset ?? 'outfit') === $fKey ? 'checked' : '' }} class="mt-1 text-violet-600 focus:ring-violet-500">
+                    <div class="min-w-0">
+                        <span class="block text-xs font-bold text-slate-900 dark:text-white">{{ $fItem['name'] }}</span>
+                        <span class="block text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 truncate">{{ $fItem['css'] }}</span>
+                    </div>
+                </label>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- ══════════════════════════════════════════════════════
+         STEP 6 — Product Grid Density
+    ══════════════════════════════════════════════════════ --}}
+    <div class="px-4 py-6 sm:px-6">
+        <p class="mb-3 text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-violet-600 text-xs font-black text-white">6</span>
+            Product Grid Density (ပစ္စည်းကတ် အကွာအဝေး)
+        </p>
+        <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">စတိုးမျက်နှာစာတွင် ပစ္စည်းများ ပြသသည့် Grid ပုံစံကို ရွေးချယ်နိုင်ပါသည်။</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            @foreach (\App\Themes\ThemeRegistry::GRID_DENSITIES as $dKey => $dItem)
+                <label class="flex items-start gap-3 p-3.5 rounded-2xl border cursor-pointer transition shadow-2xs {{ ($setting->grid_density ?? 'compact') === $dKey ? 'border-violet-500 bg-violet-50/60 dark:bg-violet-950/40 ring-2 ring-violet-500/30' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 hover:bg-slate-50' }}">
+                    <input type="radio" name="grid_density" value="{{ $dKey }}" {{ ($setting->grid_density ?? 'compact') === $dKey ? 'checked' : '' }} class="mt-1 text-violet-600 focus:ring-violet-500">
+                    <div class="min-w-0">
+                        <span class="block text-xs font-bold text-slate-900 dark:text-white">{{ $dItem['name'] }}</span>
+                        <span class="block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{{ $dKey === 'compact' ? 'ဖုန်း/ကွန်ပျူတာတွင် ပစ္စည်းအရေအတွက် အများဆုံးမြင်ရသော Compact ပုံစံ' : 'ပုံကြီးကြီးဖြင့် သန့်ရှင်းစွာ ပြသသော Comfortable Showcase ပုံစံ' }}</span>
+                    </div>
+                </label>
             @endforeach
         </div>
     </div>

@@ -874,8 +874,14 @@
                     </x-slot:icon>
                         @php
                             $isSettings = request()->routeIs('store.admin.settings.*') || request()->is('store/*/admin/settings*');
+                            $isTheme = request()->routeIs('store.admin.theme.*') || (request()->routeIs('store.admin.settings.section') && request()->route('section') === 'appearance');
                         @endphp
-                        <x-admin.nav-link :href="route('store.admin.settings.edit', $storeRouteParams)" route-name="store.admin.settings.edit" :active="$isSettings" :label="__('messages.settings_storefront_settings')">
+                        <x-admin.nav-link :href="route('store.admin.theme.index', $storeRouteParams)" route-name="store.admin.theme.index" :active="$isTheme" label="Theme & Branding">
+                            <x-slot:icon>
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2Z"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                        <x-admin.nav-link :href="route('store.admin.settings.edit', $storeRouteParams)" route-name="store.admin.settings.edit" :active="$isSettings && !$isTheme" :label="__('messages.settings_storefront_settings')">
                             <x-slot:icon>
                                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M7 7v10M12 7v10M17 7v10M4 17h16"/></svg>
                             </x-slot:icon>

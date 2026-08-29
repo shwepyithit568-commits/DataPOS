@@ -150,9 +150,11 @@
         $sfGlowStyle = $sfColors['glow_style'] ?? 'vivid';
         $glowLightOp = $sfGlowStyle === 'subtle' ? '0.07' : ($sfGlowStyle === 'none' ? '0' : '0.20');
         $glowDarkOp  = $sfGlowStyle === 'subtle' ? '0.09' : ($sfGlowStyle === 'none' ? '0' : '0.25');
+        $fontFamilyCss = ($setting ?? null)?->fontFamilyCss() ?? "'Outfit', 'Pyidaungsu', system-ui, sans-serif";
     @endphp
     <style>
         :root {
+            --sf-font-family:    {!! $fontFamilyCss !!};
             --sf-primary:        {{ $sfColors['primary'] }};
             --sf-accent:         {{ $sfColors['accent'] }};
             --sf-header-bg:      {{ $sfColors['header_bg'] }};
@@ -170,8 +172,9 @@
             --sf-glow-opacity:   {{ $glowDarkOp }};
         }
 
-        /* ── Dynamic Page Body Background ── */
+        /* ── Dynamic Page Body Background & Font ── */
         body {
+            font-family: var(--sf-font-family) !important;
             background-color: var(--sf-body-bg) !important;
         }
         .dark body,

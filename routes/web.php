@@ -251,7 +251,8 @@ Route::prefix('store/{store_slug}')
         // Admin Store Settings CRUD (split into sidebar sections: general /
         // contact / delivery / how-to-order — see StoreSettingController)
         Route::get('/admin/settings', [StoreSettingController::class, 'edit'])->name('store.admin.settings.edit')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::get('/admin/settings/{section}', [StoreSettingController::class, 'edit'])->name('store.admin.settings.section')->middleware(EnsureStoreAccess::class . ':store_manager')->whereIn('section', ['general', 'currency', 'appearance', 'contact', 'delivery', 'how-to-order', 'footer', 'pos']);
+        Route::get('/admin/settings/{section}', [StoreSettingController::class, 'edit'])->name('store.admin.settings.section')->middleware(EnsureStoreAccess::class . ':store_manager')->whereIn('section', ['general', 'currency', 'appearance', 'theme', 'contact', 'delivery', 'how-to-order', 'footer', 'pos']);
+        Route::get('/admin/theme', fn (string $store_slug) => redirect()->route('store.admin.settings.section', ['store_slug' => $store_slug, 'section' => 'appearance']))->name('store.admin.theme.index')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::post('/admin/settings', [StoreSettingController::class, 'update'])->middleware(EnsureStoreAccess::class . ':store_manager');
 
         // Structured payment / delivery method CRUD (store-scoped; managed from

@@ -27,7 +27,7 @@ class StoreSettingController extends Controller
      *   footer        — combined live preview of the storefront footer (read-only)
      *   pos           — POS behaviour (held-sale auto-expiry window)
      */
-    private const SECTIONS = ['general', 'currency', 'appearance', 'contact', 'delivery', 'how-to-order', 'footer', 'pos'];
+    private const SECTIONS = ['general', 'currency', 'appearance', 'theme', 'contact', 'delivery', 'how-to-order', 'footer', 'pos'];
 
     public function edit(Request $request, StoreContext $context): View
     {
@@ -36,6 +36,10 @@ class StoreSettingController extends Controller
         $section = $request->route('section') ?? 'general';
 
         abort_unless(in_array($section, self::SECTIONS, true), 404);
+
+        if ($section === 'theme') {
+            $section = 'appearance';
+        }
 
         $store = $context->getStore();
         $setting = $store->setting ?? new StorefrontSetting(['store_id' => $store->id, 'store_name' => $store->name]);
@@ -47,6 +51,10 @@ class StoreSettingController extends Controller
     {
         $store = $context->getStore();
         $section = $request->input('section', 'general');
+
+        if ($section === 'theme') {
+            $section = 'appearance';
+        }
 
         $validated = match ($section) {
             'currency' => $request->validate([
@@ -69,6 +77,8 @@ class StoreSettingController extends Controller
                 'theme_body_bg'       => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
                 'theme_glow_style'    => ['nullable', 'string', Rule::in(['vivid', 'subtle', 'none'])],
                 'theme_dark_mode'     => ['nullable', 'string', Rule::in(['auto', 'light', 'dark'])],
+                'font_preset'         => ['nullable', 'string', Rule::in(array_keys(\App\Themes\ThemeRegistry::FONT_PRESETS))],
+                'grid_density'        => ['nullable', 'string', Rule::in(array_keys(\App\Themes\ThemeRegistry::GRID_DENSITIES))],
             ]),
             'contact' => $request->validate([
                 'phone' => ['nullable', 'string', 'max:50'],
