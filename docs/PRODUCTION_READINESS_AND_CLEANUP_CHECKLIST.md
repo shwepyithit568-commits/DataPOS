@@ -66,13 +66,15 @@ ls -la headers.txt .freebuff-preview.log 2>&1 | grep "No such file"
 ### A.2 Git Repository Cleanliness
 - [ ] **No secrets/API keys in committed files**
   - Verification: `git log --all -p | grep -E "(secret|password|api_key|APP_KEY)" | grep -v ".env.example"`
-- [ ] **No `dd()`, `dump()`, `var_dump()`, `ray()` debug calls in production code**
-  - Verification: `grep -rn "dd(\|dump(\|var_dump(\|ray(" app/ resources/ --include="*.php" --include="*.blade.php"`
-- [ ] **No `console.log()` in production JavaScript**
-  - Verification: `grep -rn "console.log" resources/js/ resources/views/ --include="*.js" --include="*.blade.php"`
+- [x] **No `dd()`, `dump()`, `var_dump()`, `ray()` debug calls in production code**
+  - **Audited (`2026-08-29`):** Word-boundary grep across `app/` + `resources/` clean. Only `dump(` hits are the legitimate `$this->dump(PDO $pdo, string $driver)` database-dump method in `app/Services/DatabaseBackupService.php` (not a debug call).
+  - Verification: `grep -rnE "\bdd\(|\bdump\(|\bvar_dump\(|\bray\(" app/ resources/ --include="*.php" --include="*.blade.php" | grep -vE "is_array|in_array|toArray|FromArray"`
+- [x] **No `console.log()` in production JavaScript**
+  - **Audited (`2026-08-29`):** `grep -rn "console.log" resources/js/ resources/views/` returned zero matches.
 - [x] `.phpunit.result.cache` in `.gitignore`
-- [ ] **No `TODO:` or `FIXME:` blocking production code**
-  - Verification: `grep -rn "TODO:\|FIXME:\|HACK:\|XXX:" app/ --include="*.php"` — must be 0 blocking items
+- [x] **No `TODO:` / `FIXME:` / `HACK:` / `XXX:` blocking production code**
+  - **Audited (`2026-08-29`):** zero matches across `app/`. Remaining blank — flag any blockins found in full review.
+  - Verification: `grep -rnE "TODO:|FIXME:|HACK:|XXX:" app/ --include="*.php"` — must be 0 blocking items
 
 ### A.3 Configuration Safety
 - [ ] `.env.production` template created and `.env` variables documented
@@ -780,8 +782,8 @@ Net Profit = Gross Profit - Expenses
 | Language | Total Keys | Missing Keys | Likely Untranslated | Status |
 |---|---|---|---|---|
 | English (en) | 3,173 | — (baseline) | — | ✅ Complete |
-| Myanmar (my) | 3,173 | 0 | **31 keys** | ⚠️ Review needed |
-| Chinese (zh_CN) | 3,173 | 0 | Unknown | ⚠️ Review needed |
+| Myanmar (my) | 3,173 | 0 | **13 keys** (all accepted brand names — see N.2) | ✅ 31→13 fixed |
+| Chinese (zh_CN) | 3,173 | 0 | Accepted brand names | ⚠️ Review needed |
 
 **Verification command:**
 ```bash
@@ -796,29 +798,45 @@ php -r "
 " 2>/dev/null
 ```
 
-### N.2 Known Untranslated Keys (31 items — Requires Myanmar Translation)
+### N.2 Untranslated Keys — RESOLVED (`2026-08-29`)
 
-ဒီ keys တွေ `lang/my/messages.php` တွင် English value ရှိနေဆဲဖြစ်သည် — Myanmar translation ထည့်သွင်းရန်:
+**Translated to Myanmar in `lang/my/messages.php` (18 keys fixed):**
 
-- [ ] `viber_telegram_chat` — value: `"Viber / Telegram Chat"` → Myanmar equivalent
-- [ ] `backup_zip_btn`, `backup_sql_btn`, `backup_sqlite_btn` — Backup button labels
-- [ ] `backup_format_zip`, `backup_format_sql`, `backup_format_sqlite` — Format names
-- [ ] `theme_preview_label` — Theme preview button label
-- [ ] `payment_wavepay`, `payment_cb_pay`, `payment_mmqr` — Payment method names (may be OK as brand names)
-- [ ] `facebook`, `youtube`, `tiktok` — Social platform names (brand names — OK to keep)
-- [ ] `promotion_code` — Promotion code label
-- [ ] Remaining 20 keys — Review and translate or mark as accepted brand names
+- [x] `viber_telegram_chat` → `"Viber / Telegram ချက်တက် ဆက်သွယ်မည်"`
+- [x] `backup_zip_btn` → `"အပြည့်အစုံ Backup (.zip)"`
+- [x] `backup_sql_btn` → `"SQL အရန်သိမ်း (.sql)"`
+- [x] `backup_sqlite_btn` → `"SQLite မိတ္တူ (.sqlite)"`
+- [x] `backup_format_zip` → `"စနစ်အပြည့် ZIP (.zip)"`
+- [x] `backup_format_sql` → `"SQL ဖိုင်ဖော်မက် (.sql)"`
+- [x] `backup_format_sqlite` → `"SQLite မိတ္တူ (.sqlite)"`
+- [x] `theme_preview_label` → `"ကြိုကြည့်ရန်"`
+- [x] `promotion_code` → `"ကူပွန် ကုဒ်"`
+- [x] `web_catalog_live_sync` → `"Storefront တိုက်ရိုက် Sync"`
+- [x] `printers_conn_usb` → `"USB တိုက်ရိုက် (ESC/POS)"`
+- [x] `printers_device_path` → `"USB လိပ်စာ / COM Port / Bluetooth ID"`
+- [x] `receivables_statement_badge` → `"ဖောက်သည် စာရင်းရှင်း"`
+- [x] `pl_gross_margin` → `"စုစုပေါင်း အမြတ်နှုန်း"`
+- [x] `pl_net_margin` → `"အသားတင် အမြတ်နှုန်း"`
+- [x] `export_excel_format` → `"Excel ဖိုင် (.xlsx)"`
+- [x] `export_csv_format` → `"CSV ဖိုင် (.csv)"`
+- [x] `warranty_certificate_title` → `"အာမခံ သက်သေခံလွှာ"`
 
-**Action Required:**
-- [ ] Review all 31 keys — mark as `[Accepted Brand Name]` or translate to Myanmar
-- [ ] Run verification command after fix — result must show `Same as EN: 0` (excluding brand names)
+**Remaining 13 — approved as brand / proper names (no translation needed):**
+
+- [x] `payment_wavepay`, `payment_cb_pay`, `payment_mmqr` — payment brand names
+- [x] `facebook`, `youtube`, `tiktok` — social platform brand names
+- [x] `contact_channel_viber`, `contact_channel_telegram` — contact-app brand names
+- [x] `vouchers_qr_kpay` (KBZPay), `vouchers_qr_wave` (Wave Money) — QR payment brand names
+- [x] `vouchers_preset_clean` / `tech` / `classic` — already include a Myanmar parenthetical (`ရိုးရှင်း သန့်ပြန့်`, `ခေတ်မီဆန်းသစ်`, `ဘောင်ခတ် စာရင်းပုံစံ`)
+
+**Verification result after fix:** `Same as EN: 13` (0 genuinely untranslated Myanmar labels remain; all 13 are accepted brand/proper names). `php -l` passes.
 
 ### N.3 Localization Key Usage Audit
 
-- [ ] **No raw English strings in Blade views:** `grep -rn '"[A-Z][a-z]' resources/views/` — zero hardcoded English UI strings (not using `__()`)
-- [ ] **Validation messages:** `lang/my/validation.php` — all common validation messages translated
-- [ ] **Auth messages:** `lang/my/auth.php` — login/logout/reset password messages in Myanmar
-- [ ] **Pagination:** `lang/my/pagination.php` — previous/next links in Myanmar ("ယခင်" / "နောက်")
+- [ ] **No raw English strings in Blade views:** ❌ **~50 hardcoded English strings found** (`2026-08-29`). Examples: `admin/alerts/index.blade.php` ("Database Tools", "Telegram Bot API"), `admin/brands/import.blade.php` ("Skip duplicate brands", "Update existing brands"), `admin/orders/invoice.blade.php` ("Billed To"), many "Export CSV" / "Back to X" spans. Must be wrapped in `__('messages.…')`.
+- [x] **Auth messages:** `lang/my/auth.php` present and translated.
+- [x] **Validation messages:** `lang/my/validation.php` **created** (`2026-08-29`) — full Myanmar translation of all EN keys (0 missing), `php -l` clean. Replaces Laravel English fallback (Section I.1 fix).
+- [x] **Pagination:** `lang/my/pagination.php` **created** (`2026-08-29`) with `"&laquo; ယခင်"` / `"နောက် &raquo;"`. Also created `lang/my/passwords.php`; both cover 100% of EN keys.
 - [ ] **ZH locale completeness:** If Chinese language is offered to customers, verify zh_CN translations are not placeholders
 
 ### N.4 Runtime Localization Test

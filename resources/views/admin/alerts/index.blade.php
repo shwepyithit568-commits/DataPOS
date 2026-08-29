@@ -26,7 +26,7 @@
                     <span class="text-amber-600 dark:text-amber-400">{{ __('messages.sidebar_alerts') }}</span>
                 </div>
                 <h1 class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
-                    {{ __('messages.sidebar_alerts') }} (System Alert Center)
+                    {{ __('messages.sidebar_alerts') }}
                 </h1>
                 <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
                     စတော့နည်းပါးမှု၊ ရက်လွန်အကြွေး၊ မစစ်ရသေးသော အမှာစာများနှင့် Telegram အသိပေးချက်များ
@@ -47,7 +47,7 @@
             <a href="{{ route('store.admin.database.index', $storeRouteParams) }}"
                class="h-9 px-3 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white shadow-sm transition inline-flex items-center gap-1.5">
                 <span>🗄️</span>
-                <span>Database Tools</span>
+                <span>{{ __('messages.sidebar_database') }}</span>
             </a>
         </div>
     </div>
@@ -74,7 +74,7 @@
                 class="text-left rounded-xl bg-white dark:bg-slate-900 border p-3 shadow-sm transition hover:border-rose-400 focus:outline-none"
                 :class="activeTab === 'low_stock' ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/10' : 'border-slate-200/90 dark:border-slate-800'">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <span class="text-rose-600 dark:text-rose-400">Low Stock Alert</span>
+                <span class="text-rose-600 dark:text-rose-400">{{ __('messages.alerts_kpi_low_stock') }}</span>
                 <span>📦</span>
             </div>
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-rose-600 dark:text-rose-400 tabular-nums">
@@ -88,7 +88,7 @@
                 class="text-left rounded-xl bg-white dark:bg-slate-900 border p-3 shadow-sm transition hover:border-amber-400 focus:outline-none"
                 :class="activeTab === 'pending_orders' ? 'border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/20 dark:bg-amber-950/10' : 'border-slate-200/90 dark:border-slate-800'">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <span class="text-amber-600 dark:text-amber-400">Pending Requests</span>
+                <span class="text-amber-600 dark:text-amber-400">{{ __('messages.alerts_kpi_pending') }}</span>
                 <span>⏳</span>
             </div>
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
@@ -102,7 +102,7 @@
                 class="text-left rounded-xl bg-white dark:bg-slate-900 border p-3 shadow-sm transition hover:border-blue-400 focus:outline-none"
                 :class="activeTab === 'overdue_debt' ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/20 dark:bg-blue-950/10' : 'border-slate-200/90 dark:border-slate-800'">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <span class="text-blue-600 dark:text-blue-400">Overdue Debts</span>
+                <span class="text-blue-600 dark:text-blue-400">{{ __('messages.alerts_kpi_overdue') }}</span>
                 <span>⏰</span>
             </div>
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-blue-600 dark:text-blue-400 tabular-nums">
@@ -116,7 +116,7 @@
                 class="text-left rounded-xl bg-white dark:bg-slate-900 border p-3 shadow-sm transition hover:border-purple-400 focus:outline-none"
                 :class="activeTab === 'security' ? 'border-purple-500 ring-2 ring-purple-500/20 bg-purple-50/20 dark:bg-purple-950/10' : 'border-slate-200/90 dark:border-slate-800'">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <span class="text-purple-600 dark:text-purple-400">Security Events</span>
+                <span class="text-purple-600 dark:text-purple-400">{{ __('messages.alerts_kpi_security') }}</span>
                 <span>🛡️</span>
             </div>
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-purple-600 dark:text-purple-400 tabular-nums">
@@ -131,7 +131,7 @@
         <button type="button" @click="activeTab = 'low_stock'"
                 class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5"
                 :class="activeTab === 'low_stock' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'">
-            <span>📦 Low Stock</span>
+            <span>📦 {{ __('messages.alerts_tab_low_stock') }}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold"
                   :class="activeTab === 'low_stock' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'">
                 {{ count($lowStockProducts) }}
@@ -141,7 +141,7 @@
         <button type="button" @click="activeTab = 'pending_orders'"
                 class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5"
                 :class="activeTab === 'pending_orders' ? 'bg-amber-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'">
-            <span>⏳ Pending Requests</span>
+            <span>⏳ {{ __('messages.alerts_tab_pending') }}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold"
                   :class="activeTab === 'pending_orders' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'">
                 {{ count($pendingOrders) + count($pendingWholesale) }}
@@ -151,7 +151,7 @@
         <button type="button" @click="activeTab = 'overdue_debt'"
                 class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5"
                 :class="activeTab === 'overdue_debt' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'">
-            <span>⏰ Overdue Debts</span>
+            <span>⏰ {{ __('messages.alerts_tab_overdue') }}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold"
                   :class="activeTab === 'overdue_debt' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'">
                 {{ count($overdueDebts) }}
@@ -161,7 +161,7 @@
         <button type="button" @click="activeTab = 'security'"
                 class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5"
                 :class="activeTab === 'security' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'">
-            <span>🛡️ Security Logs</span>
+            <span>🛡️ {{ __('messages.alerts_tab_security') }}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold"
                   :class="activeTab === 'security' ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'">
                 {{ count($securityAlerts) }}
@@ -171,7 +171,7 @@
         <button type="button" @click="activeTab = 'telegram'"
                 class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5"
                 :class="activeTab === 'telegram' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'">
-            <span>📱 Telegram Bot Setup</span>
+            <span>📱 {{ __('messages.alerts_tab_telegram') }}</span>
         </button>
     </div>
 
@@ -269,7 +269,7 @@
                         <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                             <th class="py-2.5 px-3.5">အော်ဒါနံပါတ်</th>
                             <th class="py-2.5 px-3.5">ဖောက်သည်</th>
-                            <th class="py-2.5 px-3.5">Channel</th>
+                            <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_channel') }}</th>
                             <th class="py-2.5 px-3.5 text-right">ကျသင့်ငွေ</th>
                             <th class="py-2.5 px-3.5">အချိန်</th>
                             <th class="py-2.5 px-3.5 text-right">လုပ်ဆောင်ချက်</th>
@@ -441,16 +441,16 @@
                     <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                         <th class="py-2.5 px-3.5">အချိန်</th>
                         <th class="py-2.5 px-3.5">လုပ်ဆောင်သူ</th>
-                        <th class="py-2.5 px-3.5">Action Event</th>
-                        <th class="py-2.5 px-3.5">IP / Terminal</th>
-                        <th class="py-2.5 px-3.5 text-right">အသေးစိတ် (Metadata)</th>
+                        <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_action') }}</th>
+                        <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_ip') }}</th>
+                        <th class="py-2.5 px-3.5 text-right">{{ __('messages.alerts_th_metadata') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
                     @forelse ($securityAlerts as $sec)
                         <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
                             <td class="py-2.5 px-3.5 font-mono text-slate-400">{{ $sec->created_at?->format('d M Y, h:i A') }}</td>
-                            <td class="py-2.5 px-3.5 font-semibold text-slate-900 dark:text-slate-100">{{ $sec->actor?->name ?? 'POS Terminal / Guest' }}</td>
+                            <td class="py-2.5 px-3.5 font-semibold text-slate-900 dark:text-slate-100">{{ $sec->actor?->name ?? __('messages.alerts_pos_guest') }}</td>
                             <td class="py-2.5 px-3.5">
                                 <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300">
                                     {{ $sec->action }}
@@ -485,7 +485,7 @@
             </div>
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200/60 dark:border-sky-800/60 w-fit">
                 <span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></span>
-                <span>Telegram Bot API</span>
+                <span>{{ __('messages.alerts_tg_bot_api') }}</span>
             </span>
         </div>
 
@@ -495,7 +495,7 @@
                 @csrf
                 <div>
                     <label class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5 block">
-                        Telegram Bot Token <span class="text-rose-500">*</span>
+                        {{ __('messages.alerts_tg_token') }} <span class="text-rose-500">*</span>
                     </label>
                     <input type="password" name="telegram_bot_token"
                            placeholder="bot123456789:ABCdefGhIJKlmNoPQRstuVWXyz..."
@@ -505,7 +505,7 @@
 
                 <div>
                     <label class="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5 block">
-                        Telegram Chat / Channel ID <span class="text-rose-500">*</span>
+                        {{ __('messages.alerts_tg_chat_id') }} <span class="text-rose-500">*</span>
                     </label>
                     <input type="text" name="telegram_chat_id"
                            placeholder="-100123456789 သို့မဟုတ် @channel_username"
@@ -516,7 +516,7 @@
                 <button type="submit"
                         class="w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 dark:bg-amber-600 dark:hover:bg-amber-500 text-white font-bold text-xs shadow-md shadow-amber-500/15 transition flex items-center justify-center gap-2 active:scale-95 cursor-pointer">
                     <span>🔔</span>
-                    <span>စမ်းသပ် သတိပေးချက် ပေးပို့မည် (Test Ping)</span>
+                    <span>စမ်းသပ် သတိပေးချက် ပေးပို့မည် ({{ __('messages.alerts_tg_test_ping') }})</span>
                 </button>
             </form>
 
@@ -524,20 +524,20 @@
             <div class="bg-slate-50/90 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/80 space-y-2.5 flex flex-col justify-between">
                 <div>
                     <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
-                        <span>Telegram Notification Preview</span>
-                        <span class="text-slate-400 text-[10px] font-mono">HTML Formatted</span>
+                        <span>{{ __('messages.alerts_tg_preview') }}</span>
+                        <span class="text-slate-400 text-[10px] font-mono">{{ __('messages.alerts_tg_html') }}</span>
                     </div>
                     <div class="bg-white dark:bg-slate-950 rounded-xl p-3.5 text-xs font-mono text-slate-800 dark:text-slate-200 space-y-1.5 shadow-sm leading-relaxed border border-slate-200/80 dark:border-slate-800">
                         <div class="font-bold text-amber-600 dark:text-amber-400 text-[13px]">📊 [DataPOS Daily Business Summary]</div>
-                        <div class="text-slate-600 dark:text-slate-300">🏪 <b>Store:</b> {{ $store->name }}</div>
-                        <div class="text-slate-500 dark:text-slate-400 text-[11px]">📅 <b>Date:</b> {{ now()->format('d M Y, h:i A') }}</div>
+                        <div class="text-slate-600 dark:text-slate-300">🏪 <b>{{ __('messages.alerts_tg_store') }}</b> {{ $store->name }}</div>
+                        <div class="text-slate-500 dark:text-slate-400 text-[11px]">📅 <b>{{ __('messages.alerts_tg_date') }}</b> {{ now()->format('d M Y, h:i A') }}</div>
                         <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800/80 space-y-1 text-[12px]">
-                            <div>💰 <b>Confirmed Sales:</b> <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ number_format($stats['today_sales']) }} Ks</span></div>
-                            <div>🛒 <b>Total Orders:</b> <span class="font-bold text-slate-900 dark:text-slate-100">{{ $stats['today_orders_count'] }}</span> orders</div>
-                            <div>⏳ <b>Pending Contact:</b> <span class="font-bold text-amber-600 dark:text-amber-400">{{ $stats['pending_orders'] }}</span> orders</div>
-                            <div>⚠️ <b>Low Stock Items:</b> <span class="font-bold text-rose-600 dark:text-rose-400">{{ $stats['low_stock_count'] }}</span> items</div>
+                            <div>💰 <b>{{ __('messages.alerts_tg_confirmed_sales') }}</b> <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ number_format($stats['today_sales']) }} Ks</span></div>
+                            <div>🛒 <b>{{ __('messages.alerts_tg_total_orders') }}</b> <span class="font-bold text-slate-900 dark:text-slate-100">{{ $stats['today_orders_count'] }}</span> orders</div>
+                            <div>⏳ <b>{{ __('messages.alerts_tg_pending_contact') }}</b> <span class="font-bold text-amber-600 dark:text-amber-400">{{ $stats['pending_orders'] }}</span> orders</div>
+                            <div>⚠️ <b>{{ __('messages.alerts_tg_low_stock_items') }}</b> <span class="font-bold text-rose-600 dark:text-rose-400">{{ $stats['low_stock_count'] }}</span> items</div>
                         </div>
-                        <div class="pt-1 text-[10px] text-slate-400 italic">Generated by DataPOS System Monitor</div>
+                        <div class="pt-1 text-[10px] text-slate-400 italic">{{ __('messages.alerts_tg_generated') }}</div>
                     </div>
                 </div>
                 <div class="text-[11px] text-slate-500 dark:text-slate-400 bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-900/40 rounded-lg p-2.5 flex items-center gap-2">
