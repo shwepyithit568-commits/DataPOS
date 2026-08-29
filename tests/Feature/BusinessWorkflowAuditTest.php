@@ -108,7 +108,7 @@ class BusinessWorkflowAuditTest extends TestCase
         $storefrontResponse = $this->get("/store/{$this->storeA->slug}/product/{$product->slug}");
         $storefrontResponse->assertStatus(200);
         $storefrontResponse->assertSee('Premium Glass Guard');
-        $storefrontResponse->assertSee('Ks 15,000');
+        $storefrontResponse->assertSee('15,000');
     }
 
     /**
@@ -219,7 +219,7 @@ class BusinessWorkflowAuditTest extends TestCase
 
         $catalogResponse = $this->actingAs($customer)->get("/store/{$this->storeA->slug}/product/{$product->slug}");
         $catalogResponse->assertStatus(200);
-        $catalogResponse->assertSee('Ks 6,000');
+        $catalogResponse->assertSee('6,000');
     }
 
     /**

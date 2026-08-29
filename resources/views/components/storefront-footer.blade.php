@@ -107,29 +107,47 @@
         </div>
     </div>
 
-    {{-- ================= 2. MAIN 4-COLUMN HIGH CONTRAST SECTION ================= --}}
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+    {{-- ================= 2. MAIN 4-COLUMN HIGH CONTRAST SECTION (CARDS ON MOBILE) ================= --}}
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <div class="grid grid-cols-1 gap-3.5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
 
             {{-- Column 1: Customer Service / အကူအညီနှင့် ဝန်ဆောင်မှု --}}
-            <div class="space-y-3">
+            <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 p-4 sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-0 shadow-2xs sm:shadow-none space-y-3">
                 <div>
                     <h3 class="{{ $colHeader }}">
                         {{ __('messages.customer_service') }}
                     </h3>
                 </div>
-                <ul class="space-y-1.5 pt-1">
-                    <li><a href="{{ $howToOrderUrl }}" class="{{ $linkStyle }}">📖 {{ __('messages.how_to_order') }}</a></li>
-                    <li><a href="{{ $serviceTrackingUrl }}" class="{{ $linkStyle }} font-bold text-violet-700 dark:text-violet-400 hover:text-violet-900">🔧 {{ __('messages.nav_service_track') }} (Live)</a></li>
-                    <li><a href="{{ $glassFinderUrl }}" class="{{ $linkStyle }}">📱 {{ __('messages.glass_finder') }}</a></li>
-                    <li><a href="{{ $productsUrl }}" class="{{ $linkStyle }}">🛍️ {{ __('messages.products') }}</a></li>
-                    <li><a href="{{ $accountUrl }}" class="{{ $linkStyle }}">👤 {{ __('messages.account') }}</a></li>
-                    <li><a href="{{ $blogUrl }}" class="{{ $linkStyle }}">📰 {{ __('messages.blog') }}</a></li>
-                </ul>
+                <div class="grid grid-cols-2 sm:grid-cols-1 gap-2 sm:gap-1.5 pt-1">
+                    <a href="{{ $howToOrderUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
+                        <span>📖</span>
+                        <span>{{ __('messages.how_to_order') }}</span>
+                    </a>
+                    <a href="{{ $serviceTrackingUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-violet-50/60 sm:bg-transparent dark:bg-violet-950/30 sm:dark:bg-transparent border border-violet-200/60 sm:border-0 dark:border-violet-800/60 {{ $linkStyle }} font-bold text-violet-700 dark:text-violet-400 hover:text-violet-900">
+                        <span>🔧</span>
+                        <span>{{ __('messages.nav_service_track') }}</span>
+                    </a>
+                    <a href="{{ $glassFinderUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
+                        <span>📱</span>
+                        <span>{{ __('messages.glass_finder') }}</span>
+                    </a>
+                    <a href="{{ $productsUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
+                        <span>🛍️</span>
+                        <span>{{ __('messages.products') }}</span>
+                    </a>
+                    <a href="{{ $accountUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
+                        <span>👤</span>
+                        <span>{{ __('messages.account') }}</span>
+                    </a>
+                    <a href="{{ $blogUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
+                        <span>📰</span>
+                        <span>{{ __('messages.blog') }}</span>
+                    </a>
+                </div>
             </div>
 
             {{-- Column 2: Shopping & Category Guide / ဆိုင်အချက်အလက် --}}
-            <div class="space-y-3">
+            <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 p-4 sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-0 shadow-2xs sm:shadow-none space-y-3">
                 <div>
                     <h3 class="{{ $colHeader }}">
                         ဆိုင်အချက်အလက်
@@ -145,14 +163,14 @@
                     </p>
 
                     @if ($openingHours)
-                        <div class="pt-2 border-t border-slate-300 dark:border-slate-800">
+                        <div class="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
                             <span class="font-extrabold text-slate-900 dark:text-white block text-xs">{{ __('messages.opening_hours') }}:</span>
-                            <span class="text-slate-800 dark:text-slate-300 font-semibold">⏰ {{ $openingHours }}</span>
+                            <span class="text-slate-800 dark:text-slate-300 font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px]">⏰ {{ $openingHours }}</span>
                         </div>
                     @endif
 
-                    <div class="pt-2">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-900 dark:bg-emerald-950/80 dark:text-emerald-300 text-xs font-bold border border-emerald-300 dark:border-emerald-800">
+                    <div class="pt-1">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300 text-xs font-bold border border-emerald-200 dark:border-emerald-800 w-full justify-center sm:w-auto">
                             <span>✓</span>
                             <span>တရားဝင် အသိအမှတ်ပြု အရောင်းဆိုင်</span>
                         </span>
@@ -161,7 +179,7 @@
             </div>
 
             {{-- Column 3: Contact Channels / ဆက်သွယ်ရန် --}}
-            <div class="space-y-3">
+            <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 p-4 sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-0 shadow-2xs sm:shadow-none space-y-3">
                 <div>
                     <h3 class="{{ $colHeader }}">
                         {{ __('messages.contact') }}
@@ -169,28 +187,32 @@
                 </div>
                 <div class="space-y-2.5 text-xs sm:text-[13px] font-myanmar pt-1">
                     @if ($phone)
-                        <div>
-                            <span class="text-xs font-bold text-slate-800 dark:text-slate-300 block">ဖုန်းနံပါတ် (Hotline):</span>
-                            <a href="tel:{{ $phone }}" class="font-mono font-black text-slate-950 dark:text-white hover:text-orange-600 dark:hover:text-orange-400 text-sm tracking-wide inline-block pt-0.5">
-                                📞 {{ $phone }}
-                            </a>
-                        </div>
+                        <a href="tel:{{ $phone }}" class="flex items-center justify-between p-2.5 rounded-xl bg-orange-50/60 hover:bg-orange-100/80 dark:bg-orange-950/30 dark:hover:bg-orange-950/50 border border-orange-200/80 dark:border-orange-800/60 transition group">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="w-7 h-7 rounded-lg bg-orange-500 text-white flex items-center justify-center text-xs shrink-0 shadow-2xs">📞</span>
+                                <div>
+                                    <span class="text-[10px] font-bold text-orange-800 dark:text-orange-300 block">Hotline Phone</span>
+                                    <span class="font-mono font-black text-slate-950 dark:text-white text-xs tracking-wide">{{ $phone }}</span>
+                                </div>
+                            </div>
+                            <span class="text-xs text-orange-600 dark:text-orange-400 font-bold group-hover:translate-x-0.5 transition-transform">Call →</span>
+                        </a>
                     @endif
 
                     @if ($ftViberUrl || $ftTelegramUrl)
-                        <div class="pt-1">
-                            <span class="text-xs font-bold text-slate-800 dark:text-slate-300 block mb-1.5">တိုက်ရိုက်စကားပြောရန်:</span>
-                            <div class="flex flex-wrap gap-1.5">
+                        <div class="pt-0.5">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-300 block mb-1.5">တိုက်ရိုက်စကားပြောရန် (Direct Chat):</span>
+                            <div class="grid grid-cols-2 gap-2">
                                 @if ($ftViberUrl)
                                     <a href="{{ $ftViberUrl }}" data-ios-href="{{ $ftViberIosUrl ?? $ftViberUrl }}" target="_blank" rel="noopener noreferrer"
-                                       class="inline-flex items-center gap-1.5 rounded-md border border-violet-400 bg-white px-2.5 py-1 text-xs font-bold text-violet-800 hover:bg-violet-50 dark:border-violet-700 dark:bg-slate-900 dark:text-violet-300 shadow-2xs">
+                                       class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-violet-300 bg-violet-50/70 p-2 text-xs font-bold text-violet-800 hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-950/40 dark:text-violet-300 shadow-2xs transition active:scale-95">
                                         <x-brand-icon brand="viber" class="h-3.5 w-3.5 fill-current"/>
                                         <span>Viber</span>
                                     </a>
                                 @endif
                                 @if ($ftTelegramUrl)
                                     <a href="{{ $ftTelegramUrl }}" target="_blank" rel="noopener noreferrer"
-                                       class="inline-flex items-center gap-1.5 rounded-md border border-sky-400 bg-white px-2.5 py-1 text-xs font-bold text-sky-800 hover:bg-sky-50 dark:border-sky-700 dark:bg-slate-900 dark:text-sky-300 shadow-2xs">
+                                       class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-sky-300 bg-sky-50/70 p-2 text-xs font-bold text-sky-800 hover:bg-sky-100 dark:border-sky-700 dark:bg-sky-950/40 dark:text-sky-300 shadow-2xs transition active:scale-95">
                                         <x-brand-icon brand="telegram" class="h-3.5 w-3.5 fill-current"/>
                                         <span>Telegram</span>
                                     </a>
@@ -200,25 +222,25 @@
                     @endif
 
                     @if ($address)
-                        <div class="pt-1">
-                            <span class="text-xs font-bold text-slate-800 dark:text-slate-300 block">ဆိုင်လိပ်စာ:</span>
-                            <p class="text-slate-800 dark:text-slate-200 leading-relaxed text-xs font-medium pt-0.5">
+                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
+                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block uppercase">ဆိုင်လိပ်စာ</span>
+                            <p class="text-slate-850 dark:text-slate-200 leading-relaxed text-xs font-medium pt-0.5">
                                 📍 {{ $address }}
                             </p>
                         </div>
                     @endif
 
                     @if ($ftMapUrl || $ftMapDirectionsUrl)
-                        <div class="flex flex-wrap gap-1.5 pt-1.5">
+                        <div class="grid grid-cols-2 gap-2 pt-0.5">
                             @if ($ftMapUrl)
                                 <a href="{{ $ftMapUrl }}" target="_blank" rel="noopener noreferrer"
-                                   class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1 text-xs font-bold text-rose-700 border border-slate-300 hover:bg-rose-50 dark:border-slate-700 dark:bg-slate-900 dark:text-rose-400 shadow-2xs">
+                                   class="inline-flex items-center justify-center gap-1 rounded-xl bg-rose-50/60 p-2 text-xs font-bold text-rose-700 border border-rose-200/80 hover:bg-rose-100 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300 shadow-2xs transition">
                                     <span>🗺️ {{ __('messages.view_on_map') }}</span>
                                 </a>
                             @endif
                             @if ($ftMapDirectionsUrl)
                                 <a href="{{ $ftMapDirectionsUrl }}" target="_blank" rel="noopener noreferrer"
-                                   class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1 text-xs font-bold text-blue-700 border border-slate-300 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:text-blue-400 shadow-2xs">
+                                   class="inline-flex items-center justify-center gap-1 rounded-xl bg-blue-50/60 p-2 text-xs font-bold text-blue-700 border border-blue-200/80 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300 shadow-2xs transition">
                                     <span>🧭 {{ __('messages.get_directions') }}</span>
                                 </a>
                             @endif
@@ -228,7 +250,7 @@
             </div>
 
             {{-- Column 4: Stay Connected & Socials / ဆိုရှယ်မီဒီယာနှင့် မျှဝေရန် --}}
-            <div class="space-y-3">
+            <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 p-4 sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-0 shadow-2xs sm:shadow-none space-y-3">
                 @if (!empty($ftSocialLinks['facebook']) || !empty($ftSocialLinks['youtube']) || !empty($ftSocialLinks['tiktok']))
                     <div>
                         <h3 class="{{ $colHeader }}">
@@ -250,21 +272,21 @@
                     <div class="flex flex-wrap items-center gap-2">
                         @if (!empty($ftSocialLinks['facebook']))
                             <a href="{{ $ftSocialLinks['facebook'] }}" target="_blank" rel="noopener noreferrer"
-                               class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-blue-600 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:text-blue-400 shadow-2xs transition-colors"
+                               class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white text-blue-600 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 shadow-2xs transition-colors"
                                title="Facebook" aria-label="Facebook">
                                 <x-brand-icon brand="facebook" class="h-4 w-4 fill-current"/>
                             </a>
                         @endif
                         @if (!empty($ftSocialLinks['youtube']))
                             <a href="{{ $ftSocialLinks['youtube'] }}" target="_blank" rel="noopener noreferrer"
-                               class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-red-600 hover:bg-red-50 dark:border-slate-700 dark:bg-slate-900 dark:text-red-400 shadow-2xs transition-colors"
+                               class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white text-red-600 hover:bg-red-50 dark:border-slate-700 dark:bg-slate-800 dark:text-red-400 shadow-2xs transition-colors"
                                title="YouTube" aria-label="YouTube">
                                 <x-brand-icon brand="youtube" class="h-4 w-4 fill-current"/>
                             </a>
                         @endif
                         @if (!empty($ftSocialLinks['tiktok']))
                             <a href="{{ $ftSocialLinks['tiktok'] }}" target="_blank" rel="noopener noreferrer"
-                               class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-900 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-white shadow-2xs transition-colors"
+                               class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-900 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-2xs transition-colors"
                                title="TikTok" aria-label="TikTok">
                                 <x-brand-icon brand="tiktok" class="h-4 w-4 fill-current"/>
                             </a>
@@ -274,14 +296,14 @@
                             :url="$homeUrl"
                             :title="$storeDisplayName"
                             :label="__('messages.share')"
-                            button-class="inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 shadow-2xs"
+                            button-class="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 shadow-2xs"
                             :show-viber="(bool) $ftViberUrl"
                             :show-telegram="(bool) $ftTelegramUrl"
                             :show-facebook="!empty($ftSocialLinks['facebook'])"
                         />
                     </div>
 
-                    <div class="pt-2 border-t border-slate-300 dark:border-slate-800">
+                    <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
                         <a href="{{ $homeUrl }}" class="inline-flex items-center gap-2">
                             @if (!empty(($setting ?? null)?->storefrontLogo()))
                                 <img src="{{ asset('storage/' . $setting->storefrontLogo()) }}" alt="{{ $storeDisplayName }}"
@@ -298,11 +320,70 @@
     </div>
 
     {{-- ================= 3. PAYMENT & DELIVERY PARTNERS STRIP (HIGH CONTRAST) ================= --}}
-    <div class="border-t border-slate-300 bg-slate-200/90 dark:border-slate-800 dark:bg-slate-900/90 py-5">
+    <div class="border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/60 py-5">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-4">
             
             {{-- Pay With Bar --}}
-            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 rounded-2xl sm:rounded-none border sm:border-0 border-slate-200/80 dark:border-slate-800/80 p-3 sm:p-0 bg-slate-50/60 sm:bg-transparent dark:bg-slate-900/40 sm:dark:bg-transparent">
+                <span class="text-xs sm:text-[13px] font-extrabold text-slate-900 dark:text-white shrink-0 font-myanmar uppercase tracking-wide flex items-center gap-1.5">
+                    <span>💳</span>
+                    <span>{{ __('messages.payment') }}:</span>
+                </span>
+                <div class="flex flex-wrap items-center gap-2">
+                    @if ($ftPaymentMethods->isNotEmpty())
+                        @foreach ($ftPaymentMethods as $pm)
+                            <span class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-extrabold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 shadow-2xs">
+                                <x-payment-method-icon :method="$pm" class="h-3.5 w-3.5" text-class="text-[7px]" />
+                                <span>{{ $pm->name }}</span>
+                            </span>
+                        @endforeach
+                    @else
+                        <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 shadow-2xs">KBZPay</span>
+                        <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 shadow-2xs">WavePay</span>
+                        <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 shadow-2xs">AYA / CB</span>
+                        <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 shadow-2xs">Cash on Delivery</span>
+                    @endif
+
+                    @if ($setting?->payment_info)
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 font-myanmar ml-1">
+                            ({{ $setting->payment_info }})
+                        </span>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Delivery Partners Bar --}}
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 rounded-2xl sm:rounded-none border sm:border-0 border-slate-200/80 dark:border-slate-800/80 p-3 sm:p-0 bg-slate-50/60 sm:bg-transparent dark:bg-slate-900/40 sm:dark:bg-transparent">
+                <span class="text-xs sm:text-[13px] font-extrabold text-slate-900 dark:text-white shrink-0 font-myanmar uppercase tracking-wide flex items-center gap-1.5">
+                    <span>🚚</span>
+                    <span>{{ __('messages.delivery') }}:</span>
+                </span>
+                <div class="flex flex-wrap items-center gap-2">
+                    @if ($ftDeliveryMethods->isNotEmpty())
+                        @foreach ($ftDeliveryMethods as $dm)
+                            <span class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-extrabold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 shadow-2xs">
+                                <span>{{ $dm->icon ?: '🚚' }}</span>
+                                <span>{{ $dm->name }}</span>
+                                @if ($dm->estimated_time)
+                                    <span class="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">({{ $dm->estimated_time }})</span>
+                                @endif
+                            </span>
+                        @endforeach
+                    @else
+                        <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 shadow-2xs">🛵 အိမ်အရောက် Express</span>
+                        <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 shadow-2xs">📦 ကားဂိတ် အမြန်ချော</span>
+                    @endif
+
+                    @if ($setting?->delivery_info)
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 font-myanmar ml-1">
+                            ({{ $setting->delivery_info }})
+                        </span>
+                    @endif
+                </div>
+            </div>
+
+        </div>
+    </div>
                 <span class="text-xs sm:text-[13px] font-extrabold text-slate-900 dark:text-white shrink-0 font-myanmar uppercase tracking-wide">
                     💳 {{ __('messages.payment') }}:
                 </span>

@@ -20,7 +20,7 @@ class UserManagementController extends Controller
 {
     private const GLOBAL_ROLES = ['customer', 'platform_owner'];
 
-    private const STORE_ROLES = ['store_manager', 'staff', 'wholesale_customer', 'retail_customer'];
+    private const STORE_ROLES = ['store_owner', 'store_manager', 'staff', 'wholesale_customer', 'retail_customer'];
 
     private const MEMBERSHIP_STATUSES = ['active', 'pending', 'suspended'];
 
@@ -78,7 +78,7 @@ class UserManagementController extends Controller
         if ($tab === 'staff') {
             $query->whereHas('stores', fn ($storeQuery) => $storeQuery
                 ->where('stores.id', $store->id)
-                ->wherePivotIn('role', ['store_manager', 'staff']));
+                ->wherePivotIn('role', ['store_owner', 'store_manager', 'staff']));
         } elseif ($tab === 'customers') {
             $query->whereHas('stores', fn ($storeQuery) => $storeQuery
                 ->where('stores.id', $store->id)
@@ -97,7 +97,7 @@ class UserManagementController extends Controller
 
         // Calculate KPI metrics
         $totalUsers = DB::table('store_user')->where('store_id', $store->id)->count();
-        $staffCount = DB::table('store_user')->where('store_id', $store->id)->whereIn('role', ['store_manager', 'staff'])->count();
+        $staffCount = DB::table('store_user')->where('store_id', $store->id)->whereIn('role', ['store_owner', 'store_manager', 'staff'])->count();
         $customerCount = DB::table('store_user')->where('store_id', $store->id)->whereIn('role', ['retail_customer', 'wholesale_customer'])->count();
         $suspendedCount = DB::table('store_user')->where('store_id', $store->id)->where('status', 'suspended')->count();
 
@@ -129,30 +129,57 @@ class UserManagementController extends Controller
     public function store(Request $request, StoreContext $context): RedirectResponse
     {
         $store = $this->resolveStore($context);
-        $validated = $this->validatePayload($request, null, $store);
 
-        DB::transaction(function () use ($validated, $store) {
-            $user = User::create([
-                'name'     => $validated['name'],
-                'phone'    => $validated['phone'],
-                'email'    => $validated['email'] ?? null,
-                'password' => Hash::make($validated['password']),
-                'role'     => $validated['role'] === 'platform_owner' ? 'platform_owner' : 'customer',
-                'pos_pin'  => $validated['pos_pin'] ?? null,
-            ]);
+        $phone = preg_replace('/[^0-9]/', '', (string) $request->input('phone'));
+        $request->merge(['phone' => $phone]);
 
-            if ($validated['role'] !== 'platform_owner') {
-                $isStaff = in_array($validated['role'], ['store_manager', 'staff'], true);
-                $user->stores()->attach($store->id, [
-                    'role'          => $validated['role'],
-                    'staff_role_id' => $isStaff ? ($validated['staff_role_id'] ?? null) : null,
-                    'status'        => $validated['status'] ?? 'active',
+        $existingUser = User::where('phone', $phone)->first();
+
+        if ($existingUser && $existingUser->stores()->where('stores.id', $store->id)->exists()) {
+            return back()->withInput()->withErrors(['phone' => 'ဤဖုန်းနံပါတ်ဖြင့် အကောင့်သည် ဤဆိုင်တွင် စာရင်းသွင်းပြီးသား ဖြစ်နေပါသည်။ (User with this phone is already enrolled in this store.)']);
+        }
+
+        $validated = $this->validatePayload($request, $existingUser, $store);
+
+        DB::transaction(function () use ($validated, $store, $existingUser) {
+            if ($existingUser) {
+                $user = $existingUser;
+                $user->name = $validated['name'] ?: $user->name;
+                if (! empty($validated['email'])) {
+                    $user->email = $validated['email'];
+                }
+                if (! empty($validated['password'])) {
+                    $user->password = Hash::make($validated['password']);
+                }
+                if (! empty($validated['pos_pin'])) {
+                    $user->pos_pin = $validated['pos_pin'];
+                }
+                $user->save();
+            } else {
+                $user = User::create([
+                    'name'     => $validated['name'],
+                    'phone'    => $validated['phone'],
+                    'email'    => $validated['email'] ?? null,
+                    'password' => Hash::make($validated['password'] ?? 'password'),
+                    'role'     => (auth()->user()?->isPlatformOwner() && ($validated['role'] ?? '') === 'platform_owner') ? 'platform_owner' : 'customer',
+                    'pos_pin'  => $validated['pos_pin'] ?? null,
+                ]);
+            }
+
+            if ($user->role !== 'platform_owner') {
+                $isStaff = in_array($validated['role'], ['store_owner', 'store_manager', 'staff'], true);
+                $user->stores()->syncWithoutDetaching([
+                    $store->id => [
+                        'role'          => $validated['role'],
+                        'staff_role_id' => $isStaff ? ($validated['staff_role_id'] ?? null) : null,
+                        'status'        => $validated['status'] ?? 'active',
+                    ],
                 ]);
             }
         });
 
         return redirect(AdminListReturn::resolve('admin_users_return', route('store.admin.users.index', ['store_slug' => $store->slug])))
-            ->with('success', 'အသုံးပြုသူ အကောင့် အောင်မြင်စွာ ဖန်တီးပြီးပါပြီ။ (User account created successfully.)');
+            ->with('success', 'ဝန်ထမ်း/အသုံးပြုသူ အကောင့် အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ။ (User enrolled successfully.)');
     }
 
     public function edit(string $store_slug, User $user, StoreContext $context): View
@@ -211,7 +238,7 @@ class UserManagementController extends Controller
                 return;
             }
 
-            $isStaff = in_array($validated['role'], ['store_manager', 'staff'], true);
+            $isStaff = in_array($validated['role'], ['store_owner', 'store_manager', 'staff'], true);
             $user->stores()->syncWithoutDetaching([
                 $store->id => [
                     'role'          => $validated['role'],
@@ -223,6 +250,30 @@ class UserManagementController extends Controller
 
         return redirect(AdminListReturn::resolve('admin_users_return', route('store.admin.users.index', ['store_slug' => $store->slug])))
             ->with('success', 'အသုံးပြုသူ အချက်အလက်များ အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။ (User updated successfully.)');
+    }
+
+    public function destroy(string $store_slug, User $user, StoreContext $context): RedirectResponse
+    {
+        $store = $this->resolveStore($context);
+
+        if ($user->id === auth()->id()) {
+            return back()->withErrors(['user' => 'မိမိကိုယ်ပိုင် အကောင့်အား ဖျက်ခွင့်/ဖယ်ရှားခွင့် မရှိပါ။ (You cannot remove your own account.)']);
+        }
+
+        if ($user->isPlatformOwner() && ! auth()->user()?->isPlatformOwner()) {
+            return back()->withErrors(['user' => 'Platform Owner အကောင့်အား ဖယ်ရှားခွင့်မရှိပါ။ (Platform owner accounts cannot be removed.)']);
+        }
+
+        // Store Owner accounts cannot be removed by Store Managers
+        if ($user->stores()->where('stores.id', $store->id)->wherePivot('role', 'store_owner')->exists() && ! auth()->user()?->isStoreOwner($store->id)) {
+            return back()->withErrors(['user' => 'ဆိုင်ပိုင်ရှင် (Store Owner) အကောင့်အား ဖယ်ရှားခွင့်မရှိပါ။ (Store Owner accounts cannot be removed.)']);
+        }
+
+        // Detach user membership from this specific store
+        $user->stores()->detach($store->id);
+
+        return redirect(AdminListReturn::resolve('admin_users_return', route('store.admin.users.index', ['store_slug' => $store->slug])))
+            ->with('success', 'ဝန်ထမ်း/အသုံးပြုသူအား ဤဆိုင်စာရင်းမှ အောင်မြင်စွာ ဖယ်ရှားပြီးပါပြီ။ (User removed from store successfully.)');
     }
 
     public function suspend(string $store_slug, User $user, StoreContext $context): RedirectResponse
@@ -309,7 +360,11 @@ class UserManagementController extends Controller
 
         abort_unless((bool) $store, 404, 'Store not found.');
         $user = auth()->user();
-        abort_unless($user && $user->isPlatformOwner(), 403, 'Platform owner access required.');
+        abort_unless(
+            $user && ($user->isPlatformOwner() || $user->isStoreOwner($store->id)),
+            403,
+            'Store owner access required.'
+        );
 
         return $store;
     }

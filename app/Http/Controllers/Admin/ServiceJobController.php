@@ -580,7 +580,7 @@ class ServiceJobController extends Controller
             'items.*.item_type'   => 'required|in:service,part',
             'items.*.name'        => 'nullable|string|max:120',
             'items.*.sku'         => 'nullable|string|max:40',
-            'items.*.product_id'  => 'nullable|exists:products,id',
+            'items.*.product_id'  => ['nullable', Rule::exists('products', 'id')->where('store_id', $store->id)],
             'items.*.quantity'    => 'required|integer|min:1|max:100000',
             'items.*.unit_price'  => 'required|numeric|min:0',
         ]);

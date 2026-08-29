@@ -21,7 +21,7 @@ class OrderController extends Controller
     {
         $store = $context->getStore();
 
-        abort_unless($store, 404, 'Store not found.');
+        abort_unless((bool) $store, 404, 'Store not found.');
 
         $user = auth()->user();
 
@@ -40,13 +40,13 @@ class OrderController extends Controller
     {
         $store = $context->getStore();
 
-        abort_unless($store, 404, 'Store not found.');
+        abort_unless((bool) $store, 404, 'Store not found.');
 
         $validated = $request->validate([
             'items_json' => ['nullable', 'string'],
-            'product_id' => ['nullable', 'exists:products,id'],
+            'product_id' => ['nullable', \Illuminate\Validation\Rule::exists('products', 'id')->where('store_id', $store->id)],
             'product_variant_id' => ['nullable', 'exists:product_variants,id'],
-            'glass_finder_item_id' => ['nullable', 'exists:glass_finder_items,id'],
+            'glass_finder_item_id' => ['nullable', \Illuminate\Validation\Rule::exists('glass_finder_items', 'id')->where('store_id', $store->id)],
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:50'],
             'customer_address' => ['required', 'string', 'max:1000'],
@@ -284,7 +284,7 @@ class OrderController extends Controller
             . ($order->contact_identifier ? "ဆက်သွယ်ရန်: {$order->contact_identifier}\n" : '')
             . "လိပ်စာ: {$order->customer_address}\n"
             . "မှာယူသော ပစ္စည်းများ:\n{$itemsLines}\n"
-            . "စုစုပေါင်း: Ks " . number_format($order->total_amount);
+            . "စုစုပေါင်း: Ks " . number_format((float) $order->total_amount);
 
         $viberUrl = \App\Support\ContactLinkBuilder::viberChatUrl(
             $store->setting?->viber_number,

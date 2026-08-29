@@ -12,10 +12,13 @@ use App\Models\User;
 use App\POS\Enums\InventoryMovementType;
 use App\POS\Models\InventoryMovement;
 use App\POS\Models\Warehouse;
+use App\POS\Services\CustomerDebtService;
 use App\POS\Services\InventoryService;
 use App\POS\Services\StoreLocationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class DemoBusinessScenarioService
@@ -23,6 +26,8 @@ class DemoBusinessScenarioService
     public function __construct(
         private StoreLocationService $storeLocations,
         private InventoryService $inventory,
+        private CustomerDebtService $debt,
+        private DemoStorefrontAssetService $storefrontAssets,
     ) {
     }
 
@@ -34,42 +39,64 @@ class DemoBusinessScenarioService
                 'subtitle' => 'ဖုန်းနှင့် Accessories အရောင်းဆိုင်',
                 'description' => 'Phone, cover, glass, charger, cable, earphone stock workflow စမ်းရန်။',
                 'store_slug' => 'mobile-accessories-demo',
+                'readiness' => 'Core-ready',
+                'limitation' => null,
             ],
             'mobile-sale-service' => [
                 'label' => 'Mobile Sale & Service',
                 'subtitle' => 'ဖုန်းအရောင်းနှင့် Service/Repair ဆိုင်',
                 'description' => 'Phone sales, spare parts, service items, technician workflow စမ်းရန်။',
                 'store_slug' => 'mobile-sale-service-demo',
+                'readiness' => 'Core-ready',
+                'limitation' => null,
             ],
             'cctv-network-computer' => [
                 'label' => 'CCTV + Network + Computer',
                 'subtitle' => 'CCTV, Network, Computer အရောင်း/တပ်ဆင်ရေး',
                 'description' => 'Project stock, showroom, service spare parts, installation package workflow စမ်းရန်။',
                 'store_slug' => 'cctv-network-computer-demo',
+                'readiness' => 'Core-ready',
+                'limitation' => null,
             ],
             'pharmacy' => [
                 'label' => 'Pharmacy',
                 'subtitle' => 'ဆေးဆိုင်',
                 'description' => 'Medicine, supplement, device, expiry/batch stock workflow စမ်းရန်။',
                 'store_slug' => 'pharmacy-demo',
+                'readiness' => 'Preview',
+                'limitation' => 'Batch/expiry ကို demo metadata အဖြစ်သာပြထားပြီး production workflow မပြီးသေးပါ။',
             ],
             'restaurant' => [
                 'label' => 'Restaurant',
                 'subtitle' => 'စားသောက်ဆိုင်',
                 'description' => 'Kitchen stock, counter drinks, ready-to-sell menu workflow စမ်းရန်။',
                 'store_slug' => 'restaurant-demo',
+                'readiness' => 'Preview',
+                'limitation' => 'Table, KOT, modifier နှင့် recipe inventory မပါသေးသော catalog/POS demo ဖြစ်သည်။',
             ],
             'diamond-stone-agri' => [
                 'label' => 'Diamond Stone',
                 'subtitle' => 'စိုက်ပျိုးရေး မျိုးစေ့နှင့် ပိုးသတ်ဆေးအရောင်းဆိုင်',
                 'description' => 'Seeds, fertilizer, pesticide, supplier credit, expiry/chemical stock workflow စမ်းရန်။',
                 'store_slug' => 'diamond-stone-agri',
+                'readiness' => 'Preview',
+                'limitation' => 'Batch, expiry နှင့် UOM ကို production-grade workflow အဖြစ် မထောက်ပံ့သေးပါ။',
             ],
             'si-taw-gyi-food-bar' => [
                 'label' => 'စည်တော်ကြီး',
                 'subtitle' => 'စားသောက်ဆိုင် + အရက်/ဘီယာအရောင်းဆိုင်',
                 'description' => 'Kitchen stock, bar stock, daily counter, food/drink sale workflow စမ်းရန်။',
                 'store_slug' => 'si-taw-gyi-food-bar',
+                'readiness' => 'Preview',
+                'limitation' => 'Table/KOT မပါသေးသော counter sale နှင့် catalog demo ဖြစ်သည်။',
+            ],
+            'general-retail' => [
+                'label' => 'General Retail / Mini Mart',
+                'subtitle' => 'ကုန်စုံ၊ အိမ်သုံးပစ္စည်းနှင့် Mini Mart',
+                'description' => 'Barcode POS, fast-moving stock, retail/wholesale price နှင့် daily closing workflow စမ်းရန်။',
+                'store_slug' => 'general-retail-demo',
+                'readiness' => 'Core-ready',
+                'limitation' => null,
             ],
         ];
     }
@@ -82,7 +109,7 @@ class DemoBusinessScenarioService
 
         $scenario = $this->scenarioDefinition($scenarioKey);
 
-        return DB::transaction(function () use ($scenarioKey, $scenario, $actor) {
+        $result = DB::transaction(function () use ($scenarioKey, $scenario, $actor) {
             $store = Store::where('slug', $scenario['store']['slug'])->first();
             if (! $store && ! empty($scenario['legacy_slugs'])) {
                 $store = Store::whereIn('slug', $scenario['legacy_slugs'])->first();
@@ -188,6 +215,9 @@ class DemoBusinessScenarioService
                         'slug' => Str::slug($item['sku']),
                         'description' => $item['description'] ?? null,
                         'retail_price' => $item['retail_price'],
+                        'old_price' => $item['old_price'] ?? null,
+                        'sale_starts_at' => $item['sale_starts_at'] ?? null,
+                        'sale_ends_at' => $item['sale_ends_at'] ?? null,
                         'wholesale_price' => $item['wholesale_price'] ?? $item['retail_price'],
                         'purchase_cost' => $item['purchase_cost'] ?? null,
                         'reorder_level' => $item['reorder_level'] ?? 5,
@@ -232,15 +262,411 @@ class DemoBusinessScenarioService
             return [
                 'store' => $store,
                 'products' => $productsCreated,
+                'featured_products' => collect($scenario['products'])->where('is_featured', true)->count(),
+                'timed_promotions' => collect($scenario['products'])->whereNotNull('old_price')->count(),
                 'warehouses' => count($warehouses),
                 'users' => count($scenario['users']) + 1,
             ];
         });
+
+        return $this->attachStorefrontAssets($result, $scenarioKey);
+    }
+
+    /**
+     * Seed scenario data directly into an existing store with optional clearing of old test records.
+     */
+    public function seedIntoStore(
+        Store $store,
+        string $scenarioKey,
+        User $actor,
+        bool $cleanOldData = false,
+        bool $applyStoreIdentity = false
+    ): array
+    {
+        if (! app()->environment(['local', 'testing', 'uat']) || ! config('app.show_quick_login')) {
+            throw new \RuntimeException('Demo business scenarios are available only in local/UAT quick-login mode.');
+        }
+
+        $scenario = $this->scenarioDefinition($scenarioKey);
+
+        $result = DB::transaction(function () use ($store, $scenarioKey, $scenario, $actor, $cleanOldData, $applyStoreIdentity) {
+            if ($cleanOldData) {
+                $this->cleanStoreData($store);
+            }
+
+            if ($applyStoreIdentity) {
+                $store->fill([
+                    'name' => $scenario['store']['name'],
+                    'business_type' => $scenario['store']['business_type'],
+                    'viber_number' => $scenario['store']['viber_number'] ?? null,
+                    'telegram_username' => $scenario['store']['telegram_username'] ?? null,
+                ])->save();
+
+                StorefrontSetting::updateOrCreate(
+                    ['store_id' => $store->id],
+                    $scenario['setting'] + ['store_id' => $store->id, 'default_language' => 'my']
+                );
+            }
+
+            $locations = $this->storeLocations->ensureDefaults($store);
+            $this->attachUser($store, $actor, 'store_manager');
+
+            foreach ($scenario['users'] as $user) {
+                $this->attachUser($store, $this->user($user), $user['store_role']);
+            }
+
+            $warehouses = [
+                'MAIN' => $locations['warehouse'],
+            ];
+
+            foreach ($scenario['warehouses'] as $warehouse) {
+                $warehouses[$warehouse['code']] = Warehouse::updateOrCreate(
+                    ['store_id' => $store->id, 'name' => $warehouse['name']],
+                    [
+                        'branch_id' => $locations['branch']->id,
+                        'code' => $warehouse['code'],
+                        'is_default' => false,
+                        'is_active' => true,
+                    ]
+                );
+            }
+
+            $categories = [];
+            foreach ($scenario['categories'] as $category) {
+                $categories[$category['key']] = Category::updateOrCreate(
+                    ['store_id' => $store->id, 'slug' => $category['slug']],
+                    [
+                        'name' => $category['name'],
+                        'code' => strtoupper(str_replace('-', '_', $category['slug'])),
+                        'description' => $category['description'] ?? null,
+                        'icon' => $category['icon'] ?? null,
+                    ]
+                );
+            }
+
+            $brands = [];
+            foreach ($scenario['brands'] as $brand) {
+                $brandModel = Brand::where('store_id', $store->id)->where('slug', $brand['slug'])->first();
+                if (! $brandModel && ! empty($brand['legacy_slugs'])) {
+                    $brandModel = Brand::where('store_id', $store->id)->whereIn('slug', $brand['legacy_slugs'])->first();
+                }
+
+                if ($brandModel) {
+                    $brandModel->update([
+                        'name' => $brand['name'],
+                        'slug' => $brand['slug'],
+                        'code' => strtoupper(str_replace('-', '_', $brand['slug'])),
+                    ]);
+                } else {
+                    $brandModel = Brand::create([
+                        'store_id' => $store->id,
+                        'name' => $brand['name'],
+                        'slug' => $brand['slug'],
+                        'code' => strtoupper(str_replace('-', '_', $brand['slug'])),
+                    ]);
+                }
+
+                $brands[$brand['key']] = $brandModel;
+            }
+
+            $suppliers = [];
+            foreach ($scenario['suppliers'] as $supplier) {
+                $suppliers[$supplier['key']] = Supplier::updateOrCreate(
+                    ['store_id' => $store->id, 'phone' => $supplier['phone']],
+                    [
+                        'name' => $supplier['name'],
+                        'contact_person' => $supplier['contact_person'] ?? null,
+                        'address' => $supplier['address'] ?? null,
+                        'notes' => $supplier['notes'] ?? null,
+                    ]
+                );
+            }
+
+            $productsCreated = 0;
+            foreach ($scenario['products'] as $item) {
+                $product = Product::updateOrCreate(
+                    ['store_id' => $store->id, 'sku' => $item['sku']],
+                    [
+                        'category_id' => $categories[$item['category_key']]->id,
+                        'brand_id' => $brands[$item['brand_key']]->id,
+                        'supplier_id' => $suppliers[$item['supplier_key']]->id,
+                        'warehouse_id' => $warehouses[$item['warehouse_code']]->id,
+                        'product_type' => $item['product_type'] ?? 'standard',
+                        'barcode' => $item['barcode'] ?? null,
+                        'name' => $item['name'],
+                        'slug' => Str::slug($item['sku']),
+                        'description' => $item['description'] ?? null,
+                        'retail_price' => $item['retail_price'],
+                        'old_price' => $item['old_price'] ?? null,
+                        'sale_starts_at' => $item['sale_starts_at'] ?? null,
+                        'sale_ends_at' => $item['sale_ends_at'] ?? null,
+                        'wholesale_price' => $item['wholesale_price'] ?? $item['retail_price'],
+                        'purchase_cost' => $item['purchase_cost'] ?? null,
+                        'reorder_level' => $item['reorder_level'] ?? 5,
+                        'stock_status' => 'in_stock',
+                        'shelf_location' => $item['shelf_location'] ?? null,
+                        'service_duration' => $item['service_duration'] ?? null,
+                        'digital_delivery_method' => $item['digital_delivery_method'] ?? null,
+                        'is_featured' => $item['is_featured'] ?? false,
+                        'is_ecommerce' => $item['is_ecommerce'] ?? true,
+                        'warranty' => $item['warranty'] ?? null,
+                        'return_policy' => $item['return_policy'] ?? 'Demo return policy only.',
+                        'specs' => $item['specs'] ?? null,
+                    ]
+                );
+
+                $hasOpeningMovement = InventoryMovement::query()
+                    ->where('store_id', $store->id)
+                    ->where('source_type', 'demo_scenario')
+                    ->where('product_id', $product->id)
+                    ->exists();
+
+                if (! $hasOpeningMovement) {
+                    $this->inventory->postMovement([
+                        'store' => $store,
+                        'warehouse_id' => $warehouses[$item['warehouse_code']]->id,
+                        'branch_id' => $locations['branch']->id,
+                        'product_id' => $product->id,
+                        'movement_type' => InventoryMovementType::OpeningBalance->value,
+                        'quantity_delta' => (string) $item['opening_stock'],
+                        'unit_cost' => $item['purchase_cost'] ?? null,
+                        'source_type' => 'demo_scenario',
+                        'source_id' => $store->id,
+                        'client_transaction_id' => "demo:{$scenarioKey}:opening:{$item['sku']}:" . $store->id,
+                        'metadata' => ['scenario' => $scenarioKey],
+                    ]);
+                }
+
+                $productsCreated++;
+            }
+
+            // Seed Sample Customers & Debts
+            $this->seedSampleCustomersAndDebts($store, $actor);
+
+            return [
+                'store' => $store,
+                'products' => $productsCreated,
+                'featured_products' => collect($scenario['products'])->where('is_featured', true)->count(),
+                'timed_promotions' => collect($scenario['products'])->whereNotNull('old_price')->count(),
+                'warehouses' => count($warehouses),
+                'users' => count($scenario['users']) + 1,
+                'identity_updated' => $applyStoreIdentity,
+            ];
+        });
+
+        return $this->attachStorefrontAssets($result, $scenarioKey);
+    }
+
+    public function purgeStorefrontAssets(Store $store): void
+    {
+        $this->storefrontAssets->purge($store);
+    }
+
+    private function attachStorefrontAssets(array $result, string $scenarioKey): array
+    {
+        try {
+            $result['assets'] = $this->storefrontAssets->generate($result['store'], $scenarioKey);
+            $result['asset_warning'] = null;
+        } catch (\Throwable $exception) {
+            Log::warning('Demo data seeded but storefront asset generation failed.', [
+                'store_id' => $result['store']->id,
+                'scenario' => $scenarioKey,
+                'exception' => $exception->getMessage(),
+            ]);
+            $result['assets'] = ['products' => 0, 'categories' => 0, 'banners' => 0, 'skipped' => 0];
+            $result['asset_warning'] = $exception->getMessage();
+        }
+
+        return $result;
+    }
+
+    /**
+     * Clean old test data (orders, sales, inventory, debts, service jobs, products, categories, brands) for a store.
+     */
+    public function cleanStoreData(Store $store): void
+    {
+        // 1. Delete online orders and order items
+        if (Schema::hasTable('orders')) {
+            if (Schema::hasTable('order_items')) {
+                DB::table('order_items')->whereIn('order_id', function ($query) use ($store) {
+                    $query->select('id')->from('orders')->where('store_id', $store->id);
+                })->delete();
+            }
+            DB::table('orders')->where('store_id', $store->id)->delete();
+        }
+
+        // 2. Delete wholesale applications & reviews
+        if (Schema::hasTable('wholesale_applications')) {
+            DB::table('wholesale_applications')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('reviews')) {
+            DB::table('reviews')->where('store_id', $store->id)->delete();
+        }
+
+        // 3. Delete POS sales, items, returns, shifts, and daily closings
+        if (Schema::hasTable('pos_sales')) {
+            if (Schema::hasTable('pos_sale_items')) {
+                DB::table('pos_sale_items')->whereIn('sale_id', function ($query) use ($store) {
+                    $query->select('id')->from('pos_sales')->where('store_id', $store->id);
+                })->delete();
+            }
+            DB::table('pos_sales')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('pos_returns')) {
+            if (Schema::hasTable('pos_return_items')) {
+                DB::table('pos_return_items')->whereIn('return_id', function ($query) use ($store) {
+                    $query->select('id')->from('pos_returns')->where('store_id', $store->id);
+                })->delete();
+            }
+            DB::table('pos_returns')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('cashier_shifts')) {
+            if (Schema::hasTable('cash_events')) {
+                DB::table('cash_events')->where('store_id', $store->id)->delete();
+            }
+            DB::table('cashier_shifts')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('daily_closings')) {
+            DB::table('daily_closings')->where('store_id', $store->id)->delete();
+        }
+
+        // 4. Delete purchases, purchase orders, goods receipts, returns, and buybacks
+        if (Schema::hasTable('purchases')) {
+            if (Schema::hasTable('purchase_items')) {
+                DB::table('purchase_items')->whereIn('purchase_id', function ($query) use ($store) {
+                    $query->select('id')->from('purchases')->where('store_id', $store->id);
+                })->delete();
+            }
+            DB::table('purchases')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('purchase_orders')) {
+            if (Schema::hasTable('purchase_order_items')) {
+                DB::table('purchase_order_items')->whereIn('purchase_order_id', function ($query) use ($store) {
+                    $query->select('id')->from('purchase_orders')->where('store_id', $store->id);
+                })->delete();
+            }
+            DB::table('purchase_orders')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('goods_receipts')) {
+            if (Schema::hasTable('goods_receipt_items')) {
+                DB::table('goods_receipt_items')->whereIn('goods_receipt_id', function ($query) use ($store) {
+                    $query->select('id')->from('goods_receipts')->where('store_id', $store->id);
+                })->delete();
+            }
+            DB::table('goods_receipts')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('buy_backs')) {
+            DB::table('buy_backs')->where('store_id', $store->id)->delete();
+        }
+
+        // 5. Delete stock counts, transfers, adjustments, movements, and balances
+        if (Schema::hasTable('stock_counts')) {
+            if (Schema::hasTable('stock_count_lines')) {
+                DB::table('stock_count_lines')->whereIn('stock_count_id', function ($query) use ($store) {
+                    $query->select('id')->from('stock_counts')->where('store_id', $store->id);
+                })->delete();
+            }
+            DB::table('stock_counts')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('stock_transfers')) {
+            if (Schema::hasTable('stock_transfer_items')) {
+                DB::table('stock_transfer_items')->whereIn('stock_transfer_id', function ($query) use ($store) {
+                    $query->select('id')->from('stock_transfers')->where('store_id', $store->id);
+                })->delete();
+            }
+            DB::table('stock_transfers')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('inventory_adjustments')) {
+            if (Schema::hasTable('inventory_adjustment_items')) {
+                DB::table('inventory_adjustment_items')->whereIn('inventory_adjustment_id', function ($query) use ($store) {
+                    $query->select('id')->from('inventory_adjustments')->where('store_id', $store->id);
+                })->delete();
+            }
+            DB::table('inventory_adjustments')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('inventory_movements')) {
+            DB::table('inventory_movements')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('inventory_balances')) {
+            DB::table('inventory_balances')->where('store_id', $store->id)->delete();
+        }
+
+        // 6. Delete service jobs, parts, device warranties, expenses, and debts
+        if (Schema::hasTable('service_jobs')) {
+            if (Schema::hasTable('service_job_parts')) {
+                DB::table('service_job_parts')->whereIn('service_job_id', function ($query) use ($store) {
+                    $query->select('id')->from('service_jobs')->where('store_id', $store->id);
+                })->delete();
+            }
+            DB::table('service_jobs')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('device_warranties')) {
+            DB::table('device_warranties')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('expenses')) {
+            DB::table('expenses')->where('store_id', $store->id)->delete();
+        }
+        if (Schema::hasTable('customer_ledger_entries')) {
+            DB::table('customer_ledger_entries')->where('store_id', $store->id)->delete();
+        }
+
+        // 7. Delete product images, variants, products, categories, brands, and suppliers
+        if (Schema::hasTable('product_images')) {
+            DB::table('product_images')->whereIn('product_id', function ($query) use ($store) {
+                $query->select('id')->from('products')->where('store_id', $store->id);
+            })->delete();
+        }
+        if (Schema::hasTable('product_variants')) {
+            DB::table('product_variants')->whereIn('product_id', function ($query) use ($store) {
+                $query->select('id')->from('products')->where('store_id', $store->id);
+            })->delete();
+        }
+        Product::where('store_id', $store->id)->delete();
+        Category::where('store_id', $store->id)->delete();
+        Brand::where('store_id', $store->id)->delete();
+        Supplier::where('store_id', $store->id)->delete();
+    }
+
+    private function seedSampleCustomersAndDebts(Store $store, User $actor): void
+    {
+        $customersData = [
+            ['name' => 'ဦးဘိုဘို (Farmer/Wholesale)', 'phone' => '09988776655', 'debt' => '150000', 'notes' => 'စိုက်ပျိုးရေး မျိုးစေ့ အကြွေး'],
+            ['name' => 'ဒေါ်သန်းသန်းနွယ် (Retail Buyer)', 'phone' => '09776655443', 'debt' => '45000', 'notes' => 'အပတ်စဉ် ပုံမှန်ဝယ်ယူသူ'],
+            ['name' => 'ကိုမင်းထွန်း (Regular Buyer)', 'phone' => '09665544332', 'debt' => '0', 'notes' => 'Cash Customer'],
+        ];
+
+        foreach ($customersData as $c) {
+            $user = User::updateOrCreate(
+                ['phone' => $c['phone']],
+                [
+                    'name' => $c['name'],
+                    'password' => Hash::make('password'),
+                    'role' => 'customer',
+                ]
+            );
+
+            $this->attachUser($store, $user, 'customer');
+
+            if (bccomp($c['debt'], '0', 2) > 0) {
+                try {
+                    $this->debt->recordOpeningBalance(
+                        $store,
+                        $user->id,
+                        $c['debt'],
+                        $actor,
+                        $c['notes'],
+                        "demo:debt:{$user->id}:{$store->id}"
+                    );
+                } catch (\Throwable) {
+                    // Ignore if already posted
+                }
+            }
+        }
     }
 
     private function scenarioDefinition(string $scenarioKey): array
     {
-        return match ($scenarioKey) {
+        $scenario = match ($scenarioKey) {
             'mobile-accessories' => $this->mobileAccessories(),
             'mobile-sale-service' => $this->mobileSaleService(),
             'cctv-network-computer' => $this->cctvNetworkComputer(),
@@ -248,8 +674,11 @@ class DemoBusinessScenarioService
             'restaurant' => $this->restaurant(),
             'diamond-stone-agri', 'diamon-stone-agri' => $this->diamondStoneAgri(),
             'si-taw-gyi-food-bar' => $this->siTawGyiFoodBar(),
+            'general-retail' => $this->generalRetail(),
             default => throw new \InvalidArgumentException('Unknown demo scenario.'),
         };
+
+        return $this->enrichScenario($scenarioKey, $scenario);
     }
 
     private function user(array $data): User
@@ -513,6 +942,121 @@ class DemoBusinessScenarioService
             'suppliers' => $suppliers,
             'products' => $products,
         ];
+    }
+
+    private function generalRetail(): array
+    {
+        return $this->scenario(
+            store: [
+                'name' => 'ရွှေမြန်မာ မီနီမတ်',
+                'business_type' => 'general_retail',
+                'slug' => 'general-retail-demo',
+                'viber_number' => '09200000001',
+                'telegram_username' => 'shwemyanmar_minimart',
+            ],
+            setting: [
+                'store_name' => 'ရွှေမြန်မာ မီနီမတ်',
+                'tagline' => 'နေ့စဉ်လိုအပ်သမျှ တစ်နေရာတည်းမှာ ဝယ်ယူနိုင်သော အိမ်နီးချင်း Mini Mart',
+                'phone' => '09200000001',
+                'address' => 'အမှတ် (၁၂၃)၊ ဗိုလ်ချုပ်လမ်း၊ မန္တလေးမြို့',
+                'opening_hours' => 'နေ့စဉ် မနက် 7:00 မှ ည 9:00 အထိ',
+                'delivery_info' => 'မြို့တွင်းအိမ်အရောက်ပို့နှင့် ဆိုင်တွင်လာယူနိုင်ပါသည်။',
+                'payment_info' => 'Cash, KBZ Pay, Wave Pay နှင့် MMQR လက်ခံပါသည်။',
+            ],
+            users: [
+                ['name' => 'ဒေါ်ခင်မာ (ဆိုင်မန်နေဂျာ)', 'phone' => '09200000001', 'store_role' => 'store_manager', 'pos_pin' => '1234'],
+                ['name' => 'မနွယ်နီ (အရောင်းစာရေး)', 'phone' => '09200000002', 'store_role' => 'staff'],
+            ],
+            warehouses: [
+                ['name' => 'အရောင်းစင်', 'code' => 'FRONT'],
+                ['name' => 'နောက်ဂိုဒေါင်', 'code' => 'BACK'],
+                ['name' => 'ပျက်စီး/ပြန်ပို့', 'code' => 'RETURN'],
+            ],
+            categories: [
+                ['key' => 'grocery', 'name' => 'အခြေခံစားသောက်ကုန်', 'slug' => 'daily-grocery', 'icon' => '🛒'],
+                ['key' => 'snacks', 'name' => 'မုန့်နှင့် အဆာပြေ', 'slug' => 'snacks', 'icon' => '🍪'],
+                ['key' => 'drinks', 'name' => 'အချိုရည်နှင့် သောက်ရေ', 'slug' => 'beverages', 'icon' => '🥤'],
+                ['key' => 'personal', 'name' => 'တစ်ကိုယ်ရေသုံးပစ္စည်း', 'slug' => 'personal-care-retail', 'icon' => '🧴'],
+                ['key' => 'household', 'name' => 'အိမ်သုံးနှင့် သန့်ရှင်းရေး', 'slug' => 'household-cleaning', 'icon' => '🧹'],
+            ],
+            brands: [
+                ['key' => 'shwe', 'name' => 'ရွှေမြန်မာ', 'slug' => 'shwe-myanmar'],
+                ['key' => 'daily', 'name' => 'Daily Choice', 'slug' => 'daily-choice'],
+                ['key' => 'fresh', 'name' => 'Fresh Myanmar', 'slug' => 'fresh-myanmar'],
+                ['key' => 'home', 'name' => 'Happy Home', 'slug' => 'happy-home'],
+            ],
+            suppliers: [
+                ['key' => 'grocery_supplier', 'name' => 'မန္တလေး အထွေထွေကုန်စုံ လက်ကား', 'phone' => '09300000001', 'contact_person' => 'ဦးအောင်မင်း', 'address' => 'ဇေယျာဈေး၊ မန္တလေး'],
+                ['key' => 'household_supplier', 'name' => 'မြန်မာ အိမ်သုံးပစ္စည်း ဖြန့်ချိရေး', 'phone' => '09300000002', 'contact_person' => 'ဒေါ်မိုးမိုး', 'address' => 'ရန်ကုန်မြို့'],
+            ],
+            products: [
+                ['sku' => 'GR-RICE-PAWSAN-5KG', 'name' => 'ပေါ်ဆန်းမွှေးဆန် 5 Kg', 'category_key' => 'grocery', 'brand_key' => 'shwe', 'supplier_key' => 'grocery_supplier', 'warehouse_code' => 'BACK', 'retail_price' => 24500, 'wholesale_price' => 23000, 'purchase_cost' => 20500, 'opening_stock' => 35, 'reorder_level' => 8],
+                ['sku' => 'GR-OIL-PEANUT-1L', 'name' => 'မြေပဲဆီသန့် 1 L', 'category_key' => 'grocery', 'brand_key' => 'fresh', 'supplier_key' => 'grocery_supplier', 'warehouse_code' => 'FRONT', 'retail_price' => 12500, 'wholesale_price' => 11500, 'purchase_cost' => 9800, 'opening_stock' => 48, 'reorder_level' => 12],
+                ['sku' => 'GR-NOODLE-INSTANT-10', 'name' => 'အသင့်စားခေါက်ဆွဲ 10 ထုပ်ပါ', 'category_key' => 'grocery', 'brand_key' => 'daily', 'supplier_key' => 'grocery_supplier', 'warehouse_code' => 'FRONT', 'retail_price' => 8500, 'wholesale_price' => 7800, 'purchase_cost' => 6500, 'opening_stock' => 60, 'reorder_level' => 15],
+                ['sku' => 'GR-SNACK-POTATO', 'name' => 'အာလူးကြော် အထုပ်ကြီး', 'category_key' => 'snacks', 'brand_key' => 'daily', 'supplier_key' => 'grocery_supplier', 'warehouse_code' => 'FRONT', 'retail_price' => 2500, 'wholesale_price' => 2200, 'purchase_cost' => 1700, 'opening_stock' => 96, 'reorder_level' => 24],
+                ['sku' => 'GR-WATER-1L', 'name' => 'သောက်ရေသန့် 1 L', 'category_key' => 'drinks', 'brand_key' => 'fresh', 'supplier_key' => 'grocery_supplier', 'warehouse_code' => 'FRONT', 'retail_price' => 900, 'wholesale_price' => 750, 'purchase_cost' => 520, 'opening_stock' => 180, 'reorder_level' => 48],
+                ['sku' => 'GR-SHAMPOO-340', 'name' => 'မိသားစုသုံး Shampoo 340 ml', 'category_key' => 'personal', 'brand_key' => 'daily', 'supplier_key' => 'household_supplier', 'warehouse_code' => 'FRONT', 'retail_price' => 9500, 'wholesale_price' => 8800, 'purchase_cost' => 7200, 'opening_stock' => 36, 'reorder_level' => 10],
+                ['sku' => 'GR-DETERGENT-1KG', 'name' => 'အဝတ်လျှော်မှုန့် 1 Kg', 'category_key' => 'household', 'brand_key' => 'home', 'supplier_key' => 'household_supplier', 'warehouse_code' => 'BACK', 'retail_price' => 7800, 'wholesale_price' => 7100, 'purchase_cost' => 5800, 'opening_stock' => 42, 'reorder_level' => 12],
+                ['sku' => 'GR-DISHWASH-800', 'name' => 'ပန်းကန်ဆေးရည် 800 ml', 'category_key' => 'household', 'brand_key' => 'home', 'supplier_key' => 'household_supplier', 'warehouse_code' => 'FRONT', 'retail_price' => 6500, 'wholesale_price' => 5900, 'purchase_cost' => 4700, 'opening_stock' => 40, 'reorder_level' => 10],
+            ],
+        );
+    }
+
+    /**
+     * Expand each compact scenario into a storefront-ready catalog while keeping
+     * the source definitions readable. Generated records are deterministic and
+     * remain idempotent because every SKU is stable.
+     */
+    private function enrichScenario(string $scenarioKey, array $scenario): array
+    {
+        $labels = match ($scenarioKey) {
+            'mobile-accessories' => ['Black Edition', 'Blue Edition', 'Value Pack', 'Premium Pack'],
+            'mobile-sale-service' => ['Standard Grade', 'OEM Grade', 'Premium Grade', 'Service Pack'],
+            'cctv-network-computer' => ['Home Package', 'Shop Package', 'Office Package', 'Pro Package'],
+            'pharmacy' => ['10 Unit Pack', '30 Unit Pack', 'Family Pack', 'Clinic Pack'],
+            'restaurant', 'si-taw-gyi-food-bar' => ['Regular', 'Large', 'Family Set', 'Takeaway Set'],
+            'diamond-stone-agri', 'diamon-stone-agri' => ['Small Farm Pack', 'Standard Pack', 'Value Pack', 'Commercial Pack'],
+            'general-retail' => ['Small Pack', 'Standard Pack', 'Family Pack', 'Value Carton'],
+            default => ['Standard', 'Plus', 'Value Pack', 'Premium'],
+        };
+
+        $baseProducts = array_values($scenario['products']);
+        $products = $baseProducts;
+        $targetCount = 32;
+        $variantNumber = 1;
+
+        while (count($products) < $targetCount) {
+            $base = $baseProducts[($variantNumber - 1) % count($baseProducts)];
+            $label = $labels[(int) floor(($variantNumber - 1) / count($baseProducts)) % count($labels)];
+            $multiplier = [1.04, 1.08, 1.14, 1.22][($variantNumber - 1) % 4];
+            $variant = $base;
+            $variant['sku'] = $base['sku'] . '-D' . str_pad((string) $variantNumber, 2, '0', STR_PAD_LEFT);
+            $variant['name'] = $base['name'] . ' - ' . $label;
+            $variant['retail_price'] = max(100, (int) round($base['retail_price'] * $multiplier / 100) * 100);
+            $variant['wholesale_price'] = max(100, (int) round($variant['retail_price'] * 0.92 / 100) * 100);
+            $variant['purchase_cost'] = max(0, (int) round(($base['purchase_cost'] ?? 0) * $multiplier / 100) * 100);
+            $variant['opening_stock'] = max(1, (int) ($base['opening_stock'] * (0.65 + (($variantNumber % 4) * 0.08))));
+            $variant['is_featured'] = false;
+            $products[] = $variant;
+            $variantNumber++;
+        }
+
+        foreach ($products as $index => &$product) {
+            $isEcommerce = $product['is_ecommerce'] ?? true;
+            $product['description'] ??= $scenario['setting']['store_name'] . ' ၏ demo catalog အတွက် မြန်မာဈေးကွက်နှင့်ကိုက်ညီသော နမူနာကုန်ပစ္စည်းဖြစ်ပါသည်။';
+            $product['is_featured'] = $isEcommerce && ($index % 6 === 0);
+
+            if ($isEcommerce && $index % 5 === 0) {
+                $product['old_price'] = max($product['retail_price'] + 100, (int) ceil($product['retail_price'] * 1.15 / 100) * 100);
+                $product['sale_starts_at'] = $index % 10 === 5 ? now()->addDay() : now()->subDay();
+                $product['sale_ends_at'] = now()->addDays(7 + ($index % 4));
+            }
+        }
+        unset($product);
+
+        $scenario['products'] = $products;
+
+        return $scenario;
     }
 
     private function diamondStoneAgri(): array

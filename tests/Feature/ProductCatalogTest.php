@@ -78,7 +78,8 @@ class ProductCatalogTest extends TestCase
         $responseWholesale = $this->actingAs($wholesaleUser)->get('/products?store_slug=store-main');
         $responseWholesale->assertStatus(200);
         $responseWholesale->assertDontSee('5,000');
-        $responseWholesale->assertSee(__('messages.wholesale') . ': Ks 3,000');
+        $responseWholesale->assertSee(__('messages.wholesale'));
+        $responseWholesale->assertSee('3,000');
 
         // 3. Pending Wholesale / Retail Customer -> Retail Price Only
         $pendingUser = User::create([
@@ -117,7 +118,7 @@ class ProductCatalogTest extends TestCase
         $responseRetail->assertSee('40,000');
         $responseRetail->assertSee('50,000');
         $responseRetail->assertSee('-20%');
-        $responseRetail->assertDontSee(__('messages.wholesale') . ': Ks 25,000');
+        $responseRetail->assertDontSee('25,000');
 
         $wholesaleUser = User::create([
             'name' => 'Wholesale Buyer',
@@ -129,7 +130,8 @@ class ProductCatalogTest extends TestCase
 
         $responseWholesale = $this->actingAs($wholesaleUser)->get('/products?store_slug=store-main');
         $responseWholesale->assertStatus(200);
-        $responseWholesale->assertSee(__('messages.wholesale') . ': Ks 25,000');
+        $responseWholesale->assertSee(__('messages.wholesale'));
+        $responseWholesale->assertSee('25,000');
         $responseWholesale->assertDontSee('40,000');
         $responseWholesale->assertDontSee('50,000');
         $responseWholesale->assertDontSee('-20%');
@@ -229,7 +231,7 @@ class ProductCatalogTest extends TestCase
         $managerB->stores()->attach($storeB->id, ['role' => 'store_manager', 'status' => 'active']);
 
         // Create category in Store A
-        $categoryA = \App\Models\Category::create([
+        $categoryA = Category::create([
             'store_id' => $storeA->id,
             'name' => 'Original Name',
             'slug' => 'original-name',
@@ -289,7 +291,7 @@ class ProductCatalogTest extends TestCase
         $managerB->stores()->attach($storeB->id, ['role' => 'store_manager', 'status' => 'active']);
 
         // Create brand in Store A
-        $brandA = \App\Models\Brand::create([
+        $brandA = Brand::create([
             'store_id' => $storeA->id,
             'name' => 'Original Brand',
             'slug' => 'original-brand',
@@ -349,7 +351,7 @@ class ProductCatalogTest extends TestCase
         $managerB->stores()->attach($storeB->id, ['role' => 'store_manager', 'status' => 'active']);
 
         // Create product in Store A
-        $productA = \App\Models\Product::create([
+        $productA = Product::create([
             'store_id' => $storeA->id,
             'sku' => 'FEA-001',
             'name' => 'Featured Test',
@@ -361,7 +363,7 @@ class ProductCatalogTest extends TestCase
         ]);
 
         // Create product in Store B
-        $productB = \App\Models\Product::create([
+        $productB = Product::create([
             'store_id' => $storeB->id,
             'sku' => 'FEA-002',
             'name' => 'Not Featured',

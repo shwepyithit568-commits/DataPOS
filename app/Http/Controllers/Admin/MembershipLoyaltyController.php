@@ -165,7 +165,7 @@ class MembershipLoyaltyController extends Controller
 
         $validated = $request->validate([
             'customer_id' => 'required|integer',
-            'tier_id' => 'required|integer',
+            'tier_id' => ['required', 'integer', Rule::exists('membership_tiers', 'id')->where('store_id', $store->id)],
         ]);
 
         $this->membershipService->assignTier(

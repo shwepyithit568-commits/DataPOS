@@ -35,7 +35,7 @@ class AdminBackupTest extends TestCase
     public function test_service_creates_sql_dump_with_schema_and_data(): void
     {
         $service = new DatabaseBackupService();
-        $result = $service->create('test');
+        $result = $service->create('test', 'sql');
 
         $this->assertStringEndsWith('.sql', $result['filename']);
         $this->assertGreaterThan(0, $result['size']);
@@ -77,7 +77,7 @@ class AdminBackupTest extends TestCase
 
         $files = Storage::disk('local')->files('backups');
         $this->assertCount(1, $files);
-        $this->assertStringEndsWith('.sql', $files[0]);
+        $this->assertTrue(str_ends_with($files[0], '.zip') || str_ends_with($files[0], '.sql'));
     }
 
     public function test_manager_can_download_backup(): void

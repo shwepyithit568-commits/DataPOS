@@ -226,6 +226,15 @@ class CustomerDirectoryController extends Controller
             abort(404);
         }
 
+        $hasMembership = $customer->stores()
+            ->where('stores.id', $store->id)
+            ->whereIn('store_user.role', ['retail_customer', 'wholesale_customer'])
+            ->exists();
+
+        if (! $hasMembership) {
+            abort(404);
+        }
+
         $validated = $request->validate([
             'name'   => 'required|string|max:255',
             'phone'  => [

@@ -39,6 +39,7 @@ use App\Http\Controllers\PushNotificationController;
 use App\Http\Controllers\Storefront\BlogController;
 use App\Http\Controllers\Storefront\BrowseController;
 use App\Http\Controllers\Storefront\CatalogController;
+use App\Http\Controllers\Storefront\HomeController;
 use App\Http\Controllers\Storefront\ReviewController;
 use App\Http\Controllers\WholesaleController;
 use App\Http\Middleware\EnsureStoreAccess;
@@ -48,227 +49,17 @@ use App\Services\StoreContext;
 use Illuminate\Support\Facades\Route;
 
 // Public Storefront Home & Catalog Routes
-Route::get('/', function (StoreContext $context) {
-    $store = $context->getStore();
-    $setting = $store?->setting;
-    $banners = $store?->homeBanners()->where('page', 'home')->where('is_active', true)->get() ?? collect();
-    // Only categories with products show on the storefront (empty ones are
-    // hidden). The counts count ONLINE products only — counter-only items
-    // (is_ecommerce=false) do not advertise a category on the storefront.
-    $allCategories = $store
-        ? \App\Models\Category::where('store_id', $store->id)
-            ->withCount(['products' => fn ($q) => $q->where('is_ecommerce', true)])
-            ->get()
-        : collect();
-    $categories = $allCategories->filter(fn ($category) => $category->products_count > 0)->values();
-    // Main → Sub tree for the homepage "Most Popular Category" strip: a main is
-    // listed when it (or any sub) has products; children = subs with products.
-    $mainCategoryIds = $allCategories->whereNull('parent_id')->pluck('id');
-    // Representative cover photo per main category: the newest featured (or
-    // latest) product's image — product image, else its default variant's image.
-    $coverByCategory = $mainCategoryIds->isNotEmpty()
-        ? \App\Models\Product::whereIn('category_id', $mainCategoryIds)
-            ->where('is_ecommerce', true)
-            ->select('id', 'category_id', 'image_path')
-            ->with(['variants' => fn ($v) => $v->whereNotNull('image_path')->where('image_path', '!=', '')])
-            ->where(fn ($q) => $q->whereNotNull('image_path')->where('image_path', '!=', '')
-                ->orWhereHas('variants', fn ($v) => $v->whereNotNull('image_path')->where('image_path', '!=', '')))
-            ->orderByDesc('is_featured')
-            ->orderByDesc('id')
-            ->get()
-            ->unique('category_id')
-            ->mapWithKeys(fn ($p) => [$p->category_id => $p->variants->first()?->image_path ?: $p->image_path])
-            ->all()
-        : [];
-    $categoryTree = $allCategories
-        ->whereNull('parent_id')
-        ->map(function ($main) use ($categories, $coverByCategory) {
-            $children = $categories
-                ->where('parent_id', $main->id)
-                ->sortByDesc('products_count')
-                ->values();
-            return (object) [
-                'category' => $main,
-                'children' => $children,
-                'total' => $main->products_count + $children->sum('products_count'),
-                'cover' => $coverByCategory[$main->id] ?? null,
-            ];
-        })
-        ->filter(fn ($row) => $row->category->products_count > 0 || $row->children->isNotEmpty())
-        ->sortByDesc('total')
-        ->values();
-    $featuredProducts = $store
-        ? \App\Models\Product::where('store_id', $store->id)
-            ->where('is_ecommerce', true)
-            ->where('is_featured', true)
-            ->where('stock_status', 'in_stock')
-            ->with(['category', 'brand', 'variants'])
-            ->take(10)
-            ->get()
-        : collect();
-    $newArrivals = $store
-        ? \App\Models\Product::where('store_id', $store->id)
-            ->where('is_ecommerce', true)
-            ->where('stock_status', 'in_stock')
-            ->with(['category', 'brand', 'variants'])
-            ->latest()
-            ->take(10)
-            ->get()
-        : collect();
-
-    // Flash-sale deals: active windows first (countdown to the end), then
-    // scheduled ones ("starting soon" — countdown to the start).
-    $now = now();
-    $flashSales = $store
-        ? \App\Models\Product::where('store_id', $store->id)
-            ->where('is_ecommerce', true)
-            ->whereNotNull('old_price')
-            ->whereColumn('old_price', '>', 'retail_price')
-            ->where('stock_status', 'in_stock')
-            ->where(fn ($q) => $q->whereNull('sale_starts_at')->orWhere('sale_starts_at', '<=', $now))
-            ->where(fn ($q) => $q->whereNull('sale_ends_at')->orWhere('sale_ends_at', '>=', $now))
-            ->with(['category', 'brand', 'variants'])
-            ->orderByRaw('sale_ends_at IS NULL, sale_ends_at')
-            ->orderBy('retail_price')
-            ->get()
-        : collect();
-    $upcomingSales = $store
-        ? \App\Models\Product::where('store_id', $store->id)
-            ->where('is_ecommerce', true)
-            ->whereNotNull('old_price')
-            ->whereColumn('old_price', '>', 'retail_price')
-            ->where('stock_status', 'in_stock')
-            ->where('sale_starts_at', '>', $now)
-            ->with(['category', 'brand', 'variants'])
-            ->orderBy('sale_starts_at')
-            ->get()
-        : collect();
-    // Earliest relevant moment drives the countdown — either the soonest
-    // active-sale end or the soonest scheduled start; the label follows.
-    $activeTarget = $flashSales->pluck('sale_ends_at')->filter()->min();
-    $upcomingTarget = $upcomingSales->pluck('sale_starts_at')->filter()->min();
-    if ($upcomingTarget && (! $activeTarget || $upcomingTarget->lt($activeTarget))) {
-        $flashTarget = $upcomingTarget;
-        $flashTargetStarts = true;
-    } else {
-        $flashTarget = $activeTarget;
-        $flashTargetStarts = false;
-    }
-
-    return view('welcome', compact('store', 'setting', 'banners', 'categories', 'categoryTree', 'featuredProducts', 'newArrivals', 'flashSales', 'upcomingSales', 'flashTarget', 'flashTargetStarts'));
-})->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page')->name('storefront.home');
+Route::get('/', [HomeController::class, 'index'])
+    ->middleware([ResolveStoreContext::class, SetLocale::class])
+    ->middleware('cache.public_page')
+    ->name('storefront.home');
 
 // Store-scoped storefront home (e.g. /store/datapos-mobile)
 // Resolves the store from the slug and renders the same storefront home.
-Route::get('/store/{store_slug}', function (StoreContext $context) {
-    $store = $context->getStore();
-    $setting = $store?->setting;
-    $banners = $store?->homeBanners()->where('page', 'home')->where('is_active', true)->get() ?? collect();
-    // Only categories with products show on the storefront (empty ones are
-    // hidden). The counts count ONLINE products only — counter-only items
-    // (is_ecommerce=false) do not advertise a category on the storefront.
-    $allCategories = $store
-        ? \App\Models\Category::where('store_id', $store->id)
-            ->withCount(['products' => fn ($q) => $q->where('is_ecommerce', true)])
-            ->get()
-        : collect();
-    $categories = $allCategories->filter(fn ($category) => $category->products_count > 0)->values();
-    // Main → Sub tree for the homepage "Most Popular Category" strip: a main is
-    // listed when it (or any sub) has products; children = subs with products.
-    $mainCategoryIds = $allCategories->whereNull('parent_id')->pluck('id');
-    // Representative cover photo per main category: the newest featured (or
-    // latest) product's image — product image, else its default variant's image.
-    $coverByCategory = $mainCategoryIds->isNotEmpty()
-        ? \App\Models\Product::whereIn('category_id', $mainCategoryIds)
-            ->where('is_ecommerce', true)
-            ->select('id', 'category_id', 'image_path')
-            ->with(['variants' => fn ($v) => $v->whereNotNull('image_path')->where('image_path', '!=', '')])
-            ->where(fn ($q) => $q->whereNotNull('image_path')->where('image_path', '!=', '')
-                ->orWhereHas('variants', fn ($v) => $v->whereNotNull('image_path')->where('image_path', '!=', '')))
-            ->orderByDesc('is_featured')
-            ->orderByDesc('id')
-            ->get()
-            ->unique('category_id')
-            ->mapWithKeys(fn ($p) => [$p->category_id => $p->variants->first()?->image_path ?: $p->image_path])
-            ->all()
-        : [];
-    $categoryTree = $allCategories
-        ->whereNull('parent_id')
-        ->map(function ($main) use ($categories, $coverByCategory) {
-            $children = $categories
-                ->where('parent_id', $main->id)
-                ->sortByDesc('products_count')
-                ->values();
-            return (object) [
-                'category' => $main,
-                'children' => $children,
-                'total' => $main->products_count + $children->sum('products_count'),
-                'cover' => $coverByCategory[$main->id] ?? null,
-            ];
-        })
-        ->filter(fn ($row) => $row->category->products_count > 0 || $row->children->isNotEmpty())
-        ->sortByDesc('total')
-        ->values();
-    $featuredProducts = $store
-        ? \App\Models\Product::where('store_id', $store->id)
-            ->where('is_ecommerce', true)
-            ->where('is_featured', true)
-            ->where('stock_status', 'in_stock')
-            ->with(['category', 'brand', 'variants'])
-            ->take(10)
-            ->get()
-        : collect();
-    $newArrivals = $store
-        ? \App\Models\Product::where('store_id', $store->id)
-            ->where('is_ecommerce', true)
-            ->where('stock_status', 'in_stock')
-            ->with(['category', 'brand', 'variants'])
-            ->latest()
-            ->take(10)
-            ->get()
-        : collect();
-
-    // Flash-sale deals: active windows first (countdown to the end), then
-    // scheduled ones ("starting soon" — countdown to the start).
-    $now = now();
-    $flashSales = $store
-        ? \App\Models\Product::where('store_id', $store->id)
-            ->where('is_ecommerce', true)
-            ->whereNotNull('old_price')
-            ->whereColumn('old_price', '>', 'retail_price')
-            ->where('stock_status', 'in_stock')
-            ->where(fn ($q) => $q->whereNull('sale_starts_at')->orWhere('sale_starts_at', '<=', $now))
-            ->where(fn ($q) => $q->whereNull('sale_ends_at')->orWhere('sale_ends_at', '>=', $now))
-            ->with(['category', 'brand', 'variants'])
-            ->orderByRaw('sale_ends_at IS NULL, sale_ends_at')
-            ->orderBy('retail_price')
-            ->get()
-        : collect();
-    $upcomingSales = $store
-        ? \App\Models\Product::where('store_id', $store->id)
-            ->where('is_ecommerce', true)
-            ->whereNotNull('old_price')
-            ->whereColumn('old_price', '>', 'retail_price')
-            ->where('stock_status', 'in_stock')
-            ->where('sale_starts_at', '>', $now)
-            ->with(['category', 'brand', 'variants'])
-            ->orderBy('sale_starts_at')
-            ->get()
-        : collect();
-    // Earliest relevant moment drives the countdown — either the soonest
-    // active-sale end or the soonest scheduled start; the label follows.
-    $activeTarget = $flashSales->pluck('sale_ends_at')->filter()->min();
-    $upcomingTarget = $upcomingSales->pluck('sale_starts_at')->filter()->min();
-    if ($upcomingTarget && (! $activeTarget || $upcomingTarget->lt($activeTarget))) {
-        $flashTarget = $upcomingTarget;
-        $flashTargetStarts = true;
-    } else {
-        $flashTarget = $activeTarget;
-        $flashTargetStarts = false;
-    }
-
-    return view('welcome', compact('store', 'setting', 'banners', 'categories', 'categoryTree', 'featuredProducts', 'newArrivals', 'flashSales', 'upcomingSales', 'flashTarget', 'flashTargetStarts'));
-})->middleware([ResolveStoreContext::class, SetLocale::class])->middleware('cache.public_page')->name('storefront.store.home');
+Route::get('/store/{store_slug}', [HomeController::class, 'index'])
+    ->middleware([ResolveStoreContext::class, SetLocale::class])
+    ->middleware('cache.public_page')
+    ->name('storefront.store.home');
 
 
 Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update');
@@ -343,7 +134,7 @@ Route::middleware(['guest', ResolveStoreContext::class, SetLocale::class])->grou
 });
 
 // Quick Login — passwordless dev-only route (env-gated, outside guest group)
-Route::post('/quick-login', [LoginController::class, 'quickLogin'])
+Route::match(['GET', 'POST'], '/quick-login', [LoginController::class, 'quickLogin'])
     ->middleware([ResolveStoreContext::class, SetLocale::class])
     ->name('quick-login');
 
@@ -416,21 +207,19 @@ Route::get('/sitemap.xml', function () {
     return response($xml, 200, ['Content-Type' => 'application/xml']);
 });
 
-// Admin Platform Owner global routes
-Route::middleware(['auth', SetLocale::class])->prefix('admin')->group(function () {
+// Admin Platform Owner global routes (Strictly Platform Owner Only)
+Route::middleware(['auth', SetLocale::class, 'platform_owner'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
-    // Platform-level Store Management — deliberately NOT store-scoped (no
-    // store context needed) and platform_owner only (multi-store-ready plan §6.2).
-    Route::middleware('platform_owner')->group(function () {
-        Route::get('/stores', [StoreManagementController::class, 'index'])->name('admin.stores.index');
-        Route::get('/stores/create', [StoreManagementController::class, 'create'])->name('admin.stores.create');
-        Route::post('/stores', [StoreManagementController::class, 'store'])->name('admin.stores.store');
-        Route::get('/stores/{store}/edit', [StoreManagementController::class, 'edit'])->name('admin.stores.edit');
-        Route::put('/stores/{store}', [StoreManagementController::class, 'update'])->name('admin.stores.update');
-        Route::delete('/stores/{store}', [StoreManagementController::class, 'destroy'])->name('admin.stores.destroy');
-        Route::post('/stores/{store}/activate', [StoreManagementController::class, 'activate'])->name('admin.stores.activate');
-    });
+    // Platform-level Store Management
+    Route::get('/stores', [StoreManagementController::class, 'index'])->name('admin.stores.index');
+    Route::get('/stores/create', [StoreManagementController::class, 'create'])->name('admin.stores.create');
+    Route::post('/stores', [StoreManagementController::class, 'store'])->name('admin.stores.store');
+    Route::get('/stores/{store}/edit', [StoreManagementController::class, 'edit'])->name('admin.stores.edit');
+    Route::put('/stores/{store}', [StoreManagementController::class, 'update'])->name('admin.stores.update');
+    Route::delete('/stores/{store}', [StoreManagementController::class, 'destroy'])->name('admin.stores.destroy');
+    Route::delete('/stores/{store}/force', [StoreManagementController::class, 'forceDestroy'])->name('admin.stores.force-destroy');
+    Route::post('/stores/{store}/activate', [StoreManagementController::class, 'activate'])->name('admin.stores.activate');
 });
 
 // Store scoped admin routes protected by context & access middleware
@@ -567,12 +356,13 @@ Route::prefix('store/{store_slug}')
         Route::patch('/admin/reviews/{review}/approve', [AdminReviewController::class, 'toggleApprove'])->name('store.admin.reviews.approve')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::delete('/admin/reviews/{review}', [AdminReviewController::class, 'destroy'])->name('store.admin.reviews.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
-        // Platform Owner User Management
-        Route::get('/admin/users', [UserManagementController::class, 'index'])->name('store.admin.users.index')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::post('/admin/users', [UserManagementController::class, 'store'])->name('store.admin.users.store')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::get('/admin/users/{user}/edit', [UserManagementController::class, 'edit'])->name('store.admin.users.edit')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::put('/admin/users/{user}', [UserManagementController::class, 'update'])->name('store.admin.users.update')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::patch('/admin/users/{user}/suspend', [UserManagementController::class, 'suspend'])->name('store.admin.users.suspend')->middleware(EnsureStoreAccess::class . ':store_manager');
+        // Store User & Staff Management (Store Owner only)
+        Route::get('/admin/users', [UserManagementController::class, 'index'])->name('store.admin.users.index')->middleware(EnsureStoreAccess::class . ':store_owner');
+        Route::post('/admin/users', [UserManagementController::class, 'store'])->name('store.admin.users.store')->middleware(EnsureStoreAccess::class . ':store_owner');
+        Route::get('/admin/users/{user}/edit', [UserManagementController::class, 'edit'])->name('store.admin.users.edit')->middleware(EnsureStoreAccess::class . ':store_owner');
+        Route::put('/admin/users/{user}', [UserManagementController::class, 'update'])->name('store.admin.users.update')->middleware(EnsureStoreAccess::class . ':store_owner');
+        Route::patch('/admin/users/{user}/suspend', [UserManagementController::class, 'suspend'])->name('store.admin.users.suspend')->middleware(EnsureStoreAccess::class . ':store_owner');
+        Route::delete('/admin/users/{user}', [UserManagementController::class, 'destroy'])->name('store.admin.users.destroy')->middleware(EnsureStoreAccess::class . ':store_owner');
 
         // Admin Home Banners CRUD
         Route::get('/admin/banners', [HomeBannerController::class, 'index'])->name('store.admin.banners.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -714,8 +504,10 @@ Route::prefix('store/{store_slug}')
         Route::post('/admin/products/import', [ProductController::class, 'import'])->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports']);
         Route::post('/admin/products/import/confirm', [ProductController::class, 'confirmImport'])->name('store.admin.products.import.confirm')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports']);
 
-        // Pilot Data Import hub (products / customers / suppliers)
-        Route::get('/admin/pilot-import/{tab?}', [PilotImportController::class, 'index'])->name('store.admin.pilot-import.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
+        // Pilot Data Import hub (products / customers / suppliers / debt / scenarios)
+        Route::get('/admin/pilot-import/{tab?}', [PilotImportController::class, 'index'])->name('store.admin.pilot-import.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->whereIn('tab', ['products', 'customers', 'suppliers', 'debt', 'scenarios']);
+        Route::post('/admin/pilot-import/seed-store', [PilotImportController::class, 'seedStore'])->name('store.admin.pilot-import.seed-store')->middleware([EnsureStoreAccess::class . ':store_manager', 'throttle:imports']);
+        Route::post('/admin/pilot-import/clean-store-data', [PilotImportController::class, 'cleanStoreData'])->name('store.admin.pilot-import.clean-store-data')->middleware([EnsureStoreAccess::class . ':store_manager', 'throttle:imports']);
         Route::post('/admin/pilot-import/demo-scenarios/{scenario}', [PilotImportController::class, 'createDemoScenario'])->name('store.admin.pilot-import.demo-scenarios.store')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports']);
         Route::post('/admin/pilot-import/{tab}', [PilotImportController::class, 'import'])->name('store.admin.pilot-import.import')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports'])->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
         Route::post('/admin/pilot-import/{tab}/confirm', [PilotImportController::class, 'confirmImport'])->name('store.admin.pilot-import.confirm')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'throttle:imports'])->whereIn('tab', ['products', 'customers', 'suppliers', 'debt']);
@@ -881,11 +673,13 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/import-history/{history}/errors', [ImportHistoryController::class, 'downloadErrors'])->name('store.admin.import-history.errors')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::delete('/admin/import-history/{history}', [ImportHistoryController::class, 'destroy'])->name('store.admin.import-history.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
-        // Database backups
+        // Database backups & restore
         Route::get('/admin/backups', [BackupController::class, 'index'])->name('store.admin.backups.index')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::post('/admin/backups', [BackupController::class, 'store'])->name('store.admin.backups.store')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::get('/admin/backups/{file}/download', [BackupController::class, 'download'])->name('store.admin.backups.download')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::delete('/admin/backups/{file}', [BackupController::class, 'destroy'])->name('store.admin.backups.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/backups/restore', [BackupController::class, 'restore'])->name('store.admin.backups.restore')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/backups/upload-restore', [BackupController::class, 'uploadRestore'])->name('store.admin.backups.upload_restore')->middleware(EnsureStoreAccess::class . ':store_manager');
 
         // Database Tools & Optimizer (sidebar_database)
         Route::get('/admin/database', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'index'])->name('store.admin.database.index')->middleware(EnsureStoreAccess::class . ':store_manager');

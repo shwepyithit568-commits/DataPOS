@@ -16,17 +16,24 @@ class ResolveStoreContext
 
     public function handle(Request $request, Closure $next): Response
     {
-        $slug = $request->route('store_slug') ?? $request->header('X-Store-Slug') ?? $request->get('store_slug');
+        $routeSlug = $request->route('store_slug');
+        $slug = $routeSlug ?? $request->header('X-Store-Slug') ?? $request->input('store_slug');
 
         if ($slug) {
             $store = Store::where('slug', $slug)->where('is_active', true)->first();
 
-            if (!$store) {
-                abort(404, 'Store not found or inactive.');
+            if (! $store) {
+                if ($slug === 'platform-admin' || $request->is('quick-login')) {
+                    // Allow platform admin / quick-login bypass without store context
+                } else {
+                    abort(404, 'Store not found or inactive.');
+                }
+            } else {
+                $this->storeContext->setStore($store);
             }
+        }
 
-            $this->storeContext->setStore($store);
-        } else {
+        if (!$this->storeContext->getStore()) {
             $store = $this->resolveFallbackStore($request);
 
             if ($store) {

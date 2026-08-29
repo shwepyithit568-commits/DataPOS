@@ -60,7 +60,7 @@ class EloadController extends Controller
             'package_name'     => ['nullable', 'string', 'max:150'],
             'customer_name'    => ['nullable', 'string', 'max:100'],
             'payment_method'   => ['nullable', 'string', 'in:cash,kpay,wavepay,cbpay,ayapay,other'],
-            'eload_account_id' => ['nullable', 'integer', 'exists:eload_accounts,id'],
+            'eload_account_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('eload_accounts', 'id')->where('store_id', $store->id)],
             'cost'             => ['nullable', 'numeric', 'min:0'],
             'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notes'            => ['nullable', 'string', 'max:500'],
@@ -92,7 +92,7 @@ class EloadController extends Controller
         abort_if(!$store, 404);
 
         $validated = $request->validate([
-            'eload_account_id' => ['required', 'integer', 'exists:eload_accounts,id'],
+            'eload_account_id' => ['required', 'integer', \Illuminate\Validation\Rule::exists('eload_accounts', 'id')->where('store_id', $store->id)],
             'amount'           => ['required', 'numeric', 'min:100', 'max:50000000'],
             'notes'            => ['nullable', 'string', 'max:255'],
         ]);

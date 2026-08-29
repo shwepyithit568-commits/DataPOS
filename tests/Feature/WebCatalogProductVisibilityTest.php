@@ -160,7 +160,7 @@ class WebCatalogProductVisibilityTest extends TestCase
                 'product_id' => $foreignProduct->id,
             ]);
 
-        $response->assertStatus(404);
+        $response->assertUnprocessable();
         $this->assertTrue($foreignProduct->fresh()->is_ecommerce);
     }
 

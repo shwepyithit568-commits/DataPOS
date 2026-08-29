@@ -27,7 +27,7 @@ class StaffRoleTest extends TestCase
         $this->store->setting()->create(['store_name' => 'Roles Store 1', 'default_language' => 'en']);
 
         $this->manager = User::factory()->create(['name' => 'Manager U Ba', 'phone' => '09111222333']);
-        $this->manager->stores()->attach($this->store->id, ['role' => 'store_manager', 'status' => 'active']);
+        $this->manager->stores()->attach($this->store->id, ['role' => 'store_owner', 'status' => 'active']);
 
         $this->staff = User::factory()->create(['name' => 'Cashier Ko Kyaw', 'phone' => '09444555666']);
         $this->staff->stores()->attach($this->store->id, ['role' => 'staff', 'status' => 'active']);

@@ -72,7 +72,7 @@ class CashierShiftController extends Controller
             // ("1e3") with a ValueError — this rule blocks it before the shift
             // service's bc* calls ever see it.
             'opening_cash' => ['nullable', 'decimal:0,2', 'min:0'],
-            'branch_id' => ['nullable', 'integer'],
+            'branch_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('branches', 'id')->where('store_id', $store->id)],
         ]);
 
         try {

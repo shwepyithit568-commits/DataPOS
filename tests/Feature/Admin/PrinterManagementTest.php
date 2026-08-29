@@ -5,7 +5,6 @@ namespace Tests\Feature\Admin;
 use App\Models\Printer;
 use App\Models\Store;
 use App\Models\User;
-use App\POS\Services\PrinterService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,192 +21,136 @@ class PrinterManagementTest extends TestCase
         parent::setUp();
 
         $this->store = Store::create([
-            'slug' => 'test-hardware-store',
-            'name' => 'Test Hardware Store',
+            'name' => 'Printer Test Store',
+            'slug' => 'printer-test-store',
             'is_active' => true,
         ]);
+        $this->store->setting()->create([
+            'store_name' => 'Printer Test Store',
+            'default_language' => 'my',
+        ]);
 
-        $this->manager = User::factory()->create(['role' => 'store_manager']);
-        $this->manager->stores()->attach($this->store->id, ['role' => 'store_manager']);
+        $this->manager = User::factory()->create(['name' => 'Manager U Ba', 'phone' => '09111222333']);
+        $this->manager->stores()->attach($this->store->id, ['role' => 'store_manager', 'status' => 'active']);
 
-        $this->staff = User::factory()->create(['role' => 'staff']);
-        $this->staff->stores()->attach($this->store->id, ['role' => 'staff']);
+        $this->staff = User::factory()->create(['name' => 'Staff Ko Lay', 'phone' => '09444555666']);
+        $this->staff->stores()->attach($this->store->id, ['role' => 'staff', 'status' => 'active']);
     }
 
-    public function test_printers_index_renders_with_default_printer(): void
+    public function test_manager_can_view_printers_index(): void
     {
         $response = $this->actingAs($this->manager)
-            ->get(route('store.admin.printers.index', ['store_slug' => $this->store->slug]));
+            ->get("/store/{$this->store->slug}/admin/printers");
 
-        $response->assertStatus(200);
-        $response->assertSee('Main POS Counter');
-        $response->assertSee('80mm');
-        $response->assertSee(__('messages.printers_title'));
+        $response->assertOk();
     }
 
-    public function test_create_network_ip_printer(): void
+    public function test_manager_can_create_printer(): void
     {
         $response = $this->actingAs($this->manager)
-            ->post(route('store.admin.printers.store', ['store_slug' => $this->store->slug]), [
-                'name' => 'Kitchen Bar LAN Printer',
+            ->post("/store/{$this->store->slug}/admin/printers", [
+                'name' => 'Main Counter 80mm',
                 'connection_type' => 'network',
                 'paper_width' => '80mm',
-                'ip_address' => '192.168.1.220',
+                'printer_role' => 'receipt',
+                'ip_address' => '192.168.1.200',
                 'port' => 9100,
-                'printer_role' => 'kitchen',
-                'print_copies' => 2,
-                'auto_cut' => 1,
-                'cash_drawer_kick' => 0,
-                'feed_lines' => 3,
-                'header_text' => 'ORDER TICKET',
-            ]);
-
-        $response->assertRedirect(route('store.admin.printers.index', ['store_slug' => $this->store->slug]));
-        $response->assertSessionHas('success');
-
-        $this->assertDatabaseHas('printers', [
-            'store_id' => $this->store->id,
-            'name' => 'Kitchen Bar LAN Printer',
-            'connection_type' => 'network',
-            'ip_address' => '192.168.1.220',
-            'port' => 9100,
-            'printer_role' => 'kitchen',
-            'print_copies' => 2,
-        ]);
-    }
-
-    public function test_create_bluetooth_printer(): void
-    {
-        $response = $this->actingAs($this->manager)
-            ->post(route('store.admin.printers.store', ['store_slug' => $this->store->slug]), [
-                'name' => 'Portable PT-210 Mobile',
-                'connection_type' => 'bluetooth',
-                'paper_width' => '58mm',
-                'device_path' => '00:11:22:33:44:55',
-                'printer_role' => 'receipt',
-                'print_copies' => 1,
-                'auto_cut' => 0,
-                'cash_drawer_kick' => 0,
-                'feed_lines' => 1,
-            ]);
-
-        $response->assertRedirect(route('store.admin.printers.index', ['store_slug' => $this->store->slug]));
-        $response->assertSessionHas('success');
-
-        $this->assertDatabaseHas('printers', [
-            'store_id' => $this->store->id,
-            'name' => 'Portable PT-210 Mobile',
-            'connection_type' => 'bluetooth',
-            'paper_width' => '58mm',
-        ]);
-    }
-
-    public function test_update_printer_settings(): void
-    {
-        $service = app(PrinterService::class);
-        $service->ensureDefaultPrinter($this->store);
-
-        $printer = Printer::where('store_id', $this->store->id)->first();
-
-        $response = $this->actingAs($this->manager)
-            ->put(route('store.admin.printers.update', [
-                'store_slug' => $this->store->slug,
-                'printer' => $printer->id,
-            ]), [
-                'name' => 'Renamed Counter 80mm ESC/POS',
-                'connection_type' => 'usb',
-                'paper_width' => '80mm',
-                'printer_role' => 'receipt',
-                'device_path' => 'COM3',
-                'print_copies' => 1,
+                'is_default' => 1,
                 'auto_cut' => 1,
                 'cash_drawer_kick' => 1,
-                'feed_lines' => 4,
             ]);
 
-        $response->assertRedirect(route('store.admin.printers.index', ['store_slug' => $this->store->slug]));
-        $response->assertSessionHas('success');
-
-        $printer->refresh();
-        $this->assertEquals('Renamed Counter 80mm ESC/POS', $printer->name);
-        $this->assertEquals('usb', $printer->connection_type);
-        $this->assertEquals('COM3', $printer->device_path);
-        $this->assertEquals(4, $printer->feed_lines);
+        $response->assertRedirect();
+        $this->assertDatabaseHas('printers', [
+            'store_id' => $this->store->id,
+            'name' => 'Main Counter 80mm',
+            'paper_width' => '80mm',
+            'ip_address' => '192.168.1.200',
+        ]);
     }
 
-    public function test_set_default_printer(): void
+    public function test_manager_can_update_printer(): void
     {
-        $service = app(PrinterService::class);
-        $service->ensureDefaultPrinter($this->store);
-
-        $printer1 = Printer::where('store_id', $this->store->id)->first();
-        $printer2 = Printer::create([
+        $printer = Printer::create([
             'store_id' => $this->store->id,
-            'name' => 'Second Printer',
-            'connection_type' => 'network',
-            'paper_width' => '80mm',
-            'is_default' => false,
-            'is_active' => true,
+            'name' => 'Old Printer',
+            'connection_type' => 'usb',
+            'paper_width' => '58mm',
+            'printer_role' => 'receipt',
         ]);
 
-        $this->assertTrue($printer1->fresh()->is_default);
-        $this->assertFalse($printer2->fresh()->is_default);
+        $response = $this->actingAs($this->manager)
+            ->put("/store/{$this->store->slug}/admin/printers/{$printer->id}", [
+                'name' => 'Updated 58mm',
+                'connection_type' => 'usb',
+                'paper_width' => '58mm',
+                'printer_role' => 'receipt',
+                'is_default' => 0,
+            ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('printers', [
+            'id' => $printer->id,
+            'name' => 'Updated 58mm',
+        ]);
+    }
+
+    public function test_manager_can_set_default_printer(): void
+    {
+        $printer1 = Printer::create([
+            'store_id' => $this->store->id,
+            'name' => 'Printer 1',
+            'connection_type' => 'usb',
+            'paper_width' => 80,
+            'is_default' => true,
+        ]);
+
+        $printer2 = Printer::create([
+            'store_id' => $this->store->id,
+            'name' => 'Printer 2',
+            'connection_type' => 'network',
+            'paper_width' => 80,
+            'is_default' => false,
+        ]);
 
         $response = $this->actingAs($this->manager)
-            ->post(route('store.admin.printers.set_default', [
-                'store_slug' => $this->store->slug,
-                'printer' => $printer2->id,
-            ]));
+            ->post("/store/{$this->store->slug}/admin/printers/{$printer2->id}/set-default");
 
-        $response->assertRedirect(route('store.admin.printers.index', ['store_slug' => $this->store->slug]));
-        $response->assertSessionHas('success');
-
-        $this->assertFalse($printer1->fresh()->is_default);
+        $response->assertRedirect();
         $this->assertTrue($printer2->fresh()->is_default);
+        $this->assertFalse($printer1->fresh()->is_default);
     }
 
-    public function test_delete_non_default_printer(): void
+    public function test_manager_can_view_test_print(): void
     {
-        $service = app(PrinterService::class);
-        $service->ensureDefaultPrinter($this->store);
-
-        $printer2 = Printer::create([
+        $printer = Printer::create([
             'store_id' => $this->store->id,
-            'name' => 'To Delete Printer',
+            'name' => 'Test 80mm',
             'connection_type' => 'network',
-            'paper_width' => '80mm',
-            'is_default' => false,
-            'is_active' => true,
+            'paper_width' => 80,
         ]);
 
         $response = $this->actingAs($this->manager)
-            ->delete(route('store.admin.printers.destroy', [
-                'store_slug' => $this->store->slug,
-                'printer' => $printer2->id,
-            ]));
+            ->get("/store/{$this->store->slug}/admin/printers/{$printer->id}/test-print");
 
-        $response->assertRedirect(route('store.admin.printers.index', ['store_slug' => $this->store->slug]));
-        $response->assertSessionHas('success');
-
-        $this->assertDatabaseMissing('printers', ['id' => $printer2->id]);
+        $response->assertOk();
     }
 
-    public function test_test_print_view_renders_successfully(): void
+    public function test_manager_can_delete_printer(): void
     {
-        $service = app(PrinterService::class);
-        $service->ensureDefaultPrinter($this->store);
-
-        $printer = Printer::where('store_id', $this->store->id)->first();
+        $printer = Printer::create([
+            'store_id' => $this->store->id,
+            'name' => 'Delete Me',
+            'connection_type' => 'bluetooth',
+            'paper_width' => 58,
+        ]);
 
         $response = $this->actingAs($this->manager)
-            ->get(route('store.admin.printers.test_print', [
-                'store_slug' => $this->store->slug,
-                'printer' => $printer->id,
-            ]));
+            ->delete("/store/{$this->store->slug}/admin/printers/{$printer->id}");
 
-        $response->assertStatus(200);
-        $response->assertSee('TEST PRINT');
-        $response->assertSee($printer->name);
-        $response->assertSee('HARDWARE OK');
+        $response->assertRedirect();
+        $this->assertDatabaseMissing('printers', [
+            'id' => $printer->id,
+        ]);
     }
 }

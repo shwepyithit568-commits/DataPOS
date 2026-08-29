@@ -210,9 +210,9 @@
             serviceOpen: {{ Str::contains($currentPath, ['repairs', 'service-jobs', 'spare-parts', 'service-settings']) ? 'true' : 'false' }},
             financeOpen: {{ Str::contains($currentPath, ['expenses', 'expense-categories', 'receivables', 'payables', 'profit-loss', 'transactions']) ? 'true' : 'false' }},
             reportsOpen: {{ ((Str::contains($currentPath, ['pos/reports/sales', 'pos/reports/cash', 'pos/reports/services', 'sales-analytics', 'inventory-valuation', 'debt-aging', 'aging-report'])) && !Str::contains($currentPath, 'pos/reports/stock')) ? 'true' : 'false' }},
-            securityOpen: {{ Str::contains($currentPath, ['security', 'roles', 'audit-logs']) ? 'true' : 'false' }},
+            securityOpen: {{ Str::contains($currentPath, ['security', 'roles', 'users', 'audit-logs']) ? 'true' : 'false' }},
             maintenanceOpen: {{ Str::contains($currentPath, ['alerts', 'database', 'backups', 'pilot-import', 'import-history']) ? 'true' : 'false' }},
-            setupOpen: {{ (Str::contains($currentPath, ['settings', 'users', 'branches', 'printers', 'vouchers', 'exchange-rates']) && !Str::contains($currentPath, 'service-settings')) ? 'true' : 'false' }},
+            setupOpen: {{ (Str::contains($currentPath, ['settings', 'branches', 'printers', 'vouchers', 'exchange-rates']) && !Str::contains($currentPath, 'service-settings')) ? 'true' : 'false' }},
 
             closeGroups() {
                 this.posOpen = false;
@@ -772,6 +772,15 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
+                    @if ($canManageUsers)
+                        @php $isUsers = request()->is('store/*/admin/users*'); @endphp
+                        <x-admin.nav-link :href="route('store.admin.users.index', $storeRouteParams)" route-name="store.admin.users.index" :active="$isUsers" :label="__('messages.users')">
+                            <x-slot:icon>
+                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11a4 4 0 1 0-8 0m8 0a4 4 0 1 1-8 0m8 0c3 1 5 3 5 6v1H3v-1c0-3 2-5 5-6"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    @endif
+
                     {{-- System Audit Trail Logs --}}
                     @php $isAuditLogs = request()->routeIs('store.admin.audit-logs.*'); @endphp
                     <x-admin.nav-link :href="route('store.admin.audit-logs.index', $storeRouteParams)" route-name="store.admin.audit-logs.index" :active="$isAuditLogs" :label="__('messages.sidebar_audit_logs')">
@@ -874,15 +883,6 @@
                                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             </x-slot:icon>
                         </x-admin.nav-link>
-
-                        @if ($canManageUsers)
-                            @php $isUsers = request()->is('store/*/admin/users*'); @endphp
-                            <x-admin.nav-link :href="route('store.admin.users.index', $storeRouteParams)" route-name="store.admin.users.index" :active="$isUsers" :label="__('messages.users')">
-                                <x-slot:icon>
-                                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11a4 4 0 1 0-8 0m8 0a4 4 0 1 1-8 0m8 0c3 1 5 3 5 6v1H3v-1c0-3 2-5 5-6"/></svg>
-                                </x-slot:icon>
-                            </x-admin.nav-link>
-                        @endif
                 </x-admin.nav-group>
                 @endif
             @endif

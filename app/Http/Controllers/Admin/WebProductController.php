@@ -86,7 +86,7 @@ class WebProductController extends Controller
         abort_if(!$store, 404);
 
         $request->validate([
-            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'product_id' => ['required', 'integer', \Illuminate\Validation\Rule::exists('products', 'id')->where('store_id', $store->id)],
         ]);
 
         $product = Product::where('store_id', $store->id)->findOrFail($request->product_id);
@@ -117,7 +117,7 @@ class WebProductController extends Controller
         abort_if(!$store, 404);
 
         $request->validate([
-            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'product_id' => ['required', 'integer', \Illuminate\Validation\Rule::exists('products', 'id')->where('store_id', $store->id)],
         ]);
 
         $product = Product::where('store_id', $store->id)->findOrFail($request->product_id);

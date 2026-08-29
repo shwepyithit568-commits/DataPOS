@@ -180,6 +180,61 @@ class StoreManagementController extends Controller
             ->with('success', __('messages.store_reactivated'));
     }
 
+    /**
+     * Permanently delete a store and its related records.
+     */
+    public function forceDestroy(Store $store): RedirectResponse
+    {
+        $activeCount = Store::where('is_active', true)->count();
+        if ($store->is_active && $activeCount <= 1) {
+            return back()->withErrors([
+                'store' => __('messages.store_last_active_blocked'),
+            ]);
+        }
+
+        $wasPrimary = $store->is_primary;
+        $storeName = $store->name;
+
+        DB::transaction(function () use ($store, $wasPrimary) {
+            app(\App\Services\DemoBusinessScenarioService::class)->cleanStoreData($store);
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('storefront_settings')) {
+                DB::table('storefront_settings')->where('store_id', $store->id)->delete();
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('store_payment_methods')) {
+                DB::table('store_payment_methods')->where('store_id', $store->id)->delete();
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('store_delivery_methods')) {
+                DB::table('store_delivery_methods')->where('store_id', $store->id)->delete();
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('warehouses')) {
+                DB::table('warehouses')->where('store_id', $store->id)->delete();
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('branches')) {
+                DB::table('branches')->where('store_id', $store->id)->delete();
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('store_user')) {
+                DB::table('store_user')->where('store_id', $store->id)->delete();
+            }
+
+            if ($wasPrimary) {
+                $next = Store::where('is_active', true)
+                    ->where('id', '!=', $store->id)
+                    ->orderBy('id')
+                    ->first();
+                if ($next) {
+                    $next->update(['is_primary' => true]);
+                }
+            }
+
+            $store->delete();
+        });
+
+        return redirect()
+            ->route('admin.stores.index')
+            ->with('success', "Store '{$storeName}' ကို အပြီးတိုင် ဖျက်သိမ်းပြီးပါပြီ။");
+    }
+
     private function demoteOtherPrimaries(int $exceptStoreId): void
     {
         Store::where('is_primary', true)

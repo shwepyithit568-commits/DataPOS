@@ -111,6 +111,13 @@ class CustomerReceivableController extends Controller
             abort(404, 'Customer not found.');
         }
 
+        $hasStoreAssociation = $customerUser->stores()->where('stores.id', $store->id)->exists()
+            || CustomerLedgerEntry::where('store_id', $store->id)->where('customer_id', $customerUser->id)->exists();
+
+        if (! $hasStoreAssociation) {
+            abort(404, 'Customer not found in this store.');
+        }
+
         $balance = $this->debts->balanceFor($store->id, $customerUser->id);
         $history = $this->debts->history($store, $customerUser->id, 100);
 
@@ -149,6 +156,13 @@ class CustomerReceivableController extends Controller
         $customerUser = User::find($customer);
         if (! $customerUser) {
             abort(404, 'Customer not found.');
+        }
+
+        $hasStoreAssociation = $customerUser->stores()->where('stores.id', $store->id)->exists()
+            || CustomerLedgerEntry::where('store_id', $store->id)->where('customer_id', $customerUser->id)->exists();
+
+        if (! $hasStoreAssociation) {
+            abort(404, 'Customer not found in this store.');
         }
 
         $data = $request->validate([
@@ -199,6 +213,13 @@ class CustomerReceivableController extends Controller
         $customerUser = User::find($customer);
         if (! $customerUser) {
             abort(404, 'Customer not found.');
+        }
+
+        $hasStoreAssociation = $customerUser->stores()->where('stores.id', $store->id)->exists()
+            || CustomerLedgerEntry::where('store_id', $store->id)->where('customer_id', $customerUser->id)->exists();
+
+        if (! $hasStoreAssociation) {
+            abort(404, 'Customer not found in this store.');
         }
 
         $balance = $this->debts->balanceFor($store->id, $customerUser->id);

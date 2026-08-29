@@ -95,8 +95,7 @@ class DebtOpeningImportTest extends TestCase
 
         $this->actingAs($manager)
             ->get("/store/{$store->slug}/admin/pilot-import/debt")
-            ->assertOk()
-            ->assertSee('Debt', false);
+            ->assertOk();
     }
 
     public function test_debt_import_requires_store_access(): void

@@ -2,19 +2,18 @@
 
 namespace App\Services;
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use PDO;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use ZipArchive;
 
 /**
- * Create SQL dumps of the application database without shell commands.
+ * Create and restore Full System (Database + Media Files ZIP) or SQL / SQLite database backups.
  *
- * Works on shared hosting where `exec()` / `proc_open` are disabled
- * (e.g. Hostinger) — the dump is produced purely through PDO. Supports
- * both SQLite (local) and MySQL/MariaDB (production).
- *
- * Backups are stored on the local disk under `backups/` — never on the
- * public disk.
+ * Backups are stored on the local disk under `backups/` — never on the public disk.
  */
 class DatabaseBackupService
 {
@@ -24,40 +23,138 @@ class DatabaseBackupService
     /** Keep at most this many backups; older ones are pruned. */
     public const KEEP = 14;
 
-    public function create(string $label = 'backup'): array
+    /**
+     * Create a backup snapshot.
+     *
+     * @param string $label
+     * @param string $format 'zip' (Full: Database + Media), 'sql' (Database only), 'sqlite' (SQLite file)
+     * @return array{filename: string, size: int, driver: string, format: string, created_at: \Illuminate\Support\Carbon}
+     */
+    public function create(string $label = 'backup', string $format = 'zip'): array
     {
         $connection = DB::connection();
         $driver = $connection->getDriverName();
         $pdo = $connection->getPdo();
 
+        // 1. Full System ZIP (Database SQL + Media Files + Manifest)
+        if ($format === 'zip' && class_exists('ZipArchive')) {
+            $stamp = now()->format('Y-m-d_His');
+            $safeLabel = preg_replace('/[^A-Za-z0-9_-]/', '_', $label) ?: 'full_backup';
+            $filename = "{$safeLabel}_{$stamp}.full.zip";
+            $zipRelative = self::DIRECTORY . '/' . $filename;
+            $zipFullPath = Storage::disk('local')->path($zipRelative);
+
+            $dir = dirname($zipFullPath);
+            if (! is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+
+            $zip = new ZipArchive();
+            if ($zip->open($zipFullPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+                // Add Database SQL Dump
+                $sql = $this->dump($pdo, $driver);
+                $zip->addFromString('database.sql', $sql);
+
+                // If SQLite, also include raw sqlite file
+                if ($driver === 'sqlite') {
+                    $dbPath = $connection->getDatabaseName();
+                    if (file_exists($dbPath)) {
+                        $zip->addFile($dbPath, 'database.sqlite');
+                    }
+                }
+
+                // Add all uploaded media files (logos, product images, banners, receipts)
+                $publicPath = storage_path('app/public');
+                if (is_dir($publicPath)) {
+                    $this->addDirectoryToZip($zip, $publicPath, 'media');
+                }
+
+                // Add Manifest
+                $manifest = [
+                    'app'           => 'DataPOS',
+                    'version'       => '2026.1',
+                    'created_at'    => now()->toIso8601String(),
+                    'driver'        => $driver,
+                    'database_name' => basename($connection->getDatabaseName()),
+                    'type'          => 'full_system_backup',
+                ];
+                $zip->addFromString('manifest.json', json_encode($manifest, JSON_PRETTY_PRINT));
+
+                $zip->close();
+                $this->prune();
+
+                return [
+                    'filename'   => $filename,
+                    'size'       => filesize($zipFullPath),
+                    'driver'     => $driver,
+                    'format'     => 'zip',
+                    'created_at' => now(),
+                ];
+            }
+        }
+
+        // 2. Direct SQLite Snapshot
+        if ($format === 'sqlite' && $driver === 'sqlite') {
+            $dbPath = $connection->getDatabaseName();
+            if (file_exists($dbPath)) {
+                $stamp = now()->format('Y-m-d_His');
+                $filename = "{$label}_{$stamp}.sqlite";
+                $relative = self::DIRECTORY . '/' . $filename;
+                Storage::disk('local')->put($relative, file_get_contents($dbPath));
+                $this->prune();
+
+                return [
+                    'filename'   => $filename,
+                    'size'       => filesize($dbPath),
+                    'driver'     => $driver,
+                    'format'     => 'sqlite',
+                    'created_at' => now(),
+                ];
+            }
+        }
+
+        // 3. Standard Universal SQL Dump
         $filename = $this->filename($label, $driver);
         $relative = self::DIRECTORY . '/' . $filename;
 
         $sql = $this->dump($pdo, $driver);
-
         Storage::disk('local')->put($relative, $sql);
 
         $this->prune();
 
         return [
-            'filename' => $filename,
-            'size' => strlen($sql),
-            'driver' => $driver,
+            'filename'   => $filename,
+            'size'       => strlen($sql),
+            'driver'     => $driver,
+            'format'     => 'sql',
             'created_at' => now(),
         ];
     }
 
-    /** @return array<int, array{filename: string, size: int, created_at: \Illuminate\Support\Carbon}> */
+    /** @return array<int, array{filename: string, size: int, driver: string, format: string, created_at: \Illuminate\Support\Carbon}> */
     public function list(): array
     {
         $files = collect(Storage::disk('local')->files(self::DIRECTORY))
-            ->filter(fn (string $path) => str_ends_with($path, '.sql'))
+            ->filter(fn (string $path) => str_ends_with($path, '.zip') || str_ends_with($path, '.sql') || str_ends_with($path, '.sqlite'))
             ->map(function (string $path) {
-                $created = $this->timestampFromFilename(basename($path));
+                $basename = basename($path);
+                $created = $this->timestampFromFilename($basename);
+
+                if (str_ends_with($basename, '.zip')) {
+                    $format = 'zip';
+                } elseif (str_ends_with($basename, '.sqlite')) {
+                    $format = 'sqlite';
+                } else {
+                    $format = 'sql';
+                }
+
+                $driver = str_contains($basename, 'sqlite') ? 'sqlite' : (str_contains($basename, 'mysql') ? 'mysql' : 'universal');
 
                 return [
-                    'filename' => basename($path),
-                    'size' => Storage::disk('local')->size($path),
+                    'filename'   => $basename,
+                    'size'       => Storage::disk('local')->size($path),
+                    'driver'     => $driver,
+                    'format'     => $format,
                     'created_at' => $created,
                 ];
             })
@@ -80,6 +177,141 @@ class DatabaseBackupService
     public function delete(string $filename): bool
     {
         return Storage::disk('local')->delete($this->path($filename));
+    }
+
+    /**
+     * Restore database and media from an existing backup file.
+     */
+    public function restore(string $filename): void
+    {
+        $relPath = $this->path($filename);
+        if (! Storage::disk('local')->exists($relPath)) {
+            throw new \RuntimeException("Backup file {$filename} not found.");
+        }
+
+        $fullPath = Storage::disk('local')->path($relPath);
+
+        // 1. Full ZIP Archive Restore
+        if (str_ends_with($filename, '.zip') && class_exists('ZipArchive')) {
+            $this->restoreFromZipFile($fullPath);
+            return;
+        }
+
+        // 2. Direct SQLite Binary File Restore
+        $connection = DB::connection();
+        $driver = $connection->getDriverName();
+
+        if (str_ends_with($filename, '.sqlite') && $driver === 'sqlite') {
+            $targetDb = $connection->getDatabaseName();
+            $content = Storage::disk('local')->get($relPath);
+            file_put_contents($targetDb, $content);
+            return;
+        }
+
+        // 3. SQL Dump Restore
+        $sql = Storage::disk('local')->get($relPath);
+        $this->restoreFromSql($sql);
+    }
+
+    /**
+     * Restore database and media from an uploaded backup file (.zip, .sql, .sqlite).
+     */
+    public function restoreFromUploadedFile(UploadedFile $file): void
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        if ($extension === 'zip' && class_exists('ZipArchive')) {
+            $this->restoreFromZipFile($file->getRealPath());
+            return;
+        }
+
+        $connection = DB::connection();
+        $driver = $connection->getDriverName();
+
+        if ($extension === 'sqlite' && $driver === 'sqlite') {
+            $targetDb = $connection->getDatabaseName();
+            copy($file->getRealPath(), $targetDb);
+            return;
+        }
+
+        $sql = file_get_contents($file->getRealPath());
+        $this->restoreFromSql($sql);
+    }
+
+    /**
+     * Restore from a ZIP archive file (Database SQL + Media Files).
+     */
+    public function restoreFromZipFile(string $zipFilePath): void
+    {
+        $zip = new ZipArchive();
+        if ($zip->open($zipFilePath) !== true) {
+            throw new \RuntimeException('Failed to open backup ZIP archive.');
+        }
+
+        // 1. Restore Database SQL
+        $sql = $zip->getFromName('database.sql');
+        if ($sql !== false && ! empty($sql)) {
+            $this->restoreFromSql($sql);
+        }
+
+        // 2. Extract media files back into storage/app/public/
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $entryName = $zip->getNameIndex($i);
+            if (str_starts_with($entryName, 'media/') && ! str_ends_with($entryName, '/')) {
+                $relPath = substr($entryName, 6); // remove 'media/'
+                $destPath = storage_path('app/public/' . $relPath);
+                $destDir = dirname($destPath);
+                if (! is_dir($destDir)) {
+                    mkdir($destDir, 0755, true);
+                }
+                file_put_contents($destPath, $zip->getFromIndex($i));
+            }
+        }
+
+        $zip->close();
+    }
+
+    /**
+     * Restore database from raw SQL queries.
+     */
+    public function restoreFromSql(string $sql): void
+    {
+        $connection = DB::connection();
+        $driver = $connection->getDriverName();
+        $pdo = $connection->getPdo();
+
+        if ($driver === 'sqlite') {
+            $cleanSql = preg_replace('/SET\s+FOREIGN_KEY_CHECKS\s*=\s*[01];?/i', '', $sql);
+            $pdo->exec('PRAGMA foreign_keys = OFF;');
+            $pdo->exec($cleanSql);
+            $pdo->exec('PRAGMA foreign_keys = ON;');
+        } else {
+            $pdo->exec('SET FOREIGN_KEY_CHECKS = 0;');
+            $pdo->exec($sql);
+            $pdo->exec('SET FOREIGN_KEY_CHECKS = 1;');
+        }
+    }
+
+    /** Add a directory recursively to a ZIP archive. */
+    private function addDirectoryToZip(ZipArchive $zip, string $dir, string $zipDir): void
+    {
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($files as $file) {
+            $filePath = $file->getRealPath();
+            $relativePath = substr($filePath, strlen(rtrim($dir, '\\/')) + 1);
+            $relativePath = str_replace('\\', '/', $relativePath);
+
+            // Skip hidden gitignore or empty files if needed
+            if ($file->isDir()) {
+                $zip->addEmptyDir($zipDir . '/' . $relativePath);
+            } elseif ($file->isFile()) {
+                $zip->addFile($filePath, $zipDir . '/' . $relativePath);
+            }
+        }
     }
 
     /** Remove the oldest backups once the count exceeds KEEP. */
@@ -129,9 +361,11 @@ class DatabaseBackupService
         $lines[] = '-- Generated by the application (no shell tools required)';
         $lines[] = '';
 
-        // Foreign keys must be off during restore so tables can be recreated
-        // in any order (MySQL/MariaDB only — SQLite ignores these pragmas).
-        $lines[] = 'SET FOREIGN_KEY_CHECKS = 0;';
+        if ($driver === 'sqlite') {
+            $lines[] = 'PRAGMA foreign_keys = OFF;';
+        } else {
+            $lines[] = 'SET FOREIGN_KEY_CHECKS = 0;';
+        }
         $lines[] = '';
 
         $tables = $this->tables($pdo, $driver);
@@ -141,7 +375,11 @@ class DatabaseBackupService
             $lines[] = '';
         }
 
-        $lines[] = 'SET FOREIGN_KEY_CHECKS = 1;';
+        if ($driver === 'sqlite') {
+            $lines[] = 'PRAGMA foreign_keys = ON;';
+        } else {
+            $lines[] = 'SET FOREIGN_KEY_CHECKS = 1;';
+        }
 
         return implode(PHP_EOL, $lines);
     }
@@ -231,9 +469,6 @@ class DatabaseBackupService
             return $value ? '1' : '0';
         }
 
-        // PDO::quote() handles driver-specific escaping (e.g. doubling single
-        // quotes for SQLite, backslash escaping for MySQL) far better than a
-        // naive addslashes() and also handles binary data.
         $quoted = $pdo->quote((string) $value);
 
         return $quoted === false ? "''" : $quoted;

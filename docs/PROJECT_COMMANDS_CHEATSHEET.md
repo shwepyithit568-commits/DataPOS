@@ -272,27 +272,38 @@ php artisan pail --timeout=0
 
 ---
 
-## 8. Default Local Test Accounts
+## 8. Myanmar SME Demo Stores & Test Accounts
 
-Default password:
+> 📖 အသေးစိတ် လမ်းညွှန်နှင့် Client Demo Workflow များအတွက် [DEMO_STORES_AND_TEST_ACCOUNTS.md](file:///d:/xmapp/htdocs/DataPOS/docs/DEMO_STORES_AND_TEST_ACCOUNTS.md) ကို ကြည့်ရှုပါ။
 
-```text
-password
-```
-
-| Role | Name | Login Phone | URL / Note |
-|---|---|---|---|
-| Platform Owner | Owner | `09100000001` | `/admin/dashboard` |
-| Store Manager | Mg Hla | `09100000002` | `/store/datapos-mobile/admin/dashboard`, POS PIN `1234` |
-| Staff / Cashier | Ko Kyaw | `09100000003` | `/store/datapos-mobile/pos` |
-| Wholesale Customer | Daw Aye | `09100000004` | `/store/datapos-mobile/wholesale` |
-| Retail Customer | Ma Su | `09100000006` | `/store/datapos-mobile` |
-
-Login data မရှိတော့လျှင်:
+Demo Stores တည်ဆောက်ရန် / နမူနာဒေတာ ပြန်ဆင်ရန်:
 
 ```powershell
-php artisan db:seed --class=UatSeeder
+php artisan datapos:build-demo-stores
 ```
+
+### 🏬 6 Core Myanmar SME Demo Stores
+
+1. **Diamond Stone Agri (စိုက်ပျိုးရေးနှင့် မြေသြဇာ)**: `http://127.0.0.1:8501/store/diamond-stone-agri`
+2. **DataPOS Mobile (မိုဘိုင်းဖုန်းနှင့် ဆက်စပ်ပစ္စည်း)**: `http://127.0.0.1:8501/store/datapos-mobile`
+3. **ProTech CCTV & PC (လုံခြုံရေးကင်မရာ၊ ကွန်ပျူတာနှင့် ကွန်ရက်)**: `http://127.0.0.1:8501/store/cctv-network-computer`
+4. **Shwe Pyi Thit Mobile & Service (ဖုန်းအရောင်းနှင့် စက်ပြင်)**: `http://127.0.0.1:8501/store/mobile-sale-service`
+5. **Shwe Mingalar Pharmacy (ဆေးဝါးနှင့် ကျန်းမာရေးပစ္စည်း)**: `http://127.0.0.1:8501/store/pharmacy`
+6. **Si Taw Gyi Food Bar (အစားအသောက်နှင့် အဖျော်ယမကာ)**: `http://127.0.0.1:8501/store/si-taw-gyi-food-bar`
+
+### 🔑 Demo Login Accounts (Password: `password`)
+
+| Role | Name | Login Phone | Default Password | URL / Access |
+|---|---|---|---|---|
+| 👑 Platform Super Admin | ဦးအောင်မျိုး | `09777000111` | `password` | `/admin/dashboard` |
+| 👔 Store Manager | ဦးကျော်ကျော် | `09111222333` | `password` | `/store/{slug}/admin/dashboard` (PIN: `1234`) |
+| 💵 Cashier | ဒေါ်လှလှ | `09222333444` | `password` | `/store/{slug}/pos` (PIN: `1234`) |
+| 🔧 Technician / Staff | ကိုမင်းမင်း | `09333444555` | `password` | `/store/{slug}/admin/service-jobs` (PIN: `1234`) |
+| 🏬 Wholesale Customer | ဦးဘသိန်း | `09988776655` | `password` | `/store/{slug}/wholesale` |
+| 🛒 Retail Customer | ဒေါ်နီလာ | `09776655443` | `password` | `/store/{slug}` |
+
+> 💡 **Production Deployment Note:**
+> Deployment သို့မဟုတ် Production တင်သည့်အခါ Login မျက်နှာပြင်တွင် Quick Login ခလုတ်များ မပေါ်စေရန် `.env` တွင် `SHOW_QUICK_LOGIN=false` (သို့မဟုတ် variable မထည့်ထားပါက default false) ဖြစ်ပြီးဖြစ်ပါသည်။ ဝယ်ယူမည့် Client များကို အထက်ပါ Phone နှင့် Password ပေး၍ တိုက်ရိုက် စမ်းသပ်သုံးစွဲခိုင်းနိုင်ပါသည်။
 
 ---
 

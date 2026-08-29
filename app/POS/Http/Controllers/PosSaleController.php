@@ -650,7 +650,7 @@ class PosSaleController extends Controller
             'payments.*.amount' => ['nullable', 'decimal:0,2', 'min:0'], // empty = unused method, dropped in the service
             'customer_id' => ['nullable', 'integer', 'exists:users,id'],
             'notes' => ['nullable', 'string', 'max:1000'],
-            'web_order_id' => ['nullable', 'integer', 'exists:orders,id'],
+            'web_order_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('orders', 'id')->where('store_id', $store->id)],
         ]);
 
         $shift = $this->shifts->openShiftFor($store, $user);

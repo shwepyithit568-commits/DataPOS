@@ -102,9 +102,9 @@ class StockCountController extends Controller
         $validated = $request->validate([
             'scope' => 'required|in:all,category',
             'category_ids' => 'nullable|array',
-            'category_ids.*' => 'integer|exists:categories,id',
-            'branch_id' => 'nullable|exists:branches,id',
-            'warehouse_id' => 'nullable|exists:warehouses,id',
+            'category_ids.*' => ['integer', \Illuminate\Validation\Rule::exists('categories', 'id')->where('store_id', $store->id)],
+            'branch_id' => ['nullable', \Illuminate\Validation\Rule::exists('branches', 'id')->where('store_id', $store->id)],
+            'warehouse_id' => ['nullable', \Illuminate\Validation\Rule::exists('warehouses', 'id')->where('store_id', $store->id)],
             'notes' => 'nullable|string|max:1000',
         ]);
 

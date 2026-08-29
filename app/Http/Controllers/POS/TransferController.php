@@ -142,12 +142,12 @@ class TransferController extends Controller
         $store = $context->getStore();
 
         $validated = $request->validate([
-            'from_warehouse_id' => 'required|exists:warehouses,id',
-            'to_warehouse_id' => 'required|exists:warehouses,id|different:from_warehouse_id',
-            'notes' => 'nullable|string|max:500',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|numeric|min:0.001',
+            'from_warehouse_id' => ['required', \Illuminate\Validation\Rule::exists('warehouses', 'id')->where('store_id', $store->id)],
+            'to_warehouse_id' => ['required', \Illuminate\Validation\Rule::exists('warehouses', 'id')->where('store_id', $store->id), 'different:from_warehouse_id'],
+            'notes' => ['nullable', 'string', 'max:500'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', \Illuminate\Validation\Rule::exists('products', 'id')->where('store_id', $store->id)],
+            'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
         ]);
 
         $transfer = DB::transaction(function () use ($store, $validated) {
@@ -185,12 +185,22 @@ class TransferController extends Controller
 
     public function show(StoreContext $context, string $store_slug, StockTransfer $transfer): View
     {
+        $store = $context->getStore();
+        if ((int) $transfer->store_id !== (int) $store->id) {
+            abort(403, 'Unauthorized store transfer.');
+        }
+
         $transfer->load(['fromWarehouse', 'toWarehouse', 'items.product', 'creator']);
-        return view('pos.transfers.show', ['store' => $context->getStore(), 'storeRouteParams' => $context->getRouteParams(), 'transfer' => $transfer]);
+        return view('pos.transfers.show', ['store' => $store, 'storeRouteParams' => $context->getRouteParams(), 'transfer' => $transfer]);
     }
 
     public function ship(StoreContext $context, string $store_slug, StockTransfer $transfer): RedirectResponse
     {
+        $store = $context->getStore();
+        if ((int) $transfer->store_id !== (int) $store->id) {
+            abort(403, 'Unauthorized store transfer.');
+        }
+
         if ($transfer->status !== 'pending') {
             return back()->withErrors(['status' => __('messages.transfer_invalid_status')]);
         }
@@ -200,6 +210,11 @@ class TransferController extends Controller
 
     public function receive(StoreContext $context, string $store_slug, StockTransfer $transfer): RedirectResponse
     {
+        $store = $context->getStore();
+        if ((int) $transfer->store_id !== (int) $store->id) {
+            abort(403, 'Unauthorized store transfer.');
+        }
+
         if ($transfer->status !== 'in_transit') {
             return back()->withErrors(['status' => __('messages.transfer_invalid_status')]);
         }
@@ -237,6 +252,11 @@ class TransferController extends Controller
 
     public function cancel(StoreContext $context, string $store_slug, StockTransfer $transfer): RedirectResponse
     {
+        $store = $context->getStore();
+        if ((int) $transfer->store_id !== (int) $store->id) {
+            abort(403, 'Unauthorized store transfer.');
+        }
+
         if (! in_array($transfer->status, ['pending', 'in_transit'])) {
             return back()->withErrors(['status' => __('messages.transfer_invalid_status')]);
         }

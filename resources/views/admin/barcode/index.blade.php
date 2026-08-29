@@ -773,7 +773,7 @@ window.barcodeDesignerFactory = function () {
                      CUSTOM DIMENSION, SPACING & TEMPLATE CREATOR PANEL
                      ============================================================ --}}
                 <div x-show="showCustomPanel"
-                     x-collapse
+                     x-transition
                      class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-violet-200/90 dark:border-violet-900/60 space-y-3 mt-2 shadow-inner">
                     <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-1.5">
                         <div class="flex items-center gap-1.5">

@@ -132,8 +132,9 @@
                                     @if ($store->is_active)
                                         <button type="button" data-id="{{ $store->id }}" data-name="{{ $store->name }}"
                                             @click="openConfirm($el)"
-                                            class="min-h-11 inline-flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition"
-                                            aria-label="{{ __('messages.store_deactivate') }}">
+                                            class="min-h-11 inline-flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition"
+                                            aria-label="{{ __('messages.store_deactivate') }}"
+                                            title="{{ __('messages.store_deactivate') }}">
                                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.4 6.6A9 9 0 0 1 6.6 18.4M18.4 6.6A9 9 0 0 0 6.6 18.4M18.4 6.6l-11.8 11.8"/></svg>
                                             {{ __('messages.store_deactivate') }}
                                         </button>
@@ -141,9 +142,24 @@
                                         <form method="POST" action="{{ route('admin.stores.activate', $store) }}" class="inline">
                                             @csrf
                                             <button type="submit"
-                                                class="min-h-11 inline-flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/40 transition">
+                                                class="min-h-11 inline-flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/40 transition"
+                                                title="{{ __('messages.store_activate') }}">
                                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                                 {{ __('messages.store_activate') }}
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    @if (auth()->user()?->isPlatformOwner())
+                                        <form method="POST" action="{{ route('admin.stores.force-destroy', $store) }}" class="inline"
+                                            onsubmit="return confirm('⚠️ သတိပေးချက်: Store \'{{ $store->name }}\' ({{ $store->slug }}) နှင့် သက်ဆိုင်သော ကုန်ပစ္စည်း၊ စတော့၊ အော်ဒါ၊ အရောင်းဒေတာအားလုံးကို အပြီးတိုင် ဖျက်ပစ်ပါမည်။ သေချာပါသလား?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                class="min-h-11 inline-flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                                                title="အပြီးတိုင် ဖျက်မည်">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                အပြီးတိုင်ဖျက်မည်
                                             </button>
                                         </form>
                                     @endif

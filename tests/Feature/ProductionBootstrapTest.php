@@ -28,7 +28,7 @@ class ProductionBootstrapTest extends TestCase
         $wholesale->stores()->attach($store->id, ['role' => 'wholesale_customer', 'status' => 'active']);
         $retail->stores()->attach($store->id, ['role' => 'retail_customer', 'status' => 'active']);
 
-        $this->assertSame('store_manager', $owner->getStoreRole($store->id));
+        $this->assertSame('store_owner', $owner->getStoreRole($store->id));
         $this->assertSame('store_manager', $manager->getStoreRole($store->id));
         $this->assertSame('staff', $staff->getStoreRole($store->id));
         $this->assertSame('wholesale_customer', $wholesale->getStoreRole($store->id));

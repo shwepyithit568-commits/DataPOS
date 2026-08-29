@@ -323,9 +323,10 @@
                                             <option value="delivered" {{ $order->status === 'delivered' ? 'selected' : '' }}>Delivered</option>
                                             <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancel</option>
                                         </select>
-                                        <button type="submit" title="Update Status"
+                                        <button type="submit" title="Update Status" aria-label="Update"
                                                 class="w-7 h-7 rounded border border-emerald-200 dark:border-emerald-800/80 inline-flex items-center justify-center text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition">
                                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            <span class="sr-only">Update</span>
                                         </button>
                                     </form>
 

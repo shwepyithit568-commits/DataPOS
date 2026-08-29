@@ -583,9 +583,9 @@ class ProductController extends Controller
             'product_type'    => ['nullable', 'string', 'in:standard,serialized,variant,service,digital'],
             'barcode'         => ['nullable', 'string', 'max:100'],
             'shelf_location'  => ['nullable', 'string', 'max:100'],
-            'warehouse_id'    => ['nullable', 'exists:warehouses,id'],
-            'category_id'     => ['nullable', 'exists:categories,id'],
-            'brand_id'        => ['nullable', 'exists:brands,id'],
+            'warehouse_id'    => ['nullable', \Illuminate\Validation\Rule::exists('warehouses', 'id')->where('store_id', $store->id)],
+            'category_id'     => ['nullable', \Illuminate\Validation\Rule::exists('categories', 'id')->where('store_id', $store->id)],
+            'brand_id'        => ['nullable', \Illuminate\Validation\Rule::exists('brands', 'id')->where('store_id', $store->id)],
             'retail_price'    => ['required', 'numeric', 'min:0'],
             'old_price'       => ['nullable', 'numeric', 'min:0'],
             'sale_starts_at'  => ['nullable', 'date'],
@@ -594,7 +594,7 @@ class ProductController extends Controller
             'stock_status'    => ['nullable', 'in:in_stock,out_of_stock'],
             'auto_sku'        => ['nullable', 'boolean'],
             'reorder_level'   => ['nullable', 'numeric', 'min:0'],
-            'supplier_id'     => ['nullable', 'exists:suppliers,id'],
+            'supplier_id'     => ['nullable', \Illuminate\Validation\Rule::exists('suppliers', 'id')->where('store_id', $store->id)],
             'purchase_cost'   => ['nullable', 'numeric', 'min:0'],
             'initial_stock'   => ['nullable', 'numeric', 'min:0'],
             'service_duration'=> ['nullable', 'string', 'max:100'],
@@ -762,9 +762,9 @@ class ProductController extends Controller
             'product_type'    => ['nullable', 'string', 'in:standard,serialized,variant,service,digital'],
             'barcode'         => ['nullable', 'string', 'max:100'],
             'shelf_location'  => ['nullable', 'string', 'max:100'],
-            'warehouse_id'    => ['nullable', 'exists:warehouses,id'],
-            'category_id'     => ['nullable', 'exists:categories,id'],
-            'brand_id'        => ['nullable', 'exists:brands,id'],
+            'warehouse_id'    => ['nullable', \Illuminate\Validation\Rule::exists('warehouses', 'id')->where('store_id', $store->id)],
+            'category_id'     => ['nullable', \Illuminate\Validation\Rule::exists('categories', 'id')->where('store_id', $store->id)],
+            'brand_id'        => ['nullable', \Illuminate\Validation\Rule::exists('brands', 'id')->where('store_id', $store->id)],
             'retail_price'    => ['required', 'numeric', 'min:0'],
             'old_price'       => ['nullable', 'numeric', 'min:0'],
             'sale_starts_at'  => ['nullable', 'date'],
@@ -772,7 +772,7 @@ class ProductController extends Controller
             'wholesale_price' => ['required', 'numeric', 'min:0'],
             'stock_status'    => ['nullable', 'in:in_stock,out_of_stock'],
             'reorder_level'   => ['nullable', 'numeric', 'min:0'],
-            'supplier_id'     => ['nullable', 'exists:suppliers,id'],
+            'supplier_id'     => ['nullable', \Illuminate\Validation\Rule::exists('suppliers', 'id')->where('store_id', $store->id)],
             'purchase_cost'   => ['nullable', 'numeric', 'min:0'],
             'service_duration'=> ['nullable', 'string', 'max:100'],
             'digital_delivery_method' => ['nullable', 'string', 'max:100'],
@@ -1445,7 +1445,7 @@ class ProductController extends Controller
 
         $validated = $request->validate([
             'ids'          => ['required', 'array', 'min:1'],
-            'ids.*'        => ['integer', 'exists:products,id'],
+            'ids.*'        => ['integer', \Illuminate\Validation\Rule::exists('products', 'id')->where('store_id', $store->id)],
             'stock_status' => ['required', 'in:in_stock,out_of_stock'],
         ]);
 
@@ -1466,7 +1466,7 @@ class ProductController extends Controller
 
         $validated = $request->validate([
             'ids'       => ['required', 'array', 'min:1'],
-            'ids.*'     => ['integer', 'exists:products,id'],
+            'ids.*'     => ['integer', \Illuminate\Validation\Rule::exists('products', 'id')->where('store_id', $store->id)],
             'apply_to'  => ['required', 'in:retail,wholesale,both'],
             'mode'      => ['required', 'in:amount,percent'],
             'direction' => ['required', 'in:increase,decrease'],
@@ -1519,7 +1519,7 @@ class ProductController extends Controller
 
         $validated = $request->validate([
             'ids'   => ['required', 'array', 'min:1'],
-            'ids.*' => ['integer', 'exists:products,id'],
+            'ids.*' => ['integer', \Illuminate\Validation\Rule::exists('products', 'id')->where('store_id', $store->id)],
         ]);
 
         $products = Product::where('store_id', $store->id)

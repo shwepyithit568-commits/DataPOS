@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -58,12 +59,12 @@ class StaffRoleController extends Controller
             $roles = $query->paginate((int) $perPage)->withQueryString();
         }
 
-        // Fetch staff members in this store
+        // Fetch staff members in this store (owners, managers, staff)
         $staffMembers = DB::table('store_user')
             ->join('users', 'users.id', '=', 'store_user.user_id')
             ->leftJoin('staff_roles', 'staff_roles.id', '=', 'store_user.staff_role_id')
             ->where('store_user.store_id', $store->id)
-            ->whereIn('store_user.role', ['store_manager', 'staff'])
+            ->whereIn('store_user.role', ['store_owner', 'store_manager', 'staff'])
             ->select(
                 'users.id as user_id',
                 'users.name as user_name',
@@ -83,38 +84,55 @@ class StaffRoleController extends Controller
         // Metrics
         $totalRoles = StaffRole::where('store_id', $store->id)->count();
         $activeRoles = StaffRole::where('store_id', $store->id)->where('is_active', true)->count();
-        $totalStaff = $staffMembers->count();
-        $unassignedStaff = $staffMembers->whereNull('staff_role_id')->count();
+        $assignedStaffCount = DB::table('store_user')
+            ->where('store_id', $store->id)
+            ->whereIn('role', ['store_owner', 'store_manager', 'staff'])
+            ->whereNotNull('staff_role_id')
+            ->count();
+        $unassignedStaffCount = DB::table('store_user')
+            ->where('store_id', $store->id)
+            ->whereIn('role', ['store_owner', 'store_manager', 'staff'])
+            ->whereNull('staff_role_id')
+            ->count();
 
         $metrics = [
             'total_roles'      => $totalRoles,
             'active_roles'     => $activeRoles,
-            'total_staff'      => $totalStaff,
-            'unassigned_staff' => $unassignedStaff,
+            'total_staff'      => $staffMembers->count(),
+            'assigned_staff'   => $assignedStaffCount,
+            'unassigned_staff' => $unassignedStaffCount,
         ];
 
-        $permissionGroups = StaffRole::PERMISSION_GROUPS;
-
-        return view('admin.roles.index', compact(
-            'store',
-            'roles',
-            'staffMembers',
-            'allRolesForSelect',
-            'metrics',
-            'permissionGroups',
-            'perPage',
-            'sort'
-        ));
+        return view('admin.roles.index', [
+            'store'                 => $store,
+            'roles'                 => $roles,
+            'staffMembers'          => $staffMembers,
+            'allRolesForSelect'     => $allRolesForSelect,
+            'metrics'               => $metrics,
+            'totalRoles'            => $totalRoles,
+            'activeRoles'           => $activeRoles,
+            'assignedStaffCount'    => $assignedStaffCount,
+            'unassignedStaffCount'  => $unassignedStaffCount,
+            'permissionGroups'      => StaffRole::PERMISSION_GROUPS,
+            'totalPermissionsCount' => StaffRole::allPermissionKeys()->count(),
+            'isStoreOwner'          => (bool) auth()->user()?->isStoreOwner($store->id),
+            'sort'                  => $sort,
+            'perPage'               => $perPage,
+        ]);
     }
 
     /**
      * Store a new custom staff role.
      */
-    public function store(Request $request, StoreContext $context, string $store_slug = ''): RedirectResponse
+    public function store(Request $request, StoreContext $context): RedirectResponse
     {
         $store = $context->getStore();
         if (! $store) {
             abort(404);
+        }
+
+        if (! auth()->user()?->isStoreOwner($store->id)) {
+            return back()->withErrors(['error' => 'ဆိုင်ပိုင်ရှင် (Store Owner) သာလျှင် ဝန်ထမ်းရာထူးများနှင့် လုပ်ပိုင်ခွင့်များကို ပြင်ဆင်ဖန်တီးနိုင်ပါသည်။ (Only Store Owner can create new staff roles.)']);
         }
 
         $validated = $request->validate([
@@ -151,6 +169,10 @@ class StaffRoleController extends Controller
             abort(404);
         }
 
+        if (! auth()->user()?->isStoreOwner($store->id)) {
+            return back()->withErrors(['error' => 'ဆိုင်ပိုင်ရှင် (Store Owner) သာလျှင် ဝန်ထမ်းရာထူးများနှင့် လုပ်ပိုင်ခွင့်များကို ပြင်ဆင်ဖန်တီးနိုင်ပါသည်။ (Only Store Owner can update staff roles.)']);
+        }
+
         $staffRole = StaffRole::where('store_id', $store->id)->findOrFail((int) $role);
 
         $validated = $request->validate([
@@ -183,6 +205,10 @@ class StaffRoleController extends Controller
             abort(404);
         }
 
+        if (! auth()->user()?->isStoreOwner($store->id)) {
+            return back()->withErrors(['error' => 'ဆိုင်ပိုင်ရှင် (Store Owner) သာလျှင် ဝန်ထမ်းရာထူးများနှင့် လုပ်ပိုင်ခွင့်များကို ပြင်ဆင်ဖန်တီးနိုင်ပါသည်။ (Only Store Owner can delete staff roles.)']);
+        }
+
         $staffRole = StaffRole::where('store_id', $store->id)->findOrFail((int) $role);
 
         if ($staffRole->is_system) {
@@ -210,11 +236,19 @@ class StaffRoleController extends Controller
             abort(404);
         }
 
+        if (! auth()->user()?->isStoreOwner($store->id)) {
+            return back()->withErrors(['error' => 'ဆိုင်ပိုင်ရှင် (Store Owner) သာလျှင် ဝန်ထမ်းများအား ရာထူးတာဝန် ခွဲဝေပေးအပ်နိုင်ပါသည်။ (Only Store Owner can assign staff roles.)']);
+        }
+
         $actionMode = $request->input('action_mode', 'select');
 
         if ($actionMode === 'create_and_assign') {
             $validated = $request->validate([
-                'user_id'          => 'required|integer',
+                'user_id'          => [
+                    'required',
+                    'integer',
+                    Rule::exists('store_user', 'user_id')->where('store_id', $store->id),
+                ],
                 'role_name'        => 'required|string|max:100',
                 'role_description' => 'nullable|string|max:500',
                 'role_color'       => 'nullable|string|max:20',
@@ -245,8 +279,16 @@ class StaffRoleController extends Controller
         }
 
         $validated = $request->validate([
-            'user_id'       => 'required|integer',
-            'staff_role_id' => 'nullable|integer|exists:staff_roles,id',
+            'user_id'       => [
+                'required',
+                'integer',
+                Rule::exists('store_user', 'user_id')->where('store_id', $store->id),
+            ],
+            'staff_role_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('staff_roles', 'id')->where('store_id', $store->id),
+            ],
         ]);
 
         DB::table('store_user')

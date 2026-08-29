@@ -117,13 +117,13 @@ class PurchaseOrderController extends Controller
 
         $data = $request->validate([
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'integer'],
+            'items.*.product_id' => ['required', 'integer', \Illuminate\Validation\Rule::exists('products', 'id')->where('store_id', $store->id)],
             'items.*.product_variant_id' => ['nullable', 'integer'],
             // decimal (not plain numeric): the PO service does bcmath, which
             // throws a ValueError on scientific notation ("1e3").
             'items.*.quantity' => ['required', 'decimal:0,3', 'gt:0'],
             'items.*.unit_cost' => ['required', 'decimal:0,2', 'min:0'],
-            'supplier_id' => ['nullable', 'integer'],
+            'supplier_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('suppliers', 'id')->where('store_id', $store->id)],
             'reference' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'discount_amount' => ['nullable', 'decimal:0,2', 'min:0'],
@@ -311,7 +311,7 @@ class PurchaseOrderController extends Controller
 
         $validated = $request->validate([
             'items'              => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'integer'],
+            'items.*.product_id' => ['required', 'integer', \Illuminate\Validation\Rule::exists('products', 'id')->where('store_id', $store->id)],
             'items.*.product_variant_id' => ['nullable', 'integer'],
             'items.*.quantity'   => ['required', 'string', 'min:0.001'],
             'reason'             => ['nullable', 'string', 'max:500'],

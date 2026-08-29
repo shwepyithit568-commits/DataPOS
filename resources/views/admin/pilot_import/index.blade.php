@@ -1,410 +1,286 @@
 @extends('layouts.admin.app')
 
+@section('title', __('messages.pilot_import') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-2 sm:p-3 md:p-4')
+
+@php
+    $storeRouteParams = ['store_slug' => $store->slug];
+    $isDemoAllowed = app()->environment(['local', 'testing', 'uat']) || (bool) config('app.show_quick_login');
+@endphp
+
 @section('content')
-<div class="space-y-6 max-w-6xl">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100 font-outfit">Pilot Data Import</h1>
-            <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">AlinnThit pilot — upload → review (dry-run, nothing written) → confirm. Every import is recorded in Import History with downloadable error reports.</p>
+<div class="w-full space-y-2.5 sm:space-y-3 pb-8"
+     x-data="{
+        cleanModalOpen: false,
+        selectedScenario: '{{ $store->business_type === 'agriculture_inputs' ? 'diamond-stone-agri' : 'mobile-accessories' }}'
+     }">
+
+    {{-- 1. Compact Header --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 sm:p-4 shadow-sm">
+        <div class="flex items-center gap-3 min-w-0">
+            <span class="w-10 h-10 rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300 grid place-items-center text-lg font-bold shrink-0 shadow-sm">
+                📥
+            </span>
+            <div class="min-w-0">
+                <div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    <span>{{ __('messages.sidebar_maintenance') }}</span>
+                    <span>/</span>
+                    <span class="text-violet-600 dark:text-violet-400">{{ __('messages.pilot_import') }}</span>
+                </div>
+                <h1 class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
+                    {{ __('messages.pilot_import_title') }}
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    မိုဘိုင်း၊ စိုက်ပျိုးရေးနှင့် SME ဆိုင်များအတွက် စုံစုံလင်လင် စမ်းသပ်နိုင်ရန် ကုန်ပစ္စည်း၊ စတော့နှင့် အကြွေးစာရင်း နမူနာများ ထည့်သွင်းခြင်း
+                </p>
+            </div>
         </div>
-        <a href="{{ route('store.admin.dashboard', ['store_slug' => $store->slug]) }}" class="shrink-0 text-xs text-violet-600 dark:text-violet-400 font-semibold hover:underline whitespace-nowrap">&larr; Back to Dashboard</a>
+
+        <div class="flex items-center gap-2 shrink-0">
+            <a href="{{ route('store.admin.products.import', $storeRouteParams) }}"
+               class="h-9 px-3 rounded-xl text-xs font-semibold bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/50 dark:hover:bg-violet-900/50 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 transition inline-flex items-center gap-1.5">
+                <span>📊</span>
+                <span>Excel Product Import</span>
+            </a>
+            <a href="{{ route('store.admin.backups.index', $storeRouteParams) }}"
+               class="h-9 px-3 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-1.5">
+                <span>💾</span>
+                <span>{{ __('messages.backups') }}</span>
+            </a>
+        </div>
     </div>
 
+    {{-- Flash Notifications --}}
     @if ($errors->any())
-        <div class="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg p-4 text-sm text-red-700 dark:text-red-300 space-y-1">
+        <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs font-medium text-rose-800 dark:text-rose-200 space-y-1">
             @foreach ($errors->all() as $error)
-                <div>{{ $error }}</div>
+                <div class="flex items-center gap-1.5">
+                    <span>⚠️</span>
+                    <span>{{ $error }}</span>
+                </div>
             @endforeach
         </div>
     @endif
 
     @if (session('success'))
-        <div class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
-            {{ session('success') }}
+        <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-200 flex items-center gap-2">
+            <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 grid place-items-center text-xs font-bold">✓</span>
+            <span>{{ session('success') }}</span>
         </div>
     @endif
 
-    <div class="flex flex-nowrap gap-2 overflow-x-auto border-b border-gray-200 dark:border-slate-700 pb-px">
-        @foreach (['products', 'customers', 'suppliers', 'debt'] as $t)
-            <a href="{{ route('store.admin.pilot-import.index', ['store_slug' => $store->slug, 'tab' => $t]) }}"
-               class="shrink-0 px-4 py-2 rounded-t-lg text-sm font-semibold whitespace-nowrap transition-colors {{ $tab === $t ? 'bg-white dark:bg-slate-800 text-violet-700 dark:text-violet-300 border border-b-0 border-gray-200 dark:border-slate-600' : 'text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-200' }}">
-                {{ ucfirst($t) }}
-            </a>
-        @endforeach
-    </div>
-
-    @php
-        $importRoute = route('store.admin.pilot-import.import', ['store_slug' => $store->slug, 'tab' => $tab]);
-        $confirmRoute = route('store.admin.pilot-import.confirm', ['store_slug' => $store->slug, 'tab' => $tab]);
-        $templateRoute = route('store.admin.pilot-import.template', ['store_slug' => $store->slug, 'tab' => $tab]);
-        $columns = match ($tab) {
-            'customers' => ['name', 'phone', 'email', 'role'],
-            'suppliers' => ['name', 'phone', 'email', 'contact_person', 'address', 'notes'],
-            'debt' => ['phone', 'amount', 'notes'],
-            default => ['name', 'sku', 'brand', 'category', 'retail_price', 'stock_status'],
-        };
-        $required = match ($tab) {
-            'products' => 'name, sku, retail_price, wholesale_price, stock_status',
-            'customers' => 'name, phone',
-            'debt' => 'phone, amount',
-            default => 'name',
-        };
-        $dupRule = $tab === 'products'
-            ? 'Products are matched by SKU (case-insensitive). Matching SKUs are skipped or updated depending on the strategy.'
-            : ($tab === 'customers'
-                ? 'Customers are matched by phone (normalized, e.g. "09 123 456 789" → 9123456789). A phone already attached to this store is skipped or updated; a phone belonging to another store is attached here as a new customer.'
-                : ($tab === 'debt'
-                    ? 'Each phone must belong to a customer already attached to this store (import customers first). One opening-balance ledger entry per row; duplicate phones within the file are skipped.'
-                    : 'Suppliers are matched by phone first, then by name (case-insensitive), within this store only.'));
-    @endphp
-
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm text-center">
-        <div class="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm">
-            <div class="text-xl font-bold">{{ $summary['total_imports'] }}</div>
-            <div class="text-xs text-gray-500 dark:text-slate-400">Imports ({{ ucfirst($tab) }})</div>
-        </div>
-        <div class="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm">
-            <div class="text-xl font-bold text-green-700 dark:text-green-400">{{ $summary['successful_rows'] }}</div>
-            <div class="text-xs text-gray-500 dark:text-slate-400">Successful Rows</div>
-        </div>
-        <div class="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm">
-            <div class="text-xl font-bold text-red-700 dark:text-red-400">{{ $summary['failed_rows'] }}</div>
-            <div class="text-xs text-gray-500 dark:text-slate-400">Failed Rows</div>
-        </div>
-        <div class="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm">
-            <div class="text-xl font-bold text-amber-700 dark:text-amber-400">{{ $summary['total_imports'] > 0 ? round(($summary['successful_rows'] / max(1, $summary['successful_rows'] + $summary['failed_rows'])) * 100) . '%' : '—' }}</div>
-            <div class="text-xs text-gray-500 dark:text-slate-400">Success Rate</div>
-        </div>
-    </div>
-
-    @if (session('import_preview'))
-        @php $preview = session('import_preview'); @endphp
-        <div class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 space-y-4">
-            <div>
-                <h3 class="font-bold text-amber-900 dark:text-amber-200">Preview Ready: {{ $preview['filename'] }}</h3>
-                <p class="text-xs text-amber-800 dark:text-amber-300">Dry-run only — nothing has been written yet. Review the summary below before saving changes.</p>
+    {{-- 2. 4 Key Stat KPI Cards --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+        {{-- Total Products --}}
+        <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 shadow-sm">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <span class="text-violet-600 dark:text-violet-400">လက်ရှိ ကုန်ပစ္စည်းများ</span>
+                <span>📦</span>
             </div>
-
-            @if ($tab === 'debt')
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm text-center">
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold">{{ $preview['total'] }}</div>
-                        <div class="text-xs text-gray-500">Total</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-green-700 dark:text-green-400">{{ $preview['found'] }}</div>
-                        <div class="text-xs text-gray-500">Found (will post)</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-amber-700 dark:text-amber-400">{{ $preview['not_found'] }}</div>
-                        <div class="text-xs text-gray-500">No Customer</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-red-700 dark:text-red-400">{{ $preview['failed'] }}</div>
-                        <div class="text-xs text-gray-500">Failed</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-sky-700 dark:text-sky-400">Ks {{ number_format((float) $preview['total_amount']) }}</div>
-                        <div class="text-xs text-gray-500">Total Amount</div>
-                    </div>
-                </div>
-            @else
-                <div class="grid grid-cols-2 sm:grid-cols-6 gap-3 text-sm text-center">
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold">{{ $preview['total'] }}</div>
-                        <div class="text-xs text-gray-500">Total</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-green-700 dark:text-green-400">{{ $preview['creatable'] }}</div>
-                        <div class="text-xs text-gray-500">New</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-violet-700 dark:text-violet-400">{{ $preview['updatable'] }}</div>
-                        <div class="text-xs text-gray-500">Updates</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-amber-700 dark:text-amber-400">{{ $preview['skipped_duplicate'] }}</div>
-                        <div class="text-xs text-gray-500">Skipped</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-red-700 dark:text-red-400">{{ $preview['failed'] }}</div>
-                        <div class="text-xs text-gray-500">Failed</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-sky-700 dark:text-sky-400">{{ $preview['attached'] ?? 0 }}</div>
-                        <div class="text-xs text-gray-500">Attached</div>
-                    </div>
-                </div>
-            @endif
-
-            @if (!empty($preview['preview_rows']))
-                <div class="overflow-x-auto bg-white dark:bg-slate-800 rounded">
-                    <table class="w-full text-xs text-left">
-                        <thead class="bg-gray-50 dark:bg-slate-900/60">
-                            <tr>
-                                <th class="p-2">Row</th>
-                                <th class="p-2">Name</th>
-                                <th class="p-2">{{ $tab === 'products' ? 'SKU' : 'Phone' }}</th>
-                                @if ($tab === 'products')
-                                    <th class="p-2">Brand</th>
-                                    <th class="p-2">Category</th>
-                                    <th class="p-2">Retail Price</th>
-                                @elseif ($tab === 'customers')
-                                    <th class="p-2">Email</th>
-                                    <th class="p-2">Role</th>
-                                @elseif ($tab === 'debt')
-                                    <th class="p-2 text-right">Amount</th>
-                                    <th class="p-2 text-right">Current Balance</th>
-                                @else
-                                    <th class="p-2">Contact</th>
-                                @endif
-                                <th class="p-2">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y dark:divide-slate-700">
-                            @foreach ($preview['preview_rows'] as $row)
-                                <tr>
-                                    <td class="p-2">{{ $row['row'] }}</td>
-                                    <td class="p-2">{{ $row['name'] }}</td>
-                                    <td class="p-2 font-mono">{{ $tab === 'products' ? ($row['sku'] ?? '') : ($row['phone'] ?? '') }}</td>
-                                    @if ($tab === 'products')
-                                        <td class="p-2">{{ $row['brand'] ?? '' }}</td>
-                                        <td class="p-2">{{ $row['category'] ?? '' }}</td>
-                                        <td class="p-2">{{ $row['retail_price'] ?? '' }}</td>
-                                    @elseif ($tab === 'customers')
-                                        <td class="p-2">{{ $row['email'] ?? '' }}</td>
-                                        <td class="p-2">{{ $row['role'] ?? '' }}</td>
-                                    @elseif ($tab === 'debt')
-                                        <td class="p-2 text-right font-mono">Ks {{ number_format((float) $row['amount']) }}</td>
-                                        <td class="p-2 text-right font-mono">Ks {{ number_format((float) $row['balance']) }}</td>
-                                    @else
-                                        <td class="p-2">{{ $row['contact_person'] ?? '' }}</td>
-                                    @endif
-                                    <td class="p-2">
-                                        @php $action = $row['action'] ?? 'create'; @endphp
-                                        @if ($tab === 'debt')
-                                            @if ($action === 'post')
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300">post</span>
-                                            @elseif ($action === 'not_found')
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300">no customer</span>
-                                            @else
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">skip</span>
-                                            @endif
-                                        @else
-                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $action === 'create' || $action === 'attach' ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300' : ($action === 'update' ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300') }}">{{ $action }}</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
-
-            @if (!empty($preview['failed_rows']))
-                <details>
-                    <summary class="cursor-pointer text-xs font-semibold text-red-700 dark:text-red-400">Failed Rows ({{ count($preview['failed_rows']) }})</summary>
-                    <div class="mt-2 space-y-1 text-xs bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded p-2 max-h-48 overflow-y-auto">
-                        @foreach ($preview['failed_rows'] as $fr)
-                            <div>Row {{ $fr['row'] }}{{ isset($fr['name']) && $fr['name'] !== '' ? ' [' . $fr['name'] . ']' : '' }}: {{ $fr['reason'] }}</div>
-                        @endforeach
-                    </div>
-                </details>
-            @endif
-
-            <form method="POST" action="{{ $confirmRoute }}" class="flex flex-nowrap items-end gap-3 overflow-x-auto pb-1 -mx-1 px-1 sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0">
-                @csrf
-                <input type="hidden" name="token" value="{{ $preview['token'] }}">
-                @if ($tab !== 'debt')
-                    <div class="shrink-0">
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">Duplicate Handling</label>
-                        <select name="duplicate_strategy" class="border dark:border-slate-600 rounded px-3 py-2 text-sm bg-white dark:bg-slate-900">
-                            <option value="skip" {{ $preview['duplicate_strategy'] === 'skip' ? 'selected' : '' }}>Skip duplicates</option>
-                            <option value="update" {{ $preview['duplicate_strategy'] === 'update' ? 'selected' : '' }}>Update existing</option>
-                        </select>
-                    </div>
-                @endif
-                <button type="submit" class="shrink-0 px-4 py-2 bg-green-600 text-white rounded font-semibold text-sm hover:bg-green-700 whitespace-nowrap">{{ $tab === 'debt' ? 'Post Opening Balances' : 'Confirm Import' }}</button>
-            </form>
-        </div>
-    @endif
-
-    @if (session('import_result'))
-        @php $result = session('import_result'); @endphp
-        <div class="bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 rounded-lg p-4 space-y-3">
-            <h3 class="font-bold text-green-800 dark:text-green-300">{{ $tab === 'debt' ? 'Opening Balances Posted' : 'Import Completed' }}</h3>
-            @if ($tab === 'debt')
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm text-center">
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold">{{ $result['total'] }}</div>
-                        <div class="text-xs text-gray-500">Total Rows</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-green-700">{{ $result['posted'] }}</div>
-                        <div class="text-xs text-gray-500">Posted</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-amber-600">{{ $result['not_found'] }}</div>
-                        <div class="text-xs text-gray-500">No Customer</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-red-600">{{ $result['failed'] }}</div>
-                        <div class="text-xs text-gray-500">Failed</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-sky-700">Ks {{ number_format((float) $result['total_amount']) }}</div>
-                        <div class="text-xs text-gray-500">Total Posted</div>
-                    </div>
-                </div>
-            @else
-                <div class="grid grid-cols-2 sm:grid-cols-6 gap-3 text-sm text-center">
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold">{{ $result['total'] }}</div>
-                        <div class="text-xs text-gray-500">Total Rows</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-green-700">{{ $result['imported'] }}</div>
-                        <div class="text-xs text-gray-500">Created</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-violet-700">{{ $result['updated'] }}</div>
-                        <div class="text-xs text-gray-500">Updated</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-sky-700">{{ $result['attached'] ?? 0 }}</div>
-                        <div class="text-xs text-gray-500">Attached</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-amber-600">{{ $result['skipped_duplicate'] }}</div>
-                        <div class="text-xs text-gray-500">Skipped</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 rounded p-3">
-                        <div class="text-xl font-bold text-red-600">{{ $result['failed'] }}</div>
-                        <div class="text-xs text-gray-500">Failed</div>
-                    </div>
-                </div>
-            @endif
-            @if ($result['failed'] > 0)
-                <p class="text-xs text-red-600 dark:text-red-400">Failed rows are recorded in Import History — download the error report there to fix and re-import them.</p>
-            @endif
-        </div>
-    @endif
-
-    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm space-y-5 transition-colors duration-200">
-        <div class="flex items-center justify-between gap-3">
-            <h2 class="text-lg font-bold text-gray-900 dark:text-slate-100">Upload {{ ucfirst($tab) }} File</h2>
-            <a href="{{ $templateRoute }}" class="shrink-0 px-3 py-2 bg-green-600 text-white rounded-md text-xs font-semibold hover:bg-green-700 whitespace-nowrap">Download {{ ucfirst($tab) }} Template</a>
-        </div>
-        <form action="{{ $importRoute }}" method="POST" enctype="multipart/form-data" class="space-y-4">
-            @csrf
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1">CSV or XLSX File</label>
-                <input type="file" name="file" accept=".csv,.txt,.xlsx" required
-                    class="block w-full text-sm text-gray-600 dark:text-slate-300 border border-gray-300 dark:border-slate-600 rounded-lg p-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-slate-900">
-                <p class="text-xs text-gray-400 dark:text-slate-500 mt-1">Max 5MB. Supports CSV and XLSX files. The system always uses the current admin store — do not add a store_id column.</p>
+            <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-violet-600 dark:text-violet-400 tabular-nums">
+                {{ number_format($stats['products'] ?? 0) }}
             </div>
-            @if ($tab !== 'debt')
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1">Duplicate Handling</label>
-                    <select name="duplicate_strategy" class="border dark:border-slate-600 rounded px-3 py-2 text-sm bg-white dark:bg-slate-900">
-                        <option value="skip">Skip duplicates (default)</option>
-                        <option value="update">Update existing records</option>
-                    </select>
-                </div>
-            @endif
-            <button type="submit" class="px-4 py-2 bg-violet-600 text-white rounded font-semibold text-sm hover:bg-violet-700">
-                Upload & Preview (dry-run)
-            </button>
-        </form>
+            <p class="text-[11px] text-slate-400 truncate">Total Active Products</p>
+        </div>
 
-        <div class="border-t dark:border-slate-700 pt-4">
-            <h4 class="text-sm font-bold text-gray-700 dark:text-slate-300 mb-2">Supported Columns</h4>
-            <div class="bg-gray-50 dark:bg-slate-900 rounded p-3 font-mono text-xs text-gray-600 dark:text-slate-400 overflow-x-auto">
-                {{ implode(',', $columns) }}
+        {{-- Categories & Brands --}}
+        <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 shadow-sm">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <span class="text-emerald-600 dark:text-emerald-400">အုပ်စုနှင့် အမှတ်တံဆိပ်</span>
+                <span>🏷️</span>
             </div>
-            <p class="text-xs text-gray-400 dark:text-slate-500 mt-2">
-                <code>{{ $required }}</code> {{ $tab === 'customers' ? 'are' : 'is' }} required. {{ $dupRule }}
-            </p>
+            <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
+                {{ number_format($stats['categories'] ?? 0) }} / {{ number_format($stats['brands'] ?? 0) }}
+            </div>
+            <p class="text-[11px] text-slate-400 truncate">Categories / Brands</p>
+        </div>
+
+        {{-- Suppliers --}}
+        <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 shadow-sm">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <span class="text-amber-600 dark:text-amber-400">ကုန်သွင်းသူများ</span>
+                <span>🏢</span>
+            </div>
+            <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
+                {{ number_format($stats['suppliers'] ?? 0) }}
+            </div>
+            <p class="text-[11px] text-slate-400 truncate">Active Suppliers</p>
+        </div>
+
+        {{-- Customers --}}
+        <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 shadow-sm">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <span class="text-sky-600 dark:text-sky-400">ဝယ်ယူသူနှင့် အကောင့်များ</span>
+                <span>👥</span>
+            </div>
+            <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-sky-600 dark:text-sky-400 tabular-nums">
+                {{ number_format($stats['customers'] ?? 0) }}
+            </div>
+            <p class="text-[11px] text-slate-400 truncate">Customer Accounts</p>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm space-y-3">
-        <h2 class="text-lg font-bold text-gray-900 dark:text-slate-100">Recent {{ ucfirst($tab) }} Imports</h2>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-gray-50 dark:bg-slate-900/60 text-gray-600 dark:text-slate-300">
-                    <tr>
-                        <th class="p-2">Date</th>
-                        <th class="p-2">File</th>
-                        <th class="p-2">User</th>
-                        <th class="p-2">Total</th>
-                        <th class="p-2">Success</th>
-                        <th class="p-2">Failed</th>
-                        <th class="p-2">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y dark:divide-slate-700">
-                    @forelse ($histories as $history)
-                        <tr>
-                            <td class="p-2">{{ $history->created_at->format('Y-m-d H:i') }}</td>
-                            <td class="p-2">{{ $history->filename }}</td>
-                            <td class="p-2">{{ $history->user?->name ?? 'System' }}</td>
-                            <td class="p-2">{{ $history->total_rows }}</td>
-                            <td class="p-2">{{ $history->success_rows }}</td>
-                            <td class="p-2">{{ $history->failed_rows }}</td>
-                            <td class="p-2 whitespace-nowrap">
-                                @if ($history->error_file_path && $history->failed_rows > 0)
-                                    <a href="{{ route('store.admin.import-history.errors', ['store_slug' => $store->slug, 'history' => $history]) }}" class="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline">Download Error Report</a>
-                                @else
-                                    <span class="text-xs text-gray-400">No errors</span>
-                                @endif
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="p-3 text-center text-gray-500">No {{ $tab }} imports yet.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    {{-- Demo Business Builder — local/UAT testing helper kept alongside the hub --}}
-    <div class="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+    {{-- 3. Dedicated Excel Import Link Info Banner --}}
+    <div class="rounded-2xl bg-gradient-to-r from-violet-50 via-slate-50 to-indigo-50 dark:from-slate-900 dark:via-slate-900 dark:to-violet-950/40 border border-violet-200/80 dark:border-violet-900/60 p-3.5 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex items-start sm:items-center gap-3">
+            <span class="w-9 h-9 rounded-xl bg-violet-600 text-white grid place-items-center text-base shrink-0 shadow-sm">
+                📊
+            </span>
             <div>
-                <h2 class="text-lg font-bold text-gray-900 dark:text-slate-100">Demo Business Builder</h2>
-                <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
-                    ခလုပ်တစ်ချက်နှိပ်ပြီး test ဆိုင်အသစ်တည်ဆောက်နိုင်ပါတယ်။ ထပ်နှိပ်မိရင် duplicate မပွားဘဲ ရှိပြီးသား data ကို update လုပ်ပါမယ်။
+                <h4 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                    မိမိ၏ Excel / CSV ဖိုင်ဖြင့် ပစ္စည်းများ အများအပြား ထည့်သွင်းလိုပါသလား?
+                </h4>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Excel ဖိုင်ဖြင့် ကုန်ပစ္စည်းများ စတင်ထည့်သွင်းခြင်း (Batch Product Ingestion) ကို သီးသန့် Excel Import စာမျက်နှာတွင် စနစ်တကျ ပြုလုပ်နိုင်ပါသည်။
                 </p>
             </div>
-            <span class="shrink-0 inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold {{ $demoScenariosEnabled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' }}">
-                {{ $demoScenariosEnabled ? 'Enabled for local testing' : 'Disabled outside local quick-login mode' }}
+        </div>
+        <a href="{{ route('store.admin.products.import', $storeRouteParams) }}"
+           class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center justify-center gap-1.5 shrink-0 active:scale-95">
+            <span>📦 Excel Product Import သို့ သွားရန်</span>
+            <span>→</span>
+        </a>
+    </div>
+
+    {{-- 4. Myanmar SME Pilot Presets Seeder Section --}}
+    <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <span>🌱</span>
+                    <span>လက်ရှိဆိုင်ထဲသို့ နမူနာဒေတာ ထည့်သွင်းခြင်း (Seed Demo Data into Current Store)</span>
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Myanmar SME Commercialization Guide (Phase C1) အရ ဆိုင်အမျိုးအစားအလိုက် စုံစုံလင်လင် စမ်းသပ်နိုင်ရန် ကုန်ပစ္စည်းများ၊ စတော့များနှင့် Customer အကြွေးများကို တစ်ချက်တည်းဖြင့် ချက်ချင်း ထည့်သွင်းပေးပါသည်။
+                </p>
+            </div>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 w-fit">
+                <span>✓ Live Test Ready</span>
             </span>
         </div>
 
-        <div class="grid gap-3 md:grid-cols-2">
+        {{-- Preset Grid --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             @foreach ($demoScenarios as $key => $scenario)
-                <div class="rounded-lg border border-gray-200 dark:border-slate-700 p-4 space-y-3">
+                <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-3.5 flex flex-col justify-between space-y-3 hover:border-violet-300 dark:hover:border-violet-700 transition bg-slate-50/50 dark:bg-slate-800/30">
                     <div>
-                        <h3 class="font-bold text-gray-900 dark:text-slate-100">{{ $scenario['label'] }}</h3>
-                        <p class="text-xs font-semibold text-violet-600 dark:text-violet-300 mt-0.5">{{ $scenario['subtitle'] }}</p>
-                        <p class="text-xs text-gray-500 dark:text-slate-400 mt-2">{{ $scenario['description'] }}</p>
-                        <p class="text-[11px] text-gray-400 dark:text-slate-500 mt-2">Store slug: {{ $scenario['store_slug'] }}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-900 dark:text-slate-100">{{ $scenario['label'] }}</span>
+                            <div class="flex flex-col items-end gap-1">
+                                <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-md bg-violet-100 dark:bg-violet-950 text-violet-700 dark:text-violet-300 font-mono max-w-32 truncate" title="{{ $key }}">
+                                    {{ $key }}
+                                </span>
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded-full {{ $scenario['readiness'] === 'Core-ready' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' }}">
+                                    {{ $scenario['readiness'] }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-xs font-semibold text-violet-600 dark:text-violet-400 mt-1">{{ $scenario['subtitle'] }}</div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                            {{ $scenario['description'] }}
+                        </p>
+                        @if ($scenario['limitation'])
+                            <p class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[10px] font-semibold leading-relaxed text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
+                                ⚠ {{ $scenario['limitation'] }}
+                            </p>
+                        @endif
+                        <div class="mt-3 grid grid-cols-3 gap-1.5 text-center">
+                            <div class="rounded-lg border border-slate-200 bg-white px-1.5 py-2 dark:border-slate-700 dark:bg-slate-900">
+                                <div class="text-sm font-black text-slate-900 dark:text-white">32</div>
+                                <div class="text-[9px] font-bold text-slate-400">Products</div>
+                            </div>
+                            <div class="rounded-lg border border-slate-200 bg-white px-1.5 py-2 dark:border-slate-700 dark:bg-slate-900">
+                                <div class="text-sm font-black text-amber-600">6</div>
+                                <div class="text-[9px] font-bold text-slate-400">Featured</div>
+                            </div>
+                            <div class="rounded-lg border border-slate-200 bg-white px-1.5 py-2 dark:border-slate-700 dark:bg-slate-900">
+                                <div class="text-sm font-black text-rose-600">6+</div>
+                                <div class="text-[9px] font-bold text-slate-400">Promos</div>
+                            </div>
+                        </div>
                     </div>
-                    <form method="POST" action="{{ route('store.admin.pilot-import.demo-scenarios.store', ['store_slug' => $store->slug, 'scenario' => $key]) }}">
+
+                    <form method="POST" action="{{ route('store.admin.pilot-import.seed-store', $storeRouteParams) }}" class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-2">
                         @csrf
+                        <input type="hidden" name="scenario" value="{{ $key }}">
+
+                        <label class="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300 cursor-pointer">
+                            <input type="checkbox" name="clean_old" value="1" class="rounded border-slate-300 text-violet-600 focus:ring-violet-500">
+                            <span>ဒေတာဟောင်းများ ရှင်းလင်းပြီးမှ သွင်းမည်</span>
+                        </label>
+
+                        <label class="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300 cursor-pointer">
+                            <input type="checkbox" name="apply_store_identity" value="1" class="mt-0.5 rounded border-slate-300 text-violet-600 focus:ring-violet-500">
+                            <span>ဆိုင်အမည်၊ tagline၊ လိပ်စာ၊ ဆက်သွယ်ရန်နှင့် storefront setting များကို ဒီလုပ်ငန်းနမူနာအတိုင်း ပြောင်းမည်</span>
+                        </label>
+
                         <button type="submit"
-                            class="w-full px-3 py-2 rounded-md text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                            @disabled(!$demoScenariosEnabled)
-                        >
-                            Create / Update {{ $scenario['label'] }} Demo
+                                onclick="return confirm('{{ $scenario['label'] }} နမူနာဒေတာများကို လက်ရှိဆိုင် ({{ $store->name }}) ထဲသို့ ထည့်သွင်းမည်မှာ သေချာပါသလား?')"
+                                class="w-full py-2 px-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
+                            <span>✨</span>
+                            <span>ဒေတာ နမူနာ သွင်းမည်</span>
                         </button>
                     </form>
                 </div>
             @endforeach
         </div>
     </div>
+
+    {{-- 5. Quick-Start Demo Store Creator (Local / UAT environment) --}}
+    @if ($demoScenariosEnabled)
+        <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                        <span>🏬</span>
+                        <span>သီးသန့် စမ်းသပ်ဆိုင်အသစ် အလိုအလျောက် ဖွင့်လှစ်ခြင်း (Create Demo Store)</span>
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        လုပ်ငန်းအမျိုးအစားအလိုက် Demo Store အသစ်တစ်ခု ချက်ချင်း ဖန်တီးပြီး Quick Login အကောင့်များ (Manager, Cashier, Customer) ပါ တစ်ခါတည်း ထည့်သွင်းပေးပါမည်။
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                @foreach ($demoScenarios as $key => $sc)
+                    <form method="POST" action="{{ route('store.admin.pilot-import.demo-scenarios.store', array_merge($storeRouteParams, ['scenario' => $key])) }}"
+                          class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between gap-2">
+                        @csrf
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{{ $sc['label'] }}</div>
+                            <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate">store/{{ $key }}</div>
+                        </div>
+                        <button type="submit"
+                                onclick="return confirm('{{ $sc['label'] }} သီးသန့် Demo Store အသစ် ဖန်တီးမည်မှာ သေချာပါသလား?')"
+                                class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white text-xs font-bold shrink-0 transition cursor-pointer active:scale-95">
+                            + Demo Store
+                        </button>
+                    </form>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    {{-- 6. Danger Zone: Wipe / Clean Test Data --}}
+    <div class="rounded-2xl bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 p-4 sm:p-5 shadow-sm space-y-3">
+        <div class="flex items-center gap-2.5 text-rose-700 dark:text-rose-400 font-bold text-sm">
+            <span>⚠️</span>
+            <span>သတိပေးချက်: စမ်းသပ်ထားသော ဒေတာများ အားလုံး ရှင်းလင်းခြင်း (Wipe Store Data)</span>
+        </div>
+        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            စမ်းသပ်ထားသော ကုန်ပစ္စည်းများ၊ စတော့မှတ်တမ်းများ၊ အကြွေးမှတ်တမ်းများနှင့် အမျိုးအစား/အမှတ်တံဆိပ် အားလုံးကို ဆိုင်ထဲမှ လုံးဝ ရှင်းလင်းဖျက်ပစ်ပါမည်။ (ဆိုင်၏ အခြေခံဆက်တင်များ မပျက်စီးပါ)။
+        </p>
+
+        <form method="POST" action="{{ route('store.admin.pilot-import.clean-store-data', $storeRouteParams) }}">
+            @csrf
+            <button type="submit"
+                    onclick="return confirm('သတိပေးချက်: လက်ရှိဆိုင် ({{ $store->name }}) ရှိ ကုန်ပစ္စည်း၊ စတော့၊ အကြွေး နှင့် ကုန်သွင်းသူ ဒေတာအားလုံးကို ဖျက်ပစ်မည်မှာ သေချာပါသလား?')"
+                    class="py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center gap-2 cursor-pointer active:scale-95">
+                <span>🗑️</span>
+                <span>ဒေတာဟောင်းများ အားလုံး ရှင်းလင်းမည်</span>
+            </button>
+        </form>
+    </div>
+
 </div>
 @endsection

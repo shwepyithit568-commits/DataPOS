@@ -115,7 +115,7 @@ class WarrantyTrackerController extends Controller
         }
 
         $validated = $request->validate([
-            'product_id' => 'nullable|exists:products,id',
+            'product_id' => ['nullable', \Illuminate\Validation\Rule::exists('products', 'id')->where('store_id', $store->id)],
             'product_name' => 'required|string|max:255',
             'customer_id' => 'nullable|exists:users,id',
             'customer_name' => 'nullable|string|max:255',
@@ -190,7 +190,7 @@ class WarrantyTrackerController extends Controller
         $warranty = $this->resolveWarranty($store, $request->route('warranty'));
 
         $validated = $request->validate([
-            'product_id' => 'nullable|exists:products,id',
+            'product_id' => ['nullable', \Illuminate\Validation\Rule::exists('products', 'id')->where('store_id', $store->id)],
             'product_name' => 'required|string|max:255',
             'customer_id' => 'nullable|exists:users,id',
             'customer_name' => 'nullable|string|max:255',

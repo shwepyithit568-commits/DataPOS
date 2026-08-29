@@ -595,6 +595,22 @@ class StaffRole extends Model
     }
 
     /**
+     * Get a collection of all registered permission keys.
+     */
+    public static function allPermissionKeys(): \Illuminate\Support\Collection
+    {
+        $keys = collect();
+        foreach (static::PERMISSION_GROUPS as $group) {
+            foreach ($group['modules'] as $module) {
+                foreach ($module['permissions'] as $permKey) {
+                    $keys->push($permKey);
+                }
+            }
+        }
+        return $keys->unique()->values();
+    }
+
+    /**
      * Count of active staff members assigned to this role in the store.
      */
     public function getStaffCountAttribute(): int
@@ -607,136 +623,206 @@ class StaffRole extends Model
     }
 
     /**
-     * Seed default system roles for a store if none exist.
+     * Seed or sync default system roles for a store.
      */
     public static function bootstrapDefaultRoles(Store $store): void
     {
-        if (static::where('store_id', $store->id)->exists()) {
-            return;
-        }
+        // 1. Store Owner / ဆိုင်ပိုင်ရှင် (All Permissions & Owner Control)
+        static::updateOrCreate(
+            ['store_id' => $store->id, 'slug' => 'store_owner'],
+            [
+                'name'        => 'Store Owner / ဆိုင်ပိုင်ရှင်',
+                'description' => 'Full store administrative control, security roles delegation, and owner-only settings.',
+                'color'       => '#4f46e5', // Indigo
+                'permissions' => ['*'],
+                'is_system'   => true,
+                'is_active'   => true,
+            ]
+        );
 
-        // 1. Store Manager (All Permissions)
-        static::create([
-            'store_id'    => $store->id,
-            'name'        => 'Store Manager',
-            'slug'        => 'store_manager',
-            'description' => 'Full administrative access to all POS, Inventory, Financial and Settings features.',
-            'color'       => '#0284c7', // Sky blue
-            'permissions' => ['*'],
-            'is_system'   => true,
-            'is_active'   => true,
-        ]);
+        // 2. Store Manager / ဆိုင်မန်နေဂျာ (Operations & Daily Management)
+        static::updateOrCreate(
+            ['store_id' => $store->id, 'slug' => 'store_manager'],
+            [
+                'name'        => 'Store Manager / ဆိုင်မန်နေဂျာ',
+                'description' => 'Daily store operations, inventory management, counter POS, customer debt, and sales reports.',
+                'color'       => '#0284c7', // Sky blue
+                'permissions' => [
+                    'pos_sales.view',
+                    'pos_sales.edit',
+                    'pos_closing.view',
+                    'pos_closing.edit',
+                    'pos_returns.view',
+                    'pos_returns.edit',
+                    'pos_buyback.view',
+                    'pos_buyback.edit',
+                    'pos_eload.view',
+                    'pos_eload.edit',
+                    'master_data.view',
+                    'products.view',
+                    'products.edit',
+                    'stock_balance.view',
+                    'stock_ledger.view',
+                    'stock_count.view',
+                    'stock_count.edit',
+                    'stock_adjustments.view',
+                    'stock_adjustments.edit',
+                    'transfers.view',
+                    'transfers.edit',
+                    'warehouses.view',
+                    'barcode.view',
+                    'barcode.edit',
+                    'purchases.view',
+                    'purchases.edit',
+                    'purchase_returns.view',
+                    'purchase_returns.edit',
+                    'suppliers.view',
+                    'suppliers.edit',
+                    'orders.view',
+                    'orders.edit',
+                    'flash_sales.view',
+                    'coupons.view',
+                    'promotions.view',
+                    'shipping_rates.view',
+                    'storefront_design.view',
+                    'customers.view',
+                    'customers.edit',
+                    'membership_tiers.view',
+                    'membership_tiers.edit',
+                    'loyalty.view',
+                    'loyalty.edit',
+                    'customer_groups.view',
+                    'repairs.view',
+                    'repairs.edit',
+                    'spare_parts.view',
+                    'spare_parts.edit',
+                    'expenses.view',
+                    'expenses.edit',
+                    'receivables.view',
+                    'receivables.edit',
+                    'payables.view',
+                    'payables.edit',
+                    'profit_loss.view',
+                    'reports_sales.view',
+                    'sales_analytics.view',
+                    'reports_cash.view',
+                    'inventory_valuation.view',
+                    'debt_aging.view',
+                    'reports_services.view',
+                    'alerts.view',
+                    'settings.view',
+                ],
+                'is_system'   => true,
+                'is_active'   => true,
+            ]
+        );
 
-        // 2. Senior Cashier / Counter Sales
-        static::create([
-            'store_id'    => $store->id,
-            'name'        => 'Cashier / Sales Staff',
-            'slug'        => 'cashier',
-            'description' => 'Daily counter sales, open cash drawer, customer payments, and receipts.',
-            'color'       => '#10b981', // Emerald
-            'permissions' => [
-                'pos_sales.view',
-                'pos_sales.edit',
-                'pos_closing.view',
-                'pos_closing.edit',
-                'pos_returns.view',
-                'pos_returns.edit',
-                'pos_buyback.view',
-                'pos_buyback.edit',
-                'products.view',
-                'customers.view',
-                'customers.edit',
-                'reports_sales.view',
-            ],
-            'is_system'   => true,
-            'is_active'   => true,
-        ]);
+        // 3. Senior Cashier / Counter Sales
+        static::updateOrCreate(
+            ['store_id' => $store->id, 'slug' => 'cashier'],
+            [
+                'name'        => 'Cashier / Sales Staff',
+                'description' => 'Daily counter sales, open cash drawer, customer payments, and receipts.',
+                'color'       => '#10b981', // Emerald
+                'permissions' => [
+                    'pos_sales.view',
+                    'pos_sales.edit',
+                    'pos_closing.view',
+                    'pos_closing.edit',
+                    'pos_returns.view',
+                    'pos_returns.edit',
+                    'pos_buyback.view',
+                    'pos_buyback.edit',
+                    'products.view',
+                    'customers.view',
+                    'customers.edit',
+                    'reports_sales.view',
+                ],
+                'is_system'   => true,
+                'is_active'   => true,
+            ]
+        );
 
-        // 3. Accountant / Financial Auditor
-        static::create([
-            'store_id'    => $store->id,
-            'name'        => 'Accountant / စာရင်းကိုင်',
-            'slug'        => 'accountant',
-            'description' => 'Manages Profit & Loss, Expenses, Banking transactions, Debt Aging and Inventory Valuations.',
-            'color'       => '#8b5cf6', // Violet
-            'permissions' => [
-                'products.view',
-                'stock_balance.view',
-                'stock_ledger.view',
-                'purchases.view',
-                'payables.view',
-                'payables.edit',
-                'customers.view',
-                'receivables.view',
-                'receivables.edit',
-                'profit_loss.view',
-                'expenses.view',
-                'expenses.edit',
-                'expenses.delete',
-                'transactions.view',
-                'transactions.edit',
-                'reports_sales.view',
-                'sales_analytics.view',
-                'reports_cash.view',
-                'inventory_valuation.view',
-                'debt_aging.view',
-            ],
-            'is_system'   => true,
-            'is_active'   => true,
-        ]);
+        // 4. Accountant / Financial Auditor
+        static::updateOrCreate(
+            ['store_id' => $store->id, 'slug' => 'accountant'],
+            [
+                'name'        => 'Accountant / စာရင်းကိုင်',
+                'description' => 'Manages Profit & Loss, Expenses, Banking transactions, Debt Aging and Inventory Valuations.',
+                'color'       => '#8b5cf6', // Violet
+                'permissions' => [
+                    'products.view',
+                    'stock_balance.view',
+                    'stock_ledger.view',
+                    'purchases.view',
+                    'payables.view',
+                    'payables.edit',
+                    'customers.view',
+                    'receivables.view',
+                    'receivables.edit',
+                    'profit_loss.view',
+                    'expenses.view',
+                    'expenses.edit',
+                    'expenses.delete',
+                    'transactions.view',
+                    'transactions.edit',
+                    'reports_sales.view',
+                    'sales_analytics.view',
+                    'reports_cash.view',
+                    'inventory_valuation.view',
+                    'debt_aging.view',
+                ],
+                'is_system'   => true,
+                'is_active'   => true,
+            ]
+        );
 
-        // 4. Service Technician / Repair Engineer
-        static::create([
-            'store_id'    => $store->id,
-            'name'        => 'Technician / ဝန်ဆောင်မှု ပညာရှင်',
-            'slug'        => 'technician',
-            'description' => 'Device inspection, spare parts estimation, diagnosis, repair job status updates.',
-            'color'       => '#f59e0b', // Amber
-            'permissions' => [
-                'repairs.view',
-                'repairs.edit',
-                'spare_parts.view',
-                'spare_parts.edit',
-                'products.view',
-                'reports_services.view',
-            ],
-            'is_system'   => true,
-            'is_active'   => true,
-        ]);
+        // 5. Service Technician / Repair Engineer
+        static::updateOrCreate(
+            ['store_id' => $store->id, 'slug' => 'technician'],
+            [
+                'name'        => 'Technician / ဝန်ဆောင်မှု ပညာရှင်',
+                'description' => 'Device inspection, spare parts estimation, diagnosis, repair job status updates.',
+                'color'       => '#f59e0b', // Amber
+                'permissions' => [
+                    'repairs.view',
+                    'repairs.edit',
+                    'spare_parts.view',
+                    'spare_parts.edit',
+                    'products.view',
+                    'reports_services.view',
+                ],
+                'is_system'   => true,
+                'is_active'   => true,
+            ]
+        );
 
-        // 5. Stock Keeper / Warehouse Supervisor
-        static::create([
-            'store_id'    => $store->id,
-            'name'        => 'Stock Keeper / စတော့မှူး',
-            'slug'        => 'stock_keeper',
-            'description' => 'Receiving shipments, warehouse stock adjustments, branch transfers, and stock counts.',
-            'color'       => '#06b6d4', // Cyan
-            'permissions' => [
-                'products.view',
-                'products.edit',
-                'stock_ledger.view',
-                'stock_balance.view',
-                'stock_count.view',
-                'stock_count.edit',
-                'stock_adjustments.view',
-                'stock_adjustments.edit',
-                'stock_reconciliation.view',
-                'stock_reconciliation.edit',
-                'master_data.view',
-                'barcode.view',
-                'barcode.edit',
-                'product_import.view',
-                'product_import.edit',
-                'purchases.view',
-                'purchases.edit',
-                'purchase_returns.view',
-                'purchase_returns.edit',
-                'transfers.view',
-                'transfers.edit',
-                'warehouses.view',
-            ],
-            'is_system'   => true,
-            'is_active'   => true,
-        ]);
+        // 6. Stock Keeper / Warehouse Supervisor
+        static::updateOrCreate(
+            ['store_id' => $store->id, 'slug' => 'stock_keeper'],
+            [
+                'name'        => 'Stock Keeper / စတော့မှူး',
+                'description' => 'Receiving shipments, warehouse stock adjustments, branch transfers, and stock counts.',
+                'color'       => '#06b6d4', // Cyan
+                'permissions' => [
+                    'products.view',
+                    'products.edit',
+                    'stock_ledger.view',
+                    'stock_balance.view',
+                    'stock_count.view',
+                    'stock_count.edit',
+                    'stock_adjustments.view',
+                    'stock_adjustments.edit',
+                    'stock_reconciliation.view',
+                    'transfers.view',
+                    'transfers.edit',
+                    'warehouses.view',
+                    'barcode.view',
+                    'barcode.edit',
+                ],
+                'is_system'   => true,
+                'is_active'   => true,
+            ]
+        );
     }
 }

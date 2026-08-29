@@ -79,7 +79,9 @@ class DatabaseToolController extends Controller
 
         try {
             if ($driver === 'sqlite') {
-                DB::statement('VACUUM');
+                if (DB::transactionLevel() === 0) {
+                    DB::statement('VACUUM');
+                }
             } else {
                 $tables = DB::select('SHOW TABLES');
                 $dbName = 'Tables_in_' . DB::connection()->getDatabaseName();
@@ -121,9 +123,11 @@ class DatabaseToolController extends Controller
         try {
             if ($driver === 'sqlite') {
                 DB::statement('ANALYZE');
-                DB::statement('PRAGMA optimize');
+                if (DB::transactionLevel() === 0) {
+                    DB::statement('PRAGMA optimize');
+                }
             } else {
-                DB::statement('ANALYZE TABLE products, orders, audit_logs, customers, users');
+                DB::statement('ANALYZE TABLE products, orders, audit_logs, users');
             }
 
             $durationMs = round((microtime(true) - $start) * 1000, 2);

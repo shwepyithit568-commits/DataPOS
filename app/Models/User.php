@@ -127,13 +127,31 @@ class User extends Authenticatable
 
     /**
      * Whether the user can access store admin areas
-     * (store_manager or staff role in any active store).
+     * (store_owner, store_manager or staff role in any active store).
      */
     public function isStoreAdmin(): bool
     {
         return $this->activeStores()
-            ->wherePivotIn('role', ['store_manager', 'staff'])
+            ->wherePivotIn('role', ['store_owner', 'store_manager', 'staff'])
             ->exists();
+    }
+
+    public function isStoreOwner(int $storeId): bool
+    {
+        if ($this->isPlatformOwner()) {
+            return true;
+        }
+
+        return $this->getStoreRole($storeId) === 'store_owner';
+    }
+
+    public function isStoreManager(int $storeId): bool
+    {
+        if ($this->isPlatformOwner()) {
+            return true;
+        }
+
+        return in_array($this->getStoreRole($storeId), ['store_owner', 'store_manager'], true);
     }
 
     public function getStoreMembership(int $storeId): ?object
@@ -153,7 +171,7 @@ class User extends Authenticatable
     public function getStoreRole(int $storeId): ?string
     {
         if ($this->isPlatformOwner()) {
-            return 'store_manager';
+            return 'store_owner';
         }
 
         $membership = $this->getStoreMembership($storeId);
@@ -174,6 +192,16 @@ class User extends Authenticatable
         }
 
         $allowedRoles = (array) $roles;
+
+        // store_owner has hierarchical access to store_manager and staff
+        if ($userStoreRole === 'store_owner') {
+            return true;
+        }
+
+        // store_manager has hierarchical access to staff
+        if ($userStoreRole === 'store_manager' && in_array('staff', $allowedRoles, true)) {
+            return true;
+        }
 
         return in_array($userStoreRole, $allowedRoles, true);
     }

@@ -386,8 +386,18 @@
                                             @method('PATCH')
                                             <button type="submit"
                                                     class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition
-                                                    {{ $status === 'suspended' ? 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50' : 'text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50' }}">
+                                                    {{ $status === 'suspended' ? 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/50' : 'text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/50' }}">
                                                 {{ $status === 'suspended' ? 'Activate' : 'Suspend' }}
+                                            </button>
+                                        </form>
+
+                                        <form method="POST" action="{{ route('store.admin.users.destroy', array_merge($storeRouteParams, ['user' => $user->id])) }}"
+                                              onsubmit="return confirm('အသုံးပြုသူ {{ $user->name }} ({{ $user->phone }}) အား ဤဆိုင်စာရင်းမှ ဖျက်/ဖယ်ရှားမှာ သေချာပါသလား?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                    class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition">
+                                                Delete
                                             </button>
                                         </form>
                                     @endif

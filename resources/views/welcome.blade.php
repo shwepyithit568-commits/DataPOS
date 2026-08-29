@@ -476,135 +476,140 @@
     @endif
 
     {{-- =========================================================================
-         4. TABBED PRODUCT SHOWCASE (Featured vs New Arrivals)
+         4. FEATURED PRODUCTS SHOWCASE (လူကြိုက်များသော ပစ္စည်းများ)
          ========================================================================= --}}
-    <div x-data="{ activeTab: 'featured' }" class="space-y-4">
-        
-        {{-- Interactive Tab Filter Bar --}}
-        <div class="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3 flex-wrap">
-            <div class="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
-                <button
-                    type="button"
-                    @click="activeTab = 'featured'"
-                    :class="activeTab === 'featured' ? 'bg-gradient-to-r from-violet-600 to-sky-600 text-white shadow-xs' : 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700'"
-                    class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer font-myanmar"
-                >
-                    🔥 {{ __('messages.featured_products') }} ({{ $featuredProducts->count() }})
-                </button>
-                <button
-                    type="button"
-                    @click="activeTab = 'new'"
-                    :class="activeTab === 'new' ? 'bg-gradient-to-r from-violet-600 to-sky-600 text-white shadow-xs' : 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700'"
-                    class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer font-myanmar"
-                >
-                    ✨ {{ __('messages.new_arrivals') }} ({{ $newArrivals->count() }})
-                </button>
+    @if ($featuredProducts->count() > 0)
+        <div class="space-y-3.5">
+            {{-- Section Header Bar --}}
+            <div class="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-2.5">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white font-outfit flex items-center gap-2">
+                        <span class="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-rose-500 text-white shadow-xs text-sm sm:text-base">
+                            🔥
+                        </span>
+                        <span class="font-myanmar">{{ __('messages.featured_products') }}</span>
+                    </h2>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[11px] font-black font-outfit">
+                        {{ $featuredProducts->count() }}
+                    </span>
+                </div>
+
+                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline whitespace-nowrap font-myanmar">
+                    {{ __('messages.view_all_products') }} →
+                </a>
             </div>
 
-            <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline whitespace-nowrap font-myanmar">
-                {{ __('messages.view_all_products') }} →
-            </a>
+            {{-- Featured Products Grid --}}
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
+                @foreach ($featuredProducts as $product)
+                    <x-product-card 
+                        :product="$product" 
+                        :store="$store" 
+                        :isWholesaleApproved="$isWholesaleApproved" 
+                        :dense="true"
+                    />
+                @endforeach
+            </div>
         </div>
-
-        {{-- Tab 1: Featured Products Grid --}}
-        <div x-show="activeTab === 'featured'" x-transition class="space-y-4">
-            @if ($featuredProducts->count() > 0)
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
-                    @foreach ($featuredProducts as $product)
-                        <x-product-card 
-                            :product="$product" 
-                            :store="$store" 
-                            :isWholesaleApproved="$isWholesaleApproved" 
-                            :dense="true"
-                        />
-                    @endforeach
-                </div>
-            @else
-                <div class="p-6 text-center text-xs text-slate-500 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 font-myanmar">
-                    {{ __('messages.no_products_hint') }}
-                </div>
-            @endif
-        </div>
-
-        {{-- Tab 2: New Arrivals Grid --}}
-        <div x-show="activeTab === 'new'" x-cloak x-transition class="space-y-4">
-            @if (isset($newArrivals) && $newArrivals->count() > 0)
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
-                    @foreach ($newArrivals as $product)
-                        <x-product-card 
-                            :product="$product" 
-                            :store="$store" 
-                            :isWholesaleApproved="$isWholesaleApproved" 
-                            :dense="true"
-                        />
-                    @endforeach
-                </div>
-            @else
-                <div class="p-6 text-center text-xs text-slate-500 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 font-myanmar">
-                    {{ __('messages.no_products_hint') }}
-                </div>
-            @endif
-        </div>
-
-    </div>
+    @endif
 
     {{-- =========================================================================
          5. MOST POPULAR CATEGORY CARDS (Uniform Dimension & Consistent Size)
          ========================================================================= --}}
-    <div class="space-y-3.5">
-        <div class="flex items-center justify-between">
-            <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white font-myanmar flex items-center gap-2">
-                <span class="text-sky-500">🏷️</span>
-                <span>{{ __('messages.most_popular_category') }}</span>
-            </h2>
-            <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline font-myanmar">
-                {{ __('messages.view_all') }} →
-            </a>
-        </div>
-
-        <div
-            x-data="{ isDown: false, startX: 0, scrollLeft: 0 }"
-            @mousedown="isDown = true; startX = $event.pageX - $el.offsetLeft; scrollLeft = $el.scrollLeft"
-            @mouseleave="isDown = false"
-            @mouseup="isDown = false"
-            @mousemove="if(isDown){$event.preventDefault();const x=$event.pageX-$el.offsetLeft;const walk=(x-startX)*1.5;$el.scrollLeft=scrollLeft-walk}"
-            class="flex overflow-x-auto gap-3 pb-2.5 pt-0.5 cursor-grab active:cursor-grabbing select-none scrollbar-none"
-        >
-            @forelse ($categoryTree as $mainRow)
-                @php
-                    $main = $mainRow->category;
-                    $mainIcon = $main->icon ?: $iconFor($main->name);
-                    $cover = $main->image_path ?: $mainRow->cover;
-                @endphp
-                <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $main->id) }}"
-                   class="group shrink-0 w-36 sm:w-40 h-[180px] sm:h-[196px] flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 shadow-2xs hover:shadow-md hover:border-sky-400 dark:hover:border-sky-500 transition-all text-center"
-                   aria-label="{{ $main->name }}">
-                    
-                    {{-- Uniform Fixed-Size Image/Icon Container --}}
-                    <div class="w-full h-28 sm:h-32 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center relative shrink-0">
-                        @if ($cover)
-                            <img src="{{ asset('storage/' . $cover) }}" alt="{{ $main->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" loading="lazy" decoding="async" data-img-fallback="hide-next" />
-                            <span class="hidden w-full h-full items-center justify-center text-3xl sm:text-4xl">{{ $mainIcon }}</span>
-                        @else
-                            <div class="w-full h-full flex items-center justify-center text-3xl sm:text-4xl">{{ $mainIcon }}</div>
-                        @endif
-                        <span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-slate-900/80 text-white text-[10px] font-black tabular-nums font-outfit shadow-xs">
-                            {{ number_format($mainRow->total) }}
-                        </span>
-                    </div>
-
-                    {{-- Uniform Fixed-Height Label Container for Consistent Baseline --}}
-                    <div class="h-10 flex items-center justify-center px-0.5 mt-1">
-                        <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-2 leading-snug group-hover:text-sky-600 transition-colors font-myanmar">
-                            {{ $main->name }}
-                        </h3>
-                    </div>
+    @if ($categoryTree->isNotEmpty())
+        <div class="space-y-3.5">
+            <div class="flex items-center justify-between">
+                <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white font-myanmar flex items-center gap-2">
+                    <span class="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-500 text-white shadow-xs text-sm sm:text-base">
+                        🏷️
+                    </span>
+                    <span>{{ __('messages.most_popular_category') }}</span>
+                </h2>
+                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline font-myanmar">
+                    {{ __('messages.view_all') }} →
                 </a>
-            @empty
-                <div class="text-xs text-slate-500 py-4 font-myanmar">{{ __('messages.no_products_hint') }}</div>
-            @endforelse
+            </div>
+
+            <div
+                x-data="{ isDown: false, startX: 0, scrollLeft: 0 }"
+                @mousedown="isDown = true; startX = $event.pageX - $el.offsetLeft; scrollLeft = $el.scrollLeft"
+                @mouseleave="isDown = false"
+                @mouseup="isDown = false"
+                @mousemove="if(isDown){$event.preventDefault();const x=$event.pageX-$el.offsetLeft;const walk=(x-startX)*1.5;$el.scrollLeft=scrollLeft-walk}"
+                class="flex overflow-x-auto gap-3 pb-2.5 pt-0.5 cursor-grab active:cursor-grabbing select-none scrollbar-none"
+            >
+                @foreach ($categoryTree as $mainRow)
+                    @php
+                        $main = $mainRow->category;
+                        $mainIcon = $main->icon ?: $iconFor($main->name);
+                        $cover = $main->image_path ?: $mainRow->cover;
+                    @endphp
+                    <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $main->id) }}"
+                       class="group shrink-0 w-36 sm:w-40 h-[180px] sm:h-[196px] flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 shadow-2xs hover:shadow-md hover:border-sky-400 dark:hover:border-sky-500 transition-all text-center"
+                       aria-label="{{ $main->name }}">
+                        
+                        {{-- Uniform Fixed-Size Image/Icon Container --}}
+                        <div class="w-full h-28 sm:h-32 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center relative shrink-0">
+                            @if ($cover)
+                                <img src="{{ asset('storage/' . $cover) }}" alt="{{ $main->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" loading="lazy" decoding="async" data-img-fallback="hide-next" />
+                                <span class="hidden w-full h-full items-center justify-center text-3xl sm:text-4xl">{{ $mainIcon }}</span>
+                            @else
+                                <div class="w-full h-full flex items-center justify-center text-3xl sm:text-4xl">{{ $mainIcon }}</div>
+                            @endif
+                            <span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-slate-900/80 text-white text-[10px] font-black tabular-nums font-outfit shadow-xs">
+                                {{ number_format($mainRow->total) }}
+                            </span>
+                        </div>
+
+                        {{-- Uniform Fixed-Height Label Container for Consistent Baseline --}}
+                        <div class="h-10 flex items-center justify-center px-0.5 mt-1">
+                            <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-2 leading-snug group-hover:text-sky-600 transition-colors font-myanmar">
+                                {{ $main->name }}
+                            </h3>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
         </div>
-    </div>
+    @endif
+
+    {{-- =========================================================================
+         6. NEW ARRIVALS SHOWCASE (အသစ်ရောက် ပစ္စည်းများ)
+         ========================================================================= --}}
+    @if (isset($newArrivals) && $newArrivals->count() > 0)
+        <div class="space-y-3.5">
+            {{-- Section Header Bar --}}
+            <div class="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-2.5">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white font-outfit flex items-center gap-2">
+                        <span class="inline-flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-sky-500 text-white shadow-xs text-sm sm:text-base">
+                            ✨
+                        </span>
+                        <span class="font-myanmar">{{ __('messages.new_arrivals') }}</span>
+                    </h2>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950/60 text-violet-800 dark:text-violet-300 text-[11px] font-black font-outfit">
+                        {{ $newArrivals->count() }}
+                    </span>
+                </div>
+
+                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline whitespace-nowrap font-myanmar">
+                    {{ __('messages.view_all_products') }} →
+                </a>
+            </div>
+
+            {{-- New Arrivals Products Grid --}}
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
+                @foreach ($newArrivals as $product)
+                    <x-product-card 
+                        :product="$product" 
+                        :store="$store" 
+                        :isWholesaleApproved="$isWholesaleApproved" 
+                        :dense="true"
+                    />
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     {{-- =========================================================================
          6. GLASS FINDER CTA BANNER (Compact & High Conversion)

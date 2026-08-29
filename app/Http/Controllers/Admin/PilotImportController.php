@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\ImportHistory;
 use App\Services\CustomerImportService;
 use App\Services\DebtOpeningImportService;
@@ -19,47 +20,104 @@ use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirect;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * AlinnThit pilot data-import hub (Phase 2.5): one page with tabs for
- * products, customers and suppliers. Each tab follows the proven
- * upload → preview (dry-run, nothing written) → confirm flow and records
- * ImportHistory + downloadable error reports.
- *
- * The active tab is read from $request->route('tab') rather than a method
- * parameter so Laravel's positional primitive binding cannot swap it with
- * the {store_slug} prefix parameter.
+ * AlinnThit pilot data-import hub: one page with tabs for
+ * products, customers, suppliers, debt opening balances, and sample demo scenarios.
+ * Each tab follows the proven upload → preview (dry-run, nothing written) → confirm flow
+ * and records ImportHistory + downloadable error reports.
  */
 class PilotImportController extends Controller
 {
-    public const TABS = ['products', 'customers', 'suppliers', 'debt'];
+    public const TABS = ['products', 'customers', 'suppliers', 'debt', 'scenarios'];
 
     public function index(Request $request, StoreContext $context): View
     {
         $tab = $this->tabFromRequest($request);
         $store = $context->getStore();
 
+        $stats = [
+            'products' => \App\Models\Product::where('store_id', $store->id)->count(),
+            'categories' => \App\Models\Category::where('store_id', $store->id)->count(),
+            'brands' => \App\Models\Brand::where('store_id', $store->id)->count(),
+            'suppliers' => \App\Models\Supplier::where('store_id', $store->id)->count(),
+            'customers' => \App\Models\User::whereHas('stores', fn ($q) => $q->where('store_id', $store->id))->count(),
+        ];
+
         $histories = ImportHistory::where('store_id', $store->id)
-            ->where('type', $tab)
             ->with('user')
             ->latest()
             ->take(10)
             ->get();
 
         $summary = [
-            'total_imports' => ImportHistory::where('store_id', $store->id)->where('type', $tab)->count(),
-            'successful_rows' => ImportHistory::where('store_id', $store->id)->where('type', $tab)->sum('success_rows'),
-            'failed_rows' => ImportHistory::where('store_id', $store->id)->where('type', $tab)->sum('failed_rows'),
+            'total_imports' => ImportHistory::where('store_id', $store->id)->count(),
+            'successful_rows' => ImportHistory::where('store_id', $store->id)->sum('success_rows'),
+            'failed_rows' => ImportHistory::where('store_id', $store->id)->sum('failed_rows'),
         ];
 
         $demoScenarios = app(DemoBusinessScenarioService::class)->scenarios();
         $demoScenariosEnabled = app()->environment(['local', 'testing', 'uat']) && (bool) config('app.show_quick_login');
 
-        return view('admin.pilot_import.index', compact('store', 'tab', 'histories', 'summary', 'demoScenarios', 'demoScenariosEnabled'));
+        return view('admin.pilot_import.index', compact('store', 'tab', 'stats', 'histories', 'summary', 'demoScenarios', 'demoScenariosEnabled'));
+    }
+
+    public function seedStore(
+        Request $request,
+        StoreContext $context,
+        DemoBusinessScenarioService $demoScenarios
+    ): RedirectResponse {
+        $store = $context->getStore();
+        $validated = $request->validate([
+            'scenario' => ['required', 'string'],
+            'clean_old' => ['nullable', 'boolean'],
+            'apply_store_identity' => ['nullable', 'boolean'],
+        ]);
+
+        $cleanOld = (bool) ($validated['clean_old'] ?? false);
+        $applyStoreIdentity = (bool) ($validated['apply_store_identity'] ?? false);
+
+        try {
+            $result = $demoScenarios->seedIntoStore(
+                $store,
+                $validated['scenario'],
+                $request->user(),
+                $cleanOld,
+                $applyStoreIdentity
+            );
+
+            AuditLog::write(
+                $store->id,
+                'pilot_demo_data_seeded',
+                'store',
+                $store->id,
+                [
+                    'scenario' => $validated['scenario'],
+                    'clean_old' => $cleanOld,
+                    'apply_store_identity' => $applyStoreIdentity,
+                    'products' => $result['products'],
+                    'featured_products' => $result['featured_products'],
+                    'timed_promotions' => $result['timed_promotions'],
+                    'assets' => $result['assets'],
+                    'asset_warning' => $result['asset_warning'],
+                ],
+                auth()->id(),
+                request()->ip()
+            );
+
+            return redirect()
+                ->route('store.admin.pilot-import.index', ['store_slug' => $store->slug, 'tab' => 'scenarios'])
+                ->with('success', "နမူနာဒေတာများ အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ: ကုန်ပစ္စည်း {$result['products']} မျိုး၊ Featured {$result['featured_products']} မျိုး၊ Promotion {$result['timed_promotions']} မျိုး၊ Product image {$result['assets']['products']} ပုံ၊ Category image {$result['assets']['categories']} ပုံနှင့် Banner {$result['assets']['banners']} ပုံ ထည့်သွင်းပြီးပါပြီ။" . ($result['asset_warning'] ? ' Image generation warning: ' . $result['asset_warning'] : ''));
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withErrors(['demo_scenario' => $e->getMessage()]);
+        }
     }
 
     public function createDemoScenario(
         Request $request,
         StoreContext $context,
         DemoBusinessScenarioService $demoScenarios,
+        string $store_slug,
         string $scenario
     ): RedirectResponse {
         try {
@@ -72,7 +130,38 @@ class PilotImportController extends Controller
 
         return redirect()
             ->route('store.admin.products.index', ['store_slug' => $store->slug])
-            ->with('success', "Demo store created/updated: {$store->name} ({$result['products']} products, {$result['warehouses']} warehouses, {$result['users']} quick-login users).");
+            ->with('success', "Demo store created/updated: {$store->name} ({$result['products']} products, {$result['assets']['products']} product images, {$result['assets']['categories']} category images, {$result['assets']['banners']} banners)." . ($result['asset_warning'] ? ' Image generation warning: ' . $result['asset_warning'] : ''));
+    }
+
+    public function cleanStoreData(
+        Request $request,
+        StoreContext $context,
+        DemoBusinessScenarioService $demoScenarios
+    ): RedirectResponse {
+        $store = $context->getStore();
+
+        try {
+            $demoScenarios->cleanStoreData($store);
+            $demoScenarios->purgeStorefrontAssets($store);
+
+            AuditLog::write(
+                $store->id,
+                'pilot_demo_data_cleaned',
+                'store',
+                $store->id,
+                [],
+                auth()->id(),
+                request()->ip()
+            );
+
+            return redirect()
+                ->route('store.admin.pilot-import.index', ['store_slug' => $store->slug, 'tab' => 'scenarios'])
+                ->with('success', "စမ်းသပ်ထားသော ဒေတာဟောင်းများ (Products, Stock, Debts, Categories, Brands) အားလုံးကို ရှင်းလင်းပြီးပါပြီ။");
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->withErrors(['clean_data' => $e->getMessage()]);
+        }
     }
 
     public function import(Request $request, StoreContext $context): RedirectResponse
@@ -126,57 +215,56 @@ class PilotImportController extends Controller
             'token' => ['required', 'string'],
         ]);
 
-        if ($tab !== 'debt') {
-            $validated = $request->validate([
-                'token' => ['required', 'string'],
-                'duplicate_strategy' => ['required', 'in:skip,update'],
-            ]);
-        }
-
         $sessionKey = "imports.pilot.{$tab}.{$validated['token']}";
-        $pendingImport = session()->pull($sessionKey);
+        $data = session()->get($sessionKey);
 
-        if (!$pendingImport || empty($pendingImport['path'])) {
-            return back()->withErrors(['file' => 'Import preview expired. Please upload the file again.']);
+        if (! $data || ! Storage::disk('local')->exists($data['path'])) {
+            return redirect()
+                ->route('store.admin.pilot-import.index', ['store_slug' => $store->slug, 'tab' => $tab])
+                ->withErrors(['file' => 'Import session expired or file not found. Please upload again.']);
         }
 
-        $storedPath = $pendingImport['path'];
+        $fullPath = Storage::disk('local')->path($data['path']);
+        $service = $this->service($tab);
 
         try {
-            if ($tab === 'debt') {
-                $result = $this->service($tab)->import(
-                    Storage::disk('local')->path($storedPath),
-                    $store,
-                    $request->user(),
-                    $pendingImport['filename'] ?? "{$tab}-import.csv",
-                );
-            } else {
-                $result = $this->service($tab)->import(
-                    Storage::disk('local')->path($storedPath),
-                    $store,
-                    $request->user(),
-                    $pendingImport['filename'] ?? "{$tab}-import.csv",
-                    $validated['duplicate_strategy']
-                );
+            $result = $service->import(
+                $fullPath,
+                $store,
+                $request->user(),
+                $data['filename'],
+                $data['duplicate_strategy'] ?? 'skip'
+            );
+
+            session()->forget($sessionKey);
+            Storage::disk('local')->delete($data['path']);
+
+            $successCount = $result['imported'] ?? ($result['posted'] ?? ($result['success_count'] ?? $result['total'] ?? 0));
+            $failedCount = $result['failed'] ?? ($result['failed_count'] ?? 0);
+
+            $msg = "Import completed: {$successCount} successful";
+            if ($failedCount > 0) {
+                $msg .= ", {$failedCount} failed (download error report from history table below)";
             }
 
-            return back()->with('import_result', $result);
+            return redirect()
+                ->route('store.admin.pilot-import.index', ['store_slug' => $store->slug, 'tab' => $tab])
+                ->with('import_result', $result)
+                ->with('success', $msg . '.');
         } catch (\InvalidArgumentException|\RuntimeException $e) {
-            return back()->withErrors(['file' => $e->getMessage()]);
-        } finally {
-            Storage::disk('local')->delete($storedPath);
+            return redirect()
+                ->route('store.admin.pilot-import.index', ['store_slug' => $store->slug, 'tab' => $tab])
+                ->withErrors(['file' => $e->getMessage()]);
         }
     }
 
     public function downloadTemplate(Request $request, StoreContext $context): StreamedResponse|SymfonyRedirect
     {
         $tab = $this->tabFromRequest($request);
-        $storeSlug = $context->getStore()->slug;
+        $store = $context->getStore();
 
-        // The full-featured product template already exists on the products
-        // import page — reuse it instead of duplicating the generator.
         if ($tab === 'products') {
-            return redirect()->route('store.admin.products.import.template', ['store_slug' => $storeSlug]);
+            return redirect()->route('store.admin.products.import.template', ['store_slug' => $store->slug]);
         }
 
         $filename = "{$tab}-import-template.csv";
@@ -213,7 +301,7 @@ class PilotImportController extends Controller
     private function normalizeTab(string $tab): string
     {
         $tab = strtolower(trim($tab));
-        if (!in_array($tab, self::TABS, true)) {
+        if (! in_array($tab, self::TABS, true)) {
             abort(404, 'Unknown import tab.');
         }
 
@@ -227,6 +315,7 @@ class PilotImportController extends Controller
             'customers' => app(CustomerImportService::class),
             'suppliers' => app(SupplierImportService::class),
             'debt' => app(DebtOpeningImportService::class),
+            default => throw new \InvalidArgumentException("No service for tab {$tab}"),
         };
     }
 

@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Supplier;
 use App\Models\WholesaleApplication;
+use App\POS\Models\PurchaseOrder;
 use App\Services\StoreContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,11 +25,11 @@ class SystemAlertCenterController extends Controller
         }
 
         $storeRouteParams = ['store_slug' => $store->slug];
-        $tab = $request->query('tab', 'all');
+        $tab = $request->query('tab', 'low_stock');
 
-        // 1. Low Stock Products (inventory balance <= reorder_level or stock_status === 'out_of_stock')
+        // 1. Low Stock & Out of Stock Products
         $allProducts = Product::where('store_id', $store->id)
-            ->with('inventoryBalances')
+            ->with(['inventoryBalances', 'category'])
             ->get();
 
         $lowStockProducts = [];
@@ -44,6 +46,7 @@ class SystemAlertCenterController extends Controller
                     'id'             => $product->id,
                     'name'           => $product->name,
                     'sku'            => $product->sku,
+                    'category'       => $product->category?->name ?? '—',
                     'stock_quantity' => $qty,
                     'reorder_level'  => $reorderLevel,
                     'retail_price'   => (float) $product->retail_price,
@@ -52,7 +55,10 @@ class SystemAlertCenterController extends Controller
             }
         }
 
-        // 2. Pending Orders
+        // Sort low stock items: lowest stock quantity first
+        usort($lowStockProducts, fn ($a, $b) => $a['stock_quantity'] <=> $b['stock_quantity']);
+
+        // 2. Pending Online Orders
         $pendingOrders = Order::where('store_id', $store->id)
             ->where('status', 'pending_contact')
             ->latest('created_at')
@@ -64,17 +70,19 @@ class SystemAlertCenterController extends Controller
             ->latest('created_at')
             ->get();
 
-        // 4. Overdue Debt Accounts (> 30 days)
+        // 4. Overdue Debts (Suppliers & Customers > 30 days)
         $overdueDebts = [];
+
+        // Supplier Payables
         try {
-            $suppliers = \App\Models\Supplier::where('store_id', $store->id)
+            $suppliers = Supplier::where('store_id', $store->id)
                 ->whereRaw('total_credit - total_repaid > 0')
                 ->get();
 
             foreach ($suppliers as $sup) {
-                $unpaidPos = \App\POS\Models\PurchaseOrder::where('supplier_id', $sup->id)
+                $unpaidPos = PurchaseOrder::where('supplier_id', $sup->id)
                     ->where('status', 'received')
-                    ->whereRaw('remaining_balance > 0')
+                    ->where('remaining_balance', '>', 0)
                     ->get();
 
                 foreach ($unpaidPos as $po) {
@@ -82,22 +90,53 @@ class SystemAlertCenterController extends Controller
                     if ($age > 30) {
                         $overdueDebts[] = [
                             'type'         => 'supplier',
+                            'type_label'   => __('messages.supplier') ?? 'Supplier',
                             'name'         => $sup->name,
                             'phone'        => $sup->phone,
                             'amount'       => (float) $po->remaining_balance,
                             'days_overdue' => $age,
                             'ref'          => $po->po_number,
+                            'action_url'   => route('pos.purchases.payables.show', array_merge($storeRouteParams, ['supplier' => $sup->id])),
                         ];
                     }
                 }
             }
         } catch (\Throwable $e) {
-            // Supplier debt schema fallback
+            // Supplier debt fallback
         }
 
-        // 5. Security & Failed PIN Warnings (Last 7 days)
+        // Customer Receivables via CustomerDebtService
+        try {
+            /** @var \App\POS\Services\CustomerDebtService $debtService */
+            $debtService = app(\App\POS\Services\CustomerDebtService::class);
+            $debtCustomers = $debtService->outstandingCustomers($store, 30);
+
+            foreach ($debtCustomers as $cust) {
+                $amount = (float) ($cust['balance'] ?? 0);
+                if ($amount > 0) {
+                    $overdueDebts[] = [
+                        'type'         => 'customer',
+                        'type_label'   => __('messages.customer') ?? 'Customer',
+                        'name'         => $cust['name'],
+                        'phone'        => $cust['phone'] ?? '—',
+                        'amount'       => $amount,
+                        'days_overdue' => 31,
+                        'ref'          => 'CUST-' . $cust['customer_id'],
+                        'action_url'   => route('store.admin.receivables.show', array_merge($storeRouteParams, ['customer' => $cust['customer_id']])),
+                    ];
+                }
+            }
+        } catch (\Throwable $e) {
+            // Customer debt fallback
+        }
+
+        // Sort overdue debts by amount descending
+        usort($overdueDebts, fn ($a, $b) => $b['amount'] <=> $a['amount']);
+
+        // 5. Security Alerts & Access Events (Last 7 days)
         $securityAlerts = AuditLog::where('store_id', $store->id)
-            ->whereIn('action', ['pos_pin_failed', 'staff_role_deleted', 'staff_role_updated'])
+            ->whereIn('action', ['pos_pin_failed', 'staff_role_deleted', 'staff_role_updated', 'inventory_adjustment_voided', 'bulk_price_updated'])
+            ->with('actor')
             ->where('created_at', '>=', now()->subDays(7))
             ->latest('created_at')
             ->get();
@@ -112,7 +151,7 @@ class SystemAlertCenterController extends Controller
             ->whereIn('status', ['confirmed', 'delivered'])
             ->sum(fn ($o) => $o->agreed_amount ?? $o->total_amount);
 
-        // KPI stats
+        // Stats summary
         $criticalAlertsCount = count($lowStockProducts) + count($pendingOrders) + count($pendingWholesale) + count($overdueDebts);
 
         $stats = [
@@ -126,7 +165,6 @@ class SystemAlertCenterController extends Controller
             'today_orders_count' => $todaySalesCount,
         ];
 
-        // Telegram Bot / Alert Settings from store settings or defaults
         $setting = $store->setting;
 
         return view('admin.alerts.index', compact(
@@ -158,7 +196,7 @@ class SystemAlertCenterController extends Controller
         $chatId = $validated['telegram_chat_id'] ?? env('TELEGRAM_ALERT_CHAT_ID');
 
         if (empty($botToken) || empty($chatId)) {
-            return back()->with('error', 'Please configure Telegram Bot Token and Chat ID to send test notifications. (Telegram Bot Token နှင့် Chat ID ထည့်သွင်းပေးပါ)');
+            return back()->with('error', 'Telegram Bot Token နှင့် Chat ID ထည့်သွင်းပေးရန် လိုအပ်ပါသည် (Telegram Bot Token & Chat ID required)');
         }
 
         $message = "🔔 <b>[DataPOS Alert Test]</b>\n"
@@ -174,7 +212,7 @@ class SystemAlertCenterController extends Controller
             ]);
 
             if ($response->successful()) {
-                return back()->with('success', 'Telegram test alert delivered successfully! (Telegram သို့ သတိပေးချက် စမ်းသပ်ပေးပို့ပြီးပါပြီ)');
+                return back()->with('success', 'Telegram သို့ စမ်းသပ်သတိပေးချက် အောင်မြင်စွာ ပေးပို့ပြီးပါပြီ (Test alert sent successfully!)');
             }
 
             return back()->with('error', 'Telegram API Error: ' . ($response->json('description') ?? 'Failed to send message'));
@@ -220,7 +258,6 @@ class SystemAlertCenterController extends Controller
             request()->ip()
         );
 
-        return back()->with('success', 'Daily Business Summary compiled successfully! (နေ့စဉ် အရောင်းနှင့် စတော့ အကျဉ်းချုပ် သတိပေးချက် ထုတ်ယူပြီးပါပြီ)');
+        return back()->with('success', 'နေ့စဉ် လုပ်ငန်းအကျဉ်းချုပ် သတိပေးချက် ထုတ်ယူပြီးစီးပါပြီ (Daily business summary generated)');
     }
-
 }

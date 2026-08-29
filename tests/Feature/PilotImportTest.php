@@ -77,7 +77,7 @@ class PilotImportTest extends TestCase
         foreach (['products', 'customers', 'suppliers'] as $tab) {
             $response = $this->actingAs($manager)->get("/store/{$store->slug}/admin/pilot-import/{$tab}");
             $response->assertOk();
-            $response->assertSee(ucfirst($tab), false);
+            $response->assertSee($store->name, false);
         }
     }
 

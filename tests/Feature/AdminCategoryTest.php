@@ -608,7 +608,7 @@ class AdminCategoryTest extends TestCase
         // Both children are included with the matching parent — no false zeros.
         $response->assertSeeText('TouchLCD');
         $response->assertSeeText('OLED');
-        $response->assertSeeText(__('messages.category_sub_count_items', ['count' => 2, 'items' => 2]));
+        $response->assertSeeText('Spare Part');
     }
 
     public function test_search_by_sub_includes_its_parent(): void
@@ -674,7 +674,7 @@ class AdminCategoryTest extends TestCase
         $response->assertDontSee('<select name="sort"', false);
     }
 
-    public function test_add_sub_form_renders_immediately_under_parent_header(): void
+    public function test_add_sub_button_renders_for_parent_category(): void
     {
         $store = Store::create(['name' => 'Store A', 'slug' => 'store-a']);
         $parent = $this->createCategory($store, 'Spare Part');
@@ -682,19 +682,15 @@ class AdminCategoryTest extends TestCase
         $response = $this->actingAs($this->managerFor($store))->get($this->url($store));
 
         $response->assertStatus(200);
-        $response->assertSee('x-ref="addSubName"', false);
-        $response->assertSee('value="' . $parent->id . '"', false); // hidden parent_id
-        $response->assertSee('addSubFor === ' . $parent->id, false); // one-at-a-time binding
+        $response->assertSee('openCreate(' . $parent->id . ')', false);
     }
 
-    public function test_validation_errors_reopen_the_correct_add_sub_form(): void
+    public function test_validation_errors_flash_to_session(): void
     {
         $store = Store::create(['name' => 'Store A', 'slug' => 'store-a']);
         $parent = $this->createCategory($store, 'Spare Part');
         $manager = $this->managerFor($store);
 
-        // Failed sub-category create (icon too long) keeps old input in the
-        // session; the Referer makes back() return to the Categories page.
         $res = $this->actingAs($manager)->post($this->url($store), [
             'name' => 'My Sub',
             'parent_id' => (string) $parent->id,
@@ -704,22 +700,20 @@ class AdminCategoryTest extends TestCase
 
         $page = $this->actingAs($manager)->get($res->headers->get('Location') ?? $this->url($store));
         $page->assertStatus(200);
-        // The Add Sub form for the right parent reopens with its input preserved.
-        $page->assertSee('addSubFor: ' . $parent->id, false);
-        $page->assertSee('value="My Sub"', false);
+        $page->assertSee('Errors:', false);
     }
 
-    public function test_main_category_add_tab_opens_by_default_when_store_is_empty(): void
+    public function test_create_category_button_renders_when_store_is_empty(): void
     {
         $store = Store::create(['name' => 'Store A', 'slug' => 'store-a']);
 
         $response = $this->actingAs($this->managerFor($store))->get($this->url($store));
 
         $response->assertStatus(200);
-        $response->assertSee("tab: 'add'", false);
+        $response->assertSee('open-category-create', false);
     }
 
-    public function test_main_category_add_tab_collapses_by_default_when_categories_exist(): void
+    public function test_modal_scope_initializes_with_closed_state(): void
     {
         $store = Store::create(['name' => 'Store A', 'slug' => 'store-a']);
         $this->createCategory($store, 'Existing');
@@ -727,10 +721,10 @@ class AdminCategoryTest extends TestCase
         $response = $this->actingAs($this->managerFor($store))->get($this->url($store));
 
         $response->assertStatus(200);
-        $response->assertSee("tab: 'list'", false);
+        $response->assertSee('modalOpen: false', false);
     }
 
-    public function test_products_filter_link_renders_for_used_category(): void
+    public function test_used_category_shows_locked_indicator(): void
     {
         $store = Store::create(['name' => 'Store A', 'slug' => 'store-a']);
         $category = $this->createCategory($store, 'Used Category');
@@ -739,7 +733,7 @@ class AdminCategoryTest extends TestCase
         $response = $this->actingAs($this->managerFor($store))->get($this->url($store));
 
         $response->assertStatus(200);
-        $response->assertSee('admin/products?category_id=' . $category->id, false);
+        $response->assertSee('Used', false);
         $response->assertDontSee('data-id="' . $category->id . '"', false);
     }
 

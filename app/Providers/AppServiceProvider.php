@@ -86,7 +86,7 @@ class AppServiceProvider extends ServiceProvider
                     : 0,
                 'adminCanManageSettings' => $user && $store && $user->hasStoreRole($store->id, 'store_manager'),
                 'adminCanAccessStaffTools' => $user && $store && $user->hasStoreRole($store->id, ['store_manager', 'staff']),
-                'adminCanManageUsers' => $user && $user->isPlatformOwner(),
+                'adminCanManageUsers' => $user && ($user->isPlatformOwner() || ($store && $user->isStoreOwner($store->id))),
                 'adminCurrentStoreRole' => $role,
             ]);
         });

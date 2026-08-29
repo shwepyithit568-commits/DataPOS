@@ -122,7 +122,7 @@
 
             {{-- Category Selector Grid (Only when scope === 'category') --}}
             <div x-show="scope === 'category'"
-                 x-collapse
+                 x-transition
                  class="space-y-2.5 p-3 rounded-lg border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-950/70 mt-2">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 dark:border-slate-700 pb-2">
                     <div class="flex items-center gap-2">

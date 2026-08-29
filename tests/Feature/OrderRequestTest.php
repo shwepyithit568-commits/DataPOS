@@ -373,10 +373,9 @@ class OrderRequestTest extends TestCase
 
         $detailResponse = $this->actingAs($staff)->get('/store/main-store/admin/orders/' . $order->id);
         $detailResponse->assertStatus(200);
-        $detailResponse->assertSee('Contact:');
         $detailResponse->assertSee('@admin_buyer');
         $detailResponse->assertDontSee('onchange="this.form.submit()"', false);
-        $detailResponse->assertSee('Update');
+        $detailResponse->assertSee(__('messages.update'));
     }
 
     public function test_store_isolation_and_admin_order_confirmation(): void

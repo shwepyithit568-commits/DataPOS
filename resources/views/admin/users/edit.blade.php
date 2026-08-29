@@ -199,5 +199,28 @@
         </div>
     </form>
 
+    @if ($managedUser->id !== auth()->id() && (! $managedUser->isPlatformOwner() || auth()->user()?->isPlatformOwner()))
+        <div class="rounded-3xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h4 class="text-sm font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2">
+                    <span>🗑️</span>
+                    <span>ဆိုင်စာရင်းမှ ဖယ်ရှားမည် (Remove User from Store)</span>
+                </h4>
+                <p class="text-xs text-rose-600/80 dark:text-rose-400/70 mt-0.5">
+                    ဤအသုံးပြုသူအား {{ $store->name }} ၏ ဝန်ထမ်း/အသင်းဝင်စာရင်းမှ အပြီးတိုင် ဖယ်ရှားပါမည်။
+                </p>
+            </div>
+            <form method="POST" action="{{ route('store.admin.users.destroy', array_merge($storeRouteParams, ['user' => $managedUser->id])) }}"
+                  onsubmit="return confirm('အသုံးပြုသူ {{ $managedUser->name }} ({{ $managedUser->phone }}) အား ဤဆိုင်စာရင်းမှ ဖယ်ရှားမှာ သေချာပါသလား?');">
+                @csrf
+                @method('DELETE')
+                <button type="submit"
+                        class="px-4 py-2.5 rounded-xl text-xs font-black bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition flex-shrink-0">
+                    Remove from Store (ဆိုင်မှ ဖယ်ရှားမည်)
+                </button>
+            </form>
+        </div>
+    @endif
+
 </div>
 @endsection
