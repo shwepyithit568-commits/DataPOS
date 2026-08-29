@@ -167,12 +167,13 @@
 
 > **ရည်ရွယ်ချက်:** Multi-tenant Cloud SaaS အဖြစ် ဆိုင်များစွာသို့ တပြိုင်နက် လုံခြုံစိတ်ချစွာ ဝန်ဆောင်မှုပေးနိုင်ရန်။
 
-- [ ] **၅.၁ Automated Store Provisioning & Subscription Plan Limits**
-  - [ ] Plan Limits: Max Products, Max Branches, Allowed Capabilities
-- [ ] **၅.၂ Support Mode with Strict Reason & Audit Logging**
-  - [ ] Platform Super Admin က ဆိုင်အကောင့်ထဲသို့ အကူအညီပေးရန် ဝင်ရောက်ပါက အကြောင်းပြချက် မဖြစ်မနေ ထည့်သွင်းရခြင်းနှင့် Audit Log မှတ်တမ်းတင်ခြင်း။
-- [ ] **၅.၃ Rate Limiting, File Upload Quotas & Tenant Resource Protection**
-- [ ] **၅.၄ Store Data Export (GDPR/Data Ownership) & Clean Deletion Workflow**
+- [x] **၅.၁ Automated Store Provisioning & Subscription Plan Limits**
+  - [x] Plan Limits: Max Products, Max Branches, Allowed Capabilities (`SubscriptionPlanService`)
+- [x] **၅.၂ Support Mode with Strict Reason & Audit Logging**
+  - [x] Platform Super Admin က ဆိုင်အကောင့်ထဲသို့ အကူအညီပေးရန် ဝင်ရောက်ပါက အကြောင်းပြချက် မဖြစ်မနေ ထည့်သွင်းရခြင်းနှင့် Audit Log မှတ်တမ်းတင်ခြင်း (`SupportAccessService`, `SupportModeController`, Top Sticky Warning Banner)။
+- [x] **၅.၃ Rate Limiting, File Upload Quotas & Tenant Resource Protection**
+- [x] **၅.၄ Store Data Export (GDPR/Data Ownership) & Clean Deletion Workflow**
+  - [x] 1-Click Store Data Export endpoint (`StoreDataExportService`, `store.admin.settings.export-data`)။
 
 ---
 

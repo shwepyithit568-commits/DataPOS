@@ -220,6 +220,10 @@ Route::middleware(['auth', SetLocale::class, 'platform_owner'])->prefix('admin')
     Route::delete('/stores/{store}', [StoreManagementController::class, 'destroy'])->name('admin.stores.destroy');
     Route::delete('/stores/{store}/force', [StoreManagementController::class, 'forceDestroy'])->name('admin.stores.force-destroy');
     Route::post('/stores/{store}/activate', [StoreManagementController::class, 'activate'])->name('admin.stores.activate');
+
+    // Support Mode for Platform Owners
+    Route::post('/support-mode/enter', [\App\Http\Controllers\Admin\SupportModeController::class, 'enter'])->name('admin.support-mode.enter');
+    Route::post('/support-mode/exit', [\App\Http\Controllers\Admin\SupportModeController::class, 'exit'])->name('admin.support-mode.exit');
 });
 
 // Store scoped admin routes protected by context & access middleware
@@ -253,6 +257,7 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/settings', [StoreSettingController::class, 'edit'])->name('store.admin.settings.edit')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::get('/admin/settings/{section}', [StoreSettingController::class, 'edit'])->name('store.admin.settings.section')->middleware(EnsureStoreAccess::class . ':store_manager')->whereIn('section', ['general', 'currency', 'appearance', 'theme', 'contact', 'delivery', 'how-to-order', 'footer', 'pos']);
         Route::get('/admin/theme', fn (string $store_slug) => redirect()->route('store.admin.settings.section', ['store_slug' => $store_slug, 'section' => 'appearance']))->name('store.admin.theme.index')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/export-data', [StoreSettingController::class, 'exportData'])->name('store.admin.settings.export-data')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::post('/admin/settings', [StoreSettingController::class, 'update'])->middleware(EnsureStoreAccess::class . ':store_manager');
 
         // Structured payment / delivery method CRUD (store-scoped; managed from

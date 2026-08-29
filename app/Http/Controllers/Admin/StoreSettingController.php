@@ -610,6 +610,19 @@ class StoreSettingController extends Controller
     }
 
     /**
+     * Export complete store data as JSON archive (GDPR / Data Portability).
+     */
+    public function exportData(StoreContext $context, \App\Services\StoreDataExportService $exportService): \Illuminate\Http\JsonResponse
+    {
+        $store = $context->getStore();
+        $payload = $exportService->exportStoreArchive($store);
+
+        return response()->json($payload, 200, [
+            'Content-Disposition' => 'attachment; filename="' . $store->slug . '-data-export-' . date('Y-m-d') . '.json"',
+        ]);
+    }
+
+    /**
      * Loose check that a link is Google-Maps-shaped. Accepts official domains
      * plus the shortened maps.app.goo.gl links Google Maps "Share" produces.
      */

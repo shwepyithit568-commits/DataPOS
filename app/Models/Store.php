@@ -21,11 +21,16 @@ class Store extends Model
         'telegram_username',
         'is_active',
         'is_primary',
+        'subscription_tier',
+        'max_products',
+        'max_branches',
     ];
 
     protected $casts = [
         'is_active'              => 'boolean',
         'is_primary'             => 'boolean',
+        'max_products'           => 'integer',
+        'max_branches'           => 'integer',
         'capabilities_override'  => 'array',
     ];
 
@@ -168,5 +173,37 @@ class Store extends Model
         $caps = $this->getCapabilities();
 
         return !empty($caps[$capability]);
+    }
+
+    /**
+     * Max allowed products under active subscription plan.
+     */
+    public function maxProducts(): ?int
+    {
+        return \App\Services\SubscriptionPlanService::getMaxProducts($this);
+    }
+
+    /**
+     * Max allowed branches under active subscription plan.
+     */
+    public function maxBranches(): ?int
+    {
+        return \App\Services\SubscriptionPlanService::getMaxBranches($this);
+    }
+
+    /**
+     * Check if store can add a new product within quota.
+     */
+    public function canAddProduct(): bool
+    {
+        return \App\Services\SubscriptionPlanService::canAddProduct($this);
+    }
+
+    /**
+     * Check if store can add a new branch within quota.
+     */
+    public function canAddBranch(): bool
+    {
+        return \App\Services\SubscriptionPlanService::canAddBranch($this);
     }
 }
