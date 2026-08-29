@@ -207,6 +207,16 @@ class StorefrontSetting extends Model
         return $this->favicon_path ?: $this->admin_logo_path ?: $this->storefront_logo_path ?: $this->logo_path;
     }
 
+    public function viberUrl(): ?string
+    {
+        return \App\Support\ContactLinkBuilder::viberChatUrl($this->viber_number ?? $this->phone);
+    }
+
+    public function telegramUrl(): ?string
+    {
+        return \App\Support\ContactLinkBuilder::telegramUrl($this->telegram_username);
+    }
+
     // -------------------------------------------------------------------------
     // Theme / Colour scheme helpers
     // -------------------------------------------------------------------------

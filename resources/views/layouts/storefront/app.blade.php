@@ -926,22 +926,28 @@
                 <nav aria-label="Storefront primary navigation" class="sf-primary-nav flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white p-1 text-sm font-extrabold shadow-sm dark:border-slate-700 dark:bg-slate-800">
                     <a href="{{ $homeUrl }}" class="rounded-xl px-3 py-2 transition {{ $isHome ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">{{ __('messages.home') }}</a>
                     <a href="{{ $productsUrl }}" class="rounded-xl px-3 py-2 transition {{ $isProducts ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">{{ __('messages.products') }}</a>
-                    <a href="{{ $glassFinderUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isGlassFinder ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
-                        <span aria-hidden="true">📱</span>
-                        <span>{{ __('messages.glass_finder') }}</span>
-                    </a>
-                    <a href="{{ $serviceTrackingUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isServiceTracking ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
-                        <span aria-hidden="true">🔧</span>
-                        <span>{{ __('messages.nav_service_track') }}</span>
-                    </a>
+                    @if (store_can('storefront.glass_finder', $activeStoreContext))
+                        <a href="{{ $glassFinderUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isGlassFinder ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
+                            <span aria-hidden="true">📱</span>
+                            <span>{{ __('messages.glass_finder') }}</span>
+                        </a>
+                    @endif
+                    @if (store_can('service.repair_jobs', $activeStoreContext))
+                        <a href="{{ $serviceTrackingUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isServiceTracking ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
+                            <span aria-hidden="true">🔧</span>
+                            <span>{{ __('messages.nav_service_track') }}</span>
+                        </a>
+                    @endif
                     <a href="{{ $howToOrderUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isHowToOrder ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
                         <span aria-hidden="true">📖</span>
                         <span>{{ __('messages.how_to_order') }}</span>
                     </a>
-                    <a href="{{ $blogUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isBlog ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
-                        <span aria-hidden="true">📝</span>
-                        <span>{{ __('messages.blog') }}</span>
-                    </a>
+                    @if (store_can('storefront.blog', $activeStoreContext))
+                        <a href="{{ $blogUrl }}" class="inline-flex items-center gap-1 rounded-xl px-3 py-2 transition {{ $isBlog ? 'sf-nav-active shadow-sm' : 'sf-nav-link' }}">
+                            <span aria-hidden="true">📝</span>
+                            <span>{{ __('messages.blog') }}</span>
+                        </a>
+                    @endif
                 </nav>
             </div>
         </div>
@@ -1186,22 +1192,28 @@
                         <span aria-hidden="true">🗂️</span>
                         <span>{{ __('messages.categories') }}</span>
                     </a>
-                    <a href="{{ $glassFinderUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isGlassFinder ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
-                        <span aria-hidden="true">📱</span>
-                        <span>{{ __('messages.glass_finder') }}</span>
-                    </a>
-                    <a href="{{ $serviceTrackingUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isServiceTracking ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
-                        <span aria-hidden="true">🔧</span>
-                        <span>{{ __('messages.nav_service_track') }}</span>
-                    </a>
+                    @if (store_can('storefront.glass_finder', $activeStoreContext))
+                        <a href="{{ $glassFinderUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isGlassFinder ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
+                            <span aria-hidden="true">📱</span>
+                            <span>{{ __('messages.glass_finder') }}</span>
+                        </a>
+                    @endif
+                    @if (store_can('service.repair_jobs', $activeStoreContext))
+                        <a href="{{ $serviceTrackingUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isServiceTracking ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
+                            <span aria-hidden="true">🔧</span>
+                            <span>{{ __('messages.nav_service_track') }}</span>
+                        </a>
+                    @endif
                     <a href="{{ $howToOrderUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isHowToOrder ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
                         <span aria-hidden="true">📖</span>
                         <span>{{ __('messages.how_to_order') }}</span>
                     </a>
-                    <a href="{{ $blogUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isBlog ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
-                        <span aria-hidden="true">📝</span>
-                        <span>{{ __('messages.blog') }}</span>
-                    </a>
+                    @if (store_can('storefront.blog', $activeStoreContext))
+                        <a href="{{ $blogUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isBlog ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
+                            <span aria-hidden="true">📝</span>
+                            <span>{{ __('messages.blog') }}</span>
+                        </a>
+                    @endif
                 </nav>
             </div>
         </div>
@@ -1365,13 +1377,29 @@
             </span>
             <span class="text-xs font-bold tracking-tight {{ $isProducts ? 'font-black' : '' }}">{{ __('messages.nav_products') }}</span>
         </a>
-        <a href="{{ $serviceTrackingUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isServiceTracking ? 'text-teal-700 dark:text-teal-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
-            <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isServiceTracking ? 'bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-500/40 scale-110' : 'bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-300 group-hover:bg-teal-200 dark:group-hover:bg-teal-900/60' }}">
-                {{-- Wrench/service icon --}}
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            </span>
-            <span class="text-xs font-bold tracking-tight {{ $isServiceTracking ? 'font-black' : '' }}">{{ __('messages.nav_service_track') }}</span>
-        </a>
+        @if (store_can('service.repair_jobs', $activeStoreContext))
+            <a href="{{ $serviceTrackingUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isServiceTracking ? 'text-teal-700 dark:text-teal-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isServiceTracking ? 'bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-500/40 scale-110' : 'bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-300 group-hover:bg-teal-200 dark:group-hover:bg-teal-900/60' }}">
+                    {{-- Wrench/service icon --}}
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </span>
+                <span class="text-xs font-bold tracking-tight {{ $isServiceTracking ? 'font-black' : '' }}">{{ __('messages.nav_service_track') }}</span>
+            </a>
+        @else
+            <a href="{{ $browseUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isBrowse ? 'text-teal-700 dark:text-teal-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isBrowse ? 'bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-500/40 scale-110' : 'bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-300 group-hover:bg-teal-200 dark:group-hover:bg-teal-900/60' }}">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <rect x="3" y="3.6" width="4" height="5.4" rx="2.7"/>
+                        <rect x="9" y="3.6" width="12" height="5.4" rx="2.7"/>
+                        <rect x="3" y="9.3" width="4" height="5.4" rx="2.7"/>
+                        <rect x="9" y="9.3" width="12" height="5.4" rx="2.7"/>
+                        <rect x="3" y="15" width="4" height="5.4" rx="2.7"/>
+                        <rect x="9" y="15" width="12" height="5.4" rx="2.7"/>
+                    </svg>
+                </span>
+                <span class="text-xs font-bold tracking-tight {{ $isBrowse ? 'font-black' : '' }}">{{ __('messages.categories') }}</span>
+            </a>
+        @endif
         <a href="{{ $orderBuilderUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isOrderBuilder ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
             <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl relative transition-all duration-200 {{ $isOrderBuilder ? 'bg-gradient-to-br from-rose-500 to-red-500 text-white shadow-lg shadow-rose-500/40 scale-110' : 'bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 group-hover:bg-rose-200 dark:group-hover:bg-rose-900/60' }}">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>

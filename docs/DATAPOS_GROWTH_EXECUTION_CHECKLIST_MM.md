@@ -99,21 +99,23 @@
 
 > **ရည်ရွယ်ချက်:** လက်ရှိ Storefront မျက်နှာစာမှ Mobile-specific အသုံးအနှုန်းများနှင့် အစိတ်အပိုင်းများကို industry-neutral view models အဖြစ် ခွဲထုတ်ရန်။
 
-- [ ] **၂.၁ Storefront View Models သတ်မှတ်ခြင်း (`App\ViewModels\Storefront\...`)**
-  - [ ] `StoreHeaderViewModel` (Logo, Contact, Social, Navigation Links)
-  - [ ] `ProductCardViewModel` (Title, SKU, Price, Badges, Stock Status)
-  - [ ] `CategoryFilterViewModel` (Categories, Brands, Price Range)
-- [ ] **၂.၂ Industry-Specific Sections ကို Profile အလိုက် Dynamic ပြုလုပ်ခြင်း**
-  - [ ] Glass Finder / IMEI Search ကို `mobile_electronics` profile တွင်သာ ဖော်ပြခြင်း။
-  - [ ] General Retail နှင့် Pharmacy ဆိုင်များတွင် Mobile-specific widgets များ အလိုအလျောက် ပုန်းနေစေခြင်း။
-  - [ ] `storefront.ecommerce` capability ပိတ်ထားသော **POS-Only ဆိုင်များ** တွင် Public Catalog လုံးဝ ပိတ်ထားပြီး Cashier Login သို့မဟုတ် "Counter Sales Only" စာမျက်နှာသို့ အလိုအလျောက် ညွှန်ပြခြင်း (Safe Redirect / Fallback)။
-- [ ] **၂.၃ Mobile & Tablet POS Touch Experience (POS-Only Ready)**
-  - [ ] Tablet (iPad/Android Tablet) နှင့် Phone မျက်နှာပြင်များတွင် POS အရောင်းကောင်တာ Touch UI ကောင်းမွန်စွာ အလုပ်လုပ်ခြင်း။
-  - [ ] PWA (Progressive Web App) အနေဖြင့် ဖုန်း/တက်ပလက် Screen ပေါ်တွင် App ကဲ့သို့ Icon တင်၍ သုံးနိုင်ခြင်း။
-  - [ ] ကင်မရာဖြင့် Barcode Scan ဖတ်ခြင်းနှင့် 58mm/80mm Bluetooth/Network Thermal Print ထုတ်နိုင်ခြင်း။
-- [ ] **၂.၄ Storefront Decoupling Tests**
-  - [ ] `test_general_retail_storefront_omits_mobile_finder()`
-  - [ ] `test_mobile_storefront_preserves_device_repair_tracking()`
+- [x] **၂.၁ Storefront View Models သတ်မှတ်ခြင်း (`App\ViewModels\Storefront\...`)**
+  - [x] `StoreHeaderViewModel` (Logo, Contact, Social, Navigation Links)
+  - [x] `ProductCardViewModel` (Title, SKU, Price, Badges, Stock Status)
+  - [x] `CategoryFilterViewModel` (Categories, Brands, Price Range)
+- [x] **၂.၂ Industry-Specific Sections ကို Profile အလိုက် Dynamic ပြုလုပ်ခြင်း**
+  - [x] Glass Finder / IMEI Search ကို `mobile_electronics` profile တွင်သာ ဖော်ပြခြင်း။
+  - [x] General Retail နှင့် Pharmacy ဆိုင်များတွင် Mobile-specific widgets များ အလိုအလျောက် ပုန်းနေစေခြင်း။
+  - [x] `storefront.ecommerce` capability ပိတ်ထားသော **POS-Only ဆိုင်များ** တွင် Public Catalog လုံးဝ ပိတ်ထားပြီး Cashier Login သို့မဟုတ် "Counter Sales Only" စာမျက်နှာသို့ အလိုအလျောက် ညွှန်ပြခြင်း (Safe Redirect / Fallback)။
+- [x] **၂.၃ Mobile & Tablet POS Touch Experience (POS-Only Ready)**
+  - [x] Tablet (iPad/Android Tablet) နှင့် Phone မျက်နှာပြင်များတွင် POS အရောင်းကောင်တာ Touch UI ကောင်းမွန်စွာ အလုပ်လုပ်ခြင်း။
+  - [x] PWA (Progressive Web App) အနေဖြင့် ဖုန်း/တက်ပလက် Screen ပေါ်တွင် App ကဲ့သို့ Icon တင်၍ သုံးနိုင်ခြင်း။
+  - [x] ကင်မရာဖြင့် Barcode Scan ဖတ်ခြင်းနှင့် 58mm/80mm Bluetooth/Network Thermal Print ထုတ်နိုင်ခြင်း။
+- [x] **၂.၄ Storefront Decoupling Tests**
+  - [x] `test_general_retail_storefront_omits_mobile_finder()`
+  - [x] `test_mobile_storefront_preserves_device_repair_tracking()`
+  - [x] `test_pos_only_store_shows_in_store_counter_landing_to_guests()`
+  - [x] `test_pos_only_store_redirects_staff_to_pos_directly()`
 
 ---
 

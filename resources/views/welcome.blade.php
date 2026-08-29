@@ -75,16 +75,18 @@
                 </nav>
             </div>
 
-            {{-- Quick Glass Finder shortcut at bottom of rail --}}
-            <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
-                <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="flex items-center gap-2.5 p-2 rounded-xl bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-950/40 dark:to-fuchsia-950/40 text-violet-800 dark:text-violet-300 text-xs font-black border border-violet-200/60 dark:border-violet-800/60 hover:brightness-105 transition">
-                    <span class="text-xl">📱</span>
-                    <div class="min-w-0">
-                        <span class="block text-[11px] leading-tight font-myanmar">{{ __('messages.find_model_glass') }}</span>
-                        <span class="block text-[9px] text-violet-600 dark:text-violet-400 font-bold">{{ __('messages.glass_finder') }} →</span>
-                    </div>
-                </a>
-            </div>
+            @if (store_can('storefront.glass_finder', $store))
+                {{-- Quick Glass Finder shortcut at bottom of rail --}}
+                <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                    <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="flex items-center gap-2.5 p-2 rounded-xl bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-950/40 dark:to-fuchsia-950/40 text-violet-800 dark:text-violet-300 text-xs font-black border border-violet-200/60 dark:border-violet-800/60 hover:brightness-105 transition">
+                        <span class="text-xl">📱</span>
+                        <div class="min-w-0">
+                            <span class="block text-[11px] leading-tight font-myanmar">{{ __('messages.find_model_glass') }}</span>
+                            <span class="block text-[9px] text-violet-600 dark:text-violet-400 font-bold">{{ __('messages.glass_finder') }} →</span>
+                        </div>
+                    </a>
+                </div>
+            @endif
         </div>
 
         {{-- [Center Column] Main Interactive Carousel Slider (Mobile: full-width, Desktop: 2 cols = 50%) --}}
@@ -206,9 +208,11 @@
                         <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-sky-600 hover:brightness-110 text-white font-bold text-xs rounded-xl shadow-sm transition active:scale-95 font-myanmar">
                             {{ __('messages.view_products') }} →
                         </a>
-                        <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white font-bold text-xs rounded-xl hover:bg-slate-50 transition active:scale-95 font-myanmar">
-                            {{ __('messages.glass_finder') }}
-                        </a>
+                        @if (store_can('storefront.glass_finder', $store))
+                            <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white font-bold text-xs rounded-xl hover:bg-slate-50 transition active:scale-95 font-myanmar">
+                                {{ __('messages.glass_finder') }}
+                            </a>
+                        @endif
                     </div>
                 </div>
             @endif
@@ -247,23 +251,25 @@
                 </div>
             </div>
 
-            {{-- Live Service Tracking Quick Lookup Box --}}
-            <div class="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50/80 to-purple-50/80 p-3.5 dark:border-violet-900/40 dark:bg-slate-900/80 space-y-2">
-                <div class="flex items-center justify-between">
-                    <span class="flex items-center gap-1.5 text-xs font-extrabold text-violet-800 dark:text-violet-300 font-myanmar">
-                        <span>🔧</span> {{ __('messages.nav_service_track') }}
-                    </span>
-                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live
-                    </span>
+            @if (store_can('service.repair_jobs', $store))
+                {{-- Live Service Tracking Quick Lookup Box --}}
+                <div class="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50/80 to-purple-50/80 p-3.5 dark:border-violet-900/40 dark:bg-slate-900/80 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="flex items-center gap-1.5 text-xs font-extrabold text-violet-800 dark:text-violet-300 font-myanmar">
+                            <span>🔧</span> {{ __('messages.nav_service_track') }}
+                        </span>
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-slate-600 dark:text-slate-400 font-myanmar leading-tight font-medium">
+                        {{ __('messages.service_track_desc') }}
+                    </p>
+                    <a href="{{ url('/service-tracking?store_slug=' . $storeSlug) }}" class="inline-flex w-full items-center justify-center gap-1.5 py-2 rounded-xl bg-violet-600 text-white text-xs font-bold shadow-2xs hover:bg-violet-700 transition font-myanmar">
+                        <span>{{ __('messages.click_to_check') }}</span> →
+                    </a>
                 </div>
-                <p class="text-[11px] text-slate-600 dark:text-slate-400 font-myanmar leading-tight font-medium">
-                    {{ __('messages.service_track_desc') }}
-                </p>
-                <a href="{{ url('/service-tracking?store_slug=' . $storeSlug) }}" class="inline-flex w-full items-center justify-center gap-1.5 py-2 rounded-xl bg-violet-600 text-white text-xs font-bold shadow-2xs hover:bg-violet-700 transition font-myanmar">
-                    <span>{{ __('messages.click_to_check') }}</span> →
-                </a>
-            </div>
+            @endif
 
             {{-- Hotline & Direct Consultation Shortcut --}}
             <div class="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 flex-1 flex flex-col justify-between">
@@ -296,28 +302,37 @@
     </div>
 
     {{-- =========================================================================
-         1.1. MOBILE 1-TAP QUICK ACTION SHORTCUTS (5 Quick Action Pills)
+         1.1. MOBILE 1-TAP QUICK ACTION SHORTCUTS
          ========================================================================= --}}
-    <div class="lg:hidden grid gap-1 py-1 px-0.5" style="grid-template-columns: repeat(5, minmax(0, 1fr));">
-        <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="flex flex-col items-center gap-1 p-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
-            <span class="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center text-lg shrink-0">🛍️</span>
+    <div class="lg:hidden flex flex-wrap gap-1.5 py-1 px-0.5">
+        <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="flex-1 min-w-[4rem] flex flex-col items-center gap-1 p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
+            <span class="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center text-base shrink-0">🛍️</span>
             <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate w-full font-myanmar">{{ __('messages.products') }}</span>
         </a>
-        <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="flex flex-col items-center gap-1 p-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
-            <span class="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center text-lg shrink-0">📱</span>
-            <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate w-full font-myanmar">{{ __('messages.glass_finder') }}</span>
-        </a>
-        <a href="{{ url('/service-tracking?store_slug=' . $storeSlug) }}" class="flex flex-col items-center gap-1 p-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
-            <span class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shrink-0 relative">
-                🔧
-                <span class="w-2 h-2 rounded-full bg-emerald-500 absolute top-1 right-1 animate-pulse"></span>
-            </span>
-            <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate w-full font-myanmar">{{ __('messages.nav_service_track') }}</span>
-        </a>
-        <a href="{{ url('/how-to-order?store_slug=' . $storeSlug) }}" class="flex flex-col items-center gap-1 p-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
-            <span class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg shrink-0">📖</span>
+        @if (store_can('storefront.glass_finder', $store))
+            <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="flex-1 min-w-[4rem] flex flex-col items-center gap-1 p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
+                <span class="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center text-base shrink-0">📱</span>
+                <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate w-full font-myanmar">{{ __('messages.glass_finder') }}</span>
+            </a>
+        @endif
+        @if (store_can('service.repair_jobs', $store))
+            <a href="{{ url('/service-tracking?store_slug=' . $storeSlug) }}" class="flex-1 min-w-[4rem] flex flex-col items-center gap-1 p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
+                <span class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base shrink-0 relative">
+                    🔧
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 absolute top-1 right-1 animate-pulse"></span>
+                </span>
+                <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate w-full font-myanmar">{{ __('messages.nav_service_track') }}</span>
+            </a>
+        @endif
+        <a href="{{ url('/how-to-order?store_slug=' . $storeSlug) }}" class="flex-1 min-w-[4rem] flex flex-col items-center gap-1 p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
+            <span class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base shrink-0">📖</span>
             <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate w-full font-myanmar">{{ __('messages.how_to_order') }}</span>
         </a>
+        <a href="{{ url('/browse?store_slug=' . $storeSlug) }}" class="flex-1 min-w-[4rem] flex flex-col items-center gap-1 p-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
+            <span class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-base shrink-0">🗂️</span>
+            <span class="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate w-full font-myanmar">{{ __('messages.categories') }}</span>
+        </a>
+    </div>
         @if ($ftViberUrl || $ftTelegramUrl)
             <a href="{{ $ftViberUrl ?: $ftTelegramUrl }}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-1 p-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center shadow-2xs active:scale-95 transition">
                 <span class="w-9 h-9 rounded-xl bg-fuchsia-50 dark:bg-fuchsia-950/60 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center text-lg shrink-0">💬</span>
@@ -349,13 +364,23 @@
                 <p class="text-[11px] text-slate-600 dark:text-slate-400 font-myanmar truncate font-medium">100% Genuine Quality</p>
             </div>
         </div>
-        <a href="{{ url('/service-tracking?store_slug=' . $storeSlug) }}" class="flex items-center gap-3 p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs group hover:border-violet-300 transition">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 text-xl border border-violet-200 dark:border-violet-900/50 group-hover:scale-105 transition-transform">🔧</span>
-            <div class="min-w-0">
-                <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-myanmar leading-tight group-hover:text-violet-600">{{ __('messages.nav_service_track') }}</h4>
-                <p class="text-[11px] text-violet-600 dark:text-violet-400 font-myanmar truncate font-bold">{{ __('messages.check_repair_status') }}</p>
+        @if (store_can('service.repair_jobs', $store))
+            <a href="{{ url('/service-tracking?store_slug=' . $storeSlug) }}" class="flex items-center gap-3 p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs group hover:border-violet-300 transition">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 text-xl border border-violet-200 dark:border-violet-900/50 group-hover:scale-105 transition-transform">🔧</span>
+                <div class="min-w-0">
+                    <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-myanmar leading-tight group-hover:text-violet-600">{{ __('messages.nav_service_track') }}</h4>
+                    <p class="text-[11px] text-violet-600 dark:text-violet-400 font-myanmar truncate font-bold">{{ __('messages.check_repair_status') }}</p>
+                </div>
+            </a>
+        @else
+            <div class="flex items-center gap-3 p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 text-xl border border-violet-200 dark:border-violet-900/50">💎</span>
+                <div class="min-w-0">
+                    <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-myanmar leading-tight">100% Quality</h4>
+                    <p class="text-[11px] text-slate-600 dark:text-slate-400 font-myanmar truncate font-medium">Trusted & Certified</p>
+                </div>
             </div>
-        </a>
+        @endif
         <div class="flex items-center gap-3 p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 text-xl border border-sky-200 dark:border-sky-900/50">💬</span>
             <div class="min-w-0">
@@ -611,28 +636,30 @@
         </div>
     @endif
 
-    {{-- =========================================================================
-         6. GLASS FINDER CTA BANNER (Compact & High Conversion)
-         ========================================================================= --}}
-    <div class="rounded-2xl p-4 sm:p-5 border border-sky-300 dark:border-sky-900/50 bg-gradient-to-r from-sky-50 via-violet-50 to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 shadow-xs flex items-center justify-between gap-3">
-        <div class="flex items-center gap-3 min-w-0">
-            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-tr from-violet-600 to-sky-500 text-white flex items-center justify-center text-xl sm:text-2xl shadow-xs shrink-0">
-                📱
+    @if (store_can('storefront.glass_finder', $store))
+        {{-- =========================================================================
+             6. GLASS FINDER CTA BANNER (Compact & High Conversion)
+             ========================================================================= --}}
+        <div class="rounded-2xl p-4 sm:p-5 border border-sky-300 dark:border-sky-900/50 bg-gradient-to-r from-sky-50 via-violet-50 to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 shadow-xs flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-tr from-violet-600 to-sky-500 text-white flex items-center justify-center text-xl sm:text-2xl shadow-xs shrink-0">
+                    📱
+                </div>
+                <div class="min-w-0">
+                    <span class="text-[11px] font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-300 block font-myanmar">
+                        ✨ {{ __('messages.fast_glass_match') }}
+                    </span>
+                    <h3 class="font-black text-sm sm:text-base text-slate-900 dark:text-white font-myanmar truncate">
+                        {{ __('messages.glass_finder') }}
+                    </h3>
+                </div>
             </div>
-            <div class="min-w-0">
-                <span class="text-[11px] font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-300 block font-myanmar">
-                    ✨ {{ __('messages.fast_glass_match') }}
-                </span>
-                <h3 class="font-black text-sm sm:text-base text-slate-900 dark:text-white font-myanmar truncate">
-                    {{ __('messages.glass_finder') }}
-                </h3>
-            </div>
-        </div>
 
-        <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="shrink-0 px-4 py-2 bg-gradient-to-r from-violet-600 to-sky-600 hover:brightness-110 text-white font-bold text-xs rounded-xl shadow-xs transition active:scale-95 flex items-center gap-1 font-myanmar">
-            <span>{{ __('messages.glass_finder') }}</span> →
-        </a>
-    </div>
+            <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="shrink-0 px-4 py-2 bg-gradient-to-r from-violet-600 to-sky-600 hover:brightness-110 text-white font-bold text-xs rounded-xl shadow-xs transition active:scale-95 flex items-center gap-1 font-myanmar">
+                <span>{{ __('messages.glass_finder') }}</span> →
+            </a>
+        </div>
+    @endif
 
 </div>
 @endsection

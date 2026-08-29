@@ -14,10 +14,19 @@ class HomeController extends Controller
     /**
      * Render the storefront homepage for the current active store context.
      */
-    public function index(Request $request, StoreContext $context): View
+    public function index(Request $request, StoreContext $context): mixed
     {
         $store = $context->getStore();
         $setting = $store?->setting;
+
+        if ($store && $store->isPosOnly()) {
+            if (auth()->check() && $store->users()->where('users.id', auth()->id())->exists()) {
+                return redirect()->route('pos.index', ['store_slug' => $store->slug]);
+            }
+
+            return view('storefront.pos_only', compact('store', 'setting'));
+        }
+
         $banners = $store?->homeBanners()->where('page', 'home')->where('is_active', true)->get() ?? collect();
 
         // Only categories with products show on the storefront (empty ones are hidden)

@@ -90,18 +90,20 @@
                 </div>
 
                 {{-- Guarantee 4: Live Help & Service Tracking --}}
-                <a href="{{ $serviceTrackingUrl }}" class="flex items-center gap-3 group">
-                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-400 border border-purple-300 dark:border-purple-800 text-lg group-hover:scale-105 transition-transform">
-                        🔧
-                    </div>
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-1.5">
-                            <h4 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white font-myanmar leading-tight group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">{{ __('messages.nav_service_track') }}</h4>
-                            <span class="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                @if (store_can('service.repair_jobs', $store))
+                    <a href="{{ $serviceTrackingUrl }}" class="flex items-center gap-3 group">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-400 border border-purple-300 dark:border-purple-800 text-lg group-hover:scale-105 transition-transform">
+                            🔧
                         </div>
-                        <p class="text-xs font-semibold text-violet-700 dark:text-violet-400 font-myanmar truncate">{{ __('messages.service_tracking_sub') }}</p>
-                    </div>
-                </a>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5">
+                                <h4 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white font-myanmar leading-tight group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">{{ __('messages.nav_service_track') }}</h4>
+                                <span class="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            </div>
+                            <p class="text-xs font-semibold text-violet-700 dark:text-violet-400 font-myanmar truncate">{{ __('messages.service_tracking_sub') }}</p>
+                        </div>
+                    </a>
+                @endif
 
             </div>
         </div>
@@ -123,14 +125,18 @@
                         <span>📖</span>
                         <span>{{ __('messages.how_to_order') }}</span>
                     </a>
-                    <a href="{{ $serviceTrackingUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-violet-50/60 sm:bg-transparent dark:bg-violet-950/30 sm:dark:bg-transparent border border-violet-200/60 sm:border-0 dark:border-violet-800/60 {{ $linkStyle }} font-bold text-violet-700 dark:text-violet-400 hover:text-violet-900">
-                        <span>🔧</span>
-                        <span>{{ __('messages.nav_service_track') }}</span>
-                    </a>
-                    <a href="{{ $glassFinderUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
-                        <span>📱</span>
-                        <span>{{ __('messages.glass_finder') }}</span>
-                    </a>
+                    @if (store_can('service.repair_jobs', $store))
+                        <a href="{{ $serviceTrackingUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-violet-50/60 sm:bg-transparent dark:bg-violet-950/30 sm:dark:bg-transparent border border-violet-200/60 sm:border-0 dark:border-violet-800/60 {{ $linkStyle }} font-bold text-violet-700 dark:text-violet-400 hover:text-violet-900">
+                            <span>🔧</span>
+                            <span>{{ __('messages.nav_service_track') }}</span>
+                        </a>
+                    @endif
+                    @if (store_can('storefront.glass_finder', $store))
+                        <a href="{{ $glassFinderUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
+                            <span>📱</span>
+                            <span>{{ __('messages.glass_finder') }}</span>
+                        </a>
+                    @endif
                     <a href="{{ $productsUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
                         <span>🛍️</span>
                         <span>{{ __('messages.products') }}</span>
@@ -139,10 +145,12 @@
                         <span>👤</span>
                         <span>{{ __('messages.account') }}</span>
                     </a>
-                    <a href="{{ $blogUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
-                        <span>📰</span>
-                        <span>{{ __('messages.blog') }}</span>
-                    </a>
+                    @if (store_can('storefront.blog', $store))
+                        <a href="{{ $blogUrl }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
+                            <span>📰</span>
+                            <span>{{ __('messages.blog') }}</span>
+                        </a>
+                    @endif
                 </div>
             </div>
 

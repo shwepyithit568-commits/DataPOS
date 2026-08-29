@@ -12,11 +12,19 @@ use Illuminate\View\View;
 
 class CatalogController extends Controller
 {
-    public function index(Request $request, StoreContext $context): View
+    public function index(Request $request, StoreContext $context): mixed
     {
         $store = $context->getStore();
 
         abort_unless((bool) $store, 404, 'Store not found.');
+
+        if ($store->isPosOnly()) {
+            if (auth()->check() && $store->users()->where('users.id', auth()->id())->exists()) {
+                return redirect()->route('pos.index', ['store_slug' => $store->slug]);
+            }
+
+            return redirect()->route('storefront.store.home', ['store_slug' => $store->slug]);
+        }
 
         // Only categories/brands that actually have products are shown in the
         // storefront filter — empty ones clutter the list for customers.
