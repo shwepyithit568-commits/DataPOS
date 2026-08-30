@@ -40,16 +40,9 @@
          ============================================================ --}}
     <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
         <div class="min-w-0">
-            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 text-[10px] sm:text-[11px] font-black uppercase tracking-wider border border-amber-100 dark:border-amber-900/60 mb-0.5">
-                <span>🛒</span>
-                <span>{{ __('messages.sidebar_orders') }}</span>
-            </div>
-            <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <span>အော်ဒါ အမှာစာများ (Order Requests)</span>
+            <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                <span>🛒 အော်ဒါ အမှာစာများ (Order Requests)</span>
             </h1>
-            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {{ $store->name }} · Viber, Telegram နှင့် ဖုန်းဖြင့် မှာယူထားသော အော်ဒါများ
-            </p>
         </div>
         <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0">
             <a href="{{ $exportUrl }}"

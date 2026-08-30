@@ -37,7 +37,7 @@ class StorefrontAsset
             return null;
         }
 
-        if (! preg_match('#^(assets/chat-icons|chat-icons)/[A-Za-z0-9][A-Za-z0-9._/-]*\.(png|jpe?g|webp)$#i', $path)) {
+        if (! preg_match('#^(assets/chat-icons|chat-icons|payment-icons|payment-qr)/[A-Za-z0-9][A-Za-z0-9._/-]*\.(png|jpe?g|webp|svg)$#i', $path)) {
             return null;
         }
 

@@ -19,26 +19,9 @@
     {{-- 1. Top Page Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
-            <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-xl sm:text-2xl font-bold shadow-sm flex-shrink-0">
-                👥
-            </span>
-            <div class="min-w-0">
-                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
-                    <a href="{{ route('store.admin.dashboard', $storeRouteParams) }}" class="hover:text-slate-600 dark:hover:text-slate-300 transition">
-                        {{ __('messages.admin_dashboard') }}
-                    </a>
-                    <span>/</span>
-                    <a href="{{ route('store.admin.roles.index', $storeRouteParams) }}" class="hover:text-slate-600 dark:hover:text-slate-300 transition">
-                        {{ __('messages.sidebar_security') }}
-                    </a>
-                    <span>/</span>
-                    <span class="text-violet-600 dark:text-violet-400">Users & Staff</span>
-                </div>
-                <h1 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
-                    <span>အသုံးပြုသူနှင့် ဝန်ထမ်းများ (Users & Customers)</span>
-                </h1>
-                <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ $store->name }} · စနစ်သုံးစွဲသူနှင့် ဝန်ထမ်းရာထူးများ စီမံခန့်ခွဲမှု</p>
-            </div>
+            <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                <span>👥 အသုံးပြုသူနှင့် ဝန်ထမ်းများ (Users & Customers)</span>
+            </h1>
         </div>
 
         {{-- Top Right Action (Create User Button) --}}

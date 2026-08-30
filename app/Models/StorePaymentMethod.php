@@ -18,6 +18,7 @@ class StorePaymentMethod extends Model
         'icon_type',          // builtin | custom | initials
         'icon_value',         // builtin key or emoji
         'icon_path',          // custom uploaded icon
+        'qr_path',            // custom uploaded QR code image
         'account_name',
         'account_number',
         'instructions',
@@ -69,5 +70,22 @@ class StorePaymentMethod extends Model
         }
 
         return mb_substr($name, 0, 1) . str_repeat('•', max(3, mb_strlen($name) - 3)) . mb_substr($name, -2);
+    }
+
+    /**
+     * Publicly accessible URL for the payment QR code image.
+     */
+    public function qrUrl(): ?string
+    {
+        if (! $this->qr_path) {
+            return null;
+        }
+
+        return \App\Support\StorefrontAsset::imageUrl($this->qr_path);
+    }
+
+    public function hasQr(): bool
+    {
+        return ! empty($this->qr_path);
     }
 }

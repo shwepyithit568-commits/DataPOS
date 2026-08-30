@@ -88,20 +88,18 @@ class="space-y-2 sm:space-y-2.5">
     {{-- ============================================================
          1. TOOLBAR AREA: Search, View Mode Toggle (Standard Admin Toolbar)
          ============================================================ --}}
-    <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-        <x-admin.toolbar
-            :search="request('search', $search)"
-            searchPlaceholder="{{ __('messages.search') }} {{ $title }}..."
-            :sortOptions="[]"
-            :filters="[]"
-            :showViewToggle="true"
-            :showExportImport="true"
-            :exportUrl="url('/store/' . $store->slug . '/admin/product-master-presets/export?type=' . $presetType)"
-            :importUrl="url('/store/' . $store->slug . '/admin/product-master-presets/import?type=' . $presetType)"
-            :totalCount="$presetList->total()"
-            :paginator="$presetList"
-        />
-    </div>
+    <x-admin.toolbar
+        :search="request('search', $search)"
+        searchPlaceholder="{{ __('messages.search') }} {{ $title }}..."
+        :sortOptions="[]"
+        :filters="[]"
+        :showViewToggle="true"
+        :showExportImport="true"
+        :exportUrl="url('/store/' . $store->slug . '/admin/product-master-presets/export?type=' . $presetType)"
+        :importUrl="url('/store/' . $store->slug . '/admin/product-master-presets/import?type=' . $presetType)"
+        :totalCount="$presetList->total()"
+        :paginator="$presetList"
+    />
 
     {{-- Floating Action Button for Mobile/Tablet Quick Add --}}
     <button type="button" @click="openCreate()"

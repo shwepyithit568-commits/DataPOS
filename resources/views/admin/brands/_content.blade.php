@@ -104,34 +104,32 @@
         {{-- ============================================================
              1. TOOLBAR AREA: Search, Filters, Sort, View Toggle, Add CTA
              ============================================================ --}}
-        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-            <x-admin.toolbar
-                :search="request('search', '')"
-                searchPlaceholder="{{ __('messages.brand_search_placeholder') }}"
-                :sort="request('sort', 'newest')"
-                :sortOptions="[
-                    'newest' => __('messages.brand_sort_newest'),
-                    'oldest' => __('messages.brand_sort_oldest'),
-                    'name_asc' => __('messages.brand_sort_name_asc'),
-                    'name_desc' => __('messages.brand_sort_name_desc'),
-                    'most_products' => __('messages.brand_sort_most_products')
-                ]"
-                :filters="[
-                    'has_logo' => [
-                        'label' => __('messages.brand_filter_logo'),
-                        'options' => ['with' => __('messages.brand_with_logo'), 'without' => __('messages.brand_without_logo')]
-                    ]
-                ]"
-                :showViewToggle="true"
-                :showExportImport="true"
-                :importUrl="url('/store/' . $store->slug . '/admin/brands/import')"
-                :exportUrl="url('/store/' . $store->slug . '/admin/brands/export')"
-                :liveSearch="true"
-                :perPageOptions="[25 => '25', 50 => '50', 100 => '100']"
-                :totalCount="$totalCount"
-                :paginator="$brands"
-            />
-        </div>
+        <x-admin.toolbar
+            :search="request('search', '')"
+            searchPlaceholder="{{ __('messages.brand_search_placeholder') }}"
+            :sort="request('sort', 'newest')"
+            :sortOptions="[
+                'newest' => __('messages.brand_sort_newest'),
+                'oldest' => __('messages.brand_sort_oldest'),
+                'name_asc' => __('messages.brand_sort_name_asc'),
+                'name_desc' => __('messages.brand_sort_name_desc'),
+                'most_products' => __('messages.brand_sort_most_products')
+            ]"
+            :filters="[
+                'has_logo' => [
+                    'label' => __('messages.brand_filter_logo'),
+                    'options' => ['with' => __('messages.brand_with_logo'), 'without' => __('messages.brand_without_logo')]
+                ]
+            ]"
+            :showViewToggle="true"
+            :showExportImport="true"
+            :importUrl="url('/store/' . $store->slug . '/admin/brands/import')"
+            :exportUrl="url('/store/' . $store->slug . '/admin/brands/export')"
+            :liveSearch="true"
+            :perPageOptions="[25 => '25', 50 => '50', 100 => '100']"
+            :totalCount="$totalCount"
+            :paginator="$brands"
+        />
 
         {{-- Floating Action Button for Mobile/Tablet Quick Add --}}
         <button type="button" @click="openCreate()"

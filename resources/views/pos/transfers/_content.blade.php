@@ -18,19 +18,10 @@
          ============================================================ --}}
     <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 transition">
         <div class="min-w-0">
-            <div class="flex items-center gap-1.5 mb-0.5">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
-                    <span>🔄</span>
-                    <span>{{ __('messages.sidebar_transfers') }}</span>
-                </span>
-                <span class="text-slate-300 dark:text-slate-700">/</span>
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">{{ $store->name }}</span>
-            </div>
             <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <span>{{ __('messages.transfers_title') }}</span>
+                <span>🔄 {{ __('messages.transfers_title') }}</span>
                 <span class="text-xs font-mono font-bold text-slate-400">({{ number_format($stats['total'] ?? $transfers->total()) }})</span>
             </h1>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{{ __('messages.transfers_sub') }}</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-1.5 shrink-0">
@@ -422,12 +413,12 @@
 
                     {{-- Creator & Notes Metadata --}}
                     <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between pt-0.5">
-                        <span>ဖန်တီးသူ: <strong class="text-slate-700 dark:text-slate-300">{{ $transfer->creator?->name ?? 'System' }}</strong></span>
+                        <span>{{ __('messages.created_by') }}: <strong class="text-slate-700 dark:text-slate-300">{{ $transfer->creator?->name ?? 'System' }}</strong></span>
                     </div>
 
                     @if($transfer->notes)
                         <div class="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 p-1.5 rounded border border-slate-200/60 dark:border-slate-800 line-clamp-2">
-                            <strong>မှတ်ချက်:</strong> {{ $transfer->notes }}
+                            <strong>{{ __('messages.notes') }}:</strong> {{ $transfer->notes }}
                         </div>
                     @endif
                 </div>

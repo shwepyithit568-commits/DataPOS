@@ -191,6 +191,31 @@ class StorePaymentDeliveryAndMapTest extends TestCase
         Storage::disk('public')->assertExists($pm->icon_path);
     }
 
+    public function test_custom_payment_qr_upload_and_cleanup_works(): void
+    {
+        Storage::fake('public');
+
+        $qr = UploadedFile::fake()->image('kpay-qr.png', 300, 300);
+
+        $this->actingAs($this->manager)->post('/store/store-a/admin/settings/payment-methods', [
+            'name' => 'KPay QR',
+            'icon_type' => 'builtin',
+            'icon_value' => 'kpay',
+            'qr_image' => $qr,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $pm = StorePaymentMethod::where('store_id', $this->store->id)->where('name', 'KPay QR')->first();
+        $this->assertNotNull($pm);
+        $this->assertNotNull($pm->qr_path);
+        $this->assertStringStartsWith('payment-qr/', $pm->qr_path);
+        Storage::disk('public')->assertExists($pm->qr_path);
+
+        // Delete method cleans up QR file
+        $this->actingAs($this->manager)->delete('/store/store-a/admin/settings/payment-methods/' . $pm->id)
+            ->assertRedirect();
+        Storage::disk('public')->assertMissing($pm->qr_path);
+    }
+
     // ---------------------------------------------------------------------
     // Payment methods — storefront rendering
     // ---------------------------------------------------------------------

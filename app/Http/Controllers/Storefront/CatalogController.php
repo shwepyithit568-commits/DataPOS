@@ -56,10 +56,35 @@ class CatalogController extends Controller
             ->filter(fn ($row) => $row->category->products_count > 0 || $row->children->isNotEmpty())
             ->values();
 
+        // Group categories by brand in a single efficient query for the hover flyout
+        $brandCategories = Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
+            ->whereNotNull('brand_id')
+            ->whereNotNull('category_id')
+            ->select('id', 'brand_id', 'category_id')
+            ->with(['category:id,name,icon'])
+            ->get()
+            ->groupBy('brand_id')
+            ->map(function ($items) {
+                return $items->groupBy('category_id')->map(function ($catItems) {
+                    $category = $catItems->first()->category;
+                    return (object) [
+                        'id' => $category?->id,
+                        'name' => $category?->name,
+                        'icon' => $category?->icon,
+                        'products_count' => $catItems->count(),
+                    ];
+                })->filter(fn ($c) => $c->id !== null)->sortByDesc('products_count')->values();
+            });
+
         $brands = Brand::where('store_id', $store->id)
-            ->withCount('products')
+            ->withCount(['products' => fn ($q) => $q->where('is_ecommerce', true)])
             ->get()
             ->filter(fn (Brand $brand) => $brand->products_count > 0)
+            ->map(function (Brand $brand) use ($brandCategories) {
+                $brand->related_categories = $brandCategories->get($brand->id, collect());
+                return $brand;
+            })
             ->values();
 
         $query = Product::where('store_id', $store->id)
@@ -334,8 +359,8 @@ class CatalogController extends Controller
             ->where('id', '!=', $product->id)
             ->where(fn ($q) => $q->where('category_id', $product->category_id)->orWhere('brand_id', $product->brand_id))
             ->latest()
-            ->limit(4)
-            ->with(['category', 'brand', 'variants'])
+            ->limit(10)
+            ->with(['category', 'brand', 'images', 'variants'])
             ->get();
 
         // Approved customer reviews for the product + summary.

@@ -66,17 +66,9 @@
     {{-- 1. Top Header Banner --}}
     <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
         <div class="flex items-center gap-2.5 min-w-0">
-            <span class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 grid place-items-center text-sm font-black shrink-0">
-                🏭
-            </span>
-            <div class="min-w-0">
-                <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 truncate">
-                    {{ __('messages.sidebar_suppliers') }}
-                </h1>
-                <p class="text-[11px] text-slate-400 font-mono truncate">
-                    {{ $store->name }} — {{ __('messages.supplier_index_sub') }}
-                </p>
-            </div>
+            <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 truncate flex items-center gap-2">
+                <span>🏭 {{ __('messages.sidebar_suppliers') }}</span>
+            </h1>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap shrink-0">

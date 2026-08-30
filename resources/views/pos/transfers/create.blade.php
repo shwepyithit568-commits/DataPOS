@@ -141,24 +141,9 @@
          ============================================================ --}}
     <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 transition">
         <div class="min-w-0">
-            <div class="flex items-center gap-1.5 mb-0.5">
-                <a href="{{ route('pos.transfers.index', $storeRouteParams) }}"
-                   class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                    <span>{{ __('messages.back') }}</span>
-                </a>
-                <span class="text-slate-300 dark:text-slate-700">/</span>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
-                    <span>🔄</span>
-                    <span>{{ __('messages.sidebar_transfers') }}</span>
-                </span>
-                <span class="text-slate-300 dark:text-slate-700">/</span>
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">{{ $store->name }}</span>
-            </div>
             <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <span>{{ __('messages.new_transfer') }}</span>
+                <span>🔄 {{ __('messages.new_transfer') }}</span>
             </h1>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{{ __('messages.transfer_empty_hint') }}</p>
         </div>
 
         <div class="flex items-center gap-1.5 shrink-0">
@@ -201,12 +186,12 @@
         {{-- Card 2: Estimated Transfer Value --}}
         <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
             <div class="flex items-center justify-between">
-                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">Est. Total Value</span>
+                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ __('messages.transfer_est_total_value') }}</span>
                 <span class="w-6 h-6 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-xs">💰</span>
             </div>
             <div class="mt-1">
                 <p class="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono truncate" x-text="'Ks ' + fmt(totalValue)"></p>
-                <span class="text-[10px] text-slate-400 block mt-0.5">Inventory Cost Value</span>
+                <span class="text-[10px] text-slate-400 block mt-0.5">{{ __('messages.transfer_inventory_cost_value') }}</span>
             </div>
         </div>
 
@@ -232,7 +217,7 @@
             <div class="mt-1">
                 <p class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 truncate"
                    x-text="toWarehouseName ? toWarehouseName : '{{ __('messages.select_warehouse') }}'"></p>
-                <span class="text-[10px] text-slate-400 block mt-0.5">Destination</span>
+                <span class="text-[10px] text-slate-400 block mt-0.5">{{ __('messages.transfer_destination') }}</span>
             </div>
         </div>
     </div>
@@ -378,8 +363,8 @@
             <div x-show="!fromWarehouseId"
                  class="rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 py-8 text-center bg-slate-50/50 dark:bg-slate-900/30">
                 <div class="text-2xl mb-1 opacity-50">📤</div>
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400">ကျေးဇူးပြု၍ ပေးပို့မည့်ဂိုဒေါင် (From Warehouse) ကို အရင်ရွေးချယ်ပါ</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">ဂိုဒေါင်ရွေးချယ်ပြီးမှ ထိုဂိုဒေါင်ရှိ ကုန်ပစ္စည်းများကို ရှာဖွေထည့်သွင်းနိုင်ပါမည်။</p>
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('messages.select_from_warehouse_first') }}</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.select_from_warehouse_hint') }}</p>
             </div>
 
             {{-- Empty State (Warehouse Selected but No Items Added) --}}

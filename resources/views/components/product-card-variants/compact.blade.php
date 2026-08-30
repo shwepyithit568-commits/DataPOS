@@ -237,33 +237,32 @@
     <div class="px-2.5 pb-2.5 mt-1.5">
         <div class="flex flex-col">
             @if ($isWholesaleApproved && $wholesalePrice > 0)
-                <div class="flex flex-row items-baseline justify-between gap-2">
-                    <div class="flex items-center space-x-1.5 min-w-0">
-                        <span class="text-sm font-black text-emerald-700 dark:text-emerald-400">
-                            {{ __('messages.wholesale') }}: {{ format_currency($wholesalePrice, $store) }}
-                        </span>
-                    </div>
+                <div class="flex items-baseline justify-center gap-1.5 min-w-0">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 font-myanmar">{{ __('messages.wholesale') }}:</span>
+                    <span class="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-400 font-outfit">
+                        {{ format_currency($wholesalePrice, $store) }}
+                    </span>
                 </div>
             @else
-                {{-- Price: original (red-struck) on top row, sale price below — keeps narrow cards from overlapping --}}
-                <div class="flex flex-col gap-0.5 items-center text-center">
-                    <div class="flex items-baseline gap-1.5 min-w-0 justify-center">
-                        <div class="text-xs font-bold text-slate-500 dark:text-slate-600">{{ __('messages.price') }}</div>
-                        @if ($showRetailSale)
-                            <div class="text-xs text-slate-600 dark:text-slate-500 line-through decoration-rose-500 decoration-2 shrink-0">
+                {{-- Price: single row for label and amount --}}
+                <div class="flex items-baseline justify-center flex-wrap gap-x-1.5 gap-y-0.5 text-center">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 font-myanmar shrink-0">{{ __('messages.price') }}:</span>
+                    <span class="text-sm sm:text-base font-black text-sky-700 dark:text-sky-400 font-outfit leading-tight">
+                        {{ format_currency($retailPrice, $store) }}
+                    </span>
+                    @if ($showRetailSale)
+                        <div class="flex items-center gap-1 shrink-0">
+                            <span class="text-[11px] text-slate-400 dark:text-slate-500 line-through decoration-rose-500 decoration-1.5">
                                 {{ format_currency($product->old_price, $store) }}
-                            </div>
-                            <span class="shrink-0 px-1.5 py-0.5 rounded-md text-xs font-black bg-rose-500 text-white shadow-sm shadow-rose-500/40">
+                            </span>
+                            <span class="px-1 py-0.2 rounded text-[10px] font-black bg-rose-500 text-white shadow-2xs">
                                 -{{ $product->discountPercent() }}%
                             </span>
-                        @endif
-                    </div>
-                    <div class="text-base font-black text-sky-700 dark:text-sky-400 font-outfit leading-tight">
-                        {{ format_currency($retailPrice, $store) }}
-                    </div>
+                        </div>
+                    @endif
                 </div>
                 @if ($showRetailSale && $product->saleWindowLabel())
-                    <div class="mt-1 text-xs font-bold text-rose-600 dark:text-rose-400">
+                    <div class="mt-1 text-[11px] font-bold text-rose-600 dark:text-rose-400 text-center">
                         {{ $product->saleWindowLabel() }}
                     </div>
                 @endif

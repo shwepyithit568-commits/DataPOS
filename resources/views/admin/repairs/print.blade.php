@@ -3,7 +3,7 @@
     // exists; fall back to no @font-face (system Myanmar fonts) if not.
     $myanmarFontUrl = null;
     try {
-        $myanmarFontUrl = \Illuminate\Support\Facades\Vite::asset('resources/assets/fonts/NotoSansMyanmar-Regular.woff2');
+        $myanmarFontUrl = \Illuminate\Support\Facades\Vite::asset('resources/assets/fonts/NotoSansMyanmar/NotoSansMyanmar-Regular.ttf');
     } catch (\Throwable $e) {
         $myanmarFontUrl = null;
     }

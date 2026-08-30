@@ -94,10 +94,10 @@
         this.searching = true;
         form.submit();
     }
-}" class="rounded-lg sm:rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-xs p-2.5 sm:p-3.5 mb-3 sm:mb-5 backdrop-blur-md transition">
+}" class="rounded-lg sm:rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-2xs px-2.5 py-1.5 sm:px-3 sm:py-2 mb-2 sm:mb-2.5 backdrop-blur-md transition">
 
     {{-- Main Row: Controls in a smooth, responsive bar --}}
-    <div class="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 -mx-1 px-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
+    <div class="flex items-center gap-2 overflow-x-auto pb-0.5 pt-0.5 -mx-1 px-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
 
         {{-- ===== 1. SEARCH INPUT ===== --}}
         <form method="GET" class="flex items-center gap-2 shrink-0" role="search">

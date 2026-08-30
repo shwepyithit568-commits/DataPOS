@@ -8,13 +8,19 @@
 [x-cloak] { display: none !important; }
 
 
-/* Local @font-face Definitions (WOFF2 subsets — ~80% smaller than the
-   original TTFs; Latin + Myanmar + symbol ranges only). WOFF2 is
-   supported by every browser since 2018, so no TTF fallback is shipped. */
+/* Full OpenType Myanmar Font Definitions (Complete GSUB/GPOS tables for correct ligatures and vowels) */
 @font-face {
     font-family: 'Noto Sans Myanmar';
-    src: url('../assets/fonts/NotoSansMyanmar-Regular.woff2') format('woff2');
+    src: url('../assets/fonts/NotoSansMyanmar/NotoSansMyanmar-Regular.ttf') format('truetype');
     font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Sans Myanmar';
+    src: url('../assets/fonts/NotoSansMyanmar/NotoSansMyanmar-Bold.ttf') format('truetype');
+    font-weight: bold;
     font-style: normal;
     font-display: swap;
 }
@@ -51,10 +57,24 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Outfit', 'Noto Sans Myanmar', 'Roboto', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Outfit', 'Pyidaungsu', 'Myanmar Text', 'Noto Sans Myanmar', 'Padauk', 'Roboto', ui-sans-serif, system-ui, sans-serif;
     --font-outfit: 'Outfit', sans-serif;
     --font-roboto: 'Roboto', sans-serif;
-    --font-myanmar: 'Noto Sans Myanmar', sans-serif;
+    --font-myanmar: 'Pyidaungsu', 'Myanmar Text', 'Noto Sans Myanmar', 'Padauk', sans-serif;
+}
+
+/* Prevent Myanmar script broken ligatures and vowels caused by CSS letter-spacing (tracking) */
+html[lang="my"],
+[lang="my"],
+:lang(my),
+.font-myanmar {
+    letter-spacing: normal !important;
+}
+
+html[lang="my"] [class*="tracking-"],
+[lang="my"] [class*="tracking-"],
+.font-myanmar [class*="tracking-"] {
+    letter-spacing: normal !important;
 }
 
 @layer utilities {

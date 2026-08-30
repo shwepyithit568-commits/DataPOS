@@ -14,6 +14,7 @@
 
     $phone = trim((string) ($setting?->phone ?? $store?->phone ?? ''));
     $ftViberUrl = \App\Support\ContactLinkBuilder::viberChatUrl($setting?->viber_number ?? $phone);
+    $ftViberIosUrl = \App\Support\ContactLinkBuilder::viberIosContactUrl($setting?->viber_number ?? $phone);
     $ftTelegramUrl = \App\Support\ContactLinkBuilder::telegramUrl($setting?->telegram_username);
 
     // Dynamic icon resolver for categories
@@ -37,62 +38,107 @@
 <div class="space-y-4 sm:space-y-6">
 
     {{-- =========================================================================
-         1. HERO SECTION (AliExpress / Shopee Pro 3-Column Layout)
-            Desktop: Left Category Rail (25%) | Center Banner (50%) | Right Hub (25%)
-            Mobile: Full-Width Auto-Play Banner
+         1. HERO SECTION (Linn IT / Modern 2-Column Layout for Desktop)
+            Desktop: Left Category Sidebar (25% / lg:col-span-1) | Right Wide Hero Slider (75% / lg:col-span-3)
+            Mobile / Tablet: Full-Width Auto-Play Banner Slider
          ========================================================================= --}}
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 items-stretch">
 
-        {{-- [Desktop Left Column] 1 col = 25% Category Rail --}}
-        <div class="hidden lg:flex lg:col-span-1 min-w-0 flex-col rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900 justify-between">
-            <div>
-                <div class="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-100 dark:border-slate-800 px-1">
-                    <span class="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-myanmar">
-                        <span class="text-sky-500 text-sm">🗂️</span> {{ __('messages.categories') }}
-                    </span>
-                    <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline font-myanmar">
-                        {{ __('messages.view_all') }} →
-                    </a>
-                </div>
+        {{-- [Desktop Left Column] 1 col = 25% Category Sidebar with Hover Subcategories Flyout --}}
+        <div class="hidden lg:flex lg:col-span-1 min-w-0 flex-col rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900 relative z-30"
+             x-data="{ activeHover: null, closeTimeout: null }"
+             @mouseleave="closeTimeout = setTimeout(() => { activeHover = null }, 150)"
+             @mouseenter="if (closeTimeout) clearTimeout(closeTimeout)"
+        >
+            <div class="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-100 dark:border-slate-800 px-1">
+                <span class="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-myanmar">
+                    <span class="text-sky-500 text-sm">🗂️</span> {{ __('messages.categories') }}
+                </span>
+                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline font-myanmar">
+                    {{ __('messages.view_all') }} →
+                </a>
+            </div>
 
-                <nav class="space-y-0.5">
-                    @forelse ($categoryTree->take(8) as $catRow)
-                        @php
-                            $cMain = $catRow->category;
-                            $cIcon = ($cMain->icon && $cMain->icon !== 'NULL' && $cMain->icon !== 'null') ? $cMain->icon : $iconFor($cMain->name);
-                        @endphp
+            <nav class="space-y-0.5">
+                @forelse ($categoryTree->take(10) as $catRow)
+                    @php
+                        $cMain = $catRow->category;
+                        $cIcon = ($cMain->icon && $cMain->icon !== 'NULL' && $cMain->icon !== 'null') ? $cMain->icon : $iconFor($cMain->name);
+                        $hasChildren = $catRow->children->isNotEmpty();
+                    @endphp
+                    <div class="relative"
+                         @mouseenter="if (closeTimeout) clearTimeout(closeTimeout); activeHover = {{ $cMain->id }}"
+                    >
                         <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $cMain->id) }}"
-                           class="group flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 transition-all">
+                           class="group flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl text-xs font-bold transition-all"
+                           :class="activeHover === {{ $cMain->id }} ? 'bg-sky-50 dark:bg-slate-800 text-sky-600 dark:text-sky-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-sky-600 dark:hover:text-sky-400'">
                             <span class="flex items-center gap-2.5 min-w-0">
                                 <span class="text-base shrink-0 group-hover:scale-110 transition-transform">{{ $cIcon }}</span>
                                 <span class="truncate font-myanmar">{{ $cMain->name }}</span>
                             </span>
-                            <span class="shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover:bg-sky-100 group-hover:text-sky-700 dark:group-hover:bg-sky-950 dark:group-hover:text-sky-300">
-                                {{ number_format($catRow->total) }}
-                            </span>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <span class="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover:bg-sky-100 group-hover:text-sky-700 dark:group-hover:bg-sky-950 dark:group-hover:text-sky-300">
+                                    {{ number_format($catRow->total) }}
+                                </span>
+                                @if ($hasChildren)
+                                    <svg class="h-3 w-3 text-slate-400 group-hover:text-sky-500 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                @endif
+                            </div>
                         </a>
-                    @empty
-                        <div class="text-xs text-slate-400 p-2 font-myanmar">{{ __('messages.no_products_hint') }}</div>
-                    @endforelse
-                </nav>
-            </div>
 
-            @if (store_can('storefront.glass_finder', $store))
-                {{-- Quick Glass Finder shortcut at bottom of rail --}}
-                <div class="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800">
-                    <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="flex items-center gap-2.5 p-2 rounded-xl bg-gradient-to-r from-violet-50 via-purple-50 to-fuchsia-50 dark:from-violet-950/40 dark:to-fuchsia-950/40 text-violet-800 dark:text-violet-300 text-xs font-black border border-violet-200/70 dark:border-violet-800/60 hover:brightness-105 transition shadow-2xs">
-                        <span class="text-xl shrink-0">📱</span>
-                        <div class="min-w-0">
-                            <span class="block text-[11px] leading-tight font-myanmar">{{ __('messages.find_model_glass') }}</span>
-                            <span class="block text-[9px] text-violet-600 dark:text-violet-400 font-bold">{{ __('messages.glass_finder') }} →</span>
-                        </div>
-                    </a>
-                </div>
-            @endif
+                        {{-- Subcategory Flyout Panel --}}
+                        @if ($hasChildren)
+                            <div x-show="activeHover === {{ $cMain->id }}"
+                                 x-transition:enter="transition ease-out duration-150"
+                                 x-transition:enter-start="opacity-0 translate-x-1"
+                                 x-transition:enter-end="opacity-100 translate-x-0"
+                                 x-transition:leave="transition ease-in duration-100"
+                                 x-transition:leave-start="opacity-100 translate-x-0"
+                                 x-transition:leave-end="opacity-0 translate-x-1"
+                                 @mouseenter="if (closeTimeout) clearTimeout(closeTimeout); activeHover = {{ $cMain->id }}"
+                                 class="absolute left-full top-0 ml-2.5 w-72 sm:w-80 bg-white/95 dark:bg-slate-900/95 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xl p-3 z-50 backdrop-blur-xl"
+                                 style="display: none;"
+                            >
+                                <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800 px-1">
+                                    <span class="text-xs font-black text-slate-900 dark:text-white font-myanmar flex items-center gap-1.5 truncate">
+                                        <span>{{ $cIcon }}</span>
+                                        <span class="truncate">{{ $cMain->name }}</span>
+                                    </span>
+                                    <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $cMain->id) }}" class="shrink-0 text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline font-myanmar">
+                                        {{ __('messages.view_all') }} →
+                                    </a>
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-1 max-h-[320px] overflow-y-auto">
+                                    @foreach ($catRow->children as $subCat)
+                                        @php
+                                            $subIcon = ($subCat->icon && $subCat->icon !== 'NULL' && $subCat->icon !== 'null') ? $subCat->icon : '▫️';
+                                        @endphp
+                                        <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $subCat->id) }}"
+                                           class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 transition group/sub">
+                                            <span class="flex items-center gap-2 min-w-0">
+                                                <span class="text-xs shrink-0 text-slate-400 group-hover/sub:text-sky-500">{{ $subIcon }}</span>
+                                                <span class="truncate font-myanmar">{{ $subCat->name }}</span>
+                                            </span>
+                                            <span class="shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover/sub:bg-sky-100 group-hover/sub:text-sky-700 dark:group-hover/sub:bg-sky-950 dark:group-hover/sub:text-sky-300">
+                                                {{ number_format($subCat->products_count) }}
+                                            </span>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @empty
+                    <div class="text-xs text-slate-400 p-2 font-myanmar">{{ __('messages.no_products_hint') }}</div>
+                @endforelse
+            </nav>
         </div>
 
-        {{-- [Center Column] 2 cols = 50% Main Banner Slider --}}
-        <div class="col-span-1 lg:col-span-2 min-w-0 flex flex-col">
+        {{-- [Desktop Right Column] 3 cols = 75% Wide Hero Banner Slider --}}
+        <div class="col-span-1 lg:col-span-3 min-w-0 flex flex-col">
             @if (count($banners) > 0)
                 <div 
                     x-data="{
@@ -111,7 +157,7 @@
                     }"
                     @mouseenter="stop()"
                     @mouseleave="start()"
-                    class="relative w-full h-[240px] sm:h-[300px] lg:h-full overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-950 shadow-md dark:border-slate-800 group"
+                    class="relative w-full h-[240px] sm:h-[300px] lg:h-[360px] xl:h-[380px] overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-950 shadow-md dark:border-slate-800 group"
                     style="min-height: 240px;"
                 >
                     @foreach ($banners as $index => $banner)
@@ -146,8 +192,8 @@
 
                     {{-- Navigation Dots & Arrows Controls --}}
                     @if (count($banners) > 1)
-                        <div class="absolute bottom-3 inset-x-0 z-20 flex items-center justify-between px-3.5 pointer-events-none">
-                            <div class="flex items-center space-x-1.5 pointer-events-auto bg-slate-950/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15 shadow-sm">
+                        <div class="absolute bottom-3.5 inset-x-0 z-20 flex items-center justify-between px-4 pointer-events-none">
+                            <div class="flex items-center space-x-1.5 pointer-events-auto bg-slate-950/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15 shadow-sm">
                                 @foreach ($banners as $index => $banner)
                                     <button
                                         type="button"
@@ -160,22 +206,22 @@
                             </div>
 
                             <div class="hidden sm:flex items-center space-x-2 pointer-events-auto">
-                                <button type="button" @click.prevent.stop="prev()" class="w-8 h-8 rounded-xl bg-slate-950/60 hover:bg-slate-950/90 backdrop-blur-md flex items-center justify-center text-white transition active:scale-90 text-sm border border-white/15 shadow-sm" title="Previous Slide">&larr;</button>
-                                <button type="button" @click.prevent.stop="next()" class="w-8 h-8 rounded-xl bg-slate-950/60 hover:bg-slate-950/90 backdrop-blur-md flex items-center justify-center text-white transition active:scale-90 text-sm border border-white/15 shadow-sm" title="Next Slide">&rarr;</button>
+                                <button type="button" @click.prevent.stop="prev()" class="w-9 h-9 rounded-xl bg-slate-950/60 hover:bg-slate-950/90 backdrop-blur-md flex items-center justify-center text-white transition active:scale-90 text-sm border border-white/15 shadow-sm" title="Previous Slide">&larr;</button>
+                                <button type="button" @click.prevent.stop="next()" class="w-9 h-9 rounded-xl bg-slate-950/60 hover:bg-slate-950/90 backdrop-blur-md flex items-center justify-center text-white transition active:scale-90 text-sm border border-white/15 shadow-sm" title="Next Slide">&rarr;</button>
                             </div>
                         </div>
                     @endif
                 </div>
             @else
                 {{-- Fallback Hero Banner --}}
-                <div class="relative flex-1 min-h-[260px] p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-sky-500/10 via-white to-violet-500/10 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 shadow-xs flex flex-col justify-center">
+                <div class="relative flex-1 min-h-[240px] sm:min-h-[300px] lg:min-h-[340px] p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-sky-500/10 via-white to-violet-500/10 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 shadow-xs flex flex-col justify-center">
                     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 self-start mb-3 font-myanmar">
                         ⚡ {{ __('messages.nationwide_shipping') }}
                     </span>
                     <h1 class="text-2xl sm:text-3xl font-black font-outfit text-slate-900 dark:text-white">
                         {{ $storeDisplayName }}
                     </h1>
-                    <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-myanmar leading-relaxed mt-2 max-w-lg">
+                    <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-myanmar leading-relaxed mt-2 max-w-xl">
                         {{ __('messages.hero_description') }}
                     </p>
                     <div class="flex flex-wrap gap-2.5 pt-4">
@@ -190,133 +236,133 @@
                     </div>
                 </div>
             @endif
-        </div>
 
-        {{-- [Desktop Right Column] 1 col = 25% User Perks, Service & Hotline Hub --}}
-        <div class="hidden lg:flex lg:col-span-1 min-w-0 flex-col gap-3">
-            
-            {{-- User Welcome / Quick Login Card --}}
-            <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 via-fuchsia-500 to-sky-500 text-white flex items-center justify-center font-bold text-base shadow-xs shrink-0">
-                        {{ $user ? mb_substr($user->name, 0, 1) : '👤' }}
-                    </div>
+            {{-- Compact 4-Item Value & Service Trust Strip (Directly below Banner Image) --}}
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 mt-2.5 sm:mt-3">
+                <div class="flex items-center gap-2 sm:gap-2.5 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs min-w-0">
+                    <span class="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 text-sm sm:text-base border border-sky-200/70 dark:border-sky-900/50 shadow-2xs">⚡</span>
                     <div class="min-w-0">
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400 font-myanmar font-semibold">{{ __('messages.welcome_greeting') }}</p>
-                        <h4 class="text-xs font-black text-slate-900 dark:text-white truncate font-outfit">
-                            {{ $user ? $user->name : __('messages.guest') }}
-                        </h4>
+                        <h4 class="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white font-myanmar leading-tight truncate">{{ __('messages.fast_delivery') }}</h4>
+                        <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-myanmar truncate font-medium">{{ __('messages.doorstep_and_bus_gate') }}</p>
                     </div>
                 </div>
-
-                <div class="mt-3 flex gap-2">
-                    @auth
-                        @if (store_can('storefront.customer_portal', $store))
-                        <a href="{{ url('/account?store_slug=' . $storeSlug) }}" class="flex-1 py-2 px-2.5 rounded-xl bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 text-xs font-extrabold text-center hover:bg-sky-100 transition font-myanmar">
-                            👤 {{ __('messages.account_and_orders') }}
-                        </a>
-                        @endif
-                    @else
-                        <a href="{{ route('login') }}" class="flex-1 py-2 px-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-sky-600 text-white text-xs font-bold text-center hover:brightness-110 shadow-2xs transition font-myanmar">
-                            {{ __('messages.login') }}
-                        </a>
-                        <a href="{{ route('register') }}" class="flex-1 py-2 px-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold text-center hover:bg-slate-50 dark:hover:bg-slate-800 transition font-myanmar">
-                            {{ __('messages.register') }}
-                        </a>
-                    @endauth
-                </div>
-            </div>
-
-            @if (store_can('service.repair_jobs', $store))
-                {{-- Live Service Tracking Quick Lookup Box --}}
-                <div class="rounded-2xl border border-violet-200/80 bg-gradient-to-br from-violet-50/80 via-purple-50/50 to-white p-3.5 dark:border-violet-900/40 dark:bg-slate-900/80 space-y-2 shadow-2xs">
-                    <div class="flex items-center justify-between">
-                        <span class="flex items-center gap-1.5 text-xs font-extrabold text-violet-800 dark:text-violet-300 font-myanmar">
-                            <span>🔧</span> {{ __('messages.nav_service_track') }}
-                        </span>
-                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live
-                        </span>
+                <div class="flex items-center gap-2 sm:gap-2.5 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs min-w-0">
+                    <span class="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 text-sm sm:text-base border border-emerald-200/70 dark:border-emerald-900/50 shadow-2xs">🛡️</span>
+                    <div class="min-w-0">
+                        <h4 class="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white font-myanmar leading-tight truncate">{{ __('messages.genuine_warranty') }}</h4>
+                        <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-myanmar truncate font-medium">100% Original Brand</p>
                     </div>
-                    <p class="text-[11px] text-slate-600 dark:text-slate-400 font-myanmar leading-tight font-medium">
-                        {{ __('messages.service_track_desc') }}
-                    </p>
-                    <a href="{{ url('/service-tracking?store_slug=' . $storeSlug) }}" class="inline-flex w-full items-center justify-center gap-1.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold shadow-2xs transition font-myanmar">
-                        <span>{{ __('messages.click_to_check') }}</span> →
+                </div>
+                @if (store_can('service.repair_jobs', $store))
+                    <a href="{{ url('/service-tracking?store_slug=' . $storeSlug) }}" class="flex items-center gap-2 sm:gap-2.5 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs group hover:border-violet-300 transition min-w-0">
+                        <span class="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 text-sm sm:text-base border border-violet-200/70 dark:border-violet-900/50 group-hover:scale-105 transition-transform shadow-2xs">🔧</span>
+                        <div class="min-w-0">
+                            <h4 class="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white font-myanmar leading-tight group-hover:text-violet-600 truncate">{{ __('messages.nav_service_track') }}</h4>
+                            <p class="text-[9px] sm:text-[10px] text-violet-600 dark:text-violet-400 font-myanmar truncate font-bold">{{ __('messages.check_repair_status') }}</p>
+                        </div>
                     </a>
-                </div>
-            @endif
+                @else
+                    <div class="flex items-center gap-2 sm:gap-2.5 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs min-w-0">
+                        <span class="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 text-sm sm:text-base border border-violet-200/70 dark:border-violet-900/50 shadow-2xs">💎</span>
+                        <div class="min-w-0">
+                            <h4 class="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white font-myanmar leading-tight truncate">100% Quality</h4>
+                            <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-myanmar truncate font-medium">Trusted & Certified</p>
+                        </div>
+                    </div>
+                @endif
+                <div x-data="{ directHelpOpen: false }">
+                    <button type="button"
+                            @click="directHelpOpen = true"
+                            class="w-full h-full flex items-center gap-2 sm:gap-2.5 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs min-w-0 text-left hover:border-sky-400 hover:shadow-sm transition active:scale-95 cursor-pointer group">
+                        <span class="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 text-sm sm:text-base border border-sky-200/70 dark:border-sky-900/50 shadow-2xs group-hover:scale-105 transition-transform">💬</span>
+                        <div class="min-w-0">
+                            <h4 class="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white font-myanmar leading-tight truncate group-hover:text-sky-600 transition-colors">{{ __('messages.direct_support') }}</h4>
+                            <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-myanmar truncate font-medium">{{ __('messages.viber_telegram_chat') }}</p>
+                        </div>
+                    </button>
 
-            {{-- Direct Contact & Online Support --}}
-            <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 flex-1 flex flex-col justify-between shadow-2xs">
-                <div class="space-y-1">
-                    <span class="text-[11px] font-bold text-slate-600 dark:text-slate-400 block font-myanmar">{{ __('messages.direct_help_prompt') }}</span>
-                    @if ($phone)
-                        <a href="tel:{{ $phone }}" class="font-mono font-black text-slate-900 dark:text-white hover:text-sky-600 text-xs block">
-                            📞 {{ $phone }}
-                        </a>
-                    @endif
-                </div>
+                    {{-- Direct Support Modal (Viber & Telegram Choice) --}}
+                    <div x-show="directHelpOpen"
+                         x-cloak
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0"
+                         x-transition:enter-end="opacity-100"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         @keydown.escape.window="directHelpOpen = false"
+                         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+                        <div @click.away="directHelpOpen = false"
+                             x-show="directHelpOpen"
+                             x-transition:enter="transition ease-out duration-200 transform"
+                             x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-150 transform"
+                             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                             x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+                             class="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xl p-5 sm:p-6 space-y-4 relative">
+                            
+                            {{-- Header & Close Button --}}
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="space-y-1">
+                                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black text-white uppercase shadow-2xs border-0"
+                                         style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;">
+                                        <span>💬</span>
+                                        <span>Direct Support</span>
+                                    </div>
+                                    <h3 class="text-base font-black text-slate-900 dark:text-white font-myanmar">
+                                        တိုက်ရိုက် ဆက်သွယ် မေးမြန်းရန်
+                                    </h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 font-myanmar leading-relaxed">
+                                        လိုချင်သော ပစ္စည်း သို့မဟုတ် အချက်အလက်များကို အောက်ပါ Channel များဖြင့် အလွယ်တကူ မေးမြန်းနိုင်ပါသည်
+                                    </p>
+                                </div>
+                                <button type="button"
+                                        @click="directHelpOpen = false"
+                                        class="w-8 h-8 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center text-sm transition cursor-pointer">
+                                    ✕
+                                </button>
+                            </div>
 
-                <div class="flex gap-2 pt-2">
-                    @if ($ftViberUrl)
-                        <a href="{{ $ftViberUrl }}" target="_blank" rel="noopener noreferrer" class="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-violet-300 bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300 text-xs font-bold hover:bg-violet-100 transition shadow-2xs">
-                            <x-brand-icon brand="viber" class="h-3.5 w-3.5 fill-current"/>
-                            <span>Viber</span>
-                        </a>
-                    @endif
-                    @if ($ftTelegramUrl)
-                        <a href="{{ $ftTelegramUrl }}" target="_blank" rel="noopener noreferrer" class="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-sky-300 bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 text-xs font-bold hover:bg-sky-100 transition shadow-2xs">
-                            <x-brand-icon brand="telegram" class="h-3.5 w-3.5 fill-current"/>
-                            <span>Telegram</span>
-                        </a>
-                    @endif
-                </div>
-            </div>
+                            {{-- Channel Buttons --}}
+                            <div class="space-y-2.5 pt-1">
+                                @if ($ftViberUrl)
+                                    <a href="{{ $ftViberUrl }}"
+                                       @if ($ftViberIosUrl) data-ios-href="{{ $ftViberIosUrl }}" @endif
+                                       style="background: linear-gradient(135deg, #7360F2 0%, #5f4de0 100%) !important; color: #ffffff !important;"
+                                       class="w-full min-h-[46px] flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-black text-white shadow-md shadow-purple-500/25 hover:brightness-110 active:scale-95 transition cursor-pointer select-none border-0">
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/20 shrink-0">
+                                            <x-brand-icon brand="viber" class="h-4 w-4 fill-white text-white"/>
+                                        </span>
+                                        <span>Viber ဖြင့် တိုက်ရိုက် မေးမည်</span>
+                                    </a>
+                                @endif
 
-        </div>
-    </div>
+                                @if ($ftTelegramUrl)
+                                    <a href="{{ $ftTelegramUrl }}"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       style="background: linear-gradient(135deg, #229ED9 0%, #0284c7 100%) !important; color: #ffffff !important;"
+                                       class="w-full min-h-[46px] flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-black text-white shadow-md shadow-sky-500/25 hover:brightness-110 active:scale-95 transition cursor-pointer select-none border-0">
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/20 shrink-0">
+                                            <x-brand-icon brand="telegram" class="h-4 w-4 fill-white text-white"/>
+                                        </span>
+                                        <span>Telegram ဖြင့် မေးမည်</span>
+                                    </a>
+                                @endif
 
-    {{-- =========================================================================
-         3. VALUE & SERVICE TRUST STRIP (AliExpress / Amazon Style)
-         ========================================================================= --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
-        <div class="flex items-center gap-3 p-3 rounded-2xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 text-xl border border-sky-200 dark:border-sky-900/50 shadow-2xs">⚡</span>
-            <div class="min-w-0">
-                <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-myanmar leading-tight">{{ __('messages.fast_delivery') }}</h4>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-myanmar truncate font-medium">{{ __('messages.doorstep_and_bus_gate') }}</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-3 p-3 rounded-2xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 text-xl border border-emerald-200 dark:border-emerald-900/50 shadow-2xs">🛡️</span>
-            <div class="min-w-0">
-                <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-myanmar leading-tight">{{ __('messages.genuine_warranty') }}</h4>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-myanmar truncate font-medium">100% Original Brand</p>
-            </div>
-        </div>
-        @if (store_can('service.repair_jobs', $store))
-            <a href="{{ url('/service-tracking?store_slug=' . $storeSlug) }}" class="flex items-center gap-3 p-3 rounded-2xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs group hover:border-violet-300 transition">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 text-xl border border-violet-200 dark:border-violet-900/50 group-hover:scale-105 transition-transform shadow-2xs">🔧</span>
-                <div class="min-w-0">
-                    <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-myanmar leading-tight group-hover:text-violet-600">{{ __('messages.nav_service_track') }}</h4>
-                    <p class="text-[11px] text-violet-600 dark:text-violet-400 font-myanmar truncate font-bold">{{ __('messages.check_repair_status') }}</p>
+                                @if ($phone)
+                                    <a href="tel:{{ \App\Support\ContactLinkBuilder::normalizeMyanmarPhone($phone) }}"
+                                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: #ffffff !important;"
+                                       class="w-full min-h-[46px] flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-black text-white shadow-md shadow-emerald-500/25 hover:brightness-110 active:scale-95 transition cursor-pointer select-none border-0">
+                                        <span class="text-base">📞</span>
+                                        <span>ဖုန်းတိုက်ရိုက်ခေါ်မည် ({{ $phone }})</span>
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </a>
-        @else
-            <div class="flex items-center gap-3 p-3 rounded-2xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 text-xl border border-violet-200 dark:border-violet-900/50 shadow-2xs">💎</span>
-                <div class="min-w-0">
-                    <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-myanmar leading-tight">100% Quality</h4>
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400 font-myanmar truncate font-medium">Trusted & Certified</p>
-                </div>
-            </div>
-        @endif
-        <div class="flex items-center gap-3 p-3 rounded-2xl border border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 text-xl border border-sky-200 dark:border-sky-900/50 shadow-2xs">💬</span>
-            <div class="min-w-0">
-                <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-myanmar leading-tight">{{ __('messages.direct_support') }}</h4>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-myanmar truncate font-medium">{{ __('messages.viber_telegram_chat') }}</p>
             </div>
         </div>
     </div>
@@ -418,11 +464,15 @@
                         </div>
                         <div class="p-2 sm:p-2.5 flex-1 flex flex-col justify-between">
                             <h3 class="text-xs font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 group-hover:text-rose-600 transition-colors font-myanmar">{{ $deal->name }}</h3>
-                            <div class="pt-1.5">
+                            <div class="pt-1.5 flex items-baseline justify-center flex-wrap gap-x-2 gap-y-0.5 text-center">
                                 @if ($deal->old_price)
-                                    <span class="text-[10px] text-slate-400 line-through decoration-rose-500 block tabular-nums">{{ format_currency($deal->old_price, $store) }}</span>
+                                    <span class="text-xs sm:text-sm text-slate-400 dark:text-slate-500 line-through decoration-rose-500 font-outfit tabular-nums shrink-0 font-medium">
+                                        {{ format_currency($deal->old_price, $store) }}
+                                    </span>
                                 @endif
-                                <span class="text-xs sm:text-sm font-black text-rose-600 dark:text-rose-400 tabular-nums">{{ format_currency($deal->retail_price, $store) }}</span>
+                                <span class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400 font-outfit tabular-nums leading-tight">
+                                    {{ format_currency($deal->retail_price, $store) }}
+                                </span>
                             </div>
                         </div>
                     </a>
@@ -446,9 +496,6 @@
                         </span>
                         <span class="font-myanmar">{{ __('messages.featured_products') }}</span>
                     </h2>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] sm:text-[11px] font-black font-outfit">
-                        {{ $featuredProducts->count() }}
-                    </span>
                 </div>
 
                 <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline whitespace-nowrap font-myanmar">
@@ -456,8 +503,8 @@
                 </a>
             </div>
 
-            {{-- Featured Products Grid (2-col mobile, 3-col tablet, 5-col desktop) --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 lg:gap-3.5">
+            {{-- Featured Products Grid (2-col mobile, 3-col tablet, 4-col laptop, 5-col desktop, 6-col widescreen) --}}
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5 sm:gap-2 lg:gap-2.5">
                 @foreach ($featuredProducts as $product)
                     <x-product-card 
                         :product="$product" 
@@ -544,9 +591,6 @@
                         </span>
                         <span class="font-myanmar">{{ __('messages.new_arrivals') }}</span>
                     </h2>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950/60 text-violet-800 dark:text-violet-300 text-[10px] sm:text-[11px] font-black font-outfit">
-                        {{ $newArrivals->count() }}
-                    </span>
                 </div>
 
                 <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline whitespace-nowrap font-myanmar">
@@ -554,8 +598,8 @@
                 </a>
             </div>
 
-            {{-- New Arrivals Products Grid --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 lg:gap-3.5">
+            {{-- New Arrivals Products Grid (2-col mobile, 3-col tablet, 4-col laptop, 5-col desktop, 6-col widescreen) --}}
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5 sm:gap-2 lg:gap-2.5">
                 @foreach ($newArrivals as $product)
                     <x-product-card 
                         :product="$product" 

@@ -38,6 +38,8 @@
     $storeSlug = $store?->slug ?? request('store_slug');
     $productUrl = url("/store/{$storeSlug}/product/{$product->slug}");
     $storeSetting = $store?->setting;
+    $storeLogo = $storeSetting?->storefrontLogo() ?: $storeSetting?->adminLogo();
+    $storeLogoUrl = $storeLogo ? asset('storage/' . $storeLogo) : null;
     $directOrderText = "မင်္ဂလာပါ။\n"
         . ($store?->name ?? config('app.name')) . " မှာ အောက်ပါပစ္စည်းကို အော်ဒါတင်ချင်ပါတယ်။\n\n"
         . "ပစ္စည်း: {$product->name}\n"
@@ -49,6 +51,10 @@
     // so the order message (product name + details) would be lost on iPhone.
     $directViberIosUrl = \App\Support\ContactLinkBuilder::viberIosContactUrl($storeSetting?->viber_number, $directOrderText);
     $directTelegramUrl = \App\Support\ContactLinkBuilder::telegramUrl($storeSetting?->telegram_username, $directOrderText);
+    $storeViberNumber = $storeSetting?->viber_number ? preg_replace('/[^\d+]/', '', $storeSetting->viber_number) : null;
+    $storeTelegramHandle = $storeSetting?->telegram_username ? ltrim($storeSetting->telegram_username, '@') : null;
+    $storeViberUrl = $storeViberNumber ? "viber://chat?number={$storeViberNumber}" : null;
+    $storeTelegramUrl = $storeTelegramHandle ? "https://t.me/{$storeTelegramHandle}" : null;
     // Normalized channel targets — reused client-side so the Direct Order links
     // rebuild the message (with the selected variant) as the shopper switches.
     $directViberNumber = \App\Support\ContactLinkBuilder::normalizeMyanmarPhone($storeSetting?->viber_number);
@@ -56,7 +62,7 @@
     $shareText = $product->name . ' — ' . format_currency($effectivePrice, $store) . ' — ' . ($store?->name ?? config('app.name'));
 @endphp
 
-<div class="w-full mx-auto space-y-1 sm:space-y-1.5 lg:space-y-2 pb-[70px] md:pb-0"
+<div class="max-w-7xl mx-auto space-y-4 sm:space-y-6 pb-[80px] md:pb-10"
     x-data="{
         variants: @js($product->variants->map(fn($v) => [
             'id' => $v->id,
@@ -263,10 +269,6 @@
             return values;
         },
         isAttrAvailable(label, value) {
-            // A value is selectable whenever at least one variant carries it.
-            // Clicking auto-adjusts the other labels to a matching combination,
-            // so sparse combos (e.g. only 256GB-Natural / 512GB-Blue / 1TB-Black)
-            // never lock the customer out of switching.
             return this.variants.some(v => this.variantAttrValue(v, label) === value);
         },
         selectAttr(label, value) {
@@ -322,47 +324,142 @@
             });
         }
     }">
-    {{-- Back Button (right-aligned) --}}
-    <div class="flex items-center">
-        <a href="{{ url()->previous() }}" class="inline-flex items-center gap-1.5 px-3 py-2 text-slate-600 dark:text-slate-300 hover:text-sky-700 dark:hover:text-sky-300 text-sm font-bold transition active:scale-95 shrink-0">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+
+    {{-- Breadcrumbs & Back Navigation (Lazada Style) --}}
+    <div class="flex items-center justify-between gap-2 px-1 py-1 text-xs">
+        <nav aria-label="Breadcrumb" class="flex items-center gap-1.5 font-medium text-slate-500 dark:text-slate-400 overflow-x-auto scrollbar-none py-1 min-w-0">
+            <a href="{{ $homeUrl ?? url('/?store_slug=' . $storeSlug) }}" class="inline-flex items-center gap-1 hover:text-orange-600 dark:hover:text-orange-400 transition shrink-0">
+                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span>{{ __('messages.home') }}</span>
+            </a>
+            <span class="text-slate-300 dark:text-slate-600 shrink-0">/</span>
+            <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="hover:text-orange-600 dark:hover:text-orange-400 transition shrink-0">
+                {{ __('messages.products') }}
+            </a>
+            @if ($product->category)
+                <span class="text-slate-300 dark:text-slate-600 shrink-0">/</span>
+                <a href="{{ url('/products?category_id=' . $product->category->id . '&store_slug=' . $storeSlug) }}" class="hover:text-orange-600 dark:hover:text-orange-400 transition shrink-0 max-w-[150px] truncate">
+                    {{ $product->category->name }}
+                </a>
+            @endif
+            <span class="text-slate-300 dark:text-slate-600 shrink-0">/</span>
+            <span class="text-slate-700 dark:text-slate-200 font-bold truncate max-w-[180px] sm:max-w-xs">{{ $product->name }}</span>
+        </nav>
+        <a href="{{ url()->previous() }}" class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-orange-600 hover:border-orange-300 text-xs font-bold transition shadow-2xs active:scale-95 shrink-0">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             <span>{{ __('messages.back') }}</span>
         </a>
     </div>
 
-    {{-- Main Product Detail --}}
-    <div class="w-full bg-white dark:bg-slate-900 border-y border-slate-200/90 dark:border-slate-800/80 shadow-none space-y-5 sm:space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-8">
-            {{-- Interactive Image Gallery --}}
-            <div class="space-y-2 sm:space-y-3">
-                {{-- Main Active Image Hero Box --}}
-                <div class="relative overflow-hidden bg-slate-100 dark:bg-slate-800 aspect-square">
-                    <template x-if="activeImage">
-                        <img 
-                            :src="'/storage/' + activeImage" 
-                            alt="{{ $product->name }}" 
-                            class="w-full h-full object-contain rounded-xl sm:rounded-2xl transition-all duration-300"
-                            data-img-fallback="hide-next"
-                        />
+    {{-- Main Product Detail Card (Lazada White Container) --}}
+    <div class="w-full rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm p-4 sm:p-6 lg:p-7 space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+            
+            {{-- Left Column: Interactive Image Gallery (5 cols) --}}
+            <div class="lg:col-span-5 space-y-3.5" x-data="{
+                isZoomed: false,
+                originX: '50%',
+                originY: '50%',
+                handleMouseMove(e) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    this.originX = Math.max(0, Math.min(100, x)).toFixed(1) + '%';
+                    this.originY = Math.max(0, Math.min(100, y)).toFixed(1) + '%';
+                },
+                handleTouchMove(e) {
+                    if (!this.isZoomed || !e.touches || e.touches.length === 0) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const t = e.touches[0];
+                    const x = ((t.clientX - rect.left) / rect.width) * 100;
+                    const y = ((t.clientY - rect.top) / rect.height) * 100;
+                    this.originX = Math.max(0, Math.min(100, x)).toFixed(1) + '%';
+                    this.originY = Math.max(0, Math.min(100, y)).toFixed(1) + '%';
+                },
+                toggleTouchZoom(e) {
+                    this.isZoomed = !this.isZoomed;
+                    if (this.isZoomed) {
+                        this.handleTouchMove(e);
+                    }
+                }
+            }">
+                {{-- Main Active Image Hero Box (Full-width in-frame zoom) --}}
+                <div 
+                    class="relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 aspect-square w-full p-2 flex items-center justify-center group shadow-sm select-none cursor-zoom-in"
+                    @mouseenter="isZoomed = true"
+                    @mouseleave="isZoomed = false"
+                    @mousemove="handleMouseMove($event)"
+                    @click="isZoomed = !isZoomed"
+                    @touchmove="handleTouchMove($event)"
+                >
+                    {{-- Store Logo / Official Tag Badge --}}
+                    <div class="absolute top-3 left-3 z-10 flex flex-col gap-1.5 pointer-events-none">
+                        @if ($storeLogoUrl)
+                            <span class="inline-flex items-center px-2 py-1 rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs border border-slate-200/90 dark:border-slate-700 shadow-sm max-h-7">
+                                <img src="{{ $storeLogoUrl }}" alt="{{ $store?->name }}" class="h-4 max-w-[80px] object-contain" />
+                            </span>
+                        @else
+                            <span style="background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%) !important; color: #ffffff !important;" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-white font-black text-[11px] tracking-wide uppercase shadow-xs border-0">
+                                ★ {{ $store?->name ?? 'Official' }}
+                            </span>
+                        @endif
+                        <template x-if="onSale">
+                            <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded bg-rose-500 text-white font-black text-[11px] shadow-xs w-fit">
+                                <span x-text="'-' + discountPct + '%'"></span>
+                            </span>
+                        </template>
+                    </div>
+
+                    {{-- Stock Warning Badge --}}
+                    <template x-if="!inStock">
+                        <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-xs z-10 flex items-center justify-center pointer-events-none">
+                            <span class="px-4 py-1.5 rounded-full bg-rose-600 text-white font-black text-xs shadow-lg uppercase tracking-wider">
+                                {{ __('messages.out_of_stock') }}
+                            </span>
+                        </div>
                     </template>
-                    <x-product-image 
-                        ::path="activeImage" 
-                        :alt="$product->name" 
-                        class="w-full h-full object-contain"
-                        aspect="aspect-square" 
-                    />
+
+                    {{-- In-Frame Zoom Status Pill --}}
+                    <div class="absolute bottom-3 right-3 z-10 pointer-events-none transition-all duration-200">
+                        <span 
+                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-white font-bold text-xs shadow-md backdrop-blur-md transition-colors"
+                            :class="isZoomed ? 'bg-orange-600/90' : 'bg-slate-900/70'"
+                        >
+                            <span x-text="isZoomed ? '🔍 Zoom Out' : '🔍 Zoom In'"></span>
+                        </span>
+                    </div>
+
+                    {{-- Inner Zoom Image Container --}}
+                    <div 
+                        class="w-full h-full flex items-center justify-center transition-transform duration-200 ease-out will-change-transform"
+                        :style="isZoomed ? `transform: scale(2.2); transform-origin: ${originX} ${originY};` : 'transform: scale(1); transform-origin: center center;'"
+                    >
+                        <template x-if="activeImage">
+                            <img 
+                                :src="'/storage/' + activeImage" 
+                                alt="{{ $product->name }}" 
+                                class="w-full h-full object-contain rounded-xl transition-opacity duration-200 pointer-events-none"
+                                data-img-fallback="hide-next"
+                            />
+                        </template>
+                        <x-product-image 
+                            ::path="activeImage" 
+                            :alt="$product->name" 
+                            class="w-full h-full object-contain pointer-events-none"
+                            aspect="aspect-square" 
+                        />
+                    </div>
                 </div>
 
-                {{-- Thumbnail Strip Navigation (server-rendered so search engines see the gallery;
-                     the hero image above swaps to the selected variant's image when it has one) --}}
+                {{-- Thumbnail Strip Navigation --}}
                 @if (count($gallery) > 1)
-                    <div x-data="{ isDown: false, startX: 0, scrollLeft: 0 }" @mousedown="isDown = true; startX = $event.pageX - $el.offsetLeft; scrollLeft = $el.scrollLeft" @mouseleave="isDown = false" @mouseup="isDown = false" @mousemove="if(isDown){$event.preventDefault();const x=$event.pageX-$el.offsetLeft;const walk=(x-startX)*1.5;$el.scrollLeft=scrollLeft-walk}" class="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1 sm:pb-1 scrollbar-thin -mx-1 sm:mx-0 px-1 sm:px-0 cursor-grab active:cursor-grabbing select-none">
+                    <div x-data="{ isDown: false, startX: 0, scrollLeft: 0 }" @mousedown="isDown = true; startX = $event.pageX - $el.offsetLeft; scrollLeft = $el.scrollLeft" @mouseleave="isDown = false" @mouseup="isDown = false" @mousemove="if(isDown){$event.preventDefault();const x=$event.pageX-$el.offsetLeft;const walk=(x-startX)*1.5;$el.scrollLeft=scrollLeft-walk}" class="flex items-center justify-start gap-2.5 overflow-x-auto pb-1 scrollbar-thin cursor-grab active:cursor-grabbing select-none w-full">
                         @foreach ($gallery as $img)
                             <button 
                                 @click="activeImage = '{{ $img }}'" 
                                 type="button" 
-                                class="w-11 h-11 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-200 shrink-0 focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-                                :class="activeImage === '{{ $img }}' ? 'border-sky-500 ring-2 ring-sky-500/30 scale-105 shadow-sm' : 'border-slate-200 dark:border-slate-700 opacity-60 hover:opacity-100'"
+                                class="w-16 h-16 sm:w-18 sm:h-18 rounded-xl overflow-hidden border-2 transition-all duration-150 shrink-0 focus:outline-none"
+                                :class="activeImage === '{{ $img }}' ? 'border-orange-500 ring-2 ring-orange-500/20 scale-102 shadow-xs' : 'border-slate-200 dark:border-slate-700 opacity-60 hover:opacity-100 hover:border-slate-400'"
                             >
                                 <img src="{{ asset('storage/' . $img) }}" alt="{{ __('messages.thumbnail') }}" class="w-full h-full object-cover" />
                             </button>
@@ -370,114 +467,333 @@
                     </div>
                 @endif
 
-                {{-- Badges Row --}}
-                <div class="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-xs pt-1 sm:pt-1">
-                    <span class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl font-bold bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-800/60 truncate max-w-[45%] sm:max-w-full">
-                        {{ $product->category?->name ?? __('messages.categories') }}
-                    </span>
-                    <span class="px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl font-bold font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 truncate max-w-[50%] sm:max-w-full">
-                        {{ __('messages.sku') }}: <span x-text="sku">{{ $product->sku }}</span>
-                    </span>
+                {{-- Trust & Service Badges (Enhanced with bespoke icons) --}}
+                <div class="grid grid-cols-2 gap-2.5 pt-2 text-xs text-slate-700 dark:text-slate-300 w-full border-t border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-orange-100 dark:bg-orange-950/70 text-orange-600 dark:text-orange-400 flex items-center justify-center text-xs shrink-0 shadow-2xs">
+                            🛡️
+                        </span>
+                        <span class="font-semibold text-[11px] sm:text-xs truncate">100% Authentic</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs shrink-0 shadow-2xs">
+                            💵
+                        </span>
+                        <span class="font-semibold text-[11px] sm:text-xs truncate">Cash On Delivery</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-sky-100 dark:bg-sky-950/70 text-sky-600 dark:text-sky-400 flex items-center justify-center text-xs shrink-0 shadow-2xs">
+                            🚚
+                        </span>
+                        <span class="font-semibold text-[11px] sm:text-xs truncate">Fast Delivery</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-purple-100 dark:bg-purple-950/70 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xs shrink-0 shadow-2xs">
+                            ⭐
+                        </span>
+                        <span class="font-semibold text-[11px] sm:text-xs truncate">Service Guaranteed</span>
+                    </div>
                 </div>
             </div>
 
-            {{-- Info & Order Column --}}
-            <div class="space-y-3 sm:space-y-5">
-                {{-- Brand & Name --}}
-                <div class="flex flex-wrap items-baseline gap-x-2 sm:gap-x-3 gap-y-1">
-                    <div class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-400 shrink-0">
-                        {{ $product->brand?->name ?? __('messages.brands') }}
+            {{-- Right Column: Buy Box & Product Info (7.5 cols) --}}
+            <div class="lg:col-span-7 space-y-4">
+                
+                {{-- Product Title & Header --}}
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 flex-wrap text-xs">
+                        @if ($storeLogoUrl)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 shadow-2xs max-h-6">
+                                <img src="{{ $storeLogoUrl }}" alt="{{ $store?->name }}" class="h-3.5 max-w-[80px] object-contain" />
+                            </span>
+                        @else
+                            <span style="background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%) !important; color: #ffffff !important;" class="px-2 py-0.5 rounded-md text-white font-black text-[10px] tracking-wide uppercase shadow-2xs border-0">
+                                {{ $store?->name ?? 'Official' }}
+                            </span>
+                        @endif
+                        @if ($product->brand)
+                            <a href="{{ url('/products?brand_id=' . $product->brand->id . '&store_slug=' . $storeSlug) }}" class="font-bold text-sky-600 dark:text-sky-400 hover:underline">
+                                {{ __('messages.brand') ?? 'Brand' }}: {{ $product->brand->name }}
+                            </a>
+                        @endif
+                        <span class="text-slate-300 dark:text-slate-600">|</span>
+                        <span class="text-slate-500 dark:text-slate-400 font-mono">
+                            {{ __('messages.sku') }}: <span x-text="sku">{{ $product->sku }}</span>
+                        </span>
                     </div>
-                    <h1 class="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white font-outfit leading-snug sm:leading-tight">
+
+                    <h1 class="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900 dark:text-white leading-snug">
                         {{ $product->name }}
                     </h1>
+
+                    {{-- Ratings & Reviews Summary Bar --}}
+                    <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 pt-0.5 border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <div class="flex items-center gap-1 text-amber-500">
+                            <span class="font-bold text-slate-900 dark:text-white">{{ $avgRating ?: '5.0' }}</span>
+                            <div class="flex text-xs">
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <span class="{{ $i <= ($avgRating ?: 5) ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600' }}">★</span>
+                                @endfor
+                            </div>
+                        </div>
+                        <span>·</span>
+                        <a href="#panel-reviews" class="text-sky-600 dark:text-sky-400 hover:underline">
+                            {{ $reviews->count() }} {{ __('messages.reviews') }}
+                        </a>
+                        <span>·</span>
+                        <template x-if="inStock">
+                            <span class="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                {{ __('messages.in_stock') }}
+                            </span>
+                        </template>
+                        <template x-if="!inStock">
+                            <span class="text-rose-600 dark:text-rose-400 font-bold">
+                                {{ __('messages.out_of_stock') }}
+                            </span>
+                        </template>
+
+                        {{-- Share / Wishlist Quick Actions (Right-aligned with Vibrant Colors) --}}
+                        <div class="ml-auto flex items-center gap-2">
+                            {{-- Favorite Heart Button (Vibrant Rose) --}}
+                            <button
+                                @click.stop.prevent="$store.favoritesStore.toggle({ id: {{ $product->id }}, name: {{ json_encode($product->name) }}, brand: {{ json_encode($product->brand?->name ?? 'General') }}, url: {{ json_encode($productUrl) }}, image_path: {{ json_encode($primaryImage ?? '') }} })"
+                                type="button"
+                                class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all duration-200 transform active:scale-95 shadow-2xs cursor-pointer text-xs font-bold"
+                                :class="$store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }}) 
+                                    ? 'bg-rose-500 text-white border-rose-500 shadow-rose-500/30 ring-2 ring-rose-300 dark:ring-rose-900' 
+                                    : 'bg-rose-50/80 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/70 border-rose-200/80 dark:border-rose-800/70 text-rose-600 dark:text-rose-400'"
+                                title="{{ __('messages.favorites') }}"
+                            >
+                                <svg class="w-4 h-4 shrink-0 transition-transform" :fill="($store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }})) ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.684a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                </svg>
+                                <span class="hidden sm:inline" x-text="($store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }})) ? 'သိမ်းဆည်းပြီး' : 'သိမ်းမည်'"></span>
+                            </button>
+
+                            {{-- Share Button (Vibrant Sky Blue) --}}
+                            <x-share-button
+                                :url="$productUrl"
+                                :title="$product->name"
+                                :text="$shareText"
+                                hide-label-on-mobile
+                                button-class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/50 dark:hover:bg-sky-900/60 border border-sky-200 dark:border-sky-800/70 text-sky-700 dark:text-sky-300 text-xs font-bold shadow-2xs transition transform active:scale-95 cursor-pointer"
+                                :show-viber="(bool) $directViberUrl"
+                                :show-telegram="(bool) $directTelegramUrl"
+                                :show-facebook="(bool) ($storeSetting?->facebook_url ?? '')"
+                            />
+                        </div>
+                    </div>
                 </div>
 
-                {{-- Price Display Box (reactive to selected variant) --}}
-                <div class="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500/10 via-fuchsia-500/10 to-transparent">
-                    <div class="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1">
-                        <div class="text-xs sm:text-xs font-semibold text-slate-500 dark:text-slate-600 shrink-0">
-                            {{ $isWholesaleApproved ? __('messages.wholesale') : __('messages.price') }}
+                {{-- Lazada Signature Price Box --}}
+                <div class="p-4 rounded-xl bg-orange-50/60 dark:bg-slate-800/80 border border-orange-100 dark:border-slate-700/60 space-y-2">
+                    <div class="flex items-baseline gap-3 flex-wrap">
+                        <div class="text-2xl sm:text-3xl lg:text-4xl font-black text-[#f85606] dark:text-orange-400 font-outfit" x-text="fmt(price)">
+                            {{ format_currency($effectivePrice, $store) }}
                         </div>
-                        {{-- Old price + % OFF when on sale --}}
                         <template x-if="onSale">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-xs sm:text-sm text-slate-600 dark:text-slate-500 line-through decoration-rose-500 decoration-2 shrink-0" x-text="fmt(baseOld)"></span>
-                                <span class="inline-block text-xs sm:text-xs font-black px-2 py-0.5 rounded-full bg-rose-500 text-white shadow-sm shadow-rose-500/40" x-text="'-' + discountPct + '%'"></span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-slate-400 line-through decoration-slate-400 font-mono" x-text="fmt(baseOld)"></span>
+                                <span class="text-xs font-black text-[#f85606] bg-orange-100 dark:bg-orange-950/60 px-1.5 py-0.5 rounded" x-text="'-' + discountPct + '%'"></span>
                             </div>
                         </template>
-                        <div class="text-lg sm:text-2xl lg:text-3xl font-black text-sky-700 dark:text-sky-400 font-outfit shrink-0" x-text="fmt(price)">{{ format_currency($effectivePrice, $store) }}</div>
                     </div>
 
-                    {{-- Variant selector — grouped by attribute when available, flat pill fallback otherwise --}}
-                    <template x-if="hasVariants">
-                        <div class="mt-3 pt-3 border-t border-sky-200/60 dark:border-sky-900/60">
-                            <template x-if="hasStructuredAttrs">
-                                <div class="space-y-2.5">
-                                    <template x-for="label in attrLabels" :key="label">
-                                        <div>
-                                            <p class="text-sm font-bold text-slate-500 dark:text-slate-600 mb-1.5" x-text="label + ':'"></p>
-                                            <div class="flex flex-wrap gap-1.5">
-                                                <template x-for="value in attrValues(label)" :key="label + ':' + value">
-                                                    <button type="button" @click="selectAttr(label, value)"
-                                                        :disabled="!isAttrAvailable(label, value)"
-                                                        class="px-3 py-1.5 rounded-full text-xs sm:text-xs font-black transition border"
-                                                        :class="selectedAttrs[label] === value
-                                                            ? 'bg-sky-600 text-white border-sky-600 shadow-md shadow-sky-500/25'
-                                                            : (isAttrAvailable(label, value)
-                                                                ? 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-sky-400'
-                                                                : 'bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/60 text-slate-300 dark:text-slate-600 line-through cursor-not-allowed')">
-                                                        <span x-text="value"></span>
-                                                    </button>
-                                                </template>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </div>
-                            </template>
-                            <template x-if="!hasStructuredAttrs">
-                                <div>
-                                    <p class="text-sm font-bold text-slate-500 dark:text-slate-600">{{ __('messages.variants') }}:</p>
-                                    <div class="flex flex-wrap gap-1.5">
-                                        <template x-for="(v, i) in variants" :key="v.id">
-                                            <button type="button" @click="selectedIndex = i"
-                                                class="px-3 py-1.5 rounded-full text-xs sm:text-xs font-black transition border"
-                                                :class="selectedIndex === i ? 'bg-sky-600 text-white border-sky-600 shadow-md shadow-sky-500/25' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-sky-400'">
-                                                <span x-text="v.name"></span>
-                                                <span class="opacity-70" x-show="(isWholesale && (v.wholesale_price || 0) > 0 ? v.wholesale_price : v.retail_price) > 0" x-text="'· ' + fmt(isWholesale && (v.wholesale_price || 0) > 0 ? v.wholesale_price : v.retail_price)"></span>
-                                            </button>
-                                        </template>
-                                    </div>
-                                </div>
-                            </template>
-                            @if ($showRetailSale && $product->saleWindowLabel())
-                                <p class="mt-2 text-xs font-bold text-rose-600 dark:text-rose-400">{{ $product->saleWindowLabel() }}</p>
-                            @endif
-                            <p class="mt-1.5 text-xs text-slate-600 dark:text-slate-500" x-show="!inStock">{{ __('messages.out_of_stock') }}</p>
-                        </div>
-                    </template>
+                    {{-- Promotion Tag --}}
+                    <div class="flex items-center gap-2 text-xs pt-1">
+                        <span class="px-2 py-0.5 rounded bg-orange-500 text-white font-bold text-[10px]">
+                            Promotions
+                        </span>
+                        <span class="text-slate-600 dark:text-slate-300 font-medium">
+                            {{ $isWholesaleApproved ? __('messages.wholesale') : 'Best Price Guarantee' }}
+                        </span>
+                        @if ($showRetailSale && $product->saleWindowLabel())
+                            <span class="text-rose-600 dark:text-rose-400 font-bold ml-auto">{{ $product->saleWindowLabel() }}</span>
+                        @endif
+                    </div>
                 </div>
 
-                @if ($product->isInStock() && ($directViberUrl || $directTelegramUrl))
-                    <div class="rounded-2xl bg-white p-3 dark:bg-slate-900">
-                        <div class="mb-2 flex items-center gap-2">
-                            <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300">💬</span>
-                            <div class="min-w-0">
-                                <p class="text-xs font-black text-slate-900 dark:text-white">{{ __('messages.direct_order') }}</p>
-                                <p class="text-xs leading-relaxed text-slate-500 dark:text-slate-600">ပစ္စည်းအချက်အလက်ပါပြီးသား message နဲ့ ဆိုင်ကိုတိုက်ရိုက်ပို့မည်။</p>
+                {{-- Delivery & Service Options (Lazada Delivery Card) --}}
+                <div class="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/40 p-3.5 space-y-2.5 text-xs">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                            <span class="text-slate-400">🚚</span>
+                            <span class="font-bold">Standard Delivery:</span>
+                            <span class="text-slate-500 dark:text-slate-400">Estimated 1 - 3 Days</span>
+                        </div>
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400">Available</span>
+                    </div>
+
+                    <div class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                        <span class="text-slate-400">💵</span>
+                        <span class="font-bold">Cash on Delivery (COD):</span>
+                        <span class="text-slate-500 dark:text-slate-400">Supported</span>
+                    </div>
+
+                    @if ($product->warranty)
+                        <div class="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                            <span class="text-slate-400">🛡️</span>
+                            <span class="font-bold">{{ __('messages.warranty') }}:</span>
+                            <span class="text-slate-600 dark:text-slate-300 font-semibold">{{ $product->warranty }}</span>
+                        </div>
+                    @endif
+
+                    @php
+                        $hasReturnPolicy = trim((string) $product->return_policy) !== '';
+                    @endphp
+                    @if ($hasReturnPolicy)
+                        <div class="rounded-lg border border-slate-200/70 dark:border-slate-700/60 bg-white/60 dark:bg-slate-800/60 overflow-hidden" x-data="{ open: false }">
+                            <button type="button" @click="open = !open" :aria-expanded="open ? 'true' : 'false'" aria-controls="return-policy-panel"
+                                class="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 text-left focus:outline-none rounded-lg">
+                                <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                    <span>🔄</span> <span>{{ __('messages.return_policy') }}</span>
+                                </span>
+                                <svg class="w-3.5 h-3.5 shrink-0 text-slate-400 transition-transform duration-150" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            <div id="return-policy-panel" x-show="open" class="px-2.5 pb-2 pt-0.5 border-t border-slate-100 dark:border-slate-700/50">
+                                <p class="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">{{ $product->return_policy }}</p>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
+                    @endif
+                </div>
+
+                {{-- Variant Selector --}}
+                <template x-if="hasVariants">
+                    <div class="space-y-3 pt-1">
+                        <template x-if="hasStructuredAttrs">
+                            <div class="space-y-2.5">
+                                <template x-for="label in attrLabels" :key="label">
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5" x-text="label + ':'"></p>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <template x-for="value in attrValues(label)" :key="label + ':' + value">
+                                                <button type="button" @click="selectAttr(label, value)"
+                                                    :disabled="!isAttrAvailable(label, value)"
+                                                    class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition border"
+                                                    :class="selectedAttrs[label] === value
+                                                        ? 'bg-orange-50 border-[#f85606] text-[#f85606] ring-1 ring-[#f85606]'
+                                                        : (isAttrAvailable(label, value)
+                                                            ? 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-orange-400'
+                                                            : 'bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/60 text-slate-300 dark:text-slate-600 line-through cursor-not-allowed')">
+                                                    <span x-text="value"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <template x-if="!hasStructuredAttrs">
+                            <div>
+                                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">{{ __('messages.variants') }}:</p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <template x-for="(v, i) in variants" :key="v.id">
+                                        <button type="button" @click="selectedIndex = i"
+                                            class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition border"
+                                            :class="selectedIndex === i ? 'bg-orange-50 border-[#f85606] text-[#f85606] ring-1 ring-[#f85606]' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-orange-400'">
+                                            <span x-text="v.name"></span>
+                                            <span class="opacity-70" x-show="(isWholesale && (v.wholesale_price || 0) > 0 ? v.wholesale_price : v.retail_price) > 0" x-text="'· ' + fmt(isWholesale && (v.wholesale_price || 0) > 0 ? v.wholesale_price : v.retail_price)"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                {{-- Action Buttons Row (Lazada Signature Dual Buttons: Buy Now + Add to Cart) --}}
+                <div class="flex items-center gap-2.5 sm:gap-3 pt-2">
+                    @if ($product->isInStock())
+                        {{-- Buy Now (Primary Solid Orange Button) --}}
+                        <button
+                            @click.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: variantId, variant_id: variantId, name: cartName, price: price, sku: sku, image_path: selectedImagePath }); window.location.href='{{ url('/order-builder?store_slug=' . $storeSlug) }}'"
+                            :disabled="!inStock"
+                            type="button"
+                            style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;"
+                            class="flex-1 h-12 px-4 sm:px-6 hover:brightness-110 disabled:opacity-50 text-white font-black text-xs sm:text-sm rounded-xl shadow-md shadow-orange-500/25 transition transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer select-none border-0"
+                        >
+                            <span class="text-base">⚡</span>
+                            <span style="color: #ffffff !important;" class="font-black text-white">Buy Now</span>
+                        </button>
+
+                        {{-- Add to Cart / Order (Secondary Sky Blue Button) --}}
+                        <button
+                            @click.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: variantId, variant_id: variantId, name: cartName, price: price, sku: sku, image_path: selectedImagePath })"
+                            :disabled="!inStock"
+                            type="button"
+                            style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important; color: #ffffff !important;"
+                            class="flex-1 h-12 px-4 sm:px-6 hover:brightness-110 disabled:opacity-50 text-white font-black text-xs sm:text-sm rounded-xl shadow-md shadow-sky-500/25 transition transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer select-none border-0"
+                        >
+                            <span class="text-base">🛒</span>
+                            <span style="color: #ffffff !important;" class="font-black text-white">{{ __('messages.add_to_order') }}</span>
+                        </button>
+                    @else
+                        <div class="w-full space-y-2.5">
+                            <div class="w-full h-12 px-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 font-black text-sm flex items-center justify-center">
+                                {{ __('messages.out_of_stock') }}
+                            </div>
+                            @if ($storeViberUrl || $storeTelegramUrl)
+                                <div class="rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/60 p-3 space-y-2">
+                                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ __('messages.ask_when_back_in_stock') }}</p>
+                                    <div class="grid {{ ($storeViberUrl && $storeTelegramUrl) ? 'grid-cols-2' : 'grid-cols-1' }} gap-2">
+                                        @if ($storeViberUrl)
+                                            <a href="{{ $storeViberUrl }}" target="_blank" rel="noopener noreferrer"
+                                               style="background: linear-gradient(135deg, #7360F2 0%, #5f4de0 100%) !important; color: #ffffff !important;"
+                                               class="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl hover:brightness-110 px-3 py-2 text-xs font-black text-white shadow-md shadow-purple-500/20 transition transform active:scale-95 cursor-pointer select-none border-0">
+                                                <x-brand-icon brand="viber" class="h-4 w-4 shrink-0 text-white fill-white"/>
+                                                <span class="font-black text-white">{{ __('messages.open_viber') }}</span>
+                                            </a>
+                                        @endif
+                                        @if ($storeTelegramUrl)
+                                            <a href="{{ $storeTelegramUrl }}" target="_blank" rel="noopener noreferrer"
+                                               style="background: linear-gradient(135deg, #229ED9 0%, #1b8ec5 100%) !important; color: #ffffff !important;"
+                                               class="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl hover:brightness-110 px-3 py-2 text-xs font-black text-white shadow-md shadow-sky-500/20 transition transform active:scale-95 cursor-pointer select-none border-0">
+                                                <x-brand-icon brand="telegram" class="h-4 w-4 shrink-0 text-white fill-white"/>
+                                                <span class="font-black text-white">Telegram</span>
+                                            </a>
+                                        @endif
+                                    </div>
+                                    @if ($storeViberUrl)
+                                        <p class="pt-0.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1.5 flex-wrap">
+                                            <span>{{ __('messages.viber_missing') }}</span>
+                                            <a href="https://www.viber.com/download/" target="_blank" rel="noopener noreferrer"
+                                               class="font-black text-[#7360F2] hover:underline dark:text-violet-400">
+                                                {{ __('messages.viber_install') }} →
+                                            </a>
+                                        </p>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Direct Order Box (Viber & Telegram) --}}
+                @if ($product->isInStock() && ($directViberUrl || $directTelegramUrl))
+                    <div class="rounded-xl border border-purple-200/80 dark:border-slate-700/80 bg-purple-50/40 dark:bg-slate-800/60 p-3 space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                <span>💬</span>
+                                <span>{{ __('messages.direct_order') }} (Chat)</span>
+                            </span>
+                        </div>
+                        <div class="grid {{ ($directViberUrl && $directTelegramUrl) ? 'grid-cols-2' : 'grid-cols-1' }} gap-2.5">
                             @if ($directViberUrl)
                                 <a
                                     href="{{ $directViberUrl }}"
                                     :href="viberHref"
                                     :data-ios-href="viberIosHref"
                                     @click.prevent="openViberModal()"
-                                    class="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-purple-600 px-2 py-2 text-xs font-black text-white shadow-md shadow-purple-500/25 transition hover:bg-purple-500 active:scale-95"
+                                    style="background: linear-gradient(135deg, #7360F2 0%, #5f4de0 100%) !important; color: #ffffff !important;"
+                                    class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full hover:brightness-110 px-4 py-2.5 text-xs sm:text-sm font-black text-white shadow-md shadow-purple-500/30 transition transform active:scale-95 cursor-pointer select-none border-0 ring-1 ring-white/20"
                                 >
-                                    <x-brand-icon brand="viber" class="h-4 w-4 shrink-0"/>
-                                    <span>Viber</span>
+                                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 shrink-0">
+                                        <x-brand-icon brand="viber" class="h-3.5 w-3.5 shrink-0 fill-white text-white"/>
+                                    </span>
+                                    <span style="color: #ffffff !important;" class="font-black text-white">{{ __('messages.open_viber') }}</span>
                                 </a>
                             @endif
                             @if ($directTelegramUrl)
@@ -486,158 +802,44 @@
                                     :href="telegramHref"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-sky-500 px-2 py-2 text-xs font-black text-white shadow-md shadow-sky-500/25 transition hover:bg-sky-400 active:scale-95"
+                                    style="background: linear-gradient(135deg, #229ED9 0%, #0284c7 100%) !important; color: #ffffff !important;"
+                                    class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full hover:brightness-110 px-4 py-2.5 text-xs sm:text-sm font-black text-white shadow-md shadow-sky-500/30 transition transform active:scale-95 cursor-pointer select-none border-0 ring-1 ring-white/20"
                                 >
-                                    <x-brand-icon brand="telegram" class="h-4 w-4 shrink-0"/>
-                                    <span>Telegram</span>
+                                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 shrink-0">
+                                        <x-brand-icon brand="telegram" class="h-3.5 w-3.5 shrink-0 fill-white text-white"/>
+                                    </span>
+                                    <span style="color: #ffffff !important;" class="font-black text-white">Telegram Chat</span>
                                 </a>
                             @endif
                         </div>
                         @if ($directViberUrl)
-                            <p class="pt-1.5 text-[11px] text-slate-400 dark:text-slate-500">
-                                {{ __('messages.viber_missing') }}
+                            <p class="pt-0.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1.5 flex-wrap">
+                                <span>{{ __('messages.viber_missing') }}</span>
                                 <a href="https://www.viber.com/download/" target="_blank" rel="noopener noreferrer"
-                                   class="font-bold text-sky-600 transition hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300">{{ __('messages.viber_install') }} →</a>
+                                   class="font-black text-[#7360F2] hover:underline dark:text-violet-400">
+                                    {{ __('messages.viber_install') }} →
+                                </a>
                             </p>
                         @endif
                     </div>
                 @endif
 
-                {{-- Stock Status (reactive to selected variant) --}}
-                <div class="flex flex-wrap items-center gap-1 sm:gap-3 text-xs sm:text-xs">
-                    <span class="font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">{{ __('messages.stock_status') }}:</span>
-                    <template x-if="inStock">
-                        <span class="px-2.5 sm:px-3 py-1 rounded-full font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/60 whitespace-nowrap">
-                            {{ __('messages.in_stock') }}
-                        </span>
-                    </template>
-                    <template x-if="!inStock">
-                        <span class="px-2.5 sm:px-3 py-1 rounded-full font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-300/60 whitespace-nowrap">
-                            {{ __('messages.out_of_stock') }}
-                        </span>
-                    </template>
-                </div>
-
-                {{-- Service / Digital details — shown prominently so shoppers know
-                     how long a labor/service item takes or how a digital code is
-                     delivered before they order. Escaped plain text only. --}}
-                @php
-                    $hasServiceDuration = trim((string) $product->service_duration) !== '';
-                    $hasDeliveryMethod  = trim((string) $product->digital_delivery_method) !== '';
-                @endphp
-                @if ($hasServiceDuration || $hasDeliveryMethod)
-                    <div class="space-y-2 sm:space-y-2.5 text-xs pt-0.5 sm:pt-1">
-                        @if ($hasServiceDuration && $product->product_type === 'service')
-                            <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 p-2.5 sm:p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/40">
-                                <span class="font-bold text-amber-900 dark:text-amber-300 text-sm shrink-0">⏱️ {{ __('messages.product_form_service_duration') }}:</span>
-                                <p class="text-slate-700 dark:text-slate-300 text-xs sm:text-xs leading-relaxed">{{ $product->service_duration }}</p>
-                            </div>
-                        @endif
-                        @if ($hasDeliveryMethod && $product->product_type === 'digital')
-                            <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 p-2.5 sm:p-3 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/40">
-                                <span class="font-bold text-sky-800 dark:text-sky-300 text-sm shrink-0">📲 {{ __('messages.product_form_digital_delivery_method') }}:</span>
-                                <p class="text-slate-700 dark:text-slate-300 text-xs sm:text-xs leading-relaxed">{{ $product->digital_delivery_method }}</p>
-                            </div>
-                        @endif
-                    </div>
-                @endif
-
-                {{-- Warranty & Return Policy Info — recommended order: Stock above,
-                     actions below. Warranty shows inline; Return Policy is a
-                     collapsible disclosure (collapsed by default so long policies
-                     don't push the action buttons down on mobile). Without JS the
-                     panel stays open so the policy text is never lost. Both are
-                     escaped plain text — never raw HTML. --}}
-                @php
-                    // Whitespace-only policies count as empty — no section, no heading.
-                    $hasReturnPolicy = trim((string) $product->return_policy) !== '';
-                @endphp
-                @if ($product->warranty || $hasReturnPolicy)
-                    <div class="space-y-2 sm:space-y-2.5 text-xs pt-0.5 sm:pt-1">
-                        @if ($product->warranty)
-                            <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 p-2.5 sm:p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/40">
-                                <span class="font-bold text-amber-900 dark:text-amber-300 text-sm shrink-0">🛡️ {{ __('messages.warranty') }}:</span>
-                                <p class="text-slate-700 dark:text-slate-300 text-xs sm:text-xs leading-relaxed">{{ $product->warranty }}</p>
-                            </div>
-                        @endif
-                        @if ($hasReturnPolicy)
-                            <div class="rounded-xl border border-sky-200/70 dark:border-sky-900/40 bg-sky-50/70 dark:bg-sky-950/40" x-data="{ open: false }">
-                                <button type="button" @click="open = !open" :aria-expanded="open ? 'true' : 'false'" aria-controls="return-policy-panel"
-                                    class="w-full flex items-center justify-between gap-2 px-2.5 sm:px-3 py-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 rounded-xl">
-                                    <span class="font-bold text-sky-800 dark:text-sky-300 text-sm shrink-0">🔄 {{ __('messages.return_policy') }}</span>
-                                    <svg class="w-4 h-4 shrink-0 text-sky-600 dark:text-sky-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-                                <div id="return-policy-panel" x-show="open" class="px-2.5 sm:px-3 pb-2.5 sm:pb-3">
-                                    <p class="text-slate-700 dark:text-slate-300 text-xs sm:text-xs leading-relaxed whitespace-pre-line">{{ $product->return_policy }}</p>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                @endif
-
-                {{-- Action Row — desktop inline (❤️ Favorite / Share / Add to Order); mobile uses the sticky bottom bar --}}
-                <div class="hidden md:flex items-center gap-2">
-                    <button
-                        @click.stop.prevent="$store.favoritesStore.toggle({ id: {{ $product->id }}, name: {{ json_encode($product->name) }}, brand: {{ json_encode($product->brand?->name ?? 'General') }}, url: {{ json_encode($productUrl) }}, image_path: {{ json_encode($primaryImage ?? '') }} })"
-                        type="button"
-                        class="w-12 h-12 shrink-0 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-lg shadow-rose-500/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
-                        :class="{ 'scale-110 ring-2 ring-rose-300 shadow-rose-500/50': $store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }}) }"
-                        title="{{ __('messages.favorites') }}"
-                        aria-label="{{ __('messages.favorites') }}"
-                    >
-                        <svg class="w-5 h-5 transition-transform duration-200 active:scale-125" :fill="($store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }})) ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.684a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                        </svg>
-                    </button>
-
-                    <x-share-button
-                        :url="$productUrl"
-                        :title="$product->name"
-                        :text="$shareText"
-                        hide-label-on-mobile
-                        button-class="w-12 sm:w-22 h-12 shrink-0 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
-                        :show-viber="(bool) $directViberUrl"
-                        :show-telegram="(bool) $directTelegramUrl"
-                        :show-facebook="(bool) ($storeSetting?->facebook_url ?? '')"
-                    />
-
-                    @if ($product->isInStock())
-                        <button
-                            @click.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: variantId, variant_id: variantId, name: cartName, price: price, sku: sku, image_path: selectedImagePath })"
-                            :disabled="!inStock"
-                            type="button"
-                            class="flex-1 h-12 px-4 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed text-white font-extrabold text-xs rounded-xl shadow-lg shadow-sky-500/30 transition transform active:scale-95 flex items-center justify-center gap-2"
-                        >
-                            <span class="text-sm">🛒</span>
-                            <span>{{ __('messages.add_to_order') }}</span>
-                        </button>
-                    @else
-                        <div class="flex-1 h-12 px-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 font-extrabold text-xs flex items-center justify-center">
-                            {{ __('messages.out_of_stock') }}
-                        </div>
-                    @endif
-                </div>
-
-                {{-- Single Order Form --}}
+                {{-- Collapsible Direct Order Form --}}
                 @if ($product->isInStock())
-                    <div class="space-y-2 sm:space-y-3" x-data="{ orderFormOpen: {{ ($errors->any() || old('customer_name')) ? 'true' : 'false' }}, contactChannel: '{{ old('contact_channel', 'phone') }}' }">
-
-                        {{-- Direct Order toggle --}}
+                    <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 overflow-hidden" x-data="{ orderFormOpen: {{ ($errors->any() || old('customer_name')) ? 'true' : 'false' }}, contactChannel: '{{ old('contact_channel', 'phone') }}' }">
                         <button
                             type="button"
                             @click="orderFormOpen = !orderFormOpen"
                             :aria-expanded="orderFormOpen ? 'true' : 'false'"
-                            class="w-full p-3.5 sm:p-4 flex items-center justify-between gap-2 transition active:scale-[0.99]"
+                            class="w-full p-3 flex items-center justify-between gap-2 transition hover:bg-slate-100/80 dark:hover:bg-slate-800/60 cursor-pointer"
                         >
-                            <span class="font-black text-sm text-slate-900 dark:text-white font-outfit flex items-center gap-2">
-                                <span>🛒</span>
-                                <span>{{ __('messages.direct_order') }}</span>
+                            <span class="font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                <span>📝</span>
+                                <span>{{ __('messages.direct_order') }} (အမြန်မှာယူရန်)</span>
                             </span>
-                            <span class="flex items-center gap-1.5 shrink-0">
-                                <span class="text-xs font-bold text-slate-600 dark:text-slate-500" x-text="orderFormOpen ? '{{ __('messages.close') }}' : '{{ __('messages.open') }}'"></span>
-                                <svg class="w-4 h-4 text-slate-600 dark:text-slate-500 transition-transform duration-200" :class="orderFormOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            <span class="flex items-center gap-1 text-xs text-[#f85606] dark:text-orange-400 font-bold">
+                                <span x-text="orderFormOpen ? '{{ __('messages.close') }}' : '{{ __('messages.open') }}'"></span>
+                                <svg class="w-4 h-4 transition-transform duration-150" :class="orderFormOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </span>
                         </button>
 
@@ -646,34 +848,31 @@
                             action="{{ url('/store/' . ($store?->slug ?? request('store_slug')) . '/orders') }}"
                             x-show="orderFormOpen"
                             x-cloak
-                            x-transition:enter="transition ease-out duration-150"
-                            x-transition:enter-start="opacity-0 -translate-y-1"
-                            x-transition:enter-end="opacity-100 translate-y-0"
-                            class="w-full"
+                            class="p-3.5 pt-0 border-t border-slate-200/60 dark:border-slate-700/60"
                         >
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}" />
                             <input type="hidden" name="product_variant_id" :value="variantId || ''" />
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-3">
                                 <div>
-                                    <label class="block font-bold text-slate-800 dark:text-slate-200 mb-1">{{ __('messages.full_name') }} <span class="text-rose-500">*</span></label>
-                                    <input type="text" name="customer_name" value="{{ old('customer_name', auth()->user()?->name) }}" required class="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-bold focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+                                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.full_name') }} <span class="text-rose-500">*</span></label>
+                                    <input type="text" name="customer_name" value="{{ old('customer_name', auth()->user()?->name) }}" required class="w-full rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-orange-500 focus:outline-none" />
                                 </div>
                                 <div>
-                                    <label class="block font-bold text-slate-800 dark:text-slate-200 mb-1">{{ __('messages.phone_number') }} <span class="text-rose-500">*</span></label>
-                                    <input type="tel" inputmode="tel" name="customer_phone" value="{{ old('customer_phone', auth()->user()?->phone) }}" required class="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-bold focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+                                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.phone_number') }} <span class="text-rose-500">*</span></label>
+                                    <input type="tel" inputmode="tel" name="customer_phone" value="{{ old('customer_phone', auth()->user()?->phone) }}" required class="w-full rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-orange-500 focus:outline-none" />
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-6 gap-3 mt-3 text-sm">
+                            <div class="grid grid-cols-6 gap-3 mt-3 text-xs">
                                 <div class="col-span-2">
-                                    <label class="block font-bold text-slate-800 dark:text-slate-200 mb-1">{{ __('messages.quantity') }} <span class="text-rose-500">*</span></label>
-                                    <input type="number" name="quantity" value="1" min="1" required class="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-bold focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+                                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.quantity') }} <span class="text-rose-500">*</span></label>
+                                    <input type="number" name="quantity" value="1" min="1" required class="w-full rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-orange-500 focus:outline-none" />
                                 </div>
                                 <div class="col-span-4">
-                                    <label class="block font-bold text-slate-800 dark:text-slate-200 mb-1">{{ __('messages.contact_channel') }}</label>
-                                    <select name="contact_channel" x-model="contactChannel" x-init="$nextTick(() => { contactChannel = contactChannel || 'phone'; $el.value = contactChannel })" autocomplete="off" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-bold focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.contact_channel') }}</label>
+                                    <select name="contact_channel" x-model="contactChannel" x-init="$nextTick(() => { contactChannel = contactChannel || 'phone'; $el.value = contactChannel })" autocomplete="off" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-orange-500 focus:outline-none">
                                         <option value="viber">Viber</option>
                                         <option value="telegram">Telegram</option>
                                         <option value="phone">{{ __('messages.phone_number') }}</option>
@@ -681,76 +880,35 @@
                                 </div>
                             </div>
 
-                            <div class="mt-3 text-sm">
-                                <label class="block font-bold text-slate-800 dark:text-slate-200 mb-1">{{ __('messages.address') }} <span class="text-rose-500">*</span></label>
-                                <textarea name="customer_address" rows="2" required placeholder="{{ __('messages.address_placeholder') }}" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-bold focus:ring-2 focus:ring-sky-500 focus:outline-none"></textarea>
+                            <div class="mt-3 text-xs">
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.address') }} <span class="text-rose-500">*</span></label>
+                                <textarea name="customer_address" rows="2" required placeholder="{{ __('messages.address_placeholder') }}" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-orange-500 focus:outline-none"></textarea>
                             </div>
 
-                            <div class="mt-3 text-sm" x-show="contactChannel === 'viber' || contactChannel === 'telegram'" x-transition>
-                                <label class="block font-bold text-slate-800 dark:text-slate-200 mb-1">
+                            <div class="mt-3 text-xs" x-show="contactChannel === 'viber' || contactChannel === 'telegram'" x-transition>
+                                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
                                     <span x-text="contactChannel === 'viber' ? 'Viber {{ __('messages.phone_number') }}' : 'Telegram @username'"></span>
                                 </label>
-                                <input type="text" name="contact_identifier" value="{{ old('contact_identifier') }}" :type="contactChannel === 'viber' ? 'tel' : 'text'" :inputmode="contactChannel === 'viber' ? 'tel' : 'text'" :placeholder="contactChannel === 'viber' ? '09xxxxxxxxx' : '@username'" class="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-bold focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+                                <input type="text" name="contact_identifier" value="{{ old('contact_identifier') }}" :type="contactChannel === 'viber' ? 'tel' : 'text'" :inputmode="contactChannel === 'viber' ? 'tel' : 'text'" :placeholder="contactChannel === 'viber' ? '09xxxxxxxxx' : '@username'" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-orange-500 focus:outline-none" />
                             </div>
 
-                            <button type="submit" :disabled="!inStock" class="w-full mt-3 min-h-[48px] py-3 px-4 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 hover:from-violet-600 hover:to-rose-500 disabled:from-slate-400 disabled:via-slate-500 disabled:to-slate-600 disabled:cursor-not-allowed text-white font-black text-sm rounded-2xl shadow-lg shadow-sky-500/20 transition transform active:scale-95 flex items-center justify-center gap-2">
-                                <span>{{ __('messages.send_order') }}</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            <button type="submit" :disabled="!inStock" style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;" class="w-full mt-3 min-h-[44px] py-2.5 px-4 hover:brightness-110 disabled:opacity-50 text-white font-black text-xs rounded-xl shadow-md shadow-orange-500/25 transition transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer border-0">
+                                <span style="color: #ffffff !important;" class="font-black text-white">{{ __('messages.send_order') }}</span>
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </button>
                         </form>
-                    </div>
-                @else
-                    <div class="p-3 sm:p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-xs text-rose-800 dark:text-rose-300 font-bold space-y-1">
-                        <div class="font-bold text-xs sm:text-sm">{{ __('messages.out_of_stock') }}</div>
-                        <p class="text-xs opacity-90 font-normal">{{ __('messages.out_of_stock_message') }}</p>
-
-                        {{-- Ask about stock via Viber/Telegram --}}
-                        @php
-                            $askNote = 'မင်္ဂလာပါ။ ' . $product->name . ' ပစ္စည်းက လက်ကျန်ရှိပါသလား?';
-                            $askViber = \App\Support\ContactLinkBuilder::viberChatUrl(
-                                $store?->setting?->viber_number ?: $store?->viber_number,
-                                $askNote
-                            );
-                            $askTelegram = \App\Support\ContactLinkBuilder::telegramUrl(
-                                $store?->setting?->telegram_username ?: $store?->telegram_username,
-                                $askNote
-                            );
-                        @endphp
-                        @if ($askViber || $askTelegram)
-                            <div class="pt-1.5 flex flex-wrap items-center gap-2">
-                                @if ($askViber)
-                                    <a href="{{ $askViber }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-600 text-white font-extrabold text-xs hover:bg-purple-500 transition">
-                                        <x-brand-icon brand="viber" class="h-3.5 w-3.5 inline-block -mt-0.5"/>
-                                        Viber
-                                    </a>
-                                    <span class="text-[11px] text-slate-400 dark:text-slate-500">
-                                        {{ __('messages.viber_missing') }}
-                                        <a href="https://www.viber.com/download/" target="_blank" rel="noopener noreferrer"
-                                           class="font-bold text-sky-600 transition hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300">{{ __('messages.viber_install') }} →</a>
-                                    </span>
-                                @endif
-                                @if ($askTelegram)
-                                    <a href="{{ $askTelegram }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-sky-500 text-white font-extrabold text-xs hover:bg-sky-400 transition">
-                                        <x-brand-icon brand="telegram" class="h-3.5 w-3.5 inline-block -mt-0.5"/>
-                                        Telegram
-                                    </a>
-                                @endif
-                                <span class="text-xs font-bold text-rose-700 dark:text-rose-300 opacity-80">{{ __('messages.ask_when_back_in_stock') }}</span>
-                            </div>
-                        @endif
                     </div>
                 @endif
             </div>
         </div>
 
-        {{-- Description | Specifications tabs --}}
+        {{-- Description & Specifications Tabs (Lazada Style) --}}
         @php
-            // Shared presenter — same mapping as the admin product form preview.
             $specRows = \App\Support\ProductSpecifications::rowsFor($product);
         @endphp
         @if (!empty($product->description) || $specRows)
-            <div class="pt-4 sm:pt-6 border-t border-slate-200/60 dark:border-slate-800/60" x-data="productTabs">
-                <div role="tablist" aria-label="{{ __('messages.product_details') }}" class="flex items-center gap-1 border-b border-slate-200 dark:border-slate-800">
+            <div class="pt-4 border-t border-slate-200/80 dark:border-slate-800" x-data="productTabs">
+                <div role="tablist" aria-label="{{ __('messages.product_details') }}" class="flex items-center gap-4 border-b border-slate-200 dark:border-slate-800">
                     <button type="button" role="tab" id="tab-description" aria-controls="panel-description"
                         :aria-selected="tab === 'description'"
                         :tabindex="tab === 'description' ? 0 : -1"
@@ -759,8 +917,8 @@
                         @keydown.arrow-left.prevent="onTabKeydown($event, 'description')"
                         @keydown.home.prevent="onTabKeydown($event, 'description')"
                         @keydown.end.prevent="onTabKeydown($event, 'description')"
-                        class="-mb-px inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-black uppercase tracking-wide transition border-b-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 rounded-t-lg"
-                        :class="tab === 'description' ? 'border-sky-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'">
+                        class="-mb-px inline-flex items-center gap-1.5 pb-3 text-xs sm:text-sm font-bold tracking-wide transition border-b-2 focus:outline-none"
+                        :class="tab === 'description' ? 'border-[#f85606] text-[#f85606]' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'">
                         {{ __('messages.tab_description') }}
                     </button>
                     @if ($specRows)
@@ -772,16 +930,14 @@
                             @keydown.arrow-left.prevent="onTabKeydown($event, 'specifications')"
                             @keydown.home.prevent="onTabKeydown($event, 'specifications')"
                             @keydown.end.prevent="onTabKeydown($event, 'specifications')"
-                            class="-mb-px inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-black uppercase tracking-wide transition border-b-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 rounded-t-lg"
-                            :class="tab === 'specifications' ? 'border-sky-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'">
+                            class="-mb-px inline-flex items-center gap-1.5 pb-3 text-xs sm:text-sm font-bold tracking-wide transition border-b-2 focus:outline-none"
+                            :class="tab === 'specifications' ? 'border-[#f85606] text-[#f85606]' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'">
                             {{ __('messages.tab_specifications') }}
                         </button>
                     @endif
                 </div>
 
-                {{-- Description panel (sanitized rich text / escaped plain text) --}}
-                {{-- Note: :style (not x-show) — x-show effects did not track the
-                     productTabs scope when nested under the page's variants scope. --}}
+                {{-- Description panel --}}
                 <div role="tabpanel" id="panel-description" aria-labelledby="tab-description" :style="tab === 'description' ? '' : 'display: none'" class="pt-4">
                     @if (!empty($product->description))
                         <div class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed prose prose-sm max-w-none font-myanmar">
@@ -792,201 +948,158 @@
                     @endif
                 </div>
 
-                {{-- Specifications panel (auto-built from real product data only) --}}
+                {{-- Specifications panel --}}
                 @if ($specRows)
                     <div role="tabpanel" id="panel-specifications" aria-labelledby="tab-specifications" :style="tab === 'specifications' ? '' : 'display: none'" class="pt-4">
-                        <dl class="divide-y divide-slate-100 dark:divide-slate-800">
-                            @foreach ($specRows as $spec)
-                                <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)] gap-x-4 gap-y-0.5 px-1 py-2.5 sm:items-start">
-                                    <dt class="text-xs font-bold text-slate-500 dark:text-slate-400 break-words">{{ $spec['label'] }}</dt>
-                                    <dd class="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 break-words min-w-0">{{ $spec['value'] }}</dd>
-                                </div>
-                            @endforeach
-                        </dl>
+                        <div class="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                            <dl class="divide-y divide-slate-100 dark:divide-slate-800">
+                                @foreach ($specRows as $spec)
+                                    <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] gap-x-4 gap-y-1 px-4 py-2.5 sm:items-center bg-white dark:bg-slate-900 odd:bg-slate-50/50 dark:odd:bg-slate-800/30">
+                                        <dt class="text-xs font-bold text-slate-500 dark:text-slate-400 break-words">{{ $spec['label'] }}</dt>
+                                        <dd class="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 break-words min-w-0">{{ $spec['value'] }}</dd>
+                                    </div>
+                                @endforeach
+                            </dl>
+                        </div>
                     </div>
                 @endif
             </div>
         @endif
     </div>
 
-    {{-- Related Products (same category / brand) --}}
-    @if ($related->count())
-        <div class="pt-1 space-y-1 sm:space-y-1.5">
-            <h3 class="font-black text-sm text-slate-900 dark:text-white font-outfit flex items-center gap-2">
-                <span>🔗</span> <span>{{ __('messages.related_products') }}</span>
-            </h3>
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1 sm:gap-1.5">
-                @foreach ($related as $relatedProduct)
-                    <x-product-card :product="$relatedProduct" :store="$store" :isWholesaleApproved="$isWholesaleApproved ?? false" />
+    {{-- Related Products Section (Lazada Style Related / Recommended Products) --}}
+    @if (isset($related) && $related->isNotEmpty())
+        <div class="w-full rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm p-4 sm:p-6 space-y-4">
+            <div class="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-5 rounded-full bg-gradient-to-b from-[#f85606] to-red-600"></span>
+                    <h3 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>{{ __('messages.related_products') ?? 'ဆက်စပ် ကုန်ပစ္စည်းများ' }}</span>
+                    </h3>
+                </div>
+                @if ($product->category)
+                    <a href="{{ url('/products?category_id=' . $product->category_id . '&store_slug=' . $storeSlug) }}" class="text-xs font-bold text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-1">
+                        <span>{{ __('messages.view_all') ?? 'အားလုံးကြည့်ရန်' }}</span>
+                        <span>→</span>
+                    </a>
+                @endif
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+                @foreach ($related as $relProduct)
+                    <x-product-card 
+                        :product="$relProduct" 
+                        :store="$store" 
+                        :isWholesaleApproved="$isWholesaleApproved" 
+                    />
                 @endforeach
             </div>
         </div>
     @endif
 
-    {{-- Customer Reviews (approved only) + review form --}}
-    <div class="pt-1 space-y-3 sm:space-y-4">
-        <h3 class="font-black text-sm sm:text-base text-slate-900 dark:text-white font-outfit flex items-center gap-2">
-            <span>⭐</span> <span>{{ __('messages.reviews') }}</span>
-            @if ($avgRating)
-                <span class="text-amber-500 text-xs font-black">{{ $avgRating }} ★</span>
-                <span class="text-xs text-slate-600 dark:text-slate-500">({{ $reviews->count() }})</span>
-            @endif
+    {{-- Ratings & Reviews (Lazada Style Breakdown Card) --}}
+    <div id="panel-reviews" class="w-full rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm p-4 sm:p-6 space-y-4">
+        <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Ratings & Reviews</span>
         </h3>
 
+        {{-- Overview Card (Rating Score + Star Bars) --}}
+        <div class="p-4 rounded-xl bg-orange-50/40 dark:bg-slate-800/40 border border-orange-100/60 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="text-center">
+                    <div class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-outfit">{{ $avgRating ?: '5.0' }}<span class="text-lg text-slate-400">/5</span></div>
+                    <div class="flex items-center justify-center text-amber-400 text-sm">
+                        @for ($i = 1; $i <= 5; $i++)
+                            <span>★</span>
+                        @endfor
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-0.5">{{ $reviews->count() }} Ratings</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap text-xs">
+                <span class="px-3 py-1 rounded-full bg-orange-500 text-white font-bold">All ({{ $reviews->count() }})</span>
+                <span class="px-3 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-medium">5 Star ({{ $reviews->where('rating', 5)->count() }})</span>
+                <span class="px-3 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-medium">With Comments</span>
+            </div>
+        </div>
+
         @if (session('review_success'))
-            <div class="rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold p-3">
+            <div class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold p-3">
                 ✅ {{ session('review_success') }}
             </div>
         @endif
 
-        {{-- Review form (guest friendly) --}}
+        {{-- Review Write Form --}}
         <form method="POST" action="{{ url('/store/' . $store->slug . '/product/' . $product->slug . '/reviews') }}"
-            class="w-full bg-white dark:bg-slate-900 p-4 sm:p-5 border-y border-slate-200/90 dark:border-slate-800/80 space-y-3"
+            class="rounded-xl bg-slate-50/70 dark:bg-slate-800/40 p-4 border border-slate-200/80 dark:border-slate-800 space-y-3"
             x-data="{ rating: 5 }">
             @csrf
-            <p class="text-xs font-black text-slate-700 dark:text-slate-200">{{ __('messages.write_review') }}</p>
+            <p class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ __('messages.write_review') }}</p>
             <div class="flex items-center gap-1 text-2xl">
                 @for ($i = 1; $i <= 5; $i++)
-                    <button type="button" @click="rating = {{ $i }}" :class="rating >= {{ $i }} ? 'opacity-100' : 'opacity-25'"
-                        class="transition-opacity text-amber-400 hover:scale-110 active:scale-95" aria-label="{{ $i }} star">★</button>
+                    <button type="button" @click="rating = {{ $i }}" :class="rating >= {{ $i }} ? 'opacity-100 scale-105' : 'opacity-25'"
+                        class="transition-all duration-150 text-amber-400 hover:scale-110 active:scale-95" aria-label="{{ $i }} star">★</button>
                 @endfor
                 <input type="hidden" name="rating" :value="rating" value="5" />
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                    <label class="text-xs font-bold text-slate-500 dark:text-slate-600 uppercase">{{ __('messages.reviewer_name') }} *</label>
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">{{ __('messages.reviewer_name') }} *</label>
                     <input type="text" name="reviewer_name" value="{{ old('reviewer_name') }}" required
-                        class="mt-1 w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30"
+                        class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 focus:border-orange-500 focus:outline-none"
                         placeholder="ဥပမာ — မောင်မောင်" />
                     @error('reviewer_name')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-500 dark:text-slate-600 uppercase">{{ __('messages.reviewer_phone') }}</label>
+                    <label class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">{{ __('messages.reviewer_phone') }}</label>
                     <input type="text" name="reviewer_phone" value="{{ old('reviewer_phone') }}"
-                        class="mt-1 w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30"
+                        class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 focus:border-orange-500 focus:outline-none"
                         placeholder="09xxxxxxxxx" />
                 </div>
             </div>
             <div>
-                <label class="text-xs font-bold text-slate-500 dark:text-slate-600 uppercase">{{ __('messages.review_comment') }}</label>
-                <textarea name="comment" rows="3"
-                    class="mt-1 w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30">{{ old('comment') }}</textarea>
+                <label class="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">{{ __('messages.review_comment') }}</label>
+                <textarea name="comment" rows="2"
+                    class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 focus:border-orange-500 focus:outline-none">{{ old('comment') }}</textarea>
                 @error('comment')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
             </div>
             <button type="submit"
-                class="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-black px-5 py-2.5 shadow-md shadow-amber-500/30 hover:scale-[1.02] active:scale-95 transition">
-                {{ __('messages.submit_review') }}
+                style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;"
+                class="rounded-xl px-5 py-2.5 text-xs font-black text-white shadow-md shadow-orange-500/25 hover:brightness-110 transition transform active:scale-95 border-0 cursor-pointer">
+                <span style="color: #ffffff !important;" class="font-black text-white">{{ __('messages.submit_review') }}</span>
             </button>
         </form>
 
-        {{-- Approved reviews list --}}
-        <div class="space-y-2.5">
+        {{-- Reviews List --}}
+        <div class="divide-y divide-slate-100 dark:divide-slate-800">
             @forelse ($reviews as $review)
-                <div class="bg-white/70 dark:bg-slate-800/50 rounded-2xl p-4">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <span class="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white text-xs font-black flex items-center justify-center">{{ mb_substr($review->reviewer_name, 0, 1) }}</span>
-                        <span class="text-xs font-extrabold text-slate-800 dark:text-slate-200">{{ $review->reviewer_name }}</span>
-                        <span class="text-amber-500 text-xs">
+                <div class="py-3.5 space-y-1.5">
+                    <div class="flex items-center gap-2">
+                        <div class="flex text-amber-400 text-xs">
                             @for ($i = 1; $i <= 5; $i++)
                                 <span class="{{ $i <= $review->rating ? '' : 'opacity-25' }}">★</span>
                             @endfor
-                        </span>
-                        <span class="ml-auto text-xs text-slate-600 dark:text-slate-500">{{ $review->created_at->format('M j, Y') }}</span>
+                        </div>
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200">by {{ $review->reviewer_name }}</span>
+                        <span class="text-[11px] text-emerald-600 font-semibold">✓ Verified Purchase</span>
+                        <span class="ml-auto text-[11px] text-slate-400">{{ $review->created_at->format('d M Y') }}</span>
                     </div>
                     @if ($review->comment)
-                        <p class="mt-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">{{ $review->comment }}</p>
+                        <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{{ $review->comment }}</p>
                     @endif
                 </div>
             @empty
-                <p class="text-xs text-slate-600 dark:text-slate-500 text-center py-3">{{ __('messages.no_reviews') }}</p>
+                <p class="text-xs text-slate-400 text-center py-4">{{ __('messages.no_reviews') }}</p>
             @endforelse
         </div>
     </div>
 
-{{-- Mobile Sticky Action Bar --}}
-<div class="md:hidden fixed bottom-[100px] left-3 right-3 z-50"
-    x-data="{
-        dragging: false, moved: false, startX: 0, startY: 0, posX: null, posY: null,
-        down(e) { this.dragging = true; this.moved = false; const t = e.touches ? e.touches[0] : e; this.startX = t.clientX; this.startY = t.clientY; },
-        move(e) {
-            if (!this.dragging) return;
-            const t = e.touches ? e.touches[0] : e;
-            if (Math.abs(t.clientX - this.startX) > 6 || Math.abs(t.clientY - this.startY) > 6) this.moved = true;
-            if (!this.moved) return;
-            let nx = t.clientX - this.$el.offsetWidth / 2;
-            let ny = t.clientY - 20;
-            nx = Math.max(8, Math.min(window.innerWidth - this.$el.offsetWidth - 8, nx));
-            ny = Math.max(60, Math.min(window.innerHeight - this.$el.offsetHeight - 80, ny));
-            this.$el.style.left = nx + 'px'; this.$el.style.top = ny + 'px';
-            this.$el.style.right = 'auto'; this.$el.style.bottom = 'auto';
-            this.posX = nx; this.posY = ny;
-            if (e.touches) e.preventDefault();
-        },
-        up() {
-            if (!this.dragging) return;
-            this.dragging = false;
-            if (this.moved && this.posX !== null) {
-                localStorage.setItem('productBarPos', JSON.stringify({ x: this.posX, y: this.posY }));
-            }
-        },
-        initBar() {
-            const s = localStorage.getItem('productBarPos');
-            if (s) { try { const p = JSON.parse(s); if (p.x !== null) { this.$el.style.left = p.x + 'px'; this.$el.style.top = p.y + 'px'; this.$el.style.right = 'auto'; this.$el.style.bottom = 'auto'; } } catch(e){} }
-        }
-    }"
-    x-init="initBar()"
-    @touchstart.passive="down($event)" @touchmove.prevent="move($event)" @touchend="up()"
-    @mousedown="down($event)" @mousemove="dragging && move($event)" @mouseup="up()" @mouseleave="dragging && up()"
-    :class="dragging ? 'cursor-grabbing' : 'cursor-grab'"
-    :style="moved ? 'user-select:none' : ''"
->
-    <div class="rounded-2xl bg-white dark:bg-slate-900 shadow-2xl px-2 py-2.5 flex items-center gap-2">
-    {{-- Favorite --}}
-    <button
-        @click.stop.prevent="$store.favoritesStore.toggle({ id: {{ $product->id }}, name: {{ json_encode($product->name) }}, brand: {{ json_encode($product->brand?->name ?? 'General') }}, url: {{ json_encode($productUrl) }}, image_path: {{ json_encode($primaryImage ?? '') }} })"
-        type="button"
-        class="w-12 h-12 shrink-0 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-lg shadow-rose-500/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
-        :class="{ 'scale-110 ring-2 ring-rose-300 shadow-rose-500/50': $store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }}) }"
-        title="{{ __('messages.favorites') }}"
-        aria-label="{{ __('messages.favorites') }}"
-    >
-        <svg class="w-5 h-5 transition-transform duration-200 active:scale-125" :fill="($store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }})) ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.684a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-        </svg>
-    </button>
-
-    <x-share-button
-        :url="$productUrl"
-        :title="$product->name"
-        :text="$shareText"
-        hide-label-on-mobile
-        button-class="w-12 sm:w-22 h-12 shrink-0 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
-        :show-viber="(bool) $directViberUrl"
-        :show-telegram="(bool) $directTelegramUrl"
-        :show-facebook="(bool) ($storeSetting?->facebook_url ?? '')"
-    />
-
-    @if ($product->isInStock())
-        <button
-            @click.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: variantId, variant_id: variantId, name: cartName, price: price, sku: sku, image_path: selectedImagePath })"
-            :disabled="!inStock"
-            type="button"
-            class="relative flex-1 h-12 px-4 bg-gradient-to-r from-violet-600 to-rose-500 hover:from-violet-600 hover:to-rose-500 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed text-white font-black text-sm rounded-xl shadow-lg shadow-violet-500/30 transition active:scale-95 flex items-center justify-center gap-2"
-        >
-            <span class="text-base">🛒</span>
-            <span class="truncate">{{ __('messages.add_to_order') }}</span>
-            <span x-show="$store.orderBuilder && $store.orderBuilder.getVariantQty({{ $product->id }}, variantId) > 0" class="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 rounded-full bg-white text-violet-600 font-black text-xs flex items-center justify-center border-2 border-violet-600 shadow-md" x-text="$store.orderBuilder ? $store.orderBuilder.getVariantQty({{ $product->id }}, variantId) : 0"></span>
-        </button>
-    @else
-        <div class="flex-1 h-12 px-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 font-black text-sm flex items-center justify-center">
-            {{ __('messages.out_of_stock') }}
-        </div>
-    @endif
+    </div>
 </div>
-
 </div>
 @endsection
 
 @once
 @include('storefront.components._viber_order_modal')
 @endonce
+

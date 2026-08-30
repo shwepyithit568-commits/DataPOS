@@ -37,10 +37,32 @@
         aside a.bg-violet-600:hover {
             background-color: var(--admin-accent) !important;
         }
+        @media (min-width: 1024px) {
+            aside.lg\:w-20 {
+                transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 220ms ease;
+            }
+            aside.lg\:w-20:hover {
+                width: 18rem !important;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+                z-index: 40;
+            }
+            aside.lg\:w-20:hover .lg\:hidden {
+                display: block !important;
+            }
+            aside.lg\:w-20:hover span[x-show="!sidebarCollapsed"] {
+                display: flex !important;
+            }
+            aside.lg\:w-20:hover .lg\:justify-center {
+                justify-content: flex-start !important;
+            }
+            aside.lg\:w-20:hover button.lg\:justify-center {
+                justify-content: space-between !important;
+            }
+        }
     </style>
-    {{-- Preload the three WOFF2 fonts so text renders without font-swap CLS. --}}
+    {{-- Preload fonts so text renders without font-swap CLS. --}}
     <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/assets/fonts/Roboto-Regular.woff2') }}">
-    <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/assets/fonts/NotoSansMyanmar-Regular.woff2') }}">
+    <link rel="preload" as="font" type="font/ttf" crossorigin href="{{ Vite::asset('resources/assets/fonts/NotoSansMyanmar/NotoSansMyanmar-Regular.ttf') }}">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/assets/fonts/Outfit-Regular.woff2') }}">
     <link rel="icon" type="{{ $adminFaviconPath && str_ends_with($adminFaviconPath, '.webp') ? 'image/webp' : ($adminFaviconPath ? 'image/png' : 'image/x-icon') }}" href="{{ $adminFaviconHref }}">
     <link rel="apple-touch-icon" href="{{ $appleTouchHref }}">
@@ -65,8 +87,22 @@
         calcOperator: null,
         calcWaitingForNext: false,
         sidebarCollapsed: localStorage.getItem('adminSidebar') === 'collapsed',
+        sidebarHovered: false,
+        sidebarHoverTimer: null,
         viewportLg: window.innerWidth >= 1024,
         darkMode: localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
+        onSidebarMouseEnter() {
+            if (!this.viewportLg || !this.sidebarCollapsed) return;
+            if (this.sidebarHoverTimer) clearTimeout(this.sidebarHoverTimer);
+            this.sidebarHovered = true;
+        },
+        onSidebarMouseLeave() {
+            if (!this.viewportLg || !this.sidebarCollapsed) return;
+            this.sidebarHoverTimer = setTimeout(() => {
+                this.sidebarHovered = false;
+                this.closeGroups();
+            }, 180);
+        },
         openCalculator() {
             this.calculatorOpen = true;
             this.$nextTick(() => this.$refs.calculatorClose?.focus());
@@ -162,11 +198,13 @@
         },
         collapseSidebar() {
             this.sidebarCollapsed = true;
+            this.sidebarHovered = false;
             localStorage.setItem('adminSidebar', 'collapsed');
             this.$dispatch('admin-sidebar-collapsed');
         },
         expandSidebar() {
             this.sidebarCollapsed = false;
+            this.sidebarHovered = false;
             localStorage.setItem('adminSidebar', 'expanded');
         },
         toggleSidebarCollapsed() {
@@ -244,9 +282,23 @@
                 this.securityOpen = false;
                 this.maintenanceOpen = false;
             },
-            // Single-open accordion: opening one group closes the others;
-            // clicking an already-open group closes it; clicking while the
-            // sidebar is collapsed expands the sidebar and opens that group.
+            activeHoverGroup: null,
+            hoverTimer: null,
+            setHoverGroup(name) {
+                if (!this.viewportLg) return;
+                if (this.hoverTimer) clearTimeout(this.hoverTimer);
+                this.activeHoverGroup = name;
+            },
+            clearHoverGroup() {
+                if (!this.viewportLg) return;
+                if (this.hoverTimer) clearTimeout(this.hoverTimer);
+                this.hoverTimer = setTimeout(() => {
+                    this.activeHoverGroup = null;
+                }, 120);
+            },
+            cancelHoverTimer() {
+                if (this.hoverTimer) clearTimeout(this.hoverTimer);
+            },
             toggleGroup(name) {
                 if (this.sidebarCollapsed) {
                     this.expandSidebar();
@@ -263,7 +315,7 @@
             }
         }"
         @admin-sidebar-collapsed.window="closeGroups()"
-        class="fixed inset-y-0 left-0 z-30 w-72 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-all duration-300 ease-in-out lg:static lg:translate-x-0 flex flex-col shadow-lg border-r border-slate-200/80 dark:border-slate-800/80 pb-[env(safe-area-inset-bottom)]">
+        class="fixed inset-y-0 left-0 z-30 w-72 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-all duration-300 ease-in-out lg:static lg:translate-x-0 flex flex-col shadow-lg border-r border-slate-200/80 dark:border-slate-800/80 pb-[env(safe-area-inset-bottom)] lg:overflow-visible">
 
         <div class="h-16 flex items-center justify-between px-4 font-bold border-b border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-950/40">
             <span class="font-outfit text-violet-700 dark:text-violet-300 flex min-w-0 items-center gap-3" :class="sidebarCollapsed ? 'lg:justify-center lg:gap-0' : ''">
@@ -291,7 +343,7 @@
             </button>
         </div>
 
-        <nav class="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto text-sm" aria-label="{{ __('messages.admin_navigation') }}">
+        <nav class="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto lg:overflow-visible text-sm" aria-label="{{ __('messages.admin_navigation') }}">
             <div>
                 @php $isDashboard = request()->is('store/*/admin/dashboard') || request()->is('admin/dashboard'); @endphp
                 <x-admin.nav-link variant="main"

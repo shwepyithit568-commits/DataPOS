@@ -223,6 +223,20 @@ class StoreSettingController extends Controller
             $validated['map_longitude'] = ($validated['map_longitude'] ?? '') !== '' && ($validated['map_longitude'] ?? null) !== null
                 ? (float) $validated['map_longitude']
                 : null;
+
+            // Auto-extract coordinates if user pasted a Google Maps link containing @lat,lng or 3d/4d coords
+            if (($validated['map_latitude'] === null || $validated['map_longitude'] === null) && $googleMapsUrl !== '') {
+                if (preg_match('/@([0-9\.\-]+),([0-9\.\-]+)/', $googleMapsUrl, $m)) {
+                    $validated['map_latitude'] = $validated['map_latitude'] ?? (float) $m[1];
+                    $validated['map_longitude'] = $validated['map_longitude'] ?? (float) $m[2];
+                } elseif (preg_match('/!3d([0-9\.\-]+)!4d([0-9\.\-]+)/', $googleMapsUrl, $m)) {
+                    $validated['map_latitude'] = $validated['map_latitude'] ?? (float) $m[1];
+                    $validated['map_longitude'] = $validated['map_longitude'] ?? (float) $m[2];
+                } elseif (preg_match('/[?&]q=([0-9\.\-]+),([0-9\.\-]+)/', $googleMapsUrl, $m)) {
+                    $validated['map_latitude'] = $validated['map_latitude'] ?? (float) $m[1];
+                    $validated['map_longitude'] = $validated['map_longitude'] ?? (float) $m[2];
+                }
+            }
         }
 
         // Chat channels (floating chat popup): store per-row icon images, drop
@@ -431,6 +445,7 @@ class StoreSettingController extends Controller
             'icon_value' => ['nullable', 'string', 'max:20'],
             'icon_path' => ['nullable', 'string', 'max:255'],
             'icon_image' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
+            'qr_image' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:4096'],
             'account_name' => ['nullable', 'string', 'max:120'],
             'account_number' => ['nullable', 'string', 'max:120'],
             'instructions' => ['nullable', 'string'],
@@ -446,6 +461,11 @@ class StoreSettingController extends Controller
             $iconPath = $validated['icon_path'];
         }
 
+        $qrPath = null;
+        if ($request->hasFile('qr_image')) {
+            $qrPath = ImageOptimizer::store($request->file('qr_image'), 'payment-qr', 1024);
+        }
+
         $store->paymentMethods()->create([
             'name' => $validated['name'],
             'code' => $validated['code'] ?? null,
@@ -453,6 +473,7 @@ class StoreSettingController extends Controller
             'icon_type' => $validated['icon_type'],
             'icon_value' => $validated['icon_value'] ?? null,
             'icon_path' => $iconPath,
+            'qr_path' => $qrPath,
             'account_name' => $validated['account_name'] ?? null,
             'account_number' => $validated['account_number'] ?? null,
             'instructions' => $validated['instructions'] ?? null,
@@ -477,6 +498,8 @@ class StoreSettingController extends Controller
             'icon_value' => ['nullable', 'string', 'max:20'],
             'icon_image' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
             'remove_icon' => ['sometimes', 'boolean'],
+            'qr_image' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:4096'],
+            'remove_qr' => ['sometimes', 'boolean'],
             'account_name' => ['nullable', 'string', 'max:120'],
             'account_number' => ['nullable', 'string', 'max:120'],
             'instructions' => ['nullable', 'string'],
@@ -492,6 +515,15 @@ class StoreSettingController extends Controller
             $newIconPath = ImageOptimizer::store($request->file('icon_image'), 'payment-icons', 512);
         } elseif (! empty($request->input('remove_icon'))) {
             $newIconPath = null;
+        }
+
+        // QR lifecycle: replace → delete old after save; remove → delete now.
+        $oldQrPath = $paymentMethod->qr_path;
+        $newQrPath = null;
+        if ($request->hasFile('qr_image')) {
+            $newQrPath = ImageOptimizer::store($request->file('qr_image'), 'payment-qr', 1024);
+        } elseif (! empty($request->input('remove_qr'))) {
+            $newQrPath = null;
         }
 
         $paymentMethod->fill([
@@ -511,6 +543,9 @@ class StoreSettingController extends Controller
         if ($newIconPath !== null || ! empty($request->input('remove_icon'))) {
             $paymentMethod->icon_path = $newIconPath;
         }
+        if ($newQrPath !== null || ! empty($request->input('remove_qr'))) {
+            $paymentMethod->qr_path = $newQrPath;
+        }
 
         try {
             $paymentMethod->save();
@@ -518,12 +553,18 @@ class StoreSettingController extends Controller
             if ($newIconPath) {
                 Storage::disk('public')->delete($newIconPath);
             }
+            if ($newQrPath) {
+                Storage::disk('public')->delete($newQrPath);
+            }
             throw $e;
         }
 
         // Delete the replaced/removed icon only after the DB update succeeded.
         if (($newIconPath !== null || ! empty($request->input('remove_icon'))) && $oldIconPath && $oldIconPath !== $newIconPath) {
             Storage::disk('public')->delete($oldIconPath);
+        }
+        if (($newQrPath !== null || ! empty($request->input('remove_qr'))) && $oldQrPath && $oldQrPath !== $newQrPath) {
+            Storage::disk('public')->delete($oldQrPath);
         }
 
         return back()->with('success', 'Payment method updated.');
@@ -534,10 +575,14 @@ class StoreSettingController extends Controller
         $store = $context->getStore();
         $paymentMethod = $store->paymentMethods()->findOrFail((int) $request->route('method'));
         $iconPath = $paymentMethod->icon_path;
+        $qrPath = $paymentMethod->qr_path;
         $paymentMethod->delete();
 
         if ($iconPath && str_starts_with($iconPath, 'payment-icons/')) {
             Storage::disk('public')->delete($iconPath);
+        }
+        if ($qrPath && str_starts_with($qrPath, 'payment-qr/')) {
+            Storage::disk('public')->delete($qrPath);
         }
 
         return back()->with('success', 'Payment method deleted.');

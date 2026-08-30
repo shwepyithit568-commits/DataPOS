@@ -55,7 +55,7 @@ class StorefrontNavigationContextTest extends TestCase
         $response->assertSee('bg-white/95 dark:bg-slate-900/95 backdrop-blur', false); // solid header styling wrapper (Option B)
         $response->assertSee('h-16 sm:h-[4.5rem]', false);
         $response->assertSee('Storefront primary navigation', false);
-        $response->assertSee('h-9 w-9 sm:h-10 sm:w-10', false);
+        $response->assertSee('sf-brand-link', false);
 
         // Header cart icon is hidden below md (mobile already has it in the bottom nav)
         $response->assertSee('hidden md:flex h-11 w-11', false);

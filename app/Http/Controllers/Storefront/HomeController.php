@@ -79,7 +79,7 @@ class HomeController extends Controller
                 ->where('is_featured', true)
                 ->where('stock_status', 'in_stock')
                 ->with(['category', 'brand', 'variants'])
-                ->take(10)
+                ->take(18)
                 ->get()
             : collect();
 
@@ -89,7 +89,7 @@ class HomeController extends Controller
                 ->where('stock_status', 'in_stock')
                 ->with(['category', 'brand', 'variants'])
                 ->latest()
-                ->take(10)
+                ->take(24)
                 ->get()
             : collect();
 

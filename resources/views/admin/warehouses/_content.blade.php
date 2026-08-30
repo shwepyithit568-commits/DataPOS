@@ -22,23 +22,12 @@
          ============================================================ --}}
     <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 transition">
         <div class="min-w-0">
-            <div class="flex items-center gap-1.5 mb-0.5">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
-                    <span>🏬</span>
-                    <span>{{ __('messages.sidebar_inventory') ?? 'Inventory' }}</span>
-                </span>
-                <span class="text-slate-300 dark:text-slate-700">/</span>
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">{{ $store->name }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <span>{{ __('messages.warehouses_title') }}</span>
-                </h1>
+            <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span>🏬 {{ __('messages.warehouses_title') }}</span>
                 <span class="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                     {{ number_format($stats['total']) }}
                 </span>
-            </div>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{{ __('messages.warehouses_sub') }}</p>
+            </h1>
         </div>
 
         <div class="flex items-center gap-1.5 flex-wrap shrink-0">

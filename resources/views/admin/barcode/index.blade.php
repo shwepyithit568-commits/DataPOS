@@ -581,53 +581,42 @@ window.barcodeDesignerFactory = function () {
     {{-- ============================================================
          1. COMPACT HERO HEADER (Admin UI Standard)
          ============================================================ --}}
-    <div class="relative overflow-hidden rounded-lg bg-gradient-to-r from-slate-900 via-violet-950 to-slate-900 text-white p-3 sm:p-3.5 shadow-md border border-violet-900/40">
-        <div class="absolute -right-8 -top-8 w-44 h-44 bg-violet-500/10 rounded-full blur-2xl pointer-events-none"></div>
+    <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 transition">
+        <div class="min-w-0">
+            <h1 class="text-sm sm:text-base font-black tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span>🏷️ {{ __('messages.sidebar_barcode') }}</span>
+                <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800"
+                      x-text="totalLabelsCount + ' {{ __('messages.barcode_total_labels') }}'"></span>
+            </h1>
+        </div>
 
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div class="space-y-1">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                        🏷️ {{ __('messages.barcode_label_printing_title') }}
-                    </span>
-                    <span class="text-slate-400 text-xs font-medium">•</span>
-                    <span class="text-xs font-semibold text-slate-300">{{ $store->name }}</span>
-                </div>
-                <h1 class="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
-                    {{ __('messages.sidebar_barcode') }}
-                    <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-violet-600/30 text-violet-200 border border-violet-500/30"
-                          x-text="totalLabelsCount + ' {{ __('messages.barcode_total_labels') }}'"></span>
-                </h1>
-            </div>
+        {{-- Header Action Buttons --}}
+        <div class="flex items-center gap-1.5 flex-wrap shrink-0">
+            {{-- Add all recent button --}}
+            <button type="button"
+                    @click="addAllRecent()"
+                    class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center gap-1.5 cursor-pointer">
+                <span>⚡</span>
+                <span>{{ __('messages.barcode_add_all_in_stock') }}</span>
+            </button>
 
-            {{-- Header Action Buttons --}}
-            <div class="flex items-center gap-2 flex-wrap">
-                {{-- Add all recent button --}}
-                <button type="button"
-                        @click="addAllRecent()"
-                        class="px-2.5 py-1.5 rounded-md text-xs font-bold bg-white/10 hover:bg-white/15 text-white transition border border-white/10 shadow-2xs flex items-center gap-1.5 cursor-pointer">
-                    <span>⚡</span>
-                    <span>{{ __('messages.barcode_add_all_in_stock') }}</span>
-                </button>
+            {{-- Clear selection button --}}
+            <button type="button"
+                    x-show="selectedItems.length > 0"
+                    @click="clearSelection()"
+                    class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 transition border border-rose-200 dark:border-rose-800 shadow-2xs cursor-pointer">
+                ✕ {{ __('messages.barcode_clear_selection') }}
+            </button>
 
-                {{-- Clear selection button --}}
-                <button type="button"
-                        x-show="selectedItems.length > 0"
-                        @click="clearSelection()"
-                        class="px-2.5 py-1.5 rounded-md text-xs font-bold bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 transition border border-rose-500/30 shadow-2xs cursor-pointer">
-                    ✕ {{ __('messages.barcode_clear_selection') ?? 'Clear Selection' }}
-                </button>
-
-                {{-- Primary Print Button --}}
-                <button type="button"
-                        @click="submitPrint()"
-                        :disabled="selectedItems.length === 0"
-                        :class="selectedItems.length === 0 ? 'opacity-50 cursor-not-allowed bg-slate-700 text-slate-400' : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-900/30 cursor-pointer'"
-                        class="px-3.5 py-1.5 rounded-md text-xs font-black transition flex items-center gap-1.5 border border-violet-400/30">
-                    <span>🖨️</span>
-                    <span>{{ __('messages.print_stickers_btn') }}</span>
-                </button>
-            </div>
+            {{-- Primary Print Button --}}
+            <button type="button"
+                    @click="submitPrint()"
+                    :disabled="selectedItems.length === 0"
+                    :class="selectedItems.length === 0 ? 'opacity-50 cursor-not-allowed bg-slate-200 dark:bg-slate-800 text-slate-400' : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-900/20 cursor-pointer active:scale-95'"
+                    class="px-3.5 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1.5">
+                <span>🖨️</span>
+                <span>{{ __('messages.print_stickers_btn') }}</span>
+            </button>
         </div>
     </div>
 

@@ -124,25 +124,23 @@
         {{-- ============================================================
              1. TOOLBAR AREA: Search, Filters, View Toggle, Export/Import
              ============================================================ --}}
-        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-            <x-admin.toolbar
-                :search="request('search', '')"
-                searchPlaceholder="{{ __('messages.category_search_placeholder') }}"
-                :sortOptions="[]"
-                :filters="[
-                    'has_image' => [
-                        'label' => __('messages.category_image_filter'),
-                        'options' => ['with' => __('messages.category_with_image'), 'without' => __('messages.category_without_image')]
-                    ]
-                ]"
-                :showViewToggle="true"
-                :showExportImport="true"
-                :importUrl="url('/store/' . $store->slug . '/admin/categories/import')"
-                :exportUrl="url('/store/' . $store->slug . '/admin/categories/export')"
-                :totalCount="$totalCount"
-                :paginator="null"
-            />
-        </div>
+        <x-admin.toolbar
+            :search="request('search', '')"
+            searchPlaceholder="{{ __('messages.category_search_placeholder') }}"
+            :sortOptions="[]"
+            :filters="[
+                'has_image' => [
+                    'label' => __('messages.category_image_filter'),
+                    'options' => ['with' => __('messages.category_with_image'), 'without' => __('messages.category_without_image')]
+                ]
+            ]"
+            :showViewToggle="true"
+            :showExportImport="true"
+            :importUrl="url('/store/' . $store->slug . '/admin/categories/import')"
+            :exportUrl="url('/store/' . $store->slug . '/admin/categories/export')"
+            :totalCount="$totalCount"
+            :paginator="null"
+        />
 
         {{-- Floating Action Button for Mobile/Tablet Quick Add --}}
         <button type="button" @click="openCreate()"

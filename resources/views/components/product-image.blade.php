@@ -2,10 +2,11 @@
     'path' => null,
     'alt' => 'Product Image',
     'class' => 'w-full h-40 object-cover',
-    'aspect' => 'aspect-square'
+    'aspect' => 'aspect-square',
+    'rounded' => 'rounded-none'
 ])
 
-<div class="relative overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center {{ $aspect }}">
+<div class="relative overflow-hidden {{ $rounded }} bg-slate-100 dark:bg-slate-800 flex items-center justify-center {{ $aspect }}">
     @if (!empty($path))
         <img 
             src="{{ asset('storage/' . $path) }}" 

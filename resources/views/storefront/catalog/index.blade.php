@@ -509,23 +509,23 @@
     {{-- Two-column layout: sidebar + product grid (Linn style) --}}
     <div class="lg:grid lg:grid-cols-[270px_minmax(0,1fr)] lg:gap-6 items-start">
         {{-- Sidebar (desktop only) — Categories / Brands / Price / Stock --}}
-        <aside class="hidden lg:block sticky top-24 space-y-4" x-data="{
-            catAccordions: {
-                @foreach ($categoryTree as $mainRow)
-                    {{ $mainRow->category->id }}: {{ collect($mainRow->children)->contains('id', (int) request('category_id')) ? 'true' : 'false' }},
-                @endforeach
-            },
+        <aside class="hidden lg:block sticky top-24 space-y-4 z-30" x-data="{
+            activeCatHover: null,
+            closeCatTimeout: null,
             brandSearch: '',
             catSearch: ''
         }">
-            {{-- Categories --}}
-            <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/90 dark:border-slate-800/80 shadow-xl">
+            {{-- Categories with Hover Flyout Menu --}}
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/90 dark:border-slate-800/80 shadow-xl relative z-30"
+                 @mouseleave="closeCatTimeout = setTimeout(() => { activeCatHover = null }, 150)"
+                 @mouseenter="if (closeCatTimeout) clearTimeout(closeCatTimeout)"
+            >
                 <h2 class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-600 font-outfit mb-3 flex items-center gap-1.5">
                     <span>🗂️</span> <span>{{ __('messages.categories') }}</span>
                 </h2>
                 {{-- Search input --}}
                 <div class="relative mb-2">
-                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     <input type="text" x-model="catSearch" placeholder="{{ __('messages.search_categories') ?? 'Search categories...' }}"
@@ -533,7 +533,7 @@
                     <button type="button" x-show="catSearch.length > 0" x-cloak @click="catSearch = ''" class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-600 text-slate-500 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-500 text-xs leading-none transition">✕</button>
                 </div>
                 <div class="space-y-1">
-                    <a href="{{ $buildLink(['category_id' => null, 'category' => null]) }}" class="flex items-center gap-2 px-2.5 py-2 rounded-xl text-sm font-bold transition {{ !request()->filled('category_id') && !request()->filled('category') ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 text-white shadow-md shadow-sky-500/20' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800' }}">
+                    <a href="{{ $buildLink(['category_id' => null, 'category' => null]) }}" class="flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition {{ !request()->filled('category_id') && !request()->filled('category') ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 text-white shadow-md shadow-sky-500/20' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                         <span class="text-base">🏷️</span>
                         <span class="flex-1 min-w-0 truncate">{{ __('messages.all_categories') }}</span>
                         <span class="shrink-0 text-xs font-black {{ !request()->filled('category_id') && !request()->filled('category') ? 'text-white/80' : 'text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-full px-1.5 py-0.5' }}">{{ $totalProducts }}</span>
@@ -543,51 +543,76 @@
                             $main = $mainRow->category;
                             $isMainActive = request('category_id') == $main->id || request('category') == $main->name;
                             $activeChildId = collect($mainRow->children)->firstWhere('id', (int) request('category_id'));
+                            $hasChildren = $mainRow->children->isNotEmpty();
                             $mainLower = strtolower(addslashes($main->name));
                             $childLowerArr = $mainRow->children->pluck('name')->map(fn($n) => strtolower(addslashes($n)))->values()->all();
                         @endphp
-                        <div class="pt-1.5" x-show="catSearch === '' || '{{ $mainLower }}'.includes(catSearch.toLowerCase()) || [{{ implode(',', array_map(fn($c) => "'".$c."'", $childLowerArr)) }}].some(s => s.includes(catSearch.toLowerCase()))"
-                            x-init="$watch('catSearch', v => { if (v && [{{ implode(',', array_map(fn($c) => "'".$c."'", $childLowerArr)) }}].some(s => s.includes(v.toLowerCase()))) catAccordions[{{ $main->id }}] = true; })">
-                            {{-- Main category: link + chevron toggle --}}
-                            <div class="flex items-center">
-                                <a href="{{ $buildLink(['category_id' => $main->id, 'category' => null]) }}" class="flex-1 flex items-center gap-2 px-2.5 py-2 rounded-xl text-sm font-black transition {{ $isMainActive && !$activeChildId ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 text-white shadow-md shadow-sky-500/20' : 'text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800' }}">
-                                    <span class="w-7 h-7 shrink-0 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center text-sm shadow-sm border border-slate-200/70 dark:border-slate-700/60">{{ $main->icon ?: '📦' }}</span>
-                                    <span class="flex-1 min-w-0 truncate">{{ $main->name }}</span>
-                                    <span class="shrink-0 text-xs font-black {{ $isMainActive && !$activeChildId ? 'text-white/85' : 'text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-full px-1.5 py-0.5' }}">{{ $mainRow->total }}</span>
-                                </a>
-                                @if ($mainRow->children->isNotEmpty())
-                                    <button type="button" @click.stop="catAccordions[{{ $main->id }}] = !catAccordions[{{ $main->id }}]"
-                                        class="w-7 h-7 shrink-0 flex items-center justify-center rounded-lg transition hover:bg-slate-100 dark:hover:bg-slate-800 {{ $isMainActive && !$activeChildId ? 'text-white/70 hover:text-white' : 'text-slate-600 hover:text-slate-600 dark:hover:text-slate-300' }}"
-                                        :aria-expanded="catAccordions[{{ $main->id }}]"
-                                        aria-label="Toggle subcategories">
-                                        <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="catAccordions[{{ $main->id }}] && 'rotate-90'" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                        <div class="relative pt-0.5"
+                             x-show="catSearch === '' || '{{ $mainLower }}'.includes(catSearch.toLowerCase()) || [{{ implode(',', array_map(fn($c) => "'".$c."'", $childLowerArr)) }}].some(s => s.includes(catSearch.toLowerCase()))"
+                             @mouseenter="if (closeCatTimeout) clearTimeout(closeCatTimeout); activeCatHover = {{ $main->id }}"
+                        >
+                            {{-- Main Category Row --}}
+                            <a href="{{ $buildLink(['category_id' => $main->id, 'category' => null]) }}"
+                               class="group flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all"
+                               :class="activeCatHover === {{ $main->id }} || {{ $isMainActive && !$activeChildId ? 'true' : 'false' }} ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 text-white shadow-md shadow-sky-500/20' : 'text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                            >
+                                <span class="flex items-center gap-2 min-w-0">
+                                    <span class="w-6 h-6 shrink-0 rounded-lg flex items-center justify-center text-xs shadow-2xs border transition-transform group-hover:scale-110 {{ $isMainActive && !$activeChildId ? 'bg-white/20 border-white/30 text-white' : 'bg-slate-100 dark:bg-slate-800 border-slate-200/70 dark:border-slate-700/60' }}">{{ $main->icon ?: '📦' }}</span>
+                                    <span class="truncate font-myanmar">{{ $main->name }}</span>
+                                </span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <span class="text-[10px] font-black px-1.5 py-0.5 rounded-full {{ $isMainActive && !$activeChildId ? 'text-white/90 bg-white/20' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover:bg-sky-100 group-hover:text-sky-700 dark:group-hover:bg-sky-950 dark:group-hover:text-sky-300' }}">
+                                        {{ $mainRow->total }}
+                                    </span>
+                                    @if ($hasChildren)
+                                        <svg class="h-3 w-3 transition-transform group-hover:translate-x-0.5 {{ $isMainActive && !$activeChildId ? 'text-white/80' : 'text-slate-400 group-hover:text-sky-500' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                                         </svg>
-                                    </button>
-                                @endif
-                            </div>
+                                    @endif
+                                </div>
+                            </a>
 
-                            {{-- Sub-categories (accordion) --}}
-                            @if ($mainRow->children->isNotEmpty())
-                                <div x-show="catAccordions[{{ $main->id }}]"
-                                    x-transition:enter="transition ease-out duration-150"
-                                    x-transition:enter-start="opacity-0 -translate-y-1"
-                                    x-transition:enter-end="opacity-100 translate-y-0"
-                                    x-transition:leave="transition ease-in duration-100"
-                                    x-transition:leave-start="opacity-100 translate-y-0"
-                                    x-transition:leave-end="opacity-0 -translate-y-1"
-                                    class="ml-3.5 mt-0.5 space-y-0.5 border-l-2 border-slate-100 dark:border-slate-800 pl-2.5">
-                                    @foreach ($mainRow->children as $sub)
-                                        @php
-                                            $isSubActive = request('category_id') == $sub->id || request('category') == $sub->name;
-                                        @endphp
-                                        <a href="{{ $buildLink(['category_id' => $sub->id, 'category' => null]) }}"
-                                            x-show="catSearch === '' || '{{ strtolower(addslashes($sub->name)) }}'.includes(catSearch.toLowerCase())"
-                                            class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-[13px] font-semibold transition {{ $isSubActive ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100' }}">
-                                            <span class="flex-1 min-w-0 truncate">{{ $sub->name }}</span>
-                                            <span class="shrink-0 text-xs font-black {{ $isSubActive ? 'text-white/85' : 'text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-full px-1.5 py-0.5' }}">{{ $sub->products_count }}</span>
+                            {{-- Subcategory Flyout Panel (Hover popover to the right) --}}
+                            @if ($hasChildren)
+                                <div x-show="activeCatHover === {{ $main->id }}"
+                                     x-transition:enter="transition ease-out duration-150"
+                                     x-transition:enter-start="opacity-0 translate-x-1"
+                                     x-transition:enter-end="opacity-100 translate-x-0"
+                                     x-transition:leave="transition ease-in duration-100"
+                                     x-transition:leave-start="opacity-100 translate-x-0"
+                                     x-transition:leave-end="opacity-0 translate-x-1"
+                                     @mouseenter="if (closeCatTimeout) clearTimeout(closeCatTimeout); activeCatHover = {{ $main->id }}"
+                                     class="absolute left-full top-0 ml-3 w-72 sm:w-80 bg-white/95 dark:bg-slate-900/95 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xl p-3 z-50 backdrop-blur-xl"
+                                     style="display: none;"
+                                >
+                                    <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800 px-1">
+                                        <span class="text-xs font-black text-slate-900 dark:text-white font-myanmar flex items-center gap-1.5 truncate">
+                                            <span>{{ $main->icon ?: '📦' }}</span>
+                                            <span class="truncate">{{ $main->name }}</span>
+                                        </span>
+                                        <a href="{{ $buildLink(['category_id' => $main->id, 'category' => null]) }}" class="shrink-0 text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline font-myanmar">
+                                            {{ __('messages.view_all') }} →
                                         </a>
-                                    @endforeach
+                                    </div>
+
+                                    <div class="grid grid-cols-1 gap-1 max-h-[320px] overflow-y-auto">
+                                        @foreach ($mainRow->children as $sub)
+                                            @php
+                                                $isSubActive = request('category_id') == $sub->id || request('category') == $sub->name;
+                                                $subIcon = ($sub->icon && $sub->icon !== 'NULL' && $sub->icon !== 'null') ? $sub->icon : '▫️';
+                                            @endphp
+                                            <a href="{{ $buildLink(['category_id' => $sub->id, 'category' => null]) }}"
+                                               class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-bold transition group/sub {{ $isSubActive ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400' }}">
+                                                <span class="flex items-center gap-2 min-w-0">
+                                                    <span class="text-xs shrink-0 {{ $isSubActive ? 'text-white' : 'text-slate-400 group-hover/sub:text-sky-500' }}">{{ $subIcon }}</span>
+                                                    <span class="truncate font-myanmar">{{ $sub->name }}</span>
+                                                </span>
+                                                <span class="shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-full {{ $isSubActive ? 'text-white/90 bg-white/20' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover/sub:bg-sky-100 group-hover/sub:text-sky-700 dark:group-hover/sub:bg-sky-950 dark:group-hover/sub:text-sky-300' }}">
+                                                    {{ $sub->products_count }}
+                                                </span>
+                                            </a>
+                                        @endforeach
+                                    </div>
                                 </div>
                             @endif
                         </div>
@@ -595,36 +620,100 @@
                 </div>
             </div>
 
-            {{-- Brands (with search) --}}
+            {{-- Brands (with search & hover related categories flyout) --}}
             @if ($brands->count() > 0)
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/90 dark:border-slate-800/80 shadow-xl">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/90 dark:border-slate-800/80 shadow-xl relative z-20"
+                     x-data="{ activeBrandHover: null, closeBrandTimeout: null }"
+                     @mouseleave="closeBrandTimeout = setTimeout(() => { activeBrandHover = null }, 150)"
+                     @mouseenter="if (closeBrandTimeout) clearTimeout(closeBrandTimeout)"
+                >
                     <h2 class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-600 font-outfit mb-3 flex items-center gap-1.5">
                         <span>🏷️</span> <span>{{ __('messages.brands') }}</span>
                     </h2>
                     {{-- Search input --}}
                     <div class="relative mb-2">
-                        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                         <input type="text" x-model="brandSearch" placeholder="{{ __('messages.search_brands') ?? 'Search brands...' }}"
                             class="w-full pl-8 pr-8 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 shadow-sm" />
                         <button type="button" x-show="brandSearch.length > 0" x-cloak @click="brandSearch = ''" class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-600 text-slate-500 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-500 text-xs leading-none transition">✕</button>
                     </div>
-                    <div class="space-y-0.5 max-h-[280px] overflow-y-auto pr-1 scrollbar-thin">
-                        <a href="{{ $buildLink(['brand_id' => null, 'brand' => null]) }}" class="flex items-center gap-2 px-2.5 py-2 rounded-xl text-sm font-bold transition {{ !request()->filled('brand_id') && !request()->filled('brand') ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 text-white shadow-md shadow-sky-500/20' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800' }}">
+                    <div class="space-y-0.5">
+                        <a href="{{ $buildLink(['brand_id' => null, 'brand' => null]) }}" class="flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition {{ !request()->filled('brand_id') && !request()->filled('brand') ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 text-white shadow-md shadow-sky-500/20' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                             <span class="flex-1 min-w-0 truncate">{{ __('messages.all_brands') }}</span>
                             <span class="shrink-0 text-xs font-black {{ !request()->filled('brand_id') && !request()->filled('brand') ? 'text-white/80' : 'text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-full px-1.5 py-0.5' }}">{{ $brands->count() }}</span>
                         </a>
                         @foreach ($brands as $b)
                             @php
                                 $isBrandActive = request('brand_id') == $b->id || request('brand') == $b->name;
+                                $hasRelCats = isset($b->related_categories) && $b->related_categories->isNotEmpty();
                             @endphp
-                            <a href="{{ $buildLink(['brand_id' => $b->id, 'brand' => null]) }}"
-                                x-show="brandSearch === '' || '{{ strtolower(addslashes($b->name)) }}'.includes(brandSearch.toLowerCase())"
-                                class="flex items-center gap-2 px-2.5 py-2 rounded-xl text-sm font-bold transition {{ $isBrandActive ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 text-white shadow-md shadow-sky-500/20' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800' }}">
-                                <span class="flex-1 min-w-0 truncate">{{ $b->name }}</span>
-                                <span class="shrink-0 text-xs font-black {{ $isBrandActive ? 'text-white/85' : 'text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-full px-1.5 py-0.5' }}">{{ $b->products_count }}</span>
-                            </a>
+                            <div class="relative pt-0.5"
+                                 x-show="brandSearch === '' || '{{ strtolower(addslashes($b->name)) }}'.includes(brandSearch.toLowerCase())"
+                                 @mouseenter="if (closeBrandTimeout) clearTimeout(closeBrandTimeout); activeBrandHover = {{ $b->id }}"
+                            >
+                                <a href="{{ $buildLink(['brand_id' => $b->id, 'brand' => null]) }}"
+                                   class="group flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all"
+                                   :class="activeBrandHover === {{ $b->id }} || {{ $isBrandActive ? 'true' : 'false' }} ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 text-white shadow-md shadow-sky-500/20' : 'text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                                >
+                                    <span class="flex-1 min-w-0 truncate font-myanmar">{{ $b->name }}</span>
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        <span class="text-[10px] font-black px-1.5 py-0.5 rounded-full {{ $isBrandActive ? 'text-white/90 bg-white/20' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover:bg-sky-100 group-hover:text-sky-700 dark:group-hover:bg-sky-950 dark:group-hover:text-sky-300' }}">
+                                            {{ $b->products_count }}
+                                        </span>
+                                        @if ($hasRelCats)
+                                            <svg class="h-3 w-3 transition-transform group-hover:translate-x-0.5 {{ $isBrandActive ? 'text-white/80' : 'text-slate-400 group-hover:text-sky-500' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                                            </svg>
+                                        @endif
+                                    </div>
+                                </a>
+
+                                {{-- Brand Related Categories Flyout Panel --}}
+                                @if ($hasRelCats)
+                                    <div x-show="activeBrandHover === {{ $b->id }}"
+                                         x-transition:enter="transition ease-out duration-150"
+                                         x-transition:enter-start="opacity-0 translate-x-1"
+                                         x-transition:enter-end="opacity-100 translate-x-0"
+                                         x-transition:leave="transition ease-in duration-100"
+                                         x-transition:leave-start="opacity-100 translate-x-0"
+                                         x-transition:leave-end="opacity-0 translate-x-1"
+                                         @mouseenter="if (closeBrandTimeout) clearTimeout(closeBrandTimeout); activeBrandHover = {{ $b->id }}"
+                                         class="absolute left-full top-0 ml-3 w-72 sm:w-80 bg-white/95 dark:bg-slate-900/95 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xl p-3 z-50 backdrop-blur-xl"
+                                         style="display: none;"
+                                    >
+                                        <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800 px-1">
+                                            <span class="text-xs font-black text-slate-900 dark:text-white font-myanmar flex items-center gap-1.5 truncate">
+                                                <span>🏷️</span>
+                                                <span class="truncate">{{ $b->name }}</span>
+                                            </span>
+                                            <a href="{{ $buildLink(['brand_id' => $b->id, 'brand' => null]) }}" class="shrink-0 text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline font-myanmar">
+                                                {{ __('messages.view_all') }} →
+                                            </a>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 gap-1 max-h-[300px] overflow-y-auto">
+                                            @foreach ($b->related_categories as $relCat)
+                                                @php
+                                                    $isCatActive = request('brand_id') == $b->id && (request('category_id') == $relCat->id || request('category') == $relCat->name);
+                                                    $cIcon = ($relCat->icon && $relCat->icon !== 'NULL' && $relCat->icon !== 'null') ? $relCat->icon : '📁';
+                                                @endphp
+                                                <a href="{{ $buildLink(['brand_id' => $b->id, 'category_id' => $relCat->id, 'brand' => null, 'category' => null]) }}"
+                                                   class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-bold transition group/rel {{ $isCatActive ? 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 text-white shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400' }}">
+                                                    <span class="flex items-center gap-2 min-w-0">
+                                                        <span class="text-xs shrink-0 {{ $isCatActive ? 'text-white' : 'text-slate-400 group-hover/rel:text-sky-500' }}">{{ $cIcon }}</span>
+                                                        <span class="truncate font-myanmar">{{ $relCat->name }}</span>
+                                                    </span>
+                                                    <span class="shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-full {{ $isCatActive ? 'text-white/90 bg-white/20' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover/rel:bg-sky-100 group-hover/rel:text-sky-700 dark:group-hover/rel:bg-sky-950 dark:group-hover/rel:text-sky-300' }}">
+                                                        {{ $relCat->products_count }}
+                                                    </span>
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
                         @endforeach
                         {{-- No results message --}}
                         <div x-show="brandSearch.length > 0 && [...document.querySelectorAll('[x-show*=brandSearch]')].every(el => el.style.display === 'none')" x-cloak class="px-3 py-4 text-center text-xs text-slate-600 dark:text-slate-500">
@@ -686,8 +775,8 @@
         {{-- Main: product grid / list --}}
         <div class="min-w-0">
             @if ($viewMode === 'list')
-                {{-- List (deep-linked from /browse) — glued hairline rows; 1 column on mobile, 2 on tablet/desktop --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                {{-- List (deep-linked from /browse) — glued hairline rows; 1 column on mobile, 2-3 on tablet/desktop --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-px bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
                     @forelse ($products as $product)
                         <x-product-card-list
                             :product="$product"
@@ -707,8 +796,8 @@
                     @endforelse
                 </div>
             @else
-                {{-- Dense hairline-divided grid (AliExpress style) --}}
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-px bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                {{-- Dense hairline-divided grid with adaptive responsive columns for all display widths --}}
+                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[1920px]:grid-cols-6 gap-px bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
                     @forelse ($products as $product)
                         <x-product-card
                             :product="$product"

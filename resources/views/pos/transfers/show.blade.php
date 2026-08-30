@@ -301,7 +301,7 @@
                     @if($transfer->shipped_at)
                         <p class="text-[10px] font-mono text-amber-600 dark:text-amber-400 mt-0.5">{{ $transfer->shipped_at->format('d/m/Y H:i') }}</p>
                     @else
-                        <p class="text-[10px] text-slate-400 mt-0.5">Pending shipment</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.pending_shipment') }}</p>
                     @endif
                 </div>
             </div>
@@ -312,7 +312,7 @@
                     <span class="w-6 h-6 rounded-full bg-rose-500 text-white font-black text-xs grid place-items-center shrink-0">✕</span>
                     <div class="min-w-0">
                         <p class="text-xs font-bold text-rose-700 dark:text-rose-300">{{ __('messages.transfer_status_cancelled') }}</p>
-                        <p class="text-[10px] text-rose-500 dark:text-rose-400 mt-0.5">Transfer voided</p>
+                        <p class="text-[10px] text-rose-500 dark:text-rose-400 mt-0.5">{{ __('messages.transfer_voided') }}</p>
                     </div>
                 </div>
             @else
@@ -323,7 +323,7 @@
                         @if($transfer->received_at)
                             <p class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 mt-0.5">{{ $transfer->received_at->format('d/m/Y H:i') }}</p>
                         @else
-                            <p class="text-[10px] text-slate-400 mt-0.5">Pending receipt</p>
+                            <p class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.pending_receipt') }}</p>
                         @endif
                     </div>
                 </div>

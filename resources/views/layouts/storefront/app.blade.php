@@ -157,9 +157,9 @@
             : asset('apple-touch-icon.png');
     @endphp
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    {{-- Preload the three WOFF2 fonts so text renders without font-swap CLS. --}}
+    {{-- Preload fonts so text renders without font-swap CLS. --}}
     <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/assets/fonts/Roboto-Regular.woff2') }}">
-    <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/assets/fonts/NotoSansMyanmar-Regular.woff2') }}">
+    <link rel="preload" as="font" type="font/ttf" crossorigin href="{{ Vite::asset('resources/assets/fonts/NotoSansMyanmar/NotoSansMyanmar-Regular.ttf') }}">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/assets/fonts/Outfit-Regular.woff2') }}">
     <link rel="icon" type="{{ $faviconPath && str_ends_with($faviconPath, '.webp') ? 'image/webp' : ($faviconPath ? 'image/png' : 'image/x-icon') }}" href="{{ $faviconHref }}">
     <link rel="apple-touch-icon" href="{{ $appleTouchHref }}">
@@ -517,182 +517,8 @@
     <header x-data="{ searchOpen: false }" class="sticky top-0 border-b border-white/50 shadow-sm dark:border-slate-800/80" :class="mobileMenuOpen ? 'z-[70]' : 'z-30'" @click.outside="searchOpen = false">
         <div class="bg-white/95 dark:bg-slate-900/95 backdrop-blur sf-header-main">
         <div class="w-full px-1 sm:px-5 lg:px-8 h-16 sm:h-[4.5rem] flex items-center gap-1.5 sm:gap-3 relative">
-            {{-- Left: Category menu (Linn IT Mart style icon button) --}}
-            <div class="flex shrink-0 items-center">
-
-                {{-- Shopwise-style Category Menu (left of header) — desktop opens the flyout; mobile is a shortcut to /browse --}}
-                @if ($navCategories->count() > 0)
-                    <div class="relative shrink-0" x-data="{ catOpen: false, activeCat: {{ $navCategoryTree->first()?->category->id ?? 0 }}, catIds: [{{ $navCategoryTree->pluck('category.id')->implode(',') }}], moveCat(dir) { const ids = this.catIds; if (!ids.length) return; const i = ids.indexOf(this.activeCat); let n = i + dir; if (n < 0) n = ids.length - 1; else if (n >= ids.length) n = 0; this.activeCat = ids[n]; this.focusRailAt(ids.indexOf(this.activeCat)); }, moveTo(i) { const ids = this.catIds; if (!ids.length) return; if (i < 0) i = 0; else if (i >= ids.length) i = ids.length - 1; this.activeCat = ids[i]; this.focusRailAt(i); }, focusRailAt(i) { this.$nextTick(() => { const btns = this.$refs.catRail ? this.$refs.catRail.querySelectorAll('button') : []; if (btns[i]) btns[i].focus(); }); } }" @mouseenter="catOpen = true" @mouseleave="catOpen = false" @click.outside="catOpen = false" @keydown.escape.window="catOpen = false">
-                        {{-- Desktop (lg+): hover/click toggles the category flyout (mobile has a Categories shortcut beside the search bar) --}}
-                        <button
-                            type="button"
-                            @click="catOpen = !catOpen"
-                            :aria-expanded="catOpen ? 'true' : 'false'"
-                            aria-haspopup="menu"
-                            aria-label="{{ __('messages.categories') }}"
-                            title="{{ __('messages.categories') }}"
-                            class="hidden lg:inline-flex h-9 w-9 sm:h-10 sm:w-10 lg:h-auto lg:w-auto items-center justify-center gap-1.5 lg:gap-2 rounded-xl border px-0 lg:px-3.5 py-2 text-xs font-extrabold transition focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            :class="catOpen ? 'border-transparent bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-md shadow-sky-500/25' : 'border-slate-200/80 bg-white text-slate-700 shadow-sm hover:bg-slate-100 hover:text-sky-600 dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-sky-300'"
-                        >
-                            {{-- Categories icon (3 rows of rounded pills — Linn IT Mart style) --}}
-                            <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <rect x="3" y="3.6" width="4" height="5.4" rx="2.7"/>
-                                <rect x="9" y="3.6" width="12" height="5.4" rx="2.7"/>
-                                <rect x="3" y="9.3" width="4" height="5.4" rx="2.7"/>
-                                <rect x="9" y="9.3" width="12" height="5.4" rx="2.7"/>
-                                <rect x="3" y="15" width="4" height="5.4" rx="2.7"/>
-                                <rect x="9" y="15" width="12" height="5.4" rx="2.7"/>
-                            </svg>
-                            <span class="hidden lg:inline font-extrabold text-xs">{{ __('messages.categories') }}</span>
-                            <svg class="hidden lg:block w-3.5 h-3.5 shrink-0 text-slate-600 transition-transform duration-200" :class="catOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </button>
-                        <div
-                            x-show="catOpen"
-                            x-cloak
-                            x-transition:enter="transition ease-out duration-150"
-                            x-transition:enter-start="opacity-0 translate-y-1"
-                            x-transition:enter-end="opacity-100 translate-y-0"
-                            x-transition:leave="transition ease-in duration-100"
-                            x-transition:leave-start="opacity-100"
-                            x-transition:leave-end="opacity-0"
-                            class="absolute left-0 top-full mt-2 z-50 w-[46rem] max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-xl shadow-2xl dark:border-slate-700 dark:bg-slate-900/95"
-                            role="menu"
-                        >
-                            {{-- Mega menu: left rail + right panel (AliExpress/Shopee style) --}}
-                            <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-100 dark:border-slate-800">
-                                <span class="flex items-center gap-2 text-sm font-black text-slate-800 dark:text-slate-100">
-                                    <span class="w-7 h-7 shrink-0 rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white flex items-center justify-center text-sm shadow-sm" aria-hidden="true">🗂️</span>
-                                    {{ __('messages.categories') }}
-                                </span>
-                                <a href="{{ $browseUrl }}" class="inline-flex items-center gap-0.5 whitespace-nowrap text-xs font-extrabold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition" role="menuitem">
-                                    {{ __('messages.view_all_products') }} →
-                                </a>
-                            </div>
-                            <div class="flex h-[26rem] max-h-[70vh]">
-                                {{-- Left rail: main categories (hover/click swaps the right panel) --}}
-                                <nav x-ref="catRail" aria-label="{{ __('messages.categories') }}" class="w-52 shrink-0 border-r border-slate-100 dark:border-slate-800 p-1.5 space-y-0.5 overflow-y-auto scrollbar-thin" @keydown.arrow-down.prevent="moveCat(1)" @keydown.arrow-up.prevent="moveCat(-1)" @keydown.home.prevent="moveTo(0)" @keydown.end.prevent="moveTo(catIds.length - 1)">
-                                    @foreach ($navCategoryTree as $navMainRow)
-                                        @php $navMain = $navMainRow->category; @endphp
-                                        <button
-                                            type="button"
-                                            @click="activeCat = {{ $navMain->id }}"
-                                            @mouseenter="activeCat = {{ $navMain->id }}"
-                                            :class="activeCat === {{ $navMain->id }} ? 'bg-sky-50 dark:bg-slate-800 text-sky-700 dark:text-sky-300 border-sky-600 shadow-sm' : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'"
-                                            class="w-full flex items-center gap-2.5 rounded-xl border-l-[3px] px-2 py-1.5 text-left text-sm font-extrabold transition"
-                                            role="menuitem"
-                                            :aria-current="activeCat === {{ $navMain->id }} ? 'true' : 'false'"
-                                        >
-                                            <span class="w-9 h-9 shrink-0 rounded-lg overflow-hidden bg-sky-100 dark:bg-slate-700 flex items-center justify-center text-base shadow-sm" aria-hidden="true">
-                                                @if ($navMain->image_path)
-                                                    <img src="{{ asset('storage/' . $navMain->image_path) }}" alt="" class="w-full h-full object-cover" loading="lazy" decoding="async" data-img-fallback="hide-next">
-                                                    <span class="hidden w-full h-full items-center justify-center">{{ $navMain->icon ?: '📦' }}</span>
-                                                @else
-                                                    {{ $navMain->icon ?: '📦' }}
-                                                @endif
-                                            </span>
-                                            <span class="flex-1 min-w-0 truncate">{{ $navMain->name }}</span>
-                                            <span class="shrink-0 text-[10px] font-black text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-full px-1.5 py-0.5">{{ number_format($navMainRow->total) }}</span>
-                                        </button>
-                                    @endforeach
-                                </nav>
-                                {{-- Right panel: brands + sub-categories of the active main (swaps on hover/click) --}}
-                                <div class="flex-1 min-w-0 overflow-y-auto scrollbar-thin p-3">
-                                    @foreach ($navCategoryTree as $navMainRow)
-                                        @php
-                                            $navMain = $navMainRow->category;
-                                            $mainBrandRows = $navBrandsByCategory[$navMain->id] ?? collect();
-                                        @endphp
-                                        <div x-show="activeCat === {{ $navMain->id }}" x-cloak class="space-y-3.5">
-                                            {{-- Sticky panel header --}}
-                                            <div class="sticky top-0 z-10 -mx-3 px-3 py-2.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-100 dark:border-slate-800 flex items-center gap-2.5">
-                                                <span class="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white flex items-center justify-center text-base shadow-sm" aria-hidden="true">{{ $navMain->icon ?: '📦' }}</span>
-                                                <div class="min-w-0">
-                                                    <h3 class="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">{{ $navMain->name }}</h3>
-                                                    <p class="text-[11px] font-bold text-slate-600 dark:text-slate-500">{{ number_format($navMainRow->total) }} {{ __('messages.products') }}</p>
-                                                </div>
-                                                <a href="{{ url('/products?category_id=' . $navMain->id . ($activeStoreSlug ? '&store_slug=' . $activeStoreSlug : '')) }}" class="ml-auto shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-[11px] font-extrabold shadow-sm hover:brightness-110 active:scale-95 transition" role="menuitem">
-                                                    👀 <span class="whitespace-nowrap">{{ __('messages.view_all_products') }}</span>
-                                                </a>
-                                            </div>
-
-                                            {{-- Brands grid --}}
-                                            @if ($mainBrandRows->isNotEmpty())
-                                                <div>
-                                                    <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-2 flex items-center gap-1">
-                                                        <span aria-hidden="true">🏷️</span> {{ __('messages.brands') }}
-                                                    </h4>
-                                                    <div class="grid grid-cols-2 gap-1.5">
-                                                        @foreach ($mainBrandRows as $brandRow)
-                                                            @php $flyBrand = $brandRow['brand']; @endphp
-                                                            <a href="{{ url('/products?category_id=' . $navMain->id . '&brand_id=' . $flyBrand->id . ($activeStoreSlug ? '&store_slug=' . $activeStoreSlug : '')) }}"
-                                                               class="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-1.5 pr-2 py-1.5 transition hover:border-sky-400 dark:hover:border-sky-500/60 active:scale-95"
-                                                               role="menuitem"
-                                                            >
-                                                                <span class="w-8 h-8 shrink-0 rounded-lg overflow-hidden bg-sky-100 dark:bg-slate-700 flex items-center justify-center text-sm" aria-hidden="true">
-                                                                    @if ($flyBrand->logo_path)
-                                                                        <img src="{{ asset('storage/' . $flyBrand->logo_path) }}" alt="" class="w-full h-full object-cover" loading="lazy" decoding="async" data-img-fallback="hide-next">
-                                                                        <span class="hidden w-full h-full items-center justify-center text-[10px] font-black">{{ mb_substr($flyBrand->name, 0, 1) }}</span>
-                                                                    @else
-                                                                        <span class="text-[10px] font-black">{{ mb_substr($flyBrand->name, 0, 1) }}</span>
-                                                                    @endif
-                                                                </span>
-                                                                <span class="min-w-0">
-                                                                    <span class="block font-black text-xs leading-tight truncate text-slate-800 dark:text-slate-100">{{ $flyBrand->name }}</span>
-                                                                    <span class="block text-[10px] font-bold text-slate-500 dark:text-slate-400">{{ number_format($brandRow['count']) }} {{ __('messages.products') }}</span>
-                                                                </span>
-                                                            </a>
-                                                        @endforeach
-                                                    </div>
-                                                </div>
-                                            @endif
-
-                                            {{-- Sub-categories glued grid --}}
-                                            @if ($navMainRow->children->isNotEmpty())
-                                                <div>
-                                                    <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-500 mb-2 flex items-center gap-1">
-                                                        <span aria-hidden="true">📂</span> {{ __('messages.sub_categories') }}
-                                                    </h4>
-                                                    <div class="grid grid-cols-2 gap-px bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
-                                                        @foreach ($navMainRow->children as $navSub)
-                                                            <a href="{{ url('/products?category_id=' . $navSub->id . ($activeStoreSlug ? '&store_slug=' . $activeStoreSlug : '')) }}"
-                                                               class="bg-white dark:bg-slate-900 p-2.5 flex items-center gap-2 min-h-[52px] hover:bg-sky-50 dark:hover:bg-slate-800 transition group"
-                                                               role="menuitem"
-                                                            >
-                                                                <span class="w-7 h-7 shrink-0 rounded-md bg-sky-100 dark:bg-slate-800 flex items-center justify-center text-sm group-hover:scale-110 transition" aria-hidden="true">📁</span>
-                                                                <span class="min-w-0">
-                                                                    <span class="block text-[11px] font-extrabold text-slate-800 dark:text-slate-100 leading-tight truncate">{{ $navSub->name }}</span>
-                                                                    <span class="block text-[10px] font-bold text-slate-600 dark:text-slate-500">{{ number_format($navSub->products_count) }} {{ __('messages.products') }}</span>
-                                                                </span>
-                                                            </a>
-                                                        @endforeach
-                                                    </div>
-                                                </div>
-                                            @endif
-
-                                            {{-- Fallback when a main has no subs/brands of its own --}}
-                                            @if ($mainBrandRows->isEmpty() && $navMainRow->children->isEmpty())
-                                                <a href="{{ url('/products?category_id=' . $navMain->id . ($activeStoreSlug ? '&store_slug=' . $activeStoreSlug : '')) }}" class="block p-3 rounded-xl bg-sky-50 dark:bg-slate-800 border border-sky-200 dark:border-slate-700 text-center text-xs font-extrabold text-sky-700 dark:text-sky-300 transition active:scale-[0.98]" role="menuitem">
-                                                    👀 {{ __('messages.view_all_products') }}
-                                                </a>
-                                            @endif
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                            {{-- Footer: browse all --}}
-                            <div class="border-t border-slate-100 dark:border-slate-800 px-4 py-2.5">
-                                <a href="{{ $productsUrl }}" class="flex items-center justify-center gap-1 text-xs font-black text-sky-600 dark:text-sky-400 hover:text-sky-700 transition" role="menuitem">
-                                    <span>👀</span> <span>{{ __('messages.view_all_products') }}</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-            </div>
-
-            {{-- Shop logo (mobile: centered via flex-1; desktop: left-aligned so the
-                 big inline search bar takes the center — Shopee/Lazada marketplace look) --}}
-            <a href="{{ $homeUrl }}" class="sf-brand-link flex min-w-0 flex-1 items-center justify-center lg:flex-none lg:justify-start lg:pr-3 group transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]">
+            {{-- Shop logo (mobile: centered via flex-1; desktop: snapped to far-left) --}}
+            <a href="{{ $homeUrl }}" class="sf-brand-link flex min-w-0 flex-1 lg:flex-none items-center justify-center lg:justify-start lg:pr-4 group transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]">
                 @if (!empty(($setting ?? null)?->storefrontLogo()))
                     <img
                         src="{{ asset('storage/' . $setting->storefrontLogo()) }}"
@@ -723,13 +549,13 @@
                 <form action="{{ url('/products') }}" method="GET"
                       x-data="searchSuggestions('{{ $activeStoreSlug }}', '{{ url('/products/suggestions') }}', { categories: '{{ __('messages.categories') }}', brands: '{{ __('messages.brands') }}', products: '{{ __('messages.products') }}', trending: '{{ __('messages.trending_searches') }}' })"
                       @click.outside="open = false"
-                      class="relative flex items-center gap-1.5 rounded-full border-2 border-sky-500 bg-white py-1 pl-3 pr-1.5 shadow-sm transition focus-within:ring-2 focus-within:ring-sky-500/30 dark:border-sky-600 dark:bg-slate-800">
+                      class="relative flex items-center gap-1.5 rounded-xl border-2 border-sky-500 bg-white py-1 pl-3 pr-1.5 shadow-sm transition focus-within:ring-2 focus-within:ring-sky-500/30 dark:border-sky-600 dark:bg-slate-800">
                     <input type="hidden" name="store_slug" value="{{ $activeStoreSlug }}">
                     <svg class="h-5 w-5 shrink-0 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                     <input type="text" name="search" id="header-search-input" x-model="query" @input="onInput()" @focus="onFocus()" @keydown="onKeydown($event)" autocomplete="off" placeholder="{{ __('messages.search_products') }}" class="w-full min-w-0 bg-transparent px-1 text-sm outline-none text-slate-700 placeholder:text-slate-400 dark:text-slate-200 dark:placeholder:text-slate-500" role="combobox" aria-expanded="open ? 'true' : 'false'" aria-autocomplete="list" aria-controls="search-suggestions-panel" :aria-activedescendant="activeId() || undefined">
-                    <button type="submit" class="shrink-0 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-5 py-1.5 text-xs font-extrabold text-white shadow-sm shadow-sky-500/20 transition active:scale-95">
+                    <button type="submit" class="shrink-0 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-1.5 text-xs font-extrabold text-white shadow-sm shadow-sky-500/20 transition active:scale-95">
                         {{ __('messages.search') }}
                     </button>
 
@@ -1039,88 +865,307 @@
             x-transition:leave-end="-translate-x-full"
             x-effect="document.body.classList.toggle('overflow-hidden', mobileMenuOpen); if (mobileMenuOpen) $nextTick(() => $refs.drawerClose && $refs.drawerClose.focus())"
             @keyup.escape.window="mobileMenuOpen = false"
-            class="lg:hidden fixed inset-y-0 left-0 z-[60] w-[86vw] max-w-sm flex flex-col bg-white shadow-2xl dark:bg-slate-900"
+            class="lg:hidden fixed inset-y-0 left-0 z-[60] w-[86vw] max-w-sm flex flex-col bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-800/80 shadow-2xl"
             role="dialog"
             aria-modal="true"
             aria-label="{{ __('messages.menu') }}"
         >
             {{-- Drawer header --}}
-            <div class="flex h-16 shrink-0 items-center gap-2 border-b border-slate-200/80 px-4 dark:border-slate-800/80">
-                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-500 text-sm font-black text-white shadow-md">AT</div>
-                <div class="min-w-0 flex-1">
-                    <p class="truncate font-outfit text-sm font-black text-slate-900 dark:text-white">{{ $storeDisplayName }}</p>
-                    <p class="truncate text-[11px] font-bold text-sky-600 dark:text-sky-400">{{ __('messages.menu') }}</p>
+            <div class="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 px-4 bg-white/80 dark:bg-slate-900/80 dark:border-slate-800/80 backdrop-blur">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <div class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 via-fuchsia-600 to-rose-500 text-sm font-black text-white shadow-md shadow-violet-500/25 ring-2 ring-white dark:ring-slate-800">
+                        {{ mb_strtoupper(mb_substr($storeDisplayName, 0, 2)) }}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate font-outfit text-sm font-black text-slate-900 dark:text-white leading-tight">{{ $storeDisplayName }}</p>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500/50 animate-pulse"></span>
+                            <span class="truncate text-[11px] font-bold text-slate-500 dark:text-slate-400 leading-none">{{ __('messages.menu') }}</span>
+                        </div>
+                    </div>
                 </div>
                 <button
                     type="button"
                     x-ref="drawerClose"
                     @click="mobileMenuOpen = false"
-                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    class="group flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200/90 bg-slate-100/80 text-slate-600 shadow-2xs transition-all hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 active:scale-95 dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 dark:hover:border-rose-800/50"
                     aria-label="{{ __('messages.close_menu') }}"
                     title="{{ __('messages.close_menu') }}"
                 >
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <svg class="h-4.5 w-4.5 transition-transform duration-200 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
                 </button>
             </div>
 
-            <div class="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3">
-                {{-- Mobile Menu Utility: Account / Login --}}
-                <div class="flex items-center gap-2">
-                    {{-- Account / Login --}}
-                    @auth
-                        @if (store_can('storefront.customer_portal', $activeStoreContext))
-                        <a href="{{ $accountUrl }}" @click="mobileMenuOpen = false" class="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl border border-violet-400 bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3 text-sm font-extrabold text-white shadow-md shadow-sky-500/20 transition hover:brightness-110 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-sky-500/60">
-                            <span aria-hidden="true">👤</span>
-                            <span class="flex-1 truncate text-left">{{ auth()->user()->name }}</span>
-                        </a>
-                        @endif
-                    @else
-                        <a href="{{ route('login') }}" @click="mobileMenuOpen = false" class="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3 text-sm font-extrabold text-white shadow-md shadow-sky-500/20 transition hover:brightness-110 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-sky-500/60">
-                            <span aria-hidden="true">🔑</span>
-                            <span class="flex-1 truncate text-left">{{ __('messages.login') }}</span>
-                        </a>
-                    @endauth
+            {{-- Drawer body with nav links --}}
+            <div class="flex-1 overflow-y-auto overscroll-contain px-3.5 py-4 space-y-3.5">
+                {{-- Account / Auth Card --}}
+                @auth
+                    @if (store_can('storefront.customer_portal', $activeStoreContext))
+                        <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-800/90 p-3 shadow-xs transition hover:shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-violet-600 to-sky-500 text-white font-black text-xs shadow-sm">
+                                    {{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 2)) }}
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-xs font-black text-slate-900 dark:text-white">{{ auth()->user()->name }}</p>
+                                    <p class="truncate text-[11px] font-bold text-sky-600 dark:text-sky-400">{{ __('messages.nav_account') }}</p>
+                                </div>
+                                <a href="{{ $accountUrl }}" @click="mobileMenuOpen = false" class="inline-flex h-8 px-3 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 text-xs font-extrabold hover:bg-sky-100 dark:hover:bg-sky-900/60 transition active:scale-95" aria-label="{{ __('messages.nav_account') }}">
+                                    <span>{{ __('messages.view') ?? 'View' }}</span>
+                                    <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+                @else
+                    <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-800/90 p-3.5 shadow-xs">
+                        <div class="flex flex-col gap-2.5">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-950/80 text-violet-700 dark:text-violet-300 text-xs font-black shadow-2xs">🔑</span>
+                                    <span class="text-xs font-black tracking-wide text-slate-800 dark:text-slate-100">{{ __('messages.account') ?? 'Account' }}</span>
+                                </div>
+                                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">{{ __('messages.welcome') ?? 'Welcome' }}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <a href="{{ route('login') }}" @click="mobileMenuOpen = false" class="flex h-9 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-sky-600 px-3 text-xs font-black text-white shadow-sm shadow-sky-500/25 transition hover:brightness-110 active:scale-95">
+                                    <span>{{ __('messages.login') }}</span>
+                                </a>
+                                <a href="{{ route('register') }}" @click="mobileMenuOpen = false" class="flex h-9 items-center justify-center gap-1.5 rounded-xl bg-slate-100 dark:bg-slate-700/80 border border-slate-200/90 dark:border-slate-600 px-3 text-xs font-black text-slate-800 dark:text-white transition hover:bg-slate-200 dark:hover:bg-slate-600 active:scale-95">
+                                    <span>{{ __('messages.register') }}</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @endauth
+
+                {{-- Section Label --}}
+                <div class="px-1 flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-500">
+                    <span>{{ __('messages.menu') }}</span>
+                    <span class="h-px flex-1 bg-slate-200/60 dark:bg-slate-800 ml-2"></span>
                 </div>
 
                 {{-- Mobile Nav Links --}}
-                <nav aria-label="{{ __('messages.menu') }}" data-mobile-nav class="grid grid-cols-1 gap-1">
-                    <a href="{{ $homeUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isHome ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
-                        <span aria-hidden="true">🏠</span>
-                        <span>{{ __('messages.home') }}</span>
+                <nav aria-label="{{ __('messages.menu') }}" data-mobile-nav class="grid grid-cols-1 gap-1.5">
+                    {{-- 1. Home --}}
+                    <a
+                        href="{{ $homeUrl }}"
+                        @click="mobileMenuOpen = false"
+                        class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isHome ? 'bg-gradient-to-r from-sky-500/15 via-sky-500/5 to-transparent border-l-4 border-sky-500 text-sky-900 dark:text-sky-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
+                    >
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isHome ? 'bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/30' : 'bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 group-hover:scale-105' }}">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/>
+                                </svg>
+                            </span>
+                            <span class="text-sm truncate">{{ __('messages.home') }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            @if ($isHome)
+                                <span class="h-2 w-2 rounded-full bg-sky-500 shadow-xs shadow-sky-500/50 animate-pulse"></span>
+                            @endif
+                            <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
                     </a>
-                    <a href="{{ $productsUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isProducts ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
-                        <span aria-hidden="true">📦</span>
-                        <span>{{ __('messages.products') }}</span>
+
+                    {{-- 2. Products --}}
+                    <a
+                        href="{{ $productsUrl }}"
+                        @click="mobileMenuOpen = false"
+                        class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isProducts ? 'bg-gradient-to-r from-violet-500/15 via-violet-500/5 to-transparent border-l-4 border-violet-500 text-violet-900 dark:text-violet-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
+                    >
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isProducts ? 'bg-gradient-to-tr from-violet-600 to-fuchsia-500 text-white shadow-md shadow-violet-500/30' : 'bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 group-hover:scale-105' }}">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/>
+                                </svg>
+                            </span>
+                            <span class="text-sm truncate">{{ __('messages.products') }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            @if ($isProducts)
+                                <span class="h-2 w-2 rounded-full bg-violet-500 shadow-xs shadow-violet-500/50 animate-pulse"></span>
+                            @endif
+                            <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
                     </a>
-                    <a href="{{ $browseUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isBrowse ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
-                        <span aria-hidden="true">🗂️</span>
-                        <span>{{ __('messages.categories') }}</span>
+
+                    {{-- 3. Categories --}}
+                    <a
+                        href="{{ $browseUrl }}"
+                        @click="mobileMenuOpen = false"
+                        class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isBrowse ? 'bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-4 border-amber-500 text-amber-900 dark:text-amber-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
+                    >
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isBrowse ? 'bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/30' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 group-hover:scale-105' }}">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <rect x="3" y="3.6" width="4" height="5.4" rx="2.7"/>
+                                    <rect x="9" y="3.6" width="12" height="5.4" rx="2.7"/>
+                                    <rect x="3" y="9.3" width="4" height="5.4" rx="2.7"/>
+                                    <rect x="9" y="9.3" width="12" height="5.4" rx="2.7"/>
+                                    <rect x="3" y="15" width="4" height="5.4" rx="2.7"/>
+                                    <rect x="9" y="15" width="12" height="5.4" rx="2.7"/>
+                                </svg>
+                            </span>
+                            <span class="text-sm truncate">{{ __('messages.categories') }}</span>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            @if ($navCategories->count() > 0)
+                                <span class="rounded-full bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 text-[11px] font-black text-amber-700 dark:text-amber-300">
+                                    {{ $navCategories->count() }}
+                                </span>
+                            @endif
+                            @if ($isBrowse)
+                                <span class="h-2 w-2 rounded-full bg-amber-500 shadow-xs shadow-amber-500/50 animate-pulse"></span>
+                            @endif
+                            <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
                     </a>
+
+                    {{-- 4. Glass Finder (if enabled) --}}
                     @if (store_can('storefront.glass_finder', $activeStoreContext))
-                        <a href="{{ $glassFinderUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isGlassFinder ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
-                            <span aria-hidden="true">📱</span>
-                            <span>{{ __('messages.glass_finder') }}</span>
+                        <a
+                            href="{{ $glassFinderUrl }}"
+                            @click="mobileMenuOpen = false"
+                            class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isGlassFinder ? 'bg-gradient-to-r from-cyan-500/15 via-cyan-500/5 to-transparent border-l-4 border-cyan-500 text-cyan-900 dark:text-cyan-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
+                        >
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isGlassFinder ? 'bg-gradient-to-tr from-cyan-500 to-teal-500 text-white shadow-md shadow-cyan-500/30' : 'bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 group-hover:scale-105' }}">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/>
+                                    </svg>
+                                </span>
+                                <span class="text-sm truncate">{{ __('messages.glass_finder') }}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                @if ($isGlassFinder)
+                                    <span class="h-2 w-2 rounded-full bg-cyan-500 shadow-xs shadow-cyan-500/50 animate-pulse"></span>
+                                @endif
+                                <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
                         </a>
                     @endif
+
+                    {{-- 5. Service Tracking / Repair (if enabled) --}}
                     @if (store_can('service.repair_jobs', $activeStoreContext))
-                        <a href="{{ $serviceTrackingUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isServiceTracking ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
-                            <span aria-hidden="true">🔧</span>
-                            <span>{{ __('messages.nav_service_track') }}</span>
+                        <a
+                            href="{{ $serviceTrackingUrl }}"
+                            @click="mobileMenuOpen = false"
+                            class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isServiceTracking ? 'bg-gradient-to-r from-emerald-500/15 via-emerald-500/5 to-transparent border-l-4 border-emerald-500 text-emerald-900 dark:text-emerald-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
+                        >
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isServiceTracking ? 'bg-gradient-to-tr from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/30' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 group-hover:scale-105' }}">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                </span>
+                                <span class="text-sm truncate">{{ __('messages.nav_service_track') }}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                @if ($isServiceTracking)
+                                    <span class="h-2 w-2 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500/50 animate-pulse"></span>
+                                @endif
+                                <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
                         </a>
                     @endif
+
+                    {{-- 6. How to Order (if enabled) --}}
                     @if (store_can('storefront.online_ordering', $activeStoreContext))
-                        <a href="{{ $howToOrderUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isHowToOrder ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
-                            <span aria-hidden="true">📖</span>
-                            <span>{{ __('messages.how_to_order') }}</span>
+                        <a
+                            href="{{ $howToOrderUrl }}"
+                            @click="mobileMenuOpen = false"
+                            class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isHowToOrder ? 'bg-gradient-to-r from-rose-500/15 via-rose-500/5 to-transparent border-l-4 border-rose-500 text-rose-900 dark:text-rose-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
+                        >
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isHowToOrder ? 'bg-gradient-to-tr from-rose-500 to-red-500 text-white shadow-md shadow-rose-500/30' : 'bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 group-hover:scale-105' }}">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+                                    </svg>
+                                </span>
+                                <span class="text-sm truncate">{{ __('messages.how_to_order') }}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                @if ($isHowToOrder)
+                                    <span class="h-2 w-2 rounded-full bg-rose-500 shadow-xs shadow-rose-500/50 animate-pulse"></span>
+                                @endif
+                                <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
                         </a>
                     @endif
+
+                    {{-- 7. Blog (if enabled) --}}
                     @if (store_can('storefront.blog', $activeStoreContext))
-                        <a href="{{ $blogUrl }}" @click="mobileMenuOpen = false" class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-extrabold transition {{ $isBlog ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800' }}">
-                            <span aria-hidden="true">📝</span>
-                            <span>{{ __('messages.blog') }}</span>
+                        <a
+                            href="{{ $blogUrl }}"
+                            @click="mobileMenuOpen = false"
+                            class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isBlog ? 'bg-gradient-to-r from-purple-500/15 via-purple-500/5 to-transparent border-l-4 border-purple-500 text-purple-900 dark:text-purple-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
+                        >
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isBlog ? 'bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/30' : 'bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 group-hover:scale-105' }}">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"/>
+                                    </svg>
+                                </span>
+                                <span class="text-sm truncate">{{ __('messages.blog') }}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                @if ($isBlog)
+                                    <span class="h-2 w-2 rounded-full bg-purple-500 shadow-xs shadow-purple-500/50 animate-pulse"></span>
+                                @endif
+                                <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
                         </a>
                     @endif
                 </nav>
+            </div>
+
+            {{-- Drawer footer / Quick store info & utilities --}}
+            <div class="shrink-0 border-t border-slate-200/80 bg-white/90 p-3 dark:border-slate-800/80 dark:bg-slate-900/90 backdrop-blur">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        @if ($setting?->phone)
+                            <a href="tel:{{ $setting->phone }}" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-black text-slate-700 hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition active:scale-95">
+                                <span class="text-emerald-500">📞</span>
+                                <span class="truncate max-w-[120px]">{{ $setting->phone }}</span>
+                            </a>
+                        @endif
+                    </div>
+                    <div class="flex items-center gap-1.5 ml-auto">
+                        <button
+                            type="button"
+                            @click="toggleDarkMode()"
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-amber-400 transition active:scale-95"
+                            title="{{ __('messages.theme_toggle') }}"
+                        >
+                            <svg x-show="!darkMode" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.8A8.5 8.5 0 1111.2 3a6.5 6.5 0 009.8 9.8z" />
+                            </svg>
+                            <svg x-show="darkMode" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36-6.36-1.42 1.42M7.06 16.94l-1.42 1.42m12.72 0-1.42-1.42M7.06 7.06 5.64 5.64" />
+                                <circle cx="12" cy="12" r="4" stroke-width="2" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 

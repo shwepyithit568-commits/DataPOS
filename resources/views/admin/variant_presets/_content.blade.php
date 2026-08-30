@@ -137,25 +137,23 @@
         {{-- ============================================================
              1. TOOLBAR AREA: Search, Family Filter, View Mode Toggle
              ============================================================ --}}
-        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-            <x-admin.toolbar
-                :search="request('search', '')"
-                searchPlaceholder="{{ __('messages.variant_preset_search_placeholder') }}"
-                :sortOptions="[]"
-                :filters="[
-                    'family' => [
-                        'label' => __('messages.variant_preset_category_family'),
-                        'options' => $familyFilterOptions
-                    ]
-                ]"
-                :showViewToggle="true"
-                :showExportImport="true"
-                :exportUrl="url('/store/' . $store->slug . '/admin/variant-presets/export')"
-                :importUrl="url('/store/' . $store->slug . '/admin/variant-presets/import')"
-                :totalCount="$presetCollection->count()"
-                :paginator="null"
-            />
-        </div>
+        <x-admin.toolbar
+            :search="request('search', '')"
+            searchPlaceholder="{{ __('messages.variant_preset_search_placeholder') }}"
+            :sortOptions="[]"
+            :filters="[
+                'family' => [
+                    'label' => __('messages.variant_preset_category_family'),
+                    'options' => $familyFilterOptions
+                ]
+            ]"
+            :showViewToggle="true"
+            :showExportImport="true"
+            :exportUrl="url('/store/' . $store->slug . '/admin/variant-presets/export')"
+            :importUrl="url('/store/' . $store->slug . '/admin/variant-presets/import')"
+            :totalCount="$presetCollection->count()"
+            :paginator="null"
+        />
 
         {{-- Floating Action Button for Mobile/Tablet Quick Add --}}
         <button type="button" @click="openCreate()"

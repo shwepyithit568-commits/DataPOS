@@ -65,18 +65,23 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="sm:col-span-2">
-                        <label class="{{ $labelClass }}">Custom Icon (PNG / JPG / WebP, ≤ 2 MB)</label>
+                    <div>
+                        <label class="{{ $labelClass }}">Custom Icon (PNG/JPG/WebP, ≤ 2MB)</label>
                         <input type="file" name="icon_image" accept="image/png,image/jpeg,image/webp"
                             class="block w-full text-xs text-gray-500 file:mr-2 file:rounded-lg file:border-0 file:bg-violet-50 file:px-3 file:py-2 file:text-xs file:font-bold file:text-violet-700 hover:file:bg-violet-100 dark:text-slate-400 dark:file:bg-violet-950/40 dark:file:text-violet-300" />
                     </div>
                     <div>
+                        <label class="{{ $labelClass }}">QR Code Image (PNG/JPG/WebP, ≤ 4MB)</label>
+                        <input type="file" name="qr_image" accept="image/png,image/jpeg,image/webp"
+                            class="block w-full text-xs text-gray-500 file:mr-2 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-xs file:font-bold file:text-emerald-700 hover:file:bg-emerald-100 dark:text-slate-400 dark:file:bg-emerald-950/40 dark:file:text-emerald-300" />
+                    </div>
+                    <div>
                         <label class="{{ $labelClass }}">Account Name</label>
-                        <input type="text" name="account_name" x-model="payForm.account_name" maxlength="120" class="{{ $inputClass }}" />
+                        <input type="text" name="account_name" x-model="payForm.account_name" maxlength="120" placeholder="e.g. U Thit Sar" class="{{ $inputClass }}" />
                     </div>
                     <div>
                         <label class="{{ $labelClass }}">Account Number</label>
-                        <input type="text" name="account_number" x-model="payForm.account_number" maxlength="120" class="{{ $inputClass }}" />
+                        <input type="text" name="account_number" x-model="payForm.account_number" maxlength="120" placeholder="e.g. 09xxxxxxxxx / 123456789" class="{{ $inputClass }}" />
                     </div>
                     <div class="sm:col-span-2">
                         <label class="{{ $labelClass }}">Instructions</label>
@@ -100,57 +105,142 @@
 
         {{-- Existing methods --}}
         @forelse ($store->paymentMethods as $pm)
-            <div class="bg-white dark:bg-slate-800/60 rounded-xl p-4 transition-colors duration-200">
-                <div class="flex flex-wrap items-start gap-3">
-                    <x-payment-method-icon :method="$pm" class="h-10 w-10" text-class="text-sm" />
-                    <div class="min-w-0 flex-1">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <p class="text-sm font-black text-gray-900 dark:text-slate-100">{{ $pm->name }}</p>
-                            <span class="rounded-full px-2 py-0.5 text-[10px] font-black {{ $pm->is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300' }}">
+            <div x-data="{ editing: false }" class="bg-white dark:bg-slate-800/60 rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 transition-colors duration-200 border border-slate-200/80 dark:border-slate-700/60">
+                {{-- Main Summary Row --}}
+                <div class="flex flex-wrap items-center justify-between gap-2.5">
+                    <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <x-payment-method-icon :method="$pm" class="h-8 w-8 sm:h-9 sm:w-9 shrink-0" text-class="text-xs" />
+                        <div class="min-w-0 flex flex-wrap items-center gap-2">
+                            <h4 class="text-xs sm:text-sm font-black text-gray-900 dark:text-slate-100 truncate">{{ $pm->name }}</h4>
+                            <span class="rounded-full px-2 py-0.5 text-[9px] font-black {{ $pm->is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300' }}">
                                 {{ $pm->is_active ? 'Active' : 'Inactive' }}
                             </span>
-                            <span class="text-[10px] font-bold text-slate-400">sort {{ $pm->sort_order }}</span>
+                            <span class="text-[9px] font-bold text-slate-400">sort {{ $pm->sort_order }}</span>
+                            @if ($pm->icon_path && \App\Support\StorefrontAsset::imageUrl($pm->icon_path))
+                                <span class="inline-flex items-center gap-1 text-[9px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 px-1.5 py-0.5 rounded border border-violet-200 dark:border-violet-800">
+                                    <span>📷 Custom Icon</span>
+                                </span>
+                            @endif
                         </div>
-                        @if ($pm->account_name || $pm->account_number)
-                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                {{ $pm->account_name ? $pm->account_name . ' · ' : '' }}{{ $pm->account_number ? $pm->maskedAccountNumber() : '' }}
-                                @if ($pm->show_account_details) <span class="font-bold text-emerald-600 dark:text-emerald-300">(public)</span> @endif
-                            </p>
-                        @endif
-                        @if ($pm->instructions)
-                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $pm->instructions }}</p>
-                        @endif
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/settings/payment-methods/' . $pm->id) }}" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2"
-                            data-confirm="Update this payment method?">
-                            @csrf
-                            @method('PUT')
-                            <input type="text" name="name" value="{{ $pm->name }}" required maxlength="120" class="hidden" aria-hidden="true" tabindex="-1" />
-                            <select name="icon_type" class="hidden" aria-hidden="true" tabindex="-1">
-                                <option value="{{ $pm->icon_type }}" selected>{{ $pm->icon_type }}</option>
-                            </select>
-                            <input type="text" name="icon_value" value="{{ $pm->icon_value }}" class="hidden" aria-hidden="true" tabindex="-1" />
-                            <input type="text" name="account_name" value="{{ $pm->account_name }}" class="hidden" aria-hidden="true" tabindex="-1" />
-                            <input type="text" name="account_number" value="{{ $pm->account_number }}" class="hidden" aria-hidden="true" tabindex="-1" />
-                            <textarea name="instructions" class="hidden" aria-hidden="true" tabindex="-1">{{ $pm->instructions }}</textarea>
-                            <input type="number" name="sort_order" value="{{ $pm->sort_order }}" class="hidden" aria-hidden="true" tabindex="-1" />
-                            <input type="checkbox" name="is_active" value="1" class="hidden" aria-hidden="true" tabindex="-1" {{ $pm->is_active ? 'checked' : '' }} />
-                            <input type="checkbox" name="show_account_details" value="1" class="hidden" aria-hidden="true" tabindex="-1" {{ $pm->show_account_details ? 'checked' : '' }} />
-                            <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300">
-                                <input type="file" name="icon_image" accept="image/png,image/jpeg,image/webp" class="text-[10px] text-slate-500 file:mr-1 file:rounded file:border-0 file:bg-violet-50 file:px-2 file:py-1 file:text-[10px] file:font-bold file:text-violet-700" />
-                            </label>
-                            <label class="inline-flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400 cursor-pointer">
-                                <input type="checkbox" name="remove_icon" value="1" class="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500" /> Remove icon
-                            </label>
-                            <button type="submit" class="inline-flex min-h-11 items-center rounded-lg bg-slate-800 px-3 py-2 text-xs font-black text-white hover:bg-slate-700">Save</button>
-                        </form>
+                    <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                        @if ($pm->hasQr())
+                            <a href="{{ $pm->qrUrl() }}" target="_blank" rel="noopener noreferrer"
+                                class="inline-flex min-h-8 items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-700 shadow-2xs hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/80 transition cursor-pointer"
+                                title="View QR Code">
+                                <span>📱 QR Code</span>
+                            </a>
+                        @endif
+                        <button type="button" @click="editing = !editing"
+                            class="inline-flex min-h-8 items-center gap-1 rounded-lg border border-sky-300 bg-sky-50 px-2.5 py-1 text-[11px] font-black text-sky-700 shadow-2xs hover:bg-sky-100 dark:border-sky-700 dark:bg-sky-950/60 dark:text-sky-300 dark:hover:bg-sky-900/80 cursor-pointer transition">
+                            <span x-text="editing ? '✕ Cancel' : '✏️ Edit (ပြင်မည်)'"></span>
+                        </button>
                         <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/settings/payment-methods/' . $pm->id) }}" data-confirm="Delete {{ $pm->name }}?">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="inline-flex min-h-11 items-center rounded-lg bg-rose-600 px-3 py-2 text-xs font-black text-white hover:bg-rose-500">Delete</button>
+                            <button type="submit" class="inline-flex min-h-8 items-center gap-1 rounded-lg bg-rose-600 px-2.5 py-1 text-[11px] font-black text-white hover:bg-rose-700 active:bg-rose-800 cursor-pointer shadow-xs transition">
+                                <span>🗑️ Delete</span>
+                            </button>
                         </form>
                     </div>
+                </div>
+
+                {{-- Expandable Full Edit Form --}}
+                <div x-show="editing" x-collapse class="mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-700/80">
+                    <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/settings/payment-methods/' . $pm->id) }}" enctype="multipart/form-data" class="space-y-4">
+                        @csrf
+                        @method('PUT')
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div>
+                                <label class="{{ $labelClass }}">Payment Method Name *</label>
+                                <input type="text" name="name" value="{{ $pm->name }}" required maxlength="120" class="{{ $inputClass }}" />
+                            </div>
+                            <div>
+                                <label class="{{ $labelClass }}">Icon Type</label>
+                                <select name="icon_type" class="{{ $inputClass }}">
+                                    <option value="builtin" {{ $pm->icon_type === 'builtin' ? 'selected' : '' }}>Built-in brand icon</option>
+                                    <option value="custom" {{ $pm->icon_type === 'custom' ? 'selected' : '' }}>Custom uploaded icon</option>
+                                    <option value="initials" {{ $pm->icon_type === 'initials' ? 'selected' : '' }}>Initials / text</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="{{ $labelClass }}">Built-in Icon Key</label>
+                                <select name="icon_value" class="{{ $inputClass }}">
+                                    <option value="">— none —</option>
+                                    @foreach (['kpay' => 'KBZPay (KPay)', 'wavepay' => 'WavePay', 'cbpay' => 'CB Pay', 'ayapay' => 'AYA Pay', 'mmqr' => 'MMQR (National Standard)', 'bank' => 'Bank Transfer', 'cod' => 'Cash on Delivery', 'cash' => 'Cash'] as $key => $label)
+                                        <option value="{{ $key }}" {{ $pm->icon_value === $key ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="{{ $labelClass }}">Sort Order</label>
+                                <input type="number" name="sort_order" value="{{ $pm->sort_order }}" min="0" max="9999" class="{{ $inputClass }}" />
+                            </div>
+
+                            {{-- Custom Icon Upload & Preview --}}
+                            <div class="rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-900/40 p-3 space-y-2">
+                                <label class="block text-xs font-black text-slate-800 dark:text-slate-200">📷 Custom Icon (PNG/JPG/WebP, ≤ 2MB)</label>
+                                @if ($pm->icon_path && \App\Support\StorefrontAsset::imageUrl($pm->icon_path))
+                                    <div class="flex items-center gap-3">
+                                        <img src="{{ \App\Support\StorefrontAsset::imageUrl($pm->icon_path) }}" alt="Current Icon" class="h-10 w-10 object-contain rounded-lg border border-slate-300 bg-white p-1" />
+                                        <label class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 cursor-pointer">
+                                            <input type="checkbox" name="remove_icon" value="1" class="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500" />
+                                            <span>Remove Icon</span>
+                                        </label>
+                                    </div>
+                                @endif
+                                <input type="file" name="icon_image" accept="image/png,image/jpeg,image/webp"
+                                    class="block w-full text-xs text-slate-500 file:mr-2 file:rounded-lg file:border-0 file:bg-violet-600 file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:file:bg-violet-700 cursor-pointer" />
+                            </div>
+
+                            {{-- QR Code Upload & Preview --}}
+                            <div class="rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-900/40 p-3 space-y-2">
+                                <label class="block text-xs font-black text-slate-800 dark:text-slate-200">📱 QR Code Image (PNG/JPG/WebP, ≤ 4MB)</label>
+                                @if ($pm->hasQr())
+                                    <div class="flex items-center gap-3">
+                                        <img src="{{ $pm->qrUrl() }}" alt="Current QR" class="h-14 w-14 object-contain rounded-lg border border-slate-300 bg-white p-1 shadow-2xs" />
+                                        <label class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 cursor-pointer">
+                                            <input type="checkbox" name="remove_qr" value="1" class="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-500" />
+                                            <span>Remove QR</span>
+                                        </label>
+                                    </div>
+                                @endif
+                                <input type="file" name="qr_image" accept="image/png,image/jpeg,image/webp"
+                                    class="block w-full text-xs text-slate-500 file:mr-2 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-3 file:py-2 file:text-xs file:font-bold file:text-white hover:file:bg-emerald-700 cursor-pointer" />
+                            </div>
+
+                            <div>
+                                <label class="{{ $labelClass }}">Account Name</label>
+                                <input type="text" name="account_name" value="{{ $pm->account_name }}" maxlength="120" placeholder="e.g. U Thit Sar" class="{{ $inputClass }}" />
+                            </div>
+                            <div>
+                                <label class="{{ $labelClass }}">Account Number</label>
+                                <input type="text" name="account_number" value="{{ $pm->account_number }}" maxlength="120" placeholder="e.g. 09xxxxxxxxx / 123456789" class="{{ $inputClass }}" />
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="{{ $labelClass }}">Instructions</label>
+                                <textarea name="instructions" rows="2" class="{{ $inputClass }}" placeholder="ဥပမာ — လွှဲပြီးရင် payment screenshot ကို Viber မှာ ပို့ပါ">{{ $pm->instructions }}</textarea>
+                            </div>
+                            <div class="sm:col-span-2 flex flex-wrap gap-4 pt-1">
+                                <label class="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" name="is_active" value="1" {{ $pm->is_active ? 'checked' : '' }} class="h-5 w-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
+                                    <span class="text-xs font-bold text-gray-700 dark:text-slate-200">Active (show on storefront)</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" name="show_account_details" value="1" {{ $pm->show_account_details ? 'checked' : '' }} class="h-5 w-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
+                                    <span class="text-xs font-bold text-gray-700 dark:text-slate-200">Show account details publicly</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 pt-2">
+                            <button type="submit" class="inline-flex min-h-11 items-center rounded-xl bg-violet-600 px-5 py-2.5 text-xs font-black text-white hover:bg-violet-700 shadow-sm transition">
+                                💾 Save Changes (သိမ်းမည်)
+                            </button>
+                            <button type="button" @click="editing = false" class="inline-flex min-h-11 items-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         @empty
@@ -269,7 +359,7 @@
                         <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/settings/delivery-methods/' . $dm->id) }}" data-confirm="Delete {{ $dm->name }}?">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="inline-flex min-h-11 items-center rounded-lg bg-rose-600 px-3 py-2 text-xs font-black text-white hover:bg-rose-500">Delete</button>
+                            <button type="submit" class="inline-flex min-h-11 items-center gap-1 rounded-xl bg-rose-600 px-3.5 py-2 text-xs font-black text-white hover:bg-rose-700 active:bg-rose-800 cursor-pointer shadow-xs transition">🗑️ Delete</button>
                         </form>
                     </div>
                 </div>

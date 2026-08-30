@@ -238,7 +238,7 @@ window.sfThemeFactory = function () {
             this.previewKey++;
             this.previewLoaded = false;
             this.previewSrc = d.previewUrl + '?v=' + this.previewKey;
-            // Fallback: if the iframe never fires @load (blocked/errored),
+            // Fallback: if the iframe never fires load event (blocked or errored),
             // drop the loading overlay so the frame is never stuck spinning.
             var self = this;
             clearTimeout(this._previewLoadTimer);

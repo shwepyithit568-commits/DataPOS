@@ -26,11 +26,11 @@
         @endif
         <div class="p-5 sm:p-8">
             <div class="flex items-center gap-2 flex-wrap">
-                <span class="px-2.5 py-1 rounded-full text-xs font-black bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-400/30">
+                <span class="px-2.5 py-1 rounded-full text-xs font-black bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-800">
                     📝 {{ __('messages.blog') }}
                 </span>
                 @if ($post->category)
-                    <span class="px-2.5 py-1 rounded-full text-xs font-black bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300 border border-fuchsia-400/30">
+                    <span style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important; color: #ffffff !important;" class="px-2.5 py-1 rounded-full text-xs font-black text-white shadow-xs border-0">
                         🏷️ {{ $post->category }}
                     </span>
                 @endif
