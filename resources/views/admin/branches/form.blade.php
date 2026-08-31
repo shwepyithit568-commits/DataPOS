@@ -125,7 +125,7 @@
                                    class="w-4 h-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500">
                             <div>
                                 <span class="block text-xs font-bold text-indigo-900 dark:text-indigo-200">{{ __('messages.branches_create_warehouse') }}</span>
-                                <span class="block text-[11px] text-indigo-700/80 dark:text-indigo-300">Creates a dedicated stockpoint named "[Branch Name] Warehouse"</span>
+                                <span class="block text-[11px] text-indigo-700/80 dark:text-indigo-300">{{ __('messages.branches_create_warehouse_help') }}</span>
                             </div>
                         </label>
                     </div>

@@ -20,12 +20,6 @@
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
             <div class="min-w-0">
-                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 text-[10px] sm:text-[11px] font-black uppercase tracking-wider border border-sky-100 dark:border-sky-900/60 mb-0.5">
-                    <span>📦</span>
-                    <span>{{ __('messages.spare_parts_title') }}</span>
-                    <span class="text-slate-400 dark:text-slate-500">·</span>
-                    <span class="font-normal normal-case text-slate-500 dark:text-slate-400">Service Consumption & Ledger</span>
-                </div>
                 <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2 truncate">
                     <span>{{ __('messages.spare_parts_title') }}</span>
                 </h1>

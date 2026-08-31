@@ -70,12 +70,13 @@ class AdminExpenseTest extends TestCase
             ->assertSeeText('450,000');
     }
 
-    public function test_staff_can_view_expenses_index(): void
+    public function test_staff_is_denied_from_expenses_index(): void
     {
+        // Expenses are Owner/Manager-only (audit §13) — server-side deny.
         $response = $this->actingAs($this->staff)
             ->get("/store/{$this->store->slug}/admin/expenses");
 
-        $response->assertOk();
+        $response->assertForbidden();
     }
 
     public function test_guest_is_redirected_to_login(): void

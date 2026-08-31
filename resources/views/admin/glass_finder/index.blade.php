@@ -32,12 +32,6 @@
          ============================================================ --}}
     <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
         <div class="min-w-0">
-            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-950/60 dark:text-fuchsia-300 text-[10px] sm:text-[11px] font-black uppercase tracking-wider border border-fuchsia-100 dark:border-fuchsia-900/60 mb-0.5">
-                <span>🔍</span>
-                <span>{{ __('messages.sidebar_glass_finder') }}</span>
-                <span class="text-slate-400 dark:text-slate-500">·</span>
-                <span class="font-normal normal-case text-slate-500 dark:text-slate-400">Compatibility Matrix & Stock</span>
-            </div>
             <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                 {{ __('messages.glass_finder_admin_title') }}
             </h1>

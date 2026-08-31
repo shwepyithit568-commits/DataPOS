@@ -57,7 +57,7 @@ window.printerFormData = function () {
         <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
 
             <h2 class="text-sm font-black uppercase tracking-wider text-violet-600 dark:text-violet-400 font-mono">
-                Hardware Connection & Model
+                {{ __('messages.printers_section_hardware') }}
             </h2>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -163,7 +163,7 @@ window.printerFormData = function () {
         <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
 
             <h2 class="text-sm font-black uppercase tracking-wider text-violet-600 dark:text-violet-400 font-mono">
-                Hardware Automation & Triggers
+                {{ __('messages.printers_section_automation') }}
             </h2>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -203,7 +203,7 @@ window.printerFormData = function () {
                            class="w-4 h-4 mt-0.5 rounded border-slate-300 text-violet-600 focus:ring-violet-500">
                     <div>
                         <span class="block text-xs font-bold text-slate-900 dark:text-slate-100">{{ __('messages.printers_print_logo') }}</span>
-                        <span class="block text-[11px] text-slate-500">Render store logo graphic at top of receipt</span>
+                        <span class="block text-[11px] text-slate-500">{{ __('messages.printers_print_logo_hint') }}</span>
                     </div>
                 </label>
 
@@ -216,7 +216,7 @@ window.printerFormData = function () {
                            class="w-4 h-4 mt-0.5 rounded border-slate-300 text-violet-600 focus:ring-violet-500">
                     <div>
                         <span class="block text-xs font-bold text-slate-900 dark:text-slate-100">{{ __('messages.printers_beep_on_print') }}</span>
-                        <span class="block text-[11px] text-slate-500">Play buzzer chime alert when print starts</span>
+                        <span class="block text-[11px] text-slate-500">{{ __('messages.printers_beep_on_print_hint') }}</span>
                     </div>
                 </label>
 

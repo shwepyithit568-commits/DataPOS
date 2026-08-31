@@ -146,7 +146,7 @@
                 </div>
 
                 {{-- Expandable Full Edit Form --}}
-                <div x-show="editing" x-collapse class="mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-700/80">
+                <div x-show="editing" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-700/80">
                     <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/settings/payment-methods/' . $pm->id) }}" enctype="multipart/form-data" class="space-y-4">
                         @csrf
                         @method('PUT')

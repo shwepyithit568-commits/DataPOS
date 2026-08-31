@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Print - {{ $printer->name }} - {{ $store->name }}</title>
+    <title>{{ __('messages.printers_test_print') }} - {{ $printer->name }} - {{ $store->name }}</title>
     <style>
         @page {
             size: {{ $printer->is58mm() ? '58mm' : '80mm' }} auto;
@@ -228,7 +228,7 @@
 </div>
 
 <button type="button" class="btn-print" onclick="window.print()">
-    🖨️ Print Test Receipt
+    🖨️ {{ __('messages.printers_test_print') }}
 </button>
 
 </body>

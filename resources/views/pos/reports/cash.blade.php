@@ -9,17 +9,9 @@
     <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xs">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
             <div class="min-w-0">
-                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-                    <span>💵 {{ __('messages.sidebar_reports') }}</span>
-                    <span class="text-emerald-400">·</span>
-                    <span>{{ __('messages.reports_cash') }}</span>
-                </div>
-                <h1 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-slate-100 font-outfit mt-0.5 truncate">
+                <h1 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-slate-100 font-outfit truncate">
                     {{ __('messages.reports_cash') }}
                 </h1>
-                <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
-                    {{ $store->name }} · {{ __('messages.reports_cash') }}
-                </p>
             </div>
 
             {{-- Header Actions --}}

@@ -571,6 +571,50 @@ class AdminSidebarNavigationUXTest extends TestCase
         $response->assertSee('inventoryOpen: false', false);
     }
 
+    public function test_desktop_hover_flyouts_keep_visibility_and_positioning_state_separate(): void
+    {
+        $response = $this->actingAs($this->manager1)
+            ->get("/store/{$this->store1->slug}/admin/dashboard");
+
+        $response->assertStatus(200);
+        $content = $response->getContent();
+
+        $this->assertStringContainsString('openHoverGroup(name, trigger)', $content);
+        $this->assertStringContainsString('if (!this.viewportLg) return;', $content);
+        $this->assertStringNotContainsString('if (!this.viewportLg || this.sidebarCollapsed) return;', $content);
+        $this->assertStringNotContainsString('aside.lg\\:w-20:hover', $content);
+        $this->assertStringContainsString('data-nav-flyout="pos"', $content);
+        $this->assertStringContainsString('x-show="viewportLg && activeHoverGroup === \'pos\'"', $content);
+        $this->assertStringContainsString(
+            ':style="{ top: `${hoverFlyoutTop}px`, left: `${hoverFlyoutSidebarRight + 8}px` }"',
+            $content
+        );
+        $this->assertStringNotContainsString('style="display:none;"', $content);
+        $this->assertStringContainsString('window.innerHeight - panel.offsetHeight - 8', $content);
+        $this->assertStringContainsString("document.querySelector('[data-nav-flyout=' + name + ']')", $content);
+    }
+
+    public function test_active_child_link_highlights_its_group_in_expanded_and_collapsed_sidebar(): void
+    {
+        $response = $this->actingAs($this->manager1)
+            ->get("/store/{$this->store1->slug}/admin/products");
+
+        $response->assertStatus(200);
+        $content = $response->getContent();
+
+        $inventoryTrigger = $this->extractUntil(
+            $content,
+            'data-nav-group-active="true"',
+            '</button>'
+        );
+
+        $this->assertNotSame('', $inventoryTrigger);
+        $this->assertStringContainsString('bg-violet-100 text-violet-800', $inventoryTrigger);
+        $this->assertStringContainsString('ring-2 ring-violet-500', $content);
+        $this->assertStringContainsString("sidebarCollapsed ? 'lg:justify-center' : ''", $inventoryTrigger);
+        $this->assertSame(1, substr_count($content, 'data-nav-group-active="true"'));
+    }
+
     /**
      * Extract the substring starting at $needle up to (but not including) the
      * first occurrence of $until after it. Returns '' when $needle is absent.

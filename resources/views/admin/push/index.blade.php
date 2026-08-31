@@ -21,12 +21,6 @@
          ============================================================ --}}
     <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
         <div class="min-w-0">
-            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 text-[10px] sm:text-[11px] font-black uppercase tracking-wider border border-indigo-100 dark:border-indigo-900/60 mb-0.5">
-                <span>🔔</span>
-                <span>{{ __('messages.sidebar_push_notifications') }}</span>
-                <span class="text-slate-400 dark:text-slate-500">·</span>
-                <span class="font-normal normal-case text-slate-500 dark:text-slate-400">Broadcast Studio & VAPID</span>
-            </div>
             <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                 {{ __('messages.push_admin_title') }}
             </h1>
@@ -221,27 +215,27 @@
             <p class="text-[11px] text-slate-400">This simulates how the push notification banner appears on the customer's phone or desktop.</p>
 
             {{-- Android / Desktop Notification Card Simulator --}}
-            <div class="p-3 bg-slate-900 text-white rounded-xl shadow-lg border border-slate-700/80 space-y-2 font-sans select-none">
+            <div class="p-3.5 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-2.5 font-sans select-none transition">
                 {{-- Mock Header --}}
-                <div class="flex items-center justify-between text-[10px] text-slate-400 pb-1.5 border-b border-slate-800">
+                <div class="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
                     <div class="flex items-center gap-1.5 font-bold">
-                        <span class="w-4 h-4 rounded bg-violet-600 grid place-items-center text-[9px] text-white font-mono">D</span>
-                        <span class="text-slate-200">{{ $store->name }}</span>
+                        <span class="w-4 h-4 rounded bg-indigo-600 grid place-items-center text-[9px] text-white font-mono shadow-xs">D</span>
+                        <span class="text-slate-800 dark:text-slate-200 font-black">{{ $store->name }}</span>
                         <span>· Web Push</span>
                     </div>
-                    <span>Just now</span>
+                    <span class="text-[10px] text-slate-400">Just now</span>
                 </div>
 
                 {{-- Mock Body --}}
                 <div class="space-y-1">
-                    <h4 class="text-xs font-bold text-white tracking-tight" x-text="title || 'Notification Title...'"></h4>
-                    <p class="text-[11px] text-slate-300 line-clamp-3 leading-snug" x-text="body || 'Notification message body will render here as you type...'"></p>
+                    <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 tracking-tight" x-text="title || 'Notification Title...'"></h4>
+                    <p class="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed" x-text="body || 'Notification message body will render here as you type...'"></p>
                 </div>
 
                 {{-- Mock Destination --}}
-                <div class="pt-1 flex items-center justify-between text-[10px] text-violet-400 font-mono">
-                    <span class="truncate" x-text="url || '{{ url('/') }}'"></span>
-                    <span class="text-slate-500 shrink-0">Tap to open ↗</span>
+                <div class="pt-1.5 flex items-center justify-between text-[10px] text-indigo-600 dark:text-indigo-400 font-mono">
+                    <span class="truncate font-medium" x-text="url || '{{ url('/') }}'"></span>
+                    <span class="text-slate-400 dark:text-slate-500 shrink-0 font-sans">Tap to open ↗</span>
                 </div>
             </div>
         </div>

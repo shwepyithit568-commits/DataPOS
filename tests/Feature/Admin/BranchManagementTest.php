@@ -195,6 +195,65 @@ class BranchManagementTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee($branch->name);
-        $response->assertSee('Linked Warehouses');
+        $response->assertSee(__('messages.branches_linked_warehouses'));
+    }
+
+    public function test_branches_views_render_without_translation_leaks_in_all_locales(): void
+    {
+        $service = app(StoreLocationService::class);
+        $service->ensureDefaults($this->store);
+        $branch = Branch::where('store_id', $this->store->id)->first();
+
+        foreach (['en', 'my', 'zh_CN'] as $locale) {
+            // Test Index View
+            $indexResponse = $this->actingAs($this->manager)
+                ->withSession(['locale' => $locale])
+                ->get(route('store.admin.branches.index', ['store_slug' => $this->store->slug]));
+
+            $indexResponse->assertOk();
+            $this->assertFalse(
+                (bool) preg_match('/messages\.[a-zA-Z0-9_-]+/', $indexResponse->getContent()),
+                "Found leaked translation key in locale [{$locale}] on branches.index"
+            );
+
+            // Test Create View
+            $createResponse = $this->actingAs($this->manager)
+                ->withSession(['locale' => $locale])
+                ->get(route('store.admin.branches.create', ['store_slug' => $this->store->slug]));
+
+            $createResponse->assertOk();
+            $this->assertFalse(
+                (bool) preg_match('/messages\.[a-zA-Z0-9_-]+/', $createResponse->getContent()),
+                "Found leaked translation key in locale [{$locale}] on branches.create"
+            );
+
+            // Test Show View
+            $showResponse = $this->actingAs($this->manager)
+                ->withSession(['locale' => $locale])
+                ->get(route('store.admin.branches.show', [
+                    'store_slug' => $this->store->slug,
+                    'branch' => $branch->id,
+                ]));
+
+            $showResponse->assertOk();
+            $this->assertFalse(
+                (bool) preg_match('/messages\.[a-zA-Z0-9_-]+/', $showResponse->getContent()),
+                "Found leaked translation key in locale [{$locale}] on branches.show"
+            );
+
+            // Test Edit View
+            $editResponse = $this->actingAs($this->manager)
+                ->withSession(['locale' => $locale])
+                ->get(route('store.admin.branches.edit', [
+                    'store_slug' => $this->store->slug,
+                    'branch' => $branch->id,
+                ]));
+
+            $editResponse->assertOk();
+            $this->assertFalse(
+                (bool) preg_match('/messages\.[a-zA-Z0-9_-]+/', $editResponse->getContent()),
+                "Found leaked translation key in locale [{$locale}] on branches.edit"
+            );
+        }
     }
 }

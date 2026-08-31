@@ -6,19 +6,10 @@
 @section('content')
 <div class="w-full space-y-2 sm:space-y-2.5">
 
-    {{-- Breadcrumbs & Header --}}
+    {{-- Page Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 py-1">
         <div>
-            <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                <a href="{{ route('store.admin.dashboard', ['store_slug' => $store->slug]) }}" class="hover:text-violet-600 dark:hover:text-violet-400 transition">
-                    {{ __('messages.admin_dashboard') }}
-                </a>
-                <span>/</span>
-                <span class="text-slate-500 dark:text-slate-400">{{ __('messages.finance') ?? 'Finance' }}</span>
-                <span>/</span>
-                <span class="text-slate-800 dark:text-slate-200 font-bold">{{ __('messages.sidebar_profit_loss') }}</span>
-            </div>
-            <div class="flex items-center gap-2.5 mt-1">
+            <div class="flex items-center gap-2.5">
                 <h1 class="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 font-outfit tracking-tight">
                     {{ __('messages.profit_loss_title') }}
                 </h1>

@@ -46,11 +46,10 @@
     <div class="admin-hairline-grid grid-cols-2 sm:grid-cols-4">
         {{-- 1. Total Configured --}}
         <div class="admin-hairline-cell bg-violet-50/30 dark:bg-violet-950/20">
-            <div class="admin-stat-label text-violet-600 dark:text-violet-400">{{ __('messages.printers_total_configured') }}</div>
-            <div class="admin-stat-value text-violet-700 dark:text-violet-300 font-mono">
+            <div class="admin-stat-label text-violet-600 dark:text-violet-400">{{ __('messages.printers_total_configured') }}</div>            <div class="admin-stat-value text-violet-700 dark:text-violet-300 font-mono">
                 {{ $stats['total_printers'] }}
             </div>
-            <div class="admin-stat-sub text-slate-500">{{ $stats['active_printers'] }} Active</div>
+            <div class="admin-stat-sub text-slate-500">{{ $stats['active_printers'] }} {{ __('messages.active') }}</div>
         </div>
 
         {{-- 2. Default Printer --}}
@@ -86,7 +85,7 @@
          ============================================================ --}}
     <div class="space-y-4">
         <h2 class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
-            Configured Receipt & Thermal Printers ({{ count($printers) }})
+            {{ __('messages.printers_section_configured') }} ({{ count($printers) }})
         </h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -135,11 +134,11 @@
                         {{-- Connection target detail --}}
                         <div class="mt-1 text-xs font-mono text-slate-500 dark:text-slate-400">
                             @if($isNet && $p->ip_address)
-                                <span>🌐 IP: <strong class="text-slate-900 dark:text-slate-200">{{ $p->ip_address }}:{{ $p->port }}</strong></span>
+                                <span>🌐 {{ __('messages.printers_ip_address') }}: <strong class="text-slate-900 dark:text-slate-200">{{ $p->ip_address }}:{{ $p->port }}</strong></span>
                             @elseif($p->device_path)
-                                <span>🔌 Path: <strong class="text-slate-900 dark:text-slate-200">{{ $p->device_path }}</strong></span>
+                                <span>🔌 {{ __('messages.printers_device_path') }}: <strong class="text-slate-900 dark:text-slate-200">{{ $p->device_path }}</strong></span>
                             @else
-                                <span>🖥️ Web Browser Direct Print Dialog</span>
+                                <span>🖥️ {{ __('messages.printers_conn_browser') }}</span>
                             @endif
                         </div>
 
@@ -147,26 +146,26 @@
                         <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
                             <div class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                                 <span class="w-2 h-2 rounded-full {{ $p->auto_cut ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600' }}"></span>
-                                <span>Auto Cutter: <strong>{{ $p->auto_cut ? 'Yes' : 'No' }}</strong></span>
+                                <span>{{ __('messages.printers_auto_cut') }}: <strong>{{ $p->auto_cut ? __('messages.yes') : __('messages.no') }}</strong></span>
                             </div>
                             <div class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                                 <span class="w-2 h-2 rounded-full {{ $p->cash_drawer_kick ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600' }}"></span>
-                                <span>Drawer Kick: <strong>{{ $p->cash_drawer_kick ? 'Yes' : 'No' }}</strong></span>
+                                <span>{{ __('messages.printers_cash_drawer_kick') }}: <strong>{{ $p->cash_drawer_kick ? __('messages.yes') : __('messages.no') }}</strong></span>
                             </div>
                             <div class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                                 <span class="w-2 h-2 rounded-full {{ $p->print_copies > 1 ? 'bg-violet-500' : 'bg-slate-300 dark:bg-slate-600' }}"></span>
-                                <span>Copies: <strong>{{ $p->print_copies }}</strong></span>
+                                <span>{{ __('messages.printers_print_copies') }}: <strong>{{ $p->print_copies }}</strong></span>
                             </div>
                             <div class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                                 <span class="w-2 h-2 rounded-full {{ $p->feed_lines > 0 ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-600' }}"></span>
-                                <span>Feed: <strong>{{ $p->feed_lines }} lines</strong></span>
+                                <span>{{ __('messages.printers_feed_lines') }}: <strong>{{ $p->feed_lines }}</strong></span>
                             </div>
                         </div>
 
                         @if($p->header_text || $p->footer_text)
                             <div class="mt-2.5 p-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5">
-                                @if($p->header_text)<p class="truncate">Header: <em>"{{ $p->header_text }}"</em></p>@endif
-                                @if($p->footer_text)<p class="truncate">Footer: <em>"{{ $p->footer_text }}"</em></p>@endif
+                                @if($p->header_text)<p class="truncate">{{ __('messages.printers_header_text') }}: <em>"{{ $p->header_text }}"</em></p>@endif
+                                @if($p->footer_text)<p class="truncate">{{ __('messages.printers_footer_text') }}: <em>"{{ $p->footer_text }}"</em></p>@endif
                             </div>
                         @endif
                     </div>
@@ -198,11 +197,11 @@
                             <a href="{{ route('store.admin.printers.edit', ['store_slug' => $store->slug, 'printer' => $p->id]) }}"
                                class="p-1.5 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                                title="{{ __('messages.edit') }}">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 0 1-2-2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             </a>
 
                             @if(!$p->is_default)
-                                <form method="POST" action="{{ route('store.admin.printers.destroy', ['store_slug' => $store->slug, 'printer' => $p->id]) }}" onsubmit="return confirm('Remove this printer configuration?')" class="inline">
+                                <form method="POST" action="{{ route('store.admin.printers.destroy', ['store_slug' => $store->slug, 'printer' => $p->id]) }}" onsubmit="return confirm('{{ __('messages.printers_confirm_delete') }}')" class="inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"
@@ -231,21 +230,21 @@
         <div class="flex items-center gap-2">
             <span class="text-base">💡</span>
             <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 font-outfit">
-                Thermal Receipt Printer Tips (ESC/POS)
+                {{ __('messages.printers_tips_title') }}
             </h3>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-slate-600 dark:text-slate-400">
             <div class="p-3 bg-white dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
-                <p class="font-bold text-slate-900 dark:text-slate-200 mb-1">Standard 80mm POS</p>
-                <p>Best for counter cashier stations. Supports auto paper cutting and 24V cash drawer kick-out pulses.</p>
+                <p class="font-bold text-slate-900 dark:text-slate-200 mb-1">{{ __('messages.printers_tips_80mm_title') }}</p>
+                <p>{{ __('messages.printers_tips_80mm_desc') }}</p>
             </div>
             <div class="p-3 bg-white dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
-                <p class="font-bold text-slate-900 dark:text-slate-200 mb-1">Network LAN (IP 9100)</p>
-                <p>Plug ethernet cable into router. Set static IP (e.g. 192.168.1.200) to allow multiple POS tablets/PCs to print simultaneously.</p>
+                <p class="font-bold text-slate-900 dark:text-slate-200 mb-1">{{ __('messages.printers_tips_lan_title') }}</p>
+                <p>{{ __('messages.printers_tips_lan_desc') }}</p>
             </div>
             <div class="p-3 bg-white dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
-                <p class="font-bold text-slate-900 dark:text-slate-200 mb-1">Bluetooth 58mm Mini</p>
-                <p>Ideal for mobile delivery, outdoor sales, and phone repair counters. Compact and battery powered.</p>
+                <p class="font-bold text-slate-900 dark:text-slate-200 mb-1">{{ __('messages.printers_tips_bt_title') }}</p>
+                <p>{{ __('messages.printers_tips_bt_desc') }}</p>
             </div>
         </div>
     </div>

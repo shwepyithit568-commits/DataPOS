@@ -57,7 +57,7 @@
             <div class="admin-stat-value text-violet-700 dark:text-violet-300 font-mono">
                 {{ $stats['total_branches'] }}
             </div>
-            <div class="admin-stat-sub text-slate-500">{{ $stats['active_branches'] }} Active</div>
+            <div class="admin-stat-sub text-slate-500">{{ $stats['active_branches'] }} {{ __('messages.active') }}</div>
         </div>
 
         {{-- 2. Default Branch --}}
@@ -66,7 +66,7 @@
             <div class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100 truncate mt-0.5" title="{{ $stats['default_branch_name'] }}">
                 {{ $stats['default_branch_name'] }}
             </div>
-            <div class="admin-stat-sub text-slate-400">Code: {{ $stats['default_branch_code'] }}</div>
+            <div class="admin-stat-sub text-slate-400">{{ __('messages.code') }}: {{ $stats['default_branch_code'] }}</div>
         </div>
 
         {{-- 3. Active Outlets --}}
@@ -75,7 +75,7 @@
             <div class="admin-stat-value text-blue-600 dark:text-blue-400 font-mono">
                 {{ $stats['active_branches'] }}
             </div>
-            <div class="admin-stat-sub text-slate-400">Operating Locations</div>
+            <div class="admin-stat-sub text-slate-400">{{ __('messages.branches_operating_locations') }}</div>
         </div>
 
         {{-- 4. Total Linked Warehouses --}}
@@ -84,7 +84,7 @@
             <div class="admin-stat-value text-indigo-600 dark:text-indigo-400 font-mono">
                 {{ $stats['total_warehouses'] }}
             </div>
-            <div class="admin-stat-sub text-slate-400">Inventory Stockpoints</div>
+            <div class="admin-stat-sub text-slate-400">{{ __('messages.branches_stockpoints') }}</div>
         </div>
     </div>
 
@@ -93,7 +93,7 @@
          ============================================================ --}}
     <div class="space-y-4">
         <h2 class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
-            Store Outlets & Showrooms ({{ count($branches) }})
+            {{ __('messages.branches_outlets_section') }} ({{ count($branches) }})
         </h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -111,7 +111,7 @@
                                 @endif
 
                                 <span class="px-2 py-0.5 rounded-full text-xs font-bold {{ $b->is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' }}">
-                                    {{ $b->is_active ? 'Active' : 'Inactive' }}
+                                    {{ $b->is_active ? __('messages.active') : __('messages.inactive') }}
                                 </span>
 
                                 <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">
@@ -136,13 +136,13 @@
                         <div class="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-400">
                             @if($b->manager_name)
                                 <div class="flex items-center gap-1.5">
-                                    <span>👤 Manager:</span>
+                                    <span>👤 {{ __('messages.branches_manager') }}:</span>
                                     <strong class="text-slate-900 dark:text-slate-200">{{ $b->manager_name }}</strong>
                                 </div>
                             @endif
                             @if($b->phone)
                                 <div class="flex items-center gap-1.5">
-                                    <span>📞 Phone/Viber:</span>
+                                    <span>📞 {{ __('messages.branches_phone') }}:</span>
                                     <strong class="text-slate-900 dark:text-slate-200 font-mono">{{ $b->phone }}</strong>
                                 </div>
                             @endif
@@ -195,7 +195,7 @@
                             </a>
 
                             @if(!$b->is_default)
-                                <form method="POST" action="{{ route('store.admin.branches.destroy', ['store_slug' => $store->slug, 'branch' => $b->id]) }}" onsubmit="return confirm('Remove this branch?')" class="inline">
+                                <form method="POST" action="{{ route('store.admin.branches.destroy', ['store_slug' => $store->slug, 'branch' => $b->id]) }}" onsubmit="return confirm('{{ __('messages.branches_confirm_delete') }}')" class="inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"

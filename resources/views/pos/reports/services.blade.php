@@ -42,17 +42,6 @@
     {{-- 1. Top Action Bar & Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-slate-200/90 dark:border-slate-800 shadow-xs">
         <div class="space-y-1">
-            <div class="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-                <a href="{{ route('store.admin.dashboard', $storeRouteParams) }}" class="hover:text-slate-600 dark:hover:text-slate-200 transition">
-                    {{ __('messages.admin_dashboard') }}
-                </a>
-                <span>/</span>
-                <a href="{{ route('store.admin.repairs.index', $storeRouteParams) }}" class="hover:text-slate-600 dark:hover:text-slate-200 transition">
-                    {{ __('messages.sidebar_repair_center') }}
-                </a>
-                <span>/</span>
-                <span class="text-indigo-600 dark:text-indigo-400 font-bold">{{ __('messages.sidebar_service_revenue_report') }}</span>
-            </div>
             <div class="flex items-center gap-2.5 flex-wrap">
                 <h1 class="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 font-outfit tracking-tight">
                     {{ __('messages.sidebar_service_revenue_report') }}

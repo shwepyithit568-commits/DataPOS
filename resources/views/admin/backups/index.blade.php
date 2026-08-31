@@ -33,11 +33,6 @@
                 💾
             </span>
             <div class="min-w-0">
-                <div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    <span>{{ __('messages.sidebar_maintenance') }}</span>
-                    <span>/</span>
-                    <span class="text-violet-600 dark:text-violet-400">{{ __('messages.backups') }}</span>
-                </div>
                 <h1 class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
                     {{ __('messages.backup_title') }}
                 </h1>
@@ -225,15 +220,15 @@
                             <td class="py-2.5 px-3.5">
                                 @if ($file['format'] === 'zip')
                                     <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                                        📦 Full Archive (DB + Media)
+                                        📦 {{ __('messages.backup_format_full_archive') }}
                                     </span>
                                 @elseif ($file['format'] === 'sqlite')
                                     <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300">
-                                        💾 SQLite Binary
+                                        💾 {{ __('messages.backup_format_sqlite_binary') }}
                                     </span>
                                 @else
                                     <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-violet-100 text-violet-800 dark:bg-violet-950/60 dark:text-violet-300">
-                                        📄 Universal SQL
+                                        📄 {{ __('messages.backup_format_universal_sql') }}
                                     </span>
                                 @endif
                             </td>
@@ -253,7 +248,7 @@
 
                                     {{-- Restore from file button --}}
                                     <button type="button" @click="openRestoreModal('{{ $file['filename'] }}')"
-                                            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 transition cursor-pointer">
+                                             class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 transition cursor-pointer">
                                         🔄 {{ __('messages.backup_restore') }}
                                     </button>
 
@@ -282,7 +277,7 @@
 
         <div class="px-4 py-2.5 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between">
             <span>{{ __('messages.backup_hint', ['keep' => \App\Services\DatabaseBackupService::KEEP]) }}</span>
-            <span class="font-mono text-slate-400">Retention: Max {{ \App\Services\DatabaseBackupService::KEEP }} Backups</span>
+            <span class="font-mono text-slate-400">{{ __('messages.backup_retention_note', ['keep' => \App\Services\DatabaseBackupService::KEEP]) }}</span>
         </div>
     </div>
 
@@ -299,7 +294,7 @@
                 </p>
             </div>
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60 w-fit">
-                <span>⚠️ Caution: Data Overwrite</span>
+                <span>⚠️ {{ __('messages.backup_caution_overwrite') }}</span>
             </span>
         </div>
 
@@ -326,7 +321,7 @@
                 </label>
                 <input type="file" name="backup_file" required accept=".zip,.sql,.sqlite,.db"
                        class="w-full text-xs font-mono border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-800 dark:file:bg-amber-950 dark:file:text-amber-300 hover:file:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
-                <p class="text-[10px] text-slate-400 mt-1">Full ZIP (.zip), SQL (.sql) သို့မဟုတ် SQLite (.sqlite) ဖိုင်များ တင်သွင်းနိုင်ပါသည် (Max: 200 MB)</p>
+                <p class="text-[10px] text-slate-400 mt-1">{{ __('messages.backup_restore_upload_hint') }}</p>
             </div>
 
             <button type="submit"
@@ -353,7 +348,7 @@
             </div>
 
             <div class="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/80 space-y-1 font-mono">
-                <div>Selected File:</div>
+                <div>{{ __('messages.backup_restore_selected_file') }}:</div>
                 <div class="font-bold text-amber-600 dark:text-amber-400 truncate" x-text="restoreTargetFile"></div>
             </div>
 

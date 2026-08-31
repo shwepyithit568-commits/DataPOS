@@ -39,24 +39,7 @@
         }
         @media (min-width: 1024px) {
             aside.lg\:w-20 {
-                transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 220ms ease;
-            }
-            aside.lg\:w-20:hover {
-                width: 18rem !important;
-                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-                z-index: 40;
-            }
-            aside.lg\:w-20:hover .lg\:hidden {
-                display: block !important;
-            }
-            aside.lg\:w-20:hover span[x-show="!sidebarCollapsed"] {
-                display: flex !important;
-            }
-            aside.lg\:w-20:hover .lg\:justify-center {
-                justify-content: flex-start !important;
-            }
-            aside.lg\:w-20:hover button.lg\:justify-center {
-                justify-content: space-between !important;
+                transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
             }
         }
     </style>
@@ -249,6 +232,13 @@
         $canAccessStaffTools = $hasStoreContext && ($adminCanAccessStaffTools ?? false);
         $canManageSettings = $hasStoreContext && ($adminCanManageSettings ?? false);
         $canManageUsers = $hasStoreContext && ($adminCanManageUsers ?? false);
+        // Finance pages (P&L, expenses, transactions, admin receivables) are
+        // Owner/Manager-only — mirror the server-side `finance_access` gate here
+        // so staff/cashier do not even see the links (audit §5.3 / §13). Note:
+        // supplier Payables lives in the POS purchase back-office and stays
+        // available to staff, so its nav link is NOT gated here.
+        $canManageFinance = $hasStoreContext && $activeStore
+            && auth()->user()?->hasStoreRole($activeStore->id, ['store_owner', 'store_manager']);
         $currentPath = request()->path();
         $adminStoreSetting = $activeStore?->setting;
     @endphp
@@ -283,7 +273,28 @@
                 this.maintenanceOpen = false;
             },
             activeHoverGroup: null,
+            hoverFlyoutTop: 0,
+            hoverFlyoutSidebarRight: 0,
             hoverTimer: null,
+            openHoverGroup(name, trigger) {
+                if (!this.viewportLg) return;
+                if (this.hoverTimer) clearTimeout(this.hoverTimer);
+
+                const triggerRect = trigger.getBoundingClientRect();
+                const sidebarRect = trigger.closest('aside').getBoundingClientRect();
+                this.hoverFlyoutTop = Math.max(8, triggerRect.top);
+                this.hoverFlyoutSidebarRight = sidebarRect.right;
+                this.activeHoverGroup = name;
+
+                this.$nextTick(() => requestAnimationFrame(() => {
+                    const panel = document.querySelector('[data-nav-flyout=' + name + ']');
+                    if (!panel || this.activeHoverGroup !== name) return;
+                    this.hoverFlyoutTop = Math.max(
+                        8,
+                        Math.min(triggerRect.top, window.innerHeight - panel.offsetHeight - 8)
+                    );
+                }));
+            },
             setHoverGroup(name) {
                 if (!this.viewportLg) return;
                 if (this.hoverTimer) clearTimeout(this.hoverTimer);
@@ -706,7 +717,7 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
 
-                    @if (store_can('commerce.customer_debt', $activeStore))
+                    @if (store_can('commerce.customer_debt', $activeStore) && $canManageFinance)
                         @php $isReceivables = request()->is('store/*/admin/receivables*'); @endphp
                         <x-admin.nav-link :href="route('store.admin.receivables.index', $storeRouteParams)" route-name="store.admin.receivables.index" :active="$isReceivables" :label="__('messages.sidebar_receivables')">
                             <x-slot:icon>
@@ -766,6 +777,7 @@
                     </x-admin.nav-group>
                 @endif
 
+                @if ($canManageFinance)
                 <x-admin.nav-group name="finance" :label="__('messages.sidebar_finance')" icon-class="bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300">
                     <x-slot:icon>
                         {{-- Banknote icon --}}
@@ -802,6 +814,7 @@
                         </x-slot:icon>
                     </x-admin.nav-link>
                 </x-admin.nav-group>
+                @endif
 
                 <x-admin.nav-group name="reports" :label="__('messages.sidebar_reports')" icon-class="bg-cyan-100 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300">
                     <x-slot:icon>

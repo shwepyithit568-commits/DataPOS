@@ -5,15 +5,10 @@
 @section('content')
 <div class="space-y-6">
 
-    {{-- Breadcrumbs & Header --}}
+    {{-- Page Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                <a href="{{ route('store.admin.dashboard', ['store_slug' => $store->slug]) }}" class="hover:text-violet-600 dark:hover:text-violet-400">{{ __('messages.admin_dashboard') }}</a>
-                <span>/</span>
-                <span class="text-slate-700 dark:text-slate-200 font-semibold">{{ __('messages.sidebar_sales_analytics') }}</span>
-            </div>
-            <div class="flex items-center gap-3 mt-1.5 flex-wrap">
+            <div class="flex items-center gap-3 flex-wrap">
                 <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 font-outfit">
                     {{ __('messages.sales_analytics_title') }}
                 </h1>

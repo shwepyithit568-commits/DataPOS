@@ -203,15 +203,6 @@
                 🛡️
             </div>
             <div class="min-w-0">
-                <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    <a href="{{ route('store.admin.dashboard', $storeRouteParams) }}" class="hover:text-slate-600 dark:hover:text-slate-300 transition">
-                        {{ __('messages.admin_dashboard') }}
-                    </a>
-                    <span>/</span>
-                    <span class="text-red-600 dark:text-red-400">{{ __('messages.sidebar_security') }}</span>
-                    <span>/</span>
-                    <span class="text-slate-600 dark:text-slate-300">{{ __('messages.sidebar_roles') }}</span>
-                </div>
                 <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
                     <span class="truncate">{{ __('messages.roles_title') }}</span>
                 </h1>

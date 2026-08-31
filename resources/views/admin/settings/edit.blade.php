@@ -55,15 +55,6 @@
                 ⚙️
             </div>
             <div class="min-w-0">
-                <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    <a href="{{ route('store.admin.dashboard', ['store_slug' => $store->slug]) }}" class="hover:text-slate-600 dark:hover:text-slate-300 transition">
-                        {{ __('messages.admin_dashboard') }}
-                    </a>
-                    <span>/</span>
-                    <span class="text-slate-400">{{ __('messages.sidebar_security') }}</span>
-                    <span>/</span>
-                    <span class="text-blue-600 dark:text-blue-400">{{ __('messages.sidebar_settings') }}</span>
-                </div>
                 <h1 class="admin-page-title text-base sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
                     <span>{{ __('messages.settings_storefront_settings') }}</span>
                 </h1>
@@ -105,9 +96,9 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 shadow-sm flex items-center justify-between transition hover:shadow">
             <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">Store Identity</p>
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">{{ __('messages.settings_overview_store_identity') }}</p>
                 <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white truncate">{{ $setting->store_name ?? $store->name }}</h3>
-                <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">{{ $setting->tagline ?: 'No tagline set' }}</p>
+                <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">{{ $setting->tagline ?: __('messages.settings_overview_no_tagline') }}</p>
             </div>
             <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 grid place-items-center text-base sm:text-lg font-bold shadow-inner shrink-0">
                 🏪
@@ -116,12 +107,12 @@
 
         <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 shadow-sm flex items-center justify-between transition hover:shadow">
             <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">Brand Theme</p>
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">{{ __('messages.settings_overview_brand_theme') }}</p>
                 <div class="flex items-center gap-1.5 mt-0.5">
                     <span class="w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-slate-900 shadow-xs" style="background-color: {{ $setting->brand_color ?: '#0284c7' }};"></span>
                     <h3 class="text-xs sm:text-sm font-black font-mono text-slate-900 dark:text-white">{{ strtoupper($setting->brand_color ?: '#0284C7') }}</h3>
                 </div>
-                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium truncate mt-0.5">Active Palette</p>
+                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium truncate mt-0.5">{{ __('messages.settings_overview_active_palette') }}</p>
             </div>
             <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 grid place-items-center text-base sm:text-lg font-bold shadow-inner shrink-0">
                 🎨
@@ -130,8 +121,8 @@
 
         <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 shadow-sm flex items-center justify-between transition hover:shadow">
             <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">Direct Contact</p>
-                <h3 class="text-xs sm:text-sm font-black font-mono text-indigo-600 dark:text-indigo-400 truncate">{{ $setting->phone ?: 'No phone set' }}</h3>
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">{{ __('messages.settings_overview_direct_contact') }}</p>
+                <h3 class="text-xs sm:text-sm font-black font-mono text-indigo-600 dark:text-indigo-400 truncate">{{ $setting->phone ?: __('messages.settings_overview_no_phone') }}</h3>
                 <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">{{ $setting->telegram_username ? ('TG: @' . ltrim($setting->telegram_username, '@')) : 'Viber / Telegram' }}</p>
             </div>
             <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 grid place-items-center text-base sm:text-lg font-bold shadow-inner shrink-0">
@@ -141,9 +132,9 @@
 
         <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 shadow-sm flex items-center justify-between transition hover:shadow">
             <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">Delivery & Pay</p>
-                <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate">Active Methods</h3>
-                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium truncate mt-0.5">Ready for Orders</p>
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">{{ __('messages.settings_overview_delivery_pay') }}</p>
+                <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate">{{ __('messages.settings_overview_active_methods') }}</h3>
+                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium truncate mt-0.5">{{ __('messages.settings_overview_ready_orders') }}</p>
             </div>
             <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 grid place-items-center text-base sm:text-lg font-bold shadow-inner shrink-0">
                 🚚
@@ -231,30 +222,30 @@
                         🕒
                     </span>
                     <div>
-                        <h2 id="theme-history-title" class="text-sm font-black text-slate-900 dark:text-white">Published Theme History</h2>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400">ယခင် Publish လုပ်ထားသော Theme များကို အချိန်မရွေး ပြန်လည်ထားရှိ (Rollback) နိုင်ပါသည်။</p>
+                        <h2 id="theme-history-title" class="text-sm font-black text-slate-900 dark:text-white">{{ __('messages.theme_history_title') }}</h2>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ __('messages.theme_history_desc') }}</p>
                     </div>
                 </div>
                 <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 self-start sm:self-auto">
-                    Latest 10 revisions
+                    {{ __('messages.theme_history_latest_10') }}
                 </span>
             </div>
 
             @if ($themeRevisions->isEmpty())
                 <div class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
-                    Theme ကို ပထမဆုံး Publish လုပ်ပြီးပါက history မှတ်တမ်းများကို ဒီနေရာတွင် တွေ့ရပါမည်။
+                    {{ __('messages.theme_history_empty') }}
                 </div>
             @else
                 <div class="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
                     <table class="min-w-full text-left text-xs">
                         <thead class="bg-slate-50 dark:bg-slate-800/80 text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
                             <tr>
-                                <th class="px-3.5 py-2.5">Revision</th>
-                                <th class="px-3.5 py-2.5">Theme Palette</th>
-                                <th class="px-3.5 py-2.5">Action</th>
-                                <th class="px-3.5 py-2.5">Published by</th>
-                                <th class="px-3.5 py-2.5">Date & Time</th>
-                                <th class="px-3.5 py-2.5 text-right font-black">Restore</th>
+                                <th class="px-3.5 py-2.5">{{ __('messages.theme_history_th_revision') }}</th>
+                                <th class="px-3.5 py-2.5">{{ __('messages.theme_history_th_palette') }}</th>
+                                <th class="px-3.5 py-2.5">{{ __('messages.theme_history_th_action') }}</th>
+                                <th class="px-3.5 py-2.5">{{ __('messages.theme_history_th_published_by') }}</th>
+                                <th class="px-3.5 py-2.5">{{ __('messages.theme_history_th_datetime') }}</th>
+                                <th class="px-3.5 py-2.5 text-right font-black">{{ __('messages.theme_history_th_restore') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -268,7 +259,7 @@
                                             @if ($index === 0)
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                    Current
+                                                    {{ __('messages.theme_history_current') }}
                                                 </span>
                                             @endif
                                         </div>
@@ -292,11 +283,11 @@
                                             <form method="POST" action="{{ route('store.admin.settings.appearance.rollback', ['store_slug' => $store->slug, 'revision' => $revision->id]) }}">
                                                 @csrf
                                                 <button type="submit" class="min-h-8 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-1 text-xs font-black text-slate-700 dark:text-slate-200 transition hover:border-violet-400 hover:text-violet-700 dark:hover:border-violet-500 dark:hover:text-violet-300 shadow-xs cursor-pointer active:scale-95">
-                                                    Restore
+                                                    {{ __('messages.theme_history_btn_restore') }}
                                                 </button>
                                             </form>
                                         @else
-                                            <span class="text-xs font-black text-emerald-600 dark:text-emerald-400">✓ Active</span>
+                                            <span class="text-xs font-black text-emerald-600 dark:text-emerald-400">✓ {{ __('messages.theme_history_active') }}</span>
                                         @endif
                                     </td>
                                 </tr>

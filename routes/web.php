@@ -313,20 +313,20 @@ Route::prefix('store/{store_slug}')
 
         // Customer Receivables & Debt Ledger Management (SoT §17)
         Route::middleware('store.capability:commerce.customer_debt')->group(function () {
-            Route::get('/admin/receivables', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'index'])->name('store.admin.receivables.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-            Route::get('/admin/receivables/export', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'exportCsv'])->name('store.admin.receivables.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-            Route::get('/admin/receivables/{customer}', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'show'])->name('store.admin.receivables.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-            Route::post('/admin/receivables/{customer}/collect', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'collect'])->name('store.admin.receivables.collect')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-            Route::get('/admin/receivables/{customer}/statement', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'statement'])->name('store.admin.receivables.statement')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/receivables', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'index'])->name('store.admin.receivables.index')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+            Route::get('/admin/receivables/export', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'exportCsv'])->name('store.admin.receivables.export')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+            Route::get('/admin/receivables/{customer}', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'show'])->name('store.admin.receivables.show')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+            Route::post('/admin/receivables/{customer}/collect', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'collect'])->name('store.admin.receivables.collect')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+            Route::get('/admin/receivables/{customer}/statement', [\App\Http\Controllers\Admin\CustomerReceivableController::class, 'statement'])->name('store.admin.receivables.statement')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
         });
 
         // Supplier Payables (Accounts Payable)
         Route::get('/admin/payables', fn (StoreContext $context) => redirect()->route('pos.purchases.payables', $context->getRouteParams()))->name('store.admin.payables.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Profit & Loss Financial Statement (SoT §18)
-        Route::get('/admin/profit-loss', [\App\Http\Controllers\Admin\ProfitLossController::class, 'index'])->name('store.admin.profit_loss.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/profit-loss/statement', [\App\Http\Controllers\Admin\ProfitLossController::class, 'statement'])->name('store.admin.profit_loss.statement')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/profit-loss/export', [\App\Http\Controllers\Admin\ProfitLossController::class, 'export'])->name('store.admin.profit_loss.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/profit-loss', [\App\Http\Controllers\Admin\ProfitLossController::class, 'index'])->name('store.admin.profit_loss.index')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::get('/admin/profit-loss/statement', [\App\Http\Controllers\Admin\ProfitLossController::class, 'statement'])->name('store.admin.profit_loss.statement')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::get('/admin/profit-loss/export', [\App\Http\Controllers\Admin\ProfitLossController::class, 'export'])->name('store.admin.profit_loss.export')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
 
         // Repair Center / Service Jobs (SoT §16)
         Route::middleware('store.capability:service.repair_jobs')->group(function () {
@@ -375,18 +375,18 @@ Route::prefix('store/{store_slug}')
         });
 
         // Expense Categories CRUD
-        Route::get('/admin/expense-categories', [ExpenseCategoryController::class, 'index'])->name('store.admin.expense_categories.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/expense-categories', [ExpenseCategoryController::class, 'store'])->name('store.admin.expense_categories.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::put('/admin/expense-categories/{category}', [ExpenseCategoryController::class, 'update'])->name('store.admin.expense_categories.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::patch('/admin/expense-categories/{category}/toggle', [ExpenseCategoryController::class, 'toggle'])->name('store.admin.expense_categories.toggle')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::delete('/admin/expense-categories/{category}', [ExpenseCategoryController::class, 'destroy'])->name('store.admin.expense_categories.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/expense-categories', [ExpenseCategoryController::class, 'index'])->name('store.admin.expense_categories.index')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::post('/admin/expense-categories', [ExpenseCategoryController::class, 'store'])->name('store.admin.expense_categories.store')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::put('/admin/expense-categories/{category}', [ExpenseCategoryController::class, 'update'])->name('store.admin.expense_categories.update')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::patch('/admin/expense-categories/{category}/toggle', [ExpenseCategoryController::class, 'toggle'])->name('store.admin.expense_categories.toggle')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::delete('/admin/expense-categories/{category}', [ExpenseCategoryController::class, 'destroy'])->name('store.admin.expense_categories.destroy')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
 
         // Expenses Management (Daily Expenses CRUD & Export)
-        Route::get('/admin/expenses', [ExpenseController::class, 'index'])->name('store.admin.expenses.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::get('/admin/expenses/export', [ExpenseController::class, 'export'])->name('store.admin.expenses.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/expenses', [ExpenseController::class, 'store'])->name('store.admin.expenses.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::put('/admin/expenses/{expense}', [ExpenseController::class, 'update'])->name('store.admin.expenses.update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::delete('/admin/expenses/{expense}', [ExpenseController::class, 'destroy'])->name('store.admin.expenses.destroy')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/expenses', [ExpenseController::class, 'index'])->name('store.admin.expenses.index')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::get('/admin/expenses/export', [ExpenseController::class, 'export'])->name('store.admin.expenses.export')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::post('/admin/expenses', [ExpenseController::class, 'store'])->name('store.admin.expenses.store')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::put('/admin/expenses/{expense}', [ExpenseController::class, 'update'])->name('store.admin.expenses.update')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::delete('/admin/expenses/{expense}', [ExpenseController::class, 'destroy'])->name('store.admin.expenses.destroy')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
 
         // Admin Product Reviews (moderation)
         Route::get('/admin/reviews', [AdminReviewController::class, 'index'])->name('store.admin.reviews.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -609,12 +609,12 @@ Route::prefix('store/{store_slug}')
         });
 
         // Cash & Bank Transactions Register (sidebar_transactions)
-        Route::get('/admin/transactions', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'index'])->name('store.admin.transactions.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/transactions/deposit', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'deposit'])->name('store.admin.transactions.deposit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/transactions/withdraw', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'withdraw'])->name('store.admin.transactions.withdraw')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
-        Route::post('/admin/transactions/transfer', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'transfer'])->name('store.admin.transactions.transfer')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/transactions', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'index'])->name('store.admin.transactions.index')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::post('/admin/transactions/deposit', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'deposit'])->name('store.admin.transactions.deposit')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::post('/admin/transactions/withdraw', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'withdraw'])->name('store.admin.transactions.withdraw')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::post('/admin/transactions/transfer', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'transfer'])->name('store.admin.transactions.transfer')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
         Route::post('/admin/transactions/account', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'storeAccount'])->name('store.admin.transactions.account.store')->middleware(EnsureStoreAccess::class . ':store_manager');
-        Route::get('/admin/transactions/export', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'export'])->name('store.admin.transactions.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/transactions/export', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'export'])->name('store.admin.transactions.export')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
         Route::get('/admin/transactions/{transaction}/voucher', [\App\Http\Controllers\Admin\CashBankTransactionController::class, 'printVoucher'])->name('store.admin.transactions.voucher')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
 
         // Printer Setup & Direct Printing (sidebar_printers)

@@ -73,10 +73,7 @@ window.exchangeHubData = function () {
          ============================================================ --}}
     <div class="admin-page-header">
         <div class="min-w-0">
-            <p class="text-[11px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                {{ __('messages.sidebar_setup') ?? 'Store & Location Setup' }}
-            </p>
-            <h1 class="admin-page-title mt-0.5">
+            <h1 class="admin-page-title">
                 {{ __('messages.exchange_title') }}
             </h1>
             <p class="admin-page-sub mt-1">
@@ -121,7 +118,7 @@ window.exchangeHubData = function () {
             <div class="admin-stat-value text-emerald-700 dark:text-emerald-300 font-mono">
                 MMK (Ks)
             </div>
-            <div class="admin-stat-sub text-slate-500">Fixed Rate: 1.00</div>
+            <div class="admin-stat-sub text-slate-500">{{ __('messages.exchange_fixed_base_rate') }}</div>
         </div>
 
         {{-- 2. USD Rate --}}
@@ -164,10 +161,10 @@ window.exchangeHubData = function () {
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <h2 class="text-sm font-extrabold text-slate-900 dark:text-slate-100 font-outfit">
-                            Daily Exchange Rates Table
+                            {{ __('messages.exchange_table_title') }}
                         </h2>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            Update daily rates in bulk and click Save All Daily Rates
+                            {{ __('messages.exchange_table_desc') }}
                         </p>
                     </div>
                 </div>
@@ -183,8 +180,8 @@ window.exchangeHubData = function () {
                                     <th class="pb-3">{{ __('messages.exchange_currency_code') }}</th>
                                     <th class="pb-3">{{ __('messages.exchange_currency_name') }}</th>
                                     <th class="pb-3 w-36">{{ __('messages.exchange_rate_to_mmk') }}</th>
-                                    <th class="pb-3 text-center">Status</th>
-                                    <th class="pb-3 text-right">Action</th>
+                                    <th class="pb-3 text-center">{{ __('messages.status') }}</th>
+                                    <th class="pb-3 text-right">{{ __('messages.action') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -192,77 +189,77 @@ window.exchangeHubData = function () {
                                     <tr class="{{ $curr->is_base ? 'bg-emerald-50/20 dark:bg-emerald-950/10' : '' }}">
                                         {{-- Code & Symbol --}}
                                         <td class="py-3 font-bold">
-                                            <div class="flex items-center gap-1.5">
-                                                <span class="px-2.5 py-0.5 rounded-lg text-xs font-black font-mono {{ $curr->is_base ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700' }}">
-                                                    {{ $curr->code }}
-                                                </span>
-                                                @if($curr->symbol)
-                                                    <span class="text-slate-500 dark:text-slate-400 text-xs font-mono font-bold">({{ $curr->symbol }})</span>
-                                                @endif
-                                            </div>
-                                        </td>
+                                             <div class="flex items-center gap-1.5">
+                                                 <span class="px-2.5 py-0.5 rounded-lg text-xs font-black font-mono {{ $curr->is_base ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700' }}">
+                                                     {{ $curr->code }}
+                                                 </span>
+                                                 @if($curr->symbol)
+                                                     <span class="text-slate-500 dark:text-slate-400 text-xs font-mono font-bold">({{ $curr->symbol }})</span>
+                                                 @endif
+                                             </div>
+                                         </td>
 
-                                        {{-- Name & Base Badge --}}
-                                        <td class="py-3">
-                                            <div class="font-bold text-slate-800 dark:text-slate-200">{{ $curr->name }}</div>
-                                            @if($curr->is_base)
-                                                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">★ Base Currency</span>
-                                            @elseif($curr->last_updated_at)
-                                                <span class="text-[10px] text-slate-400">Updated {{ $curr->last_updated_at->diffForHumans() }}</span>
-                                            @endif
-                                        </td>
+                                         {{-- Name & Base Badge --}}
+                                         <td class="py-3">
+                                             <div class="font-bold text-slate-800 dark:text-slate-200">{{ $curr->name }}</div>
+                                             @if($curr->is_base)
+                                                 <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">★ {{ __('messages.exchange_base_currency_badge') }}</span>
+                                             @elseif($curr->last_updated_at)
+                                                 <span class="text-[10px] text-slate-400">{{ __('messages.updated') ?? 'Updated' }} {{ $curr->last_updated_at->diffForHumans() }}</span>
+                                             @endif
+                                         </td>
 
-                                        {{-- Rate Input --}}
-                                        <td class="py-3">
-                                            @if($curr->is_base)
-                                                <span class="font-mono font-black text-slate-700 dark:text-slate-300 pl-2">1.0000 Ks</span>
-                                            @else
-                                                <div class="relative">
-                                                    <input type="number"
-                                                           step="0.0001"
-                                                           min="0.0001"
-                                                           name="rates[{{ $curr->id }}]"
-                                                           value="{{ $curr->exchange_rate }}"
-                                                           required
-                                                           class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-mono font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 shadow-sm">
-                                                </div>
-                                            @endif
-                                        </td>
+                                         {{-- Rate Input --}}
+                                         <td class="py-3">
+                                             @if($curr->is_base)
+                                                 <span class="font-mono font-black text-slate-700 dark:text-slate-300 pl-2">1.0000 Ks</span>
+                                             @else
+                                                 <div class="relative">
+                                                     <input type="number"
+                                                            step="0.0001"
+                                                            min="0.0001"
+                                                            name="rates[{{ $curr->id }}]"
+                                                            value="{{ $curr->exchange_rate }}"
+                                                            required
+                                                            class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-mono font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 shadow-sm">
+                                                 </div>
+                                             @endif
+                                         </td>
 
-                                        {{-- Status --}}
-                                        <td class="py-3 text-center">
-                                            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold {{ $curr->is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' }}">
-                                                {{ $curr->is_active ? 'Active' : 'Inactive' }}
-                                            </span>
-                                        </td>
+                                         {{-- Status --}}
+                                         <td class="py-3 text-center">
+                                             <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold {{ $curr->is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' }}">
+                                                 {{ $curr->is_active ? __('messages.active') : __('messages.inactive') }}
+                                             </span>
+                                         </td>
 
-                                        {{-- Actions --}}
-                                        <td class="py-3 text-right">
-                                            <div class="flex items-center justify-end gap-1">
-                                                @if(!$curr->is_base)
-                                                    <button type="button"
-                                                            @click="openEdit({{ $curr->id }}, '{{ $curr->code }}', '{{ addslashes($curr->name) }}', '{{ addslashes($curr->symbol) }}', {{ $curr->exchange_rate }}, {{ $curr->is_active ? 'true' : 'false' }})"
-                                                            class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                                                            title="Edit Details">
-                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                                    </button>
+                                         {{-- Actions --}}
+                                         <td class="py-3 text-right">
+                                             <div class="flex items-center justify-end gap-1">
+                                                 @if(!$curr->is_base)
+                                                     <button type="button"
+                                                             @click="openEdit({{ $curr->id }}, '{{ $curr->code }}', '{{ addslashes($curr->name) }}', '{{ addslashes($curr->symbol) }}', {{ $curr->exchange_rate }}, {{ $curr->is_active ? 'true' : 'false' }})"
+                                                             class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                                                             title="{{ __('messages.edit') }}">
+                                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                     </button>
 
-                                                    <button type="submit"
-                                                            form="delete-curr-form-{{ $curr->id }}"
-                                                            class="p-1.5 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
-                                                            title="Delete">
-                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                    </button>
-                                                @endif
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                                                     <button type="submit"
+                                                             form="delete-curr-form-{{ $curr->id }}"
+                                                             class="p-1.5 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                                                             title="{{ __('messages.delete') }}">
+                                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                     </button>
+                                                 @endif
+                                             </div>
+                                         </td>
+                                     </tr>
+                                 @endforeach
+                             </tbody>
+                         </table>
+                     </div>
 
-                    {{-- Bulk Save Button --}}
+                     {{-- Bulk Save Button --}}n --}}
                     <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
                         <button type="submit"
                                 class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold shadow-md transition flex items-center gap-2">
@@ -355,7 +352,7 @@ window.exchangeHubData = function () {
                 <div class="space-y-3 text-xs">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">Import Currency</label>
+                            <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.exchange_import_currency') }}</label>
                             <select x-model="calcCurr" class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-2 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
                                 @foreach($currencies->where('is_base', false) as $c)
                                     <option value="{{ $c->code }}">{{ $c->code }} (Rate: {{ number_format($c->exchange_rate, 0) }})</option>
@@ -392,7 +389,7 @@ window.exchangeHubData = function () {
                             <span class="font-mono font-bold text-slate-900 dark:text-slate-100" x-text="landedCostMmk.toLocaleString() + ' Ks'"></span>
                         </div>
                         <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
-                            <span>Expected Profit Margin:</span>
+                            <span>{{ __('messages.exchange_profit_margin') }}:</span>
                             <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400" x-text="'+ ' + profitMarginMmk.toLocaleString() + ' Ks'"></span>
                         </div>
                         <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
@@ -466,12 +463,12 @@ window.exchangeHubData = function () {
 
                 <div class="flex items-center gap-2 pt-2">
                     <input type="checkbox" name="is_active" value="1" checked class="w-4 h-4 rounded text-violet-600">
-                    <span class="font-bold text-slate-800 dark:text-slate-200">Active Currency</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-200">{{ __('messages.exchange_active_currency') }}</span>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="showAddModal = false" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-violet-600 text-white font-bold shadow-md">Add Currency</button>
+                    <button type="button" @click="showAddModal = false" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-violet-600 text-white font-bold shadow-md">{{ __('messages.exchange_add_currency_btn') }}</button>
                 </div>
             </form>
         </div>
@@ -488,7 +485,7 @@ window.exchangeHubData = function () {
              class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5">
             <div class="flex justify-between items-center">
                 <h3 class="text-base font-black text-slate-900 dark:text-slate-100 font-outfit">
-                    Edit Currency: <span x-text="editingCurr.code" class="text-violet-600"></span>
+                    {{ __('messages.exchange_edit_currency') }}: <span x-text="editingCurr.code" class="text-violet-600"></span>
                 </h3>
                 <button type="button" @click="editModalOpen = false" class="text-slate-400 hover:text-slate-600">✕</button>
             </div>
@@ -534,12 +531,12 @@ window.exchangeHubData = function () {
                            value="1"
                            :checked="editingCurr.is_active == 1"
                            class="w-4 h-4 rounded text-violet-600">
-                    <span class="font-bold text-slate-800 dark:text-slate-200">Active Currency</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-200">{{ __('messages.exchange_active_currency') }}</span>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="editModalOpen = false" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-violet-600 text-white font-bold shadow-md">Update Currency</button>
+                    <button type="button" @click="editModalOpen = false" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-violet-600 text-white font-bold shadow-md">{{ __('messages.exchange_update_currency_btn') }}</button>
                 </div>
             </form>
         </div>
@@ -551,7 +548,7 @@ window.exchangeHubData = function () {
             <form id="delete-curr-form-{{ $c->id }}"
                   method="POST"
                   action="{{ route('store.admin.exchange_rates.destroy', ['store_slug' => $store->slug, 'currency' => $c->id]) }}"
-                  onsubmit="return confirm('Delete this currency?')"
+                  onsubmit="return confirm('{{ __('messages.exchange_confirm_delete') }}')"
                   class="hidden">
                 @csrf
                 @method('DELETE')

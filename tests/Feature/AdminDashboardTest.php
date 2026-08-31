@@ -87,7 +87,9 @@ class AdminDashboardTest extends TestCase
             'status' => 'pending_contact',
         ]);
 
-        $response = $this->actingAs($manager)->get('/store/store-a/admin/dashboard');
+        $response = $this->actingAs($manager)
+            ->withSession(['locale' => 'en'])
+            ->get('/store/store-a/admin/dashboard');
 
         $response->assertStatus(200);
         $response->assertSee('Admin Dashboard');
@@ -161,16 +163,46 @@ class AdminDashboardTest extends TestCase
         ]);
 
         // Global dashboard select view
-        $responseGlobal = $this->actingAs($owner)->get('/admin/dashboard');
+        $responseGlobal = $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get('/admin/dashboard');
         $responseGlobal->assertStatus(200);
         $responseGlobal->assertSee('Platform Owner Store Selector');
         $responseGlobal->assertSee('Store A');
         $responseGlobal->assertSee('Store B');
 
         // Access specific store dashboard
-        $responseStoreB = $this->actingAs($owner)->get('/store/store-b/admin/dashboard');
+        $responseStoreB = $this->actingAs($owner)
+            ->withSession(['locale' => 'en'])
+            ->get('/store/store-b/admin/dashboard');
         $responseStoreB->assertStatus(200);
         $responseStoreB->assertSee('Admin Dashboard');
         $responseStoreB->assertSee('Store B');
+    }
+
+    public function test_dashboard_renders_without_translation_leaks_in_all_locales(): void
+    {
+        $store = Store::create(['name' => 'Store Test', 'slug' => 'store-test']);
+        $manager = User::create([
+            'name' => 'Manager Test',
+            'phone' => '09777777777',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $manager->stores()->attach($store->id, ['role' => 'store_manager', 'status' => 'active']);
+
+        foreach (['en', 'my', 'zh_CN'] as $locale) {
+            $response = $this->actingAs($manager)
+                ->withSession(['locale' => $locale])
+                ->get(route('store.admin.dashboard', ['store_slug' => $store->slug]));
+
+            $response->assertOk();
+
+            preg_match_all('/messages\.[a-zA-Z0-9_-]+/', $response->getContent(), $matches);
+            $this->assertEmpty(
+                $matches[0],
+                "Found leaked translation keys in locale [{$locale}] on store.admin.dashboard: " . implode(', ', array_unique($matches[0]))
+            );
+        }
     }
 }

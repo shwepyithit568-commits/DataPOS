@@ -73,9 +73,10 @@ class EloadTransaction extends Model
         return match ($this->type) {
             'topup'        => 'Top-up (ဘေလ်ဖြည့်)',
             'data_pack'    => 'Data Pack (ဒေတာ)',
-            'pin_code'     => 'Pin / Card (ကတ်)',
+            'pin_code'     => 'Topup Card (ငွေဖြည့်ကတ်)',
+            'sim_card'     => 'SIM Card (ဆင်းမ်ကတ်)',
             'bill_payment' => 'Bill (ဘေလ်ပေးသွင်း)',
-            default        => ucfirst($this->type),
+            default        => ucfirst((string) $this->type),
         };
     }
 

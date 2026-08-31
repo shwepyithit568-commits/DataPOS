@@ -210,7 +210,7 @@ class ThemeEngineTest extends TestCase
                 'section' => 'appearance',
             ]))
             ->assertOk()
-            ->assertSee('Published Theme History')
+            ->assertSee(__('messages.theme_history_title'))
             ->assertSee('Retail Trust')
             ->assertSee('Theme Manager');
     }
@@ -329,5 +329,24 @@ class ThemeEngineTest extends TestCase
 
         $setting = StorefrontSetting::where('store_id', $this->store->id)->firstOrFail();
         $this->assertSame('marketplace_pro', $setting->theme_preset);
+    }
+
+    public function test_appearance_and_settings_render_without_translation_key_leaks_in_all_locales(): void
+    {
+        foreach (['en', 'my', 'zh_CN'] as $locale) {
+            $response = $this->actingAs($this->manager)
+                ->withSession(['locale' => $locale])
+                ->get(route('store.admin.settings.section', [
+                    'store_slug' => $this->store->slug,
+                    'section'    => 'appearance',
+                ]));
+
+            $response->assertOk();
+            $content = $response->getContent();
+            $this->assertFalse(
+                (bool) preg_match('/messages\.[a-zA-Z0-9_-]+/', $content),
+                "Found leaked translation key in locale [{$locale}] on appearance settings"
+            );
+        }
     }
 }

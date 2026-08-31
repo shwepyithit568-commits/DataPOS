@@ -153,4 +153,60 @@ class PrinterManagementTest extends TestCase
             'id' => $printer->id,
         ]);
     }
+
+    public function test_printers_views_render_without_translation_leaks_in_all_locales(): void
+    {
+        $printer = Printer::create([
+            'store_id' => $this->store->id,
+            'name' => 'Flagship 80mm ESC/POS',
+            'connection_type' => 'network',
+            'paper_width' => '80mm',
+            'printer_role' => 'receipt',
+            'ip_address' => '192.168.1.200',
+            'port' => 9100,
+            'auto_cut' => 1,
+            'cash_drawer_kick' => 1,
+            'print_logo' => 1,
+            'is_default' => 1,
+            'is_active' => 1,
+        ]);
+
+        foreach (['en', 'my', 'zh_CN'] as $locale) {
+            // Test Index View
+            $indexResponse = $this->actingAs($this->manager)
+                ->withSession(['locale' => $locale])
+                ->get(route('store.admin.printers.index', ['store_slug' => $this->store->slug]));
+
+            $indexResponse->assertOk();
+            $this->assertFalse(
+                (bool) preg_match('/messages\.[a-zA-Z0-9_-]+/', $indexResponse->getContent()),
+                "Found leaked translation key in locale [{$locale}] on printers.index"
+            );
+
+            // Test Create View
+            $createResponse = $this->actingAs($this->manager)
+                ->withSession(['locale' => $locale])
+                ->get(route('store.admin.printers.create', ['store_slug' => $this->store->slug]));
+
+            $createResponse->assertOk();
+            $this->assertFalse(
+                (bool) preg_match('/messages\.[a-zA-Z0-9_-]+/', $createResponse->getContent()),
+                "Found leaked translation key in locale [{$locale}] on printers.create"
+            );
+
+            // Test Edit View
+            $editResponse = $this->actingAs($this->manager)
+                ->withSession(['locale' => $locale])
+                ->get(route('store.admin.printers.edit', [
+                    'store_slug' => $this->store->slug,
+                    'printer' => $printer->id,
+                ]));
+
+            $editResponse->assertOk();
+            $this->assertFalse(
+                (bool) preg_match('/messages\.[a-zA-Z0-9_-]+/', $editResponse->getContent()),
+                "Found leaked translation key in locale [{$locale}] on printers.edit"
+            );
+        }
+    }
 }

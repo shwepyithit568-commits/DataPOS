@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sample Preview - {{ $template->name }} - {{ $store->name }}</title>
+    <title>{{ __('messages.vouchers_print_sample') }} - {{ $template->name }} - {{ $store->name }}</title>
     <style>
         @page {
             @if($template->is58mm())

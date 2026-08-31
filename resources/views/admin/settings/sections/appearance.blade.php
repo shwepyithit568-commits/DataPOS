@@ -473,14 +473,14 @@ if (window.Alpine) {
                     🚀
                 </div>
                 <div>
-                    <h3 class="text-base font-black text-slate-900 dark:text-white">Storefront သို့ Theme Publish မည်</h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Live Customer ဆိုင်မျက်နှာစာသို့ တိုက်ရိုက်ပြောင်းလဲပါမည်။</p>
+                    <h3 class="text-base font-black text-slate-900 dark:text-white">{{ __('messages.theme_modal_publish_title') }}</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.theme_modal_publish_desc') }}</p>
                 </div>
             </div>
 
             <div class="rounded-xl bg-slate-50 p-3.5 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1.5">
-                <p>• ရွေးချယ်ထားသော အရောင်၊ ဖောင့်နှင့် Theme ဒီဇိုင်းများသည် Customer များ မြင်တွေ့နေရသော Storefront တွင် ချက်ချင်း အသက်ဝင်သွားပါမည်။</p>
-                <p>• ယခု Published: <strong>Revision #{{ $latestRevNumber ?? '—' }}</strong> — Publish လုပ်ပါက <strong>Revision #{{ ($latestRevNumber ?? 0) + 1 }}</strong> အသစ်အဖြစ် မှတ်တမ်းတင်ပြီး ယခင်ဗားရှင်းသို့ အချိန်မရွေး ပြန်သွားနိုင်ပါမည်။</p>
+                <p>• {{ __('messages.theme_modal_publish_point1') }}</p>
+                <p>• {{ __('messages.theme_modal_publish_point2', ['current' => $latestRevNumber ?? '—', 'next' => ($latestRevNumber ?? 0) + 1]) }}</p>
             </div>
 
             <div x-show="publishError" x-cloak class="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-300">
@@ -492,15 +492,15 @@ if (window.Alpine) {
                         @click="closePublishConfirm()"
                         :disabled="draftStatus === 'publishing'"
                         class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 transition cursor-pointer">
-                    မလုပ်တော့ပါ
+                    {{ __('messages.theme_modal_publish_btn_cancel') }}
                 </button>
                 <button type="button"
                         @click="confirmPublish()"
                         :disabled="draftStatus === 'publishing'"
                         class="inline-flex items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 px-5 py-2.5 text-xs font-black text-white disabled:opacity-50 transition shadow-sm cursor-pointer">
                     <svg x-show="draftStatus === 'publishing'" x-cloak class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                    <span x-show="draftStatus === 'publishing'" x-cloak>Publishing...</span>
-                    <span x-show="draftStatus !== 'publishing'">Publish Live အတည်ပြုမည်</span>
+                    <span x-show="draftStatus === 'publishing'" x-cloak>{{ __('messages.theme_status_publishing') }}</span>
+                    <span x-show="draftStatus !== 'publishing'">{{ __('messages.theme_modal_publish_btn_confirm') }}</span>
                 </button>
             </div>
         </div>
@@ -538,23 +538,23 @@ if (window.Alpine) {
                 >
                     <span x-show="draftStatus === 'saved'"      x-cloak class="flex items-center gap-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                        <span>Draft Saved</span>
+                        <span>{{ __('messages.theme_status_saved') }}</span>
                     </span>
                     <span x-show="draftStatus === 'unsaved'"    x-cloak class="flex items-center gap-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                        <span>Unsaved Changes</span>
+                        <span>{{ __('messages.theme_status_unsaved') }}</span>
                     </span>
                     <span x-show="draftStatus === 'saving'"     x-cloak class="flex items-center gap-1">
                         <svg class="animate-spin h-3 w-3 text-slate-500" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                        <span>Saving Draft...</span>
+                        <span>{{ __('messages.theme_status_saving') }}</span>
                     </span>
                     <span x-show="draftStatus === 'conflict'"   x-cloak class="flex items-center gap-1">
                         <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                        <span>⚠️ Conflict</span>
+                        <span>⚠️ {{ __('messages.theme_status_conflict') }}</span>
                     </span>
                     <span x-show="draftStatus === 'publishing'" x-cloak class="flex items-center gap-1">
                         <svg class="animate-spin h-3 w-3 text-violet-600" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                        <span>Publishing...</span>
+                        <span>{{ __('messages.theme_status_publishing') }}</span>
                     </span>
                 </span>
 
@@ -568,7 +568,7 @@ if (window.Alpine) {
                         : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-violet-400 hover:text-violet-700'"
                 >
                     <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                    <span x-text="showPreview ? 'Hide Preview' : 'Live Preview'"></span>
+                    <span x-text="showPreview ? @js(__('messages.theme_btn_hide_preview')) : @js(__('messages.theme_btn_toggle_preview'))"></span>
                 </button>
 
                 {{-- Save Draft button --}}
@@ -580,7 +580,7 @@ if (window.Alpine) {
                     class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs transition hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-violet-400 hover:text-violet-700 active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
                     <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-3-5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 21V9h6v12"/></svg>
-                    <span>Save Draft</span>
+                    <span>{{ __('messages.theme_btn_save_draft') }}</span>
                 </button>
 
                 {{-- Publish button --}}
@@ -592,7 +592,7 @@ if (window.Alpine) {
                     class="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 px-4 py-2 text-xs font-black text-white shadow-xs hover:shadow-violet-500/20 transition active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
                     <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12l7-7 7 7M12 5v14"/></svg>
-                    <span>Publish Live</span>
+                    <span>{{ __('messages.theme_btn_publish_live') }}</span>
                 </button>
             </div>
         </div>
@@ -601,7 +601,7 @@ if (window.Alpine) {
         <div x-show="draftStatus === 'conflict'" x-cloak
              class="mt-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
             <svg class="mt-0.5 h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-            <span x-text="conflictMsg || 'Theme conflict detected. Another session published changes. Refresh to reload the latest state.'" ></span>
+            <span x-text="conflictMsg || @js(__('messages.theme_conflict_warning'))"></span>
         </div>
     </div>
 
@@ -618,13 +618,13 @@ if (window.Alpine) {
                 </span>
                 <div>
                     <h3 class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 leading-tight flex items-center gap-2">
-                        <span>Live Preview (Draft Storefront)</span>
+                        <span>{{ __('messages.theme_preview_title') }}</span>
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700">
-                            Isolated Frame
+                            {{ __('messages.theme_preview_isolated') }}
                         </span>
                     </h3>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400 font-normal mt-0.5">
-                        Customer များ မမြင်နိုင်သော သီးသန့်စမ်းသပ်ခန်းဖြစ်ပြီး Publish နှိပ်မှသာ Live ဖြစ်ပါမည်။
+                        {{ __('messages.theme_preview_desc') }}
                     </p>
                 </div>
             </div>
@@ -635,7 +635,7 @@ if (window.Alpine) {
                         :class="showPreview
                             ? 'border-violet-300 bg-violet-100 text-violet-800 dark:border-violet-700 dark:bg-violet-900/60 dark:text-violet-200'
                             : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'">
-                    <span x-text="showPreview ? '✖️ Preview ပိတ်မည်' : '👁️ Preview ဖွင့်ကြည့်မည်'"></span>
+                    <span x-text="showPreview ? @js('✖️ ' . __('messages.theme_btn_hide_preview')) : @js('👁️ ' . __('messages.theme_btn_open_preview'))"></span>
                     <svg class="h-3.5 w-3.5 transition-transform duration-200" :class="{ 'rotate-180': showPreview }" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>
             </div>
@@ -655,23 +655,23 @@ if (window.Alpine) {
             {{-- Viewport toolbar --}}
             <div class="flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
                 <div class="flex items-center gap-2">
-                    <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Viewport:</span>
+                    <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">{{ __('messages.theme_preview_viewport') }}</span>
                     {{-- Viewport segmented control --}}
                     <div class="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-0.5 shadow-xs" role="group" aria-label="Preview viewport size">
                         <button type="button" @click="setViewport('desktop')"
                                 :class="previewViewport === 'desktop' ? 'bg-violet-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
                                 class="rounded-lg px-3 py-1 text-[11px] font-black transition cursor-pointer" aria-pressed="false">
-                            🖥 Desktop
+                            🖥 {{ __('messages.theme_preview_desktop') }}
                         </button>
                         <button type="button" @click="setViewport('tablet')"
                                 :class="previewViewport === 'tablet' ? 'bg-violet-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
                                 class="rounded-lg px-3 py-1 text-[11px] font-black transition cursor-pointer" aria-pressed="false">
-                            📱 Tablet
+                            📱 {{ __('messages.theme_preview_tablet') }}
                         </button>
                         <button type="button" @click="setViewport('mobile')"
                                 :class="previewViewport === 'mobile' ? 'bg-violet-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
                                 class="rounded-lg px-3 py-1 text-[11px] font-black transition cursor-pointer" aria-pressed="false">
-                            📲 Mobile
+                            📲 {{ __('messages.theme_preview_mobile') }}
                         </button>
                     </div>
                 </div>
@@ -682,7 +682,7 @@ if (window.Alpine) {
                             title="Reload preview frame"
                             class="inline-flex items-center gap-1 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-1 text-[11px] font-black text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs cursor-pointer active:scale-95">
                         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                        <span>Refresh</span>
+                        <span>{{ __('messages.theme_preview_refresh') }}</span>
                     </button>
                 </div>
             </div>
@@ -721,7 +721,7 @@ if (window.Alpine) {
                          class="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs">
                         <span class="inline-flex items-center gap-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-black text-slate-700 dark:text-slate-200 shadow-xl">
                             <svg class="animate-spin h-4 w-4 text-violet-600" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                            Loading Preview...
+                            {{ __('messages.theme_preview_loading') }}
                         </span>
                     </div>
                 </div>
@@ -739,9 +739,9 @@ if (window.Alpine) {
             </span>
             <div>
                 <h3 class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">
-                    Template ရွေးချယ်ပါ (Curated Themes)
+                    {{ __('messages.theme_step1_title') }}
                 </h3>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400">စတိုးအတွက် သင့်တော်မည့် Palette နှင့် Composition တစ်ခုကို ရွေးချယ်ပါ။</p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ __('messages.theme_step1_desc') }}</p>
             </div>
         </div>
 
@@ -872,9 +872,9 @@ if (window.Alpine) {
                 </span>
                 <div>
                     <h3 class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">
-                        Color & Atmosphere Fine-Tune (စိတ်ကြိုက် အရောင်ချိန်ညှိပါ)
+                        {{ __('messages.theme_step2_title') }}
                     </h3>
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Brand Color, CTA Button, Header နှင့် Body Background တို့ကို အတိအကျ ပြင်ဆင်နိုင်ပါသည်။</p>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ __('messages.theme_step2_desc') }}</p>
                 </div>
             </div>
 
@@ -900,11 +900,11 @@ if (window.Alpine) {
                 <span class="h-6 w-6 rounded-lg flex-shrink-0 transition-colors shadow-xs" :style="'background:' + colors.primary"></span>
                 <span class="flex-1 h-8 rounded-xl border transition-colors text-xs flex items-center px-3 font-medium"
                       :style="'border-color:' + colors.primary + '50; color:' + (preview_dark ? '#cbd5e1' : '#94a3b8') + '; background:' + (preview_dark ? 'rgba(30,41,59,0.8)' : 'rgba(241,245,249,0.6)')">
-                    ကုန်ပစ္စည်း ရှာဖွေပါ...
+                    {{ __('messages.theme_preview_search_ph') }}
                 </span>
                 <span class="rounded-xl px-3.5 py-1.5 text-xs font-black transition-colors shadow-xs"
                       :style="'background:' + colors.accent + '; color:' + contrastText(colors.accent)">
-                    ရှာရန်
+                    {{ __('messages.theme_preview_search_btn') }}
                 </span>
             </div>
             {{-- Category nav --}}
@@ -932,7 +932,7 @@ if (window.Alpine) {
             <div class="relative z-10 flex flex-wrap items-center gap-2 border-t px-4 py-2 backdrop-blur-xs transition-colors"
                  :class="preview_dark ? 'border-slate-800 bg-slate-900/90 text-white' : 'border-slate-200/80 bg-white/90 text-slate-800'">
                 <svg class="h-3.5 w-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                <span class="text-[11px] font-bold" :class="preview_dark ? 'text-slate-300' : 'text-slate-500'">Atmosphere Test:</span>
+                <span class="text-[11px] font-bold" :class="preview_dark ? 'text-slate-300' : 'text-slate-500'">{{ __('messages.theme_atmosphere_test') }}</span>
 
                 {{-- Mini Preview Dark Mode Toggle --}}
                 <button type="button" @click="togglePreviewDark()"
@@ -1104,9 +1104,9 @@ if (window.Alpine) {
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             @foreach ([
-                'vivid'  => ['emoji' => '✨', 'title' => __('messages.theme_glow_vivid'),  'desc' => 'တောက်ပသော အရောင်စုံ အလင်းစက်ဝိုင်း Effect'],
-                'subtle' => ['emoji' => '🌫️', 'title' => __('messages.theme_glow_subtle'), 'desc' => 'နူးညံ့သော ဖျော့တော့အလင်း Effect'],
-                'none'   => ['emoji' => '🚫', 'title' => __('messages.theme_glow_none'),   'desc' => 'အလင်းပိတ်ပြီး ရိုးရိုး Clean နောက်ခံထားမည်'],
+                'vivid'  => ['emoji' => '✨', 'title' => __('messages.theme_glow_vivid'),  'desc' => __('messages.theme_glow_vivid_desc')],
+                'subtle' => ['emoji' => '🌫️', 'title' => __('messages.theme_glow_subtle'), 'desc' => __('messages.theme_glow_subtle_desc')],
+                'none'   => ['emoji' => '🚫', 'title' => __('messages.theme_glow_none'),   'desc' => __('messages.theme_glow_none_desc')],
             ] as $gVal => $gItem)
                 <button
                     type="button"
@@ -1148,9 +1148,9 @@ if (window.Alpine) {
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             @foreach ([
-                'auto'  => ['emoji' => '🌓', 'label' => 'Auto (စနစ်အလိုက်)',  'desc' => 'ဝယ်ယူသူ၏ စနစ် (System Theme) အတိုင်း လိုက်ပြောင်းမည်'],
-                'light' => ['emoji' => '☀️', 'label' => 'Light (အမြဲတမ်းလင်း)', 'desc' => 'ဝယ်ယူသူတိုင်းအတွက် ဖြူ/လင်း မုဒ် ဖော်ပြမည်'],
-                'dark'  => ['emoji' => '🌙', 'label' => 'Dark (အမြဲတမ်းမှောင်)',  'desc' => 'ဝယ်ယူသူတိုင်းအတွက် နက်မှောင်/အမှောင် မုဒ် ဖော်ပြမည်'],
+                'auto'  => ['emoji' => '🌓', 'label' => __('messages.theme_dark_auto'),  'desc' => __('messages.theme_dark_auto_desc')],
+                'light' => ['emoji' => '☀️', 'label' => __('messages.theme_dark_light'), 'desc' => __('messages.theme_dark_light_desc')],
+                'dark'  => ['emoji' => '🌙', 'label' => __('messages.theme_dark_dark'),  'desc' => __('messages.theme_dark_dark_desc')],
             ] as $val => $item)
                 <button
                     type="button"
@@ -1184,9 +1184,9 @@ if (window.Alpine) {
             </span>
             <div>
                 <h3 class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">
-                    Storefront Typography & Font Presets (စာလုံးဖောင့်ပုံစံ)
+                    {{ __('messages.theme_step5_title') }}
                 </h3>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400">ဝဘ်ဆိုက်စာမျက်နှာများအတွက် မြန်မာ/အင်္ဂလိပ် ဖောင့်စနစ်ကို စိတ်ကြိုက်ရွေးချယ်နိုင်ပါသည်။</p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ __('messages.theme_step5_desc') }}</p>
             </div>
         </div>
 
@@ -1198,7 +1198,7 @@ if (window.Alpine) {
                         <span class="block text-xs font-black text-slate-900 dark:text-white">{{ $fItem['name'] }}</span>
                         <span class="block text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 truncate">{{ $fItem['css'] }}</span>
                         <div class="mt-2 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700 text-[11px] text-slate-700 dark:text-slate-300">
-                            AaBb 12345 — မြန်မာစာနမူနာ
+                            {{ __('messages.theme_font_sample') }}
                         </div>
                     </div>
                 </label>
@@ -1216,9 +1216,9 @@ if (window.Alpine) {
             </span>
             <div>
                 <h3 class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100">
-                    Product Grid Density (ပစ္စည်းကတ် အကွာအဝေး)
+                    {{ __('messages.theme_step6_title') }}
                 </h3>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400">စတိုးမျက်နှာစာတွင် ပစ္စည်းများ ပြသသည့် Grid ပုံစံကို ရွေးချယ်နိုင်ပါသည်။</p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ __('messages.theme_step6_desc') }}</p>
             </div>
         </div>
 
@@ -1230,11 +1230,11 @@ if (window.Alpine) {
                         <span class="block text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
                             <span>{{ $dItem['name'] }}</span>
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {{ $dKey === 'compact' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300' : 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300' }}">
-                                {{ $dKey === 'compact' ? 'High Density' : 'Showcase' }}
+                                {{ $dKey === 'compact' ? __('messages.theme_density_compact_badge') : __('messages.theme_density_comfortable_badge') }}
                             </span>
                         </span>
                         <span class="block text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                            {{ $dKey === 'compact' ? 'ဖုန်း/ကွန်ပျူတာတွင် ပစ္စည်းအရေအတွက် အများဆုံးမြင်ရသော Compact ပုံစံ (အကြံပြု)' : 'ပုံကြီးကြီးဖြင့် သန့်ရှင်းစွာ ပြသသော Comfortable Showcase ပုံစံ' }}
+                            {{ $dKey === 'compact' ? __('messages.theme_density_compact_desc') : __('messages.theme_density_comfortable_desc') }}
                         </span>
                     </div>
                 </label>
@@ -1248,7 +1248,7 @@ if (window.Alpine) {
     <div class="border-t border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-800/80 px-4 py-3.5 sm:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sticky bottom-0 z-20 backdrop-blur-md">
         <div>
             <p class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                <span>Theme Actions</span>
+                <span>{{ __('messages.theme_actions_title') }}</span>
                 <span
                     class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold shadow-xs"
                     :class="{
@@ -1259,15 +1259,15 @@ if (window.Alpine) {
                         'bg-violet-100 text-violet-800 dark:bg-violet-900/60 dark:text-violet-300':     draftStatus === 'publishing',
                     }"
                 >
-                    <span x-show="draftStatus === 'saved'"      x-cloak>✓ Saved</span>
-                    <span x-show="draftStatus === 'unsaved'"    x-cloak>• Unsaved Changes</span>
-                    <span x-show="draftStatus === 'saving'"     x-cloak>Saving...</span>
-                    <span x-show="draftStatus === 'conflict'"   x-cloak>⚠️ Conflict</span>
-                    <span x-show="draftStatus === 'publishing'" x-cloak>Publishing...</span>
+                    <span x-show="draftStatus === 'saved'"      x-cloak>✓ {{ __('messages.theme_status_saved') }}</span>
+                    <span x-show="draftStatus === 'unsaved'"    x-cloak>• {{ __('messages.theme_status_unsaved') }}</span>
+                    <span x-show="draftStatus === 'saving'"     x-cloak>{{ __('messages.theme_status_saving') }}</span>
+                    <span x-show="draftStatus === 'conflict'"   x-cloak>⚠️ {{ __('messages.theme_status_conflict') }}</span>
+                    <span x-show="draftStatus === 'publishing'" x-cloak>{{ __('messages.theme_status_publishing') }}</span>
                 </span>
             </p>
             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                Draft သိမ်းရန် "Save Draft" သို့မဟုတ် စတိုးတွင် တိုက်ရိုက်အသုံးပြုရန် "Publish Live" ကို နှိပ်ပါ။
+                {{ __('messages.theme_actions_help') }}
             </p>
         </div>
 
@@ -1281,7 +1281,7 @@ if (window.Alpine) {
                     : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-violet-400 hover:text-violet-700'"
             >
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                <span x-text="showPreview ? '✖️ Hide Preview' : '👁️ Live Preview'"></span>
+                <span x-text="showPreview ? @js('✖️ ' . __('messages.theme_btn_hide_preview')) : @js('👁️ ' . __('messages.theme_btn_toggle_preview'))"></span>
             </button>
 
             <button
@@ -1291,7 +1291,7 @@ if (window.Alpine) {
                 class="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 px-4 py-2.5 text-xs font-black text-slate-700 dark:text-slate-200 shadow-xs transition active:scale-95 disabled:opacity-50 cursor-pointer"
             >
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-3-5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 21V9h6v12"/></svg>
-                <span>💾 Save Draft</span>
+                <span>💾 {{ __('messages.theme_btn_save_draft') }}</span>
             </button>
 
             <button
@@ -1302,7 +1302,7 @@ if (window.Alpine) {
                 class="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 px-5 py-2.5 text-xs font-black text-white shadow-sm shadow-violet-500/20 transition active:scale-95 disabled:opacity-50 cursor-pointer"
             >
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12l7-7 7 7M12 5v14"/></svg>
-                <span>🚀 Publish Live</span>
+                <span>🚀 {{ __('messages.theme_btn_publish_live') }}</span>
             </button>
         </div>
     </div>

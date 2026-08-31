@@ -55,12 +55,13 @@ class AdminExpenseCategoryTest extends TestCase
             ->assertSeeText('RENT');
     }
 
-    public function test_staff_can_view_expense_categories_index(): void
+    public function test_staff_is_denied_from_expense_categories_index(): void
     {
+        // Expense categories are Owner/Manager-only (audit §13) — server-side deny.
         $response = $this->actingAs($this->staff)
             ->get("/store/{$this->store->slug}/admin/expense-categories");
 
-        $response->assertOk();
+        $response->assertForbidden();
     }
 
     public function test_guest_is_redirected_to_login(): void

@@ -42,10 +42,7 @@ window.voucherStudioData = function () {
          ============================================================ --}}
     <div class="admin-page-header">
         <div class="min-w-0">
-            <p class="text-[11px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                {{ __('messages.sidebar_setup') ?? 'Store & Hardware Setup' }}
-            </p>
-            <h1 class="admin-page-title mt-0.5">
+            <h1 class="admin-page-title">
                 {{ __('messages.vouchers_title') }}
             </h1>
             <p class="admin-page-sub mt-1">
@@ -106,7 +103,7 @@ window.voucherStudioData = function () {
 
             @if ($errors->any())
                 <div class="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl text-sm text-rose-800 dark:text-rose-200">
-                    <div class="font-bold mb-1">Please fix the following errors:</div>
+                    <div class="font-bold mb-1">{{ __('messages.fix_errors_prompt') ?? 'Please fix the following errors:' }}</div>
                     <ul class="list-disc list-inside space-y-0.5">
                         @foreach ($errors->all() as $err)
                             <li>{{ $err }}</li>
@@ -127,14 +124,14 @@ window.voucherStudioData = function () {
                 {{-- Card 1: Format & Preset --}}
                 <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
                     <h3 class="text-xs font-black uppercase tracking-wider text-violet-600 dark:text-violet-400 font-mono">
-                        1. Format & Visual Preset
+                        {{ __('messages.vouchers_section_format') }}
                     </h3>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {{-- Template Name --}}
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                                Template Profile Name *
+                                {{ __('messages.vouchers_template_name') }} *
                             </label>
                             <input type="text"
                                    name="name"
@@ -336,23 +333,23 @@ window.voucherStudioData = function () {
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <label class="flex items-center gap-2 cursor-pointer p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
                             <input type="checkbox" name="show_customer_info" value="1" x-model="showCustomer" class="w-3.5 h-3.5 rounded text-violet-600">
-                            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">Customer Info</span>
+                            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ __('messages.vouchers_show_customer') }}</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
                             <input type="checkbox" name="show_cashier_name" value="1" x-model="showCashier" class="w-3.5 h-3.5 rounded text-violet-600">
-                            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">Cashier Name</span>
+                            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ __('messages.vouchers_show_cashier') }}</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
                             <input type="checkbox" name="show_tax_breakdown" value="1" x-model="showTax" class="w-3.5 h-3.5 rounded text-violet-600">
-                            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">Tax Breakdown</span>
+                            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ __('messages.vouchers_show_tax') }}</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
                             <input type="checkbox" name="show_discount_line" value="1" x-model="showDiscount" class="w-3.5 h-3.5 rounded text-violet-600">
-                            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">Discount Line</span>
+                            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ __('messages.vouchers_show_discount') }}</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
                             <input type="checkbox" name="show_barcode" value="1" x-model="showBarcode" class="w-3.5 h-3.5 rounded text-violet-600">
-                            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">Barcode</span>
+                            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ __('messages.vouchers_show_barcode') }}</span>
                         </label>
                     </div>
 

@@ -22,16 +22,11 @@
                 📥
             </span>
             <div class="min-w-0">
-                <div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    <span>{{ __('messages.sidebar_maintenance') }}</span>
-                    <span>/</span>
-                    <span class="text-violet-600 dark:text-violet-400">{{ __('messages.pilot_import') }}</span>
-                </div>
                 <h1 class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
                     {{ __('messages.pilot_import_title') }}
                 </h1>
                 <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    မိုဘိုင်း၊ စိုက်ပျိုးရေးနှင့် SME ဆိုင်များအတွက် စုံစုံလင်လင် စမ်းသပ်နိုင်ရန် ကုန်ပစ္စည်း၊ စတော့နှင့် အကြွေးစာရင်း နမူနာများ ထည့်သွင်းခြင်း
+                    {{ __('messages.pilot_import_subtitle') }}
                 </p>
             </div>
         </div>
@@ -40,7 +35,7 @@
             <a href="{{ route('store.admin.products.import', $storeRouteParams) }}"
                class="h-9 px-3 rounded-xl text-xs font-semibold bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/50 dark:hover:bg-violet-900/50 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 transition inline-flex items-center gap-1.5">
                 <span>📊</span>
-                <span>Excel Product Import</span>
+                <span>{{ __('messages.pilot_import_btn_excel') }}</span>
             </a>
             <a href="{{ route('store.admin.backups.index', $storeRouteParams) }}"
                class="h-9 px-3 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-1.5">
@@ -74,49 +69,49 @@
         {{-- Total Products --}}
         <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 shadow-sm">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <span class="text-violet-600 dark:text-violet-400">လက်ရှိ ကုန်ပစ္စည်းများ</span>
+                <span class="text-violet-600 dark:text-violet-400">{{ __('messages.pilot_import_kpi_products') }}</span>
                 <span>📦</span>
             </div>
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-violet-600 dark:text-violet-400 tabular-nums">
                 {{ number_format($stats['products'] ?? 0) }}
             </div>
-            <p class="text-[11px] text-slate-400 truncate">Total Active Products</p>
+            <p class="text-[11px] text-slate-400 truncate">{{ __('messages.pilot_import_kpi_products_sub') }}</p>
         </div>
 
         {{-- Categories & Brands --}}
         <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 shadow-sm">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <span class="text-emerald-600 dark:text-emerald-400">အုပ်စုနှင့် အမှတ်တံဆိပ်</span>
+                <span class="text-emerald-600 dark:text-emerald-400">{{ __('messages.pilot_import_kpi_categories_brands') }}</span>
                 <span>🏷️</span>
             </div>
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
                 {{ number_format($stats['categories'] ?? 0) }} / {{ number_format($stats['brands'] ?? 0) }}
             </div>
-            <p class="text-[11px] text-slate-400 truncate">Categories / Brands</p>
+            <p class="text-[11px] text-slate-400 truncate">{{ __('messages.pilot_import_kpi_categories_brands_sub') }}</p>
         </div>
 
         {{-- Suppliers --}}
         <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 shadow-sm">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <span class="text-amber-600 dark:text-amber-400">ကုန်သွင်းသူများ</span>
+                <span class="text-amber-600 dark:text-amber-400">{{ __('messages.pilot_import_kpi_suppliers') }}</span>
                 <span>🏢</span>
             </div>
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
                 {{ number_format($stats['suppliers'] ?? 0) }}
             </div>
-            <p class="text-[11px] text-slate-400 truncate">Active Suppliers</p>
+            <p class="text-[11px] text-slate-400 truncate">{{ __('messages.pilot_import_kpi_suppliers_sub') }}</p>
         </div>
 
         {{-- Customers --}}
         <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 shadow-sm">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <span class="text-sky-600 dark:text-sky-400">ဝယ်ယူသူနှင့် အကောင့်များ</span>
+                <span class="text-sky-600 dark:text-sky-400">{{ __('messages.pilot_import_kpi_customers') }}</span>
                 <span>👥</span>
             </div>
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-sky-600 dark:text-sky-400 tabular-nums">
                 {{ number_format($stats['customers'] ?? 0) }}
             </div>
-            <p class="text-[11px] text-slate-400 truncate">Customer Accounts</p>
+            <p class="text-[11px] text-slate-400 truncate">{{ __('messages.pilot_import_kpi_customers_sub') }}</p>
         </div>
     </div>
 
@@ -128,16 +123,16 @@
             </span>
             <div>
                 <h4 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
-                    မိမိ၏ Excel / CSV ဖိုင်ဖြင့် ပစ္စည်းများ အများအပြား ထည့်သွင်းလိုပါသလား?
+                    {{ __('messages.pilot_import_banner_title') }}
                 </h4>
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Excel ဖိုင်ဖြင့် ကုန်ပစ္စည်းများ စတင်ထည့်သွင်းခြင်း (Batch Product Ingestion) ကို သီးသန့် Excel Import စာမျက်နှာတွင် စနစ်တကျ ပြုလုပ်နိုင်ပါသည်။
+                    {{ __('messages.pilot_import_banner_desc') }}
                 </p>
             </div>
         </div>
         <a href="{{ route('store.admin.products.import', $storeRouteParams) }}"
            class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center justify-center gap-1.5 shrink-0 active:scale-95">
-            <span>📦 Excel Product Import သို့ သွားရန်</span>
+            <span>{{ __('messages.pilot_import_banner_btn') }}</span>
             <span>→</span>
         </a>
     </div>
@@ -148,14 +143,14 @@
             <div>
                 <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                     <span>🌱</span>
-                    <span>လက်ရှိဆိုင်ထဲသို့ နမူနာဒေတာ ထည့်သွင်းခြင်း (Seed Demo Data into Current Store)</span>
+                    <span>{{ __('messages.pilot_import_seed_title') }}</span>
                 </h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Myanmar SME Commercialization Guide (Phase C1) အရ ဆိုင်အမျိုးအစားအလိုက် စုံစုံလင်လင် စမ်းသပ်နိုင်ရန် ကုန်ပစ္စည်းများ၊ စတော့များနှင့် Customer အကြွေးများကို တစ်ချက်တည်းဖြင့် ချက်ချင်း ထည့်သွင်းပေးပါသည်။
+                    {{ __('messages.pilot_import_seed_desc') }}
                 </p>
             </div>
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 w-fit">
-                <span>✓ Live Test Ready</span>
+                <span>✓ {{ __('messages.pilot_import_live_test_ready') }}</span>
             </span>
         </div>
 
@@ -187,15 +182,15 @@
                         <div class="mt-3 grid grid-cols-3 gap-1.5 text-center">
                             <div class="rounded-lg border border-slate-200 bg-white px-1.5 py-2 dark:border-slate-700 dark:bg-slate-900">
                                 <div class="text-sm font-black text-slate-900 dark:text-white">32</div>
-                                <div class="text-[9px] font-bold text-slate-400">Products</div>
+                                <div class="text-[9px] font-bold text-slate-400">{{ __('messages.pilot_import_stat_products') }}</div>
                             </div>
                             <div class="rounded-lg border border-slate-200 bg-white px-1.5 py-2 dark:border-slate-700 dark:bg-slate-900">
                                 <div class="text-sm font-black text-amber-600">6</div>
-                                <div class="text-[9px] font-bold text-slate-400">Featured</div>
+                                <div class="text-[9px] font-bold text-slate-400">{{ __('messages.pilot_import_stat_featured') }}</div>
                             </div>
                             <div class="rounded-lg border border-slate-200 bg-white px-1.5 py-2 dark:border-slate-700 dark:bg-slate-900">
                                 <div class="text-sm font-black text-rose-600">6+</div>
-                                <div class="text-[9px] font-bold text-slate-400">Promos</div>
+                                <div class="text-[9px] font-bold text-slate-400">{{ __('messages.pilot_import_stat_promos') }}</div>
                             </div>
                         </div>
                     </div>
@@ -206,19 +201,19 @@
 
                         <label class="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300 cursor-pointer">
                             <input type="checkbox" name="clean_old" value="1" class="rounded border-slate-300 text-violet-600 focus:ring-violet-500">
-                            <span>ဒေတာဟောင်းများ ရှင်းလင်းပြီးမှ သွင်းမည်</span>
+                            <span>{{ __('messages.pilot_import_clean_old_label') }}</span>
                         </label>
 
                         <label class="flex items-start gap-2 text-[11px] text-slate-600 dark:text-slate-300 cursor-pointer">
                             <input type="checkbox" name="apply_store_identity" value="1" class="mt-0.5 rounded border-slate-300 text-violet-600 focus:ring-violet-500">
-                            <span>ဆိုင်အမည်၊ tagline၊ လိပ်စာ၊ ဆက်သွယ်ရန်နှင့် storefront setting များကို ဒီလုပ်ငန်းနမူနာအတိုင်း ပြောင်းမည်</span>
+                            <span>{{ __('messages.pilot_import_apply_identity_label') }}</span>
                         </label>
 
                         <button type="submit"
-                                onclick="return confirm('{{ $scenario['label'] }} နမူနာဒေတာများကို လက်ရှိဆိုင် ({{ $store->name }}) ထဲသို့ ထည့်သွင်းမည်မှာ သေချာပါသလား?')"
+                                onclick="return confirm('{{ __('messages.pilot_import_seed_confirm', ['scenario' => $scenario['label'], 'store' => $store->name]) }}')"
                                 class="w-full py-2 px-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
                             <span>✨</span>
-                            <span>ဒေတာ နမူနာ သွင်းမည်</span>
+                            <span>{{ __('messages.pilot_import_btn_seed') }}</span>
                         </button>
                     </form>
                 </div>
@@ -233,10 +228,10 @@
                 <div>
                     <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                         <span>🏬</span>
-                        <span>သီးသန့် စမ်းသပ်ဆိုင်အသစ် အလိုအလျောက် ဖွင့်လှစ်ခြင်း (Create Demo Store)</span>
+                        <span>{{ __('messages.pilot_import_demo_store_title') }}</span>
                     </h3>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        လုပ်ငန်းအမျိုးအစားအလိုက် Demo Store အသစ်တစ်ခု ချက်ချင်း ဖန်တီးပြီး Quick Login အကောင့်များ (Manager, Cashier, Customer) ပါ တစ်ခါတည်း ထည့်သွင်းပေးပါမည်။
+                        {{ __('messages.pilot_import_demo_store_desc') }}
                     </p>
                 </div>
             </div>
@@ -251,9 +246,9 @@
                             <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate">store/{{ $key }}</div>
                         </div>
                         <button type="submit"
-                                onclick="return confirm('{{ $sc['label'] }} သီးသန့် Demo Store အသစ် ဖန်တီးမည်မှာ သေချာပါသလား?')"
+                                onclick="return confirm('{{ __('messages.pilot_import_demo_store_confirm', ['scenario' => $sc['label']]) }}')"
                                 class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white text-xs font-bold shrink-0 transition cursor-pointer active:scale-95">
-                            + Demo Store
+                            + {{ __('messages.pilot_import_btn_demo_store') }}
                         </button>
                     </form>
                 @endforeach
@@ -265,19 +260,19 @@
     <div class="rounded-2xl bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/60 p-4 sm:p-5 shadow-sm space-y-3">
         <div class="flex items-center gap-2.5 text-rose-700 dark:text-rose-400 font-bold text-sm">
             <span>⚠️</span>
-            <span>သတိပေးချက်: စမ်းသပ်ထားသော ဒေတာများ အားလုံး ရှင်းလင်းခြင်း (Wipe Store Data)</span>
+            <span>{{ __('messages.pilot_import_wipe_title') }}</span>
         </div>
         <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            စမ်းသပ်ထားသော ကုန်ပစ္စည်းများ၊ စတော့မှတ်တမ်းများ၊ အကြွေးမှတ်တမ်းများနှင့် အမျိုးအစား/အမှတ်တံဆိပ် အားလုံးကို ဆိုင်ထဲမှ လုံးဝ ရှင်းလင်းဖျက်ပစ်ပါမည်။ (ဆိုင်၏ အခြေခံဆက်တင်များ မပျက်စီးပါ)။
+            {{ __('messages.pilot_import_wipe_desc') }}
         </p>
 
         <form method="POST" action="{{ route('store.admin.pilot-import.clean-store-data', $storeRouteParams) }}">
             @csrf
             <button type="submit"
-                    onclick="return confirm('သတိပေးချက်: လက်ရှိဆိုင် ({{ $store->name }}) ရှိ ကုန်ပစ္စည်း၊ စတော့၊ အကြွေး နှင့် ကုန်သွင်းသူ ဒေတာအားလုံးကို ဖျက်ပစ်မည်မှာ သေချာပါသလား?')"
+                    onclick="return confirm('{{ __('messages.pilot_import_wipe_confirm', ['store' => $store->name]) }}')"
                     class="py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center gap-2 cursor-pointer active:scale-95">
                 <span>🗑️</span>
-                <span>ဒေတာဟောင်းများ အားလုံး ရှင်းလင်းမည်</span>
+                <span>{{ __('messages.pilot_import_btn_wipe') }}</span>
             </button>
         </form>
     </div>

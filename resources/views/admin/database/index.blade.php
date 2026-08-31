@@ -26,16 +26,11 @@
                 🗄️
             </span>
             <div class="min-w-0">
-                <div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    <span>{{ __('messages.sidebar_maintenance') }}</span>
-                    <span>/</span>
-                    <span class="text-cyan-600 dark:text-cyan-400">{{ __('messages.sidebar_database') }}</span>
-                </div>
                 <h1 class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
-                    {{ __('messages.sidebar_database') }} (Database Tools & Optimizer)
+                    {{ __('messages.database_title') }}
                 </h1>
                 <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    ဒေတာဘေ့စ် ကျစ်လစ်စေခြင်း၊ Query အမြန်နှုန်း မြှင့်တင်ခြင်းနှင့် Integrity စစ်ဆေးခြင်း
+                    {{ __('messages.database_subtitle') }}
                 </p>
             </div>
         </div>
@@ -75,49 +70,49 @@
         {{-- Database Size --}}
         <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 shadow-sm">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <span class="text-cyan-600 dark:text-cyan-400">Database Size</span>
+                <span class="text-cyan-600 dark:text-cyan-400">{{ __('messages.database_kpi_size') }}</span>
                 <span>💾</span>
             </div>
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-cyan-600 dark:text-cyan-400 tabular-nums">
                 {{ $stats['file_size'] }}
             </div>
-            <p class="text-[11px] text-slate-400 font-mono truncate">{{ $stats['driver'] }} Storage Engine</p>
+            <p class="text-[11px] text-slate-400 font-mono truncate">{{ $stats['driver'] }} {{ __('messages.database_storage_engine') }}</p>
         </div>
 
         {{-- Total Schema Tables --}}
         <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 shadow-sm">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <span class="text-indigo-600 dark:text-indigo-400">Schema Tables</span>
+                <span class="text-indigo-600 dark:text-indigo-400">{{ __('messages.database_kpi_tables') }}</span>
                 <span>🗄️</span>
             </div>
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-indigo-600 dark:text-indigo-400 tabular-nums">
                 {{ number_format($stats['total_tables']) }}
             </div>
-            <p class="text-[11px] text-slate-400 truncate">ဇယား စုစုပေါင်း အရေအတွက်</p>
+            <p class="text-[11px] text-slate-400 truncate">{{ __('messages.database_kpi_tables_sub') }}</p>
         </div>
 
         {{-- Total Records --}}
         <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 shadow-sm">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <span class="text-emerald-600 dark:text-emerald-400">Total Records</span>
+                <span class="text-emerald-600 dark:text-emerald-400">{{ __('messages.database_kpi_records') }}</span>
                 <span>📊</span>
             </div>
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
                 {{ number_format($stats['total_rows']) }}
             </div>
-            <p class="text-[11px] text-slate-400 truncate">စုစုပေါင်း ဒေတာစာကြောင်းများ</p>
+            <p class="text-[11px] text-slate-400 truncate">{{ __('messages.database_kpi_records_sub') }}</p>
         </div>
 
         {{-- Integrity Health --}}
         <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 shadow-sm">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <span class="text-emerald-600 dark:text-emerald-400">Integrity Health</span>
+                <span class="text-emerald-600 dark:text-emerald-400">{{ __('messages.database_kpi_integrity') }}</span>
                 <span>🛡️</span>
             </div>
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
-                Healthy ✓
+                {{ __('messages.database_healthy') }} ✓
             </div>
-            <p class="text-[11px] text-slate-400 truncate font-mono">{{ $stats['integrity_status'] }} Verified</p>
+            <p class="text-[11px] text-slate-400 truncate font-mono">{{ $stats['integrity_status'] }} {{ __('messages.database_verified') }}</p>
         </div>
     </div>
 
@@ -126,10 +121,10 @@
         <div class="border-b border-slate-100 dark:border-slate-800 pb-2.5">
             <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <span>⚡</span>
-                <span>ဒေတာဘေ့စ် စွမ်းဆောင်ရည်မြှင့်တင်ရေး ကိရိယာများ (Optimization Tools)</span>
+                <span>{{ __('messages.database_tools_title') }}</span>
             </h2>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                တစ်ချက်နှိပ်ရုံဖြင့် ဒေတာဘေ့စ်အား ကျစ်လစ်ရှင်းလင်းစေပြီး Query ရှာဖွေမှု အမြန်နှုန်းကို တိုးတက်စေပါသည်
+                {{ __('messages.database_tools_sub') }}
             </p>
         </div>
 
@@ -139,18 +134,18 @@
                 <div>
                     <div class="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-300 font-bold text-xs">
                         <span>🧹</span>
-                        <span>Vacuum & Defragment</span>
+                        <span>{{ __('messages.database_vacuum_title') }}</span>
                     </div>
                     <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                        ဖျက်ထားသော ဒေတာနေရာလွတ်များကို ပြန်လည်သိမ်းဆည်းပြီး ဖိုင်အရွယ်အစားကို အကျစ်လစ်ဆုံးဖြစ်အောင် ရှင်းလင်းပေးပါသည်
+                        {{ __('messages.database_vacuum_desc') }}
                     </p>
                 </div>
                 <form method="POST" action="{{ route('store.admin.database.vacuum', $storeRouteParams) }}">
                     @csrf
                     <button type="submit"
-                            onclick="return confirm('ဒေတာဘေ့စ် VACUUM ပြုလုပ်မည်မှာ သေချာပါသလား?')"
+                            onclick="return confirm('{{ __('messages.database_vacuum_confirm') }}')"
                             class="w-full py-2 px-3 rounded-lg text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white shadow-sm transition active:scale-95 text-center cursor-pointer">
-                        Vacuum Reclaim Space
+                        {{ __('messages.database_btn_vacuum') }}
                     </button>
                 </form>
             </div>
@@ -160,17 +155,17 @@
                 <div>
                     <div class="flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300 font-bold text-xs">
                         <span>⚡</span>
-                        <span>Re-Index & Analyze</span>
+                        <span>{{ __('messages.database_optimize_title') }}</span>
                     </div>
                     <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                        Query စာရင်းဇယားများကို ပြန်လည်တွက်ချက်ပြီး အရောင်း၊ စတော့နှင့် ရှာဖွေမှု အမြန်နှုန်းများကို အမြင့်ဆုံး ရရှိစေပါသည်
+                        {{ __('messages.database_optimize_desc') }}
                     </p>
                 </div>
                 <form method="POST" action="{{ route('store.admin.database.optimize', $storeRouteParams) }}">
                     @csrf
                     <button type="submit"
                             class="w-full py-2 px-3 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition active:scale-95 text-center cursor-pointer">
-                        Optimize Query Planner
+                        {{ __('messages.database_btn_optimize') }}
                     </button>
                 </form>
             </div>
@@ -180,17 +175,17 @@
                 <div>
                     <div class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold text-xs">
                         <span>🔍</span>
-                        <span>Integrity Health Check</span>
+                        <span>{{ __('messages.database_integrity_title') }}</span>
                     </div>
                     <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                        ဒေတာဘေ့စ် စာမျက်နှာများနှင့် ဇယားများ ပျက်စီးချွတ်ယွင်းမှု ရှိမရှိ အပြည့်အစုံ စစ်ဆေးပေးပါသည်
+                        {{ __('messages.database_integrity_desc') }}
                     </p>
                 </div>
                 <form method="POST" action="{{ route('store.admin.database.integrity', $storeRouteParams) }}">
                     @csrf
                     <button type="submit"
                             class="w-full py-2 px-3 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition active:scale-95 text-center cursor-pointer">
-                        Check Database Health
+                        {{ __('messages.database_btn_integrity') }}
                     </button>
                 </form>
             </div>
@@ -200,17 +195,17 @@
                 <div>
                     <div class="flex items-center gap-1.5 text-amber-700 dark:text-amber-300 font-bold text-xs">
                         <span>🗑</span>
-                        <span>Purge Application Cache</span>
+                        <span>{{ __('messages.database_clear_cache_title') }}</span>
                     </div>
                     <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                        ယာယီ View၊ Config၊ Route နှင့် Session Cache ဖိုင်အဟောင်းများကို အပြီးတိုင် ရှင်းလင်းပေးပါသည်
+                        {{ __('messages.database_clear_cache_desc') }}
                     </p>
                 </div>
                 <form method="POST" action="{{ route('store.admin.database.clear_cache', $storeRouteParams) }}">
                     @csrf
                     <button type="submit"
                             class="w-full py-2 px-3 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-sm transition active:scale-95 text-center cursor-pointer">
-                        Clear Cache Files
+                        {{ __('messages.database_btn_clear_cache') }}
                     </button>
                 </form>
             </div>
@@ -222,28 +217,28 @@
         <div class="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
                 <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <span>📋 ဒေတာဘေ့စ် ဇယားများ အခြေအနေ (Schema Tables Breakdown)</span>
+                    <span>📋 {{ __('messages.database_tables_title') }}</span>
                 </h3>
-                <p class="text-xs text-slate-400 mt-0.5">လက်ရှိ စနစ်အတွင်းရှိ ဒေတာဇယားများနှင့် စာကြောင်းရေများ</p>
+                <p class="text-xs text-slate-400 mt-0.5">{{ __('messages.database_tables_sub') }}</p>
             </div>
 
             {{-- Table Search and Category Filter --}}
             <div class="flex items-center gap-2">
-                <input type="text" x-model="tableSearch" placeholder="ဇယားအမည် ရှာရန်..."
+                <input type="text" x-model="tableSearch" placeholder="{{ __('messages.database_search_placeholder') }}"
                        class="text-xs border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 w-44">
 
                 <select x-model="tableCategory"
                         class="text-xs border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                    <option value="all">ကဏ္ဍအားလုံး (All)</option>
-                    <option value="Sales & Orders">Sales & Orders</option>
-                    <option value="Inventory & Catalog">Inventory & Catalog</option>
-                    <option value="Financial & Accounts">Financial & Accounts</option>
-                    <option value="Security & Users">Security & Users</option>
-                    <option value="System & Settings">System & Settings</option>
+                    <option value="all">{{ __('messages.database_cat_all') }}</option>
+                    <option value="Sales & Orders">{{ __('messages.database_cat_sales') }}</option>
+                    <option value="Inventory & Catalog">{{ __('messages.database_cat_inventory') }}</option>
+                    <option value="Financial & Accounts">{{ __('messages.database_cat_financial') }}</option>
+                    <option value="Security & Users">{{ __('messages.database_cat_security') }}</option>
+                    <option value="System & Settings">{{ __('messages.database_cat_system') }}</option>
                 </select>
 
                 <span class="text-xs font-mono font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl shrink-0">
-                    {{ count($tables) }} Tables
+                    {{ __('messages.database_table_count', ['count' => count($tables)]) }}
                 </span>
             </div>
         </div>
@@ -252,11 +247,11 @@
             <table class="w-full text-left text-xs">
                 <thead class="sticky top-0 z-10">
                     <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                        <th class="py-2.5 px-3.5 w-14">စဉ်</th>
-                        <th class="py-2.5 px-3.5">ဇယားအမည် (Table Name)</th>
-                        <th class="py-2.5 px-3.5">ကဏ္ဍ (Category)</th>
-                        <th class="py-2.5 px-3.5 text-right">စာကြောင်းရေ (Rows)</th>
-                        <th class="py-2.5 px-3.5 text-center w-28">အခြေအနေ</th>
+                        <th class="py-2.5 px-3.5 w-14">{{ __('messages.database_th_no') }}</th>
+                        <th class="py-2.5 px-3.5">{{ __('messages.database_th_name') }}</th>
+                        <th class="py-2.5 px-3.5">{{ __('messages.database_th_category') }}</th>
+                        <th class="py-2.5 px-3.5 text-right">{{ __('messages.database_th_rows') }}</th>
+                        <th class="py-2.5 px-3.5 text-center w-28">{{ __('messages.database_th_status') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -283,7 +278,7 @@
                             <td class="py-2 px-3.5 text-center">
                                 <span class="text-emerald-600 dark:text-emerald-400 font-bold text-[11px] inline-flex items-center gap-1">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                    <span>Active</span>
+                                    <span>{{ __('messages.database_status_active') }}</span>
                                 </span>
                             </td>
                         </tr>

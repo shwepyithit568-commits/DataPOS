@@ -32,13 +32,6 @@
                 ⏳
             </span>
             <div class="min-w-0">
-                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
-                    <a href="{{ route('store.admin.dashboard', ['store_slug' => $store->slug]) }}" class="hover:text-slate-600 dark:hover:text-slate-300 transition">
-                        {{ __('messages.admin_dashboard') }}
-                    </a>
-                    <span>/</span>
-                    <span class="text-amber-600 dark:text-amber-400">{{ __('messages.sidebar_reports') }}</span>
-                </div>
                 <h1 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
                     <span class="truncate">{{ __('messages.debt_aging_title') }}</span>
                 </h1>

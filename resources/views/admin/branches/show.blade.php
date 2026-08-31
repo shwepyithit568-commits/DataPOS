@@ -36,35 +36,35 @@
     {{-- Details Profile Card --}}
     <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
         <h2 class="text-xs font-black uppercase tracking-wider text-violet-600 dark:text-violet-400 font-mono">
-            Branch Information & Contacts
+            {{ __('messages.branches_info_contacts') }}
         </h2>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <div>
-                <span class="block text-xs font-bold text-slate-400">Branch Code</span>
+                <span class="block text-xs font-bold text-slate-400">{{ __('messages.branches_code') }}</span>
                 <span class="font-bold font-mono text-slate-900 dark:text-slate-100">{{ $branch->code ?? '-' }}</span>
             </div>
             <div>
-                <span class="block text-xs font-bold text-slate-400">Manager in Charge</span>
+                <span class="block text-xs font-bold text-slate-400">{{ __('messages.branches_manager') }}</span>
                 <span class="font-bold text-slate-900 dark:text-slate-100">{{ $branch->manager_name ?? '-' }}</span>
             </div>
             <div>
-                <span class="block text-xs font-bold text-slate-400">Phone / Viber</span>
+                <span class="block text-xs font-bold text-slate-400">{{ __('messages.branches_phone') }}</span>
                 <span class="font-bold font-mono text-slate-900 dark:text-slate-100">{{ $branch->phone ?? '-' }}</span>
             </div>
             <div class="sm:col-span-2">
-                <span class="block text-xs font-bold text-slate-400">Physical Address</span>
+                <span class="block text-xs font-bold text-slate-400">{{ __('messages.branches_address') }}</span>
                 <span class="text-slate-700 dark:text-slate-300">{{ $branch->address ?? '-' }}</span>
             </div>
             <div>
-                <span class="block text-xs font-bold text-slate-400">Status</span>
+                <span class="block text-xs font-bold text-slate-400">{{ __('messages.status') }}</span>
                 <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold {{ $branch->is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' }}">
-                    {{ $branch->is_active ? 'Active / Open' : 'Inactive' }}
+                    {{ $branch->is_active ? __('messages.branches_is_active') : __('messages.inactive') }}
                 </span>
             </div>
             @if($branch->notes)
                 <div class="sm:col-span-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <span class="block text-xs font-bold text-slate-400">Notes</span>
+                    <span class="block text-xs font-bold text-slate-400">{{ __('messages.branches_notes') }}</span>
                     <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{{ $branch->notes }}</p>
                 </div>
             @endif
@@ -74,20 +74,20 @@
     {{-- Linked Warehouses Card --}}
     <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
         <h2 class="text-xs font-black uppercase tracking-wider text-violet-600 dark:text-violet-400 font-mono">
-            Linked Warehouses & Stockpoints ({{ count($branch->warehouses) }})
+            {{ __('messages.branches_linked_warehouses') }} ({{ count($branch->warehouses) }})
         </h2>
 
         @if($branch->warehouses->isEmpty())
-            <p class="text-xs text-slate-400">No warehouses linked to this branch yet.</p>
+            <p class="text-xs text-slate-400">{{ __('messages.branches_no_warehouses_linked') }}</p>
         @else
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
                     <thead>
                         <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-mono uppercase">
-                            <th class="pb-2">Warehouse Name</th>
-                            <th class="pb-2">Code</th>
-                            <th class="pb-2">Status</th>
-                            <th class="pb-2 text-right">Default</th>
+                            <th class="pb-2">{{ __('messages.branches_name') }}</th>
+                            <th class="pb-2">{{ __('messages.code') }}</th>
+                            <th class="pb-2">{{ __('messages.status') }}</th>
+                            <th class="pb-2 text-right">{{ __('messages.default') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -101,12 +101,12 @@
                                 </td>
                                 <td class="py-2.5">
                                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $wh->is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-600' }}">
-                                        {{ $wh->is_active ? 'Active' : 'Inactive' }}
+                                        {{ $wh->is_active ? __('messages.active') : __('messages.inactive') }}
                                     </span>
                                 </td>
                                 <td class="py-2.5 text-right font-mono">
                                     @if($wh->is_default)
-                                        <span class="text-emerald-600 font-bold">★ Default</span>
+                                        <span class="text-emerald-600 font-bold">★ {{ __('messages.default') }}</span>
                                     @else
                                         <span class="text-slate-400">-</span>
                                     @endif

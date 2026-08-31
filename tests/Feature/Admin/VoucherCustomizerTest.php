@@ -200,7 +200,7 @@ class VoucherCustomizerTest extends TestCase
             ]));
 
         $response->assertStatus(200);
-        $response->assertSee('Sample Preview');
+        $response->assertSee(__('messages.vouchers_print_sample'));
         $response->assertSee($template->header_title);
     }
 
@@ -228,5 +228,40 @@ class VoucherCustomizerTest extends TestCase
         $response->assertSessionHas('success');
 
         $this->assertDatabaseMissing('voucher_templates', ['id' => $template->id]);
+    }
+
+    public function test_voucher_views_render_without_translation_leaks_in_all_locales(): void
+    {
+        $service = app(VoucherTemplateService::class);
+        $service->ensureDefaultTemplates($this->store);
+
+        $template = VoucherTemplate::where('store_id', $this->store->id)->first();
+
+        foreach (['en', 'my', 'zh_CN'] as $locale) {
+            // Test Index View
+            $indexResponse = $this->actingAs($this->manager)
+                ->withSession(['locale' => $locale])
+                ->get(route('store.admin.vouchers.index', ['store_slug' => $this->store->slug]));
+
+            $indexResponse->assertOk();
+            $this->assertFalse(
+                (bool) preg_match('/messages\.[a-zA-Z0-9_-]+/', $indexResponse->getContent()),
+                "Found leaked translation key in locale [{$locale}] on vouchers.index"
+            );
+
+            // Test Preview View
+            $previewResponse = $this->actingAs($this->manager)
+                ->withSession(['locale' => $locale])
+                ->get(route('store.admin.vouchers.preview', [
+                    'store_slug' => $this->store->slug,
+                    'voucher' => $template->id,
+                ]));
+
+            $previewResponse->assertOk();
+            $this->assertFalse(
+                (bool) preg_match('/messages\.[a-zA-Z0-9_-]+/', $previewResponse->getContent()),
+                "Found leaked translation key in locale [{$locale}] on vouchers.preview"
+            );
+        }
     }
 }

@@ -177,4 +177,22 @@ class CurrencyExchangeTest extends TestCase
             'result' => 45000.0,
         ]);
     }
+
+    public function test_exchange_rates_views_render_without_translation_leaks_in_all_locales(): void
+    {
+        $service = app(CurrencyExchangeService::class);
+        $service->ensureDefaultCurrencies($this->store);
+
+        foreach (['en', 'my', 'zh_CN'] as $locale) {
+            $response = $this->actingAs($this->manager)
+                ->withSession(['locale' => $locale])
+                ->get(route('store.admin.exchange_rates.index', ['store_slug' => $this->store->slug]));
+
+            preg_match_all('/messages\.[a-zA-Z0-9_-]+/', $response->getContent(), $matches);
+            $this->assertEmpty(
+                $matches[0],
+                "Found leaked translation keys in locale [{$locale}] on exchange_rates.index: " . implode(', ', array_unique($matches[0]))
+            );
+        }
+    }
 }

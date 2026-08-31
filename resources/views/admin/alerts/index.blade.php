@@ -20,16 +20,11 @@
                 🔔
             </span>
             <div class="min-w-0">
-                <div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    <span>{{ __('messages.sidebar_maintenance') }}</span>
-                    <span>/</span>
-                    <span class="text-amber-600 dark:text-amber-400">{{ __('messages.sidebar_alerts') }}</span>
-                </div>
                 <h1 class="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
                     {{ __('messages.sidebar_alerts') }}
                 </h1>
                 <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    စတော့နည်းပါးမှု၊ ရက်လွန်အကြွေး၊ မစစ်ရသေးသော အမှာစာများနှင့် Telegram အသိပေးချက်များ
+                    {{ __('messages.alerts_subtitle') }}
                 </p>
             </div>
         </div>
@@ -38,9 +33,9 @@
             <form method="POST" action="{{ route('store.admin.alerts.daily_summary', $storeRouteParams) }}">
                 @csrf
                 <button type="submit"
-                        class="h-9 px-3 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-1.5">
+                        class="h-9 px-3 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-1.5 cursor-pointer">
                     <span>📊</span>
-                    <span>နေ့စဉ် အကျဉ်းချုပ်</span>
+                    <span>{{ __('messages.alerts_daily_summary') }}</span>
                 </button>
             </form>
 
@@ -71,7 +66,7 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         {{-- Low Stock KPI --}}
         <button type="button" @click="activeTab = 'low_stock'"
-                class="text-left rounded-xl bg-white dark:bg-slate-900 border p-3 shadow-sm transition hover:border-rose-400 focus:outline-none"
+                class="text-left rounded-xl bg-white dark:bg-slate-900 border p-3 shadow-sm transition hover:border-rose-400 focus:outline-none cursor-pointer"
                 :class="activeTab === 'low_stock' ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/20 dark:bg-rose-950/10' : 'border-slate-200/90 dark:border-slate-800'">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
                 <span class="text-rose-600 dark:text-rose-400">{{ __('messages.alerts_kpi_low_stock') }}</span>
@@ -80,12 +75,12 @@
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-rose-600 dark:text-rose-400 tabular-nums">
                 {{ number_format($stats['low_stock_count']) }}
             </div>
-            <p class="text-[11px] text-slate-400 truncate">စတော့ဖြည့်ရန် လိုအပ်သောပစ္စည်း</p>
+            <p class="text-[11px] text-slate-400 truncate">{{ __('messages.alerts_kpi_low_stock_sub') }}</p>
         </button>
 
         {{-- Pending Requests KPI --}}
         <button type="button" @click="activeTab = 'pending_orders'"
-                class="text-left rounded-xl bg-white dark:bg-slate-900 border p-3 shadow-sm transition hover:border-amber-400 focus:outline-none"
+                class="text-left rounded-xl bg-white dark:bg-slate-900 border p-3 shadow-sm transition hover:border-amber-400 focus:outline-none cursor-pointer"
                 :class="activeTab === 'pending_orders' ? 'border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/20 dark:bg-amber-950/10' : 'border-slate-200/90 dark:border-slate-800'">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
                 <span class="text-amber-600 dark:text-amber-400">{{ __('messages.alerts_kpi_pending') }}</span>
@@ -94,12 +89,12 @@
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-amber-600 dark:text-amber-400 tabular-nums">
                 {{ number_format($stats['pending_orders'] + $stats['pending_wholesale']) }}
             </div>
-            <p class="text-[11px] text-slate-400 truncate">အမှာစာ ({{ $stats['pending_orders'] }}) · လက်ကား ({{ $stats['pending_wholesale'] }})</p>
+            <p class="text-[11px] text-slate-400 truncate">{{ __('messages.alerts_kpi_pending_sub', ['orders' => $stats['pending_orders'], 'wholesale' => $stats['pending_wholesale']]) }}</p>
         </button>
 
         {{-- Overdue Debts KPI --}}
         <button type="button" @click="activeTab = 'overdue_debt'"
-                class="text-left rounded-xl bg-white dark:bg-slate-900 border p-3 shadow-sm transition hover:border-blue-400 focus:outline-none"
+                class="text-left rounded-xl bg-white dark:bg-slate-900 border p-3 shadow-sm transition hover:border-blue-400 focus:outline-none cursor-pointer"
                 :class="activeTab === 'overdue_debt' ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/20 dark:bg-blue-950/10' : 'border-slate-200/90 dark:border-slate-800'">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
                 <span class="text-blue-600 dark:text-blue-400">{{ __('messages.alerts_kpi_overdue') }}</span>
@@ -108,12 +103,12 @@
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-blue-600 dark:text-blue-400 tabular-nums">
                 {{ number_format($stats['overdue_debt_count']) }}
             </div>
-            <p class="text-[11px] text-slate-400 truncate">ရက်လွန် အကြွေးစာရင်းများ</p>
+            <p class="text-[11px] text-slate-400 truncate">{{ __('messages.alerts_kpi_overdue_sub') }}</p>
         </button>
 
         {{-- Security Events KPI --}}
         <button type="button" @click="activeTab = 'security'"
-                class="text-left rounded-xl bg-white dark:bg-slate-900 border p-3 shadow-sm transition hover:border-purple-400 focus:outline-none"
+                class="text-left rounded-xl bg-white dark:bg-slate-900 border p-3 shadow-sm transition hover:border-purple-400 focus:outline-none cursor-pointer"
                 :class="activeTab === 'security' ? 'border-purple-500 ring-2 ring-purple-500/20 bg-purple-50/20 dark:bg-purple-950/10' : 'border-slate-200/90 dark:border-slate-800'">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
                 <span class="text-purple-600 dark:text-purple-400">{{ __('messages.alerts_kpi_security') }}</span>
@@ -122,14 +117,14 @@
             <div class="mt-1 text-xl sm:text-2xl font-black font-mono tracking-tight text-purple-600 dark:text-purple-400 tabular-nums">
                 {{ number_format($stats['security_warnings']) }}
             </div>
-            <p class="text-[11px] text-slate-400 truncate">လုံခြုံရေး သတိပေးချက်များ</p>
+            <p class="text-[11px] text-slate-400 truncate">{{ __('messages.alerts_kpi_security_sub') }}</p>
         </button>
     </div>
 
     {{-- 3. Tab Filter Navigation --}}
     <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs border-b border-slate-200 dark:border-slate-800">
         <button type="button" @click="activeTab = 'low_stock'"
-                class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5"
+                class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5 cursor-pointer"
                 :class="activeTab === 'low_stock' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'">
             <span>📦 {{ __('messages.alerts_tab_low_stock') }}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold"
@@ -139,7 +134,7 @@
         </button>
 
         <button type="button" @click="activeTab = 'pending_orders'"
-                class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5"
+                class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5 cursor-pointer"
                 :class="activeTab === 'pending_orders' ? 'bg-amber-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'">
             <span>⏳ {{ __('messages.alerts_tab_pending') }}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold"
@@ -149,7 +144,7 @@
         </button>
 
         <button type="button" @click="activeTab = 'overdue_debt'"
-                class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5"
+                class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5 cursor-pointer"
                 :class="activeTab === 'overdue_debt' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'">
             <span>⏰ {{ __('messages.alerts_tab_overdue') }}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold"
@@ -159,7 +154,7 @@
         </button>
 
         <button type="button" @click="activeTab = 'security'"
-                class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5"
+                class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5 cursor-pointer"
                 :class="activeTab === 'security' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'">
             <span>🛡️ {{ __('messages.alerts_tab_security') }}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold"
@@ -169,7 +164,7 @@
         </button>
 
         <button type="button" @click="activeTab = 'telegram'"
-                class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5"
+                class="px-3 py-2 rounded-xl font-semibold transition shrink-0 inline-flex items-center gap-1.5 cursor-pointer"
                 :class="activeTab === 'telegram' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'">
             <span>📱 {{ __('messages.alerts_tab_telegram') }}</span>
         </button>
@@ -180,12 +175,12 @@
         <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div class="min-w-0">
                 <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <span>📦 စတော့နည်းပါးနေသော ပစ္စည်းများ (Low Stock Items)</span>
+                    <span>📦 {{ __('messages.alerts_low_stock_title') }}</span>
                 </h3>
-                <p class="text-xs text-slate-400">Reorder Level သို့မဟုတ် စတော့ပြတ်လပ်နေသော ပစ္စည်းစာရင်း</p>
+                <p class="text-xs text-slate-400">{{ __('messages.alerts_low_stock_sub') }}</p>
             </div>
             <a href="{{ route('store.admin.products.index', $storeRouteParams) }}" class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline shrink-0">
-                ပစ္စည်းများ စီမံမည် →
+                {{ __('messages.alerts_manage_products') }} →
             </a>
         </div>
 
@@ -193,12 +188,12 @@
             <table class="w-full text-left text-xs">
                 <thead>
                     <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                        <th class="py-2.5 px-3.5">ကုန်ပစ္စည်း အမည်</th>
-                        <th class="py-2.5 px-3.5">SKU / အမျိုးအစား</th>
-                        <th class="py-2.5 px-3.5 text-center">လက်ကျန် စတော့</th>
-                        <th class="py-2.5 px-3.5 text-center">အနည်းဆုံး သတ်မှတ်ချက်</th>
-                        <th class="py-2.5 px-3.5 text-right">ရောင်းစျေး</th>
-                        <th class="py-2.5 px-3.5 text-right">လုပ်ဆောင်ချက်</th>
+                        <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_product_name') }}</th>
+                        <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_sku_category') }}</th>
+                        <th class="py-2.5 px-3.5 text-center">{{ __('messages.alerts_th_current_stock') }}</th>
+                        <th class="py-2.5 px-3.5 text-center">{{ __('messages.alerts_th_reorder_level') }}</th>
+                        <th class="py-2.5 px-3.5 text-right">{{ __('messages.alerts_th_retail_price') }}</th>
+                        <th class="py-2.5 px-3.5 text-right">{{ __('messages.alerts_th_action') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -213,11 +208,11 @@
                             </td>
                             <td class="py-2.5 px-3.5 text-center font-mono">
                                 <span class="px-2 py-0.5 rounded-full text-xs font-bold {{ $p['stock_quantity'] <= 0 ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300' }}">
-                                    {{ $p['stock_quantity'] }} ခု
+                                    {{ $p['stock_quantity'] }}
                                 </span>
                             </td>
                             <td class="py-2.5 px-3.5 text-center font-mono text-slate-500 dark:text-slate-400">
-                                {{ $p['reorder_level'] }} ခု
+                                {{ $p['reorder_level'] }}
                             </td>
                             <td class="py-2.5 px-3.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
                                 {{ number_format((float) $p['retail_price']) }} Ks
@@ -226,11 +221,11 @@
                                 <div class="inline-flex items-center gap-1.5">
                                     <a href="{{ route('pos.purchases.create', array_merge($storeRouteParams, ['product_id' => $p['id']])) }}"
                                        class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 transition">
-                                        + အဝယ်မှာမည်
+                                        + {{ __('messages.alerts_btn_purchase') }}
                                     </a>
                                     <a href="{{ route('store.admin.products.edit', array_merge($storeRouteParams, ['product' => $p['id']])) }}"
                                        class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 transition">
-                                        ပြင်ဆင်မည်
+                                        {{ __('messages.edit') }}
                                     </a>
                                 </div>
                             </td>
@@ -238,7 +233,7 @@
                     @empty
                         <tr>
                             <td colspan="6" class="py-10 text-center text-slate-400 text-xs">
-                                စတော့နည်းပါးသော ပစ္စည်းမရှိပါ။ ကုန်ပစ္စည်းစတော့အားလုံး လုံလောက်မှုရှိနေပါသည်။
+                                {{ __('messages.alerts_no_low_stock') }}
                             </td>
                         </tr>
                     @endforelse
@@ -254,12 +249,12 @@
             <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <div class="min-w-0">
                     <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                        <span>🛒 ဆက်သွယ်ရန် ကျန်ရှိနေသော အွန်လိုင်း အမှာစာများ (Pending Orders)</span>
+                        <span>🛒 {{ __('messages.alerts_pending_orders_title') }}</span>
                     </h3>
-                    <p class="text-xs text-slate-400">Viber, Telegram နှင့် Online Storefront မှ မှာယူထားသော အော်ဒါများ</p>
+                    <p class="text-xs text-slate-400">{{ __('messages.alerts_pending_orders_sub') }}</p>
                 </div>
                 <a href="{{ route('store.admin.orders.index', $storeRouteParams) }}" class="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline shrink-0">
-                    အော်ဒါအားလုံး ကြည့်မည် →
+                    {{ __('messages.alerts_view_all_orders') }} →
                 </a>
             </div>
 
@@ -267,12 +262,12 @@
                 <table class="w-full text-left text-xs">
                     <thead>
                         <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                            <th class="py-2.5 px-3.5">အော်ဒါနံပါတ်</th>
-                            <th class="py-2.5 px-3.5">ဖောက်သည်</th>
+                            <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_order_number') }}</th>
+                            <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_customer') }}</th>
                             <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_channel') }}</th>
-                            <th class="py-2.5 px-3.5 text-right">ကျသင့်ငွေ</th>
-                            <th class="py-2.5 px-3.5">အချိန်</th>
-                            <th class="py-2.5 px-3.5 text-right">လုပ်ဆောင်ချက်</th>
+                            <th class="py-2.5 px-3.5 text-right">{{ __('messages.alerts_th_total_amount') }}</th>
+                            <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_time') }}</th>
+                            <th class="py-2.5 px-3.5 text-right">{{ __('messages.alerts_th_action') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -297,14 +292,14 @@
                                 <td class="py-2.5 px-3.5 text-right">
                                     <a href="{{ route('store.admin.orders.show', array_merge($storeRouteParams, ['order' => $ord->id])) }}"
                                        class="px-3 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 transition">
-                                        ဆက်သွယ်အတည်ပြုမည်
+                                        {{ __('messages.alerts_btn_confirm_order') }}
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="6" class="py-8 text-center text-slate-400 text-xs">
-                                    ဆက်သွယ်ရန် ကျန်ရှိသော အမှာစာ မရှိသေးပါ။
+                                    {{ __('messages.alerts_no_pending_orders') }}
                                 </td>
                             </tr>
                         @endforelse
@@ -318,10 +313,10 @@
             <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm overflow-hidden">
                 <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                     <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                        <span>🏷️ လက်ကား အဖွဲ့ဝင် လျှောက်လွှာများ (Pending Wholesale Applications)</span>
+                        <span>🏷️ {{ __('messages.alerts_pending_wholesale_title') }}</span>
                     </h3>
                     <a href="{{ route('store.admin.wholesale.applications.index', $storeRouteParams) }}" class="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:underline">
-                        လျှောက်လွှာများ အားလုံး →
+                        {{ __('messages.alerts_view_all_applications') }} →
                     </a>
                 </div>
 
@@ -329,10 +324,10 @@
                     <table class="w-full text-left text-xs">
                         <thead>
                             <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                                <th class="py-2.5 px-3.5">ဆိုင်အမည် / လျှောက်ထားသူ</th>
-                                <th class="py-2.5 px-3.5">ဖုန်းနံပါတ်</th>
-                                <th class="py-2.5 px-3.5">မြို့နယ် / လိပ်စာ</th>
-                                <th class="py-2.5 px-3.5 text-right">လုပ်ဆောင်ချက်</th>
+                                <th class="py-2.5 px-3.5">{{ __('messages.alerts_wholesale_applicant') }}</th>
+                                <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_phone') }}</th>
+                                <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_city_address') }}</th>
+                                <th class="py-2.5 px-3.5 text-right">{{ __('messages.alerts_th_action') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -344,7 +339,7 @@
                                     <td class="py-2.5 px-3.5 text-right">
                                         <a href="{{ route('store.admin.wholesale.applications.show', array_merge($storeRouteParams, ['application' => $app->id])) }}"
                                            class="px-3 py-1 rounded-lg text-xs font-semibold bg-teal-50 hover:bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300 transition">
-                                            စစ်ဆေး အတည်ပြုမည်
+                                            {{ __('messages.alerts_btn_verify_wholesale') }}
                                         </a>
                                     </td>
                                 </tr>
@@ -361,12 +356,12 @@
         <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div class="min-w-0">
                 <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <span>⏰ ရက်လွန် အကြွေးစာရင်းများ (Overdue Debts)</span>
+                    <span>⏰ {{ __('messages.alerts_overdue_debts_title') }}</span>
                 </h3>
-                <p class="text-xs text-slate-400">ရက် ၃၀ ထက် ကျော်လွန်နေသော ကုန်ပေးသွင်းသူ နှင့် ဖောက်သည် အကြွေးများ</p>
+                <p class="text-xs text-slate-400">{{ __('messages.alerts_overdue_debts_sub') }}</p>
             </div>
             <a href="{{ route('store.admin.debt_aging.index', $storeRouteParams) }}" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline shrink-0">
-                Debt Aging Report →
+                {{ __('messages.sidebar_debt_aging') }} →
             </a>
         </div>
 
@@ -374,13 +369,13 @@
             <table class="w-full text-left text-xs">
                 <thead>
                     <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                        <th class="py-2.5 px-3.5">အမျိုးအစား</th>
-                        <th class="py-2.5 px-3.5">အမည်</th>
-                        <th class="py-2.5 px-3.5">ဖုန်းနံပါတ်</th>
-                        <th class="py-2.5 px-3.5">အညွှန်း (Ref)</th>
-                        <th class="py-2.5 px-3.5 text-center">ရက်လွန်ကာလ</th>
-                        <th class="py-2.5 px-3.5 text-right">ကျန်ငွေပမာဏ</th>
-                        <th class="py-2.5 px-3.5 text-right">လုပ်ဆောင်ချက်</th>
+                        <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_type') }}</th>
+                        <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_name') }}</th>
+                        <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_phone') }}</th>
+                        <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_ref') }}</th>
+                        <th class="py-2.5 px-3.5 text-center">{{ __('messages.alerts_overdue_period') }}</th>
+                        <th class="py-2.5 px-3.5 text-right">{{ __('messages.alerts_th_remaining_amount') }}</th>
+                        <th class="py-2.5 px-3.5 text-right">{{ __('messages.alerts_th_action') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -396,7 +391,7 @@
                             <td class="py-2.5 px-3.5 font-mono text-slate-500">{{ $deb['ref'] }}</td>
                             <td class="py-2.5 px-3.5 text-center">
                                 <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300">
-                                    {{ $deb['days_overdue'] }} ရက်ကျော်
+                                    {{ __('messages.alerts_days_overdue', ['days' => $deb['days_overdue']]) }}
                                 </span>
                             </td>
                             <td class="py-2.5 px-3.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
@@ -405,14 +400,14 @@
                             <td class="py-2.5 px-3.5 text-right">
                                 <a href="{{ $deb['action_url'] }}"
                                    class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 transition">
-                                    ရှင်းတမ်းကြည့်မည်
+                                    {{ __('messages.alerts_btn_view_ledger') }}
                                 </a>
                             </td>
                         </tr>
                     @empty
                         <tr>
                             <td colspan="7" class="py-8 text-center text-slate-400 text-xs">
-                                ရက်လွန်နေသော အကြွေးစာရင်း မရှိသေးပါ။
+                                {{ __('messages.alerts_no_overdue_debts') }}
                             </td>
                         </tr>
                     @endforelse
@@ -426,12 +421,12 @@
         <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div class="min-w-0">
                 <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <span>🛡️ လုံခြုံရေး သတိပေးချက်များ (Security & Access Events)</span>
+                    <span>🛡️ {{ __('messages.alerts_security_title') }}</span>
                 </h3>
-                <p class="text-xs text-slate-400">လွန်ခဲ့သော ၇ ရက်အတွင်း PIN အမှားရိုက်မှုများနှင့် အရေးကြီး အပြောင်းအလဲများ</p>
+                <p class="text-xs text-slate-400">{{ __('messages.alerts_security_sub') }}</p>
             </div>
             <a href="{{ route('store.admin.audit-logs.index', $storeRouteParams) }}" class="text-xs font-semibold text-purple-600 dark:text-purple-400 hover:underline shrink-0">
-                Audit Logs အားလုံး →
+                {{ __('messages.sidebar_audit_logs') }} →
             </a>
         </div>
 
@@ -439,8 +434,8 @@
             <table class="w-full text-left text-xs">
                 <thead>
                     <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                        <th class="py-2.5 px-3.5">အချိန်</th>
-                        <th class="py-2.5 px-3.5">လုပ်ဆောင်သူ</th>
+                        <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_time') }}</th>
+                        <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_actor') }}</th>
                         <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_action') }}</th>
                         <th class="py-2.5 px-3.5">{{ __('messages.alerts_th_ip') }}</th>
                         <th class="py-2.5 px-3.5 text-right">{{ __('messages.alerts_th_metadata') }}</th>
@@ -464,7 +459,7 @@
                     @empty
                         <tr>
                             <td colspan="5" class="py-8 text-center text-slate-400 text-xs">
-                                လတ်တလော လုံခြုံရေး သတိပေးချက် မရှိပါ။
+                                {{ __('messages.alerts_no_security') }}
                             </td>
                         </tr>
                     @endforelse
@@ -479,9 +474,9 @@
             <div>
                 <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                     <span class="text-base">📱</span>
-                    <span>Telegram Bot သတိပေးချက် ချိတ်ဆက်မှု (Telegram Alert Notification Channel)</span>
+                    <span>{{ __('messages.alerts_tg_channel_title') }}</span>
                 </h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">နေ့စဉ် အရောင်းအကျဉ်းချုပ်နှင့် အရေးကြီး သတိပေးချက်များကို Telegram သို့ အချိန်နှင့်တစ်ပြေးညီ ပေးပို့နိုင်ပါသည်</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ __('messages.alerts_tg_channel_sub') }}</p>
             </div>
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200/60 dark:border-sky-800/60 w-fit">
                 <span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></span>
@@ -500,7 +495,7 @@
                     <input type="password" name="telegram_bot_token"
                            placeholder="bot123456789:ABCdefGhIJKlmNoPQRstuVWXyz..."
                            class="w-full text-xs font-mono border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 bg-slate-50/80 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white dark:focus:bg-slate-800 transition">
-                    <p class="text-[10px] text-slate-400 mt-1">@BotFather ထံမှ ရရှိသော HTTP API Token ဖြစ်ပါသည်</p>
+                    <p class="text-[10px] text-slate-400 mt-1">{{ __('messages.alerts_tg_token_hint') }}</p>
                 </div>
 
                 <div>
@@ -510,13 +505,13 @@
                     <input type="text" name="telegram_chat_id"
                            placeholder="-100123456789 သို့မဟုတ် @channel_username"
                            class="w-full text-xs font-mono border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 bg-slate-50/80 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white dark:focus:bg-slate-800 transition">
-                    <p class="text-[10px] text-slate-400 mt-1">သတိပေးချက် လက်ခံမည့် Group/Channel ID သို့မဟုတ် User ID</p>
+                    <p class="text-[10px] text-slate-400 mt-1">{{ __('messages.alerts_tg_chat_id_hint') }}</p>
                 </div>
 
                 <button type="submit"
                         class="w-full py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 dark:bg-amber-600 dark:hover:bg-amber-500 text-white font-bold text-xs shadow-md shadow-amber-500/15 transition flex items-center justify-center gap-2 active:scale-95 cursor-pointer">
                     <span>🔔</span>
-                    <span>စမ်းသပ် သတိပေးချက် ပေးပို့မည် ({{ __('messages.alerts_tg_test_ping') }})</span>
+                    <span>{{ __('messages.alerts_tg_test_ping') }}</span>
                 </button>
             </form>
 
@@ -542,7 +537,7 @@
                 </div>
                 <div class="text-[11px] text-slate-500 dark:text-slate-400 bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-900/40 rounded-lg p-2.5 flex items-center gap-2">
                     <span class="text-amber-600 dark:text-amber-400 text-sm">💡</span>
-                    <span>အထက်ပါ စာတိုပုံစံအတိုင်း Telegram သို့ တိုက်ရိုက် ရောက်ရှိမည်ဖြစ်ပါသည်။</span>
+                    <span>{{ __('messages.alerts_tg_preview_hint') }}</span>
                 </div>
             </div>
         </div>

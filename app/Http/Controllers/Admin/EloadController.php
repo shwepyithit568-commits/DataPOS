@@ -54,9 +54,9 @@ class EloadController extends Controller
 
         $validated = $request->validate([
             'operator'         => ['required', 'string', 'in:mpt,atom,ooredoo,mytel,other'],
-            'phone_number'     => ['required', 'string', 'min:7', 'max:20'],
-            'amount'           => ['required', 'numeric', 'min:100', 'max:10000000'],
-            'type'             => ['nullable', 'string', 'in:topup,data_pack,pin_code,bill_payment'],
+            'phone_number'     => ['required', 'string', 'min:5', 'max:50'],
+            'amount'           => ['required', 'numeric', 'min:100', 'max:50000000'],
+            'type'             => ['nullable', 'string', 'in:topup,data_pack,pin_code,sim_card,bill_payment'],
             'package_name'     => ['nullable', 'string', 'max:150'],
             'customer_name'    => ['nullable', 'string', 'max:100'],
             'payment_method'   => ['nullable', 'string', 'in:cash,kpay,wavepay,cbpay,ayapay,other'],
@@ -72,13 +72,13 @@ class EloadController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success'     => true,
-                'message'     => __('messages.eload_success_msg', ['amount' => number_format($transaction->amount), 'phone' => $transaction->phone_number]),
+                'message'     => __('messages.eload_success_msg', ['amount' => number_format((float) $transaction->amount), 'phone' => $transaction->phone_number]),
                 'transaction' => $transaction,
             ]);
         }
 
         return back()->with('success', __('messages.eload_success_msg', [
-            'amount' => number_format($transaction->amount),
+            'amount' => number_format((float) $transaction->amount),
             'phone'  => $transaction->phone_number,
         ]));
     }

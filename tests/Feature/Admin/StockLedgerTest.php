@@ -119,8 +119,12 @@ class StockLedgerTest extends TestCase
 
     public function test_admin_can_access_stock_ledger_index(): void
     {
+        // preset=all so the test is independent of the calendar month
+        // (the default `this_month` filter can exclude late-month movements on
+        // the 1st of a new month, making the test flaky).
         $response = $this->actingAs($this->admin)->get(route('store.admin.stock_ledger.index', [
             'store_slug' => $this->store->slug,
+            'preset' => 'all',
         ]));
 
         $response->assertStatus(200);
@@ -135,6 +139,7 @@ class StockLedgerTest extends TestCase
         $responseInflow = $this->actingAs($this->admin)->get(route('store.admin.stock_ledger.index', [
             'store_slug' => $this->store->slug,
             'flow' => 'inflow',
+            'preset' => 'all',
         ]));
         $responseInflow->assertStatus(200);
         $responseInflow->assertSee('+10.000');
@@ -145,6 +150,7 @@ class StockLedgerTest extends TestCase
         $responseOutflow = $this->actingAs($this->admin)->get(route('store.admin.stock_ledger.index', [
             'store_slug' => $this->store->slug,
             'flow' => 'outflow',
+            'preset' => 'all',
         ]));
         $responseOutflow->assertStatus(200);
         $responseOutflow->assertSee('-2.000');
@@ -156,6 +162,7 @@ class StockLedgerTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('store.admin.stock_ledger.index', [
             'store_slug' => $this->store->slug,
             'search' => 'PENCIL-PRO',
+            'preset' => 'all',
         ]));
 
         $response->assertStatus(200);

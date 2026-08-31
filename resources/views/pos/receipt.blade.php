@@ -27,7 +27,7 @@
 
     $logoUrl = null;
     if ($showLogo) {
-        $logoPath = $store->setting?->logo();
+        $logoPath = $store->setting?->adminLogo();
         $logoUrl = $logoPath ? asset('storage/' . $logoPath) : null;
     }
 @endphp

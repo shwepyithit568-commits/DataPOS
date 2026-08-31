@@ -10,15 +10,10 @@
     <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xs">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
             <div class="min-w-0">
-                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">
-                    <span>📦 {{ __('messages.sidebar_inventory') }}</span>
-                    <span class="text-amber-400">·</span>
-                    <span>{{ __('messages.sidebar_stock_balance') }}</span>
-                </div>
-                <h1 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-slate-100 font-outfit mt-0.5 truncate">
+                <h1 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-slate-100 font-outfit truncate">
                     {{ __('messages.sidebar_stock_balance') }}
                 </h1>
-                <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
+                <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                     {{ $store->name }} · {{ __('messages.reports_stock_subtitle') }}
                 </p>
             </div>
