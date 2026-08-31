@@ -208,8 +208,8 @@ Expected after all three sales, before return:
 - P-B = `27` (`30 - 3`)
 - P-C = `13` (`15 - 2`)
 - Gross revenue = `305,000 MMK`
-- COGS = `189,000 MMK` (`2×60,000 + 3×3,000 + 1×60,000 + 2×18,000`)
-- Gross profit = `116,000 MMK`
+- COGS = `225,000 MMK` (`2×60,000 + 3×3,000 + 1×60,000 + 2×18,000`)
+- Gross profit = `80,000 MMK`
 - Customer receivable = `130,000 MMK`
 - Cash sale = `160,000 MMK`; digital sale = `15,000 MMK`; credit sale = `130,000 MMK`
 
@@ -222,8 +222,8 @@ Expected after return:
 - P-C stock = `14`
 - Customer debt = `105,000 MMK` (`130,000 - 25,000`)
 - Net sales revenue = `280,000 MMK`
-- Net COGS = `171,000 MMK`
-- Gross profit = `109,000 MMK`
+- Net COGS = `207,000 MMK`
+- Gross profit = `73,000 MMK`
 - Sale return movement P-C `+1` ရှိရမည်။
 - Original sale ကို delete/overwrite မလုပ်ဘဲ return reference သီးခြားရှိရမည်။
 
@@ -280,10 +280,10 @@ Expected final profit for scenario date range:
 
 ```text
 Net Revenue       = 280,000 MMK
-Net COGS          = 171,000 MMK
-Gross Profit      = 109,000 MMK
+Net COGS          = 207,000 MMK
+Gross Profit      =  73,000 MMK
 Operating Expense =  20,000 MMK
-Net Profit        =  89,000 MMK
+Net Profit        =  53,000 MMK
 ```
 
 Customer debt collection နှင့် supplier payment ကို revenue/expense အဖြစ် ထပ်တွက်ထားပါက **Critical accounting FAIL** ဖြစ်သည်။ ယင်းတို့သည် receivable/payable settlement ဖြစ်ပြီး scenario profit ကို မပြောင်းရ။
@@ -312,10 +312,10 @@ Same date range နှင့် QA Store filter ကိုအသုံးပြ�
 | Metric | Expected | Actual | Difference | Evidence |
 |---|---:|---:|---:|---|
 | Net Revenue | 280,000 | | | |
-| COGS | 171,000 | | | |
-| Gross Profit | 109,000 | | | |
+| COGS | 207,000 | | | |
+| Gross Profit | 73,000 | | | |
 | Expenses | 20,000 | | | |
-| Net Profit | 89,000 | | | |
+| Net Profit | 53,000 | | | |
 
 ### 14.4 Movement Trace
 
@@ -402,10 +402,10 @@ Report တွင် လုပ်ခဲ့သည်ဟု မခန့်မှ�
 - [ ] Customer debt `65,000 MMK` exact match
 - [ ] Supplier payable `150,000 MMK` exact match
 - [ ] Net revenue `280,000 MMK` exact match
-- [ ] COGS `171,000 MMK` exact match
-- [ ] Gross profit `109,000 MMK` exact match
+- [ ] COGS `207,000 MMK` exact match
+- [ ] Gross profit `73,000 MMK` exact match
 - [ ] Expense `20,000 MMK` exact match
-- [ ] Net profit `89,000 MMK` exact match
+- [ ] Net profit `53,000 MMK` exact match
 - [ ] Duplicate transaction မရှိ
 - [ ] Cross-store leak မရှိ
 - [ ] Manager/Cashier unauthorized access မရှိ
