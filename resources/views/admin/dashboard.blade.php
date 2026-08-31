@@ -7,104 +7,120 @@
 <div class="w-full space-y-3.5 sm:space-y-4">
 
     {{-- ============================================================
-         PAGE HEADER: ULTRA CLEAN & COMPACT
+         DAILY QUICK ACTIONS HUB: 12 EMBOSSED 3D PUSH BUTTONS
+         Desktop: Single horizontal row (12 cols) | Mobile: 4 cols (4x3 grid)
          ============================================================ --}}
-    <div class="admin-page-header">
-        <div class="min-w-0">
-            <h1 class="admin-page-title flex items-center gap-2">
-                <span>{{ __('messages.admin_dashboard') }}</span>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-mono">
-                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    ONLINE
-                </span>
-                <span class="text-xs text-slate-400 font-normal">({{ $store->name }})</span>
-            </h1>
-        </div>
-        <div class="flex items-center gap-2 shrink-0 text-xs font-mono text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-sm">
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <span>{{ now()->format('D, d M Y') }}</span>
-        </div>
-    </div>
-
-    {{-- ============================================================
-         DAILY QUICK ACTIONS HUB: 8 RESPONSIVE COMPACT BUTTONS
-         Desktop: 8 cols | Tablet: 4-6 cols | Mobile: 3 cols
-         ============================================================ --}}
-    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+    <div class="dashboard-quick-actions">
         {{-- 1. POS Sale (Unified with Shift Indicator) --}}
         <a href="{{ route('pos.index', ['store_slug' => $store->slug]) }}"
-           class="relative flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800/60 hover:border-sky-400 dark:hover:border-sky-500 hover:shadow-md transition text-center group">
+           class="btn-3d-action group">
             @if ($openShift)
-                <span class="absolute top-1.5 right-1.5 flex h-2 w-2">
+                <span class="absolute top-1 right-1 flex h-1.5 w-1.5">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
                 </span>
             @endif
-            <span class="w-8 h-8 rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">🧾</span>
-            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_pos_counter') }}</span>
+            <span class="btn-3d-icon bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400">🧾</span>
+            <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_pos_counter') }}</span>
         </a>
 
-        {{-- 2. Add Product --}}
+        {{-- 2. Products List --}}
+        <a href="{{ url('/store/' . $store->slug . '/admin/products') }}"
+           class="btn-3d-action group">
+            <span class="btn-3d-icon bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">🏷️</span>
+            <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_products') }}</span>
+        </a>
+
+        {{-- 3. Add Product --}}
         <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}"
-           class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md transition text-center group">
-            <span class="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">📦</span>
-            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_add_product') }}</span>
+           class="btn-3d-action group">
+            <span class="btn-3d-icon bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400">📦</span>
+            <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_add_product') }}</span>
         </a>
 
-        {{-- 3. Purchase / Stock In --}}
+        {{-- 4. Purchase / Stock In --}}
         <a href="{{ url('/store/' . $store->slug . '/pos/purchases/create') }}"
-           class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-md transition text-center group">
-            <span class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">📥</span>
-            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_purchase_stock') }}</span>
+           class="btn-3d-action group">
+            <span class="btn-3d-icon bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">📥</span>
+            <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_purchase_stock') }}</span>
         </a>
 
-        {{-- 4. Order Requests --}}
+        {{-- 5. Order Requests --}}
         <a href="{{ route('store.admin.orders.index', ['store_slug' => $store->slug]) }}"
-           class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-600 hover:shadow-md transition text-center group">
-            <span class="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">📋</span>
-            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_order_requests') }}</span>
+           class="btn-3d-action group">
+            <span class="btn-3d-icon bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">📋</span>
+            <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_order_requests') }}</span>
         </a>
 
-        {{-- 5. Service / Repair Jobs or Secondary --}}
+        {{-- 6. Service / Repair Jobs or Secondary --}}
         @if (store_can('service.repair_jobs', $store))
             <a href="{{ url('/store/' . $store->slug . '/admin/repairs') }}"
-               class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-md transition text-center group">
-                <span class="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">🛠️</span>
-                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_service_repairs') }}</span>
+               class="btn-3d-action group">
+                <span class="btn-3d-icon bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">🛠️</span>
+                <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_service_repairs') }}</span>
             </a>
         @elseif (store_can('storefront.glass_finder', $store))
             <a href="{{ route('store.admin.glass-finder.index', ['store_slug' => $store->slug]) }}"
-               class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-cyan-400 dark:hover:border-cyan-600 hover:shadow-md transition text-center group">
-                <span class="w-8 h-8 rounded-xl bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">🔍</span>
-                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.glass_finder') }}</span>
+               class="btn-3d-action group">
+                <span class="btn-3d-icon bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400">🔍</span>
+                <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.glass_finder') }}</span>
             </a>
         @else
             <a href="{{ url('/store/' . $store->slug . '/admin/stock-balance') }}"
-               class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-teal-400 dark:hover:border-teal-600 hover:shadow-md transition text-center group">
-                <span class="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">📊</span>
-                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">Stock</span>
+               class="btn-3d-action group">
+                <span class="btn-3d-icon bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">📊</span>
+                <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">Stock</span>
             </a>
         @endif
 
-        {{-- 6. Customer Receivables AR --}}
+        {{-- 7. Customer Receivables AR --}}
         <a href="{{ url('/store/' . $store->slug . '/pos/credit-sales') }}"
-           class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-rose-400 dark:hover:border-rose-600 hover:shadow-md transition text-center group">
-            <span class="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">👥</span>
-            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_credit_ar') }}</span>
+           class="btn-3d-action group">
+            <span class="btn-3d-icon bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">👥</span>
+            <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_credit_ar') }}</span>
         </a>
 
-        {{-- 7. Record Expense --}}
+        {{-- 8. Supplier Payables AP --}}
+        <a href="{{ url('/store/' . $store->slug . '/admin/payables') }}"
+           class="btn-3d-action group">
+            <span class="btn-3d-icon bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400">🤝</span>
+            <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_payables') }}</span>
+        </a>
+
+        {{-- 9. Record Expense --}}
         <a href="{{ url('/store/' . $store->slug . '/admin/expenses') }}"
-           class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-fuchsia-400 dark:hover:border-fuchsia-600 hover:shadow-md transition text-center group">
-            <span class="w-8 h-8 rounded-xl bg-fuchsia-100 dark:bg-fuchsia-950/60 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">💸</span>
-            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_record_expense') }}</span>
+           class="btn-3d-action group">
+            <span class="btn-3d-icon bg-fuchsia-100 dark:bg-fuchsia-950/60 text-fuchsia-600 dark:text-fuchsia-400">💸</span>
+            <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_record_expense') }}</span>
         </a>
 
-        {{-- 8. Daily Closing X/Z --}}
+        {{-- 10. Stock Movement Ledger --}}
+        <a href="{{ url('/store/' . $store->slug . '/admin/stock-ledger') }}"
+           class="btn-3d-action group">
+            <span class="btn-3d-icon bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">📊</span>
+            <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_stock_ledger') }}</span>
+        </a>
+
+        {{-- 11. Warranty & IMEI Tracker / Customer Lookup --}}
+        @if (store_can('service.warranty_tracking', $store))
+            <a href="{{ url('/store/' . $store->slug . '/admin/warranty') }}"
+               class="btn-3d-action group">
+                <span class="btn-3d-icon bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400">🛡️</span>
+                <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_warranty') }}</span>
+            </a>
+        @else
+            <a href="{{ url('/store/' . $store->slug . '/admin/customers') }}"
+               class="btn-3d-action group">
+                <span class="btn-3d-icon bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400">👥</span>
+                <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_customers') }}</span>
+            </a>
+        @endif
+
+        {{-- 12. Daily Closing X/Z --}}
         <a href="{{ url('/store/' . $store->slug . '/pos/daily-closing') }}"
-           class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-md transition text-center group">
-            <span class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">🖨️</span>
-            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_daily_closing') }}</span>
+           class="btn-3d-action group">
+            <span class="btn-3d-icon bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">🖨️</span>
+            <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_daily_closing') }}</span>
         </a>
     </div>
 
@@ -116,46 +132,178 @@
             <h2 class="admin-section-title">{{ __('messages.dashboard_todays_operations') }}</h2>
             <span class="admin-section-sub">{{ __('messages.dashboard_todays_metrics_sub') }}</span>
         </div>
-        <div class="admin-hairline-grid grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5">
             {{-- 1. Today Orders --}}
-            <div class="admin-hairline-cell bg-violet-50/20 dark:bg-violet-950/10">
-                <div class="admin-stat-label">
-                    <span class="inline-block h-1.5 w-1.5 rounded-full bg-violet-500" aria-hidden="true"></span>
-                    {{ __('messages.dashboard_today_orders') }}
+            <div class="stat-card-3d">
+                <div class="flex items-center justify-between">
+                    <div class="admin-stat-label truncate">
+                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-violet-500" aria-hidden="true"></span>
+                        {{ __('messages.dashboard_today_orders') }}
+                    </div>
+                    <span class="text-xs p-1 rounded-md bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 shrink-0">📦</span>
                 </div>
-                <div class="admin-stat-value text-violet-700 dark:text-violet-300 font-mono" data-today-orders-stat>{{ number_format($todayOrders) }}</div>
-                <div class="admin-stat-sub">{{ __('messages.revenue') }}: Ks {{ number_format($todayRevenue) }}</div>
+                <div class="admin-stat-value text-violet-700 dark:text-violet-300 font-mono my-0.5" data-today-orders-stat>{{ number_format($todayOrders) }}</div>
+                <div class="admin-stat-sub truncate">{{ __('messages.revenue') }}: Ks {{ number_format($todayRevenue) }}</div>
             </div>
 
             {{-- 2. Today Revenue --}}
-            <div class="admin-hairline-cell bg-emerald-50/20 dark:bg-emerald-950/10">
-                <div class="admin-stat-label">
-                    <span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
-                    {{ __('messages.dashboard_today_revenue') }}
+            <div class="stat-card-3d">
+                <div class="flex items-center justify-between">
+                    <div class="admin-stat-label truncate">
+                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
+                        {{ __('messages.dashboard_today_revenue') }}
+                    </div>
+                    <span class="text-xs p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 shrink-0">💵</span>
                 </div>
-                <div class="admin-stat-value text-emerald-600 dark:text-emerald-400 font-mono">Ks {{ number_format($todayRevenue) }}</div>
-                <div class="admin-stat-sub">{{ number_format($todayOrders) }} {{ strtolower(__('messages.dashboard_today_orders')) }}</div>
+                <div class="admin-stat-value text-emerald-600 dark:text-emerald-400 font-mono my-0.5">Ks {{ number_format($todayRevenue) }}</div>
+                <div class="admin-stat-sub truncate">{{ number_format($todayOrders) }} {{ strtolower(__('messages.dashboard_today_orders')) }}</div>
             </div>
 
-            {{-- 3. Pending Orders --}}
-            <div class="admin-hairline-cell bg-amber-50/20 dark:bg-amber-950/10">
-                <div class="admin-stat-label">
-                    <span class="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true"></span>
-                    {{ __('messages.dashboard_pending_orders') }}
+            {{-- 3. Today Expense --}}
+            <div class="stat-card-3d">
+                <div class="flex items-center justify-between">
+                    <div class="admin-stat-label truncate">
+                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-fuchsia-500" aria-hidden="true"></span>
+                        {{ __('messages.dashboard_today_expense') }}
+                    </div>
+                    <span class="text-xs p-1 rounded-md bg-fuchsia-50 dark:bg-fuchsia-950/60 text-fuchsia-600 dark:text-fuchsia-400 shrink-0">💸</span>
                 </div>
-                <div class="admin-stat-value text-amber-600 dark:text-amber-400 font-mono" data-pending-orders-stat>{{ number_format($pendingOrders) }}</div>
-                <div class="admin-stat-sub">{{ __('messages.dashboard_awaiting_contact') }}</div>
+                <div class="admin-stat-value text-fuchsia-600 dark:text-fuchsia-400 font-mono my-0.5">Ks {{ number_format($todayExpense) }}</div>
+                <div class="admin-stat-sub truncate">{{ __('messages.dashboard_expense_recorded') }}</div>
             </div>
 
-            {{-- 4. This Month Revenue --}}
-            <div class="admin-hairline-cell">
-                <div class="admin-stat-label">
-                    <span class="inline-block h-1.5 w-1.5 rounded-full bg-blue-500" aria-hidden="true"></span>
-                    {{ __('messages.dashboard_month_revenue') }}
+            {{-- 4. Pending Orders --}}
+            <div class="stat-card-3d">
+                <div class="flex items-center justify-between">
+                    <div class="admin-stat-label truncate">
+                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true"></span>
+                        {{ __('messages.dashboard_pending_orders') }}
+                    </div>
+                    <span class="text-xs p-1 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 shrink-0">⏳</span>
                 </div>
-                <div class="admin-stat-value font-mono">Ks {{ number_format($monthRevenue) }}</div>
-                <div class="admin-stat-sub">{{ __('messages.dashboard_orders_this_month', ['count' => number_format($monthOrders)]) }}</div>
+                <div class="admin-stat-value text-amber-600 dark:text-amber-400 font-mono my-0.5" data-pending-orders-stat>{{ number_format($pendingOrders) }}</div>
+                <div class="admin-stat-sub truncate">{{ __('messages.dashboard_awaiting_contact') }}</div>
             </div>
+
+            {{-- 5. Active Repairs (In Workshop) --}}
+            <div class="stat-card-3d">
+                <div class="flex items-center justify-between">
+                    <div class="admin-stat-label truncate">
+                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-indigo-500" aria-hidden="true"></span>
+                        {{ __('messages.dashboard_active_repairs') }}
+                    </div>
+                    <span class="text-xs p-1 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">🛠️</span>
+                </div>
+                <div class="admin-stat-value text-indigo-600 dark:text-indigo-400 font-mono my-0.5">{{ number_format($activeRepairs) }}</div>
+                <div class="admin-stat-sub truncate">{{ __('messages.dashboard_ready_repairs') }}: {{ number_format($readyRepairs) }}</div>
+            </div>
+
+            {{-- 6. This Month Revenue --}}
+            <div class="stat-card-3d">
+                <div class="flex items-center justify-between">
+                    <div class="admin-stat-label truncate">
+                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-blue-500" aria-hidden="true"></span>
+                        {{ __('messages.dashboard_month_revenue') }}
+                    </div>
+                    <span class="text-xs p-1 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shrink-0">📅</span>
+                </div>
+                <div class="admin-stat-value font-mono text-slate-800 dark:text-slate-200 my-0.5">Ks {{ number_format($monthRevenue) }}</div>
+                <div class="admin-stat-sub truncate">{{ __('messages.dashboard_orders_this_month', ['count' => number_format($monthOrders)]) }}</div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ============================================================
+         SECTION 2: MULTI-DOMAIN BUSINESS HIGHLIGHTS (EXPENSE, SERVICE, ECOMMERCE, AR)
+         ============================================================ --}}
+    <section aria-label="Business domain highlights">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
+            {{-- 1. Monthly Expense Card --}}
+            <a href="{{ url('/store/' . $store->slug . '/admin/expenses') }}"
+               class="stat-card-3d block group">
+                <div class="flex items-center justify-between">
+                    <div class="admin-stat-label flex items-center gap-1.5 text-fuchsia-600 dark:text-fuchsia-400 font-bold">
+                        <span class="text-sm">💸</span>
+                        <span>{{ __('messages.dashboard_expense_overview') }}</span>
+                    </div>
+                    <span class="text-xs text-slate-400 group-hover:translate-x-0.5 transition">→</span>
+                </div>
+                <div class="admin-stat-value text-fuchsia-700 dark:text-fuchsia-300 font-mono my-0.5">Ks {{ number_format($monthExpense) }}</div>
+                <div class="admin-stat-sub flex items-center justify-between text-[10.5px]">
+                    <span>{{ __('messages.dashboard_month_expense') }}</span>
+                    <span class="font-mono text-slate-400">{{ __('messages.today') }}: Ks {{ number_format($todayExpense) }}</span>
+                </div>
+            </a>
+
+            @if (store_can('service.repair_jobs', $store))
+            {{-- 2. Service & Repairs Card --}}
+            <a href="{{ url('/store/' . $store->slug . '/admin/repairs') }}"
+               class="stat-card-3d block group">
+                <div class="flex items-center justify-between">
+                    <div class="admin-stat-label flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-bold">
+                        <span class="text-sm">🛠️</span>
+                        <span>{{ __('messages.dashboard_service_overview') }}</span>
+                    </div>
+                    <span class="text-xs text-slate-400 group-hover:translate-x-0.5 transition">→</span>
+                </div>
+                <div class="admin-stat-value text-indigo-700 dark:text-indigo-300 font-mono my-0.5">{{ number_format($activeRepairs) }} <span class="text-xs font-normal text-slate-400">{{ __('messages.dashboard_in_workshop') }}</span></div>
+                <div class="admin-stat-sub flex items-center justify-between text-[10.5px]">
+                    <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ __('messages.dashboard_ready_repairs') }}: {{ number_format($readyRepairs) }}</span>
+                    <span class="text-slate-400">Total</span>
+                </div>
+            </a>
+            @else
+            {{-- 2. Inventory & Stock Card (Retail fallback) --}}
+            <a href="{{ url('/store/' . $store->slug . '/admin/products') }}"
+               class="stat-card-3d block group">
+                <div class="flex items-center justify-between">
+                    <div class="admin-stat-label flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-bold">
+                        <span class="text-sm">📦</span>
+                        <span>{{ __('messages.dashboard_inventory_catalog') }}</span>
+                    </div>
+                    <span class="text-xs text-slate-400 group-hover:translate-x-0.5 transition">→</span>
+                </div>
+                <div class="admin-stat-value text-indigo-700 dark:text-indigo-300 font-mono my-0.5">{{ number_format($totalProducts) }} <span class="text-xs font-normal text-slate-400">{{ __('messages.items') }}</span></div>
+                <div class="admin-stat-sub flex items-center justify-between text-[10.5px]">
+                    <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ __('messages.in_stock') }}: {{ number_format($inStockProducts) }}</span>
+                    <span class="text-slate-400">Catalog</span>
+                </div>
+            </a>
+            @endif
+
+            {{-- 3. Ecommerce Online Storefront Card --}}
+            <a href="{{ url('/store/' . $store->slug . '/admin/web-products') }}"
+               class="stat-card-3d block group">
+                <div class="flex items-center justify-between">
+                    <div class="admin-stat-label flex items-center gap-1.5 text-sky-600 dark:text-sky-400 font-bold">
+                        <span class="text-sm">🌐</span>
+                        <span>{{ __('messages.dashboard_ecommerce_overview') }}</span>
+                    </div>
+                    <span class="text-xs text-slate-400 group-hover:translate-x-0.5 transition">→</span>
+                </div>
+                <div class="admin-stat-value text-sky-700 dark:text-sky-300 font-mono my-0.5">{{ number_format($ecommerceProducts) }} <span class="text-xs font-normal text-slate-400">{{ __('messages.dashboard_ecommerce_products') }}</span></div>
+                <div class="admin-stat-sub flex items-center justify-between text-[10.5px]">
+                    <span>{{ __('messages.dashboard_live_on_web') }}</span>
+                    <span class="font-mono text-amber-500">{{ number_format($pendingOrders) }} {{ strtolower(__('messages.pending')) }}</span>
+                </div>
+            </a>
+
+            {{-- 4. Customer Receivables AR Card --}}
+            <a href="{{ url('/store/' . $store->slug . '/pos/credit-sales') }}"
+               class="stat-card-3d block group">
+                <div class="flex items-center justify-between">
+                    <div class="admin-stat-label flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-bold">
+                        <span class="text-sm">👥</span>
+                        <span>{{ __('messages.dashboard_customer_ar') }}</span>
+                    </div>
+                    <span class="text-xs text-slate-400 group-hover:translate-x-0.5 transition">→</span>
+                </div>
+                <div class="admin-stat-value text-rose-600 dark:text-rose-400 font-mono my-0.5">Ks {{ number_format($totalCustomerDebt) }}</div>
+                <div class="admin-stat-sub flex items-center justify-between text-[10.5px]">
+                    <span>{{ __('messages.dashboard_customer_debt_sub') }}</span>
+                    <span class="text-slate-400">AR</span>
+                </div>
+            </a>
         </div>
     </section>
 
@@ -219,73 +367,235 @@
     @endif
 
     {{-- ============================================================
-         SECTION 2: WEEKLY VOLUME & ORDER LIFECYCLE
+         OPERATIONAL ANALYTICS: 4 VISUAL EXECUTIVE CHARTS
+         ============================================================ --}}
+    <section aria-label="Operational analytics and charts">
+        <div class="admin-section-head">
+            <h2 class="admin-section-title flex items-center gap-1.5">
+                <span>📊</span>
+                <span>{{ __('messages.dashboard_4charts_section_title') }}</span>
+            </h2>
+            <span class="admin-section-sub">{{ __('messages.dashboard_4charts_section_sub') }}</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+            {{-- Chart 1: 7-Day Daily Sales Trend --}}
+            @php
+                $sevenDaysTotal = array_sum(array_column($last7DaysSeries, 'revenue'));
+                $sevenDaysMax = max(array_column($last7DaysSeries, 'revenue')) ?: 1;
+            @endphp
+            <div class="card-panel-3d flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                            <span>📊</span>
+                            <span>{{ __('messages.dashboard_chart_7days_title') }}</span>
+                        </span>
+                        <span class="text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400">Ks {{ number_format($sevenDaysTotal) }}</span>
+                    </div>
+                    <div class="h-28 flex items-end gap-1.5 pt-2 pb-1 border-b border-slate-100 dark:border-slate-800">
+                        @foreach ($last7DaysSeries as $d)
+                            @php
+                                $barHeight = $sevenDaysMax > 0 ? max(6, round(($d['revenue'] / $sevenDaysMax) * 100)) : 6;
+                            @endphp
+                            <div class="flex-1 flex flex-col items-center h-full justify-end group cursor-pointer"
+                                 title="{{ $d['date'] }} ({{ $d['day'] }}): Ks {{ number_format($d['revenue']) }} ({{ $d['orders'] }} orders)">
+                                <div class="w-full rounded-t-md bg-gradient-to-t from-indigo-600 to-sky-400 transition-all duration-300 group-hover:from-indigo-500 group-hover:to-fuchsia-400 shadow-xs"
+                                     style="height: {{ $barHeight }}%"></div>
+                                <span class="text-[9px] font-mono font-bold text-slate-400 mt-1 leading-tight">{{ $d['day'] }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="pt-2 flex items-center justify-between text-[10px] text-slate-400">
+                    <span>7-Day Volume</span>
+                    <span class="font-mono font-semibold text-slate-600 dark:text-slate-300">{{ array_sum(array_column($last7DaysSeries, 'orders')) }} orders</span>
+                </div>
+            </div>
+
+            {{-- Chart 2: Payment Channels Mix (Donut / Segmented Distribution) --}}
+            <div class="card-panel-3d flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                            <span>💳</span>
+                            <span>{{ __('messages.dashboard_chart_payments_title') }}</span>
+                        </span>
+                        <span class="text-[10px] text-slate-400">30 days</span>
+                    </div>
+                    {{-- Stacked Progress Bar --}}
+                    <div class="w-full h-3 rounded-full overflow-hidden flex bg-slate-100 dark:bg-slate-800 shadow-inner mb-2.5">
+                        @foreach ($paymentBreakdown as $pay)
+                            @if ($pay['percent'] > 0)
+                                <div style="width: {{ $pay['percent'] }}%; background-color: {{ $pay['color'] }};"
+                                     title="{{ $pay['name'] }}: {{ $pay['percent'] }}% (Ks {{ number_format($pay['amount']) }})"
+                                     class="h-full transition-all duration-300 first:rounded-l-full last:rounded-r-full"></div>
+                            @endif
+                        @endforeach
+                    </div>
+                    {{-- Payment Badges Legend --}}
+                    <div class="space-y-1.5">
+                        @foreach (array_slice($paymentBreakdown, 0, 3) as $pay)
+                            <div class="flex items-center justify-between text-[11px]">
+                                <div class="flex items-center gap-1.5 truncate">
+                                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $pay['color'] }};"></span>
+                                    <span class="text-slate-700 dark:text-slate-300 truncate">{{ $pay['name'] }}</span>
+                                </div>
+                                <span class="font-mono font-bold text-slate-900 dark:text-slate-100 text-[10.5px]">{{ $pay['percent'] }}%</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+                    <span>Active Channels</span>
+                    <span class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">{{ count(array_filter($paymentBreakdown, fn($p) => $p['amount'] > 0)) }} Active</span>
+                </div>
+            </div>
+
+            {{-- Chart 3: Expense by Category Breakdown --}}
+            @php
+                $totalExpenseLogged = array_sum(array_column($expenseBreakdown, 'amount'));
+            @endphp
+            <div class="card-panel-3d flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                            <span>💸</span>
+                            <span>{{ __('messages.dashboard_chart_expense_title') }}</span>
+                        </span>
+                        <span class="text-[11px] font-mono font-bold text-fuchsia-600 dark:text-fuchsia-400">Ks {{ number_format($totalExpenseLogged) }}</span>
+                    </div>
+                    {{-- Category Progress Bars --}}
+                    <div class="space-y-2">
+                        @foreach ($expenseBreakdown as $exp)
+                            <div>
+                                <div class="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-300 mb-0.5">
+                                    <span class="truncate pr-1">{{ $exp['name'] }}</span>
+                                    <span class="font-mono font-bold shrink-0">{{ $exp['percent'] }}%</span>
+                                </div>
+                                <div class="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full transition-all duration-300"
+                                         style="width: {{ max(4, $exp['percent']) }}%; background-color: {{ $exp['color'] }};"></div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+                    <span>This Month Outflow</span>
+                    <a href="{{ url('/store/' . $store->slug . '/admin/expenses') }}" class="text-fuchsia-600 dark:text-fuchsia-400 font-semibold hover:underline">Detail →</a>
+                </div>
+            </div>
+
+            {{-- Chart 4: Service & Repair Pipeline Funnel --}}
+            <div class="card-panel-3d flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                            <span>🛠️</span>
+                            <span>{{ __('messages.dashboard_chart_service_title') }}</span>
+                        </span>
+                        <span class="text-[10px] text-slate-400">Workshop</span>
+                    </div>
+                    {{-- 4 Stage Pipeline Cards --}}
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <div class="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60">
+                            <span class="text-[10px] text-slate-400 block truncate">📥 Received</span>
+                            <span class="text-xs font-bold font-mono text-slate-800 dark:text-slate-200">{{ $servicePipeline['received'] }}</span>
+                        </div>
+                        <div class="p-1.5 rounded-lg bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-900/40">
+                            <span class="text-[10px] text-amber-600 dark:text-amber-400 block truncate">⚙️ In Repair</span>
+                            <span class="text-xs font-bold font-mono text-amber-600 dark:text-amber-400">{{ $servicePipeline['in_progress'] }}</span>
+                        </div>
+                        <div class="p-1.5 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-900/40">
+                            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 block truncate">✅ Ready</span>
+                            <span class="text-xs font-bold font-mono text-emerald-600 dark:text-emerald-400">{{ $servicePipeline['ready'] }}</span>
+                        </div>
+                        <div class="p-1.5 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-900/40">
+                            <span class="text-[10px] text-indigo-600 dark:text-indigo-400 block truncate">🚚 Delivered</span>
+                            <span class="text-xs font-bold font-mono text-indigo-600 dark:text-indigo-400">{{ $servicePipeline['delivered'] }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+                    <span class="truncate">{{ __('messages.dashboard_chart_service_sub') }}</span>
+                    @if (store_can('service.repair_jobs', $store))
+                        <a href="{{ url('/store/' . $store->slug . '/admin/repairs') }}" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline shrink-0">Jobs →</a>
+                    @else
+                        <a href="{{ url('/store/' . $store->slug . '/admin/orders') }}" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline shrink-0">Orders →</a>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ============================================================
+         SECTION 3: WEEKLY VOLUME & ORDER LIFECYCLE
          ============================================================ --}}
     <section aria-label="Order status">
         <div class="admin-section-head">
             <h2 class="admin-section-title">{{ __('messages.dashboard_weekly_volume') }}</h2>
             <span class="admin-section-sub">{{ __('messages.dashboard_since_monday') }}</span>
         </div>
-        <div class="admin-hairline-grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
-            <div class="admin-hairline-cell">
-                <div class="admin-stat-label">{{ __('messages.dashboard_week_orders') }}</div>
-                <div class="admin-stat-value font-mono">{{ number_format($weekOrders) }}</div>
-                <div class="admin-stat-sub">{{ __('messages.revenue') }}: Ks {{ number_format($weekRevenue) }}</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-2.5">
+            <div class="stat-card-3d">
+                <div class="admin-stat-label truncate">{{ __('messages.dashboard_week_orders') }}</div>
+                <div class="admin-stat-value font-mono my-0.5">{{ number_format($weekOrders) }}</div>
+                <div class="admin-stat-sub truncate">{{ __('messages.revenue') }}: Ks {{ number_format($weekRevenue) }}</div>
             </div>
-            <div class="admin-hairline-cell">
-                <div class="admin-stat-label">{{ __('messages.dashboard_week_revenue') }}</div>
-                <div class="admin-stat-value font-mono">Ks {{ number_format($weekRevenue) }}</div>
-                <div class="admin-stat-sub">{{ __('messages.dashboard_since_monday') }}</div>
+            <div class="stat-card-3d">
+                <div class="admin-stat-label truncate">{{ __('messages.dashboard_week_revenue') }}</div>
+                <div class="admin-stat-value font-mono my-0.5">Ks {{ number_format($weekRevenue) }}</div>
+                <div class="admin-stat-sub truncate">{{ __('messages.dashboard_since_monday') }}</div>
             </div>
-            <div class="admin-hairline-cell">
-                <div class="admin-stat-label">{{ __('messages.dashboard_confirmed_orders') }}</div>
-                <div class="admin-stat-value font-mono">{{ number_format($confirmedOrders) }}</div>
-                <div class="admin-stat-sub">{{ __('messages.dashboard_all_time') }}</div>
+            <div class="stat-card-3d">
+                <div class="admin-stat-label truncate">{{ __('messages.dashboard_confirmed_orders') }}</div>
+                <div class="admin-stat-value font-mono my-0.5">{{ number_format($confirmedOrders) }}</div>
+                <div class="admin-stat-sub truncate">{{ __('messages.dashboard_all_time') }}</div>
             </div>
-            <div class="admin-hairline-cell">
-                <div class="admin-stat-label">{{ __('messages.dashboard_delivered_orders') }}</div>
-                <div class="admin-stat-value font-mono text-emerald-600 dark:text-emerald-400">{{ number_format($deliveredOrders) }}</div>
-                <div class="admin-stat-sub">{{ __('messages.dashboard_all_time') }}</div>
+            <div class="stat-card-3d">
+                <div class="admin-stat-label truncate">{{ __('messages.dashboard_delivered_orders') }}</div>
+                <div class="admin-stat-value font-mono text-emerald-600 dark:text-emerald-400 my-0.5">{{ number_format($deliveredOrders) }}</div>
+                <div class="admin-stat-sub truncate">{{ __('messages.dashboard_all_time') }}</div>
             </div>
-            <div class="admin-hairline-cell">
-                <div class="admin-stat-label">{{ __('messages.dashboard_cancelled_orders') }}</div>
-                <div class="admin-stat-value font-mono text-slate-400" data-cancelled-orders-stat>{{ number_format($cancelledOrders) }}</div>
-                <div class="admin-stat-sub">{{ __('messages.dashboard_all_time') }}</div>
+            <div class="stat-card-3d">
+                <div class="admin-stat-label truncate">{{ __('messages.dashboard_cancelled_orders') }}</div>
+                <div class="admin-stat-value font-mono text-slate-400 my-0.5" data-cancelled-orders-stat>{{ number_format($cancelledOrders) }}</div>
+                <div class="admin-stat-sub truncate">{{ __('messages.dashboard_all_time') }}</div>
             </div>
         </div>
     </section>
 
     {{-- ============================================================
-         SECTION 3: INVENTORY CATALOG & BUSINESS TRENDS
+         SECTION 4: INVENTORY CATALOG & BUSINESS TRENDS
          ============================================================ --}}
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
         {{-- Inventory Catalog --}}
         <div class="lg:col-span-8 space-y-2">
             <div class="admin-section-head">
                 <h2 class="admin-section-title">{{ __('messages.dashboard_inventory_catalog') }}</h2>
                 <span class="admin-section-sub">{{ __('messages.dashboard_inventory_sub') }}</span>
             </div>
-            <div class="admin-hairline-grid grid-cols-2 sm:grid-cols-3 {{ store_can('storefront.glass_finder', $store) ? 'lg:grid-cols-4' : '' }}">
-                <div class="admin-hairline-cell">
-                    <div class="admin-stat-label">{{ __('messages.dashboard_total_products') }}</div>
-                    <div class="admin-stat-value font-mono">{{ number_format($totalProducts) }}</div>
-                    <div class="admin-stat-sub">{{ __('messages.dashboard_whole_catalog') }}</div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 {{ store_can('storefront.glass_finder', $store) ? 'lg:grid-cols-4' : '' }} gap-2 sm:gap-2.5">
+                <div class="stat-card-3d">
+                    <div class="admin-stat-label truncate">{{ __('messages.dashboard_total_products') }}</div>
+                    <div class="admin-stat-value font-mono my-0.5">{{ number_format($totalProducts) }}</div>
+                    <div class="admin-stat-sub truncate">{{ __('messages.dashboard_whole_catalog') }}</div>
                 </div>
-                <div class="admin-hairline-cell">
-                    <div class="admin-stat-label">{{ __('messages.dashboard_in_stock') }}</div>
-                    <div class="admin-stat-value font-mono text-emerald-600 dark:text-emerald-400">{{ number_format($inStockProducts) }}</div>
-                    <div class="admin-stat-sub">{{ __('messages.dashboard_available_to_sell') }}</div>
+                <div class="stat-card-3d">
+                    <div class="admin-stat-label truncate">{{ __('messages.dashboard_in_stock') }}</div>
+                    <div class="admin-stat-value font-mono text-emerald-600 dark:text-emerald-400 my-0.5">{{ number_format($inStockProducts) }}</div>
+                    <div class="admin-stat-sub truncate">{{ __('messages.dashboard_available_to_sell') }}</div>
                 </div>
-                <div class="admin-hairline-cell">
-                    <div class="admin-stat-label">{{ __('messages.dashboard_out_of_stock') }}</div>
-                    <div class="admin-stat-value font-mono text-rose-600 dark:text-rose-400">{{ number_format($outOfStockProducts) }}</div>
-                    <div class="admin-stat-sub">{{ __('messages.dashboard_needs_restocking') }}</div>
+                <div class="stat-card-3d">
+                    <div class="admin-stat-label truncate">{{ __('messages.dashboard_out_of_stock') }}</div>
+                    <div class="admin-stat-value font-mono text-rose-600 dark:text-rose-400 my-0.5">{{ number_format($outOfStockProducts) }}</div>
+                    <div class="admin-stat-sub truncate">{{ __('messages.dashboard_needs_restocking') }}</div>
                 </div>
                 @if (store_can('storefront.glass_finder', $store))
-                    <div class="admin-hairline-cell">
-                        <div class="admin-stat-label">{{ __('messages.dashboard_glass_finder_items') }}</div>
-                        <div class="admin-stat-value font-mono text-sky-600 dark:text-sky-400">{{ number_format($glassFinderItems) }}</div>
-                        <div class="admin-stat-sub">{{ __('messages.dashboard_lookup_db') }}</div>
+                    <div class="stat-card-3d">
+                        <div class="admin-stat-label truncate">{{ __('messages.dashboard_glass_finder_items') }}</div>
+                        <div class="admin-stat-value font-mono text-sky-600 dark:text-sky-400 my-0.5">{{ number_format($glassFinderItems) }}</div>
+                        <div class="admin-stat-sub truncate">{{ __('messages.dashboard_lookup_db') }}</div>
                     </div>
                 @endif
             </div>
@@ -297,21 +607,21 @@
                 <h2 class="admin-section-title">{{ __('messages.dashboard_business_pipeline') }}</h2>
                 <span class="admin-section-sub">{{ __('messages.dashboard_business_sub') }}</span>
             </div>
-            <div class="admin-hairline-grid {{ store_can('commerce.wholesale_pricing', $store) ? 'grid-cols-2' : 'grid-cols-1' }}">
+            <div class="grid {{ store_can('commerce.wholesale_pricing', $store) ? 'grid-cols-2' : 'grid-cols-1' }} gap-2 sm:gap-2.5">
                 @if (store_can('commerce.wholesale_pricing', $store))
-                    <div class="admin-hairline-cell bg-amber-50/20 dark:bg-amber-950/10">
-                        <div class="admin-stat-label">
+                    <div class="stat-card-3d">
+                        <div class="admin-stat-label truncate">
                             <span class="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true"></span>
                             {{ __('messages.dashboard_pending_wholesale') }}
                         </div>
-                        <div class="admin-stat-value text-amber-600 dark:text-amber-400 font-mono" data-pending-wholesale-stat>{{ number_format($pendingWholesale) }}</div>
-                        <div class="admin-stat-sub">{{ __('messages.dashboard_apps_to_review') }}</div>
+                        <div class="admin-stat-value text-amber-600 dark:text-amber-400 font-mono my-0.5" data-pending-wholesale-stat>{{ number_format($pendingWholesale) }}</div>
+                        <div class="admin-stat-sub truncate">{{ __('messages.dashboard_apps_to_review') }}</div>
                     </div>
                 @endif
-                <div class="admin-hairline-cell bg-violet-50/20 dark:bg-violet-950/10">
-                    <div class="admin-stat-label">{{ __('messages.dashboard_year_revenue') }}</div>
-                    <div class="admin-stat-value text-violet-700 dark:text-violet-300 font-mono">Ks {{ number_format($yearRevenue) }}</div>
-                    <div class="admin-stat-sub">{{ __('messages.dashboard_this_calendar_year') }}</div>
+                <div class="stat-card-3d">
+                    <div class="admin-stat-label truncate">{{ __('messages.dashboard_year_revenue') }}</div>
+                    <div class="admin-stat-value text-violet-700 dark:text-violet-300 font-mono my-0.5">Ks {{ number_format($yearRevenue) }}</div>
+                    <div class="admin-stat-sub truncate">{{ __('messages.dashboard_this_calendar_year') }}</div>
                 </div>
             </div>
         </div>
@@ -320,9 +630,9 @@
     {{-- ============================================================
          SECTION 4: MONTHLY REVENUE CHART & TOP SELLING PRODUCTS
          ============================================================ --}}
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-start">
         {{-- 12-Month Sales Trend Chart (8 Cols) --}}
-        <div class="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
+        <div class="lg:col-span-8 card-panel-3d space-y-3">
             <div class="flex items-center justify-between">
                 <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100 font-mono flex items-center gap-2">
                     <span>📈 {{ __('messages.dashboard_monthly_report_title') }}</span>
@@ -358,7 +668,7 @@
         </div>
 
         {{-- Top Selling Products (4 Cols) --}}
-        <div class="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
+        <div class="lg:col-span-4 card-panel-3d space-y-3">
             <div class="flex items-center justify-between">
                 <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100 font-mono flex items-center gap-1.5">
                     <span>🏆 {{ __('messages.dashboard_top_products_title') }}</span>
@@ -392,9 +702,9 @@
     {{-- ============================================================
          SECTION 5: RECENT OPERATIONAL ACTIVITY FEEDS
          ============================================================ --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 items-start">
         {{-- Recent Orders --}}
-        <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
+        <div class="card-panel-3d space-y-3">
             <div class="flex items-center justify-between">
                 <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100 font-mono">
                     🛒 {{ __('messages.dashboard_recent_orders_title') }}
@@ -434,7 +744,7 @@
         </div>
 
         {{-- Recent Wholesale Applications --}}
-        <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
+        <div class="card-panel-3d space-y-3">
             <div class="flex items-center justify-between">
                 <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100 font-mono">
                     📝 {{ __('messages.dashboard_recent_wholesale_title') }}
@@ -466,7 +776,7 @@
         </div>
 
         {{-- Recently Added Products --}}
-        <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-3">
+        <div class="card-panel-3d space-y-3">
             <div class="flex items-center justify-between">
                 <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100 font-mono">
                     📦 {{ __('messages.dashboard_recent_products_title') }}

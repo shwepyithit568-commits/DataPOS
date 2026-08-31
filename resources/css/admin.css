@@ -286,3 +286,167 @@ html {
 h1, h2, h3, h4 {
     font-weight: 800;
 }
+
+/* Dashboard 12-Column Quick Action Hub (guaranteed single horizontal row on desktop, 4-cols on mobile) */
+.dashboard-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.35rem;
+}
+@media (min-width: 640px) {
+    .dashboard-quick-actions {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 0.375rem;
+    }
+}
+@media (min-width: 1024px) {
+    .dashboard-quick-actions {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 0.375rem;
+    }
+}
+
+/* 3D Embossed Tactile Push Button for Daily Quick Actions */
+.btn-3d-action {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.25rem 0.45rem;
+    min-width: 0;
+    border-radius: 0.75rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+    border: 1px solid rgba(203, 213, 225, 0.9);
+    border-bottom: 3px solid #cbd5e1;
+    box-shadow: 0 2px 5px -1px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1);
+    transform: translateZ(0);
+    transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease, background 120ms ease;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.btn-3d-action:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+    border-bottom: 4px solid #94a3b8;
+    box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+.btn-3d-action:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #cbd5e1;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.dark .btn-3d-action {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(51, 65, 85, 0.9);
+    border-bottom: 3px solid #020617;
+    box-shadow: 0 2px 5px -1px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.dark .btn-3d-action:hover {
+    background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+    border-bottom: 4px solid #000000;
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.dark .btn-3d-action:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #020617;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* 3D Icon Container inside Button */
+.btn-3d-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.625rem;
+    height: 1.625rem;
+    border-radius: 0.5rem;
+    font-size: 0.8125rem;
+    margin-bottom: 0.125rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transition: transform 120ms ease;
+}
+@media (min-width: 640px) {
+    .btn-3d-icon {
+        width: 1.75rem;
+        height: 1.75rem;
+        font-size: 0.875rem;
+    }
+}
+.btn-3d-action:hover .btn-3d-icon {
+    transform: scale(1.1);
+}
+
+/* Dashboard 3D Stat Cards (Elevated tactile depth with 3D bottom bevel & micro-hover) */
+.stat-card-3d {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.875rem;
+    padding: 0.65rem 0.85rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid rgba(203, 213, 225, 0.9);
+    border-bottom: 3.5px solid #cbd5e1;
+    box-shadow: 0 3px 8px -2px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1);
+    transform: translateZ(0);
+    transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.stat-card-3d:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+    border-bottom: 4.5px solid #94a3b8;
+    box-shadow: 0 6px 16px -3px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+.stat-card-3d:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #cbd5e1;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.dark .stat-card-3d {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(51, 65, 85, 0.9);
+    border-bottom: 3.5px solid #020617;
+    box-shadow: 0 3px 10px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.dark .stat-card-3d:hover {
+    background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+    border-bottom: 4.5px solid #000000;
+    box-shadow: 0 6px 18px -3px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.dark .stat-card-3d:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #020617;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Dashboard 3D Panel Containers (Chart, Top Products, Activity Feeds) */
+.card-panel-3d {
+    position: relative;
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid rgba(203, 213, 225, 0.9);
+    border-bottom: 4px solid #cbd5e1;
+    box-shadow: 0 4px 14px -3px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1);
+    transform: translateZ(0);
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+.card-panel-3d:hover {
+    box-shadow: 0 8px 22px -4px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+    border-color: rgba(148, 163, 184, 0.9);
+}
+.dark .card-panel-3d {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(51, 65, 85, 0.9);
+    border-bottom: 4px solid #020617;
+    box-shadow: 0 4px 16px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.dark .card-panel-3d:hover {
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    border-color: rgba(71, 85, 105, 0.95);
+}
+

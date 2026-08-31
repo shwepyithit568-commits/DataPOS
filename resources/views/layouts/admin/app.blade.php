@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Admin Panel - {{ config('app.name') }}</title>
+    <title>@hasSection('title')@yield('title') · @endif Admin Panel - {{ config('app.name') }}</title>
     @php
         // Resolve the store independently in <head> (the body-level
         // $activeStore variable is computed further down the template).
@@ -1069,9 +1069,16 @@
                     </svg>
                 </button>
 
-                <div class="font-bold text-gray-800 dark:text-slate-100 font-outfit text-sm sm:text-base truncate">
-                    <span class="text-gray-500 dark:text-slate-400 font-normal hidden sm:inline">{{ __('messages.store') }}: </span>{{ $activeStore->name ?? 'Select Store' }}
-                </div>
+                @php
+                    $headerDashboardUrl = $hasStoreContext
+                        ? route('store.admin.dashboard', ['store_slug' => $currentSlug])
+                        : url('/admin');
+                @endphp
+                <a href="{{ $headerDashboardUrl }}"
+                   title="{{ __('messages.admin_dashboard') }} — {{ $activeStore->name ?? 'Select Store' }}"
+                   class="inline-flex items-center px-2.5 py-1 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-outfit text-xs sm:text-sm font-bold shadow-xs hover:shadow-md hover:shadow-sky-500/20 border border-sky-300/40 border-b-2 border-b-sky-800 active:translate-y-0.5 transition-all truncate max-w-[180px] sm:max-w-xs">
+                    <span class="truncate">{{ $activeStore->name ?? 'Select Store' }}</span>
+                </a>
             </div>
 
             <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
