@@ -180,7 +180,7 @@ class CustomerReceivableController extends Controller
         }
 
         $note = trim(($data['payment_method'] ? strtoupper($data['payment_method']) . ' ' : '') .
-            ($data['reference_no'] ? "(Ref: {$data['reference_no']}) " : '') .
+            (($data['reference_no'] ?? null) ? "(Ref: {$data['reference_no']}) " : '') .
             ($data['notes'] ?? ''));
 
         try {

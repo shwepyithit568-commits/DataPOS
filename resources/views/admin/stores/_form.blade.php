@@ -6,13 +6,13 @@
 @endphp
 
 <form method="POST" action="{{ $action }}" class="w-full max-w-3xl bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl border border-gray-200/80 dark:border-slate-700 space-y-5 transition-colors duration-200"
-    x-data="{ saving: false, dirty: false, primary: {{ $isEdit ? ($store->is_primary ? 'true' : 'false') : 'false' }}, edition: '{{ old('edition', 'mobile_electronics') }}' }"
+    x-data="{ saving: false, dirty: false, primary: {{ $isEdit ? ($store->is_primary ? 'true' : 'false') : 'false' }}, edition: '{{ old('edition', 'mobile_electronics') }}', _warn: null }"
     x-init="
-        const warn = (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } };
-        window.addEventListener('beforeunload', warn);
+        _warn = (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } };
+        window.addEventListener('beforeunload', _warn);
         $nextTick(() => { const name = $refs.editName; if (name && (!document.activeElement || document.activeElement === document.body)) name.focus(); });
     "
-    @submit="if (saving) { $event.preventDefault(); } else { saving = true; }">
+    @submit="if (saving) { $event.preventDefault(); } else { saving = true; window.removeEventListener('beforeunload', _warn); }">
     @csrf
     @method($method)
 

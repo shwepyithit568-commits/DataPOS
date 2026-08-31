@@ -258,4 +258,34 @@ class CustomerReceivableTest extends TestCase
             );
         }
     }
+
+    /**
+     * Regression: omitting reference_no caused "Undefined array key 'reference_no'"
+     * because the nullable-validated field was not included in $data by Laravel
+     * when the key was absent from the request body.
+     *
+     * @see CustomerReceivableController@collect — fixed with ($data['reference_no'] ?? null)
+     */
+    public function test_collect_debt_without_reference_no_does_not_500(): void
+    {
+        $this->debtService->recordOpeningBalance(
+            store: $this->store,
+            customerId: $this->customer->id,
+            amount: '100000.00',
+            actor: $this->admin,
+        );
+
+        $response = $this->actingAs($this->admin)->post(route('store.admin.receivables.collect', [
+            'store_slug' => $this->store->slug,
+            'customer' => $this->customer->id,
+        ]), [
+            'amount' => '40000',
+            'payment_method' => 'cash',
+            // intentionally omit reference_no and notes
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertEquals('60000.00', $this->debtService->balanceFor($this->store->id, $this->customer->id));
+    }
 }
