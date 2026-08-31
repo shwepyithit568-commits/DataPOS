@@ -4,10 +4,10 @@
 @section('main_padding', 'p-2 sm:p-4')
 
 @section('content')
-<div class="w-full space-y-4 sm:space-y-5">
+<div class="w-full space-y-3.5 sm:space-y-4">
 
     {{-- ============================================================
-         PAGE HEADER: CLEAN & COMPACT
+         PAGE HEADER: ULTRA CLEAN & COMPACT
          ============================================================ --}}
     <div class="admin-page-header">
         <div class="min-w-0">
@@ -17,10 +17,8 @@
                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     ONLINE
                 </span>
+                <span class="text-xs text-slate-400 font-normal">({{ $store->name }})</span>
             </h1>
-            <p class="admin-page-sub mt-0.5">
-                {{ $store->name }} · {{ __('messages.dashboard_overview_sub') }}
-            </p>
         </div>
         <div class="flex items-center gap-2 shrink-0 text-xs font-mono text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-sm">
             <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -29,132 +27,85 @@
     </div>
 
     {{-- ============================================================
-         POS LIVE SHIFT STRIP: HERO BAR
+         DAILY QUICK ACTIONS HUB: 8 RESPONSIVE COMPACT BUTTONS
+         Desktop: 8 cols | Tablet: 4-6 cols | Mobile: 3 cols
          ============================================================ --}}
-    @if ($canAccessStaffTools)
-        <div class="rounded-2xl overflow-hidden border border-sky-200 dark:border-sky-900 bg-gradient-to-r from-sky-500 to-sky-600 dark:from-sky-950/90 dark:to-slate-900 text-white shadow-md shadow-sky-500/10">
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 px-5 py-3.5">
-                <div class="flex items-center gap-3.5 min-w-0">
-                    <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/20 text-lg font-black" aria-hidden="true">
-                        🧾
-                    </span>
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold uppercase tracking-wider text-sky-100/90">{{ __('messages.pos') }} {{ __('messages.counter') }}</span>
-                            @if ($openShift)
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-400/30 text-emerald-100 text-[10px] font-bold">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                                    {{ __('messages.shift_open') }}
-                                </span>
-                            @else
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400/30 text-amber-100 text-[10px] font-bold">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-amber-300"></span>
-                                    {{ __('messages.no_open_shift') }}
-                                </span>
-                            @endif
-                        </div>
-                        @if ($openShift)
-                            <p class="text-xs text-sky-100/90 truncate mt-0.5">
-                                <span class="font-bold text-white">{{ $openShift->register_name }}</span> · {{ $openShift->cashier?->name }} ·
-                                {{ __('messages.opened_at') }} {{ $openShift->opened_at->format('H:i') }} ·
-                                {{ __('messages.cash_sales') }}: <span class="font-mono font-bold text-white">Ks {{ number_format((float) $openShift->cash_sales) }}</span>
-                            </p>
-                        @else
-                            <p class="text-xs text-sky-100/90 mt-0.5">{{ __('messages.pos_open_shift_hint') }}</p>
-                        @endif
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    <a href="{{ route('pos.index', ['store_slug' => $store->slug]) }}"
-                       class="inline-flex items-center justify-center gap-2 rounded-xl bg-white text-sky-700 hover:bg-sky-50 px-4 py-2.5 text-xs font-black shadow-sm active:scale-[0.98] transition">
-                        <span>🧾 {{ __('messages.pos_sale') }}</span>
-                        <span>→</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    {{-- ============================================================
-         DAILY HIGH-FREQUENCY QUICK ACTIONS HUB (8 ESSENTIAL BUTTONS)
-         ============================================================ --}}
-    <div class="space-y-2">
-        <div class="flex items-center justify-between">
-            <h2 class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
-                ⚡ {{ __('messages.dashboard_quick_actions') }}
-            </h2>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
-            {{-- 1. POS Sale --}}
-            <a href="{{ route('pos.index', ['store_slug' => $store->slug]) }}"
-               class="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md transition text-center group">
-                <span class="w-9 h-9 rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center text-base mb-1.5 group-hover:scale-110 transition">🧾</span>
-                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{{ __('messages.dashboard_pos_counter') }}</span>
-            </a>
-
-            {{-- 2. Add Product --}}
-            <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}"
-               class="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md transition text-center group">
-                <span class="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center text-base mb-1.5 group-hover:scale-110 transition">📦</span>
-                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{{ __('messages.dashboard_add_product') }}</span>
-            </a>
-
-            {{-- 3. Stock In / Purchase --}}
-            <a href="{{ url('/store/' . $store->slug . '/pos/purchases/create') }}"
-               class="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md transition text-center group">
-                <span class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base mb-1.5 group-hover:scale-110 transition">📥</span>
-                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{{ __('messages.dashboard_purchase_stock') }}</span>
-            </a>
-
-            {{-- 4. Order Requests --}}
-            <a href="{{ route('store.admin.orders.index', ['store_slug' => $store->slug]) }}"
-               class="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md transition text-center group">
-                <span class="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base mb-1.5 group-hover:scale-110 transition">📋</span>
-                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{{ __('messages.dashboard_order_requests') }}</span>
-            </a>
-
-            {{-- 5. Service / Repair Jobs or Secondary --}}
-            @if (store_can('service.repair_jobs', $store))
-                <a href="{{ url('/store/' . $store->slug . '/admin/repairs') }}"
-                   class="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md transition text-center group">
-                    <span class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base mb-1.5 group-hover:scale-110 transition">🛠️</span>
-                    <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{{ __('messages.dashboard_service_repairs') }}</span>
-                </a>
-            @elseif (store_can('storefront.glass_finder', $store))
-                <a href="{{ route('store.admin.glass-finder.index', ['store_slug' => $store->slug]) }}"
-                   class="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md transition text-center group">
-                    <span class="w-9 h-9 rounded-xl bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-base mb-1.5 group-hover:scale-110 transition">🔍</span>
-                    <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{{ __('messages.glass_finder') }}</span>
-                </a>
-            @else
-                <a href="{{ url('/store/' . $store->slug . '/admin/stock-balance') }}"
-                   class="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md transition text-center group">
-                    <span class="w-9 h-9 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center text-base mb-1.5 group-hover:scale-110 transition">📊</span>
-                    <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">Stock Balance</span>
-                </a>
+    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+        {{-- 1. POS Sale (Unified with Shift Indicator) --}}
+        <a href="{{ route('pos.index', ['store_slug' => $store->slug]) }}"
+           class="relative flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800/60 hover:border-sky-400 dark:hover:border-sky-500 hover:shadow-md transition text-center group">
+            @if ($openShift)
+                <span class="absolute top-1.5 right-1.5 flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
             @endif
+            <span class="w-8 h-8 rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">🧾</span>
+            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_pos_counter') }}</span>
+        </a>
 
-            {{-- 6. Customer Receivables AR --}}
-            <a href="{{ url('/store/' . $store->slug . '/pos/credit-sales') }}"
-               class="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md transition text-center group">
-                <span class="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-base mb-1.5 group-hover:scale-110 transition">👥</span>
-                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{{ __('messages.dashboard_credit_ar') }}</span>
-            </a>
+        {{-- 2. Add Product --}}
+        <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}"
+           class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md transition text-center group">
+            <span class="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">📦</span>
+            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_add_product') }}</span>
+        </a>
 
-            {{-- 7. Record Expense --}}
-            <a href="{{ url('/store/' . $store->slug . '/admin/expenses') }}"
-               class="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md transition text-center group">
-                <span class="w-9 h-9 rounded-xl bg-fuchsia-100 dark:bg-fuchsia-950/60 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center text-base mb-1.5 group-hover:scale-110 transition">💸</span>
-                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{{ __('messages.dashboard_record_expense') }}</span>
-            </a>
+        {{-- 3. Purchase / Stock In --}}
+        <a href="{{ url('/store/' . $store->slug . '/pos/purchases/create') }}"
+           class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-md transition text-center group">
+            <span class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">📥</span>
+            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_purchase_stock') }}</span>
+        </a>
 
-            {{-- 8. Daily Closing X/Z --}}
-            <a href="{{ url('/store/' . $store->slug . '/pos/daily-closing') }}"
-               class="flex flex-col items-center justify-center p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-md transition text-center group">
-                <span class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center text-base mb-1.5 group-hover:scale-110 transition">🖨️</span>
-                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{{ __('messages.dashboard_daily_closing') }}</span>
+        {{-- 4. Order Requests --}}
+        <a href="{{ route('store.admin.orders.index', ['store_slug' => $store->slug]) }}"
+           class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-600 hover:shadow-md transition text-center group">
+            <span class="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">📋</span>
+            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_order_requests') }}</span>
+        </a>
+
+        {{-- 5. Service / Repair Jobs or Secondary --}}
+        @if (store_can('service.repair_jobs', $store))
+            <a href="{{ url('/store/' . $store->slug . '/admin/repairs') }}"
+               class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-md transition text-center group">
+                <span class="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">🛠️</span>
+                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_service_repairs') }}</span>
             </a>
-        </div>
+        @elseif (store_can('storefront.glass_finder', $store))
+            <a href="{{ route('store.admin.glass-finder.index', ['store_slug' => $store->slug]) }}"
+               class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-cyan-400 dark:hover:border-cyan-600 hover:shadow-md transition text-center group">
+                <span class="w-8 h-8 rounded-xl bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">🔍</span>
+                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.glass_finder') }}</span>
+            </a>
+        @else
+            <a href="{{ url('/store/' . $store->slug . '/admin/stock-balance') }}"
+               class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-teal-400 dark:hover:border-teal-600 hover:shadow-md transition text-center group">
+                <span class="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">📊</span>
+                <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">Stock</span>
+            </a>
+        @endif
+
+        {{-- 6. Customer Receivables AR --}}
+        <a href="{{ url('/store/' . $store->slug . '/pos/credit-sales') }}"
+           class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-rose-400 dark:hover:border-rose-600 hover:shadow-md transition text-center group">
+            <span class="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">👥</span>
+            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_credit_ar') }}</span>
+        </a>
+
+        {{-- 7. Record Expense --}}
+        <a href="{{ url('/store/' . $store->slug . '/admin/expenses') }}"
+           class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-fuchsia-400 dark:hover:border-fuchsia-600 hover:shadow-md transition text-center group">
+            <span class="w-8 h-8 rounded-xl bg-fuchsia-100 dark:bg-fuchsia-950/60 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">💸</span>
+            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_record_expense') }}</span>
+        </a>
+
+        {{-- 8. Daily Closing X/Z --}}
+        <a href="{{ url('/store/' . $store->slug . '/pos/daily-closing') }}"
+           class="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-md transition text-center group">
+            <span class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition">🖨️</span>
+            <span class="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full">{{ __('messages.dashboard_daily_closing') }}</span>
+        </a>
     </div>
 
     {{-- ============================================================
