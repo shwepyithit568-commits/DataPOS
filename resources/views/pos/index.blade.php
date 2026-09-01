@@ -40,22 +40,22 @@
 
         // Module links row — high-frequency daily operation links with inline SVG icons.
         $moduleLinks = [
-            ['pos/closing', 'closing_title', '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4"/>'],
-            ['pos/reports/sales', 'reports_sales', '<path d="M18 20V10M12 20V4M6 20v-6"/>'],
-            ['pos/reports/cash', 'reports_cash', '<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>'],
-            ['pos/reports/stock', 'reports_stock', '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>'],
-            ['pos/purchases', 'receiving_subtitle', '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>'],
-            ['pos/purchases/payables', 'balance_due', '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>'],
-            ['admin/products', 'products', '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>'],
-            ['admin/orders', 'manage_orders', '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>'],
-            ['pos/adjustments', 'adjustment_title', '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3 2.4-2.4Z"/>'],
-            ['pos/reconciliation', 'reconciliation_title', '<path d="M12 3v18M5 7h14M7.5 7 5 11a2.5 2.5 0 0 0 5 0L7.5 7Zm9 0L14 11a2.5 2.5 0 0 0 5 0l-2.5-4ZM8.5 21h7"/>'],
-            ['pos/opening-stock', 'opening_stock_title', '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/>'],
-            ['admin/dashboard', 'admin_panel', '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>'],
+            ['pos/closing', 'pos_mod_closing', '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4"/>'],
+            ['admin/expenses', 'pos_mod_expenses', '<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>'],
+            ['pos/reports/sales', 'pos_mod_sales', '<path d="M18 20V10M12 20V4M6 20v-6"/>'],
+            ['pos/reports/cash', 'pos_mod_cash', '<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>'],
+            ['pos/reports/stock', 'pos_mod_stock', '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>'],
+            ['pos/purchases', 'pos_mod_purchases', '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>'],
+            ['pos/purchases/payables', 'pos_mod_payables', '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>'],
+            ['admin/products', 'pos_mod_products', '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>'],
+            ['admin/orders', 'pos_mod_orders', '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>'],
+            ['pos/adjustments', 'pos_mod_adjustments', '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3 2.4-2.4Z"/>'],
+            ['pos/reconciliation', 'pos_mod_reconciliation', '<path d="M12 3v18M5 7h14M7.5 7 5 11a2.5 2.5 0 0 0 5 0L7.5 7Zm9 0L14 11a2.5 2.5 0 0 0 5 0l-2.5-4ZM8.5 21h7"/>'],
+            ['pos/opening-stock', 'pos_mod_opening_stock', '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/>'],
         ];
     @endphp
 
-    <div class="space-y-5"
+    <div class="space-y-1"
          x-data="posApp({
              baseUrl: '{{ url('/store/' . $store->slug . '/pos') }}',
              csrf: '{{ csrf_token() }}',
@@ -391,57 +391,48 @@
             </div>
         </div>
 
-        {{-- ── Toolbar (3-zone responsive: sticky search | filters | more) ── --}}
-        {{-- Zone A — sticky search bar (all screens: search stays reachable) --}}
+        {{-- ── Top Toolbar (Sticky header: mobile search & tools | desktop shift & shortcuts) ── --}}
         <div class="sticky top-[64px] z-30">
-            <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-                {{-- One strip on mobile (horizontal scroll), static row on desktop --}}
-                <div class="flex flex-nowrap items-center gap-2 px-4 py-3 max-lg:overflow-x-auto max-lg:whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    {{-- Search (barcode / SKU / name — F1) — anchored left, stays comfortable --}}
-                    <div class="relative flex-1 min-w-[200px] sm:min-w-[220px] max-w-md max-lg:max-w-[240px]">
+            <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                
+                {{-- Mobile toolbar (visible only on mobile/tablet < lg) --}}
+                <div class="flex lg:hidden flex-nowrap items-center gap-2 px-4 py-3 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {{-- Search (barcode / SKU / name) --}}
+                    <div class="relative flex-1 min-w-[180px] max-w-[240px]">
                         <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         </span>
-                        <input type="text" x-ref="searchInput" x-model="q" @input="onSearch()" @keydown.enter.prevent="loadGrid()"
+                        <input type="text" x-ref="mobileSearchInput" x-model="q" @input="onSearch()" @keydown.enter.prevent="loadGrid()"
                                placeholder="{{ __('messages.pos_search_placeholder') }}"
-                               class="w-full h-12 rounded-2xl border border-blue-600/20 dark:border-blue-500/20 bg-slate-50 dark:bg-slate-800 pl-11 pr-14 text-sm font-bold placeholder:font-semibold focus:ring-2 focus:ring-blue-500 outline-none">
-                        <span class="hidden sm:inline absolute right-2.5 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400 text-[10px] font-black">F1</span>
+                               class="w-full h-11 rounded-xl border border-blue-600/20 dark:border-blue-500/20 bg-slate-50 dark:bg-slate-800 pl-10 pr-3 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
 
-                    {{-- Scan barcode (USB scanners type into search + Enter) --}}
-                    <button type="button" @click="$refs.searchInput.focus()"
-                            class="shrink-0 w-12 h-12 rounded-2xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 transition grid place-items-center"
+                    {{-- Scan barcode --}}
+                    <button type="button" @click="$refs.mobileSearchInput?.focus()"
+                            class="shrink-0 w-11 h-11 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 transition grid place-items-center cursor-pointer"
                             title="{{ __('messages.pos_scan_barcode') }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/><path d="M7 8h10"/><path d="M7 16h10"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/><path d="M7 8h10"/><path d="M7 16h10"/></svg>
                     </button>
 
-                    {{-- Import web order (desktop/sm only — compact on mobile) --}}
-                    <button type="button" @click="openWebOrders()"
-                            class="hidden sm:grid shrink-0 w-12 h-12 rounded-2xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 transition place-items-center"
-                            title="{{ __('messages.pos_import_web_order') }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-                    </button>
-
-                    {{-- Shift status (dot on mobile, pill on sm+) --}}
+                    {{-- Shift status --}}
                     <button type="button" @click="if (shiftOpen) { switchTab('registers'); $nextTick(() => document.getElementById('pos-shift-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } else { window.dispatchEvent(new CustomEvent('pos:open-register')); }"
-                            class="shrink-0 inline-flex items-center justify-center min-h-11 w-11 sm:w-auto sm:px-3 gap-1.5 rounded-xl text-[11px] font-black uppercase tracking-wide border transition"
+                            class="shrink-0 inline-flex items-center justify-center min-h-11 px-3 gap-1.5 rounded-xl text-[11px] font-black uppercase tracking-wide border transition cursor-pointer"
                             :class="shiftOpen ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'">
                         <span class="w-2 h-2 rounded-full shrink-0" :class="shiftOpen ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'"></span>
-                        <template x-if="shiftOpen"><span class="hidden sm:inline">{{ __('messages.pos_shift_active') }}</span></template>
-                        <template x-if="!shiftOpen"><span class="hidden sm:inline">{{ __('messages.sale_requires_shift') }}</span></template>
+                        <span x-text="shiftOpen ? '{{ __('messages.pos_shift_active') }}' : '{{ __('messages.pos_shift_required') }}'"></span>
                     </button>
 
                     {{-- End shift --}}
                     <button type="button" x-show="shiftOpen" x-cloak
                             @click="switchTab('registers'); $nextTick(() => document.getElementById('pos-shift-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))"
-                            class="shrink-0 w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition grid place-items-center"
+                            class="shrink-0 w-11 h-11 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition grid place-items-center cursor-pointer"
                             title="{{ __('messages.pos_end_shift') }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
                     </button>
 
-                    {{-- Mobile/tablet quick action buttons: Filters + Held Sales --}}
+                    {{-- Mobile filters drawer button --}}
                     <button type="button" @click="window.dispatchEvent(new CustomEvent('pos:open-filters'))"
-                            class="lg:hidden shrink-0 min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl border text-xs font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 transition"
+                            class="shrink-0 min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl border text-xs font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 transition cursor-pointer"
                             title="{{ __('messages.pos_filters') }}">
                         <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3Z"/></svg>
                         {{ __('messages.pos_filters') }}
@@ -449,21 +440,65 @@
                               class="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-blue-600 text-white text-[10px] font-black"
                               x-text="(categoryId > 0 ? 1 : 0) + (brandId > 0 ? 1 : 0)"></span>
                     </button>
+
+                    {{-- Mobile held sales --}}
                     <button type="button" @click="document.getElementById('pos-held-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
-                            class="lg:hidden shrink-0 min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl border text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 transition">
+                            class="shrink-0 min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl border text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 transition cursor-pointer">
                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/></svg>
                         {{ __('messages.held_sales') }} <span x-text="'(' + cart.held_count + ')'"></span>
                     </button>
+                </div>
 
-                    {{-- Keyboard shortcuts (desktop only) --}}
-                    <div class="hidden xl:flex items-center gap-1.5">
+                {{-- Desktop top toolbar (Shift status + End shift + Held sales + Daily closing + Keyboard shortcuts) --}}
+                <div class="hidden lg:flex items-center justify-between gap-3 px-4 py-2.5 min-w-0">
+                    <div class="flex items-center gap-2 shrink-0 min-w-0">
+                        {{-- Shift status pill --}}
+                        <button type="button" @click="if (shiftOpen) { switchTab('registers'); $nextTick(() => document.getElementById('pos-shift-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } else { window.dispatchEvent(new CustomEvent('pos:open-register')); }"
+                                class="shrink-0 inline-flex items-center gap-2 h-9 px-3 rounded-xl text-xs font-black uppercase tracking-wide border transition cursor-pointer whitespace-nowrap"
+                                :class="shiftOpen ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20'">
+                            <span class="w-2 h-2 rounded-full shrink-0" :class="shiftOpen ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'"></span>
+                            <span x-text="shiftOpen ? '{{ __('messages.pos_shift_active') }}' : '{{ __('messages.pos_shift_required') }}'"></span>
+                        </button>
+
+                        {{-- End shift button --}}
+                        <button type="button" x-show="shiftOpen" x-cloak
+                                @click="switchTab('registers'); $nextTick(() => document.getElementById('pos-shift-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))"
+                                class="shrink-0 h-9 px-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 transition inline-flex items-center gap-1 text-xs font-bold cursor-pointer whitespace-nowrap"
+                                title="{{ __('messages.pos_end_shift') }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                            <span>{{ __('messages.pos_end_shift') }}</span>
+                        </button>
+
+                        <div class="h-5 w-px bg-slate-200 dark:bg-slate-700 shrink-0"></div>
+
+                        {{-- Held sales toggle (ဆိုင်းငံ့ထားသော အရောင်းများ) --}}
+                        <button type="button" id="pos-held-toggle"
+                                class="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-800 transition cursor-pointer whitespace-nowrap"
+                                @click="document.getElementById('pos-held-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/></svg>
+                            <span>{{ __('messages.held_sales') }}</span>
+                            <span class="px-1.5 py-0.2 rounded-md bg-amber-500/20 text-amber-800 dark:text-amber-200 text-[11px] font-black" x-text="cart.held_count"></span>
+                        </button>
+
+                        {{-- နေ့စဉ် အရောင်းပိတ် (Daily closing) --}}
+                        <a href="{{ url('/store/' . $store->slug . '/pos/closing') }}"
+                           class="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer shadow-xs whitespace-nowrap">
+                            <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4"/>
+                            </svg>
+                            <span>{{ __('messages.closing_title') }}</span>
+                        </a>
+                    </div>
+
+                    {{-- Keyboard shortcuts --}}
+                    <div class="hidden xl:flex items-center gap-1 shrink-0">
                         @foreach ([
                             ['F1', 'pos_hint_search'], ['F2', 'pos_hint_checkout'], ['F3', 'pos_hint_customer'],
                             ['F4', 'pos_hint_clear'], ['F5', 'pos_hint_reload'], ['F6', 'pos_hint_hold'], ['F7', 'pos_hint_held'],
                         ] as [$key, $hint])
-                            <span class="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                                <span class="px-1.5 py-0.5 rounded-md bg-blue-600/10 text-blue-600 dark:text-blue-400 text-[9px] font-black">{{ $key }}</span>
-                                <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{{ __('messages.' . $hint) }}</span>
+                            <span class="inline-flex items-center gap-1 px-1.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                <span class="px-1.5 py-0.5 rounded-md bg-blue-600/10 text-blue-600 dark:text-blue-400 text-[9px] font-black leading-none">{{ $key }}</span>
+                                <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">{{ __('messages.' . $hint) }}</span>
                             </span>
                         @endforeach
                     </div>
@@ -471,57 +506,216 @@
             </div>
         </div>
 
-        {{-- ── Desktop only: Navigation & Filters: More (Modules) + Categories + Brands ── --}}
-        <div class="hidden lg:block rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        {{-- ── Desktop only: Navigation & Filters (More Modules + Search + Barcode + Web Order + Categories & Brands Dropdowns) ── --}}
+        <div class="hidden lg:block rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
+             x-data="{
+                 catDropdownOpen: false,
+                 brandDropdownOpen: false,
+                 catSearch: '',
+                 brandSearch: '',
+                 get filteredCategories() {
+                     if (!this.catSearch.trim()) return categories;
+                     const query = this.catSearch.toLowerCase();
+                     return categories.filter(c => c.name.toLowerCase().includes(query));
+                 },
+                 get filteredBrands() {
+                     if (!this.brandSearch.trim()) return brands;
+                     const query = this.brandSearch.toLowerCase();
+                     return brands.filter(b => b.name.toLowerCase().includes(query));
+                 },
+                 get selectedCategoryName() {
+                     if (!categoryId) return '{{ __('messages.pos_all') }}';
+                     const c = categories.find(x => x.id === categoryId);
+                     return c ? c.name : '{{ __('messages.pos_all') }}';
+                 },
+                 get selectedBrandName() {
+                     if (!brandId) return '{{ __('messages.pos_all') }}';
+                     const b = brands.find(x => x.id === brandId);
+                     return b ? b.name : '{{ __('messages.pos_all') }}';
+                 }
+             }">
 
             {{-- Row 1: More / Quick Module Links (horizontal chip-scroll) --}}
-            <x-pos.chip-scroll :label="__('messages.pos_more')" variant="chips" class="bg-slate-50/60 dark:bg-slate-800/30">
-                <button type="button" id="pos-held-toggle"
-                        class="shrink-0 snap-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-800 transition"
-                        @click="document.getElementById('pos-held-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/></svg>
-                    {{ __('messages.held_sales') }} <span x-text="'(' + cart.held_count + ')'"></span>
-                </button>
+            <x-pos.chip-scroll :label="__('messages.pos_more')" variant="chips" class="bg-slate-50/60 dark:bg-slate-800/30 rounded-t-2xl">
                 @foreach ($moduleLinks as [$path, $label, $icon])
                     <a href="{{ url('/store/' . $store->slug . '/' . $path) }}"
-                       class="shrink-0 snap-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition">
+                       class="shrink-0 snap-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 shadow-xs transition">
                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $icon !!}</svg>
                         {{ __('messages.' . $label) }}
                     </a>
                 @endforeach
             </x-pos.chip-scroll>
 
-            {{-- Row 2: Category chips --}}
-            <x-pos.chip-scroll :label="__('messages.categories')">
-                <button type="button" @click="toggleCategory(0)"
-                        class="shrink-0 snap-start px-3.5 py-1.5 rounded-2xl text-[13px] font-black border transition"
-                        :class="categoryId === 0 ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25 ring-2 ring-blue-600/30' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
-                    <span x-show="categoryId === 0" class="inline-block mr-0.5">✓</span>{{ __('messages.pos_all') }}
-                </button>
-                <template x-for="c in categories" :key="'cat-' + c.id">
-                    <button type="button" @click="toggleCategory(c.id)"
-                            class="shrink-0 snap-start px-3.5 py-1.5 rounded-2xl text-[13px] font-black border transition"
-                            :class="categoryId === c.id ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25 ring-2 ring-blue-600/30' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
-                        <span x-show="categoryId === c.id" class="inline-block mr-0.5">✓</span><span x-text="c.name"></span>
-                    </button>
-                </template>
-            </x-pos.chip-scroll>
+            {{-- Row 2: Search, Barcode Scan, Web Orders + Categories & Brands Dropdown Filters --}}
+            <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 dark:border-slate-800 rounded-b-2xl bg-white dark:bg-slate-900">
+                <div class="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
+                    
+                    {{-- Search (barcode / SKU / name — F1) --}}
+                    <div>
+                        <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
+                            {{ __('messages.search') }}
+                        </label>
+                        <div class="relative w-60 xl:w-68">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            </span>
+                            <input type="text" x-ref="searchInput" x-model="q" @input="onSearch()" @keydown.enter.prevent="loadGrid()"
+                                   placeholder="{{ __('messages.pos_search_placeholder') }}"
+                                   class="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/60 pl-9 pr-11 text-xs font-bold placeholder:font-semibold focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition">
+                            <span class="hidden sm:inline absolute right-2 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded-md bg-blue-600/10 text-blue-600 dark:text-blue-400 text-[9px] font-black">F1</span>
+                        </div>
+                    </div>
 
-            {{-- Row 3: Brand chips --}}
-            <x-pos.chip-scroll :label="__('messages.brands')" class="rounded-b-2xl">
-                <button type="button" @click="toggleBrand(0)"
-                        class="shrink-0 snap-start px-3 py-1 rounded-2xl text-xs font-bold border transition"
-                        :class="brandId === 0 ? 'bg-blue-600 text-white border-blue-600 ring-2 ring-blue-600/30' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
-                    <span x-show="brandId === 0" class="inline-block mr-0.5">✓</span>{{ __('messages.pos_all') }}
-                </button>
-                <template x-for="b in brands" :key="'brand-' + b.id">
-                    <button type="button" @click="toggleBrand(b.id)"
-                            class="shrink-0 snap-start px-3 py-1 rounded-2xl text-xs font-bold border transition"
-                            :class="brandId === b.id ? 'bg-blue-600 text-white border-blue-600 ring-2 ring-blue-600/30' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
-                        <span x-show="brandId === b.id" class="inline-block mr-0.5">✓</span><span x-text="b.name"></span>
-                    </button>
-                </template>
-            </x-pos.chip-scroll>
+                    {{-- Scan barcode button --}}
+                    <div class="self-end">
+                        <button type="button" @click="$refs.searchInput?.focus()"
+                                class="shrink-0 w-10 h-10 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 border border-blue-600/20 transition grid place-items-center cursor-pointer"
+                                title="{{ __('messages.pos_scan_barcode') }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/><path d="M7 8h10"/><path d="M7 16h10"/></svg>
+                        </button>
+                    </div>
+
+                    {{-- Import web order button --}}
+                    <div class="self-end">
+                        <button type="button" @click="openWebOrders()"
+                                class="shrink-0 w-10 h-10 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 border border-blue-600/20 transition grid place-items-center cursor-pointer"
+                                title="{{ __('messages.pos_import_web_order') }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="self-end mb-2 h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
+
+                    {{-- Category Dropdown Filter --}}
+                    <div class="relative" @click.outside="catDropdownOpen = false">
+                        <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
+                            {{ __('messages.categories') }}
+                        </label>
+                        <button type="button"
+                                @click="catDropdownOpen = !catDropdownOpen; brandDropdownOpen = false; if (catDropdownOpen) $nextTick(() => $refs.catSearchInput?.focus())"
+                                class="min-w-[190px] max-w-[240px] h-10 px-3 rounded-xl border text-xs font-bold flex items-center justify-between gap-2 shadow-xs transition cursor-pointer"
+                                :class="categoryId > 0 
+                                    ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 ring-2 ring-blue-500/20' 
+                                    : 'bg-slate-50/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <svg class="w-3.5 h-3.5 shrink-0" :class="categoryId > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+                                <span class="truncate font-black" x-text="selectedCategoryName"></span>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <span x-show="categoryId > 0" @click.stop="toggleCategory(0)" class="w-4 h-4 rounded-full bg-blue-200 dark:bg-blue-800 text-blue-700 dark:text-blue-200 hover:bg-blue-300 grid place-items-center text-[10px] font-black" title="{{ __('messages.clear') }}">✕</span>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="catDropdownOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                        </button>
+
+                        {{-- Dropdown Menu --}}
+                        <div x-show="catDropdownOpen" x-cloak x-transition
+                             class="absolute left-0 top-full mt-1.5 w-72 max-h-80 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl z-50 p-2 flex flex-col">
+                            {{-- Search in categories --}}
+                            <div class="relative mb-2">
+                                <svg class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                <input type="text" x-ref="catSearchInput" x-model="catSearch" placeholder="{{ __('messages.pos_search_placeholder') }}"
+                                       class="w-full h-8 pl-8 pr-3 text-xs font-semibold rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+                            <div class="overflow-y-auto flex-1 space-y-0.5 max-h-60 pr-1 [scrollbar-width:thin]">
+                                {{-- All option --}}
+                                <button type="button" @click="toggleCategory(0); catDropdownOpen = false; catSearch = ''"
+                                        class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-between transition cursor-pointer"
+                                        :class="categoryId === 0 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'">
+                                    <span>{{ __('messages.pos_all') }}</span>
+                                    <span x-show="categoryId === 0" class="font-black">✓</span>
+                                </button>
+                                <template x-for="c in filteredCategories" :key="'cat-dd-' + c.id">
+                                    <button type="button" @click="toggleCategory(c.id); catDropdownOpen = false; catSearch = ''"
+                                            class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-between transition cursor-pointer"
+                                            :class="categoryId === c.id ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'">
+                                        <span class="truncate" x-text="c.name"></span>
+                                        <span x-show="categoryId === c.id" class="font-black shrink-0 ml-1">✓</span>
+                                    </button>
+                                </template>
+                                <div x-show="filteredCategories.length === 0" class="p-3 text-center text-xs text-slate-400 font-medium">
+                                    {{ __('messages.no_results') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Brand Dropdown Filter --}}
+                    <div class="relative" @click.outside="brandDropdownOpen = false">
+                        <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
+                            {{ __('messages.brands') }}
+                        </label>
+                        <button type="button"
+                                @click="brandDropdownOpen = !brandDropdownOpen; catDropdownOpen = false; if (brandDropdownOpen) $nextTick(() => $refs.brandSearchInput?.focus())"
+                                class="min-w-[190px] max-w-[240px] h-10 px-3 rounded-xl border text-xs font-bold flex items-center justify-between gap-2 shadow-xs transition cursor-pointer"
+                                :class="brandId > 0 
+                                    ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 ring-2 ring-blue-500/20' 
+                                    : 'bg-slate-50/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <svg class="w-3.5 h-3.5 shrink-0" :class="brandId > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/></svg>
+                                <span class="truncate font-black" x-text="selectedBrandName"></span>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <span x-show="brandId > 0" @click.stop="toggleBrand(0)" class="w-4 h-4 rounded-full bg-blue-200 dark:bg-blue-800 text-blue-700 dark:text-blue-200 hover:bg-blue-300 grid place-items-center text-[10px] font-black" title="{{ __('messages.clear') }}">✕</span>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="brandDropdownOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                        </button>
+
+                        {{-- Dropdown Menu --}}
+                        <div x-show="brandDropdownOpen" x-cloak x-transition
+                             class="absolute left-0 top-full mt-1.5 w-72 max-h-80 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl z-50 p-2 flex flex-col">
+                            {{-- Search in brands --}}
+                            <div class="relative mb-2">
+                                <svg class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                <input type="text" x-ref="brandSearchInput" x-model="brandSearch" placeholder="{{ __('messages.pos_search_placeholder') }}"
+                                       class="w-full h-8 pl-8 pr-3 text-xs font-semibold rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 outline-none focus:ring-1 focus:ring-blue-500">
+                            </div>
+                            <div class="overflow-y-auto flex-1 space-y-0.5 max-h-60 pr-1 [scrollbar-width:thin]">
+                                {{-- All option --}}
+                                <button type="button" @click="toggleBrand(0); brandDropdownOpen = false; brandSearch = ''"
+                                        class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-between transition cursor-pointer"
+                                        :class="brandId === 0 ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'">
+                                    <span>{{ __('messages.pos_all') }}</span>
+                                    <span x-show="brandId === 0" class="font-black">✓</span>
+                                </button>
+                                <template x-for="b in filteredBrands" :key="'brand-dd-' + b.id">
+                                    <button type="button" @click="toggleBrand(b.id); brandDropdownOpen = false; brandSearch = ''"
+                                            class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center justify-between transition cursor-pointer"
+                                            :class="brandId === b.id ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'">
+                                        <span class="truncate" x-text="b.name"></span>
+                                        <span x-show="brandId === b.id" class="font-black shrink-0 ml-1">✓</span>
+                                    </button>
+                                </template>
+                                <div x-show="filteredBrands.length === 0" class="p-3 text-center text-xs text-slate-400 font-medium">
+                                    {{ __('messages.no_results') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Active Filters Reset Button --}}
+                    <div class="self-end pb-0.5" x-show="categoryId > 0 || brandId > 0 || q" x-cloak>
+                        <button type="button" @click="toggleCategory(0); toggleBrand(0); q = ''; loadGrid()"
+                                class="h-10 px-3 rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-900/60 transition inline-flex items-center gap-1.5 cursor-pointer">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                            <span>{{ __('messages.clear_filters') }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Active filter pill badges --}}
+                <div class="flex items-center gap-2 self-end pb-0.5 text-xs">
+                    <span x-show="categoryId > 0" x-cloak class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800">
+                        <span class="text-[10px] text-blue-500 font-normal uppercase">{{ __('messages.categories') }}:</span>
+                        <span x-text="selectedCategoryName"></span>
+                        <button type="button" @click="toggleCategory(0)" class="hover:text-rose-600 font-black ml-0.5">✕</button>
+                    </span>
+                    <span x-show="brandId > 0" x-cloak class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800">
+                        <span class="text-[10px] text-blue-500 font-normal uppercase">{{ __('messages.brands') }}:</span>
+                        <span x-text="selectedBrandName"></span>
+                        <button type="button" @click="toggleBrand(0)" class="hover:text-rose-600 font-black ml-0.5">✕</button>
+                    </span>
+                </div>
+            </div>
         </div>
 
         {{-- ── Mini sales summary strip (always visible, no tab needed) ──── --}}
@@ -552,7 +746,7 @@
         @endif
 
         {{-- ── Two-panel: product grid (left) + cart (right) ─────────────── --}}
-        <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_400px] items-start">
+        <div class="grid gap-1 lg:grid-cols-[minmax(0,1fr)_400px] items-start">
 
             {{-- LEFT: product grid --}}
             <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-sm min-w-0"
@@ -586,55 +780,55 @@
                 </div>
 
                 {{-- Product cards (grid / list mode) --}}
-                {{-- GRID MODE (Mobile: 2 columns, Tablet: 3 columns, Desktop: 4 columns) --}}
+                {{-- GRID MODE (Mobile: 2 columns, Tablet: 3-4 columns, Desktop: 5 columns) --}}
                 <div x-show="gridMode !== 'list'"
-                     class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3.5 max-h-[58vh] overflow-y-auto pr-1 pb-1">
+                     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 min-[1350px]:grid-cols-5 2xl:grid-cols-5 gap-0.5 max-h-[58vh] overflow-y-auto pr-1 pb-1">
                     <template x-for="p in products" :key="p.id">
-                        <div class="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition hover:shadow-lg hover:-translate-y-0.5 active:scale-[.98]"
+                        <div class="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden p-2 flex flex-col justify-between transition hover:shadow-md hover:-translate-y-0.5 active:scale-[.98]"
                              :class="parseFloat(p.balance) > 0 ? '' : 'opacity-55'">
                             {{-- Image section --}}
-                            <div class="relative m-2 aspect-[4/3] rounded-xl bg-slate-100 dark:bg-slate-900/70 grid place-items-center overflow-hidden">
+                            <div class="relative aspect-[4/3] rounded-lg bg-slate-100 dark:bg-slate-900/70 grid place-items-center overflow-hidden mb-1.5">
                                 <template x-if="p.image">
-                                    <img :src="p.image" alt="" loading="lazy" class="absolute inset-0 w-full h-full object-contain p-3">
+                                    <img :src="p.image" alt="" loading="lazy" class="absolute inset-0 w-full h-full object-contain p-2">
                                 </template>
                                 <template x-if="!p.image">
-                                    <svg class="w-10 h-10 text-slate-300 dark:text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                                    <svg class="w-8 h-8 text-slate-300 dark:text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                                 </template>
 
                                 {{-- Stock status badge (top-right) --}}
-                                <span class="absolute top-2 right-2 px-2 py-0.5 rounded-md text-[9px] font-black text-white shadow-sm"
+                                <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[8.5px] font-black text-white shadow-sm"
                                       :class="parseFloat(p.balance) <= 0 ? 'bg-rose-500' : (parseFloat(p.balance) <= 5 ? 'bg-amber-500' : 'bg-emerald-500')"
                                       x-text="parseFloat(p.balance) <= 0 ? labels.out_of_stock : (parseFloat(p.balance) <= 5 ? ('×' + p.balance) : labels.in_stock)"></span>
 
                                 {{-- Variants badge (top-left) --}}
                                 <span x-show="p.variants && p.variants.length > 0" x-cloak
-                                      class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-blue-600 text-white text-[9px] font-black shadow-sm"
+                                      class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-blue-600 text-white text-[8.5px] font-black shadow-sm"
                                       x-text="'↕ ' + p.variants.length + ' ' + labels.variant"></span>
 
                                 {{-- Category badge (bottom-left) --}}
                                 <span x-show="p.category" x-cloak
-                                      class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-white/90 dark:bg-slate-900/90 text-[9px] font-black uppercase tracking-wider text-slate-500 border border-slate-200 dark:border-slate-700 shadow-sm"
+                                      class="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-white/90 dark:bg-slate-900/90 text-[8px] font-black uppercase tracking-wider text-slate-500 border border-slate-200 dark:border-slate-700 shadow-sm"
                                       x-text="p.category"></span>
                             </div>
 
                             {{-- Info section --}}
-                            <div class="px-3 pb-3 pt-1">
-                                <p class="text-sm font-bold leading-snug line-clamp-2 min-h-[2.5em]" x-text="p.name"></p>
-                                <div class="mt-2 flex items-end justify-between gap-2">
+                            <div class="flex-1 flex flex-col justify-between">
+                                <p class="text-xs sm:text-[13px] font-bold leading-snug line-clamp-2 min-h-[2.4em] text-slate-800 dark:text-slate-200" x-text="p.name"></p>
+                                <div class="mt-1.5 flex items-end justify-between gap-1.5">
                                     <div class="min-w-0">
                                         {{-- Retail/walk-in: show the sale (old) price struck through --}}
-                                        <p class="text-[11px] text-rose-500 font-bold line-through" x-show="p.tier !== 'wholesale' && p.old_price && parseFloat(p.old_price) > parseFloat(p.price)" x-text="'Ks ' + Number(p.old_price).toLocaleString()"></p>
+                                        <p class="text-[10px] text-rose-500 font-bold line-through truncate" x-show="p.tier !== 'wholesale' && p.old_price && parseFloat(p.old_price) > parseFloat(p.price)" x-text="'Ks ' + Number(p.old_price).toLocaleString()"></p>
                                         {{-- Wholesale tier: strike the retail price the shopper is NOT paying --}}
-                                        <p class="text-[11px] text-rose-500 font-bold line-through" x-show="p.tier === 'wholesale' && parseFloat(p.retail_price) > parseFloat(p.price)" x-text="'Ks ' + Number(p.retail_price).toLocaleString()"></p>
-                                        <p class="text-base font-extrabold text-blue-600 dark:text-blue-400 leading-none" x-text="'Ks ' + Number(p.price).toLocaleString()"></p>
-                                        <p class="text-[10px] font-black text-amber-600 dark:text-amber-400"
+                                        <p class="text-[10px] text-rose-500 font-bold line-through truncate" x-show="p.tier === 'wholesale' && parseFloat(p.retail_price) > parseFloat(p.price)" x-text="'Ks ' + Number(p.retail_price).toLocaleString()"></p>
+                                        <p class="text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400 leading-tight" x-text="'Ks ' + Number(p.price).toLocaleString()"></p>
+                                        <p class="text-[9px] font-black text-amber-600 dark:text-amber-400 truncate"
                                            x-show="p.tier === 'wholesale' && parseFloat(p.retail_price) > parseFloat(p.price)"
                                            x-text="'−Ks ' + (parseFloat(p.retail_price) - parseFloat(p.price)).toLocaleString()"></p>
                                     </div>
                                     <button type="button" @click="addProduct(p)" :disabled="parseFloat(p.balance) <= 0"
-                                            class="shrink-0 w-10 h-10 rounded-xl bg-blue-600 text-white grid place-items-center shadow-lg shadow-blue-600/30 hover:bg-blue-500 active:scale-90 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                                            class="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-blue-600 text-white grid place-items-center shadow-md shadow-blue-600/30 hover:bg-blue-500 active:scale-90 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
                                             :title="p.variants && p.variants.length > 0 ? labels.select_variant : labels.add_to_cart">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                                     </button>
                                 </div>
                             </div>
@@ -642,35 +836,37 @@
                     </template>
                 </div>
 
-                {{-- LIST MODE --}}
-                <div x-show="gridMode === 'list'" class="max-h-[58vh] overflow-y-auto space-y-1.5 pr-1 pb-1">
+                {{-- LIST MODE (Mobile: 1 column, Desktop: 2 columns, Gap: 2px) --}}
+                <div x-show="gridMode === 'list'"
+                     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-0.5 max-h-[58vh] overflow-y-auto pr-1 pb-1">
                     <template x-for="p in products" :key="'list-' + p.id">
-                        <div class="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 hover:border-blue-400 hover:shadow-md transition"
+                        <div class="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 hover:border-blue-400 hover:shadow-sm transition"
                              :class="parseFloat(p.balance) > 0 ? '' : 'opacity-50'">
                             {{-- Thumbnail --}}
-                            <div class="shrink-0 w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-900/70 grid place-items-center overflow-hidden">
+                            <div class="shrink-0 w-9 h-9 rounded-md bg-slate-100 dark:bg-slate-900/70 grid place-items-center overflow-hidden">
                                 <template x-if="p.image">
                                     <img :src="p.image" alt="" loading="lazy" class="w-full h-full object-contain p-0.5">
                                 </template>
                                 <template x-if="!p.image">
-                                    <svg class="w-5 h-5 text-slate-300 dark:text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                                    <svg class="w-4 h-4 text-slate-300 dark:text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                                 </template>
                             </div>
                             {{-- Name + SKU --}}
                             <div class="min-w-0 flex-1">
-                                <p class="text-sm font-bold truncate" x-text="p.name"></p>
-                                <p class="text-[11px] text-slate-400 font-mono" x-show="p.sku" x-text="p.sku || ''"></p>
+                                <p class="text-xs font-bold truncate text-slate-800 dark:text-slate-200" x-text="p.name"></p>
+                                <p class="text-[10px] text-slate-400 font-mono truncate" x-show="p.sku" x-text="p.sku || ''"></p>
                             </div>
                             {{-- Stock badge --}}
-                            <span class="shrink-0 px-2 py-0.5 rounded-md text-[10px] font-black text-white"
+                            <span class="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black text-white"
                                   :class="parseFloat(p.balance) <= 0 ? 'bg-rose-500' : (parseFloat(p.balance) <= 5 ? 'bg-amber-500' : 'bg-emerald-500')"
                                   x-text="parseFloat(p.balance) <= 0 ? labels.out_of_stock : '×' + p.balance"></span>
                             {{-- Price --}}
-                            <p class="shrink-0 text-sm font-extrabold text-blue-600 dark:text-blue-400 tabular-nums" x-text="'Ks ' + Number(p.price).toLocaleString()"></p>
+                            <p class="shrink-0 text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400 tabular-nums" x-text="'Ks ' + Number(p.price).toLocaleString()"></p>
                             {{-- Add button --}}
                             <button type="button" @click="addProduct(p)" :disabled="parseFloat(p.balance) <= 0"
-                                    class="shrink-0 w-10 h-10 rounded-xl bg-blue-600 text-white grid place-items-center shadow-lg shadow-blue-600/30 hover:bg-blue-500 active:scale-90 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                                    class="shrink-0 w-8 h-8 rounded-lg bg-blue-600 text-white grid place-items-center shadow-sm hover:bg-blue-500 active:scale-90 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                                    :title="p.variants && p.variants.length > 0 ? labels.select_variant : labels.add_to_cart">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                             </button>
                         </div>
                     </template>
@@ -1404,7 +1600,7 @@
                 </div>
 
                 {{-- REGISTERS: shift card + today's closing summary --}}
-                <div x-show="activeTab === 'registers'" class="space-y-5">
+                <div x-show="activeTab === 'registers'" class="space-y-1">
                     @if ($openShift)
                         <section id="pos-shift-card" class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm scroll-mt-24">
                             <div class="flex items-start justify-between gap-3 mb-4">
