@@ -8,7 +8,7 @@
     $storeLogoUrl = $storeLogo ? asset('storage/' . $storeLogo) : null;
 @endphp
 
-<div class="max-w-5xl mx-auto space-y-5 sm:space-y-6 pb-12">
+<div class="max-w-5xl mx-auto space-y-0.5 sm:space-y-1 pb-12">
     {{-- Top Breadcrumb & Store Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-slate-800">
         <div class="flex items-center gap-2.5">
@@ -62,7 +62,7 @@
                         </div>
                         <a href="{{ url('/products?store_slug=' . ($store?->slug ?? request('store_slug'))) }}"
                            style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;"
-                           class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-white font-black text-xs shadow-md shadow-orange-500/20 hover:brightness-110 transition border-0">
+                           class="btn-3d inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-white font-black text-xs shadow-md shadow-orange-500/20 hover:brightness-110 border-0">
                             <span>{{ __('messages.view_products') }}</span>
                             <span>→</span>
                         </a>
@@ -98,7 +98,9 @@
                                     <span class="px-2 font-black text-xs sm:text-sm text-slate-900 dark:text-white min-w-[24px] text-center" x-text="item.quantity"></span>
                                     <button @click="$store.orderBuilder.updateQty(item.id, 1)" type="button" class="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer select-none">+</button>
                                 </div>
-                                <button @click="$store.orderBuilder.removeItem(item.id)" type="button" class="w-8 h-8 flex items-center justify-center rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-bold transition text-sm cursor-pointer" title="Remove">🗑️</button>
+                                <button @click="$store.orderBuilder.removeItem(item.id)" type="button" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition cursor-pointer" title="Remove">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
                             </div>
                         </div>
                     </template>
@@ -111,76 +113,122 @@
                 </div>
             </div>
 
-            {{-- Trust Badges Row --}}
+            {{-- Trust badges --}}
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                <div class="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-0.5">
-                    <span class="text-base">🛡️</span>
-                    <p class="font-bold text-slate-700 dark:text-slate-300 text-[11px]">100% Authentic</p>
+                <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                    <span class="text-base block mb-1">⚡</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-200">{{ __('messages.fast_delivery') }}</span>
                 </div>
-                <div class="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-0.5">
-                    <span class="text-base">💵</span>
-                    <p class="font-bold text-slate-700 dark:text-slate-300 text-[11px]">Cash On Delivery</p>
+                <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                    <span class="text-base block mb-1">🛡️</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-200">{{ __('messages.genuine_warranty') }}</span>
                 </div>
-                <div class="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-0.5">
-                    <span class="text-base">🚚</span>
-                    <p class="font-bold text-slate-700 dark:text-slate-300 text-[11px]">Fast Delivery</p>
+                <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                    <span class="text-base block mb-1">💬</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-200">{{ __('messages.direct_support') }}</span>
                 </div>
-                <div class="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-0.5">
-                    <span class="text-base">⭐</span>
-                    <p class="font-bold text-slate-700 dark:text-slate-300 text-[11px]">Service Guaranteed</p>
+                <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                    <span class="text-base block mb-1">🚚</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-200">{{ __('messages.nationwide_shipping') }}</span>
                 </div>
             </div>
         </div>
 
-        {{-- Customer Information & Order Form Column (5 cols) --}}
+        {{-- Checkout Form Column (5 cols) --}}
         <div class="lg:col-span-5 space-y-4">
-            <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-4">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-4 sticky top-24"
+                 x-data="{
+                     contactChannel: '{{ old('contact_channel', 'phone') }}',
+                     submitting: false,
+                     submitOrder(e) {
+                         if (this.submitting) return;
+                         if (!window.Alpine.store('orderBuilder') || window.Alpine.store('orderBuilder').items.length === 0) {
+                             e.preventDefault();
+                             alert('ကျေးဇူးပြု၍ မှာယူလိုသည့် ပစ္စည်းအရင်ရွေးချယ်ပါ');
+                             return;
+                         }
+                         this.submitting = true;
+                         this.$refs.itemsJsonInput.value = JSON.stringify(window.Alpine.store('orderBuilder').items);
+                         this.$refs.orderForm.submit();
+                     }
+                 }">
                 <div class="border-b border-slate-100 dark:border-slate-800/80 pb-3">
                     <h2 class="font-black text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
-                        <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-950/60 text-sky-600 text-xs">📝</span>
+                        <span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-950/60 text-[#f85606] text-xs">📝</span>
                         <span>{{ __('messages.customer_info') }}</span>
                     </h2>
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{{ __('messages.customer_info_hint') }}</p>
                 </div>
 
-                <form method="POST" action="{{ url('/store/' . ($store?->slug ?? request('store_slug')) . '/orders') }}" class="space-y-3.5"
-                    x-data="{
-                        contactChannel: '{{ old('contact_channel', 'phone') }}',
-                        contactHelp() {
-                            return this.contactChannel === 'viber'
-                                ? 'Viber ဖြင့် ချိတ်ဆက်လိုပါက ဖုန်းနံပါတ် ဖြည့်ပေးပါရန်'
-                                : 'Telegram ဖြင့် ချိတ်ဆက်လိုပါက Telegram @username ဖြည့်ပေးပါရန်';
-                        }
-                    }">
+                <form x-ref="orderForm" method="POST" action="{{ url('/store/' . ($store?->slug ?? request('store_slug')) . '/orders') }}" @submit.prevent="submitOrder($event)" class="space-y-3.5">
                     @csrf
-                    <input type="hidden" name="items_json" :value="JSON.stringify($store.orderBuilder ? $store.orderBuilder.items : [])" />
+                    <input type="hidden" name="items_json" x-ref="itemsJsonInput" value="" />
+                    <input type="hidden" name="contact_channel" :value="contactChannel" />
 
                     {{-- Customer Name --}}
-                    <div class="space-y-1">
-                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">{{ __('messages.full_name') }} <span class="text-rose-500">*</span></label>
-                        <input type="text" name="customer_name" value="{{ old('customer_name', auth()->user()?->name) }}" required placeholder="{{ __('messages.name_placeholder') }}"
-                               class="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2.5 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-orange-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none shadow-2xs" />
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                            {{ __('messages.customer_name') }} <span class="text-rose-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="customer_name"
+                            value="{{ old('customer_name', auth()->user()?->name) }}"
+                            required
+                            placeholder="ဥပမာ - မောင်မောင်"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#f85606] outline-none transition"
+                        />
+                        @error('customer_name')
+                            <p class="text-rose-500 text-[11px] font-bold mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
-                    {{-- Phone Number --}}
-                    <div class="space-y-1">
-                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">{{ __('messages.phone_number') }} <span class="text-rose-500">*</span></label>
-                        <input type="tel" inputmode="tel" name="customer_phone" value="{{ old('customer_phone', auth()->user()?->phone) }}" required placeholder="09xxxxxxxxx"
-                               class="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2.5 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-orange-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none shadow-2xs" />
+                    {{-- Customer Phone --}}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                            {{ __('messages.customer_phone') }} <span class="text-rose-500">*</span>
+                        </label>
+                        <input
+                            type="tel"
+                            name="customer_phone"
+                            value="{{ old('customer_phone', auth()->user()?->phone) }}"
+                            required
+                            placeholder="ဥပမာ - 09xxxxxxxxx"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#f85606] outline-none transition"
+                        />
+                        @error('customer_phone')
+                            <p class="text-rose-500 text-[11px] font-bold mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     {{-- Delivery Address --}}
-                    <div class="space-y-1">
-                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">{{ __('messages.address') }} <span class="text-rose-500">*</span></label>
-                        <textarea name="customer_address" rows="2" required placeholder="{{ __('messages.address_placeholder') }}"
-                                  class="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2.5 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-orange-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none shadow-2xs"></textarea>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                            {{ __('messages.delivery_address') }} <span class="text-rose-500">*</span>
+                        </label>
+                        <textarea
+                            name="customer_address"
+                            rows="2"
+                            required
+                            placeholder="ပို့ဆောင်ပေးရမည့် လိပ်စာ (မြို့နယ်/လမ်း/အိမ်နံပါတ်)"
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-[#f85606] outline-none transition"
+                        >{{ old('customer_address') }}</textarea>
+                        @error('customer_address')
+                            <p class="text-rose-500 text-[11px] font-bold mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     {{-- Customer Note --}}
-                    <div class="space-y-1">
-                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">{{ __('messages.note_label') }}</label>
-                        <input type="text" name="customer_note" placeholder="{{ __('messages.note_placeholder') }}"
-                               class="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-orange-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none shadow-2xs" />
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                            {{ __('messages.notes') }} ({{ __('messages.optional') }})
+                        </label>
+                        <input
+                            type="text"
+                            name="customer_note"
+                            value="{{ old('customer_note') }}"
+                            placeholder="မှာကြားလိုသည့် အချက်အလက်များ"
+                            class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-[#f85606] outline-none transition"
+                        />
                     </div>
 
                     {{-- Additional Identifier for Viber/Telegram --}}
@@ -194,21 +242,23 @@
                             value="{{ old('contact_identifier') }}"
                             :placeholder="contactChannel === 'viber' ? '09xxxxxxxxx' : '@username'"
                             :inputmode="contactChannel === 'viber' ? 'tel' : 'text'"
-                            class="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-orange-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none shadow-2xs"
+                            class="w-full rounded-xl border border-slate-300 dark:border-slate-700 px-3.5 py-2 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-[#f85606] focus:outline-none shadow-2xs"
                             autocomplete="tel"
                         />
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400" x-text="contactHelp()"></p>
                     </div>
 
-                    {{-- 4 Action Buttons in 2-Column Grid (Viber, Telegram, Phone, Send Order) --}}
-                    <div class="space-y-1.5 pt-1">
-                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">{{ __('messages.contact_channel') }} & အော်ဒါပေးပို့ရန်</label>
-                        <input type="hidden" name="contact_channel" :value="contactChannel" />
+                    {{-- Preferred Contact Channel (Big 4-Grid Action Buttons) --}}
+                    <div class="pt-2">
+                        <label class="block text-xs font-black text-slate-900 dark:text-white mb-2 flex items-center justify-between">
+                            <span>အော်ဒါအတည်ပြုမည့် နည်းလမ်း ရွေးချယ်ပါ:</span>
+                            <span class="text-[10px] text-orange-500 font-bold" x-text="contactChannel.toUpperCase()"></span>
+                        </label>
+
                         <div class="grid grid-cols-2 gap-2.5">
                             {{-- 1. Viber Channel Button --}}
                             <button type="button" @click="contactChannel = 'viber'"
                                 style="background: linear-gradient(135deg, #7360F2 0%, #5f4de0 100%) !important; color: #ffffff !important;"
-                                class="flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-black transition transform active:scale-95 cursor-pointer select-none shadow-md shadow-purple-500/25 border-0"
+                                class="btn-3d flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-black select-none border-0"
                                 :class="contactChannel === 'viber' ? 'ring-2 ring-purple-400 ring-offset-2 scale-[1.02] brightness-110' : 'opacity-85 hover:opacity-100'">
                                 <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 shrink-0">
                                     <x-brand-icon brand="viber" class="h-3.5 w-3.5 shrink-0 fill-white text-white"/>
@@ -219,7 +269,7 @@
                             {{-- 2. Telegram Channel Button --}}
                             <button type="button" @click="contactChannel = 'telegram'"
                                 style="background: linear-gradient(135deg, #229ED9 0%, #0284c7 100%) !important; color: #ffffff !important;"
-                                class="flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-black transition transform active:scale-95 cursor-pointer select-none shadow-md shadow-sky-500/25 border-0"
+                                class="btn-3d flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-black select-none border-0"
                                 :class="contactChannel === 'telegram' ? 'ring-2 ring-sky-400 ring-offset-2 scale-[1.02] brightness-110' : 'opacity-85 hover:opacity-100'">
                                 <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 shrink-0">
                                     <x-brand-icon brand="telegram" class="h-3.5 w-3.5 shrink-0 fill-white text-white"/>
@@ -230,7 +280,7 @@
                             {{-- 3. Phone Channel Button --}}
                             <button type="button" @click="contactChannel = 'phone'"
                                 style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: #ffffff !important;"
-                                class="flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-black transition transform active:scale-95 cursor-pointer select-none shadow-md shadow-emerald-500/25 border-0"
+                                class="btn-3d flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-black select-none border-0"
                                 :class="contactChannel === 'phone' ? 'ring-2 ring-emerald-400 ring-offset-2 scale-[1.02] brightness-110' : 'opacity-85 hover:opacity-100'">
                                 <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 shrink-0 text-xs">📞</span>
                                 <span class="!text-white font-black">Phone</span>
@@ -241,7 +291,7 @@
                                 type="submit"
                                 :disabled="!$store.orderBuilder || $store.orderBuilder.items.length === 0"
                                 style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;"
-                                class="flex items-center justify-center gap-1.5 py-3 px-3 rounded-xl text-xs font-black text-white shadow-md shadow-orange-500/25 hover:brightness-110 disabled:opacity-50 transition transform active:scale-95 cursor-pointer border-0 select-none"
+                                class="btn-3d flex items-center justify-center gap-1.5 py-3 px-3 rounded-xl text-xs font-black text-white shadow-md shadow-orange-500/25 hover:brightness-110 disabled:opacity-50 border-0 select-none cursor-pointer"
                             >
                                 <span class="text-sm">⚡</span>
                                 <span class="font-black text-white whitespace-nowrap">{{ __('messages.send_order') }}</span>

@@ -145,6 +145,53 @@ html[lang="my"] [class*="tracking-"],
     .admin-calculator button {
         -webkit-tap-highlight-color: transparent;
     }
+
+    /* Lightweight 3D / Elevated tactile button styles (150ms transition, subtle shadow & hover/active press) */
+    .btn-3d {
+        transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+        box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.15), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+    .btn-3d:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 0 0 rgba(0, 0, 0, 0.18), 0 2px 5px 0 rgba(0, 0, 0, 0.12);
+    }
+    .btn-3d:active {
+        transform: translateY(1px);
+        box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.08);
+    }
+    .dark .btn-3d {
+        box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.4), 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+    }
+    .dark .btn-3d:hover {
+        box-shadow: 0 3px 0 0 rgba(0, 0, 0, 0.5), 0 2px 5px 0 rgba(0, 0, 0, 0.35);
+    }
+    .dark .btn-3d:active {
+        box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    /* True OLED Dark Mode surfaces */
+    .oled-canvas {
+        background-color: #000000 !important;
+    }
+    .dark .oled-surface {
+        background-color: #0a0f1d !important;
+        border-color: #1e293b !important;
+    }
+    .dark .oled-surface-card {
+        background-color: #111827 !important;
+        border-color: #1e293b !important;
+    }
+
+    /* Ultra-dense 2px Spacing Rhythm Utilities */
+    .space-y-2px > :not([hidden]) ~ :not([hidden]) {
+        margin-top: 2px !important;
+    }
+    .gap-2px {
+        gap: 2px !important;
+    }
+    .p-2px {
+        padding: 2px !important;
+    }
 }
 
 /* Reserve the scrollbar gutter so pages don't shift horizontally when navigating

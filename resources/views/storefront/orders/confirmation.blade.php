@@ -1,7 +1,7 @@
 @extends('layouts.storefront.app', ['title' => 'Order Confirmation'])
 
 @section('content')
-<div class="max-w-2xl mx-auto space-y-1 sm:space-y-1.5 lg:space-y-2">
+<div class="max-w-2xl mx-auto space-y-0.5 sm:space-y-1">
     {{-- Success Banner --}}
     <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 text-center space-y-3 border border-emerald-500/30 bg-gradient-to-b from-emerald-500/10 via-transparent to-transparent shadow-2xl">
         <div class="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center text-3xl mx-auto shadow-lg shadow-emerald-500/30">
@@ -97,14 +97,14 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
             @if ($viberUrl)
             <a href="{{ $viberUrl }}" data-ios-href="{{ $viberIosUrl ?? $viberUrl }}" target="_blank" rel="noopener noreferrer"
-               class="flex items-center justify-center space-x-2 px-5 py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm rounded-2xl shadow-lg shadow-purple-600/20 transition transform active:scale-95">
+               class="btn-3d flex items-center justify-center space-x-2 px-5 py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm rounded-2xl shadow-lg shadow-purple-600/20">
                 <x-brand-icon brand="viber" class="h-5 w-5 shrink-0"/>
                 <span>Viber {{ __('messages.send_order') }}</span>
             </a>
             @endif
             @if ($telegramUrl)
             <a href="{{ $telegramUrl }}" target="_blank" rel="noopener noreferrer"
-               class="flex items-center justify-center space-x-2 px-5 py-4 bg-sky-500 hover:bg-sky-400 text-white font-bold text-sm rounded-2xl shadow-lg shadow-sky-500/20 transition transform active:scale-95">
+               class="btn-3d flex items-center justify-center space-x-2 px-5 py-4 bg-sky-500 hover:bg-sky-400 text-white font-bold text-sm rounded-2xl shadow-lg shadow-sky-500/20">
                 <x-brand-icon brand="telegram" class="h-5 w-5 shrink-0"/>
                 <span>Telegram {{ __('messages.send_order') }}</span>
             </a>

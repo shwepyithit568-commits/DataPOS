@@ -1180,9 +1180,9 @@
         ></div>
     </header>
 
-    {{-- Main Content Container (mobile: tight 4px gutters for a full-width feel; desktop keeps comfortable padding) --}}
+    {{-- Main Content Container (mobile: standard 8px outer gutters; desktop keeps comfortable padding) --}}
     @php $mainPad = $__env->hasSection('noMainPadding') ? 'pt-0 pb-6' : 'py-6'; @endphp
-    <main class="w-full px-1 sm:px-5 lg:px-8 {{ $mainPad }} relative z-10">
+    <main class="w-full px-2 sm:px-5 lg:px-8 {{ $mainPad }} relative z-10">
         {{ $slot ?? '' }}
         @yield('content')
     </main>

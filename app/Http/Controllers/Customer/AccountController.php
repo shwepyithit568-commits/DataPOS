@@ -35,9 +35,14 @@ class AccountController extends Controller
         $user = auth()->user();
         $store = $context->getStore();
 
-        $orders = Order::where('user_id', $user->id)
-            ->with(['items'])
-            ->latest()
+        $query = Order::where('user_id', $user->id)
+            ->with(['items']);
+
+        if ($store) {
+            $query->where('store_id', $store->id);
+        }
+
+        $orders = $query->latest()
             ->paginate(10);
 
         return view('customer.account.orders', compact('user', 'store', 'orders'));
@@ -51,6 +56,10 @@ class AccountController extends Controller
         // Security check: User A cannot view User B orders
         if ($order->user_id !== $user->id) {
             abort(403, 'Unauthorized order access.');
+        }
+
+        if ($store && $order->store_id !== $store->id) {
+            abort(404, 'Order not found for this store.');
         }
 
         $order->load(['items']);

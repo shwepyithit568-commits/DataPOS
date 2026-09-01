@@ -237,4 +237,32 @@ class EloadRegisterTest extends TestCase
         $this->assertEquals(9350.0, (float) $tx->cost); // 10000 * (1 - 0.065) = 9350
         $this->assertEquals(650.0, (float) $tx->profit); // 10000 - 9350 = 650
     }
+
+    public function test_manager_can_export_eload_as_csv_and_xlsx(): void
+    {
+        EloadTransaction::create([
+            'store_id'         => $this->store->id,
+            'ref_no'           => 'EL-20260901-0001',
+            'operator'         => 'mpt',
+            'phone_number'     => '095123456',
+            'type'             => 'topup',
+            'amount'           => 5000.00,
+            'cost'             => 4800.00,
+            'profit'           => 200.00,
+            'discount_percent' => 4.00,
+            'payment_method'   => 'cash',
+            'status'           => 'completed',
+            'occurred_at'      => now(),
+        ]);
+
+        // CSV export
+        $csvRes = $this->actingAs($this->manager)->get("/store/{$this->store->slug}/admin/eload/export?format=csv");
+        $csvRes->assertOk();
+        $this->assertStringContainsString('.csv', (string) $csvRes->headers->get('content-disposition'));
+
+        // XLSX export
+        $xlsxRes = $this->actingAs($this->manager)->get("/store/{$this->store->slug}/admin/eload/export?format=xlsx");
+        $xlsxRes->assertOk();
+        $this->assertStringContainsString('.xlsx', (string) $xlsxRes->headers->get('content-disposition'));
+    }
 }

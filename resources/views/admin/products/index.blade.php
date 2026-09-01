@@ -1,6 +1,6 @@
 @extends('layouts.admin.app')
 
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-1 sm:p-1.5')
 
 @section('content')
 @php
@@ -26,7 +26,7 @@
     $currentSort = request()->only('sort', 'search');
     $clearFiltersUrl = route('store.admin.products.index', $baseParams);
 @endphp
-<div class="w-full space-y-2 sm:space-y-2.5"
+<div class="w-full space-y-0.5 sm:space-y-1"
     x-data="{
         viewMode: localStorage.getItem('admin_view_mode') || 'table',
         selectedIds: [],
@@ -112,30 +112,30 @@
     {{-- ============================================================
          HERO HEADER — eyebrow, title, subtitle, CTA row
          ============================================================ --}}
-    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
         <div class="min-w-0">
-            <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5">
                 <span>📦 {{ __('messages.product_management') }}</span>
             </h1>
         </div>
-        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0">
+        <div class="flex flex-wrap items-center gap-1 sm:gap-1.5 shrink-0">
             <a href="{{ route('store.admin.products.master-data', $baseParams) }}"
-               class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1.5 shadow-2xs active:scale-95">
-                <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+               class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1 shadow-2xs active:scale-95">
+                <svg class="w-3 h-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
                     <path d="M4 6h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z"/>
                 </svg>
                 <span>{{ __('messages.master_data') }}</span>
             </a>
             <a href="{{ url('/store/' . $store->slug . '/admin/products/import') }}"
-               class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1.5 shadow-2xs active:scale-95">
-                <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+               class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1 shadow-2xs active:scale-95">
+                <svg class="w-3 h-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
                 </svg>
                 <span>{{ __('messages.product_import') }}</span>
             </a>
             <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}"
-               class="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition flex items-center gap-1.5 active:scale-95">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+               class="btn-3d px-3 py-1 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition flex items-center gap-1 active:scale-95">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 <span>{{ __('messages.add_product') }}</span>
             </a>
         </div>
@@ -144,73 +144,73 @@
     {{-- ============================================================
          SUMMARY STAT CARDS (4-up — mobile 2x2, tablet/desktop 4x1)
          ============================================================ --}}
-    <div class="w-full grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5" role="list" aria-label="{{ __('messages.product_summary') }}">
+    <div class="w-full grid grid-cols-2 lg:grid-cols-4 gap-1 sm:gap-1.5" role="list" aria-label="{{ __('messages.product_summary') }}">
         <a href="{{ $clearFiltersUrl }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['total'] }}">
-            <div class="shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg grid place-items-center {{ $statAccents['total'] }} shadow-inner">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-2.5 py-1.5 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-xs active:scale-[.99] {{ $statBorders['total'] }}">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center {{ $statAccents['total'] }} shadow-inner">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
             </div>
             <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-xl font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums font-outfit">
+                <p class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums font-outfit">
                     {{ number_format($summary['total']) }}
                 </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
+                <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.products') }}
                 </p>
             </div>
         </a>
 
         <a href="{{ route('store.admin.products.index', array_merge($baseParams, $currentSort, ['stock_status' => 'in_stock'])) }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['in_stock'] }}">
-            <div class="shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg grid place-items-center {{ $statAccents['in_stock'] }} shadow-inner">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-2.5 py-1.5 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-xs active:scale-[.99] {{ $statBorders['in_stock'] }}">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center {{ $statAccents['in_stock'] }} shadow-inner">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                 </svg>
             </div>
             <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-xl font-black text-emerald-600 dark:text-emerald-400 leading-none tabular-nums font-outfit">
+                <p class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 leading-none tabular-nums font-outfit">
                     {{ number_format($summary['in_stock']) }}
                 </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
+                <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.in_stock') }}
                 </p>
             </div>
         </a>
 
         <a href="{{ route('store.admin.products.index', array_merge($baseParams, $currentSort, ['stock_status' => 'out_of_stock'])) }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['out_of_stock'] }}">
-            <div class="shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg grid place-items-center {{ $statAccents['out_of_stock'] }} shadow-inner">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-2.5 py-1.5 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-xs active:scale-[.99] {{ $statBorders['out_of_stock'] }}">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center {{ $statAccents['out_of_stock'] }} shadow-inner">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </div>
             <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-xl font-black text-rose-600 dark:text-rose-400 leading-none tabular-nums font-outfit">
+                <p class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400 leading-none tabular-nums font-outfit">
                     {{ number_format($summary['out_of_stock']) }}
                 </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
+                <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.out_of_stock') }}
                 </p>
             </div>
         </a>
 
         <a href="{{ route('store.admin.products.index', array_merge($baseParams, $currentSort)) }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['featured'] }}">
-            <div class="shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg grid place-items-center {{ $statAccents['featured'] }} shadow-inner">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="currentColor">
+           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-2.5 py-1.5 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-xs active:scale-[.99] {{ $statBorders['featured'] }}">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center {{ $statAccents['featured'] }} shadow-inner">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                 </svg>
             </div>
             <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-xl font-black text-amber-600 dark:text-amber-400 leading-none tabular-nums font-outfit">
+                <p class="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400 leading-none tabular-nums font-outfit">
                     {{ number_format($summary['featured']) }}
-                    <span class="text-[11px] sm:text-sm font-bold text-slate-400 dark:text-slate-500 ml-1 tabular-nums">
+                    <span class="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 ml-0.5 tabular-nums">
                         / {{ number_format($summary['online']) }}
                     </span>
                 </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
+                <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.featured') }}
                     <span class="text-slate-400 dark:text-slate-500">
                         / {{ __('messages.products_online') }}
@@ -221,7 +221,7 @@
     </div>
 
     @if (session('success'))
-        <div class="w-full p-2.5 sm:p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
+        <div class="w-full p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 shadow-2xs">
             <span>✅</span>
             <span>{{ session('success') }}</span>
         </div>

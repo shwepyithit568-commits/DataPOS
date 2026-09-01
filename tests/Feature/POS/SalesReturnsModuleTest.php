@@ -347,4 +347,22 @@ class SalesReturnsModuleTest extends TestCase
 
         $response->assertNotFound();
     }
+
+    public function test_manager_can_export_returns_as_csv_and_xlsx(): void
+    {
+        $store = $this->makeStore();
+        $manager = $this->staff($store, 'store_manager');
+        $sale = $this->postedSale($store, $manager);
+        $this->postedReturn($store, $sale, $manager);
+
+        // CSV export
+        $csvResponse = $this->actingAs($manager)->get("/store/{$store->slug}/pos/returns/export?format=csv");
+        $csvResponse->assertOk();
+        $this->assertStringContainsString('.csv', (string) $csvResponse->headers->get('content-disposition'));
+
+        // XLSX export
+        $xlsxResponse = $this->actingAs($manager)->get("/store/{$store->slug}/pos/returns/export?format=xlsx");
+        $xlsxResponse->assertOk();
+        $this->assertStringContainsString('.xlsx', (string) $xlsxResponse->headers->get('content-disposition'));
+    }
 }

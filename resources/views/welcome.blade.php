@@ -35,7 +35,7 @@
     };
 @endphp
 
-<div class="space-y-4 sm:space-y-6">
+<div class="space-y-0.5 sm:space-y-1">
 
     {{-- =========================================================================
          1. HERO SECTION (Linn IT / Modern 2-Column Layout for Desktop)
@@ -503,8 +503,8 @@
                 </a>
             </div>
 
-            {{-- Featured Products Grid (2-col mobile, 3-col tablet, 4-col laptop, 5-col desktop, 6-col widescreen) --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5 sm:gap-2 lg:gap-2.5">
+            {{-- Featured Products Grid (2-col mobile, 3-col tablet, 5-col desktop, 6-col widescreen) --}}
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5 sm:gap-2 lg:gap-2.5">
                 @foreach ($featuredProducts as $product)
                     <x-product-card 
                         :product="$product" 
@@ -598,8 +598,8 @@
                 </a>
             </div>
 
-            {{-- New Arrivals Products Grid (2-col mobile, 3-col tablet, 4-col laptop, 5-col desktop, 6-col widescreen) --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5 sm:gap-2 lg:gap-2.5">
+            {{-- New Arrivals Products Grid (2-col mobile, 3-col tablet, 5-col desktop, 6-col widescreen) --}}
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5 sm:gap-2 lg:gap-2.5">
                 @foreach ($newArrivals as $product)
                     <x-product-card 
                         :product="$product" 
@@ -631,7 +631,7 @@
                 </div>
             </div>
 
-            <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="shrink-0 px-3.5 py-2 bg-gradient-to-r from-violet-600 to-sky-600 hover:brightness-110 text-white font-bold text-xs rounded-xl shadow-xs transition active:scale-95 flex items-center gap-1 font-myanmar">
+            <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="btn-3d shrink-0 px-3.5 py-2 bg-gradient-to-r from-violet-600 to-sky-600 hover:brightness-110 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1 font-myanmar">
                 <span>{{ __('messages.glass_finder') }}</span> →
             </a>
         </div>

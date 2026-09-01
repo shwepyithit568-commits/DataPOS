@@ -38,6 +38,11 @@ class BuyBack extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'customer_id');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(BuyBackItem::class);

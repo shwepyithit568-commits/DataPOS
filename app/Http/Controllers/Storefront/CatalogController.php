@@ -339,6 +339,7 @@ class CatalogController extends Controller
         abort_unless((bool) $store, 404, 'Store not found.');
 
         $product = Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
             ->where('slug', $slug)
             ->with(['category', 'brand', 'images', 'variants'])
             ->firstOrFail();

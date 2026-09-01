@@ -683,6 +683,7 @@ Route::prefix('store/{store_slug}')
         // Mobile E-Load & Bill Register (sidebar_eload)
         Route::middleware('store.capability:operations.eload')->group(function () {
             Route::get('/admin/eload', [\App\Http\Controllers\Admin\EloadController::class, 'index'])->name('store.admin.eload.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/eload/export', [\App\Http\Controllers\Admin\EloadController::class, 'export'])->name('store.admin.eload.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
             Route::post('/admin/eload', [\App\Http\Controllers\Admin\EloadController::class, 'store'])->name('store.admin.eload.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
             Route::post('/admin/eload/refill', [\App\Http\Controllers\Admin\EloadController::class, 'refill'])->name('store.admin.eload.refill')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
             Route::post('/admin/eload/accounts', [\App\Http\Controllers\Admin\EloadController::class, 'saveAccount'])->name('store.admin.eload.accounts.store')->middleware(EnsureStoreAccess::class . ':store_manager');
@@ -882,6 +883,7 @@ Route::prefix('store/{store_slug}')
 
             // ── Buy Back (Customer Returns)
             Route::get('/buy-back', [\App\Http\Controllers\POS\BuyBackController::class, 'index'])->name('pos.buybacks.index');
+            Route::get('/buy-back/export', [\App\Http\Controllers\POS\BuyBackController::class, 'export'])->name('pos.buybacks.export');
             Route::get('/buy-back/create', [\App\Http\Controllers\POS\BuyBackController::class, 'create'])->name('pos.buybacks.create');
             Route::post('/buy-back', [\App\Http\Controllers\POS\BuyBackController::class, 'store'])->name('pos.buybacks.store');
             Route::get('/buy-back/{buyback}', [\App\Http\Controllers\POS\BuyBackController::class, 'show'])->name('pos.buybacks.show');
@@ -890,6 +892,7 @@ Route::prefix('store/{store_slug}')
 
             // ── Sales Returns (roadmap Phase 2) — management layer over PosReturnService
             Route::get('/returns', [\App\Http\Controllers\POS\ReturnsController::class, 'index'])->name('pos.returns.index');
+            Route::get('/returns/export', [\App\Http\Controllers\POS\ReturnsController::class, 'export'])->name('pos.returns.export');
             Route::get('/returns/new', [\App\Http\Controllers\POS\ReturnsController::class, 'create'])->name('pos.returns.create');
             Route::get('/returns/{return}', [\App\Http\Controllers\POS\ReturnsController::class, 'show'])->name('pos.returns.show');
 

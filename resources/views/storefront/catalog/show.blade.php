@@ -62,7 +62,7 @@
     $shareText = $product->name . ' — ' . format_currency($effectivePrice, $store) . ' — ' . ($store?->name ?? config('app.name'));
 @endphp
 
-<div class="max-w-7xl mx-auto space-y-4 sm:space-y-6 pb-[80px] md:pb-10"
+<div class="max-w-7xl mx-auto space-y-0.5 sm:space-y-1 pb-[80px] md:pb-10"
     x-data="{
         variants: @js($product->variants->map(fn($v) => [
             'id' => $v->id,

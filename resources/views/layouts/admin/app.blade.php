@@ -1051,7 +1051,7 @@
             </div>
         @endif
 
-        <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200/80 dark:border-slate-800/80 h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] flex items-center justify-between px-4 sm:px-6 transition-colors duration-200 gap-2 sticky top-0 z-10">
+        <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200/80 dark:border-slate-800/80 h-[calc(3.25rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] flex items-center justify-between px-3 sm:px-4 transition-colors duration-200 gap-1.5 sm:gap-2 sticky top-0 z-10">
             <div class="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
                 <button x-ref="menuButton" @click="sidebarOpen = true; $nextTick(() => document.querySelector('aside [x-ref=sidebarClose]')?.focus())" class="lg:hidden inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0" aria-label="{{ __('messages.open_menu') }}">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1296,7 +1296,7 @@
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto @yield('main_padding', 'p-2 sm:p-2.5 lg:p-3') bg-slate-50 dark:bg-slate-900/60 transition-colors duration-200">
+        <main class="flex-1 overflow-y-auto @yield('main_padding', 'p-0.5 sm:p-1.5 lg:p-2') bg-slate-50 dark:bg-slate-900/60 transition-colors duration-200">
             {{ $slot ?? '' }}
             @yield('content')
         </main>

@@ -7,11 +7,14 @@
     <title>POS - {{ $store->name }}</title>
     <meta name="theme-color" content="#2563eb">
     <script nonce="{{ $cspNonce }}">
-        // POS display mode — 1-click Dark/Light toggle:
+        // POS display mode (standard_light, high_contrast_daylight, oled_dark):
         (function () {
-            var theme = localStorage.getItem('theme') || localStorage.getItem('posDisplayMode');
-            var isDark = theme === 'dark' || theme === 'oled_dark';
+            var mode = localStorage.getItem('posDisplayMode') || localStorage.getItem('theme') || 'standard_light';
+            var isDark = mode === 'dark' || mode === 'oled_dark';
             document.documentElement.classList.toggle('dark', isDark);
+            if (mode === 'high_contrast_daylight') {
+                document.documentElement.classList.add('high-contrast-daylight');
+            }
         })();
     </script>
     <x-currency-js-init :store="$store ?? null" />
@@ -20,11 +23,17 @@
 <body class="bg-slate-100 dark:bg-slate-950 text-gray-900 dark:text-slate-100 font-sans antialiased min-h-dvh flex flex-col transition-colors duration-200"
     x-data="{
         isDark: document.documentElement.classList.contains('dark'),
-        toggleTheme() {
-            this.isDark = !this.isDark;
-            document.documentElement.classList.toggle('dark', this.isDark);
-            localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
-            localStorage.setItem('posDisplayMode', this.isDark ? 'oled_dark' : 'light');
+        displayMode: localStorage.getItem('posDisplayMode') || (document.documentElement.classList.contains('dark') ? 'oled_dark' : 'standard_light'),
+        displayMenuOpen: false,
+        setDisplayMode(mode) {
+            this.displayMode = mode;
+            localStorage.setItem('posDisplayMode', mode);
+            var isDark = mode === 'oled_dark';
+            this.isDark = isDark;
+            document.documentElement.classList.toggle('dark', isDark);
+            document.documentElement.classList.toggle('high-contrast-daylight', mode === 'high_contrast_daylight');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            this.displayMenuOpen = false;
         },
         calculatorOpen: false,
         calcDisplay: '0',
@@ -157,21 +166,43 @@
                 {{-- Language Switcher --}}
                 <x-language-switcher id="pos-header" />
 
-                {{-- 1-Click Dark / Light Mode Direct Toggle Button --}}
-                <button @click="toggleTheme()" type="button"
-                        class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-slate-700 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm cursor-pointer"
-                        :aria-label="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-                        :title="isDark ? 'Light Mode သို့ ပြောင်းမည်' : 'Dark Mode သို့ ပြောင်းမည်'">
-                    {{-- Sun icon in Dark Mode (click to switch to Light) --}}
-                    <svg x-show="isDark" x-cloak class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="4"/>
-                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
-                    </svg>
-                    {{-- Moon icon in Light Mode (click to switch to Dark) --}}
-                    <svg x-show="!isDark" class="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                    </svg>
-                </button>
+                {{-- POS Display Mode Dropdown (Standard Light / High-Contrast Daylight / OLED Dark) --}}
+                <div class="relative" @click.away="displayMenuOpen = false">
+                    <button @click="displayMenuOpen = !displayMenuOpen" type="button"
+                            class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-slate-700 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm cursor-pointer"
+                            aria-label="Display Mode"
+                            title="POS Display Mode">
+                        <svg x-show="displayMode === 'oled_dark' || isDark" x-cloak class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                        <svg x-show="displayMode !== 'oled_dark' && !isDark" class="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="4"/>
+                            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                        </svg>
+                    </button>
+
+                    <div x-show="displayMenuOpen" x-cloak
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="transform opacity-0 scale-95"
+                         x-transition:enter-end="transform opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="transform opacity-100 scale-100"
+                         x-transition:leave-end="transform opacity-0 scale-95"
+                         class="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl py-1 z-50 text-xs font-bold">
+                        <button type="button" @click="setDisplayMode('standard_light')" class="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700/60 transition" :class="displayMode === 'standard_light' ? 'text-sky-600 dark:text-sky-400' : 'text-slate-700 dark:text-slate-300'">
+                            <span>☀️ Standard Light</span>
+                            <span x-show="displayMode === 'standard_light'">✓</span>
+                        </button>
+                        <button type="button" @click="setDisplayMode('high_contrast_daylight')" class="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700/60 transition" :class="displayMode === 'high_contrast_daylight' ? 'text-sky-600 dark:text-sky-400' : 'text-slate-700 dark:text-slate-300'">
+                            <span>🌤️ High-Contrast Daylight</span>
+                            <span x-show="displayMode === 'high_contrast_daylight'">✓</span>
+                        </button>
+                        <button type="button" @click="setDisplayMode('oled_dark')" class="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700/60 transition" :class="displayMode === 'oled_dark' ? 'text-sky-600 dark:text-sky-400' : 'text-slate-700 dark:text-slate-300'">
+                            <span>🌙 OLED Dark</span>
+                            <span x-show="displayMode === 'oled_dark'">✓</span>
+                        </button>
+                    </div>
+                </div>
 
                 {{-- Calculator button --}}
                 <button type="button" @click="openCalculator()"

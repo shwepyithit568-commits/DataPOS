@@ -1,10 +1,10 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.admin_dashboard') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2 sm:p-4')
+@section('main_padding', 'p-1 sm:p-1.5')
 
 @section('content')
-<div class="w-full space-y-3.5 sm:space-y-4">
+<div class="w-full space-y-0.5">
 
     {{-- ============================================================
          DAILY QUICK ACTIONS HUB: 12 EMBOSSED 3D PUSH BUTTONS
@@ -132,83 +132,113 @@
             <h2 class="admin-section-title">{{ __('messages.dashboard_todays_operations') }}</h2>
             <span class="admin-section-sub">{{ __('messages.dashboard_todays_metrics_sub') }}</span>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-0.5 sm:gap-1">
             {{-- 1. Today Orders --}}
-            <div class="stat-card-3d">
-                <div class="flex items-center justify-between">
-                    <div class="admin-stat-label truncate">
-                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-violet-500" aria-hidden="true"></span>
-                        {{ __('messages.dashboard_today_orders') }}
-                    </div>
-                    <span class="text-xs p-1 rounded-md bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 shrink-0">📦</span>
+            <div class="stat-card-3d flex items-center justify-center gap-2 sm:gap-2.5">
+                <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center bg-violet-100 text-violet-600 dark:bg-violet-950/70 dark:text-violet-300 shadow-inner text-xs sm:text-sm font-bold">
+                    📦
                 </div>
-                <div class="admin-stat-value text-violet-700 dark:text-violet-300 font-mono my-0.5" data-today-orders-stat>{{ number_format($todayOrders) }}</div>
-                <div class="admin-stat-sub truncate">{{ __('messages.revenue') }}: Ks {{ number_format($todayRevenue) }}</div>
+                <div class="min-w-0">
+                    <div class="text-sm sm:text-base font-black text-violet-700 dark:text-violet-300 font-mono leading-none tabular-nums" data-today-orders-stat>
+                        {{ number_format($todayOrders) }}
+                    </div>
+                    <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                        {{ __('messages.dashboard_today_orders') }}
+                    </p>
+                    <p class="text-[8.5px] sm:text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                        {{ __('messages.revenue') }}: Ks {{ number_format($todayRevenue) }}
+                    </p>
+                </div>
             </div>
 
             {{-- 2. Today Revenue --}}
-            <div class="stat-card-3d">
-                <div class="flex items-center justify-between">
-                    <div class="admin-stat-label truncate">
-                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
-                        {{ __('messages.dashboard_today_revenue') }}
-                    </div>
-                    <span class="text-xs p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 shrink-0">💵</span>
+            <div class="stat-card-3d flex items-center justify-center gap-2 sm:gap-2.5">
+                <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center bg-emerald-100 text-emerald-600 dark:bg-emerald-950/70 dark:text-emerald-300 shadow-inner text-xs sm:text-sm font-bold">
+                    💵
                 </div>
-                <div class="admin-stat-value text-emerald-600 dark:text-emerald-400 font-mono my-0.5">Ks {{ number_format($todayRevenue) }}</div>
-                <div class="admin-stat-sub truncate">{{ number_format($todayOrders) }} {{ strtolower(__('messages.dashboard_today_orders')) }}</div>
+                <div class="min-w-0">
+                    <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono leading-none tabular-nums">
+                        Ks {{ number_format($todayRevenue) }}
+                    </div>
+                    <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                        {{ __('messages.dashboard_today_revenue') }}
+                    </p>
+                    <p class="text-[8.5px] sm:text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                        {{ number_format($todayOrders) }} {{ strtolower(__('messages.dashboard_today_orders')) }}
+                    </p>
+                </div>
             </div>
 
             {{-- 3. Today Expense --}}
-            <div class="stat-card-3d">
-                <div class="flex items-center justify-between">
-                    <div class="admin-stat-label truncate">
-                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-fuchsia-500" aria-hidden="true"></span>
-                        {{ __('messages.dashboard_today_expense') }}
-                    </div>
-                    <span class="text-xs p-1 rounded-md bg-fuchsia-50 dark:bg-fuchsia-950/60 text-fuchsia-600 dark:text-fuchsia-400 shrink-0">💸</span>
+            <div class="stat-card-3d flex items-center justify-center gap-2 sm:gap-2.5">
+                <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center bg-fuchsia-100 text-fuchsia-600 dark:bg-fuchsia-950/70 dark:text-fuchsia-300 shadow-inner text-xs sm:text-sm font-bold">
+                    💸
                 </div>
-                <div class="admin-stat-value text-fuchsia-600 dark:text-fuchsia-400 font-mono my-0.5">Ks {{ number_format($todayExpense) }}</div>
-                <div class="admin-stat-sub truncate">{{ __('messages.dashboard_expense_recorded') }}</div>
+                <div class="min-w-0">
+                    <div class="text-sm sm:text-base font-black text-fuchsia-600 dark:text-fuchsia-400 font-mono leading-none tabular-nums">
+                        Ks {{ number_format($todayExpense) }}
+                    </div>
+                    <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                        {{ __('messages.dashboard_today_expense') }}
+                    </p>
+                    <p class="text-[8.5px] sm:text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                        {{ __('messages.dashboard_expense_recorded') }}
+                    </p>
+                </div>
             </div>
 
             {{-- 4. Pending Orders --}}
-            <div class="stat-card-3d">
-                <div class="flex items-center justify-between">
-                    <div class="admin-stat-label truncate">
-                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true"></span>
-                        {{ __('messages.dashboard_pending_orders') }}
-                    </div>
-                    <span class="text-xs p-1 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 shrink-0">⏳</span>
+            <div class="stat-card-3d flex items-center justify-center gap-2 sm:gap-2.5">
+                <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center bg-amber-100 text-amber-600 dark:bg-amber-950/70 dark:text-amber-300 shadow-inner text-xs sm:text-sm font-bold">
+                    ⏳
                 </div>
-                <div class="admin-stat-value text-amber-600 dark:text-amber-400 font-mono my-0.5" data-pending-orders-stat>{{ number_format($pendingOrders) }}</div>
-                <div class="admin-stat-sub truncate">{{ __('messages.dashboard_awaiting_contact') }}</div>
+                <div class="min-w-0">
+                    <div class="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400 font-mono leading-none tabular-nums" data-pending-orders-stat>
+                        {{ number_format($pendingOrders) }}
+                    </div>
+                    <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                        {{ __('messages.dashboard_pending_orders') }}
+                    </p>
+                    <p class="text-[8.5px] sm:text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                        {{ __('messages.dashboard_awaiting_contact') }}
+                    </p>
+                </div>
             </div>
 
             {{-- 5. Active Repairs (In Workshop) --}}
-            <div class="stat-card-3d">
-                <div class="flex items-center justify-between">
-                    <div class="admin-stat-label truncate">
-                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-indigo-500" aria-hidden="true"></span>
-                        {{ __('messages.dashboard_active_repairs') }}
-                    </div>
-                    <span class="text-xs p-1 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">🛠️</span>
+            <div class="stat-card-3d flex items-center justify-center gap-2 sm:gap-2.5">
+                <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center bg-indigo-100 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-300 shadow-inner text-xs sm:text-sm font-bold">
+                    🛠️
                 </div>
-                <div class="admin-stat-value text-indigo-600 dark:text-indigo-400 font-mono my-0.5">{{ number_format($activeRepairs) }}</div>
-                <div class="admin-stat-sub truncate">{{ __('messages.dashboard_ready_repairs') }}: {{ number_format($readyRepairs) }}</div>
+                <div class="min-w-0">
+                    <div class="text-sm sm:text-base font-black text-indigo-600 dark:text-indigo-400 font-mono leading-none tabular-nums">
+                        {{ number_format($activeRepairs) }}
+                    </div>
+                    <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                        {{ __('messages.dashboard_active_repairs') }}
+                    </p>
+                    <p class="text-[8.5px] sm:text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                        {{ __('messages.dashboard_ready_repairs') }}: {{ number_format($readyRepairs) }}
+                    </p>
+                </div>
             </div>
 
             {{-- 6. This Month Revenue --}}
-            <div class="stat-card-3d">
-                <div class="flex items-center justify-between">
-                    <div class="admin-stat-label truncate">
-                        <span class="inline-block h-1.5 w-1.5 rounded-full bg-blue-500" aria-hidden="true"></span>
-                        {{ __('messages.dashboard_month_revenue') }}
-                    </div>
-                    <span class="text-xs p-1 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shrink-0">📅</span>
+            <div class="stat-card-3d flex items-center justify-center gap-2 sm:gap-2.5">
+                <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center bg-blue-100 text-blue-600 dark:bg-blue-950/70 dark:text-blue-300 shadow-inner text-xs sm:text-sm font-bold">
+                    📅
                 </div>
-                <div class="admin-stat-value font-mono text-slate-800 dark:text-slate-200 my-0.5">Ks {{ number_format($monthRevenue) }}</div>
-                <div class="admin-stat-sub truncate">{{ __('messages.dashboard_orders_this_month', ['count' => number_format($monthOrders)]) }}</div>
+                <div class="min-w-0">
+                    <div class="text-sm sm:text-base font-black text-slate-800 dark:text-slate-200 font-mono leading-none tabular-nums">
+                        Ks {{ number_format($monthRevenue) }}
+                    </div>
+                    <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                        {{ __('messages.dashboard_month_revenue') }}
+                    </p>
+                    <p class="text-[8.5px] sm:text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                        {{ __('messages.dashboard_orders_this_month', ['count' => number_format($monthOrders)]) }}
+                    </p>
+                </div>
             </div>
         </div>
     </section>
@@ -217,91 +247,101 @@
          SECTION 2: MULTI-DOMAIN BUSINESS HIGHLIGHTS (EXPENSE, SERVICE, ECOMMERCE, AR)
          ============================================================ --}}
     <section aria-label="Business domain highlights">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1">
             {{-- 1. Monthly Expense Card --}}
             <a href="{{ url('/store/' . $store->slug . '/admin/expenses') }}"
-               class="stat-card-3d block group">
-                <div class="flex items-center justify-between">
-                    <div class="admin-stat-label flex items-center gap-1.5 text-fuchsia-600 dark:text-fuchsia-400 font-bold">
-                        <span class="text-sm">💸</span>
-                        <span>{{ __('messages.dashboard_expense_overview') }}</span>
-                    </div>
-                    <span class="text-xs text-slate-400 group-hover:translate-x-0.5 transition">→</span>
+               class="stat-card-3d flex items-center justify-center gap-2.5 sm:gap-3 group">
+                <div class="shrink-0 w-8 h-8 rounded-lg grid place-items-center bg-fuchsia-100 text-fuchsia-600 dark:bg-fuchsia-950/70 dark:text-fuchsia-300 shadow-inner text-sm font-bold">
+                    💸
                 </div>
-                <div class="admin-stat-value text-fuchsia-700 dark:text-fuchsia-300 font-mono my-0.5">Ks {{ number_format($monthExpense) }}</div>
-                <div class="admin-stat-sub flex items-center justify-between text-[10.5px]">
-                    <span>{{ __('messages.dashboard_month_expense') }}</span>
-                    <span class="font-mono text-slate-400">{{ __('messages.today') }}: Ks {{ number_format($todayExpense) }}</span>
+                <div class="min-w-0">
+                    <div class="text-sm sm:text-base font-black text-fuchsia-700 dark:text-fuchsia-300 font-mono leading-none tabular-nums">
+                        Ks {{ number_format($monthExpense) }}
+                    </div>
+                    <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                        {{ __('messages.dashboard_expense_overview') }}
+                    </p>
+                    <p class="text-[8.5px] sm:text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                        {{ __('messages.today') }}: Ks {{ number_format($todayExpense) }}
+                    </p>
                 </div>
             </a>
 
             @if (store_can('service.repair_jobs', $store))
             {{-- 2. Service & Repairs Card --}}
             <a href="{{ url('/store/' . $store->slug . '/admin/repairs') }}"
-               class="stat-card-3d block group">
-                <div class="flex items-center justify-between">
-                    <div class="admin-stat-label flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-bold">
-                        <span class="text-sm">🛠️</span>
-                        <span>{{ __('messages.dashboard_service_overview') }}</span>
-                    </div>
-                    <span class="text-xs text-slate-400 group-hover:translate-x-0.5 transition">→</span>
+               class="stat-card-3d flex items-center justify-center gap-2.5 sm:gap-3 group">
+                <div class="shrink-0 w-8 h-8 rounded-lg grid place-items-center bg-indigo-100 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-300 shadow-inner text-sm font-bold">
+                    🛠️
                 </div>
-                <div class="admin-stat-value text-indigo-700 dark:text-indigo-300 font-mono my-0.5">{{ number_format($activeRepairs) }} <span class="text-xs font-normal text-slate-400">{{ __('messages.dashboard_in_workshop') }}</span></div>
-                <div class="admin-stat-sub flex items-center justify-between text-[10.5px]">
-                    <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ __('messages.dashboard_ready_repairs') }}: {{ number_format($readyRepairs) }}</span>
-                    <span class="text-slate-400">Total</span>
+                <div class="min-w-0">
+                    <div class="text-sm sm:text-base font-black text-indigo-700 dark:text-indigo-300 font-mono leading-none tabular-nums">
+                        {{ number_format($activeRepairs) }} <span class="text-xs font-normal text-slate-400">{{ __('messages.dashboard_in_workshop') }}</span>
+                    </div>
+                    <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                        {{ __('messages.dashboard_service_overview') }}
+                    </p>
+                    <p class="text-[8.5px] sm:text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold truncate mt-0.5">
+                        {{ __('messages.dashboard_ready_repairs') }}: {{ number_format($readyRepairs) }}
+                    </p>
                 </div>
             </a>
             @else
             {{-- 2. Inventory & Stock Card (Retail fallback) --}}
             <a href="{{ url('/store/' . $store->slug . '/admin/products') }}"
-               class="stat-card-3d block group">
-                <div class="flex items-center justify-between">
-                    <div class="admin-stat-label flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-bold">
-                        <span class="text-sm">📦</span>
-                        <span>{{ __('messages.dashboard_inventory_catalog') }}</span>
-                    </div>
-                    <span class="text-xs text-slate-400 group-hover:translate-x-0.5 transition">→</span>
+               class="stat-card-3d flex items-center justify-center gap-2.5 sm:gap-3 group">
+                <div class="shrink-0 w-8 h-8 rounded-lg grid place-items-center bg-indigo-100 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-300 shadow-inner text-sm font-bold">
+                    📦
                 </div>
-                <div class="admin-stat-value text-indigo-700 dark:text-indigo-300 font-mono my-0.5">{{ number_format($totalProducts) }} <span class="text-xs font-normal text-slate-400">{{ __('messages.items') }}</span></div>
-                <div class="admin-stat-sub flex items-center justify-between text-[10.5px]">
-                    <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ __('messages.in_stock') }}: {{ number_format($inStockProducts) }}</span>
-                    <span class="text-slate-400">Catalog</span>
+                <div class="min-w-0">
+                    <div class="text-sm sm:text-base font-black text-indigo-700 dark:text-indigo-300 font-mono leading-none tabular-nums">
+                        {{ number_format($totalProducts) }} <span class="text-xs font-normal text-slate-400">{{ __('messages.items') }}</span>
+                    </div>
+                    <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                        {{ __('messages.dashboard_inventory_catalog') }}
+                    </p>
+                    <p class="text-[8.5px] sm:text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold truncate mt-0.5">
+                        {{ __('messages.in_stock') }}: {{ number_format($inStockProducts) }}
+                    </p>
                 </div>
             </a>
             @endif
 
             {{-- 3. Ecommerce Online Storefront Card --}}
             <a href="{{ url('/store/' . $store->slug . '/admin/web-products') }}"
-               class="stat-card-3d block group">
-                <div class="flex items-center justify-between">
-                    <div class="admin-stat-label flex items-center gap-1.5 text-sky-600 dark:text-sky-400 font-bold">
-                        <span class="text-sm">🌐</span>
-                        <span>{{ __('messages.dashboard_ecommerce_overview') }}</span>
-                    </div>
-                    <span class="text-xs text-slate-400 group-hover:translate-x-0.5 transition">→</span>
+               class="stat-card-3d flex items-center justify-center gap-2.5 sm:gap-3 group">
+                <div class="shrink-0 w-8 h-8 rounded-lg grid place-items-center bg-sky-100 text-sky-600 dark:bg-sky-950/70 dark:text-sky-300 shadow-inner text-sm font-bold">
+                    🌐
                 </div>
-                <div class="admin-stat-value text-sky-700 dark:text-sky-300 font-mono my-0.5">{{ number_format($ecommerceProducts) }} <span class="text-xs font-normal text-slate-400">{{ __('messages.dashboard_ecommerce_products') }}</span></div>
-                <div class="admin-stat-sub flex items-center justify-between text-[10.5px]">
-                    <span>{{ __('messages.dashboard_live_on_web') }}</span>
-                    <span class="font-mono text-amber-500">{{ number_format($pendingOrders) }} {{ strtolower(__('messages.pending')) }}</span>
+                <div class="min-w-0">
+                    <div class="text-sm sm:text-base font-black text-sky-700 dark:text-sky-300 font-mono leading-none tabular-nums">
+                        {{ number_format($ecommerceProducts) }} <span class="text-xs font-normal text-slate-400">{{ __('messages.dashboard_ecommerce_products') }}</span>
+                    </div>
+                    <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                        {{ __('messages.dashboard_ecommerce_overview') }}
+                    </p>
+                    <p class="text-[8.5px] sm:text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                        {{ __('messages.dashboard_live_on_web') }} ({{ number_format($pendingOrders) }} {{ strtolower(__('messages.pending')) }})
+                    </p>
                 </div>
             </a>
 
             {{-- 4. Customer Receivables AR Card --}}
             <a href="{{ url('/store/' . $store->slug . '/pos/credit-sales') }}"
-               class="stat-card-3d block group">
-                <div class="flex items-center justify-between">
-                    <div class="admin-stat-label flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-bold">
-                        <span class="text-sm">👥</span>
-                        <span>{{ __('messages.dashboard_customer_ar') }}</span>
-                    </div>
-                    <span class="text-xs text-slate-400 group-hover:translate-x-0.5 transition">→</span>
+               class="stat-card-3d flex items-center justify-center gap-2.5 sm:gap-3 group">
+                <div class="shrink-0 w-8 h-8 rounded-lg grid place-items-center bg-rose-100 text-rose-600 dark:bg-rose-950/70 dark:text-rose-300 shadow-inner text-sm font-bold">
+                    👥
                 </div>
-                <div class="admin-stat-value text-rose-600 dark:text-rose-400 font-mono my-0.5">Ks {{ number_format($totalCustomerDebt) }}</div>
-                <div class="admin-stat-sub flex items-center justify-between text-[10.5px]">
-                    <span>{{ __('messages.dashboard_customer_debt_sub') }}</span>
-                    <span class="text-slate-400">AR</span>
+                <div class="min-w-0">
+                    <div class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400 font-mono leading-none tabular-nums">
+                        Ks {{ number_format($totalCustomerDebt) }}
+                    </div>
+                    <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                        {{ __('messages.dashboard_customer_ar') }}
+                    </p>
+                    <p class="text-[8.5px] sm:text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                        {{ __('messages.dashboard_customer_debt_sub') }}
+                    </p>
                 </div>
             </a>
         </div>
