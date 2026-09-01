@@ -322,6 +322,8 @@ class StoreSettingsAndBrandingTest extends TestCase
                 'thousand_separator' => ',',
                 'negative_format' => 'parentheses',
                 'show_symbol' => '1',
+                'qty_decimal_places' => 'auto',
+                'qty_trim_zeros' => '1',
             ],
         ]);
 
@@ -334,10 +336,17 @@ class StoreSettingsAndBrandingTest extends TestCase
         $this->assertEquals('after_space', $setting->getCurrencySetting('symbol_position'));
         $this->assertEquals(0, $setting->getCurrencySetting('decimal_places'));
         $this->assertEquals('parentheses', $setting->getCurrencySetting('negative_format'));
+        $this->assertEquals('auto', $setting->getCurrencySetting('qty_decimal_places'));
+        $this->assertTrue((bool)$setting->getCurrencySetting('qty_trim_zeros'));
 
         // Test CurrencyFormatter outputs
         $this->assertEquals('150,000 Ks', $setting->formatCurrency(150000));
         $this->assertEquals('(50,000 Ks)', $setting->formatCurrency(-50000));
+
+        // Test formatQuantity outputs
+        $this->assertEquals('10', $setting->formatQuantity(10));
+        $this->assertEquals('1.5', $setting->formatQuantity(1.5));
+        $this->assertEquals('12,500', $setting->formatQuantity(12500));
     }
 
     public function test_store_manager_can_view_currency_settings_page(): void
@@ -354,8 +363,10 @@ class StoreSettingsAndBrandingTest extends TestCase
         $response = $this->actingAs($manager)->get('/store/store-a/admin/settings/currency');
 
         $response->assertOk();
-        $response->assertSee('Currency & Accounting Number Format', false);
+        $response->assertSee('Currency &amp; Number Formatting', false);
         $response->assertSee('name="currency_settings[currency_code]"', false);
         $response->assertSee('name="currency_settings[symbol_position]"', false);
+        $response->assertSee('name="currency_settings[qty_decimal_places]"', false);
+        $response->assertSee('name="currency_settings[qty_trim_zeros]"', false);
     }
 }

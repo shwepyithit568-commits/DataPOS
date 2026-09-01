@@ -372,4 +372,44 @@ class StockCountTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    public function test_admin_can_export_stock_counts_excel_and_csv(): void
+    {
+        $service = app(StockCountService::class);
+        $session = $service->createSession($this->store, ['scope' => 'all'], $this->admin);
+
+        // CSV Export for index list
+        $csvResponse = $this->actingAs($this->admin)->get(route('store.admin.stock_count.export', [
+            'store_slug' => $this->store->slug,
+            'format' => 'csv',
+        ]));
+        $csvResponse->assertStatus(200);
+        $csvResponse->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        // Excel Export for index list
+        $xlsxResponse = $this->actingAs($this->admin)->get(route('store.admin.stock_count.export', [
+            'store_slug' => $this->store->slug,
+            'format' => 'xlsx',
+        ]));
+        $xlsxResponse->assertStatus(200);
+        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', (string) $xlsxResponse->headers->get('content-type'));
+
+        // CSV Export for single session lines detail
+        $sessionCsvResponse = $this->actingAs($this->admin)->get(route('store.admin.stock_count.export_session', [
+            'store_slug' => $this->store->slug,
+            'stock_count' => $session->id,
+            'format' => 'csv',
+        ]));
+        $sessionCsvResponse->assertStatus(200);
+        $sessionCsvResponse->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        // Excel Export for single session lines detail
+        $sessionXlsxResponse = $this->actingAs($this->admin)->get(route('store.admin.stock_count.export_session', [
+            'store_slug' => $this->store->slug,
+            'stock_count' => $session->id,
+            'format' => 'xlsx',
+        ]));
+        $sessionXlsxResponse->assertStatus(200);
+        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', (string) $sessionXlsxResponse->headers->get('content-type'));
+    }
 }

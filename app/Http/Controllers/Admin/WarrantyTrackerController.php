@@ -15,6 +15,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
 class WarrantyTrackerController extends Controller
 {
     public function __construct(
@@ -44,6 +46,11 @@ class WarrantyTrackerController extends Controller
         if (!empty($search)) $activeFiltersCount++;
         if ($status !== 'all') $activeFiltersCount++;
 
+        $exportUrl = route('store.admin.warranty.export', array_merge(
+            ['store_slug' => $store->slug],
+            $request->query()
+        ));
+
         return view('admin.warranty.index', compact(
             'store',
             'warranties',
@@ -51,8 +58,152 @@ class WarrantyTrackerController extends Controller
             'search',
             'status',
             'perPage',
-            'activeFiltersCount'
+            'activeFiltersCount',
+            'exportUrl'
         ));
+    }
+
+    /**
+     * Export device warranty records to Excel (.xlsx) or CSV.
+     */
+    public function export(StoreContext $context, Request $request): StreamedResponse
+    {
+        $store = $context->getStore();
+        if (! $store) {
+            abort(404);
+        }
+
+        $search = $request->input('search');
+        $status = $request->input('status', 'all');
+        $format = $request->input('format', 'xlsx');
+
+        $warranties = DeviceWarranty::forStore($store->id)
+            ->with(['product', 'customer', 'sale', 'creator'])
+            ->search($search)
+            ->status($status)
+            ->latest('id')
+            ->get();
+
+        $filename = 'warranties_' . $store->slug . '_' . now()->format('Ymd_His');
+
+        if ($format === 'xlsx' && class_exists(\PhpOffice\PhpSpreadsheet\Spreadsheet::class)) {
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Warranties');
+
+            $headers = [
+                'ID', 'Product Name', 'Serial Number', 'IMEI Primary', 'IMEI Secondary',
+                'Customer Name', 'Customer Phone', 'Invoice No', 'Purchase Date',
+                'Duration (Months)', 'Expiry Date', 'Days Remaining', 'Warranty Type',
+                'Status', 'Claims Count', 'Created At'
+            ];
+
+            // Header row styling
+            $sheet->fromArray($headers, null, 'A1');
+            $headerRange = 'A1:P1';
+            $sheet->getStyle($headerRange)->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '4F46E5'], // Indigo-600
+                ],
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+            ]);
+            $sheet->getRowDimension(1)->setRowHeight(26);
+
+            $rowIdx = 2;
+            foreach ($warranties as $w) {
+                $sheet->fromArray([
+                    $w->id,
+                    $w->product_name,
+                    $w->serial_number,
+                    $w->imei_primary ?? '',
+                    $w->imei_secondary ?? '',
+                    $w->customer_name ?? 'Walk-in Customer',
+                    $w->customer_phone ?? '',
+                    $w->invoice_number ?? '',
+                    $w->purchase_date ? $w->purchase_date->format('Y-m-d') : '',
+                    $w->warranty_duration_months,
+                    $w->warranty_expiry_date ? $w->warranty_expiry_date->format('Y-m-d') : '',
+                    $w->days_remaining,
+                    ucfirst(str_replace('_', ' ', $w->warranty_type)),
+                    ucfirst($w->computed_status),
+                    $w->claim_count ?? 0,
+                    $w->created_at ? $w->created_at->format('Y-m-d H:i') : '',
+                ], null, 'A' . $rowIdx);
+
+                if ($rowIdx % 2 === 1) {
+                    $sheet->getStyle('A' . $rowIdx . ':P' . $rowIdx)->applyFromArray([
+                        'fill' => [
+                            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'F8FAFC'],
+                        ],
+                    ]);
+                }
+                $sheet->getRowDimension($rowIdx)->setRowHeight(20);
+                $rowIdx++;
+            }
+
+            foreach (range('A', 'P') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+            return response()->streamDownload(function () use ($writer) {
+                $writer->save('php://output');
+            }, $filename . '.xlsx', [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Cache-Control' => 'max-age=0',
+            ]);
+        }
+
+        // CSV Stream fallback
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}.csv\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        return response()->stream(function () use ($warranties) {
+            $handle = fopen('php://output', 'w');
+            // UTF-8 BOM for Excel compatibility
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($handle, [
+                'ID', 'Product Name', 'Serial Number', 'IMEI Primary', 'IMEI Secondary',
+                'Customer Name', 'Customer Phone', 'Invoice No', 'Purchase Date',
+                'Duration (Months)', 'Expiry Date', 'Days Remaining', 'Warranty Type',
+                'Status', 'Claims Count', 'Created At'
+            ]);
+
+            foreach ($warranties as $w) {
+                fputcsv($handle, [
+                    $w->id,
+                    $w->product_name,
+                    $w->serial_number,
+                    $w->imei_primary ?? '',
+                    $w->imei_secondary ?? '',
+                    $w->customer_name ?? 'Walk-in Customer',
+                    $w->customer_phone ?? '',
+                    $w->invoice_number ?? '',
+                    $w->purchase_date ? $w->purchase_date->format('Y-m-d') : '',
+                    $w->warranty_duration_months,
+                    $w->warranty_expiry_date ? $w->warranty_expiry_date->format('Y-m-d') : '',
+                    $w->days_remaining,
+                    ucfirst(str_replace('_', ' ', $w->warranty_type)),
+                    ucfirst($w->computed_status),
+                    $w->claim_count ?? 0,
+                    $w->created_at ? $w->created_at->format('Y-m-d H:i') : '',
+                ]);
+            }
+            fclose($handle);
+        }, 200, $headers);
     }
 
     /**

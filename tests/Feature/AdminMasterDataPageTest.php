@@ -169,4 +169,72 @@ class AdminMasterDataPageTest extends TestCase
         $response->assertRedirect($masterDataUrl);
         $this->assertDatabaseHas('variant_presets', ['store_id' => $this->store->id, 'name' => 'Test Preset']);
     }
+
+    public function test_seed_data_tab_renders_with_business_type_pills(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/products/master-data?tab=seed-data");
+
+        $response->assertStatus(200);
+        $response->assertSeeText('Tech / Mobile Shop');
+        $response->assertSeeText('Fashion / Clothing Shop');
+        $response->assertSeeText('General Retail Store');
+    }
+
+    public function test_seed_data_tab_renders_fashion_data_when_selected(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/products/master-data?tab=seed-data&biz=fashion");
+
+        $response->assertStatus(200);
+        $response->assertSeeText('Fashion / Clothing Shop');
+        $response->assertSeeText('Zara');
+    }
+
+    public function test_seed_data_import_stores_fashion_presets_idempotently(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->post("/store/{$this->store->slug}/admin/products/master-data/seed", [
+                'business_type' => 'fashion',
+                'groups' => ['brands', 'categories', 'colors', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
+            ]);
+
+        $response->assertRedirect("/store/{$this->store->slug}/admin/products/master-data?tab=seed-data&biz=fashion");
+        $response->assertSessionHas('success');
+
+        // Verify that Fashion brands were created for this store
+        $this->assertDatabaseHas('brands', ['store_id' => $this->store->id, 'name' => 'Zara']);
+        $this->assertDatabaseHas('brands', ['store_id' => $this->store->id, 'name' => 'H&M']);
+        $this->assertDatabaseHas('brands', ['store_id' => $this->store->id, 'name' => 'Nike']);
+
+        // Verify idempotent re-import does not duplicate data
+        $brandCountBefore = Brand::where('store_id', $this->store->id)->count();
+        $this->actingAs($this->manager)
+            ->post("/store/{$this->store->slug}/admin/products/master-data/seed", [
+                'business_type' => 'fashion',
+                'groups' => ['brands'],
+            ]);
+        $brandCountAfter = Brand::where('store_id', $this->store->id)->count();
+        $this->assertSame($brandCountBefore, $brandCountAfter);
+    }
+
+    public function test_seed_data_import_with_clean_mode_purges_old_data(): void
+    {
+        // Seed old tech brand
+        Brand::create(['store_id' => $this->store->id, 'name' => 'Old Tech Brand', 'slug' => "old-tech-{$this->store->id}"]);
+        $this->assertDatabaseHas('brands', ['store_id' => $this->store->id, 'name' => 'Old Tech Brand']);
+
+        // Import with clean_mode=master_only
+        $response = $this->actingAs($this->manager)
+            ->post("/store/{$this->store->slug}/admin/products/master-data/seed", [
+                'business_type' => 'fashion',
+                'clean_mode' => 'master_only',
+                'groups' => ['brands'],
+            ]);
+
+        $response->assertRedirect("/store/{$this->store->slug}/admin/products/master-data?tab=seed-data&biz=fashion");
+        $this->assertDatabaseMissing('brands', ['store_id' => $this->store->id, 'name' => 'Old Tech Brand']);
+        $this->assertDatabaseHas('brands', ['store_id' => $this->store->id, 'name' => 'Zara']);
+    }
 }
+

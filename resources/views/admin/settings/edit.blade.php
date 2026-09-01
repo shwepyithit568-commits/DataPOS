@@ -12,7 +12,7 @@
     $settingsBase = url('/store/' . $store->slug . '/admin/settings');
     $sections = [
         'general'      => ['label' => __('messages.settings_general'),        'icon' => '🏪', 'badge' => 'Profile',  'desc' => 'Name, logo, tagline & language',      'url' => $settingsBase],
-        'currency'     => ['label' => 'Currency Format',                      'icon' => '💱', 'badge' => 'Money',    'desc' => 'Currency symbol, decimals & accounting format', 'url' => $settingsBase . '/currency'],
+        'currency'     => ['label' => 'Currency & Numbers',                   'icon' => '💱', 'badge' => 'Money & Qty', 'desc' => 'Currency symbol, decimals & stock quantity precision', 'url' => $settingsBase . '/currency'],
         'pos'          => ['label' => __('messages.settings_pos'),            'icon' => '🛒', 'badge' => 'Counter',  'desc' => 'Cashier held sales & PIN controls',    'url' => $settingsBase . '/pos'],
         'appearance'   => ['label' => __('messages.settings_appearance'),     'icon' => '🎨', 'badge' => 'Branding', 'desc' => 'Brand colors, themes & banners',       'url' => $settingsBase . '/appearance'],
         'contact'      => ['label' => __('messages.settings_contact'),        'icon' => '☎️', 'badge' => 'Channels', 'desc' => 'Phones, Viber, Telegram & chats',      'url' => $settingsBase . '/contact'],
@@ -23,7 +23,7 @@
 
     $sectionTitles = [
         'general'      => __('messages.settings_store_identity'),
-        'currency'     => 'Currency & Accounting Format',
+        'currency'     => 'Currency & Number Formatting',
         'pos'          => __('messages.settings_pos'),
         'appearance'   => __('messages.settings_appearance'),
         'contact'      => __('messages.settings_contact_social'),
@@ -37,7 +37,7 @@
 
     $sectionDescs = [
         'general'      => $store->name . ' ၏ storefront header, ဆိုင်အမည်၊ Logo နှင့် အဓိကဘာသာစကား သတ်မှတ်ချက်များ။',
-        'currency'     => 'စနစ်တစ်ခုလုံးရှိ ငွေကြေးသင်္ကေတ (Ks, $), သင်္ကေတနေရာ (100,000 Ks vs Ks 100,000), ဒသမ (.00) နှင့် စာရင်းကိုင် accounting format သတ်မှတ်ချက်များ။',
+        'currency'     => 'စနစ်တစ်ခုလုံးရှိ ငွေကြေးသင်္ကေတ (Ks, $), သင်္ကေတနေရာ, ဒသမ (.00), စတော့အရေအတွက် Precision (Auto/0/2/3) နှင့် စာရင်းကိုင် format သတ်မှတ်ချက်များ။',
         'pos'          => 'POS ဆိုင် cashier အတွေ့အကြုံ — thermal voucher, shift, held sale, pin control ဆက်တင်များ။',
         'appearance'   => 'Storefront ၏ Brand Color, Button Color, Header Background တို့ကို ထိန်းချုပ်ပါ — preset palette ဒါမှမဟုတ် custom HEX color ရွေးချယ်နိုင်ပါသည်။',
         'contact'      => 'Storefront footer နှင့် order confirmation တွင်ပြမည့် phone, Viber, Telegram, social media data များ။',

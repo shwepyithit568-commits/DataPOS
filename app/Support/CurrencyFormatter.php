@@ -55,4 +55,41 @@ class CurrencyFormatter
             default       => '-' . $withSymbol,
         };
     }
+
+    /**
+     * Format a stock/inventory quantity string according to store configuration.
+     */
+    public static function formatQuantity(float|int|string|null $quantity, array $customSettings = []): string
+    {
+        $settings = array_merge(self::DEFAULT_SETTINGS, array_filter($customSettings, fn ($v) => $v !== null && $v !== ''));
+        $val = (float) ($quantity ?? 0);
+        $qtyDecimals = $settings['qty_decimal_places'] ?? 'auto';
+        $trimZeros = (bool) ($settings['qty_trim_zeros'] ?? true);
+        $decimalSep = ($settings['decimal_separator'] ?? '.') === ',' ? ',' : '.';
+        $thousandSep = match ($settings['thousand_separator'] ?? ',') {
+            'dot', '.' => '.',
+            'space', ' ' => ' ',
+            'none', '' => '',
+            default => ',',
+        };
+
+        if ($qtyDecimals === 'auto') {
+            if ($val == (int) $val) {
+                return number_format($val, 0, $decimalSep, $thousandSep);
+            }
+            $formatted = number_format($val, 3, $decimalSep, $thousandSep);
+            return $trimZeros ? rtrim(rtrim($formatted, '0'), $decimalSep) : $formatted;
+        }
+
+        $decimals = max(0, (int) $qtyDecimals);
+        $formatted = number_format($val, $decimals, $decimalSep, $thousandSep);
+
+        if ($trimZeros && $decimals > 0 && str_contains($formatted, $decimalSep)) {
+            $parts = explode($decimalSep, $formatted);
+            $trimmedDec = rtrim($parts[1], '0');
+            return empty($trimmedDec) ? $parts[0] : $parts[0] . $decimalSep . $trimmedDec;
+        }
+
+        return $formatted;
+    }
 }

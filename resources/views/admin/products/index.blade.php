@@ -1,6 +1,6 @@
 @extends('layouts.admin.app')
 
-@section('main_padding', 'p-1 sm:p-1.5')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
 @php
@@ -26,7 +26,7 @@
     $currentSort = request()->only('sort', 'search');
     $clearFiltersUrl = route('store.admin.products.index', $baseParams);
 @endphp
-<div class="w-full space-y-0.5 sm:space-y-1"
+<div class="w-full space-y-0.5 pb-6"
     x-data="{
         viewMode: localStorage.getItem('admin_view_mode') || 'table',
         selectedIds: [],
@@ -110,52 +110,61 @@
     ">
 
     {{-- ============================================================
-         HERO HEADER — eyebrow, title, subtitle, CTA row
+         COMPACT PAGE HEADER (34px - 38px)
          ============================================================ --}}
-    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-        <div class="min-w-0">
-            <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5">
-                <span>📦 {{ __('messages.product_management') }}</span>
-            </h1>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <span class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 grid place-items-center text-base font-bold shadow-xs flex-shrink-0">
+                📦
+            </span>
+            <div class="min-w-0">
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                    <span>{{ __('messages.product_management') }}</span>
+                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 hidden sm:inline">({{ $store->name }})</span>
+                </h1>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    ကုန်ပစ္စည်းစာရင်း၊ စတော့လက်ကျန်နှင့် ဈေးနှုန်းများ စီမံခန့်ခွဲခြင်း
+                </p>
+            </div>
         </div>
-        <div class="flex flex-wrap items-center gap-1 sm:gap-1.5 shrink-0">
+        <div class="flex flex-wrap items-center gap-1 sm:gap-1.5 self-start sm:self-auto shrink-0">
             <a href="{{ route('store.admin.products.master-data', $baseParams) }}"
-               class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1 shadow-2xs active:scale-95">
-                <svg class="w-3 h-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+               class="h-7 px-2.5 rounded-md text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1 cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 6h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z"/>
                 </svg>
                 <span>{{ __('messages.master_data') }}</span>
             </a>
             <a href="{{ url('/store/' . $store->slug . '/admin/products/import') }}"
-               class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1 shadow-2xs active:scale-95">
-                <svg class="w-3 h-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+               class="h-7 px-2.5 rounded-md text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1 cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
                 </svg>
                 <span>{{ __('messages.product_import') }}</span>
             </a>
             <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}"
-               class="btn-3d px-3 py-1 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition flex items-center gap-1 active:scale-95">
-                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+               class="h-7 px-3 rounded-md text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-2xs hover:shadow-violet-500/20 transition flex items-center gap-1 active:scale-95 cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 <span>{{ __('messages.add_product') }}</span>
             </a>
         </div>
-    </header>
+    </div>
 
     {{-- ============================================================
-         SUMMARY STAT CARDS (4-up — mobile 2x2, tablet/desktop 4x1)
+         SUMMARY STAT CARDS (Centered Row-based Alignment)
          ============================================================ --}}
-    <div class="w-full grid grid-cols-2 lg:grid-cols-4 gap-1 sm:gap-1.5" role="list" aria-label="{{ __('messages.product_summary') }}">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1" role="list" aria-label="{{ __('messages.product_summary') }}">
         <a href="{{ $clearFiltersUrl }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-2.5 py-1.5 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-xs active:scale-[.99] {{ $statBorders['total'] }}">
-            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center {{ $statAccents['total'] }} shadow-inner">
+           class="group bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-3 py-1.5 flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 hover:shadow-xs active:scale-[.99] {{ $statBorders['total'] }}">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center {{ $statAccents['total'] }} shadow-inner text-xs sm:text-sm font-bold">
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums font-outfit">
+            <div class="min-w-0">
+                <div class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums font-outfit truncate">
                     {{ number_format($summary['total']) }}
-                </p>
+                </div>
                 <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.products') }}
                 </p>
@@ -163,54 +172,54 @@
         </a>
 
         <a href="{{ route('store.admin.products.index', array_merge($baseParams, $currentSort, ['stock_status' => 'in_stock'])) }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-2.5 py-1.5 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-xs active:scale-[.99] {{ $statBorders['in_stock'] }}">
-            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center {{ $statAccents['in_stock'] }} shadow-inner">
+           class="group bg-white dark:bg-slate-900 rounded-lg border border-emerald-200/70 dark:border-emerald-900/50 shadow-2xs bg-emerald-50/20 dark:bg-emerald-950/10 px-3 py-1.5 flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 hover:shadow-xs active:scale-[.99] {{ $statBorders['in_stock'] }}">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center {{ $statAccents['in_stock'] }} shadow-inner text-xs sm:text-sm font-bold">
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                 </svg>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 leading-none tabular-nums font-outfit">
+            <div class="min-w-0">
+                <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 leading-none tabular-nums font-outfit truncate">
                     {{ number_format($summary['in_stock']) }}
-                </p>
-                <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                </div>
+                <p class="text-[9px] sm:text-[10px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.in_stock') }}
                 </p>
             </div>
         </a>
 
         <a href="{{ route('store.admin.products.index', array_merge($baseParams, $currentSort, ['stock_status' => 'out_of_stock'])) }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-2.5 py-1.5 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-xs active:scale-[.99] {{ $statBorders['out_of_stock'] }}">
-            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center {{ $statAccents['out_of_stock'] }} shadow-inner">
+           class="group bg-white dark:bg-slate-900 rounded-lg border border-rose-200/70 dark:border-rose-900/50 shadow-2xs bg-rose-50/20 dark:bg-rose-950/10 px-3 py-1.5 flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 hover:shadow-xs active:scale-[.99] {{ $statBorders['out_of_stock'] }}">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center {{ $statAccents['out_of_stock'] }} shadow-inner text-xs sm:text-sm font-bold">
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400 leading-none tabular-nums font-outfit">
+            <div class="min-w-0">
+                <div class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400 leading-none tabular-nums font-outfit truncate">
                     {{ number_format($summary['out_of_stock']) }}
-                </p>
-                <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                </div>
+                <p class="text-[9px] sm:text-[10px] text-rose-600/80 dark:text-rose-400/80 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.out_of_stock') }}
                 </p>
             </div>
         </a>
 
         <a href="{{ route('store.admin.products.index', array_merge($baseParams, $currentSort)) }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-2.5 py-1.5 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-xs active:scale-[.99] {{ $statBorders['featured'] }}">
-            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center {{ $statAccents['featured'] }} shadow-inner">
+           class="group bg-white dark:bg-slate-900 rounded-lg border border-amber-200/70 dark:border-amber-900/50 shadow-2xs bg-amber-50/20 dark:bg-amber-950/10 px-3 py-1.5 flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 hover:shadow-xs active:scale-[.99] {{ $statBorders['featured'] }}">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center {{ $statAccents['featured'] }} shadow-inner text-xs sm:text-sm font-bold">
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                 </svg>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400 leading-none tabular-nums font-outfit">
+            <div class="min-w-0">
+                <div class="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400 leading-none tabular-nums font-outfit truncate">
                     {{ number_format($summary['featured']) }}
                     <span class="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 ml-0.5 tabular-nums">
                         / {{ number_format($summary['online']) }}
                     </span>
-                </p>
-                <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                </div>
+                <p class="text-[9px] sm:text-[10px] text-amber-600/80 dark:text-amber-400/80 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.featured') }}
                     <span class="text-slate-400 dark:text-slate-500">
                         / {{ __('messages.products_online') }}

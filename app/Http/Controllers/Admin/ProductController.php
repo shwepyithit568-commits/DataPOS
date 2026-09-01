@@ -580,7 +580,7 @@ class ProductController extends Controller
             'name'            => ['required', 'string', 'max:255'],
             // SKU is optional on create — the Auto-SKU toggle generates one.
             'sku'             => ['nullable', 'string', 'max:100'],
-            'product_type'    => ['nullable', 'string', 'in:standard,serialized,variant,service,digital'],
+            'product_type'    => ['nullable', 'string', 'in:standard,serialized,variant,service,digital,weight_based'],
             'barcode'         => ['nullable', 'string', 'max:100'],
             'shelf_location'  => ['nullable', 'string', 'max:100'],
             'warehouse_id'    => ['nullable', \Illuminate\Validation\Rule::exists('warehouses', 'id')->where('store_id', $store->id)],
@@ -759,7 +759,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name'            => ['required', 'string', 'max:255'],
             'sku'             => ['required', 'string', 'max:100'],
-            'product_type'    => ['nullable', 'string', 'in:standard,serialized,variant,service,digital'],
+            'product_type'    => ['nullable', 'string', 'in:standard,serialized,variant,service,digital,weight_based'],
             'barcode'         => ['nullable', 'string', 'max:100'],
             'shelf_location'  => ['nullable', 'string', 'max:100'],
             'warehouse_id'    => ['nullable', \Illuminate\Validation\Rule::exists('warehouses', 'id')->where('store_id', $store->id)],

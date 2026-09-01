@@ -208,6 +208,43 @@ Toolbar အပိုင်းသည် Search input, Filter pills, Excel export 
 
 ---
 
+## Quantity & Decimal Formatting Standard (စတော့အရေအတွက်နှင့် ဂဏန်းဖော်ပြမှု စံနှုန်း)
+
+DataPOS တွင် စတော့စာရင်း၊ ကုန်ပစ္စည်းအရေအတွက်နှင့် အဝင်/အထွက် စာရင်းဇယားများကို ပြသရာတွင် အောက်ပါ စံနှုန်းများအတိုင်း တိကျစွာ လိုက်နာရမည်:
+
+### ၁။ Clean Quantity Formatting (မလိုအပ်သော `.000` များ လုံးဝမထည့်ရ)
+- စတော့လက်ကျန်အရေအတွက် (On-Hand Quantity)၊ အဝင်/အထွက် အရေအတွက် (Inflow/Outflow Delta) နှင့် ကုန်ပစ္စည်းအရေအတွက်များတွင် မလိုအပ်သော ဒဿမနေရာ `.000` များ လုံးဝ မထည့်ရ။ (ဥပမာ- `10.000` အစား **`10`**၊ `2,600.000` အစား **`2,600`**၊ `+5.000` အစား **`+5`**၊ `-2.000` အစား **`-2`**)။
+- အကယ်၍ အလေးချိန်/မီတာ ကဲ့သို့ ဒဿမပါဝင်သော fractional quantity ဖြစ်ပါက မလိုအပ်သော နောက်ပိတ် သုညများကို ဖယ်ရှား၍ (ဥပမာ- `1.500` အစား **`1.5`**၊ `2.250` အစား **`2.25`**) အဖြစ် တိကျစွာ ပြသရမည်။
+
+### ၂။ Standard Quantity Formatting Helper (`$fmtQty`)
+Blade View များတွင် အောက်ပါ Helper ကို ထည့်သွင်းသုံးစွဲရမည်:
+
+```php
+@php
+    $fmtQty = function($v) {
+        $val = (float) $v;
+        return $val == (int) $val ? number_format($val, 0) : rtrim(rtrim(number_format($val, 3), '0'), '.');
+    };
+@endphp
+```
+
+### ၃။ Table View On-Hand Qty Prominence (Table View တွင် စတော့လက်ကျန် ပေါ်လွင်စေခြင်း)
+- Table View တွင် **Stock On-Hand Quantity (`messages.on_hand_qty`)** ကော်လံသည် အဓိက အရေးပါဆုံး အချက်အလက် ဖြစ်သောကြောင့် Column Header အား Contrast ပေးထားပြီး Row တစ်ခုချင်းစီ၏ လက်ကျန်အရေအတွက်ကို Soft background highlight နှင့် Bold font (`font-black font-mono text-xs sm:text-sm`) ဖြင့် မျက်စိထဲ ချက်ချင်း မြင်သာစေရမည်။
+- လက်ကျန်ပြတ်/သုည သို့မဟုတ် အနုတ်ဖြစ်ပါက အနီရောင် (`text-rose-600 dark:text-rose-400`)၊ လက်ကျန်ရှိပါက Dark/Light contrast ကောင်းသော text (`text-slate-900 dark:text-slate-100`) ဖြင့် ပြသရမည်:
+
+```blade
+{{-- Table View On-Hand Qty Column Example --}}
+<th class="py-1.5 px-2.5 text-right min-w-[110px] bg-slate-200/50 dark:bg-slate-700/50 font-black text-slate-900 dark:text-white">
+    {{ __('messages.on_hand_qty') }}
+</th>
+
+<td class="py-1.5 px-2.5 text-right font-mono font-black text-xs sm:text-sm tabular-nums bg-slate-50/50 dark:bg-slate-800/30 {{ $qty <= 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100' }}">
+    {{ $fmtQty($qty) }}
+</td>
+```
+
+---
+
 ## Localization & Myanmar Retail Language Standard
 
 ဘာသာပြန်ခြင်း လုပ်ငန်းစဉ်သည် UI အသုံးပြုရ လွယ်ကူမှုအတွက် အဓိက အရေးပါသော အစိတ်အပိုင်းဖြစ်သည်။ ဘာသာစကား ဖိုင် ၃ ခုလုံးကို အမြဲတမ်း ပြိုင်တူ update ပြုလုပ်ရမည်:
@@ -268,6 +305,9 @@ Toolbar အပိုင်းသည် Search input, Filter pills, Excel export 
 - [ ] Search Input အမြင့်သည် `h-7` ဖြစ်ပြီး Icon ပါဝင်ခြင်း။
 - [ ] Excel Export ခလုတ် ပါဝင်ပြီး `.xlsx` နှင့် `.csv` နှစ်မျိုးစလုံး Download ပြုလုပ်နိုင်ခြင်း။
 - [ ] Table/Cards View Switcher ချိတ်ဆက်ထားပြီး LocalStorage ဖြင့် ရွေးချယ်မှု မှတ်သားနိုင်ခြင်း။
+- [ ] စတော့လက်ကျန်နှင့် အဝင်/အထွက် အရေအတွက်များတွင် `.000` မပါဝင်စေဘဲ `$fmtQty` helper ဖြင့် သန့်ရှင်းစွာ ပြသထားခြင်း။
+- [ ] Table View တွင် Stock On-Hand Quantity (`messages.on_hand_qty`) ကော်လံအား Soft highlight နှင့် Bold font ဖြင့် ထင်ရှားစွာ ပေါ်လွင်စေခြင်း။
 - [ ] မြန်မာစာသားများသည် တိုတိုရှင်းရှင်းနှင့် သဘာဝကျသော ဝေါဟာရများ ဖြစ်ခြင်း (ကွင်းစကွင်းပိတ်အပိုများ မပါရှိခြင်း)။
 - [ ] ဘာသာစကားဖိုင် ၃ ခု (`lang/my`, `lang/en`, `lang/zh_CN`) အပြည့်အစုံ update ပြုလုပ်ထားခြင်း။
 - [ ] `php artisan test` အောင်မြင်ပြီး `npm run build` ပြုလုပ်ပြီးစီးခြင်း။
+

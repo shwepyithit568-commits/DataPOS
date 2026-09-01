@@ -470,6 +470,9 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/products/master-data', [ProductMasterDataController::class, 'index'])
             ->name('store.admin.products.master-data')
             ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::post('/admin/products/master-data/seed', [ProductMasterDataController::class, 'seedImport'])
+            ->name('store.admin.products.master-data.seed')
+            ->middleware(EnsureStoreAccess::class . ':store_manager');
         // Supplier management (full CRUD).
         Route::get('/admin/suppliers', [SupplierController::class, 'index'])
             ->name('store.admin.suppliers.index')
@@ -563,6 +566,7 @@ Route::prefix('store/{store_slug}')
         // Barcode & QR Label Printing Management
         Route::middleware('store.capability:catalog.barcode_printing')->group(function () {
             Route::get('/admin/barcode', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'index'])->name('store.admin.barcode.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/barcode/export', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'export'])->name('store.admin.barcode.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
             Route::get('/admin/barcode/search', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'search'])->name('store.admin.barcode.search')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
             Route::post('/admin/barcode/print', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'print'])->name('store.admin.barcode.print')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
             Route::post('/admin/barcode/templates', [\App\Http\Controllers\Admin\BarcodeLabelController::class, 'saveTemplate'])->name('store.admin.barcode.templates.save')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -572,6 +576,7 @@ Route::prefix('store/{store_slug}')
         // Warranty & Serial / IMEI Tracker (SoT §19)
         Route::middleware('store.capability:service.warranty_tracking')->group(function () {
             Route::get('/admin/warranty', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'index'])->name('store.admin.warranty.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+            Route::get('/admin/warranty/export', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'export'])->name('store.admin.warranty.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
             Route::get('/admin/warranty/quick-scan', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'quickScan'])->name('store.admin.warranty.quick_scan')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
             Route::get('/admin/warranty/create', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'create'])->name('store.admin.warranty.create')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
             Route::post('/admin/warranty', [\App\Http\Controllers\Admin\WarrantyTrackerController::class, 'store'])->name('store.admin.warranty.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -586,6 +591,8 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/stock-count', [\App\Http\Controllers\Admin\StockCountController::class, 'index'])->name('store.admin.stock_count.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/stock-count/create', [\App\Http\Controllers\Admin\StockCountController::class, 'create'])->name('store.admin.stock_count.create')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/stock-count', [\App\Http\Controllers\Admin\StockCountController::class, 'store'])->name('store.admin.stock_count.store')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/stock-count/export', [\App\Http\Controllers\Admin\StockCountController::class, 'export'])->name('store.admin.stock_count.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/stock-count/{stock_count}/export', [\App\Http\Controllers\Admin\StockCountController::class, 'exportSession'])->name('store.admin.stock_count.export_session')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/stock-count/{stock_count}', [\App\Http\Controllers\Admin\StockCountController::class, 'show'])->name('store.admin.stock_count.show')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/stock-count/{stock_count}/line/{line}', [\App\Http\Controllers\Admin\StockCountController::class, 'updateLine'])->name('store.admin.stock_count.update_line')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/stock-count/{stock_count}/bulk-update', [\App\Http\Controllers\Admin\StockCountController::class, 'bulkUpdate'])->name('store.admin.stock_count.bulk_update')->middleware(EnsureStoreAccess::class . ':store_manager,staff');

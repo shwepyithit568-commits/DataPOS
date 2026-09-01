@@ -18,14 +18,54 @@ class BlogSeeder extends Seeder
 {
     public function run(): void
     {
-        $store = Store::first();
-        if (! $store) {
+        $stores = Store::all();
+        if ($stores->isEmpty()) {
             return;
         }
 
-        Post::where('store_id', $store->id)->delete();
+        foreach ($stores as $store) {
+            self::seedForStore($store);
+        }
+    }
 
-        $posts = [
+    public static function seedForStore(Store $store): int
+    {
+        $posts = self::getSamplePosts();
+
+        foreach ($posts as $post) {
+            $baseSlug = $post['slug'];
+            $existingForStore = Post::where('store_id', $store->id)->where('slug', $baseSlug)->first();
+            if ($existingForStore) {
+                $slug = $baseSlug;
+            } else {
+                $slug = $baseSlug;
+                if (Post::where('slug', $slug)->where('store_id', '!=', $store->id)->exists()) {
+                    $slug = $baseSlug . '-' . $store->slug;
+                    if (Post::where('slug', $slug)->where('store_id', '!=', $store->id)->exists()) {
+                        $slug = $baseSlug . '-' . $store->id;
+                    }
+                }
+            }
+
+            Post::updateOrCreate(
+                [
+                    'store_id' => $store->id,
+                    'slug' => $slug,
+                ],
+                array_merge($post, [
+                    'store_id' => $store->id,
+                    'slug' => $slug,
+                    'is_published' => true,
+                ])
+            );
+        }
+
+        return count($posts);
+    }
+
+    public static function getSamplePosts(): array
+    {
+        return [
             [
                 'title'        => 'ဖုန်းဝယ်တဲ့အခါ စစ်ဆေးသင့်တဲ့ အချက် ၇ ချက်',
                 'slug'         => 'phone-buying-checklist',
@@ -75,11 +115,5 @@ class BlogSeeder extends Seeder
                 'published_at' => now(),
             ],
         ];
-
-        foreach ($posts as $post) {
-            Post::create(
-                array_merge($post, ['store_id' => $store->id, 'is_published' => true])
-            );
-        }
     }
 }

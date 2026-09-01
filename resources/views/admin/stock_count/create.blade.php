@@ -1,49 +1,50 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.stock_count_new_session') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full max-w-4xl mx-auto space-y-2.5 sm:space-y-3"
+<div class="w-full max-w-4xl mx-auto space-y-0.5 pb-6"
      x-data="{
-         scope: 'all',
-         categorySearch: '',
-         allCategories: {{ json_encode($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name, 'products_count' => $c->products_count])) }},
-         selectedCategories: [],
-         selectAll() {
-             this.selectedCategories = this.allCategories.map(c => c.id);
-         },
-         deselectAll() {
-             this.selectedCategories = [];
-         },
-         filteredCategories() {
-             if (!this.categorySearch.trim()) return this.allCategories;
-             var q = this.categorySearch.toLowerCase();
-             return this.allCategories.filter(c => c.name.toLowerCase().includes(q));
-         }
+        scope: 'all',
+        categorySearch: '',
+        allCategories: {{ json_encode($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name, 'products_count' => $c->products_count])) }},
+        selectedCategories: [],
+        selectAll() {
+            this.selectedCategories = this.allCategories.map(c => c.id);
+        },
+        deselectAll() {
+            this.selectedCategories = [];
+        },
+        filteredCategories() {
+            if (!this.categorySearch.trim()) return this.allCategories;
+            var q = this.categorySearch.toLowerCase();
+            return this.allCategories.filter(c => c.name.toLowerCase().includes(q));
+        }
      }">
 
     {{-- ============================================================
-         1. COMPACT HERO FORM HEADER
+         1. COMPACT PAGE HEADER (34px - 38px Standard Height)
          ============================================================ --}}
-    <div class="p-2.5 sm:p-3.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 transition">
-        <div class="min-w-0">
-            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/60 border border-violet-200/80 dark:border-violet-800 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
-                <span>📋 {{ __('messages.sidebar_stock_count') }}</span>
-                <span class="text-violet-400">·</span>
-                <span>{{ $store->name }}</span>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <span class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 grid place-items-center text-base font-bold shadow-xs shrink-0">
+                📋
+            </span>
+            <div class="min-w-0">
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                    <span>{{ __('messages.stock_count_new_session') ?? 'New Stock Count Session' }}</span>
+                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 hidden sm:inline">({{ $store->name }})</span>
+                </h1>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    {{ __('messages.stock_count_sub') ?? 'Snapshot ledger inventory quantities and prepare physical audit workspace' }}
+                </p>
             </div>
-            <h1 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-slate-100 font-outfit mt-0.5 truncate">
-                {{ __('messages.stock_count_new_session') }}
-            </h1>
-            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                {{ __('messages.stock_count_sub') }}
-            </p>
         </div>
 
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 self-start sm:self-auto shrink-0">
             <a href="{{ route('store.admin.stock_count.index', ['store_slug' => $store->slug]) }}"
-               class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5 shadow-2xs">
+               class="h-7 px-2.5 rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-1.5 shadow-2xs">
                 <span>←</span>
                 <span>{{ __('messages.back') }}</span>
             </a>

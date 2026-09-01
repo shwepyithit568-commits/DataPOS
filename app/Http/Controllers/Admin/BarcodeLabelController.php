@@ -13,6 +13,13 @@ use App\Services\StoreContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BarcodeLabelController extends Controller
 {
@@ -48,6 +55,7 @@ class BarcodeLabelController extends Controller
         // Load Built-in Presets & Store's Saved Custom Templates
         $presets = $this->getPresetsForStore($store->id);
         $customTemplates = BarcodeTemplate::where('store_id', $store->id)->orderBy('name')->get();
+        $exportUrl = route('store.admin.barcode.export', ['store_slug' => $store->slug]);
 
         return view('admin.barcode.index', compact(
             'store',
@@ -58,7 +66,8 @@ class BarcodeLabelController extends Controller
             'inStockCount',
             'withBarcodeCount',
             'categories',
-            'brands'
+            'brands',
+            'exportUrl'
         ));
     }
 
@@ -578,5 +587,141 @@ class BarcodeLabelController extends Controller
                 'description' => 'A4 စတစ်ကာ စာရွက် (တစ်ရွက် ၄၀ ကတ်)',
             ],
         ];
+    }
+
+    /**
+     * Export products and barcodes to formatted Excel (.xlsx) or CSV.
+     */
+    public function export(StoreContext $context, Request $request): BinaryFileResponse|StreamedResponse
+    {
+        $store = $context->getStore();
+        if (! $store) {
+            abort(404);
+        }
+
+        $format = strtolower((string) $request->query('format', 'xlsx'));
+
+        $products = Product::where('store_id', $store->id)
+            ->with(['category', 'brand', 'variants'])
+            ->orderBy('name')
+            ->get();
+
+        if ($format === 'csv') {
+            $filename = 'Barcodes_' . $store->slug . '_' . now()->format('Ymd_His') . '.csv';
+            $headers = [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ];
+
+            return response()->streamDownload(function () use ($products) {
+                $stream = fopen('php://output', 'w');
+                fwrite($stream, "\xEF\xBB\xBF");
+                fputcsv($stream, ['Product Name', 'Barcode / Code', 'SKU', 'Category', 'Brand', 'Retail Price (MMK)', 'Stock Quantity', 'Stock Status']);
+
+                foreach ($products as $p) {
+                    $code = $p->barcode ?: ($p->sku ?: 'PRD-' . $p->id);
+                    fputcsv($stream, [
+                        $this->csvCell($p->name),
+                        $this->csvCell($code),
+                        $this->csvCell($p->sku ?? ''),
+                        $this->csvCell($p->category?->name ?? '-'),
+                        $this->csvCell($p->brand?->name ?? '-'),
+                        (float) $p->retail_price,
+                        (int) $p->stock_quantity,
+                        $p->stock_status ?? 'in_stock',
+                    ]);
+                }
+
+                fclose($stream);
+            }, $filename, $headers);
+        }
+
+        $filename = 'Barcodes_' . $store->slug . '_' . now()->format('Ymd_His') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_barcode_');
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Barcodes');
+
+        // Header Title
+        $sheet->setCellValue('A1', $store->name . ' - Barcode & QR Label Product Inventory');
+        $sheet->setCellValue('A2', 'Export Date: ' . now()->format('d/m/Y h:i A') . ' | Total Products: ' . $products->count());
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('4C1D95');
+        $sheet->getStyle('A2')->getFont()->setSize(10)->getColor()->setRGB('64748B');
+
+        $row = 4;
+        $headers = [
+            'A' => 'Product Name',
+            'B' => 'Barcode / Code',
+            'C' => 'SKU',
+            'D' => 'Category',
+            'E' => 'Brand',
+            'F' => 'Retail Price (MMK)',
+            'G' => 'Stock Quantity',
+            'H' => 'Stock Status',
+        ];
+
+        foreach ($headers as $col => $title) {
+            $sheet->setCellValue("{$col}{$row}", $title);
+        }
+
+        $sheet->getStyle("A{$row}:H{$row}")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '6D28D9'],
+            ],
+            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
+        ]);
+        $sheet->getRowDimension($row)->setRowHeight(24);
+
+        $row++;
+        foreach ($products as $p) {
+            $code = $p->barcode ?: ($p->sku ?: 'PRD-' . $p->id);
+            $sheet->setCellValue("A{$row}", $p->name);
+            $sheet->setCellValueExplicit("B{$row}", $code, DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit("C{$row}", (string) ($p->sku ?? ''), DataType::TYPE_STRING);
+            $sheet->setCellValue("D{$row}", $p->category?->name ?? '-');
+            $sheet->setCellValue("E{$row}", $p->brand?->name ?? '-');
+            $sheet->setCellValue("F{$row}", (float) $p->retail_price);
+            $sheet->setCellValue("G{$row}", (int) $p->stock_quantity);
+            $sheet->setCellValue("H{$row}", ucfirst(str_replace('_', ' ', (string) ($p->stock_status ?? 'in_stock'))));
+
+            $sheet->getStyle("F{$row}")->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle("G{$row}")->getNumberFormat()->setFormatCode('#,##0');
+
+            if ($row % 2 === 0) {
+                $sheet->getStyle("A{$row}:H{$row}")->getFill()->applyFromArray([
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'F8FAFC'],
+                ]);
+            }
+            $row++;
+        }
+
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+        $spreadsheet->disconnectWorksheets();
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Neutralize spreadsheet formula injection in exported CSV cells.
+     */
+    private function csvCell(mixed $value): string
+    {
+        $value = (string) $value;
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@'], true)) {
+            return "'" . $value;
+        }
+
+        return $value;
     }
 }

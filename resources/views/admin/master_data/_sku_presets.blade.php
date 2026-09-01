@@ -2,7 +2,7 @@
 @php
     $skuTypeLabels = [
         'model' => 'Model Code (မော်ဒယ်)',
-        'connector_spec' => 'Connector / Spec (ကြိုးခေါင်း/သတ်မှတ်ချက်)',
+        'connector_spec' => 'Specs / Attributes (သတ်မှတ်ချက်များ)',
         'color' => 'Color Code (အရောင်)',
         'quality' => 'Quality (အရည်အသွေး)',
         'capacity' => 'Capacity (ပမာဏ/ဝပ်အား)',
@@ -73,7 +73,7 @@
             </a>
             <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'sku-presets', 'type' => 'connector_spec']) }}"
                class="px-3 py-1.5 rounded-xl text-xs font-bold transition {{ $selectedType === 'connector_spec' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200' }}">
-                🔌 Connectors & Specs ({{ $typeCounts['connector_spec'] ?? 0 }})
+                ⚙️ Specs & Attributes ({{ $typeCounts['connector_spec'] ?? 0 }})
             </a>
             <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'sku-presets', 'type' => 'color']) }}"
                class="px-3 py-1.5 rounded-xl text-xs font-bold transition {{ $selectedType === 'color' ? 'bg-amber-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200' }}">
@@ -193,7 +193,7 @@
                         <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Preset Type *</label>
                         <select name="type" x-model="formType" required class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500">
                             <option value="model">Model Code (မော်ဒယ်)</option>
-                            <option value="connector_spec">Connector / Spec (ကြိုးခေါင်း/သတ်မှတ်ချက်)</option>
+                            <option value="connector_spec">Specs / Attributes (သတ်မှတ်ချက်များ)</option>
                             <option value="color">Color Code (အရောင်)</option>
                             <option value="quality">Quality Level (အရည်အသွေး)</option>
                             <option value="capacity">Capacity / Power (ပမာဏ/ဝပ်အား)</option>

@@ -219,4 +219,45 @@ class WarrantyTrackerTest extends TestCase
         $response->assertSee('Daw Mya Mya');
         $response->assertSee('cert-card');
     }
+
+    public function test_admin_can_export_warranties_excel_and_csv(): void
+    {
+        DeviceWarranty::create([
+            'store_id' => $this->store->id,
+            'product_name' => 'iPad Air M2 128GB',
+            'serial_number' => 'IPAD-M2-9999',
+            'imei_primary' => '359999888877776',
+            'customer_name' => 'U Thant Zin',
+            'customer_phone' => '09971234567',
+            'purchase_date' => '2026-03-01',
+            'warranty_duration_months' => 12,
+            'warranty_expiry_date' => '2027-03-01',
+            'warranty_type' => 'official_brand',
+            'status' => 'active',
+        ]);
+
+        // 1. Test Excel (.xlsx) export
+        $excelResponse = $this->actingAs($this->admin)->get(route('store.admin.warranty.export', [
+            'store_slug' => $this->store->slug,
+            'format' => 'xlsx',
+        ]));
+
+        $excelResponse->assertStatus(200);
+        $this->assertStringContainsString('spreadsheet', $excelResponse->headers->get('content-type'));
+        $this->assertStringContainsString('.xlsx', $excelResponse->headers->get('content-disposition'));
+
+        // 2. Test CSV export
+        $csvResponse = $this->actingAs($this->admin)->get(route('store.admin.warranty.export', [
+            'store_slug' => $this->store->slug,
+            'format' => 'csv',
+        ]));
+
+        $csvResponse->assertStatus(200);
+        $this->assertStringContainsString('text/csv', $csvResponse->headers->get('content-type'));
+        $content = $csvResponse->streamedContent();
+        $this->assertStringContainsString('iPad Air M2 128GB', $content);
+        $this->assertStringContainsString('IPAD-M2-9999', $content);
+        $this->assertStringContainsString('U Thant Zin', $content);
+    }
 }
+

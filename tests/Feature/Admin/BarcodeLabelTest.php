@@ -219,4 +219,30 @@ class BarcodeLabelTest extends TestCase
         $response->assertSee('45mm 25mm');
         $response->assertSee('<svg', false);
     }
+
+    public function test_admin_can_export_barcode_products_excel_and_csv(): void
+    {
+        // Test Excel (.xlsx) export
+        $excelResponse = $this->actingAs($this->admin)->get(route('store.admin.barcode.export', [
+            'store_slug' => $this->store->slug,
+            'format' => 'xlsx',
+        ]));
+
+        $excelResponse->assertStatus(200);
+        $this->assertStringContainsString('spreadsheet', $excelResponse->headers->get('content-type'));
+        $this->assertStringContainsString('.xlsx', $excelResponse->headers->get('content-disposition'));
+
+        // Test CSV export
+        $csvResponse = $this->actingAs($this->admin)->get(route('store.admin.barcode.export', [
+            'store_slug' => $this->store->slug,
+            'format' => 'csv',
+        ]));
+
+        $csvResponse->assertStatus(200);
+        $this->assertStringContainsString('text/csv', $csvResponse->headers->get('content-type'));
+        $content = $csvResponse->streamedContent();
+        $this->assertStringContainsString('Remax 20000mAh Powerbank', $content);
+        $this->assertStringContainsString('885912345678', $content);
+    }
 }
+

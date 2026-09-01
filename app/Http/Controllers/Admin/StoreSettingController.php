@@ -74,6 +74,8 @@ class StoreSettingController extends Controller
                 'currency_settings.thousand_separator' => ['nullable', 'string', Rule::in([',', '.', 'space', 'none'])],
                 'currency_settings.negative_format'    => ['nullable', 'string', Rule::in(['minus', 'parentheses', 'dr_cr'])],
                 'currency_settings.show_symbol'        => ['nullable', 'boolean'],
+                'currency_settings.qty_decimal_places' => ['nullable', 'string', Rule::in(['auto', '0', '1', '2', '3'])],
+                'currency_settings.qty_trim_zeros'     => ['nullable', 'boolean'],
             ]),
             'appearance' => $request->only(\App\Themes\ThemeConfig::SAFE_KEYS),
             'contact' => $request->validate([
@@ -329,6 +331,8 @@ class StoreSettingController extends Controller
                 'thousand_separator' => $rawCurr['thousand_separator'] ?? ',',
                 'negative_format'    => $rawCurr['negative_format'] ?? 'minus',
                 'show_symbol'        => ! empty($rawCurr['show_symbol']),
+                'qty_decimal_places' => $rawCurr['qty_decimal_places'] ?? 'auto',
+                'qty_trim_zeros'     => ! empty($rawCurr['qty_trim_zeros']),
             ];
         }
 

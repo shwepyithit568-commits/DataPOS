@@ -65,9 +65,9 @@ class PilotImportPresetsTest extends TestCase
         $response->assertSessionHas('success');
 
         $products = Product::where('store_id', $this->store->id)->get();
-        $this->assertCount(32, $products);
-        $this->assertGreaterThanOrEqual(5, $products->where('is_featured', true)->count());
-        $this->assertGreaterThanOrEqual(6, $products->whereNotNull('old_price')->count());
+        $this->assertCount(100, $products);
+        $this->assertGreaterThanOrEqual(15, $products->where('is_featured', true)->count());
+        $this->assertGreaterThanOrEqual(20, $products->whereNotNull('old_price')->count());
         $this->assertTrue($products->contains(fn (Product $product) => $product->sale_starts_at?->isFuture()));
         $this->assertTrue($products->contains(fn (Product $product) => $product->sale_starts_at?->isPast()));
 
@@ -119,7 +119,7 @@ class PilotImportPresetsTest extends TestCase
         $this->assertSame('ရွှေမြန်မာ မီနီမတ်', $this->store->name);
         $this->assertSame('general_retail', $this->store->business_type);
         $this->assertSame('ရွှေမြန်မာ မီနီမတ်', $this->store->setting->store_name);
-        $this->assertCount(32, Product::where('store_id', $this->store->id)->get());
+        $this->assertCount(100, Product::where('store_id', $this->store->id)->get());
     }
 
     public function test_seed_does_not_change_store_identity_without_explicit_option(): void
@@ -184,5 +184,58 @@ class PilotImportPresetsTest extends TestCase
         $this->assertSame(0, \App\Models\OrderItem::where('order_id', $order->id)->count());
         $this->assertSame(0, HomeBanner::where('store_id', $this->store->id)->where('image_path', 'like', "demo-stores/{$this->store->id}/%")->count());
         $this->assertFalse(Storage::disk('public')->exists("demo-stores/{$this->store->id}"));
+    }
+
+    public function test_manager_can_create_kl_fashion_demo_store_with_master_data(): void
+    {
+        config(['app.show_quick_login' => true]);
+
+        $response = $this->actingAs($this->manager)
+            ->post("/store/{$this->store->slug}/admin/pilot-import/demo-scenarios/kl-fashion");
+
+        $response->assertRedirect('/store/kl-fashion/admin/products');
+        $response->assertSessionHas('success');
+
+        $klStore = Store::where('slug', 'kl-fashion')->first();
+        $this->assertNotNull($klStore);
+        $this->assertSame('KL Fashion & Tailoring', $klStore->name);
+        $this->assertSame('fashion', $klStore->business_type);
+
+        // Check products
+        $products = Product::where('store_id', $klStore->id)->get();
+        $this->assertCount(100, $products);
+
+        // Check tailoring services, fabrics, garments, notions
+        $this->assertTrue($products->contains(fn ($p) => str_starts_with($p->sku, 'KL-SRV-')));
+        $this->assertTrue($products->contains(fn ($p) => str_starts_with($p->sku, 'KL-FAB-')));
+        $this->assertTrue($products->contains(fn ($p) => str_starts_with($p->sku, 'KL-CLO-')));
+        $this->assertTrue($products->contains(fn ($p) => str_starts_with($p->sku, 'KL-SEW-')));
+
+        // Check automatic Master Data presets seeding
+        $presetsCount = \App\Models\ProductMasterPreset::where('store_id', $klStore->id)->count();
+        $this->assertGreaterThan(50, $presetsCount);
+        $this->assertSame(7, \App\Models\VariantPreset::where('store_id', $klStore->id)->count());
+    }
+
+    public function test_manager_can_seed_kl_fashion_scenario_into_current_store(): void
+    {
+        config(['app.show_quick_login' => true]);
+
+        $response = $this->actingAs($this->manager)
+            ->post("/store/{$this->store->slug}/admin/pilot-import/seed-store", [
+                'scenario' => 'kl-fashion',
+                'clean_old' => '1',
+                'apply_store_identity' => '1',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->store->refresh();
+        $this->assertSame('KL Fashion & Tailoring', $this->store->name);
+        $this->assertSame('fashion', $this->store->business_type);
+
+        $products = Product::where('store_id', $this->store->id)->get();
+        $this->assertCount(100, $products);
     }
 }

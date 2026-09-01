@@ -175,6 +175,12 @@
             </tr>
         </thead>
         <tbody>
+            @php
+                $fmtQty = function($v) {
+                    $val = (float) $v;
+                    return $val == (int) $val ? number_format($val, 0) : rtrim(rtrim(number_format($val, 3), '0'), '.');
+                };
+            @endphp
             @foreach($session->lines as $idx => $line)
                 <tr>
                     <td class="text-center" style="font-size: 10px; color: #94a3b8;">{{ $idx + 1 }}</td>
@@ -186,18 +192,18 @@
                     </td>
                     <td>{{ $line->category?->name ?? '-' }}</td>
                     <td class="text-right" style="font-family: monospace; font-weight: bold;">
-                        {{ number_format($line->system_quantity, 3) }}
+                        {{ $fmtQty($line->system_quantity) }}
                     </td>
                     <td class="text-center">
                         @if($line->counted_quantity !== null)
-                            <span style="font-family: monospace; font-weight: bold;">{{ number_format($line->counted_quantity, 3) }}</span>
+                            <span style="font-family: monospace; font-weight: bold;">{{ $fmtQty($line->counted_quantity) }}</span>
                         @else
                             <div class="count-box"></div>
                         @endif
                     </td>
                     <td class="text-right" style="font-family: monospace;">
                         @if($line->is_counted)
-                            {{ $line->variance_quantity > 0 ? '+' : '' }}{{ number_format($line->variance_quantity, 3) }}
+                            {{ $line->variance_quantity > 0 ? '+' : '' }}{{ $fmtQty($line->variance_quantity) }}
                         @else
                             -
                         @endif

@@ -142,9 +142,11 @@ class StockLedgerTest extends TestCase
             'preset' => 'all',
         ]));
         $responseInflow->assertStatus(200);
-        $responseInflow->assertSee('+10.000');
-        $responseInflow->assertSee('+5.000');
-        $responseInflow->assertDontSee('-2.000');
+        $responseInflow->assertSee('+10');
+        $responseInflow->assertSee('+5');
+        $inflowMovements = $responseInflow->viewData('movements');
+        $this->assertTrue($inflowMovements->every(fn($m) => (float)$m->quantity_delta > 0));
+        $this->assertCount(3, $inflowMovements);
 
         // Filter Outflow
         $responseOutflow = $this->actingAs($this->admin)->get(route('store.admin.stock_ledger.index', [
@@ -153,8 +155,10 @@ class StockLedgerTest extends TestCase
             'preset' => 'all',
         ]));
         $responseOutflow->assertStatus(200);
-        $responseOutflow->assertSee('-2.000');
-        $responseOutflow->assertDontSee('+10.000');
+        $responseOutflow->assertSee('-2');
+        $outflowMovements = $responseOutflow->viewData('movements');
+        $this->assertTrue($outflowMovements->every(fn($m) => (float)$m->quantity_delta < 0));
+        $this->assertCount(1, $outflowMovements);
     }
 
     public function test_admin_can_search_movements_by_product_or_sku(): void
@@ -181,7 +185,7 @@ class StockLedgerTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('iPad Pro 11-inch M4');
         $response->assertSee('IPAD-M4-11');
-        $response->assertSee('13.000'); // 10 - 2 + 5 = 13 running on-hand
+        $response->assertSee('13'); // 10 - 2 + 5 = 13 running on-hand
 
         // Check bin card computation via service directly
         $service = app(StockLedgerService::class);

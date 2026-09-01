@@ -36,6 +36,7 @@ class ProductMasterDataController extends Controller
         'warranties',
         'return-policies',
         'variant-presets',
+        'seed-data',
     ];
 
     public function index(Request $request, StoreContext $context): View
@@ -58,6 +59,7 @@ class ProductMasterDataController extends Controller
             'shelves' => $this->masterPresetData($request, $storeId, 'shelf_location', 'shelves'),
             'warranties' => $this->masterPresetData($request, $storeId, 'warranty', 'warranties'),
             'return-policies' => $this->masterPresetData($request, $storeId, 'return_policy', 'return-policies'),
+            'seed-data' => $this->seedDataInfo($storeId, $request->input('biz', 'tech')),
             default => $this->categoriesData($request, $storeId),
         };
 
@@ -287,4 +289,81 @@ class ProductMasterDataController extends Controller
             'totalCount' => $presets->count(),
         ];
     }
+
+    /**
+     * Seed Data tab — shows what data will be imported and current counts.
+     */
+    private function seedDataInfo(int $storeId, string $businessType = 'tech'): array
+    {
+        $seeder = new \Database\Seeders\MasterDataSeedImporter();
+        $preview = $seeder->getPreviewData($businessType);
+        $rawTypes = \Database\Seeders\MasterDataSeedImporter::businessTypes();
+
+        // Enrich each type with total seed item count and a description key
+        $businessTypes = [];
+        foreach ($rawTypes as $typeKey => $typeMeta) {
+            $typePreview = $seeder->getPreviewData($typeKey);
+            $totalCount  = array_sum(array_column($typePreview, 'count'));
+            $businessTypes[$typeKey] = array_merge($typeMeta, [
+                'count'       => $totalCount,
+                'description' => $typeMeta['desc'] ?? '',
+            ]);
+        }
+
+        $currentCounts = [
+            'brands'          => \App\Models\Brand::where('store_id', $storeId)->count(),
+            'categories'      => \App\Models\Category::where('store_id', $storeId)->count(),
+            'connectors'      => \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'connector_spec')->count(),
+            'colors'          => \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'color')->count(),
+            'shelves'         => \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'shelf_location')->count(),
+            'warranties'      => \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'warranty')->count(),
+            'return_policies' => \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'return_policy')->count(),
+            'variant_presets' => \App\Models\VariantPreset::where('store_id', $storeId)->count(),
+        ];
+
+        return [
+            'seedPreview'      => $preview,
+            'seedCurrentCounts'=> $currentCounts,
+            'businessTypes'    => $businessTypes,
+            'activeBizType'    => $businessType,
+        ];
+    }
+
+
+    /**
+     * POST /admin/products/master-data/seed — runs the master data seeder for this store.
+     * Only store_manager may trigger this (idempotent: uses updateOrCreate).
+     */
+    public function seedImport(Request $request, StoreContext $context): \Illuminate\Http\RedirectResponse
+    {
+        $store = $context->getStore();
+
+        $validTypes = array_keys(\Database\Seeders\MasterDataSeedImporter::businessTypes());
+        $businessType = $request->input('business_type', 'tech');
+        if (! in_array($businessType, $validTypes, true)) {
+            $businessType = 'tech';
+        }
+
+        $cleanMode = $request->input('clean_mode', 'none');
+        if (! in_array($cleanMode, ['none', 'master_only', 'full'], true)) {
+            $cleanMode = 'none';
+        }
+
+        $groups = $request->input('groups', []);
+        if (empty($groups)) {
+            $groups = ['brands', 'categories', 'connectors', 'colors', 'shelves', 'warranties', 'return_policies', 'variant_presets'];
+        }
+
+        $seeder = new \Database\Seeders\MasterDataSeedImporter();
+        $result = $seeder->importForStore($store, $groups, $businessType, $cleanMode);
+
+        $counts = collect($result)->sum();
+        $typeLabel = \Database\Seeders\MasterDataSeedImporter::businessTypes()[$businessType]['label'] ?? $businessType;
+        $cleanMsg = $cleanMode === 'full' ? ' (ဒေတာဟောင်းများ အကုန်ရှင်းလင်းပြီး)' : ($cleanMode === 'master_only' ? ' (Master Data အဟောင်းများ ရှင်းလင်းပြီး)' : '');
+
+        return redirect()
+            ->route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'seed-data', 'biz' => $businessType])
+            ->with('success', "✅ [{$typeLabel}] Seed Data " . number_format($counts) . " ခု အသစ်ထည့်သွင်းပြီးပါပြီ{$cleanMsg}။");
+    }
 }
+

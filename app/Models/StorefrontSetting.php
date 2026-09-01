@@ -103,6 +103,14 @@ class StorefrontSetting extends Model
     }
 
     /**
+     * Format a stock/inventory quantity using this store's configured quantity rules.
+     */
+    public function formatQuantity(float|int|string|null $quantity): string
+    {
+        return \App\Support\CurrencyFormatter::formatQuantity($quantity, $this->currency_settings ?? []);
+    }
+
+    /**
      * POS held-sale auto-expiry window in hours for this store. Falls back
      * to the global 24h default when unset; 0 disables auto-expiry.
      */

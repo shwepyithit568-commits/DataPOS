@@ -68,4 +68,10 @@ Boss runs a technology business in Myanmar covering:
   4. **POS Counter Experience:** Cashier စတင်အသုံးပြုနိုင်မည့် Cart interaction, Live UI widgets, Modal Dialogs, Barcode Scanning
   5. **Printing & Hardware:** 58mm/80mm ESC/POS Thermal Receipt, Barcode generation
   6. **Audit & Safety:** Double-entry ledger, AuditLog, Cross-store isolation
+  7. **Admin UI/UX Standard v4.1 & Tri-lingual Localization (၃ ဘာသာ ပြိုင်တူ ပြင်ဆင်ခြင်း စံသတ်မှတ်ချက်):**
+     - **Ultra-Dense 2px Rhythm:** `@section('main_padding', 'p-0.5 sm:p-1')`, `<div class="w-full space-y-0.5 pb-6">`, `gap-0.5 sm:gap-1`။
+     - **Centered Row-based Stat Cards:** အိုင်ကွန်နှင့် အချက်အလက်များအားလုံး ကတ်၏ အလယ်ဗဟိုတည့်တည့် (`flex items-center justify-center gap-2.5 sm:gap-3`) တွင် ညီညာစွာ ထားရှိရမည် (ဘယ်ဘက်မကပ်ရ၊ `flex-1` ဆွဲဆန့်မှု မပါရ)။
+     - **Interactive Toolbar & Excel Export:** Search (`h-7`), Filter pills, PhpSpreadsheet Excel (`.xlsx`) & CSV export ခလုတ်, Table/Cards switcher မဖြစ်မနေ ပါဝင်ရမည်။
+     - **Clean Quantity Formatting & Table View Prominence:** စတော့လက်ကျန်နှင့် အဝင်/အထွက် အရေအတွက်များတွင် `.000` မပါဝင်စေဘဲ `$fmtQty` helper ဖြင့် သန့်ရှင်းစွာ ပြသရမည် (ဥပမာ- `10` အစား `10.000` မပြရ)။ Table View တွင် စတော့လက်ကျန်အရေအတွက် (`messages.on_hand_qty`) ကော်လံအား Soft highlight နှင့် Bold font ဖြင့် ထင်ရှားစွာ ပေါ်လွင်စေရမည်။
+     - **Tri-lingual Language Invariance:** `lang/my/messages.php` (သဘာဝကျသော မြန်မာစကား၊ ကွင်းစကွင်းပိတ်အပိုများ မပါရ)၊ `lang/en/messages.php` (English) နှင့် `lang/zh_CN/messages.php` (Chinese) သုံးဘာသာစလုံးအတွက် Translation Keys များကို တစ်ပြိုင်နက်တည်း အပြည့်အစုံ ဖြည့်စွက်ရမည် (အင်္ဂလိပ်စာသား အလွတ်များ မကျန်စေရ)။
 - **Honest Status Reporting (ရိုးသားစွာ အစီရင်ခံခြင်း):** UI သို့မဟုတ် POS Counter အသုံးမပြုနိုင်သေးပါက "Backend Foundation အဆင့်သာ ပြီးသေးသည်၊ POS/Admin UI ချိတ်ဆက်ရန် ကျန်သေးသည်" ဟု ပွင့်လင်းရိုးသားစွာ အတိအလင်း တင်ပြရမည်။

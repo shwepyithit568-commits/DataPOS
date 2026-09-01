@@ -295,7 +295,7 @@ class PilotImportController extends Controller
 
     private function tabFromRequest(Request $request): string
     {
-        return $this->normalizeTab((string) ($request->route('tab') ?? 'products'));
+        return $this->normalizeTab((string) ($request->route('tab') ?? $request->query('tab') ?? 'scenarios'));
     }
 
     private function normalizeTab(string $tab): string

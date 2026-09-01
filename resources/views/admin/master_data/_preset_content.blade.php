@@ -10,8 +10,16 @@
         'return_policy' => __('messages.preset_type_return'),
     ];
 
+    $addItemTitles = [
+        'connector_spec' => __('messages.master_data_add_connector'),
+        'color' => __('messages.master_data_add_color'),
+        'shelf_location' => __('messages.master_data_add_shelf'),
+        'warranty' => __('messages.master_data_add_warranty'),
+        'return_policy' => __('messages.master_data_add_return_policy'),
+    ];
+
     $typeIcons = [
-        'connector_spec' => '🔌',
+        'connector_spec' => '⚙️',
         'color' => '🎨',
         'shelf_location' => '🗄️',
         'warranty' => '🛡️',
@@ -19,6 +27,7 @@
     ];
 
     $title = $typeTitles[$currentType] ?? ucfirst(str_replace('_', ' ', $currentType));
+    $addItemLabel = $addItemTitles[$currentType] ?? __('messages.preset_add_item');
     $icon = $typeIcons[$currentType] ?? '🏷️';
 @endphp
 
@@ -104,7 +113,7 @@ class="space-y-0.5">
     {{-- Floating Action Button for Mobile/Tablet Quick Add --}}
     <button type="button" @click="openCreate()"
             class="fixed bottom-5 right-5 z-40 sm:hidden w-12 h-12 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-xl shadow-violet-900/40 flex items-center justify-center text-2xl font-bold active:scale-95 transition"
-            title="{{ __('messages.preset_add_item') }}">
+            title="{{ $addItemLabel }}">
         +
     </button>
 
@@ -263,7 +272,7 @@ class="space-y-0.5">
                 <button type="button" @click="openCreate()"
                         class="mt-3 inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition">
                     <span>+</span>
-                    <span>{{ __('messages.preset_add_item') }}</span>
+                    <span>{{ $addItemLabel }}</span>
                 </button>
             </div>
         @endforelse
@@ -284,7 +293,7 @@ class="space-y-0.5">
         <div class="min-h-full flex items-center justify-center p-4">
             <div class="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-5 space-y-4" @click.stop>
                 <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                    <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100" x-text="modalMode === 'create' ? '➕ {{ __('messages.preset_add_item') }}' : '✏️ {{ __('messages.preset_edit_item') }}'"></h3>
+                    <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100" x-text="modalMode === 'create' ? '➕ {{ $addItemLabel }}' : '✏️ {{ __('messages.preset_edit_item') }}'"></h3>
                     <button type="button" @click="modalOpen = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold">&times;</button>
                 </div>
 

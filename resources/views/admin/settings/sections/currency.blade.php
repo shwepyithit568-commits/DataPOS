@@ -9,6 +9,8 @@
     $thousandSep = $curr['thousand_separator'] ?? ',';
     $negativeFormat = $curr['negative_format'] ?? 'minus';
     $showSymbol = $curr['show_symbol'] ?? true;
+    $qtyDecimals = $curr['qty_decimal_places'] ?? 'auto';
+    $qtyTrimZeros = isset($curr['qty_trim_zeros']) ? (bool) $curr['qty_trim_zeros'] : true;
 @endphp
 
 <div class="space-y-6"
@@ -22,6 +24,8 @@
         thSep: {{ json_encode($thousandSep) }},
         negFormat: {{ json_encode($negativeFormat) }},
         showSymbol: {{ $showSymbol ? 'true' : 'false' }},
+        qtyDecimals: {{ json_encode($qtyDecimals) }},
+        qtyTrimZeros: {{ $qtyTrimZeros ? 'true' : 'false' }},
 
         formatNumber(val) {
             const isNeg = val < 0;
@@ -49,6 +53,39 @@
             if (this.negFormat === 'parentheses') return '(' + withSym + ')';
             if (this.negFormat === 'dr_cr') return withSym + ' (DR)';
             return '-' + withSym;
+        },
+
+        formatQuantity(val) {
+            let tSep = ',';
+            if (this.thSep === 'dot' || this.thSep === '.') tSep = '.';
+            else if (this.thSep === 'space' || this.thSep === ' ') tSep = ' ';
+            else if (this.thSep === 'none' || this.thSep === '') tSep = '';
+
+            const isInt = Number.isInteger(val);
+            if (this.qtyDecimals === 'auto') {
+                if (isInt) {
+                    return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, tSep);
+                }
+                let fixed = val.toFixed(3);
+                if (this.qtyTrimZeros) {
+                    fixed = parseFloat(fixed).toString();
+                }
+                let parts = fixed.split('.');
+                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, tSep);
+                return parts.join(this.decSep);
+            }
+
+            const d = parseInt(this.qtyDecimals, 10);
+            let fixed = val.toFixed(d);
+            let parts = fixed.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, tSep);
+            let formatted = parts.join(this.decSep);
+            if (this.qtyTrimZeros && d > 0 && formatted.includes(this.decSep)) {
+                let split = formatted.split(this.decSep);
+                let dec = split[1].replace(/0+$/, '');
+                return dec ? split[0] + this.decSep + dec : split[0];
+            }
+            return formatted;
         }
      }">
 
@@ -60,10 +97,10 @@
             </div>
             <div>
                 <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>Currency & Accounting Number Format</span>
+                    <span>Currency & Number Formatting</span>
                     <span class="text-xs px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-200/60 dark:border-emerald-800">System-wide</span>
                 </h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400">Manage currency symbols, symbol placement, thousand separators, decimals & accounting ledger presentation.</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Manage currency symbols, decimals, accounting formats, and stock inventory quantity presentation.</p>
             </div>
         </div>
     </div>
@@ -254,6 +291,72 @@
                         </div>
                     </label>
                 </div>
+            {{-- 5. Stock Quantity & Decimal Precision --}}
+            <div class="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                        <span>📦</span>
+                        <span>Stock Quantity & Decimal Precision (စတော့ အရေအတွက် ပုံစံ)</span>
+                    </h3>
+                    <span class="text-[10px] font-bold text-slate-400">Inventory Standard</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition"
+                           :class="qtyDecimals === 'auto' ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/30' : 'border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50'">
+                        <input type="radio" name="currency_settings[qty_decimal_places]" value="auto" x-model="qtyDecimals"
+                               class="text-emerald-600 focus:ring-emerald-500 mt-0.5">
+                        <div>
+                            <span class="text-xs font-black text-slate-900 dark:text-white block">Auto Clean / Dynamic (အလိုအလျောက်)</span>
+                            <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">10, 25, 1.5, 2.25</span>
+                            <span class="text-[10px] text-slate-400 block">(Recommended — .000 မပါဘဲ သန့်ရှင်းစွာ ပြသခြင်း)</span>
+                        </div>
+                    </label>
+
+                    <label class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition"
+                           :class="qtyDecimals === '0' ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/30' : 'border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50'">
+                        <input type="radio" name="currency_settings[qty_decimal_places]" value="0" x-model="qtyDecimals"
+                               class="text-emerald-600 focus:ring-emerald-500 mt-0.5">
+                        <div>
+                            <span class="text-xs font-black text-slate-900 dark:text-white block">Whole Integers Only (ကိန်းပြည့်သက်သက်)</span>
+                            <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">10, 25, 100</span>
+                            <span class="text-[10px] text-slate-400 block">(Mobile, Computer, Fashion & Electronics)</span>
+                        </div>
+                    </label>
+
+                    <label class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition"
+                           :class="qtyDecimals === '2' ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/30' : 'border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50'">
+                        <input type="radio" name="currency_settings[qty_decimal_places]" value="2" x-model="qtyDecimals"
+                               class="text-emerald-600 focus:ring-emerald-500 mt-0.5">
+                        <div>
+                            <span class="text-xs font-black text-slate-900 dark:text-white block">2 Decimals Fixed (ဒသမ ၂ နေရာ)</span>
+                            <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">10.00, 1.50</span>
+                            <span class="text-[10px] text-slate-400 block">(Meter, Yards, Standard Weighed Items)</span>
+                        </div>
+                    </label>
+
+                    <label class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition"
+                           :class="qtyDecimals === '3' ? 'border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/30' : 'border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50'">
+                        <input type="radio" name="currency_settings[qty_decimal_places]" value="3" x-model="qtyDecimals"
+                               class="text-emerald-600 focus:ring-emerald-500 mt-0.5">
+                        <div>
+                            <span class="text-xs font-black text-slate-900 dark:text-white block">3 Decimals Precision (ဒသမ ၃ နေရာ)</span>
+                            <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">10.000, 1.500</span>
+                            <span class="text-[10px] text-slate-400 block">(Kilograms, Precision Weighing, Fuel)</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-emerald-300 transition">
+                        <input type="checkbox" name="currency_settings[qty_trim_zeros]" value="1" x-model="qtyTrimZeros"
+                               class="rounded text-emerald-600 focus:ring-emerald-500">
+                        <div>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Auto-trim Trailing Zeros (မလိုအပ်သော နောက်ပိတ် သုညများ ဖယ်ရှားမည်)</span>
+                            <span class="text-[10px] text-slate-400 block">စတော့အရေအတွက် ကိန်းပြည့်ဖြစ်နေပါက `.000` မပါဘဲ ဥပမာ- `10` အဖြစ် သန့်ရှင်းစွာ ပြသပေးပါမည်။</span>
+                        </div>
+                    </label>
+                </div>
             </div>
 
         </div>
@@ -264,72 +367,90 @@
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                     <span class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                         <span>📊</span>
-                        <span>Live Accounting Format Preview</span>
+                        <span>Live Preview (ငွေကြေးနှင့် စတော့)</span>
                     </span>
                     <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 uppercase font-bold" x-text="code"></span>
                 </div>
 
-                {{-- Sample Breakdown Display Cards --}}
-                <div class="space-y-3">
-                    <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
+                {{-- Sample Currency Breakdown Display Cards --}}
+                <div class="space-y-2.5">
+                    <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
                         <div>
-                            <p class="text-[11px] text-slate-400">Regular Retail Price</p>
+                            <p class="text-[11px] text-slate-400 font-bold">Regular Retail Price</p>
                             <p class="text-[10px] text-slate-500">Single Item Sale</p>
                         </div>
                         <span class="text-sm font-black font-mono text-emerald-400" x-text="formatNumber(45000)"></span>
                     </div>
 
-                    <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
+                    <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
                         <div>
-                            <p class="text-[11px] text-slate-400">Large Sales Volume</p>
-                            <p class="text-[10px] text-slate-500">Monthly Revenue</p>
+                            <p class="text-[11px] text-slate-400 font-bold">Monthly Revenue</p>
+                            <p class="text-[10px] text-slate-500">Large Volume Sum</p>
                         </div>
-                        <span class="text-base font-black font-mono text-white" x-text="formatNumber(12500000)"></span>
+                        <span class="text-sm font-black font-mono text-white" x-text="formatNumber(12500000)"></span>
                     </div>
 
-                    <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
+                    <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
                         <div>
-                            <p class="text-[11px] text-slate-400">Unit Price with Precision</p>
-                            <p class="text-[10px] text-slate-500">Fuel, Agri, Weighing items</p>
-                        </div>
-                        <span class="text-sm font-black font-mono text-sky-400" x-text="formatNumber(18.75)"></span>
-                    </div>
-
-                    <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
-                        <div>
-                            <p class="text-[11px] text-rose-300">Customer Refund / Expense</p>
+                            <p class="text-[11px] text-rose-300 font-bold">Customer Refund / Expense</p>
                             <p class="text-[10px] text-slate-500">Negative ledger entry</p>
                         </div>
                         <span class="text-sm font-black font-mono text-rose-400" x-text="formatNumber(-250000)"></span>
                     </div>
                 </div>
 
+                {{-- Live Stock Quantity Preview Card --}}
+                <div class="p-3 rounded-xl bg-slate-800/90 border border-sky-800/60 space-y-2.5">
+                    <div class="flex items-center justify-between border-b border-slate-700/80 pb-1.5">
+                        <span class="text-[11px] font-black uppercase text-sky-400 flex items-center gap-1.5">
+                            <span>📦</span>
+                            <span>Stock & Inventory Display (စတော့ပြသမှု)</span>
+                        </span>
+                        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-950 text-sky-300 font-bold" x-text="qtyDecimals === 'auto' ? 'Auto Clean' : qtyDecimals + ' Decimals'"></span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                            <p class="text-[10px] text-slate-400 font-bold">On-Hand Stock</p>
+                            <span class="text-sm font-black font-mono text-white" x-text="formatQuantity(30)"></span>
+                        </div>
+                        <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                            <p class="text-[10px] text-slate-400 font-bold">Fractional Qty</p>
+                            <span class="text-sm font-black font-mono text-sky-400" x-text="formatQuantity(1.5)"></span>
+                        </div>
+                        <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                            <p class="text-[10px] text-slate-400 font-bold">Inbound (+)</p>
+                            <span class="text-sm font-black font-mono text-emerald-400" x-text="'+' + formatQuantity(5)"></span>
+                        </div>
+                        <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
+                            <p class="text-[10px] text-slate-400 font-bold">Total Warehouse</p>
+                            <span class="text-sm font-black font-mono text-amber-300" x-text="formatQuantity(12500)"></span>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Mini POS Checkout Card Representation --}}
-                <div class="p-4 rounded-xl bg-white text-slate-900 space-y-2 text-xs shadow-inner">
-                    <div class="flex items-center justify-between font-bold border-b border-slate-200 pb-2">
+                <div class="p-3.5 rounded-xl bg-white text-slate-900 space-y-2 text-xs shadow-inner">
+                    <div class="flex items-center justify-between font-bold border-b border-slate-200 pb-1.5">
                         <span>POS Checkout Voucher</span>
                         <span class="text-[10px] font-mono text-slate-500">INV-8492</span>
                     </div>
                     <div class="flex justify-between text-slate-600 text-[11px]">
-                        <span>Subtotal:</span>
+                        <span>Subtotal (Qty: <span class="font-mono font-bold text-slate-900" x-text="formatQuantity(2)"></span>):</span>
                         <span class="font-mono font-bold text-slate-900" x-text="formatNumber(120000)"></span>
                     </div>
                     <div class="flex justify-between text-emerald-700 text-[11px]">
                         <span>Discount (5%):</span>
                         <span class="font-mono font-bold" x-text="formatNumber(-6000)"></span>
                     </div>
-                    <div class="flex justify-between text-slate-600 text-[11px]">
-                        <span>Tax (5%):</span>
-                        <span class="font-mono font-bold text-slate-900" x-text="formatNumber(5700)"></span>
-                    </div>
                     <div class="flex justify-between font-black text-sm pt-2 border-t border-slate-300">
                         <span>NET PAYABLE:</span>
-                        <span class="font-mono text-emerald-600" x-text="formatNumber(119700)"></span>
+                        <span class="font-mono text-emerald-600" x-text="formatNumber(114000)"></span>
                     </div>
                 </div>
 
                 <p class="text-[11px] text-slate-400 text-center">
-                    💡 Real-time format updates immediately as you customize symbols, thousand separators, decimals and negative accounting rules.
+                    💡 Real-time format updates immediately as you customize currency symbols, price decimals, and stock quantity precision.
                 </p>
             </div>
         </div>

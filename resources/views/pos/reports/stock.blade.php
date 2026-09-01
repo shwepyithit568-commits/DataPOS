@@ -1,166 +1,200 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.sidebar_stock_balance') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full space-y-2 sm:space-y-2.5">
+@php
+    $fmtQty = function($v) {
+        $val = (float) $v;
+        return $val == (int) $val ? number_format($val, 0) : rtrim(rtrim(number_format($val, 3), '0'), '.');
+    };
+    $totalItemsCount = count($report['rows']);
+    $zeroStockCount = $report['rows']->filter(fn($r) => (float)$r['quantity_on_hand'] <= 0)->count();
+    $lowStockCount = $report['rows']->filter(fn($r) => (float)$r['quantity_on_hand'] > 0 && (float)$r['quantity_on_hand'] <= 5)->count();
+@endphp
 
-    {{-- 1. Compact Page Header --}}
-    <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xs">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+<div class="w-full space-y-0.5 pb-6"
+     x-data="{ viewMode: localStorage.getItem('admin_view_mode') || 'table', statusFilter: 'all' }"
+     @view-changed.window="viewMode = $event.detail">
+
+    {{-- ============================================================
+         1. COMPACT PAGE HEADER (34px - 38px Standard Height)
+         ============================================================ --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+        <div class="flex items-center gap-2.5 min-w-0">
+            <span class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 grid place-items-center text-base font-bold shadow-xs shrink-0">
+                📊
+            </span>
             <div class="min-w-0">
-                <h1 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-slate-100 font-outfit truncate">
-                    {{ __('messages.sidebar_stock_balance') }}
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                    <span>{{ __('messages.sidebar_stock_balance') }}</span>
+                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 hidden sm:inline">({{ $store->name }})</span>
+                    <span class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        {{ number_format($totalItemsCount) }}
+                    </span>
                 </h1>
-                <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {{ $store->name }} · {{ __('messages.reports_stock_subtitle') }}
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    {{ __('messages.reports_stock_subtitle') }}
                 </p>
             </div>
+        </div>
 
-            {{-- Fast Quick Action Links --}}
-            <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-                <a href="{{ route('pos.adjustments.index', ['store_slug' => $store->slug]) }}"
-                   class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 text-xs font-bold transition shadow-2xs">
-                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    <span>{{ __('messages.sidebar_stock_adjustments') }}</span>
-                </a>
+        {{-- Header Actions: Excel, CSV, Print & Quick Nav --}}
+        <div class="flex items-center gap-1.5 self-start sm:self-auto shrink-0 flex-wrap">
+            {{-- Excel Export Button --}}
+            <a href="{{ route('pos.reports.stock.export', ['store_slug' => $store->slug, 'q' => request('q'), 'format' => 'xlsx']) }}"
+               title="Export Excel Spreadsheet (.xlsx)"
+               class="h-7 px-2.5 rounded-md text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Excel</span>
+            </a>
 
-                <a href="{{ route('store.admin.stock_ledger.index', ['store_slug' => $store->slug]) }}"
-                   class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 text-xs font-bold transition shadow-2xs">
-                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-                    <span>{{ __('messages.sidebar_stock_ledger') }}</span>
-                </a>
+            {{-- CSV Export Button --}}
+            <a href="{{ route('pos.reports.stock.export', ['store_slug' => $store->slug, 'q' => request('q'), 'format' => 'csv']) }}"
+               title="Export CSV Data (.csv)"
+               class="h-7 px-2.5 rounded-md text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                <span>CSV</span>
+            </a>
 
-                <a href="{{ route('store.admin.inventory_valuation.index', ['store_slug' => $store->slug]) }}"
-                   class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 text-xs font-bold transition shadow-2xs">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                    <span>{{ __('messages.sidebar_inventory_valuation') }}</span>
-                </a>
-            </div>
+            {{-- Print Button --}}
+            <button type="button" @click="window.print()"
+                    title="Print Stock Balance Report"
+                    class="h-7 px-2.5 rounded-md text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                <span>{{ __('messages.print') }}</span>
+            </button>
+
+            {{-- Quick Nav: Stock Ledger --}}
+            <a href="{{ route('store.admin.stock_ledger.index', ['store_slug' => $store->slug]) }}"
+               class="h-7 px-2.5 rounded-md text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 dark:hover:bg-violet-900/60 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                <span>📑</span>
+                <span>{{ __('messages.sidebar_stock_ledger') }}</span>
+            </a>
         </div>
     </div>
 
-    {{-- 2. KPI Summary Cards (4 Responsive Metrics) --}}
-    @php
-        $totalItemsCount = count($report['rows']);
-        $zeroStockCount = $report['rows']->filter(fn($r) => (float)$r['quantity_on_hand'] <= 0)->count();
-    @endphp
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
+    {{-- ============================================================
+         2. SUMMARY STAT CARDS (Row-based Center Alignment Standard)
+         ============================================================ --}}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-0.5 sm:gap-1" role="list">
         {{-- Total SKUs --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xs">
-            <div class="flex items-center justify-between text-slate-500">
-                <span class="text-[10px] sm:text-[11px] font-black uppercase tracking-wider">{{ __('messages.reports_stock_total_skus') }}</span>
-                <span class="p-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                </span>
+        <div role="listitem"
+             class="bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 shadow-inner text-xs sm:text-sm font-bold">
+                🏷️
             </div>
-            <p class="text-base sm:text-xl font-black font-mono mt-1 tabular-nums text-slate-900 dark:text-slate-100">
-                {{ number_format($totalItemsCount) }}
-            </p>
+            <div class="min-w-0">
+                <div class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums font-outfit">
+                    {{ number_format($totalItemsCount) }}
+                </div>
+                <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                    {{ __('messages.reports_stock_total_skus') }}
+                </p>
+            </div>
         </div>
 
         {{-- Total On-Hand Units --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xs">
-            <div class="flex items-center justify-between text-emerald-600 dark:text-emerald-400">
-                <span class="text-[10px] sm:text-[11px] font-black uppercase tracking-wider">{{ __('messages.reports_total_units') }}</span>
-                <span class="p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-                </span>
+        <div role="listitem"
+             class="bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/20 dark:bg-emerald-950/20 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center bg-emerald-100 text-emerald-600 dark:bg-emerald-950/70 dark:text-emerald-300 shadow-inner text-xs sm:text-sm font-bold">
+                📦
             </div>
-            <p class="text-base sm:text-xl font-black font-mono mt-1 tabular-nums text-emerald-700 dark:text-emerald-300">
-                {{ number_format((float) $report['total_units'], 3) }}
-            </p>
+            <div class="min-w-0">
+                <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 leading-none tabular-nums font-outfit">
+                    {{ $fmtQty($report['total_units']) }}
+                </div>
+                <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                    {{ __('messages.reports_total_units') }}
+                </p>
+            </div>
         </div>
 
         {{-- Total Valuation --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xs">
-            <div class="flex items-center justify-between text-sky-600 dark:text-sky-400">
-                <span class="text-[10px] sm:text-[11px] font-black uppercase tracking-wider">{{ __('messages.reports_stock_value') }}</span>
-                <span class="p-1 rounded-md bg-sky-50 dark:bg-sky-950/80 text-sky-600">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </span>
+        <div role="listitem"
+             class="bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-sky-200/80 dark:border-sky-900/60 bg-sky-50/20 dark:bg-sky-950/20 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center bg-sky-100 text-sky-600 dark:bg-sky-950/70 dark:text-sky-300 shadow-inner text-xs sm:text-sm font-bold">
+                💰
             </div>
-            <p class="text-base sm:text-xl font-black font-mono mt-1 tabular-nums text-sky-700 dark:text-sky-300">
-                Ks {{ number_format((float) $report['total_value']) }}
-            </p>
+            <div class="min-w-0">
+                <div class="text-sm sm:text-base font-black text-sky-600 dark:text-sky-400 leading-none tabular-nums font-outfit">
+                    Ks {{ number_format((float) $report['total_value']) }}
+                </div>
+                <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                    {{ __('messages.reports_stock_value') }}
+                </p>
+            </div>
         </div>
 
         {{-- Zero / Out of Stock Alert --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xs">
-            <div class="flex items-center justify-between {{ $zeroStockCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500' }}">
-                <span class="text-[10px] sm:text-[11px] font-black uppercase tracking-wider">{{ __('messages.reports_stock_low_stock') }}</span>
-                <span class="p-1 rounded-md {{ $zeroStockCount > 0 ? 'bg-amber-50 dark:bg-amber-950/80 text-amber-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400' }}">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                </span>
+        <div role="listitem"
+             class="bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border {{ $zeroStockCount > 0 ? 'border-rose-200/80 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/20' : 'border-slate-200/80 dark:border-slate-800' }} shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg grid place-items-center {{ $zeroStockCount > 0 ? 'bg-rose-100 text-rose-600 dark:bg-rose-950/70 dark:text-rose-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }} shadow-inner text-xs sm:text-sm font-bold">
+                ⚠️
             </div>
-            <p class="text-base sm:text-xl font-black font-mono mt-1 tabular-nums {{ $zeroStockCount > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-900 dark:text-slate-100' }}">
-                {{ number_format($zeroStockCount) }}
-            </p>
-        </div>
-    </div>
-
-    {{-- 3. Search & Export Toolbar --}}
-    <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 shadow-2xs">
-        <form method="GET" action="{{ url('/store/' . $store->slug . '/pos/reports/stock') }}"
-              class="flex flex-wrap items-center justify-between gap-2">
-            
-            {{-- Search Bar --}}
-            <div class="flex items-center gap-1.5 flex-1 min-w-[240px] max-w-md">
-                <div class="relative w-full">
-                    <input type="text" name="q" value="{{ request('q') }}" placeholder="{{ __('messages.reports_search') }}"
-                           class="w-full pl-8 pr-8 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-xs bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 transition shadow-2xs">
-                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    @if (request('q'))
-                        <a href="{{ url('/store/' . $store->slug . '/pos/reports/stock') }}"
-                           class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-xs">×</a>
-                    @endif
+            <div class="min-w-0">
+                <div class="text-sm sm:text-base font-black {{ $zeroStockCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100' }} leading-none tabular-nums font-outfit">
+                    {{ number_format($zeroStockCount) }}
                 </div>
-
-                <button type="submit" class="rounded-lg px-3.5 py-1.5 text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white transition shadow-2xs shrink-0">
-                    {{ __('messages.reports_filter') }}
-                </button>
+                <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
+                    {{ __('messages.reports_stock_low_stock') }}
+                </p>
             </div>
-
-            {{-- Export & Print Actions --}}
-            <div class="flex items-center gap-1.5 shrink-0 ml-auto">
-                <a href="{{ route('pos.reports.stock.export', ['store_slug' => $store->slug, 'q' => request('q'), 'format' => 'xlsx']) }}"
-                   class="rounded-lg px-2.5 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs transition inline-flex items-center gap-1.5"
-                   title="Export Excel Spreadsheet (.xlsx)">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
-                    <span>Excel</span>
-                </a>
-
-                <a href="{{ route('pos.reports.stock.export', ['store_slug' => $store->slug, 'q' => request('q'), 'format' => 'csv']) }}"
-                   class="rounded-lg px-2.5 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1.5"
-                   title="Export CSV Data (.csv)">
-                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    <span>CSV</span>
-                </a>
-
-                <button type="button" @click="window.print()"
-                        class="rounded-lg px-2.5 py-1.5 text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1.5"
-                        title="Print Stock Balance Report">
-                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                    <span class="hidden sm:inline">{{ __('messages.print') }}</span>
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
 
-    {{-- 4. Dense Stock Ledger Spreadsheet Table --}}
-    <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs overflow-hidden">
-        {{-- Mobile Swipe Hint Bar --}}
-        <div class="sm:hidden px-2.5 py-1 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200/60 dark:border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
-            <span class="flex items-center gap-1">
-                <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-                <span>Swipe horizontally to view all columns</span>
-            </span>
-            <span class="font-mono text-[9px] uppercase tracking-wider text-slate-400">Scrollable</span>
+    {{-- ============================================================
+         3. STANDARD TOOLBAR WITH SEARCH & STATUS PILLS
+         ============================================================ --}}
+    <x-admin.toolbar
+        :showSearch="true"
+        :searchPlaceholder="__('messages.reports_search') ?? 'Search product, SKU...'"
+        :searchValue="request('q') ?? request('search') ?? ''"
+        :showViewToggle="true"
+        :activeView="'table'"
+        :showExcel="true"
+        :excelUrl="route('pos.reports.stock.export', ['store_slug' => $store->slug, 'q' => request('q'), 'format' => 'xlsx'])"
+        :showCsv="true"
+        :csvUrl="route('pos.reports.stock.export', ['store_slug' => $store->slug, 'q' => request('q'), 'format' => 'csv'])"
+    >
+        {{-- Quick Stock Status Tabs --}}
+        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700 text-xs shrink-0">
+            <button type="button"
+                    @click="statusFilter = 'all'"
+                    class="h-6 px-2.5 rounded-md text-xs font-bold transition whitespace-nowrap inline-flex items-center"
+                    :class="statusFilter === 'all' ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-2xs font-black' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
+                {{ __('messages.all') }}
+            </button>
+            <button type="button"
+                    @click="statusFilter = 'in_stock'"
+                    class="h-6 px-2.5 rounded-md text-xs font-bold transition whitespace-nowrap inline-flex items-center"
+                    :class="statusFilter === 'in_stock' ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-300 shadow-2xs font-black' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
+                {{ __('messages.reports_stock_in_stock') }}
+            </button>
+            <button type="button"
+                    @click="statusFilter = 'low_stock'"
+                    class="h-6 px-2.5 rounded-md text-xs font-bold transition whitespace-nowrap inline-flex items-center"
+                    :class="statusFilter === 'low_stock' ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-300 shadow-2xs font-black' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
+                {{ __('messages.low_stock') }}
+            </button>
+            <button type="button"
+                    @click="statusFilter = 'out_of_stock'"
+                    class="h-6 px-2.5 rounded-md text-xs font-bold transition whitespace-nowrap inline-flex items-center"
+                    :class="statusFilter === 'out_of_stock' ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-300 shadow-2xs font-black' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'">
+                {{ __('messages.reports_stock_out_of_stock') }}
+            </button>
         </div>
+    </x-admin.toolbar>
 
+    {{-- ============================================================
+         4. SPREADSHEET DATA GRID TABLE (TABLE VIEW)
+         ============================================================ --}}
+    <div x-show="viewMode === 'table'" class="w-full bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-lg shadow-2xs overflow-hidden transition">
         @if ($report['rows']->isEmpty())
             <div class="py-12 px-4 text-center">
                 <div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-3">
@@ -175,34 +209,38 @@
                 @endif
             </div>
         @else
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300 border-collapse min-w-[760px]">
-                    <thead class="sticky top-0 bg-slate-50/90 dark:bg-slate-800/80 backdrop-blur-xs text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-black border-b border-slate-200/80 dark:border-slate-800">
-                        <tr>
-                            <th class="px-3 py-2.5 w-12 text-center">#</th>
-                            <th class="px-3 py-2.5">{{ __('messages.product') }}</th>
-                            <th class="px-3 py-2.5">{{ __('messages.sku') }}</th>
-                            <th class="px-3 py-2.5 text-center">{{ __('messages.status') }}</th>
-                            <th class="px-3 py-2.5 text-right">{{ __('messages.on_hand_qty') }}</th>
-                            <th class="px-3 py-2.5 text-right">{{ __('messages.average_cost') }}</th>
-                            <th class="px-3 py-2.5 text-right">{{ __('messages.stock_value') }}</th>
-                            <th class="px-3 py-2.5 text-center w-24">{{ __('messages.actions') }}</th>
+            <div class="overflow-x-auto max-h-[75vh] overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800">
+                <table class="w-full text-left text-xs border-collapse font-sans text-slate-700 dark:text-slate-200 min-w-[760px]">
+                    {{-- Sticky Header --}}
+                    <thead class="sticky top-0 z-20 bg-slate-100 dark:bg-slate-800/95 backdrop-blur-xs border-b border-slate-200 dark:border-slate-700 shadow-2xs select-none">
+                        <tr class="text-[10px] sm:text-[11px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider divide-x divide-slate-200 dark:divide-slate-700">
+                            <th class="py-1.5 px-2.5 w-12 text-center">#</th>
+                            <th class="py-1.5 px-2.5 min-w-[200px]">{{ __('messages.product') }}</th>
+                            <th class="py-1.5 px-2.5 min-w-[130px]">{{ __('messages.sku') }}</th>
+                            <th class="py-1.5 px-2.5 text-center min-w-[110px]">{{ __('messages.status') }}</th>
+                            <th class="py-1.5 px-2.5 text-right min-w-[110px] bg-slate-200/50 dark:bg-slate-700/50 font-black text-slate-900 dark:text-white">{{ __('messages.on_hand_qty') }}</th>
+                            <th class="py-1.5 px-2.5 text-right min-w-[110px]">{{ __('messages.average_cost') }}</th>
+                            <th class="py-1.5 px-2.5 text-right min-w-[130px]">{{ __('messages.stock_value') }}</th>
+                            <th class="py-1.5 px-2 text-center w-28">{{ __('messages.actions') }}</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80">
+                    {{-- Table Body --}}
+                    <tbody class="divide-y divide-slate-200/80 dark:divide-slate-800 bg-white dark:bg-slate-900">
                         @foreach ($report['rows'] as $index => $row)
                             @php
                                 $qty = (float) $row['quantity_on_hand'];
                                 $cost = (float) $row['unit_cost_avg'];
                                 $val = (float) $row['value'];
                                 $product = $row['product'];
+                                $itemStatusKey = $qty > 5 ? 'in_stock' : ($qty > 0 ? 'low_stock' : 'out_of_stock');
                             @endphp
-                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
-                                <td class="px-3 py-2 text-center text-slate-400 font-mono text-[11px]">
+                            <tr class="divide-x divide-slate-200/80 dark:divide-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition"
+                                x-show="statusFilter === 'all' || statusFilter === '{{ $itemStatusKey }}'">
+                                <td class="py-1.5 px-2.5 text-center text-slate-400 font-mono text-[11px]">
                                     {{ $index + 1 }}
                                 </td>
-                                <td class="px-3 py-2">
-                                    <div class="font-bold text-slate-900 dark:text-slate-100">
+                                <td class="py-1.5 px-2.5">
+                                    <div class="font-bold text-slate-900 dark:text-slate-100 leading-tight truncate max-w-[220px]">
                                         {{ $product?->name ?? '—' }}
                                     </div>
                                     @if ($product?->category)
@@ -211,42 +249,45 @@
                                         </div>
                                     @endif
                                 </td>
-                                <td class="px-3 py-2 font-mono text-slate-500">
-                                    <span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[11px]">
+                                <td class="py-1.5 px-2.5 font-mono text-slate-500 dark:text-slate-400">
+                                    <span class="inline-block px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-[11px]">
                                         {{ $product?->sku ?: '—' }}
                                     </span>
                                 </td>
-                                <td class="px-3 py-2 text-center">
+                                <td class="py-1.5 px-2.5 text-center whitespace-nowrap">
                                     @if ($qty > 5)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
-                                            {{ __('messages.reports_stock_in_stock') }}
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                            <span>✅</span>
+                                            <span>{{ __('messages.reports_stock_in_stock') }}</span>
                                         </span>
                                     @elseif ($qty > 0)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
-                                            {{ __('messages.low_stock') }}
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                            <span>⚠️</span>
+                                            <span>{{ __('messages.low_stock') }}</span>
                                         </span>
                                     @else
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300">
-                                            {{ __('messages.reports_stock_out_of_stock') }}
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                                            <span>❌</span>
+                                            <span>{{ __('messages.reports_stock_out_of_stock') }}</span>
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-3 py-2 text-right font-mono font-bold tabular-nums {{ $qty <= 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100' }}">
-                                    {{ number_format($qty, 3) }}
+                                <td class="py-1.5 px-2.5 text-right font-mono font-black text-xs sm:text-sm tabular-nums bg-slate-50/50 dark:bg-slate-800/30 {{ $qty <= 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100' }}">
+                                    {{ $fmtQty($qty) }}
                                 </td>
-                                <td class="px-3 py-2 text-right font-mono tabular-nums text-slate-600 dark:text-slate-400">
+                                <td class="py-1.5 px-2.5 text-right font-mono tabular-nums text-slate-600 dark:text-slate-400">
                                     Ks {{ number_format($cost) }}
                                 </td>
-                                <td class="px-3 py-2 text-right font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
+                                <td class="py-1.5 px-2.5 text-right font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">
                                     Ks {{ number_format($val) }}
                                 </td>
-                                <td class="px-3 py-2 text-center">
+                                <td class="py-1.5 px-2 text-center whitespace-nowrap">
                                     @if ($product)
-                                        <a href="{{ route('store.admin.stock_ledger.index', ['store_slug' => $store->slug, 'product_id' => $product->id]) }}"
-                                           class="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-bold transition shadow-2xs"
+                                        <a href="{{ route('store.admin.stock_ledger.bin_card', ['store_slug' => $store->slug, 'product' => $product->id]) }}"
+                                           class="h-6 px-2 text-xs font-bold rounded-md text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-950/40 transition inline-flex items-center gap-1 active:scale-95"
                                            title="{{ __('messages.reports_stock_view_ledger') }}">
-                                            <svg class="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                                            <span>{{ __('messages.reports_stock_view_ledger') }}</span>
+                                            <span>📑</span>
+                                            <span>Bin Card</span>
                                         </a>
                                     @else
                                         <span class="text-slate-400 text-xs">—</span>
@@ -255,26 +296,122 @@
                             </tr>
                         @endforeach
                     </tbody>
-                    <tfoot class="bg-slate-50 dark:bg-slate-800/90 font-bold border-t-2 border-slate-200 dark:border-slate-700 text-xs">
-                        <tr>
-                            <td colspan="4" class="px-3 py-2.5 text-right font-black uppercase text-slate-700 dark:text-slate-300">
+                    {{-- Sticky Summary Footer --}}
+                    <tfoot class="sticky bottom-0 bg-slate-100 dark:bg-slate-800/95 backdrop-blur-xs font-bold border-t-2 border-slate-300 dark:border-slate-600 text-xs shadow-inner">
+                        <tr class="divide-x divide-slate-200 dark:divide-slate-700">
+                            <td colspan="4" class="py-1.5 px-2.5 text-right font-black uppercase text-slate-700 dark:text-slate-300">
                                 {{ __('messages.total') }}:
                             </td>
-                            <td class="px-3 py-2.5 text-right font-mono font-black text-emerald-700 dark:text-emerald-400 tabular-nums">
-                                {{ number_format((float) $report['total_units'], 3) }}
+                            <td class="py-1.5 px-2.5 text-right font-mono font-black text-emerald-700 dark:text-emerald-400 tabular-nums bg-emerald-50/50 dark:bg-emerald-950/40">
+                                {{ $fmtQty($report['total_units']) }}
                             </td>
-                            <td class="px-3 py-2.5 text-right font-mono text-slate-400 tabular-nums">
+                            <td class="py-1.5 px-2.5 text-right font-mono text-slate-400 tabular-nums">
                                 —
                             </td>
-                            <td class="px-3 py-2.5 text-right font-mono font-black text-sky-700 dark:text-sky-400 tabular-nums">
+                            <td class="py-1.5 px-2.5 text-right font-mono font-black text-sky-700 dark:text-sky-400 tabular-nums">
                                 Ks {{ number_format((float) $report['total_value']) }}
                             </td>
-                            <td class="px-3 py-2.5"></td>
+                            <td class="py-1.5 px-2"></td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
         @endif
     </div>
+
+    {{-- ============================================================
+         5. RESPONSIVE CARDS VIEW GRID (CARD VIEW MODE)
+         ============================================================ --}}
+    <div x-show="viewMode === 'card' || viewMode === 'cards'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1 sm:gap-1.5">
+        @forelse ($report['rows'] as $item)
+            @php
+                $qty = (float) $item['quantity_on_hand'];
+                $cost = (float) $item['unit_cost_avg'];
+                $val = (float) $item['value'];
+                $product = $item['product'];
+                $itemStatusKey = $qty > 5 ? 'in_stock' : ($qty > 0 ? 'low_stock' : 'out_of_stock');
+            @endphp
+            <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-amber-300 dark:hover:border-amber-600/50 hover:shadow-xs transition flex flex-col justify-between group overflow-hidden"
+                 x-show="statusFilter === 'all' || statusFilter === '{{ $itemStatusKey }}'">
+                {{-- Top Card Content --}}
+                <div class="p-2.5 sm:p-3 space-y-2">
+                    {{-- Header: Product Name + Status Badge --}}
+                    <div class="flex items-start justify-between gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                        <div class="min-w-0 flex-1">
+                            <div class="font-black text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1">
+                                {{ $product?->name ?? '—' }}
+                            </div>
+                            @if ($product?->category)
+                                <span class="text-[10px] text-slate-400 block mt-0.5">{{ $product->category->name }}</span>
+                            @endif
+                        </div>
+
+                        {{-- Status Pill --}}
+                        @if ($qty > 5)
+                            <span class="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                <span>✅</span>
+                                <span>{{ __('messages.reports_stock_in_stock') }}</span>
+                            </span>
+                        @elseif ($qty > 0)
+                            <span class="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                <span>⚠️</span>
+                                <span>{{ __('messages.low_stock') }}</span>
+                            </span>
+                        @else
+                            <span class="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                                <span>❌</span>
+                                <span>{{ __('messages.reports_stock_out_of_stock') }}</span>
+                            </span>
+                        @endif
+                    </div>
+
+                    {{-- SKU Pill --}}
+                    <div class="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                        <span class="font-bold uppercase text-slate-400">SKU:</span>
+                        <span class="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold select-all">{{ $product?->sku ?: '—' }}</span>
+                    </div>
+
+                    {{-- Quantity & Valuation Hero Box --}}
+                    <div class="p-2 rounded-md border {{ $qty > 0 ? 'bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/40' : 'bg-rose-50/30 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/40' }} space-y-1">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                {{ __('messages.on_hand_qty') }}:
+                            </span>
+                            <span class="font-black font-mono text-xs sm:text-sm {{ $qty > 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-600 dark:text-rose-400' }}">
+                                {{ $fmtQty($qty) }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-200/50 dark:border-slate-700/50 font-mono">
+                            <span class="text-[10px] text-slate-400 font-sans">
+                                {{ __('messages.stock_value') }} (@ {{ number_format($cost) }} Ks)
+                            </span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                                Ks {{ number_format($val) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Card Action Footer --}}
+                <div class="p-2 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
+                    @if ($product)
+                        <a href="{{ route('store.admin.stock_ledger.bin_card', ['store_slug' => $store->slug, 'product' => $product->id]) }}"
+                           class="w-full text-center px-2.5 py-1 rounded text-xs font-bold bg-violet-50 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/60 dark:text-violet-300 transition inline-flex items-center justify-center gap-1 active:scale-95 shadow-2xs">
+                            <span>📑</span>
+                            <span>{{ __('messages.reports_stock_view_ledger') }}</span>
+                            <span>&rarr;</span>
+                        </a>
+                    @endif
+                </div>
+            </div>
+        @empty
+            <div class="col-span-full p-8 text-center text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 shadow-2xs">
+                <span class="text-3xl mb-2 block">📦</span>
+                <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">{{ __('messages.reports_stock_no_data') }}</p>
+            </div>
+        @endforelse
+    </div>
+
 </div>
 @endsection

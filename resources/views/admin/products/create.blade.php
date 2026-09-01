@@ -1,6 +1,6 @@
 @extends('layouts.admin.app')
 
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
 @php
@@ -8,7 +8,7 @@
     $initialMainCategory = $initialCategory ? ($initialCategory->parent_id ?? $initialCategory->id) : '';
     $initialSubCategory = $initialCategory?->parent_id ? $initialCategory->id : '';
 @endphp
-<div class="w-full space-y-2 sm:space-y-2.5"
+<div class="w-full space-y-0.5 pb-6"
     x-data="{
         categoryModalOpen: false,
         brandModalOpen: false,
@@ -353,39 +353,36 @@
         }
     }" @richtext-sync.window="onRichTextSync($event)">
 
-    {{-- Top Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+    {{-- Compact Page Header (34px - 38px) --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
         <div class="flex items-center gap-2.5 min-w-0">
-            <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/products') }}"
-               class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition grid place-items-center shadow-2xs shrink-0">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-            </a>
+            <span class="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 grid place-items-center text-base font-bold shadow-xs shrink-0">
+                ✨
+            </span>
             <div class="min-w-0">
-                <h1 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2 font-outfit truncate">
-                    {{ __('messages.product_form_create_title') }}
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                    <span>{{ __('messages.product_form_create_title') }}</span>
+                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 hidden sm:inline">({{ $store->name }})</span>
                 </h1>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">{{ $store->name }} · {{ __('messages.products') }}</p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    ကုန်ပစ္စည်း အချက်အလက်၊ စမတ် SKU၊ ဈေးနှုန်းနှင့် စတော့လက်ကျန် ဖြည့်သွင်းခြင်း
+                </p>
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-            <a href="{{ url('/store/' . $store->slug . '/admin/categories') }}"
-               class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1 shadow-2xs">
+        <div class="flex flex-wrap items-center gap-1 sm:gap-1.5 self-start sm:self-auto shrink-0">
+            <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug]) }}"
+               class="h-7 px-2.5 rounded-md text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1 cursor-pointer">
                 <span>📁</span>
-                <span>{{ __('messages.categories') }}</span>
-            </a>
-            <a href="{{ url('/store/' . $store->slug . '/admin/brands') }}"
-               class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1 shadow-2xs">
-                <span>🏷️</span>
-                <span>{{ __('messages.brands') }}</span>
+                <span>{{ __('messages.master_data') }}</span>
             </a>
             <a href="{{ url('/store/' . $store->slug . '/admin/suppliers') }}"
-               class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1 shadow-2xs">
+               class="h-7 px-2.5 rounded-md text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1 cursor-pointer">
                 <span>🏢</span>
                 <span>{{ __('messages.suppliers') }}</span>
             </a>
             <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/products') }}"
-               class="px-3 py-1.5 rounded-lg text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition flex items-center gap-1 shadow-2xs">
+               class="h-7 px-2.5 rounded-md text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition flex items-center gap-1 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 <span>{{ __('messages.product_form_back_to_products') }}</span>
             </a>
@@ -393,19 +390,19 @@
     </div>
 
     @if ($errors->any())
-        <div class="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-lg text-xs font-bold text-rose-700 dark:text-rose-300 space-y-1 shadow-2xs">
-            <div class="flex items-center gap-2">
+        <div class="p-2.5 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-lg text-xs font-bold text-rose-700 dark:text-rose-300 space-y-0.5 shadow-2xs">
+            <div class="flex items-center gap-1.5">
                 <span>⚠️</span>
                 <span class="font-black">{{ __('messages.product_form_check_fields') }}</span>
             </div>
             @foreach ($errors->all() as $error)
-                <p class="pl-6">• {{ $error }}</p>
+                <p class="pl-5 text-[11px]">• {{ $error }}</p>
             @endforeach
         </div>
     @endif
 
     <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products') }}" enctype="multipart/form-data"
-        class="space-y-2 sm:space-y-2.5">
+        class="space-y-0.5">
         @csrf
 
         @include('admin.products._form', ['isEdit' => false])
