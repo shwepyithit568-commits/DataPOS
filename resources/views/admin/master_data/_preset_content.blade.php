@@ -65,7 +65,7 @@
     }
 }"
 @open-preset-create.window="openCreate()"
-class="space-y-2 sm:space-y-2.5">
+class="space-y-0.5">
 
     {{-- Success Flash --}}
     @if (session('success'))

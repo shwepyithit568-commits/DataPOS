@@ -1,7 +1,7 @@
 @php
     $highlightBrand = session('highlight_brand');
 @endphp
-<div class="w-full space-y-2 sm:space-y-2.5">
+<div class="w-full space-y-0.5">
     @unless($embedded ?? false)
         {{-- Header (hidden when embedded inside Master Data hub) --}}
         <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
