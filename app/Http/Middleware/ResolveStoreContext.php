@@ -47,6 +47,11 @@ class ResolveStoreContext
     private function resolveFallbackStore(Request $request): ?Store
     {
         if (! \Illuminate\Support\Facades\Schema::hasTable('stores')) {
+            // DB tables not yet migrated — redirect to setup or show a clear error
+            // instead of silently returning null (which causes empty dashboards).
+            if ($request->is('api/*')) {
+                abort(503, 'Database tables not ready. Run migrations first.');
+            }
             return null;
         }
 
@@ -80,6 +85,11 @@ class ResolveStoreContext
             ->orderBy('id')
             ->limit(2)
             ->get();
+
+        // If no active stores exist at all, the admin needs to create one first.
+        if ($activeStores->isEmpty() && $request->is('*/admin/*')) {
+            abort(404, 'No active store found. Please create a store first via the admin panel.');
+        }
 
         return $activeStores->count() === 1 ? $activeStores->first() : null;
     }
