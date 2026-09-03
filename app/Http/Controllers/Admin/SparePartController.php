@@ -13,6 +13,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SparePartController extends Controller
@@ -70,6 +74,7 @@ class SparePartController extends Controller
             'price_desc' => $query->orderByDesc('unit_price'),
             'price_asc' => $query->orderBy('unit_price'),
             'subtotal_desc' => $query->orderByDesc('subtotal'),
+            'subtotal_asc' => $query->orderBy('subtotal'),
             'qty_desc' => $query->orderByDesc('quantity'),
             default => $query->latest('id'),
         };
@@ -110,7 +115,7 @@ class SparePartController extends Controller
         ));
     }
 
-    public function export(StoreContext $context, Request $request): StreamedResponse
+    public function export(StoreContext $context, Request $request): BinaryFileResponse|StreamedResponse
     {
         $store = $context->getStore();
 
@@ -152,6 +157,89 @@ class SparePartController extends Controller
         }
 
         $items = $query->latest('id')->get();
+        $format = strtolower((string) $request->input('format', $request->query('format', 'csv')));
+
+        if ($format === 'xlsx') {
+            $filename = 'spare-parts-' . now()->format('Ymd-His') . '.xlsx';
+            $tempFile = tempnam(sys_get_temp_dir(), 'datapos_sp_');
+
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Spare Parts');
+
+            $headers = [
+                'Date',
+                'Job Number',
+                'Device / Model',
+                'Customer',
+                'Part Name',
+                'SKU',
+                'Category',
+                'Quantity',
+                'Unit Price (MMK)',
+                'Subtotal (MMK)',
+                'Stock Status',
+            ];
+            $sheet->fromArray([$headers], null, 'A1');
+
+            $sheet->getStyle('A1:K1')->applyFromArray([
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF'],
+                    'size' => 11,
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '4F46E5'],
+                ],
+                'alignment' => [
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                ],
+            ]);
+            $sheet->getRowDimension(1)->setRowHeight(26);
+            $sheet->freezePane('A2');
+
+            $rowIndex = 2;
+            foreach ($items as $item) {
+                $job = $item->job;
+                $customerName = $job?->customer?->name ?? $job?->contact_name ?? 'Walk-in';
+                $device = trim(($job?->brand ?? '') . ' ' . ($job?->model ?? $job?->device_type ?? ''));
+                $categoryName = $item->product?->category?->name ?? '—';
+                $status = $item->is_deducted ? 'Deducted' : 'Pending';
+
+                $row = [
+                    $item->created_at?->format('Y-m-d H:i') ?? '',
+                    $job?->job_number ?? '',
+                    $device,
+                    $customerName,
+                    $item->name,
+                    $item->sku ?? '',
+                    $categoryName,
+                    (float) $item->quantity,
+                    (float) $item->unit_price,
+                    (float) $item->subtotal,
+                    $status,
+                ];
+
+                $sheet->fromArray([$row], null, "A{$rowIndex}");
+                $sheet->getStyle("H{$rowIndex}")->getNumberFormat()->setFormatCode('#,##0.###');
+                $sheet->getStyle("I{$rowIndex}:J{$rowIndex}")->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getRowDimension($rowIndex)->setRowHeight(20);
+                $rowIndex++;
+            }
+
+            foreach (range('A', 'K') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($tempFile);
+            $spreadsheet->disconnectWorksheets();
+
+            return response()->download($tempFile, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])->deleteFileAfterSend(true);
+        }
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',

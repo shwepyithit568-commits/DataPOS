@@ -752,6 +752,19 @@ class AdminRepairCenterTest extends TestCase
             $response->assertSee('html2pdf', false);
             $response->assertSee('btnDownloadPdf', false);
             $response->assertSee('btnShare', false);
+            $response->assertSee('data-repair-print', false);
+            $response->assertSee('data-repair-download-pdf', false);
+            $response->assertSee('data-repair-share-open', false);
+            $response->assertSee('data-repair-share-channel="native"', false);
+            $response->assertSee('vendor/html2pdf/html2pdf.bundle.min.js', false);
+            $response->assertSee('<script nonce="', false);
+            $response->assertSee("var pdfPaperSize = 'a5';", false);
+            $response->assertSee("filename: 'Repair_Ticket_' + jobNumber + '_A5.pdf'", false);
+            $response->assertSee("clonedTicket.classList.add('size-a5')", false);
+            $response->assertSee('jsPDF: pdfDimensions[pdfPaperSize]', false);
+            $response->assertDontSee('onclick="window.print()', false);
+            $response->assertDontSee('onclick="downloadPdf()', false);
+            $response->assertDontSee('onclick="openShareModal()', false);
         }
     }
 
@@ -777,6 +790,24 @@ class AdminRepairCenterTest extends TestCase
         $showResponse->assertSee('notifySendViber', false);
         $showResponse->assertSee('notifySendTelegram', false);
         $showResponse->assertSee('notifySendSms', false);
+    }
+
+    public function test_repair_notification_modal_is_csp_compatible_and_status_requires_an_explicit_choice(): void
+    {
+        $job = $this->makeJob(['status' => 'awaiting_parts']);
+
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/repairs/{$job->id}");
+
+        $response->assertStatus(200);
+        $response->assertSee('data-repair-notify-open', false);
+        $response->assertSee('data-repair-notify-backdrop', false);
+        $response->assertSee('data-repair-status-form', false);
+        $response->assertSee('<script nonce="', false);
+        $response->assertSee('<option value="" selected disabled>', false);
+        $response->assertDontSee('onclick="openRepairNotifyModal()', false);
+        $response->assertDontSee('onclick="closeRepairNotifyModal()', false);
+        $response->assertDontSee('onclick="notifySetTab(', false);
     }
 
     public function test_quick_add_technician(): void
@@ -876,4 +907,3 @@ class AdminRepairCenterTest extends TestCase
         return app(\App\POS\Services\InventoryService::class);
     }
 }
-

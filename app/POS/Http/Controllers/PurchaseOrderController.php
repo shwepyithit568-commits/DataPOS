@@ -438,7 +438,7 @@ class PurchaseOrderController extends Controller
         $search = trim((string) $request->input('search', ''));
         $sort = $request->input('sort', 'newest');
 
-        $query = \App\POS\Models\PurchaseReturn::where('store_id', $store->id)
+        $query = PurchaseReturn::where('store_id', $store->id)
             ->with(['purchaseOrder', 'supplier', 'createdBy']);
 
         if ($search !== '') {
@@ -516,7 +516,7 @@ class PurchaseOrderController extends Controller
         $search = trim((string) $request->input('search', ''));
         $sort = $request->input('sort', 'newest');
 
-        $query = \App\POS\Models\PurchaseReturn::where('store_id', $store->id)
+        $query = PurchaseReturn::where('store_id', $store->id)
             ->with(['purchaseOrder', 'supplier', 'createdBy']);
 
         if ($search !== '') {

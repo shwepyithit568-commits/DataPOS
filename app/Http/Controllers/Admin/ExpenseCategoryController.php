@@ -9,6 +9,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExpenseCategoryController extends Controller
 {
@@ -59,6 +65,7 @@ class ExpenseCategoryController extends Controller
         $perPageCount = ($perPage === 'all' || (int) $perPage > 1000) ? 10000 : (int) $perPage;
 
         $categories = $query->paginate($perPageCount)->withQueryString();
+        $exportUrl = route('store.admin.expense_categories.export', array_merge($storeRouteParams, request()->except(['page'])));
 
         return view('admin.expense_categories.index', compact(
             'store',
@@ -67,8 +74,139 @@ class ExpenseCategoryController extends Controller
             'metrics',
             'search',
             'status',
-            'sort'
+            'sort',
+            'exportUrl'
         ));
+    }
+
+    public function export(StoreContext $context, Request $request): BinaryFileResponse|StreamedResponse
+    {
+        $store = $context->getStore();
+
+        $query = ExpenseCategory::where('store_id', $store->id);
+
+        $search = trim((string) $request->input('search', $request->input('q', '')));
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        $status = $request->input('status', 'all');
+        if ($status === 'active') {
+            $query->where('is_active', true);
+        } elseif ($status === 'inactive') {
+            $query->where('is_active', false);
+        }
+
+        $categories = $query->orderBy('sort_order', 'asc')->orderBy('name', 'asc')->get();
+        $format = strtolower((string) $request->input('format', 'xlsx'));
+
+        if ($format === 'csv') {
+            $filename = 'expense-categories-' . now()->format('Ymd-His') . '.csv';
+
+            return response()->streamDownload(function () use ($categories) {
+                $handle = fopen('php://output', 'w');
+                fputs($handle, "\xEF\xBB\xBF"); // UTF-8 BOM
+
+                fputcsv($handle, [
+                    '#',
+                    'Name',
+                    'Code',
+                    'Color',
+                    'Sort Order',
+                    'Status',
+                    'Description',
+                    'Created At',
+                ]);
+
+                foreach ($categories as $index => $cat) {
+                    fputcsv($handle, [
+                        $index + 1,
+                        $cat->name,
+                        $cat->code ?? '',
+                        $cat->color ?? '#6366f1',
+                        $cat->sort_order,
+                        $cat->is_active ? 'Active' : 'Inactive',
+                        $cat->description ?? '',
+                        $cat->created_at?->format('Y-m-d H:i') ?? '',
+                    ]);
+                }
+
+                fclose($handle);
+            }, $filename, [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+            ]);
+        }
+
+        // PhpSpreadsheet XLSX
+        $filename = 'expense-categories-' . now()->format('Ymd-His') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_expcat_');
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Expense Categories');
+
+        $headers = [
+            '#',
+            'Name',
+            'Code',
+            'Color',
+            'Sort Order',
+            'Status',
+            'Description',
+            'Created At',
+        ];
+        $sheet->fromArray([$headers], null, 'A1');
+
+        $sheet->getStyle('A1:H1')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+                'size' => 11,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '7C3AED'],
+            ],
+            'alignment' => [
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet->getRowDimension(1)->setRowHeight(26);
+        $sheet->freezePane('A2');
+
+        $rowIndex = 2;
+        foreach ($categories as $index => $cat) {
+            $row = [
+                $index + 1,
+                $cat->name,
+                $cat->code ?? '',
+                $cat->color ?? '#6366f1',
+                $cat->sort_order,
+                $cat->is_active ? 'Active' : 'Inactive',
+                $cat->description ?? '',
+                $cat->created_at?->format('Y-m-d H:i') ?? '',
+            ];
+
+            $sheet->fromArray([$row], null, "A{$rowIndex}");
+            $sheet->getRowDimension($rowIndex)->setRowHeight(20);
+            $rowIndex++;
+        }
+
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+        $spreadsheet->disconnectWorksheets();
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     public function store(Request $request, StoreContext $context, string $store_slug): RedirectResponse

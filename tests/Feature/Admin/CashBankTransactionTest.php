@@ -187,10 +187,28 @@ class CashBankTransactionTest extends TestCase
         $service->ensureDefaultAccounts($this->store);
 
         $response = $this->actingAs($this->manager)
-            ->get(route('store.admin.transactions.export', ['store_slug' => $this->store->slug]));
+            ->get(route('store.admin.transactions.export', [
+                'store_slug' => $this->store->slug,
+                'format' => 'csv',
+            ]));
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_export_transactions_xlsx(): void
+    {
+        $service = app(FinancialTransactionService::class);
+        $service->ensureDefaultAccounts($this->store);
+
+        $response = $this->actingAs($this->manager)
+            ->get(route('store.admin.transactions.export', [
+                'store_slug' => $this->store->slug,
+                'format' => 'xlsx',
+            ]));
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
     public function test_printable_voucher_view(): void
@@ -215,6 +233,18 @@ class CashBankTransactionTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee($transaction->transaction_number);
-        $response->assertSee('150,000.00');
+        $response->assertSee('150,000');
+    }
+
+    public function test_transactions_page_no_missing_localization_keys(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get(route('store.admin.transactions.index', ['store_slug' => $this->store->slug]));
+
+        $response->assertStatus(200);
+        $content = $response->getContent();
+
+        // Must not leak raw 'messages.transactions_' translation keys
+        $this->assertStringNotContainsString('messages.transactions_', $content);
     }
 }

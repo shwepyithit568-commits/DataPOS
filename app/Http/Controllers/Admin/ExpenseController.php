@@ -524,22 +524,6 @@ class ExpenseController extends Controller
      */
     protected function resolveDateRange(Request $request): array
     {
-        $preset = $request->query('preset');
-        $now = today();
-
-        if ($preset) {
-            return match ($preset) {
-                'today' => [$now->copy(), $now->copy(), 'today'],
-                'yesterday' => [$now->copy()->subDay(), $now->copy()->subDay(), 'yesterday'],
-                'this_week' => [$now->copy()->startOfWeek(), $now->copy()->endOfWeek(), 'this_week'],
-                'this_month' => [$now->copy()->startOfMonth(), $now->copy()->endOfMonth(), 'this_month'],
-                'last_month' => [$now->copy()->subMonth()->startOfMonth(), $now->copy()->subMonth()->endOfMonth(), 'last_month'],
-                'this_year' => [$now->copy()->startOfYear(), $now->copy()->endOfYear(), 'this_year'],
-                'all' => [null, null, 'all'],
-                default => [null, null, 'all'],
-            };
-        }
-
         $dateFrom = $request->filled('date_from')
             ? Carbon::parse($request->input('date_from'))
             : ($request->filled('expense_date_from') ? Carbon::parse($request->input('expense_date_from')) : null);
@@ -550,6 +534,21 @@ class ExpenseController extends Controller
 
         if ($dateFrom || $dateTo) {
             return [$dateFrom, $dateTo, 'custom'];
+        }
+
+        $preset = $request->query('preset');
+        $now = today();
+
+        if ($preset && $preset !== 'all' && $preset !== 'custom') {
+            return match ($preset) {
+                'today' => [$now->copy(), $now->copy(), 'today'],
+                'yesterday' => [$now->copy()->subDay(), $now->copy()->subDay(), 'yesterday'],
+                'this_week' => [$now->copy()->startOfWeek(), $now->copy()->endOfWeek(), 'this_week'],
+                'this_month' => [$now->copy()->startOfMonth(), $now->copy()->endOfMonth(), 'this_month'],
+                'last_month' => [$now->copy()->subMonth()->startOfMonth(), $now->copy()->subMonth()->endOfMonth(), 'last_month'],
+                'this_year' => [$now->copy()->startOfYear(), $now->copy()->endOfYear(), 'this_year'],
+                default => [null, null, 'all'],
+            };
         }
 
         return [null, null, 'all'];

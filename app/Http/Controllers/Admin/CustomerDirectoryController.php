@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Store;
 use App\Models\User;
 use App\POS\Models\CustomerLedgerEntry;
 use App\POS\Models\PosSale;
 use App\POS\Services\CustomerDebtService;
 use App\Services\StoreContext;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,58 +40,10 @@ class CustomerDirectoryController extends Controller
         }
 
         $storeRouteParams = ['store_slug' => $store->slug];
-
-        $query = User::query()
-            ->whereHas('stores', function ($q) use ($store) {
-                $q->where('stores.id', $store->id)
-                  ->whereIn('store_user.role', ['retail_customer', 'wholesale_customer']);
-            })
-            ->with(['stores' => function ($rel) use ($store) {
-                $rel->where('stores.id', $store->id);
-            }]);
-
-        // Search by name, phone, or email
-        if ($request->filled('search')) {
-            $search = trim($request->input('search'));
-            $query->where(function ($w) use ($search) {
-                $w->where('name', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        // Tab or Role Filter
         $tab = $request->query('tab', 'all');
-        if ($tab === 'retail') {
-            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.role', 'retail_customer'));
-        } elseif ($tab === 'wholesale') {
-            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.role', 'wholesale_customer'));
-        } elseif ($tab === 'debt') {
-            $debtCustomerIds = CustomerLedgerEntry::where('store_id', $store->id)
-                ->groupBy('customer_id')
-                ->havingRaw('SUM(amount) < 0 OR SUM(amount) > 0')
-                ->pluck('customer_id');
-            $query->whereIn('users.id', $debtCustomerIds);
-        } elseif ($request->filled('role') && in_array($request->input('role'), ['retail_customer', 'wholesale_customer'], true)) {
-            $filterRole = $request->input('role');
-            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.role', $filterRole));
-        }
-
-        // Status Filter
-        if ($request->filled('status')) {
-            $status = $request->input('status');
-            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.status', $status));
-        }
-
-        // Sorting
         $sort = $request->input('sort', 'name_asc');
-        $query = match ($sort) {
-            'newest'   => $query->latest('users.created_at'),
-            'oldest'   => $query->oldest('users.created_at'),
-            'name_desc'=> $query->orderByDesc('users.name'),
-            'phone'    => $query->orderBy('users.phone'),
-            default    => $query->orderBy('users.name'),
-        };
+
+        $query = $this->buildCustomerQuery($store, $request);
 
         // KPI Stats
         $baseRoleCount = fn (string $r) => DB::table('store_user')
@@ -350,53 +304,7 @@ class CustomerDirectoryController extends Controller
             abort(404);
         }
 
-        $query = User::query()
-            ->whereHas('stores', function ($q) use ($store) {
-                $q->where('stores.id', $store->id)
-                  ->whereIn('store_user.role', ['retail_customer', 'wholesale_customer']);
-            })
-            ->with(['stores' => fn ($rel) => $rel->where('stores.id', $store->id)]);
-
-        // Filter persistence matching index query
-        if ($request->filled('search')) {
-            $search = trim($request->input('search'));
-            $query->where(function ($w) use ($search) {
-                $w->where('name', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        $tab = $request->query('tab', 'all');
-        if ($tab === 'retail') {
-            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.role', 'retail_customer'));
-        } elseif ($tab === 'wholesale') {
-            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.role', 'wholesale_customer'));
-        } elseif ($tab === 'debt') {
-            $debtCustomerIds = CustomerLedgerEntry::where('store_id', $store->id)
-                ->groupBy('customer_id')
-                ->havingRaw('SUM(amount) < 0 OR SUM(amount) > 0')
-                ->pluck('customer_id');
-            $query->whereIn('users.id', $debtCustomerIds);
-        } elseif ($request->filled('role') && in_array($request->input('role'), ['retail_customer', 'wholesale_customer'], true)) {
-            $filterRole = $request->input('role');
-            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.role', $filterRole));
-        }
-
-        if ($request->filled('status')) {
-            $status = $request->input('status');
-            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.status', $status));
-        }
-
-        $sort = $request->input('sort', 'name_asc');
-        $query = match ($sort) {
-            'newest'   => $query->latest('users.created_at'),
-            'oldest'   => $query->oldest('users.created_at'),
-            'name_desc'=> $query->orderByDesc('users.name'),
-            'phone'    => $query->orderBy('users.phone'),
-            default    => $query->orderBy('users.name'),
-        };
-
+        $query = $this->buildCustomerQuery($store, $request);
         $customers = $query->get();
         $format = strtolower((string) $request->query('format', 'xlsx'));
 
@@ -529,5 +437,63 @@ class CustomerDirectoryController extends Controller
         }
 
         return $value;
+    }
+
+    /**
+     * Build the filtered and sorted customer query for index and export.
+     *
+     * @return Builder<User>
+     */
+    private function buildCustomerQuery(Store $store, Request $request): Builder
+    {
+        $query = User::query()
+            ->whereHas('stores', function ($q) use ($store) {
+                $q->where('stores.id', $store->id)
+                  ->whereIn('store_user.role', ['retail_customer', 'wholesale_customer']);
+            })
+            ->with(['stores' => fn ($rel) => $rel->where('stores.id', $store->id)]);
+
+        // Search by name, phone, or email
+        if ($request->filled('search')) {
+            $search = trim((string) $request->input('search'));
+            $query->where(function ($w) use ($search) {
+                $w->where('name', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Tab or Role Filter
+        $tab = (string) $request->query('tab', 'all');
+        if ($tab === 'retail') {
+            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.role', 'retail_customer'));
+        } elseif ($tab === 'wholesale') {
+            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.role', 'wholesale_customer'));
+        } elseif ($tab === 'debt') {
+            $debtCustomerIds = CustomerLedgerEntry::where('store_id', $store->id)
+                ->groupBy('customer_id')
+                ->havingRaw('SUM(amount) < 0 OR SUM(amount) > 0')
+                ->pluck('customer_id');
+            $query->whereIn('users.id', $debtCustomerIds);
+        } elseif ($request->filled('role') && in_array($request->input('role'), ['retail_customer', 'wholesale_customer'], true)) {
+            $filterRole = (string) $request->input('role');
+            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.role', $filterRole));
+        }
+
+        // Status Filter
+        if ($request->filled('status')) {
+            $status = (string) $request->input('status');
+            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.status', $status));
+        }
+
+        // Sorting
+        $sort = (string) $request->input('sort', 'name_asc');
+        return match ($sort) {
+            'newest'    => $query->latest('users.created_at'),
+            'oldest'    => $query->oldest('users.created_at'),
+            'name_desc' => $query->orderByDesc('users.name'),
+            'phone'     => $query->orderBy('users.phone'),
+            default     => $query->orderBy('users.name'),
+        };
     }
 }

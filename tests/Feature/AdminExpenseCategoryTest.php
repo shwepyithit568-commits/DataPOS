@@ -320,4 +320,40 @@ class AdminExpenseCategoryTest extends TestCase
                 ->assertDontSee('messages.expense_categories_new');
         }
     }
+
+    public function test_export_downloads_csv(): void
+    {
+        ExpenseCategory::create([
+            'store_id' => $this->store->id,
+            'name' => 'Store Utilities',
+            'code' => 'UTIL',
+            'color' => '#f59e0b',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/expense-categories/export?format=csv");
+
+        $response->assertOk();
+        $this->assertEquals('text/csv; charset=UTF-8', $response->headers->get('Content-Type'));
+        $this->assertStringContainsString('Store Utilities', $response->streamedContent());
+        $this->assertStringContainsString('UTIL', $response->streamedContent());
+    }
+
+    public function test_export_downloads_xlsx(): void
+    {
+        ExpenseCategory::create([
+            'store_id' => $this->store->id,
+            'name' => 'Store Rent',
+            'code' => 'RENT',
+            'color' => '#6366f1',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/expense-categories/export?format=xlsx");
+
+        $response->assertOk();
+        $this->assertStringContainsString('spreadsheetml.sheet', (string) $response->headers->get('Content-Type'));
+    }
 }

@@ -32,7 +32,7 @@
     <meta name="robots" content="noindex,nofollow">
     <title>{{ __('messages.repair_ticket_heading') }} {{ $repair->job_number }} — {{ $store->name }}</title>
 
-    <script defer src="{{ asset('vendor/html2pdf/html2pdf.bundle.min.js') }}"></script>
+    <script nonce="{{ $cspNonce }}" src="{{ asset('vendor/html2pdf/html2pdf.bundle.min.js') }}"></script>
 
     <style>
         @if ($myanmarFontUrl)
@@ -374,6 +374,10 @@
             margin-top: 24px;
             padding-top: 8px;
         }
+        .size-58mm .signature-grid,
+        .size-80mm .signature-grid {
+            display: none;
+        }
         .sig-col {
             width: 44%;
             text-align: center;
@@ -491,15 +495,15 @@
         </div>
 
         <div class="toolbar-right">
-            <button type="button" class="tool-btn tool-btn-print" id="btnPrint" onclick="window.print(); return false;">
+            <button type="button" class="tool-btn tool-btn-print" id="btnPrint" data-repair-print>
                 🖨️ <span>{{ __('messages.repair_print_ticket') }}</span>
             </button>
 
-            <button type="button" class="tool-btn tool-btn-pdf" id="btnDownloadPdf" onclick="downloadPdf(); return false;">
+            <button type="button" class="tool-btn tool-btn-pdf" id="btnDownloadPdf" data-repair-download-pdf>
                 📥 <span>{{ __('messages.repair_download_pdf') }}</span>
             </button>
 
-            <button type="button" class="tool-btn tool-btn-share" id="btnShare" onclick="openShareModal(); return false;">
+            <button type="button" class="tool-btn tool-btn-share" id="btnShare" data-repair-share-open>
                 📲 <span>{{ __('messages.repair_share_customer') }}</span>
             </button>
         </div>
@@ -719,21 +723,19 @@
                 </div>
             @endif
 
-            {{-- Signatures for A5 and A4 formats --}}
-            @if (in_array($paperSize, ['a5', 'a4'], true))
-                <div class="signature-grid">
-                    <div class="sig-col">
-                        <div class="sig-line">
-                            {{ __('messages.repair_ticket_customer') }} (Customer Signature)
-                        </div>
-                    </div>
-                    <div class="sig-col">
-                        <div class="sig-line">
-                            {{ __('messages.repair_technician') }} (Technician Signature)
-                        </div>
+            {{-- PDF exports are always A5, so keep signatures in the DOM and hide them on thermal previews. --}}
+            <div class="signature-grid">
+                <div class="sig-col">
+                    <div class="sig-line">
+                        {{ __('messages.repair_ticket_customer') }} (Customer Signature)
                     </div>
                 </div>
-            @endif
+                <div class="sig-col">
+                    <div class="sig-line">
+                        {{ __('messages.repair_technician') }} (Technician Signature)
+                    </div>
+                </div>
+            </div>
 
             <hr class="dash-divider" style="margin-top:10px;">
 
@@ -749,44 +751,44 @@
     </div>
 
     {{-- ── SECTION 3: Customer Share Modal Dialog ── --}}
-    <div class="share-modal no-print" id="shareModal" onclick="if(event.target === this) closeShareModal()">
+    <div class="share-modal no-print" id="shareModal" data-repair-share-backdrop>
         <div class="share-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <h3 style="font-size:15px; font-weight:800; color:#0f172a;">
                     📲 {{ __('messages.repair_share_modal_title') }}
                 </h3>
-                <button type="button" onclick="closeShareModal()" style="border:none; background:transparent; font-size:18px; cursor:pointer; color:#64748b;">✕</button>
+                <button type="button" data-repair-share-close style="border:none; background:transparent; font-size:18px; cursor:pointer; color:#64748b;">✕</button>
             </div>
             <p style="font-size:12px; color:#64748b; margin-bottom:14px;">
                 {{ __('messages.repair_share_modal_desc') }}
             </p>
 
             {{-- Native Share with File (if supported) --}}
-            <button type="button" class="share-channel-btn" style="background:#7c3aed; color:#fff; border-color:#6d28d9;" onclick="shareNativePdf()">
+            <button type="button" class="share-channel-btn" data-repair-share-channel="native" style="background:#7c3aed; color:#fff; border-color:#6d28d9;">
                 <span>📄</span>
                 <span>PDF ဖိုင် တိုက်ရိုက် Share မည် (Viber / WhatsApp / AirDrop)</span>
             </button>
 
             {{-- Viber Channel --}}
-            <button type="button" class="share-channel-btn" onclick="shareToViber()">
+            <button type="button" class="share-channel-btn" data-repair-share-channel="viber">
                 <span style="color:#7360f2; font-size:16px;">💬</span>
                 <span>{{ __('messages.repair_share_viber') }}</span>
             </button>
 
             {{-- Telegram Channel --}}
-            <button type="button" class="share-channel-btn" onclick="shareToTelegram()">
+            <button type="button" class="share-channel-btn" data-repair-share-channel="telegram">
                 <span style="color:#229ed9; font-size:16px;">✈️</span>
                 <span>{{ __('messages.repair_share_telegram') }}</span>
             </button>
 
             {{-- WhatsApp Channel --}}
-            <button type="button" class="share-channel-btn" onclick="shareToWhatsApp()">
+            <button type="button" class="share-channel-btn" data-repair-share-channel="whatsapp">
                 <span style="color:#25d366; font-size:16px;">🟢</span>
                 <span>{{ __('messages.repair_share_whatsapp') }}</span>
             </button>
 
             {{-- Copy Link --}}
-            <button type="button" class="share-channel-btn" onclick="copyTrackingLink()">
+            <button type="button" class="share-channel-btn" data-repair-share-channel="copy">
                 <span>📋</span>
                 <span id="copyLinkText">{{ __('messages.repair_copy_track_link') }}</span>
             </button>
@@ -794,8 +796,9 @@
     </div>
 
     {{-- ── SECTION 4: Script for Dynamic PDF & Social Sharing ── --}}
-    <script>
+    <script nonce="{{ $cspNonce }}">
         var paperSize = @js($paperSize);
+        var pdfPaperSize = 'a5';
         var jobNumber = @js($repair->job_number);
         var trackingUrl = @js($trackingUrl ?? url()->current());
         var storeName = @js($storeName);
@@ -817,11 +820,22 @@
         };
 
         var pdfConfig = {
-            margin: [4, 4, 4, 4],
-            filename: 'Repair_Ticket_' + jobNumber + '_' + paperSize + '.pdf',
+            margin: [8, 8, 8, 8],
+            filename: 'Repair_Ticket_' + jobNumber + '_A5.pdf',
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false },
-            jsPDF: pdfDimensions[paperSize] || { unit: 'mm', format: 'a5', orientation: 'portrait' }
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                onclone: function(clonedDocument) {
+                    var clonedTicket = clonedDocument.getElementById('ticketDocument');
+                    if (!clonedTicket) return;
+
+                    clonedTicket.classList.remove('size-58mm', 'size-80mm', 'size-a5', 'size-a4');
+                    clonedTicket.classList.add('size-a5');
+                }
+            },
+            jsPDF: pdfDimensions[pdfPaperSize]
         };
 
         function downloadPdf() {
@@ -969,6 +983,31 @@
                     openShareModal();
                 });
             }
+
+            document.querySelectorAll('[data-repair-share-close]').forEach(function(button) {
+                button.addEventListener('click', closeShareModal);
+            });
+
+            var shareBackdrop = document.querySelector('[data-repair-share-backdrop]');
+            if (shareBackdrop) {
+                shareBackdrop.addEventListener('click', function(event) {
+                    if (event.target === shareBackdrop) closeShareModal();
+                });
+            }
+
+            document.querySelectorAll('[data-repair-share-channel]').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var handlers = {
+                        native: shareNativePdf,
+                        viber: shareToViber,
+                        telegram: shareToTelegram,
+                        whatsapp: shareToWhatsApp,
+                        copy: copyTrackingLink
+                    };
+                    var handler = handlers[button.dataset.repairShareChannel];
+                    if (handler) handler();
+                });
+            });
         });
     </script>
 </body>

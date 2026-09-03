@@ -155,6 +155,15 @@ class AdminSparePartsModuleTest extends TestCase
         $this->assertStringContainsString('text/csv', $response->headers->get('content-type'));
     }
 
+    public function test_export_downloads_xlsx(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/spare-parts/export?format=xlsx");
+
+        $response->assertStatus(200);
+        $this->assertStringContainsString('spreadsheetml.sheet', $response->headers->get('content-type'));
+    }
+
     public function test_manager_can_deduct_part_stock(): void
     {
         /** @var ServiceJobItem $item */

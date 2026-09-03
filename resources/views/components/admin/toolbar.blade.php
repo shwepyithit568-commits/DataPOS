@@ -203,6 +203,9 @@
         </form>
         @endif
 
+        {{-- Custom Controls Slot (e.g. Period preset selector, custom buttons) --}}
+        {{ $slot }}
+
         {{-- ===== 4. VIEW MODE TOGGLE (Table vs Cards) ===== --}}
         @if ($showViewToggle)
             <div class="flex items-center bg-slate-100 dark:bg-slate-800/90 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700 shrink-0 min-h-[36px]">
@@ -591,7 +594,7 @@
                             <span>📅</span>
                             <span>{{ $filterConfig['label'] }}</span>
                         </label>
-                        <form method="GET" data-auto-submit class="flex items-center gap-1.5">
+                        <form method="GET" class="flex items-center gap-1.5">
                             @foreach (request()->except([$filterKey . '_from', $filterKey . '_to', 'page']) as $key => $val)
                                 @if (is_array($val))
                                     @foreach ($val as $subVal)
@@ -606,6 +609,9 @@
                             <span class="text-xs text-slate-400 dark:text-slate-500 shrink-0 font-bold">→</span>
                             <input type="date" name="{{ $filterKey }}_to" value="{{ request($filterKey . '_to') }}"
                                    class="flex-1 min-w-0 border border-slate-200 dark:border-slate-700 rounded-2xl px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 shadow-xs [color-scheme:light] dark:[color-scheme:dark]" />
+                            <button type="submit" class="h-8 px-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold shrink-0 shadow-xs active:scale-95 transition" title="{{ __('messages.apply') ?? 'Apply' }}">
+                                ✓
+                            </button>
                         </form>
                     </div>
                 @else

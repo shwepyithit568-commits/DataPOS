@@ -183,11 +183,11 @@
     @endif
 
     <div class="amount-box">
-        <div class="amount-title">Total Amount (MMK)</div>
-        <div class="amount-num">{{ number_format((float) $transaction->amount, 2) }} MMK</div>
+        <div class="amount-title">{{ __('messages.transactions_amount') }}</div>
+        <div class="amount-num">{{ format_currency($transaction->amount, $store) }}</div>
         @if((float) $transaction->fee > 0)
             <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
-                + Fee: {{ number_format((float) $transaction->fee, 2) }} MMK
+                + {{ __('messages.transactions_fee') }}: {{ format_currency($transaction->fee, $store) }}
             </div>
         @endif
     </div>

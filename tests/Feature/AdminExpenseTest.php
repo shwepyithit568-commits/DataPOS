@@ -271,10 +271,20 @@ class AdminExpenseTest extends TestCase
             ->get("/store/{$this->store->slug}/admin/expenses?payment_method=bank_transfer");
         $payRes->assertOk()->assertSeeText('Shop Rent August')->assertDontSeeText('Staff Biryani Lunch');
 
-        // Date Range filter
+        // Date Range filter (date_from / date_to)
         $dateRes = $this->actingAs($this->manager)
             ->get("/store/{$this->store->slug}/admin/expenses?date_from=2026-08-22&date_to=2026-08-23");
         $dateRes->assertOk()->assertSeeText('Staff Biryani Lunch')->assertDontSeeText('Shop Rent August');
+
+        // Calendar Date Range filter (expense_date_from / expense_date_to)
+        $calendarDateRes = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/expenses?expense_date_from=2026-08-22&expense_date_to=2026-08-23");
+        $calendarDateRes->assertOk()->assertSeeText('Staff Biryani Lunch')->assertDontSeeText('Shop Rent August');
+
+        // Preset filter
+        $presetRes = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/expenses?preset=all");
+        $presetRes->assertOk()->assertSeeText('Staff Biryani Lunch')->assertSeeText('Shop Rent August');
     }
 
     public function test_manager_can_export_expenses_csv(): void
@@ -345,8 +355,7 @@ class AdminExpenseTest extends TestCase
                 ->get("/store/{$this->store->slug}/admin/expenses");
 
             $response->assertOk()
-                ->assertDontSee('messages.expenses_title')
-                ->assertDontSee('messages.expenses_new');
+                ->assertDontSee('messages.', false);
         }
     }
 }

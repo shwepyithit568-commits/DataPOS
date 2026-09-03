@@ -31,7 +31,7 @@
     <div class="admin-toolbar-root rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 px-2 sm:px-3 py-1.5 shadow-xs flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
         <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <a href="{{ route('store.admin.repairs.index', $storeRouteParams) }}"
-               class="h-7 w-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-750 dark:hover:bg-slate-700 grid place-items-center text-slate-600 dark:text-slate-300 transition-colors shrink-0"
+               class="h-7 w-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 grid place-items-center text-slate-600 dark:text-slate-300 transition-colors shrink-0"
                title="{{ __('messages.back') }}">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -54,7 +54,7 @@
                         {{ __('messages.repair_status_' . $repair->status) }}
                     </span>
                     @if ($repair->voucher_no)
-                        <span class="hidden sm:inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono text-slate-500 bg-slate-100 dark:bg-slate-750 border border-slate-200 dark:border-slate-700">
+                        <span class="hidden sm:inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono text-slate-500 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                             {{ $repair->voucher_no }}
                         </span>
                     @endif
@@ -64,7 +64,7 @@
 
         <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <button type="button"
-                    onclick="openRepairNotifyModal()"
+                    data-repair-notify-open
                     class="h-7 px-2 sm:px-2.5 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition flex items-center gap-1 cursor-pointer"
                     title="{{ __('messages.repair_notify_customer') }}">
                 <span>📢</span>
@@ -140,7 +140,7 @@
 
         {{-- Card 3: Outstanding Debt --}}
         <div class="rounded-lg bg-white dark:bg-slate-800 border {{ $outstanding > 0 ? 'border-rose-200 dark:border-rose-900/60 bg-rose-50/20' : 'border-slate-200/80 dark:border-slate-700/80' }} px-2 py-1.5 sm:px-3 sm:py-2 shadow-xs flex items-center justify-center gap-2 sm:gap-2.5">
-            <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-full {{ $outstanding > 0 ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400' : 'bg-slate-100 dark:bg-slate-750 text-slate-500' }} grid place-items-center text-xs sm:text-sm shrink-0">
+            <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-full {{ $outstanding > 0 ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500' }} grid place-items-center text-xs sm:text-sm shrink-0">
                 ⚠️
             </span>
             <div class="min-w-0">
@@ -177,7 +177,7 @@
 
             {{-- Card 1: 📱 Device Information --}}
             <div class="rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 p-2.5 sm:p-3 shadow-xs space-y-2">
-                <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-750">
+                <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-700">
                     <div class="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
                         <span class="text-amber-500">📱</span>
                         <span>{{ __('messages.repair_device_section') }}</span>
@@ -299,7 +299,7 @@
 
             {{-- Card 2: 👤 Customer Information --}}
             <div class="rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 p-2.5 sm:p-3 shadow-xs space-y-2">
-                <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-750">
+                <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-700">
                     <div class="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
                         <span class="text-sky-500">👤</span>
                         <span>{{ __('messages.repair_customer_section') }}</span>
@@ -335,14 +335,14 @@
                 </div>
 
                 @if ($repair->shipping_address)
-                    <div class="text-xs pt-1 border-t border-slate-100 dark:border-slate-750">
+                    <div class="text-xs pt-1 border-t border-slate-100 dark:border-slate-700">
                         <span class="text-[10px] text-slate-400 block font-semibold">{{ __('messages.address') }}</span>
                         <p class="text-slate-700 dark:text-slate-300">{{ $repair->shipping_address }}</p>
                     </div>
                 @endif
 
                 @if ($repair->warranty_notes)
-                    <div class="text-xs pt-1 border-t border-slate-100 dark:border-slate-750">
+                    <div class="text-xs pt-1 border-t border-slate-100 dark:border-slate-700">
                         <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-0.5">
                             🛡️ {{ __('messages.repair_warranty_notes') }}
                         </span>
@@ -351,7 +351,7 @@
                 @endif
 
                 @if ($repair->notes)
-                    <div class="text-xs pt-1 border-t border-slate-100 dark:border-slate-750">
+                    <div class="text-xs pt-1 border-t border-slate-100 dark:border-slate-700">
                         <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-0.5">
                             📝 {{ __('messages.notes') }}
                         </span>
@@ -367,7 +367,7 @@
 
             {{-- Card 3: 🛠️ Parts & Services List --}}
             <div class="rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 overflow-hidden shadow-xs">
-                <div class="p-2 sm:p-2.5 border-b border-slate-100 dark:border-slate-750 flex items-center justify-between gap-2 flex-wrap">
+                <div class="p-2 sm:p-2.5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between gap-2 flex-wrap">
                     <div class="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
                         <span class="text-violet-500">🛠️</span>
                         <span>{{ __('messages.repair_items_section') }}</span>
@@ -399,9 +399,9 @@
                                     <th class="p-2 whitespace-nowrap text-right">{{ __('messages.status') }}</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100 dark:divide-slate-750">
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                                 @foreach ($repair->items as $item)
-                                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-750/30 transition-colors">
+                                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-700/40 transition-colors">
                                         <td class="p-2 whitespace-nowrap">
                                             @if ($item->isService())
                                                 <span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
@@ -453,7 +453,7 @@
                                     </tr>
                                 @endforeach
                             </tbody>
-                            <tfoot class="bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-750">
+                            <tfoot class="bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700">
                                 <tr>
                                     <td colspan="4" class="p-2 text-right font-bold text-slate-600 dark:text-slate-300">
                                         {{ __('messages.repair_items_total') }}
@@ -471,7 +471,7 @@
 
             {{-- Card 4: 💳 Payment Records & Quick Intake Form --}}
             <div class="rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 p-2.5 sm:p-3 shadow-xs space-y-2">
-                <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-750">
+                <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-700">
                     <div class="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
                         <span class="text-emerald-500">💳</span>
                         <span>{{ __('messages.repair_payments') }}</span>
@@ -518,7 +518,7 @@
                 {{-- Quick Payment Form (if outstanding exists) --}}
                 @if (! $repair->isTerminal() && $outstanding > 0)
                     <form method="POST" action="{{ route('store.admin.repairs.payments.store', [...$storeRouteParams, 'repair' => $repair->id]) }}"
-                          class="pt-2 border-t border-slate-100 dark:border-slate-750 space-y-1.5">
+                          class="pt-2 border-t border-slate-100 dark:border-slate-700 space-y-1.5">
                         @csrf
                         <div class="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
                             <span>+ {{ __('messages.repair_add_payment') }}</span>
@@ -561,7 +561,7 @@
 
             {{-- Card 5: 🔄 Lifecycle Status Transition & History Timeline --}}
             <div class="rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 p-2.5 sm:p-3 shadow-xs space-y-2">
-                <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-750">
+                <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-700">
                     <div class="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white">
                         <span class="text-violet-500">🔄</span>
                         <span>{{ __('messages.repair_status_history') }}</span>
@@ -571,6 +571,7 @@
                 {{-- Status Change Form (if not terminal) --}}
                 @if (! $repair->isTerminal())
                     <form method="POST" action="{{ route('store.admin.repairs.status', [...$storeRouteParams, 'repair' => $repair->id]) }}"
+                          data-repair-status-form
                           class="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 space-y-1.5">
                         @csrf
                         <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
@@ -582,6 +583,7 @@
                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">{{ __('messages.repair_new_status') }}</label>
                                 <select name="status" required
                                         class="w-full h-7 px-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none">
+                                    <option value="" selected disabled>{{ __('messages.select') }}</option>
                                     @foreach (\App\POS\Models\ServiceJob::STATUSES as $status)
                                         @if ($status !== $repair->status)
                                             <option value="{{ $status }}">{{ __('messages.repair_status_' . $status) }}</option>
@@ -607,7 +609,7 @@
                             </label>
                         </div>
 
-                        <button type="submit"
+                        <button type="submit" data-repair-status-submit
                                 class="w-full h-7 rounded text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 transition cursor-pointer shadow-xs">
                             {{ __('messages.repair_apply') }}
                         </button>
@@ -653,12 +655,12 @@
     {{-- ── SECTION 5: Interactive Customer Notification Modal (pure DOM) ── --}}
     <div id="repairNotifyModal"
          style="display: none;"
-         class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs"
-         onclick="if(event.target===this) closeRepairNotifyModal()">
-        <div class="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+         class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs"
+         data-repair-notify-backdrop>
+        <div class="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
 
             {{-- Modal Header --}}
-            <div class="p-3 sm:p-4 border-b border-slate-100 dark:border-slate-750 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850">
+            <div class="p-3 sm:p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/90">
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 grid place-items-center text-base">
                         📢
@@ -672,27 +674,27 @@
                         </p>
                     </div>
                 </div>
-                <button type="button" onclick="closeRepairNotifyModal()"
-                        class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-750 grid place-items-center text-sm transition cursor-pointer">
+                <button type="button" data-repair-notify-close
+                        class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 grid place-items-center text-sm transition cursor-pointer">
                     ✕
                 </button>
             </div>
 
             {{-- Modal Body --}}
-            <div class="p-3 sm:p-4 space-y-3 overflow-y-auto">
+            <div class="p-3 sm:p-4 space-y-3 overflow-y-auto bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 font-myanmar">
                     {{ __('messages.repair_notify_customer_desc') }}
                 </p>
 
                 {{-- Quick Template Switcher Pills --}}
-                <div class="flex items-center gap-1.5 p-1 rounded-lg bg-slate-100 dark:bg-slate-900/80 text-xs">
-                    <button type="button" id="notifyTabReady" onclick="notifySetTab('ready')"
-                            class="flex-1 py-1 px-2 rounded-md transition text-center flex items-center justify-center gap-1 cursor-pointer bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-xs font-bold">
+                <div class="flex items-center gap-1.5 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 text-xs border border-slate-200/60 dark:border-slate-800">
+                    <button type="button" id="notifyTabReady" data-notify-tab="ready"
+                            class="flex-1 py-1 px-2 rounded-md transition text-center flex items-center justify-center gap-1 cursor-pointer bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-xs font-bold border border-slate-200/60 dark:border-slate-700">
                         <span>🎉</span>
                         <span>စက်ပြင်ပြီးစီး လာယူရန်</span>
                     </button>
-                    <button type="button" id="notifyTabProgress" onclick="notifySetTab('progress')"
-                            class="flex-1 py-1 px-2 rounded-md transition text-center flex items-center justify-center gap-1 cursor-pointer text-slate-600 dark:text-slate-400 hover:text-slate-900 font-medium">
+                    <button type="button" id="notifyTabProgress" data-notify-tab="progress"
+                            class="flex-1 py-1 px-2 rounded-md transition text-center flex items-center justify-center gap-1 cursor-pointer text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium border border-transparent">
                         <span>ℹ️</span>
                         <span>လက်ရှိအခြေအနေ အသိပေးစာ</span>
                     </button>
@@ -702,43 +704,43 @@
                 <div class="space-y-1">
                     <div class="flex items-center justify-between text-[11px] font-bold text-slate-700 dark:text-slate-300">
                         <span>{{ __('messages.repair_notify_preview_title') }}</span>
-                        <span class="text-slate-400 font-normal text-[10px]">စိတ်ကြိုက် ပြင်ဆင်နိုင်ပါသည်</span>
+                        <span class="text-slate-400 dark:text-slate-500 font-normal text-[10px]">စိတ်ကြိုက် ပြင်ဆင်နိုင်ပါသည်</span>
                     </div>
                     <textarea id="notifyMessageText" rows="7"
-                              class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs leading-relaxed text-slate-800 dark:text-slate-200 font-myanmar outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"></textarea>
+                              class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs leading-relaxed text-slate-800 dark:text-slate-200 font-myanmar outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"></textarea>
                 </div>
 
                 {{-- Dispatch Channels Grid --}}
                 <div class="space-y-1.5 pt-1">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                         ပေးပို့လိုသည့် လမ်းကြောင်း (Channels)
                     </span>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {{-- Viber Button --}}
-                        <button type="button" onclick="notifySendViber()"
+                        <button type="button" data-notify-channel="viber"
                                 class="w-full py-2 px-3 rounded-xl bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-violet-500/20 transition cursor-pointer">
                             <span>💬</span>
                             <span>{{ __('messages.repair_notify_send_viber') }}</span>
                         </button>
 
                         {{-- Telegram Button --}}
-                        <button type="button" onclick="notifySendTelegram()"
+                        <button type="button" data-notify-channel="telegram"
                                 class="w-full py-2 px-3 rounded-xl bg-sky-500 hover:bg-sky-600 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-sky-500/20 transition cursor-pointer">
                             <span>✈️</span>
                             <span>{{ __('messages.repair_notify_send_telegram') }}</span>
                         </button>
 
                         {{-- SMS Button --}}
-                        <button type="button" onclick="notifySendSms()"
+                        <button type="button" data-notify-channel="sms"
                                 class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-emerald-500/20 transition cursor-pointer">
                             <span>📱</span>
                             <span>{{ __('messages.repair_notify_send_sms') }}</span>
                         </button>
 
                         {{-- Copy Text Button --}}
-                        <button type="button" id="notifyCopyBtn" onclick="notifyCopyText()"
-                                class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-750 dark:hover:bg-slate-700 active:scale-[0.98] text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 transition cursor-pointer">
+                        <button type="button" id="notifyCopyBtn" data-notify-channel="copy"
+                                class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-[0.98] text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 transition cursor-pointer">
                             <span>📋</span>
                             <span id="notifyCopyText">{{ __('messages.repair_notify_copy_message') }}</span>
                         </button>
@@ -748,11 +750,11 @@
             </div>
 
             {{-- Modal Footer --}}
-            <div class="p-2.5 sm:p-3 border-t border-slate-100 dark:border-slate-750 bg-slate-50/70 dark:bg-slate-850 flex items-center justify-between text-xs">
-                <span class="text-[11px] text-slate-400 truncate max-w-[280px]">
+            <div class="p-2.5 sm:p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/90 flex items-center justify-between text-xs">
+                <span class="text-[11px] text-slate-400 dark:text-slate-500 truncate max-w-[280px]">
                     Live: <span class="font-mono text-violet-500 dark:text-violet-400">{{ $trackingUrl }}</span>
                 </span>
-                <button type="button" onclick="closeRepairNotifyModal()"
+                <button type="button" data-repair-notify-close
                         class="px-3 py-1.5 rounded-lg font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700 transition cursor-pointer">
                     {{ __('messages.close') ?? 'Close' }}
                 </button>
@@ -765,7 +767,7 @@
 @endsection
 
 @push('scripts')
-<script>
+<script nonce="{{ $cspNonce }}">
     var _notifyData = {
         customerName: @js($customerName),
         customerPhone: @js($customerPhone ?? ''),
@@ -838,10 +840,11 @@
     function _applyTabStyles() {
         var ready = document.getElementById('notifyTabReady');
         var prog  = document.getElementById('notifyTabProgress');
-        var activeClass = 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-xs font-bold';
-        var inactiveClass = 'text-slate-600 dark:text-slate-400 hover:text-slate-900 font-medium';
-        if (ready) { ready.className = ready.className.replace(activeClass,'').replace(inactiveClass,'').trim() + ' ' + (_notifyTab==='ready' ? activeClass : inactiveClass); }
-        if (prog)  { prog.className  = prog.className.replace(activeClass,'').replace(inactiveClass,'').trim()  + ' ' + (_notifyTab==='progress' ? activeClass : inactiveClass); }
+        var baseClass = 'flex-1 py-1 px-2 rounded-md transition text-center flex items-center justify-center gap-1 cursor-pointer ';
+        var activeClass = baseClass + 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-xs font-bold border border-slate-200/60 dark:border-slate-700';
+        var inactiveClass = baseClass + 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium border border-transparent';
+        if (ready) { ready.className = (_notifyTab === 'ready') ? activeClass : inactiveClass; }
+        if (prog)  { prog.className  = (_notifyTab === 'progress') ? activeClass : inactiveClass; }
     }
 
     function notifySendViber() {
@@ -877,6 +880,55 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('[data-repair-notify-open]').forEach(function(button) {
+            button.addEventListener('click', openRepairNotifyModal);
+        });
+        document.querySelectorAll('[data-repair-notify-close]').forEach(function(button) {
+            button.addEventListener('click', closeRepairNotifyModal);
+        });
+
+        var backdrop = document.querySelector('[data-repair-notify-backdrop]');
+        if (backdrop) {
+            backdrop.addEventListener('click', function(event) {
+                if (event.target === backdrop) closeRepairNotifyModal();
+            });
+        }
+
+        document.querySelectorAll('[data-notify-tab]').forEach(function(button) {
+            button.addEventListener('click', function() {
+                notifySetTab(button.dataset.notifyTab);
+            });
+        });
+        document.querySelectorAll('[data-notify-channel]').forEach(function(button) {
+            button.addEventListener('click', function() {
+                var handlers = {
+                    viber: notifySendViber,
+                    telegram: notifySendTelegram,
+                    sms: notifySendSms,
+                    copy: notifyCopyText
+                };
+                var handler = handlers[button.dataset.notifyChannel];
+                if (handler) handler();
+            });
+        });
+
+        var statusForm = document.querySelector('[data-repair-status-form]');
+        if (statusForm) {
+            statusForm.addEventListener('submit', function(event) {
+                if (statusForm.dataset.submitting === 'true') {
+                    event.preventDefault();
+                    return;
+                }
+                statusForm.dataset.submitting = 'true';
+                var submitButton = statusForm.querySelector('[data-repair-status-submit]');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.classList.add('opacity-60', 'cursor-wait');
+                    submitButton.textContent = @js(__('messages.saving'));
+                }
+            });
+        }
+
         @if (session('notify_customer'))
         openRepairNotifyModal();
         @endif

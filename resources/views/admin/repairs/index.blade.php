@@ -358,6 +358,12 @@
                     <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1 text-[11px]">
                         <span class="text-[10px] text-slate-400 font-mono">{{ $job->created_at->format('d/m/Y') }}</span>
                         <div class="flex items-center gap-1">
+                            <a href="{{ route('store.admin.repairs.show', [...$storeRouteParams, 'repair' => $job->id]) }}"
+                               onclick="event.stopPropagation();"
+                               class="px-2 py-0.5 rounded text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200/60 dark:border-indigo-800/60 transition cursor-pointer"
+                               title="{{ __('messages.view') }}">
+                                👁️ {{ __('messages.view') }}
+                            </a>
                             @if (! $job->isTerminal())
                                 <button type="button"
                                         onclick="event.stopPropagation();"
@@ -448,6 +454,11 @@
                             </td>
                             <td class="py-2 px-2.5 text-right whitespace-nowrap">
                                 <div class="flex items-center justify-end gap-1">
+                                    <a href="{{ route('store.admin.repairs.show', [...$storeRouteParams, 'repair' => $job->id]) }}"
+                                       class="px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition cursor-pointer"
+                                       title="{{ __('messages.view') }}">
+                                        👁️ {{ __('messages.view') }}
+                                    </a>
                                     @if (! $job->isTerminal())
                                         <button type="button" @click="openQuickStatus({{ $job->id }}, '{{ $job->job_number }}', '{{ $job->status }}')"
                                             class="px-2 py-0.5 text-[10px] font-bold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/60 border border-violet-200 dark:border-violet-800 rounded hover:bg-violet-100 dark:hover:bg-violet-900/50 transition cursor-pointer"

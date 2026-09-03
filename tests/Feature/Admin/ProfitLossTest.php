@@ -192,5 +192,20 @@ class ProfitLossTest extends TestCase
         $this->assertEquals(45000, $statement['services']['revenue']);
         $this->assertGreaterThanOrEqual(45000, $statement['revenue']['total_revenue']);
     }
+
+    public function test_profit_loss_index_renders_in_all_supported_locales(): void
+    {
+        foreach (['en', 'my', 'zh_CN'] as $locale) {
+            $store = Store::create(['name' => "Store PL {$locale}", 'slug' => "store-pl-{$locale}"]);
+            $store->setting()->create(['store_name' => "Store PL {$locale}", 'default_language' => $locale]);
+            $this->admin->stores()->attach($store->id, ['role' => 'store_manager']);
+
+            $response = $this->actingAs($this->admin)
+                ->get("/store/{$store->slug}/admin/profit-loss");
+
+            $response->assertStatus(200);
+            $response->assertDontSee('messages.', false);
+        }
+    }
 }
 

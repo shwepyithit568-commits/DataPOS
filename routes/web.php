@@ -376,6 +376,7 @@ Route::prefix('store/{store_slug}')
 
         // Expense Categories CRUD
         Route::get('/admin/expense-categories', [ExpenseCategoryController::class, 'index'])->name('store.admin.expense_categories.index')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
+        Route::get('/admin/expense-categories/export', [ExpenseCategoryController::class, 'export'])->name('store.admin.expense_categories.export')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
         Route::post('/admin/expense-categories', [ExpenseCategoryController::class, 'store'])->name('store.admin.expense_categories.store')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
         Route::put('/admin/expense-categories/{category}', [ExpenseCategoryController::class, 'update'])->name('store.admin.expense_categories.update')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
         Route::patch('/admin/expense-categories/{category}/toggle', [ExpenseCategoryController::class, 'toggle'])->name('store.admin.expense_categories.toggle')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'finance_access']);
