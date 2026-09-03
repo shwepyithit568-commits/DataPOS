@@ -350,4 +350,29 @@ class InventoryAdjustmentTest extends TestCase
 
         $this->assertSame(0, InventoryAdjustment::count());
     }
+
+    public function test_export_csv_and_xlsx(): void
+    {
+        $store = $this->makeStore();
+        $manager = $this->manager($store);
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store);
+        $this->seedStock($store, $product, '10');
+
+        $this->adjustments->create($store, [['product_id' => $product->id, 'quantity' => '3', 'reason' => 'Stock in test']], null, $cashier);
+
+        // 1. CSV export
+        $csvResponse = $this->actingAs($manager)
+            ->get("/store/{$store->slug}/pos/adjustments/export?format=csv");
+
+        $csvResponse->assertOk();
+        $this->assertStringContainsString('text/csv', (string) $csvResponse->headers->get('content-type'));
+
+        // 2. XLSX export
+        $xlsxResponse = $this->actingAs($manager)
+            ->get("/store/{$store->slug}/pos/adjustments/export");
+
+        $xlsxResponse->assertOk();
+        $this->assertStringContainsString('spreadsheetml', (string) $xlsxResponse->headers->get('content-type'));
+    }
 }

@@ -9,8 +9,9 @@
             'select_variant' => __('messages.pos_select_variant'),
             'variant' => __('messages.pos_variant'),
             'add_to_cart' => __('messages.pos_add_to_cart'),
-            'out_of_stock' => __('messages.pos_out_of_stock'),
-            'in_stock' => __('messages.pos_in_stock'),
+            'out_of_stock' => __('messages.out_of_stock'),
+            'in_stock' => __('messages.in_stock'),
+            'low_stock' => __('messages.low_stock'),
             'no_products' => __('messages.pos_no_products'),
             'clear_cart' => __('messages.pos_clear_cart'),
             'cart' => __('messages.cart'),
@@ -797,8 +798,8 @@
 
                                 {{-- Stock status badge (top-right) --}}
                                 <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[8.5px] font-black text-white shadow-sm"
-                                      :class="parseFloat(p.balance) <= 0 ? 'bg-rose-500' : (parseFloat(p.balance) <= 5 ? 'bg-amber-500' : 'bg-emerald-500')"
-                                      x-text="parseFloat(p.balance) <= 0 ? labels.out_of_stock : (parseFloat(p.balance) <= 5 ? ('×' + p.balance) : labels.in_stock)"></span>
+                                      :class="stockPillClass(p.balance)"
+                                      x-text="stockPillText(p.balance)"></span>
 
                                 {{-- Variants badge (top-left) --}}
                                 <span x-show="p.variants && p.variants.length > 0" x-cloak
@@ -858,8 +859,8 @@
                             </div>
                             {{-- Stock badge --}}
                             <span class="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-black text-white"
-                                  :class="parseFloat(p.balance) <= 0 ? 'bg-rose-500' : (parseFloat(p.balance) <= 5 ? 'bg-amber-500' : 'bg-emerald-500')"
-                                  x-text="parseFloat(p.balance) <= 0 ? labels.out_of_stock : '×' + p.balance"></span>
+                                  :class="stockPillClass(p.balance)"
+                                  x-text="stockPillText(p.balance)"></span>
                             {{-- Price --}}
                             <p class="shrink-0 text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400 tabular-nums" x-text="'Ks ' + Number(p.price).toLocaleString()"></p>
                             {{-- Add button --}}
@@ -1261,8 +1262,9 @@
                             <span class="shrink-0 text-right">
                                 <span class="block text-[10px] text-rose-500 font-bold line-through" x-show="variantProduct.tier === 'wholesale' && parseFloat(v.retail_price) > parseFloat(v.price)" x-text="'Ks ' + Number(v.retail_price).toLocaleString()"></span>
                                 <span class="block text-sm font-black text-blue-600 dark:text-blue-400" x-text="'Ks ' + Number(v.price).toLocaleString()"></span>
-                                <span class="block text-[10px] font-bold" :class="parseFloat(v.balance) > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'"
-                                      x-text="parseFloat(v.balance) > 0 ? ('×' + v.balance) : labels.out_of_stock"></span>
+                                <span class="block text-[10px] font-bold"
+                                      :class="parseFloat(v.balance) <= 0 ? 'text-rose-500' : (parseFloat(v.balance) <= 5 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')"
+                                      x-text="stockPillText(v.balance)"></span>
                             </span>
                         </button>
                     </template>

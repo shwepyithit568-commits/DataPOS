@@ -35,7 +35,9 @@ class ProductController extends Controller
         $store = $context->getStore();
         $summary = $this->summaryStats($store->id);
 
-        $query = Product::where('store_id', $store->id)->with(['category', 'brand']);
+        $query = Product::where('store_id', $store->id)
+            ->with(['category', 'brand'])
+            ->withSum('inventoryBalances as on_hand_qty', 'quantity_on_hand');
 
         // Enhanced Search: name, SKU, brand name, category name, variant name/SKU
         if ($request->filled('search')) {
@@ -546,7 +548,7 @@ class ProductController extends Controller
             abort(403, 'Unauthorized product access.');
         }
 
-        $product->load(['category.parent', 'brand', 'variants', 'images', 'warehouse', 'supplier']);
+        $product->load(['category.parent', 'brand', 'variants.inventoryBalances', 'images', 'warehouse', 'supplier', 'inventoryBalances']);
 
         return view('admin.products._details', [
             'product' => $product,

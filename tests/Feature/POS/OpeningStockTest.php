@@ -301,4 +301,34 @@ class OpeningStockTest extends TestCase
 
         $this->assertSame(0, OpeningStockRequest::count());
     }
+
+    public function test_opening_stock_csv_export(): void
+    {
+        $store = $this->makeStore();
+        $manager = $this->manager($store);
+        $product = $this->makeProduct($store);
+
+        $this->openingStock->create($store, [['product_id' => $product->id, 'quantity' => '5', 'unit_cost' => '1000']], null, $manager);
+
+        $response = $this->actingAs($manager)
+            ->get("/store/{$store->slug}/pos/opening-stock/export?format=csv");
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_opening_stock_xlsx_export(): void
+    {
+        $store = $this->makeStore();
+        $manager = $this->manager($store);
+        $product = $this->makeProduct($store);
+
+        $this->openingStock->create($store, [['product_id' => $product->id, 'quantity' => '5', 'unit_cost' => '1000']], null, $manager);
+
+        $response = $this->actingAs($manager)
+            ->get("/store/{$store->slug}/pos/opening-stock/export?format=xlsx");
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
 }

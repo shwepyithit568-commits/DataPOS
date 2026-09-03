@@ -541,18 +541,35 @@
                             </td>
 
                             {{-- Col 8: Stock Status (services & digital items are non-inventory) --}}
-                            <td class="py-2 px-3 text-center">
-                                @if (in_array($product->product_type, ['service', 'digital'], true))
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                                        <span>—</span>
-                                        <span>{{ in_array($product->product_type, ['service'], true) ? __('messages.product_type_service_short') : __('messages.product_type_digital_short') }}</span>
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black {{ $product->stock_status === 'in_stock' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80' }}">
-                                        <span class="w-1.5 h-1.5 rounded-full {{ $product->stock_status === 'in_stock' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500' }}"></span>
-                                        <span>{{ $product->stock_status === 'in_stock' ? __('messages.in_stock') : __('messages.out_of_stock') }}</span>
-                                    </span>
-                                @endif
+                            <td class="py-2 px-3 text-center whitespace-nowrap">
+                                @php
+                                    $isServiceOrDigital = in_array($product->product_type, ['service', 'digital'], true);
+                                    $onHand = (float) ($product->on_hand_qty ?? $product->stock_on_hand ?? 0);
+                                    $reorder = (float) ($product->reorder_level ?? 0);
+                                    $fmtQty = (fmod($onHand, 1) !== 0.0) ? number_format($onHand, 3) : number_format($onHand, 0);
+
+                                    if ($isServiceOrDigital) {
+                                        $badgeClass = 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700';
+                                        $dotClass = 'bg-slate-400';
+                                        $stockText = '— ' . ($product->product_type === 'service' ? __('messages.product_type_service_short') : __('messages.product_type_digital_short'));
+                                    } elseif ($onHand <= 0 || $product->stock_status === 'out_of_stock') {
+                                        $badgeClass = 'bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80';
+                                        $dotClass = 'bg-rose-500';
+                                        $stockText = $fmtQty . ' · ' . __('messages.out_of_stock');
+                                    } elseif ($reorder > 0 && $onHand <= $reorder) {
+                                        $badgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80';
+                                        $dotClass = 'bg-amber-500 animate-pulse';
+                                        $stockText = $fmtQty . ' · ' . __('messages.low_stock');
+                                    } else {
+                                        $badgeClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80';
+                                        $dotClass = 'bg-emerald-500 animate-pulse';
+                                        $stockText = $fmtQty . ' · ' . __('messages.in_stock');
+                                    }
+                                @endphp
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black {{ $badgeClass }}">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $dotClass }}"></span>
+                                    <span class="font-mono font-bold">{{ $stockText }}</span>
+                                </span>
                             </td>
 
                             {{-- Col 9: Online Toggle --}}
@@ -664,9 +681,33 @@
                         </div>
 
                         {{-- Stock Status Pill --}}
-                        <span class="absolute top-1.5 right-1.5 z-10 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full font-black text-[9px] sm:text-[10px] backdrop-blur-md shadow-2xs {{ $product->isInStock() ? 'bg-emerald-500/95 text-white' : 'bg-rose-500/95 text-white' }}">
-                            <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                            <span>{{ $product->isInStock() ? __('messages.in_stock') : __('messages.out_of_stock') }}</span>
+                        @php
+                            $isServiceOrDigital = in_array($product->product_type, ['service', 'digital'], true);
+                            $onHand = (float) ($product->on_hand_qty ?? $product->stock_on_hand ?? 0);
+                            $reorder = (float) ($product->reorder_level ?? 0);
+                            $fmtQty = (fmod($onHand, 1) !== 0.0) ? number_format($onHand, 3) : number_format($onHand, 0);
+
+                            if ($isServiceOrDigital) {
+                                $cardBadgeClass = 'bg-slate-800/90 text-slate-200';
+                                $cardDotClass = 'bg-slate-400';
+                                $stockText = '— ' . ($product->product_type === 'service' ? __('messages.product_type_service_short') : __('messages.product_type_digital_short'));
+                            } elseif ($onHand <= 0 || $product->stock_status === 'out_of_stock') {
+                                $cardBadgeClass = 'bg-rose-500/95 text-white';
+                                $cardDotClass = 'bg-rose-200';
+                                $stockText = $fmtQty . ' · ' . __('messages.out_of_stock');
+                            } elseif ($reorder > 0 && $onHand <= $reorder) {
+                                $cardBadgeClass = 'bg-amber-500/95 text-white';
+                                $cardDotClass = 'bg-amber-200 animate-pulse';
+                                $stockText = $fmtQty . ' · ' . __('messages.low_stock');
+                            } else {
+                                $cardBadgeClass = 'bg-emerald-500/95 text-white';
+                                $cardDotClass = 'bg-emerald-200 animate-pulse';
+                                $stockText = $fmtQty . ' · ' . __('messages.in_stock');
+                            }
+                        @endphp
+                        <span class="absolute top-1.5 right-1.5 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-black text-[9px] sm:text-[10px] backdrop-blur-md shadow-2xs {{ $cardBadgeClass }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $cardDotClass }}"></span>
+                            <span class="font-mono font-bold">{{ $stockText }}</span>
                         </span>
 
                         {{-- Featured Star Badge --}}

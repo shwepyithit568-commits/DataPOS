@@ -354,4 +354,26 @@ class InventoryReconciliationTest extends TestCase
         $this->assertSame(0, InventoryReconciliation::count());
         $this->assertSame('3.000', $this->inventory->totalOnHand($storeA->id, $productA->id));
     }
+
+    public function test_export_csv_and_xlsx(): void
+    {
+        $store = $this->makeStore();
+        $manager = $this->manager($store);
+        $product = $this->makeProduct($store);
+        $this->seedStock($store, $product, '5');
+
+        // 1. CSV export
+        $csvResponse = $this->actingAs($manager)
+            ->get("/store/{$store->slug}/pos/reconciliation/export?format=csv");
+
+        $csvResponse->assertOk();
+        $this->assertStringContainsString('text/csv', (string) $csvResponse->headers->get('content-type'));
+
+        // 2. XLSX export
+        $xlsxResponse = $this->actingAs($manager)
+            ->get("/store/{$store->slug}/pos/reconciliation/export");
+
+        $xlsxResponse->assertOk();
+        $this->assertStringContainsString('spreadsheetml', (string) $xlsxResponse->headers->get('content-type'));
+    }
 }

@@ -12,6 +12,11 @@ use App\Services\StoreContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /**
  * Purchase order lifecycle (alinthit_pos style).
@@ -330,20 +335,21 @@ class PurchaseOrderController extends Controller
     public function returnsIndex(Request $request, StoreContext $context): View
     {
         $store = $context->getStore();
+        $search = trim((string) $request->input('search', ''));
+        $sort = $request->input('sort', 'newest');
 
         $query = \App\POS\Models\PurchaseReturn::where('store_id', $store->id)
             ->with(['purchaseOrder', 'supplier', 'createdBy']);
 
-        if ($request->filled('search')) {
-            $search = trim((string) $request->search);
+        if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('return_number', 'like', '%' . $search . '%')
                   ->orWhereHas('purchaseOrder', fn ($q2) => $q2->where('po_number', 'like', '%' . $search . '%'))
-                  ->orWhereHas('supplier', fn ($q2) => $q2->where('name', 'like', '%' . $search . '%'));
+                  ->orWhereHas('supplier', fn ($q2) => $q2->where('name', 'like', '%' . $search . '%'))
+                  ->orWhere('reason', 'like', '%' . $search . '%');
             });
         }
 
-        $sort = $request->input('sort', 'newest');
         match ($sort) {
             'oldest'    => $query->oldest(),
             'highest'   => $query->orderBy('total_cost', 'desc'),
@@ -354,7 +360,146 @@ class PurchaseOrderController extends Controller
         $returns = $query->paginate(25)->withQueryString();
         $totalCount = $returns->total();
 
-        return view('pos.purchases.returns_index', compact('store', 'returns', 'totalCount'));
+        $allReturns = \App\POS\Models\PurchaseReturn::where('store_id', $store->id)->get();
+        $summary = [
+            'total_count' => $allReturns->count(),
+            'total_qty' => (float) $allReturns->sum('total_quantity'),
+            'total_cost' => (float) $allReturns->sum('total_cost'),
+            'suppliers_count' => $allReturns->pluck('supplier_id')->filter()->unique()->count(),
+        ];
+
+        return view('pos.purchases.returns_index', compact('store', 'returns', 'totalCount', 'search', 'sort', 'summary'));
+    }
+
+    /** Export Purchase Returns to styled Excel (.xlsx). */
+    public function returnsExport(Request $request, StoreContext $context)
+    {
+        $store = $context->getStore();
+        $search = trim((string) $request->input('search', ''));
+        $sort = $request->input('sort', 'newest');
+
+        $query = \App\POS\Models\PurchaseReturn::where('store_id', $store->id)
+            ->with(['purchaseOrder', 'supplier', 'createdBy']);
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('return_number', 'like', '%' . $search . '%')
+                  ->orWhereHas('purchaseOrder', fn ($q2) => $q2->where('po_number', 'like', '%' . $search . '%'))
+                  ->orWhereHas('supplier', fn ($q2) => $q2->where('name', 'like', '%' . $search . '%'))
+                  ->orWhere('reason', 'like', '%' . $search . '%');
+            });
+        }
+
+        match ($sort) {
+            'oldest'    => $query->oldest(),
+            'highest'   => $query->orderBy('total_cost', 'desc'),
+            'lowest'    => $query->orderBy('total_cost', 'asc'),
+            default     => $query->latest(),
+        };
+
+        $returns = $query->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle(__('messages.po_returns_title') ?: 'Purchase Returns');
+
+        // Header Title
+        $sheet->setCellValue('A1', ($store->name ?? 'DataPOS') . ' - ' . __('messages.po_returns_title'));
+        $sheet->mergeCells('A1:G1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF0F172A');
+        $sheet->getStyle('A1')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension(1)->setRowHeight(28);
+
+        // Subtitle
+        $sheet->setCellValue('A2', now()->format('d M Y H:i') . ' | ' . count($returns) . ' Records');
+        $sheet->mergeCells('A2:G2');
+        $sheet->getStyle('A2')->getFont()->setSize(10)->getColor()->setARGB('FF64748B');
+        $sheet->getRowDimension(2)->setRowHeight(18);
+
+        // Table Column Headers (Row 4)
+        $headers = [
+            'A4' => __('messages.po_return_col_number'),
+            'B4' => __('messages.po_col_po_number'),
+            'C4' => __('messages.supplier_col_name'),
+            'D4' => __('messages.reports_qty'),
+            'E4' => __('messages.reports_value') . ' (Ks)',
+            'F4' => __('messages.po_return_col_reason'),
+            'G4' => __('messages.po_return_col_date'),
+        ];
+
+        foreach ($headers as $cell => $text) {
+            $sheet->setCellValue($cell, $text);
+        }
+
+        $sheet->getStyle('A4:G4')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E293B']],
+            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
+        ]);
+        $sheet->getStyle('D4:E4')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getRowDimension(4)->setRowHeight(24);
+
+        $rowNum = 5;
+        $totalQty = 0;
+        $totalValue = 0;
+
+        foreach ($returns as $ret) {
+            $qty = (float) $ret->total_quantity;
+            $val = (float) $ret->total_cost;
+            $totalQty += $qty;
+            $totalValue += $val;
+
+            $sheet->setCellValue('A' . $rowNum, $ret->return_number);
+            $sheet->setCellValue('B' . $rowNum, $ret->purchaseOrder?->po_number ?? '—');
+            $sheet->setCellValue('C' . $rowNum, $ret->supplier?->name ?? '—');
+            $sheet->setCellValue('D' . $rowNum, $qty);
+            $sheet->setCellValue('E' . $rowNum, $val);
+            $sheet->setCellValue('F' . $rowNum, $ret->reason ?: '—');
+            $sheet->setCellValue('G' . $rowNum, $ret->returned_at?->format('Y-m-d H:i') ?? '—');
+
+            $sheet->getStyle('A' . $rowNum . ':G' . $rowNum)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('D' . $rowNum)->getNumberFormat()->setFormatCode('#,##0.00');
+            $sheet->getStyle('E' . $rowNum)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('D' . $rowNum . ':E' . $rowNum)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+            if ($rowNum % 2 === 0) {
+                $sheet->getStyle('A' . $rowNum . ':G' . $rowNum)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF8FAFC');
+            }
+            $rowNum++;
+        }
+
+        // Summary Total Row
+        if (count($returns) > 0) {
+            $sheet->setCellValue('A' . $rowNum, __('messages.total'));
+            $sheet->mergeCells('A' . $rowNum . ':C' . $rowNum);
+            $sheet->setCellValue('D' . $rowNum, $totalQty);
+            $sheet->setCellValue('E' . $rowNum, $totalValue);
+            $sheet->getStyle('A' . $rowNum . ':G' . $rowNum)->applyFromArray([
+                'font' => ['bold' => true, 'size' => 11, 'color' => ['argb' => 'FF0F172A']],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFE2E8F0']],
+                'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
+            ]);
+            $sheet->getStyle('D' . $rowNum)->getNumberFormat()->setFormatCode('#,##0.00');
+            $sheet->getStyle('E' . $rowNum)->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle('D' . $rowNum . ':E' . $rowNum)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->getRowDimension($rowNum)->setRowHeight(22);
+            $rowNum++;
+        }
+
+        foreach (['A', 'B', 'C', 'D', 'E', 'F', 'G'] as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'purchase_returns_' . now()->format('Ymd_His') . '.xlsx';
+
+        return response()->streamDownload(function () use ($writer, $spreadsheet) {
+            $writer->save('php://output');
+            $spreadsheet->disconnectWorksheets();
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 
         /** Apply payment to a specific PO. */

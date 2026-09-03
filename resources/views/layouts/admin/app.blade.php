@@ -1396,5 +1396,9 @@
 
     {{-- Reusable Confirmation Modal & Form Submit Protection --}}
     <x-admin.confirm-modal />
+
+    {{-- Global Floating Toast Notifications (Auto-dismiss & Close [X]) --}}
+    <x-floating-toast />
 </body>
 </html>
+

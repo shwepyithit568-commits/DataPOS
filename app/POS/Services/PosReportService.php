@@ -113,7 +113,7 @@ class PosReportService
     public function stockReport(Store $store, ?string $q = null): array
     {
         $query = InventoryBalance::query()
-            ->with('product')
+            ->with(['product.category', 'warehouse'])
             ->where('store_id', $store->id)
             ->where('warehouse_id', '!=', 0);
 
@@ -132,6 +132,7 @@ class PosReportService
 
             return [
                 'product' => $balance->product,
+                'warehouse' => $balance->warehouse,
                 'quantity_on_hand' => $qty,
                 'unit_cost_avg' => $cost,
                 'value' => bcmul($qty, $cost, 2),

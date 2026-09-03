@@ -244,6 +244,25 @@ Alpine.data('posApp', (opts = {}) => ({
         this.loadGrid();
     },
 
+    fmtQty(qty) {
+        const n = parseFloat(qty) || 0;
+        return n % 1 === 0 ? String(Math.round(n)) : String(parseFloat(n.toFixed(3)));
+    },
+
+    stockPillText(bal) {
+        const b = parseFloat(bal) || 0;
+        if (b <= 0) return '0 · ' + (this.labels.out_of_stock || 'ပစ္စည်းပြတ်');
+        if (b <= 5) return this.fmtQty(b) + ' · ' + (this.labels.low_stock || 'လက်ကျန်နည်း');
+        return this.fmtQty(b) + ' · ' + (this.labels.in_stock || 'ပစ္စည်းရှိ');
+    },
+
+    stockPillClass(bal) {
+        const b = parseFloat(bal) || 0;
+        if (b <= 0) return 'bg-rose-500';
+        if (b <= 5) return 'bg-amber-500';
+        return 'bg-emerald-500';
+    },
+
     /* ---- cart mutations (AJAX) ---- */
     async addProduct(p) {
         if (p.variants && p.variants.length > 0) { this.variantProduct = p; return; }

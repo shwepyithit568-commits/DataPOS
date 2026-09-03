@@ -1,7 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', ($po->po_number ?? 'Purchase Order') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @php
     // Slim item payload for the return modal (no nested product blobs).
@@ -15,7 +15,7 @@
 @endphp
 
 @section('content')
-    <div class="mx-auto max-w-5xl px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6"
+    <div class="w-full space-y-0.5 pb-6"
          x-data="{
              poItems: @js($returnItems),
              payOpen: false,
@@ -76,17 +76,6 @@
                 ← {{ __('messages.back') }}
             </a>
         </div>
-
-        @if (session('success'))
-            <div class="rounded-xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-4 py-3 text-sm font-semibold">
-                ✅ {{ session('success') }}
-            </div>
-        @endif
-        @if (session('error'))
-            <div class="rounded-xl border border-rose-300 dark:border-rose-700 bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-300 px-4 py-3 text-sm font-semibold">
-                ⚠️ {{ session('error') }}
-            </div>
-        @endif
 
         @php
             $statusColors = [
@@ -398,16 +387,25 @@
 
         {{-- ===== Stock posted note (if received) ===== --}}
         @if ($po->isReceived())
-            <div class="rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 px-4 sm:px-5 py-4 flex items-start gap-3">
-                <div class="shrink-0 w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 grid place-items-center">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg>
+            <div x-data="{ show: true }" x-show="show" x-transition
+                 class="rounded border border-emerald-200/90 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/40 p-2 sm:p-2.5 flex items-start justify-between gap-2 shadow-2xs">
+                <div class="flex items-start gap-2 min-w-0">
+                    <div class="shrink-0 w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 grid place-items-center text-xs">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-emerald-800 dark:text-emerald-300">{{ __('messages.po_received_info') }}</p>
+                        <p class="text-[11px] text-emerald-700/80 dark:text-emerald-400 mt-0.5 leading-relaxed">{{ __('messages.po_received_info_detail') }}</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-sm font-bold text-emerald-700 dark:text-emerald-400">{{ __('messages.po_received_info') }}</p>
-                    <p class="text-xs text-emerald-600 dark:text-emerald-500 mt-0.5">{{ __('messages.po_received_info_detail') }}</p>
-                </div>
+                <button type="button" @click="show = false"
+                        class="shrink-0 w-5 h-5 rounded flex items-center justify-center text-xs font-black text-emerald-700/60 hover:text-emerald-800 dark:text-emerald-300/60 dark:hover:text-emerald-200 hover:bg-emerald-200/40 dark:hover:bg-emerald-900/60 transition cursor-pointer"
+                        title="Close" aria-label="Close notification">
+                    ✕
+                </button>
             </div>
         @endif
+
 
         {{-- ===== Voucher Photos & Attached Invoices ===== --}}
         @php

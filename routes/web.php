@@ -870,6 +870,7 @@ Route::prefix('store/{store_slug}')
             Route::get('/purchases/create', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'create'])->name('pos.purchases.create');
             Route::post('/purchases', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'store'])->name('pos.purchases.store');
             Route::get('/purchases/returns', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'returnsIndex'])->name('pos.purchases.returns');
+            Route::get('/purchases/returns/export', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'returnsExport'])->name('pos.purchases.returns.export');
             Route::get('/purchases/{purchaseOrder}', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'show'])->name('pos.purchases.show');
             Route::post('/purchases/{purchaseOrder}/order', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'order'])->name('pos.purchases.order');
             Route::post('/purchases/{purchaseOrder}/receive', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('pos.purchases.receive');
@@ -905,6 +906,7 @@ Route::prefix('store/{store_slug}')
 
             // Opening stock (MVP Phase 2) — staff submits, manager approves → opening_balance ledger.
             Route::get('/opening-stock', [\App\POS\Http\Controllers\OpeningStockController::class, 'index'])->name('pos.opening-stock.index');
+            Route::get('/opening-stock/export', [\App\POS\Http\Controllers\OpeningStockController::class, 'export'])->name('pos.opening-stock.export');
             Route::post('/opening-stock', [\App\POS\Http\Controllers\OpeningStockController::class, 'store'])->name('pos.opening-stock.store');
             Route::post('/opening-stock/{openingStockRequest}/approve', [\App\POS\Http\Controllers\OpeningStockController::class, 'approve'])->name('pos.opening-stock.approve')
                 ->middleware(EnsureStoreAccess::class . ':store_manager');
@@ -913,11 +915,13 @@ Route::prefix('store/{store_slug}')
 
             // Opening-stock reconciliation (Phase 2.5) — imported opening stock vs the ledger; manager approves → correction adjustments.
             Route::get('/reconciliation', [\App\POS\Http\Controllers\InventoryReconciliationController::class, 'index'])->name('pos.reconciliation.index');
+            Route::get('/reconciliation/export', [\App\POS\Http\Controllers\InventoryReconciliationController::class, 'export'])->name('pos.reconciliation.export');
             Route::post('/reconciliation/approve', [\App\POS\Http\Controllers\InventoryReconciliationController::class, 'approve'])->name('pos.reconciliation.approve')
                 ->middleware(EnsureStoreAccess::class . ':store_manager');
 
             // Inventory adjustments (MVP Phase 2, final) — staff submits, manager approves → adjustment_in/out ledger.
             Route::get('/adjustments', [\App\POS\Http\Controllers\InventoryAdjustmentController::class, 'index'])->name('pos.adjustments.index');
+            Route::get('/adjustments/export', [\App\POS\Http\Controllers\InventoryAdjustmentController::class, 'export'])->name('pos.adjustments.export');
             Route::post('/adjustments', [\App\POS\Http\Controllers\InventoryAdjustmentController::class, 'store'])->name('pos.adjustments.store');
             Route::post('/adjustments/{inventoryAdjustment}/approve', [\App\POS\Http\Controllers\InventoryAdjustmentController::class, 'approve'])->name('pos.adjustments.approve')
                 ->middleware(EnsureStoreAccess::class . ':store_manager');

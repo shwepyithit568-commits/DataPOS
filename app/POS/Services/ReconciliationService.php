@@ -189,6 +189,8 @@ class ReconciliationService
                         'snapshot' => $report,
                     ]);
 
+                    $defaultWarehouse = $this->storeLocations->defaultWarehouse($store);
+
                     foreach ($report['rows'] as $i => $row) {
                         if (bccomp($row['diff'], '0', 3) === 0) {
                             continue;
@@ -198,8 +200,28 @@ class ReconciliationService
                         $delta = $row['diff'];
                         $type = bccomp($delta, '0', 3) > 0 ? 'adjustment_in' : 'adjustment_out';
 
+                        // Target warehouse resolution: if deducting stock (adjustment_out), target the warehouse holding on-hand stock or the initial opening movement.
+                        $targetWarehouseId = null;
+                        if (bccomp($delta, '0', 3) < 0) {
+                            $targetWarehouseId = DB::table('inventory_balances')
+                                ->where('store_id', $store->id)
+                                ->where('product_id', $row['product_id'])
+                                ->where('product_variant_id', $row['product_variant_id'] !== 0 ? $row['product_variant_id'] : 0)
+                                ->where('quantity_on_hand', '>', 0)
+                                ->orderByDesc('quantity_on_hand')
+                                ->value('warehouse_id');
+                        }
+
+                        $targetWarehouseId = $targetWarehouseId
+                            ?? InventoryMovement::where('store_id', $store->id)
+                                ->where('product_id', $row['product_id'])
+                                ->where('movement_type', 'opening_balance')
+                                ->value('warehouse_id')
+                            ?? $defaultWarehouse->id;
+
                         $this->inventory->postMovement([
                             'store' => $store,
+                            'warehouse_id' => $targetWarehouseId,
                             'product_id' => $row['product_id'],
                             'product_variant_id' => $row['product_variant_id'] !== 0 ? $row['product_variant_id'] : null,
                             'movement_type' => $type,

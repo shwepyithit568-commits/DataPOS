@@ -88,6 +88,10 @@ class PosSaleService
         });
 
         $variants->each(function (ProductVariant $v) use (&$results, $customer, $balances) {
+            $varBal = $this->balanceFromMap($balances, $v->product_id, $v->id);
+            if ($varBal === '0.000' && (float) ($v->quantity_on_hand ?? 0) > 0 && !isset($balances[$v->product_id]['variants'][$v->id])) {
+                $varBal = number_format((float) $v->quantity_on_hand, 3, '.', '');
+            }
             $results[] = [
                 'type' => 'variant',
                 'id' => $v->id,
@@ -95,7 +99,7 @@ class PosSaleService
                 'name' => $v->product->name . ' — ' . $v->name,
                 'sku' => $v->sku,
                 'price' => $this->priceFor($customer, $v->product, $v),
-                'balance' => $this->balanceFromMap($balances, $v->product_id, $v->id),
+                'balance' => $varBal,
                 'variant_of' => $v->product->name,
             ];
         });
@@ -122,7 +126,7 @@ class PosSaleService
             ->when($categoryId, fn ($w) => $w->where('category_id', $categoryId))
             ->when($brandId, fn ($w) => $w->where('brand_id', $brandId))
             ->when($q !== '', fn ($w) => $w->where(fn ($w2) => $w2->where('sku', 'like', "%{$q}%")->orWhere('name', 'like', "%{$q}%")))
-            ->with(['category:id,name', 'brand:id,name', 'variants:id,product_id,name,sku,retail_price,wholesale_price,is_default'])
+            ->with(['category:id,name', 'brand:id,name', 'variants:id,product_id,name,sku,retail_price,wholesale_price,is_default,quantity_on_hand'])
             ->orderBy('name')
             ->orderBy('id')
             ->limit($limit)
@@ -139,6 +143,29 @@ class PosSaleService
         $isWholesale = $this->customerTier($store->id, $customer);
 
         return $products->map(function (Product $p) use ($store, $customer, $isWholesale, $balances) {
+            $prodBal = $this->balanceFromMap($balances, $p->id);
+            $variants = $p->variants->map(function ($v) use ($customer, $p, $balances) {
+                $varBal = $this->balanceFromMap($balances, $p->id, $v->id);
+                if ($varBal === '0.000' && (float) ($v->quantity_on_hand ?? 0) > 0 && !isset($balances[$p->id]['variants'][$v->id])) {
+                    $varBal = number_format((float) $v->quantity_on_hand, 3, '.', '');
+                }
+                return [
+                    'id' => $v->id,
+                    'name' => $v->name,
+                    'sku' => $v->sku,
+                    'price' => $this->priceFor($customer, $p, $v),
+                    'retail_price' => (string) ($v->retail_price ?? $p->retail_price),
+                    'balance' => $varBal,
+                ];
+            })->values()->all();
+
+            if (!empty($variants)) {
+                $variantSum = array_reduce($variants, fn ($carry, $v) => $carry + (float) $v['balance'], 0.0);
+                if ($variantSum > 0 && (float) $prodBal <= 0) {
+                    $prodBal = number_format($variantSum, 3, '.', '');
+                }
+            }
+
             return [
                 'id' => $p->id,
                 'name' => $p->name,
@@ -148,18 +175,11 @@ class PosSaleService
                 'tier' => $isWholesale ? 'wholesale' : 'retail',
                 'old_price' => $p->old_price !== null ? (string) $p->old_price : null,
                 'image' => $p->image_path ? asset('storage/' . $p->image_path) : null,
-                'balance' => $this->balanceFromMap($balances, $p->id),
+                'balance' => $prodBal,
                 'category_id' => $p->category_id,
                 'category' => $p->category?->name,
                 'brand' => $p->brand?->name,
-                'variants' => $p->variants->map(fn ($v) => [
-                    'id' => $v->id,
-                    'name' => $v->name,
-                    'sku' => $v->sku,
-                    'price' => $this->priceFor($customer, $p, $v),
-                    'retail_price' => (string) ($v->retail_price ?? $p->retail_price),
-                    'balance' => $this->balanceFromMap($balances, $p->id, $v->id),
-                ])->values()->all(),
+                'variants' => $variants,
             ];
         })->values()->all();
     }

@@ -45,10 +45,35 @@
                     </span>
 
                     {{-- Stock Status Pill --}}
-                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-black {{ $product->isInStock() ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300' }}">
-                        <span class="w-1.5 h-1.5 rounded-full {{ $product->isInStock() ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
-                        <span>{{ $product->isInStock() ? __('messages.in_stock') : __('messages.out_of_stock') }}</span>
+                    @php
+                        $isServiceOrDigital = in_array($product->product_type, ['service', 'digital'], true);
+                        $onHand = (float) ($product->on_hand_qty ?? $product->stock_on_hand ?? 0);
+                        $reorder = (float) ($product->reorder_level ?? 0);
+                        $fmtQty = (fmod($onHand, 1) !== 0.0) ? number_format($onHand, 3) : number_format($onHand, 0);
+
+                        if ($isServiceOrDigital) {
+                            $badgeClass = 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700';
+                            $dotClass = 'bg-slate-400';
+                            $stockText = '— ' . ($product->product_type === 'service' ? __('messages.product_type_service_short') : __('messages.product_type_digital_short'));
+                        } elseif ($onHand <= 0 || $product->stock_status === 'out_of_stock') {
+                            $badgeClass = 'bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80';
+                            $dotClass = 'bg-rose-500';
+                            $stockText = $fmtQty . ' · ' . __('messages.out_of_stock');
+                        } elseif ($reorder > 0 && $onHand <= $reorder) {
+                            $badgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80';
+                            $dotClass = 'bg-amber-500 animate-pulse';
+                            $stockText = $fmtQty . ' · ' . __('messages.low_stock');
+                        } else {
+                            $badgeClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80';
+                            $dotClass = 'bg-emerald-500 animate-pulse';
+                            $stockText = $fmtQty . ' · ' . __('messages.in_stock');
+                        }
+                    @endphp
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-black {{ $badgeClass }}">
+                        <span class="w-1.5 h-1.5 rounded-full {{ $dotClass }}"></span>
+                        <span class="font-mono font-bold">{{ $stockText }}</span>
                     </span>
+
 
                     @if ($product->is_featured)
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">
@@ -284,11 +309,32 @@
                                     <td class="p-2.5 font-mono text-[11px] text-violet-700 dark:text-violet-300">{{ $v->sku }}</td>
                                     <td class="p-2.5 font-black text-slate-900 dark:text-slate-100 tabular-nums">Ks {{ number_format($v->retail_price) }}</td>
                                     <td class="p-2.5 font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{{ $v->wholesale_price > 0 ? 'Ks ' . number_format($v->wholesale_price) : '—' }}</td>
-                                    <td class="p-2.5 text-center">
-                                        <span class="px-2 py-0.5 rounded-lg text-[10px] font-black {{ ($v->stock_status ?? 'in_stock') === 'in_stock' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300' }}">
-                                            {{ ($v->stock_status ?? 'in_stock') === 'in_stock' ? __('messages.in_stock') : __('messages.out_of_stock') }}
+                                    <td class="p-2.5 text-center whitespace-nowrap">
+                                        @php
+                                            $vOnHand = (float) ($v->stock_on_hand ?? $v->quantity_on_hand ?? 0);
+                                            $vFmtQty = (fmod($vOnHand, 1) !== 0.0) ? number_format($vOnHand, 3) : number_format($vOnHand, 0);
+                                            $vReorder = (float) ($product->reorder_level ?? 0);
+
+                                            if ($vOnHand <= 0 || ($v->stock_status ?? 'in_stock') === 'out_of_stock') {
+                                                $vBadgeClass = 'bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80';
+                                                $vDotClass = 'bg-rose-500';
+                                                $vStockText = $vFmtQty . ' · ' . __('messages.out_of_stock');
+                                            } elseif ($vReorder > 0 && $vOnHand <= $vReorder) {
+                                                $vBadgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80';
+                                                $vDotClass = 'bg-amber-500 animate-pulse';
+                                                $vStockText = $vFmtQty . ' · ' . __('messages.low_stock');
+                                            } else {
+                                                $vBadgeClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80';
+                                                $vDotClass = 'bg-emerald-500 animate-pulse';
+                                                $vStockText = $vFmtQty . ' · ' . __('messages.in_stock');
+                                            }
+                                        @endphp
+                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-black {{ $vBadgeClass }}">
+                                            <span class="w-1.5 h-1.5 rounded-full {{ $vDotClass }}"></span>
+                                            <span class="font-mono font-bold">{{ $vStockText }}</span>
                                         </span>
                                     </td>
+
                                 </tr>
                             @endforeach
                         </tbody>
