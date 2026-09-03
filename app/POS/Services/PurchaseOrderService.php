@@ -12,8 +12,10 @@ use App\POS\Models\GoodsReceiptItem;
 use App\POS\Models\PurchaseOrder;
 use App\POS\Models\PurchaseReturn;
 use App\POS\Models\PurchaseReturnItem;
+use App\POS\Models\PoPaymentLog;
 use App\POS\Models\PurchaseOrderItem;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -406,6 +408,331 @@ class PurchaseOrderService
         return $po->fresh(['items.product', 'supplier', 'createdBy']);
     }
 
+    /**
+     * Update an existing purchase order.
+     *
+     * - Pending / Ordered: full edit of items, supplier, reference, notes, discounts, delivery fee.
+     *   Adjusts supplier credit balance accurately.
+     * - Received: full edit with automatic inventory movement reversals for any quantity changes,
+     *   preserving physical stock balance and supplier ledger accuracy.
+     */
+    public function update(PurchaseOrder $po, array $data, User $actor): PurchaseOrder
+    {
+        if ($po->isCancelled()) {
+            throw new InventoryException("Cancelled PO {$po->po_number} cannot be edited.");
+        }
+
+        $store = Store::findOrFail($po->store_id);
+
+        $items = $data['items'] ?? [];
+        if (empty($items)) {
+            throw new InventoryException('A purchase order needs at least one line.');
+        }
+
+        $normalized = [];
+        $totalQuantity = '0';
+        $subtotal = '0';
+
+        foreach ($items as $i => $line) {
+            $productId = (int) ($line['product_id'] ?? 0);
+            $variantId = ! empty($line['product_variant_id']) ? (int) $line['product_variant_id'] : null;
+            $quantity = (string) ($line['quantity'] ?? '0');
+            $unitCost = (string) ($line['unit_cost'] ?? '0');
+
+            if ($productId <= 0) {
+                throw new InventoryException('Line ' . ($i + 1) . ': choose a product.');
+            }
+            if (bccomp($quantity, '0', 3) <= 0) {
+                throw new InventoryException('Line ' . ($i + 1) . ': quantity must be greater than zero.');
+            }
+            if (bccomp($unitCost, '0', 4) < 0) {
+                throw new InventoryException('Line ' . ($i + 1) . ': unit cost cannot be negative.');
+            }
+
+            $product = Product::find($productId);
+            if (! $product || (int) $product->store_id !== (int) $store->id) {
+                throw new InventoryException('Line ' . ($i + 1) . ': product does not belong to this store.');
+            }
+
+            $lineTotal = bcmul($quantity, $unitCost, 2);
+            $totalQuantity = bcadd($totalQuantity, $quantity, 3);
+            $subtotal = bcadd($subtotal, $lineTotal, 2);
+
+            $normalized[] = [
+                'product_id' => $productId,
+                'product_variant_id' => $variantId,
+                'quantity' => $quantity,
+                'unit_cost' => $unitCost,
+                'line_total' => $lineTotal,
+            ];
+        }
+
+        $discountAmount = bcadd((string) ($data['discount_amount'] ?? '0'), '0', 2);
+        $deliveryFee = bcadd((string) ($data['delivery_fee'] ?? '0'), '0', 2);
+        $netTotal = bcsub($subtotal, $discountAmount, 2);
+        $totalCost = bcadd($netTotal, $deliveryFee, 2);
+        if (bccomp($totalCost, '0', 2) < 0) {
+            $totalCost = '0.00';
+        }
+
+        $newSupplierId = ! empty($data['supplier_id']) ? (int) $data['supplier_id'] : null;
+        $oldSupplierId = $po->supplier_id;
+        $oldTotalCost = (string) $po->total_cost;
+        $paidAmount = (string) $po->paid_amount;
+
+        if (bccomp($totalCost, $paidAmount, 2) < 0) {
+            throw new InventoryException("New total cost ($totalCost) cannot be less than already paid amount ($paidAmount).");
+        }
+
+        $remainingBalance = bcsub($totalCost, $paidAmount, 2);
+        $paymentStatus = bccomp($remainingBalance, '0', 2) === 0
+            ? PurchaseOrder::PAYMENT_PAID
+            : (bccomp($paidAmount, '0', 2) > 0 ? PurchaseOrder::PAYMENT_PARTIAL : PurchaseOrder::PAYMENT_UNPAID);
+
+        return DB::transaction(function () use (
+            $po, $store, $actor, $newSupplierId, $oldSupplierId, $oldTotalCost,
+            $totalCost, $subtotal, $discountAmount, $deliveryFee, $totalQuantity,
+            $paidAmount, $remainingBalance, $paymentStatus, $normalized, $data
+        ) {
+            // 1. If PO was already received, adjust inventory movements & balances
+            if ($po->isReceived()) {
+                $oldItems = $po->items()->get();
+
+                $oldMap = [];
+                foreach ($oldItems as $old) {
+                    $key = $old->product_id . ':' . ($old->product_variant_id ?? 0);
+                    $oldMap[$key] = [
+                        'product_id' => $old->product_id,
+                        'variant_id' => $old->product_variant_id,
+                        'quantity' => (string) $old->quantity,
+                        'unit_cost' => (string) $old->unit_cost,
+                    ];
+                }
+
+                $newMap = [];
+                foreach ($normalized as $norm) {
+                    $key = $norm['product_id'] . ':' . ($norm['product_variant_id'] ?? 0);
+                    $newMap[$key] = [
+                        'product_id' => $norm['product_id'],
+                        'variant_id' => $norm['product_variant_id'],
+                        'quantity' => $norm['quantity'],
+                        'unit_cost' => $norm['unit_cost'],
+                    ];
+                }
+
+                // Check modified or removed items
+                foreach ($oldMap as $key => $old) {
+                    if (isset($newMap[$key])) {
+                        $newQty = $newMap[$key]['quantity'];
+                        $oldQty = $old['quantity'];
+                        $delta = bcsub($newQty, $oldQty, 3);
+                        if (bccomp($delta, '0', 3) !== 0) {
+                            $this->inventory->postMovement([
+                                'store' => $store,
+                                'product_id' => $old['product_id'],
+                                'product_variant_id' => $old['variant_id'],
+                                'movement_type' => 'reversal',
+                                'quantity_delta' => $delta,
+                                'unit_cost' => $newMap[$key]['unit_cost'],
+                                'source_type' => 'purchase_order',
+                                'source_id' => $po->id,
+                                'metadata' => [
+                                    'reason' => 'purchase_order_edited_quantity_change',
+                                    'po_number' => $po->po_number,
+                                    'old_qty' => $oldQty,
+                                    'new_qty' => $newQty,
+                                ],
+                            ], ['allow_negative' => true]);
+                        }
+                    } else {
+                        $delta = bcmul($old['quantity'], '-1', 3);
+                        $this->inventory->postMovement([
+                            'store' => $store,
+                            'product_id' => $old['product_id'],
+                            'product_variant_id' => $old['variant_id'],
+                            'movement_type' => 'reversal',
+                            'quantity_delta' => $delta,
+                            'unit_cost' => $old['unit_cost'],
+                            'source_type' => 'purchase_order',
+                            'source_id' => $po->id,
+                            'metadata' => [
+                                'reason' => 'purchase_order_edited_item_removed',
+                                'po_number' => $po->po_number,
+                            ],
+                        ], ['allow_negative' => true]);
+                    }
+                }
+
+                // Check newly added items
+                foreach ($newMap as $key => $new) {
+                    if (! isset($oldMap[$key])) {
+                        $this->inventory->postMovement([
+                            'store' => $store,
+                            'product_id' => $new['product_id'],
+                            'product_variant_id' => $new['variant_id'],
+                            'movement_type' => 'reversal',
+                            'quantity_delta' => $new['quantity'],
+                            'unit_cost' => $new['unit_cost'],
+                            'source_type' => 'purchase_order',
+                            'source_id' => $po->id,
+                            'metadata' => [
+                                'reason' => 'purchase_order_edited_item_added',
+                                'po_number' => $po->po_number,
+                            ],
+                        ], ['allow_negative' => true]);
+                    }
+                }
+            }
+
+            // 2. Adjust Supplier total_credit
+            if ($oldSupplierId === $newSupplierId) {
+                if ($oldSupplierId && bccomp($oldTotalCost, $totalCost, 2) !== 0) {
+                    $diff = bcsub($totalCost, $oldTotalCost, 2);
+                    if (bccomp($diff, '0', 2) > 0) {
+                        $po->supplier->increment('total_credit', $diff);
+                    } else {
+                        $po->supplier->decrement('total_credit', bcmul($diff, '-1', 2));
+                    }
+                }
+            } else {
+                // Supplier changed
+                if ($oldSupplierId && bccomp($oldTotalCost, '0', 2) > 0) {
+                    $oldSupplier = \App\Models\Supplier::find($oldSupplierId);
+                    $oldSupplier?->decrement('total_credit', $oldTotalCost);
+                    if (bccomp($paidAmount, '0', 2) > 0) {
+                        $oldSupplier?->decrement('total_repaid', $paidAmount);
+                    }
+                }
+                if ($newSupplierId && bccomp($totalCost, '0', 2) > 0) {
+                    $newSupplier = \App\Models\Supplier::find($newSupplierId);
+                    $newSupplier?->increment('total_credit', $totalCost);
+                    if (bccomp($paidAmount, '0', 2) > 0) {
+                        $newSupplier?->increment('total_repaid', $paidAmount);
+                    }
+                }
+            }
+
+            // 3. Update PO record
+            $poUpdate = [
+                'supplier_id' => $newSupplierId,
+                'subtotal' => $subtotal,
+                'discount_amount' => $discountAmount,
+                'delivery_fee' => $deliveryFee,
+                'total_quantity' => $totalQuantity,
+                'total_cost' => $totalCost,
+                'remaining_balance' => $remainingBalance,
+                'payment_status' => $paymentStatus,
+                'reference' => isset($data['reference']) && trim((string) $data['reference']) !== '' ? trim((string) $data['reference']) : null,
+                'notes' => isset($data['notes']) && trim((string) $data['notes']) !== '' ? trim((string) $data['notes']) : null,
+            ];
+            if (isset($data['voucher_images'])) {
+                $poUpdate['voucher_images'] = $data['voucher_images'];
+            }
+            $po->update($poUpdate);
+
+            // 4. Re-create PO items
+            $po->items()->delete();
+            foreach ($normalized as $line) {
+                PurchaseOrderItem::create([
+                    'purchase_order_id' => $po->id,
+                    'store_id' => $store->id,
+                    'product_id' => $line['product_id'],
+                    'product_variant_id' => $line['product_variant_id'],
+                    'quantity' => $line['quantity'],
+                    'unit_cost' => $line['unit_cost'],
+                    'line_total' => $line['line_total'],
+                ]);
+            }
+
+            AuditLog::write(
+                storeId: $store->id,
+                action: 'purchase_order_updated',
+                entityType: 'purchase_order',
+                entityId: $po->id,
+                metadata: [
+                    'po_number' => $po->po_number,
+                    'total_cost' => $totalCost,
+                    'lines' => count($normalized),
+                    'status' => $po->status,
+                ],
+                actorId: $actor->id,
+            );
+
+            return $po->fresh(['items.product', 'supplier', 'createdBy']);
+        });
+    }
+
+    /**
+     * Delete an existing purchase order (pending, ordered, received, or cancelled).
+     *
+     * If received, reverses all inventory movements.
+     * Reverses accrued supplier credit and repayments.
+     */
+    public function delete(PurchaseOrder $po, User $actor): bool
+    {
+        $store = Store::findOrFail($po->store_id);
+
+        return DB::transaction(function () use ($po, $store, $actor) {
+            // If PO was received, reverse stock for all items
+            if ($po->isReceived()) {
+                foreach ($po->items as $item) {
+                    $delta = bcmul((string) $item->quantity, '-1', 3);
+                    $this->inventory->postMovement([
+                        'store' => $store,
+                        'product_id' => $item->product_id,
+                        'product_variant_id' => $item->product_variant_id,
+                        'movement_type' => 'reversal',
+                        'quantity_delta' => $delta,
+                        'unit_cost' => (string) $item->unit_cost,
+                        'source_type' => 'purchase_order',
+                        'source_id' => $po->id,
+                        'metadata' => [
+                            'reason' => 'purchase_order_deleted_stock_reversed',
+                            'po_number' => $po->po_number,
+                        ],
+                    ], ['allow_negative' => true]);
+                }
+            }
+
+            // Reverse supplier credit and repayments if not cancelled
+            if (! $po->isCancelled()) {
+                if ($po->supplier_id && bccomp((string) $po->paid_amount, '0', 2) > 0) {
+                    $po->supplier->decrement('total_repaid', $po->paid_amount);
+                }
+                if ($po->supplier_id && bccomp((string) $po->total_cost, '0', 2) > 0) {
+                    $po->supplier->decrement('total_credit', $po->total_cost);
+                }
+            }
+
+            // Delete any stored voucher image files
+            if (! empty($po->voucher_images) && is_array($po->voucher_images)) {
+                foreach ($po->voucher_images as $vPath) {
+                    Storage::disk('public')->delete($vPath);
+                }
+            }
+
+            $poNumber = $po->po_number;
+            $storeId = $po->store_id;
+            $poId = $po->id;
+
+            // Delete items, payment logs, and PO
+            $po->items()->delete();
+            $po->paymentLogs()->delete();
+            $po->delete();
+
+            AuditLog::write(
+                storeId: $storeId,
+                action: 'purchase_order_deleted',
+                entityType: 'purchase_order',
+                entityId: $poId,
+                metadata: ['po_number' => $poNumber],
+                actorId: $actor->id,
+            );
+
+            return true;
+        });
+    }
+
     /* ------------------------------------------------------------------ */
     /* ------------------------------------------------------------------ */
     /*  Purchase Returns                                                    */
@@ -623,7 +950,7 @@ class PurchaseOrderService
      * Updates paid_amount / remaining_balance / payment_status and decrements
      * the supplier's outstanding total_credit (increasing total_repaid).
      *
-     * @param  array{amount:string, reference?:string, paid_at?:string}  $payment
+     * @param  array{amount:string, reference?:string, paid_at?:string, slip_images?:array<string>}  $payment
      */
     public function applyPayment(PurchaseOrder $po, array $payment, User $actor): PurchaseOrder
     {
@@ -655,21 +982,33 @@ class PurchaseOrderService
                 $po->supplier->increment('total_repaid', $amount);
             }
 
+            // Create payment log entry (with optional slip images)
+            PoPaymentLog::create([
+                'store_id'           => $po->store_id,
+                'purchase_order_id'  => $po->id,
+                'supplier_id'        => $po->supplier_id,
+                'amount'             => $amount,
+                'reference'          => $payment['reference'] ?? null,
+                'slip_images'        => ! empty($payment['slip_images']) ? $payment['slip_images'] : null,
+                'paid_by'            => $actor->id,
+            ]);
+
             AuditLog::write(
                 storeId: $po->store_id,
                 action: 'purchase_order_payment',
                 entityType: 'purchase_order',
                 entityId: $po->id,
                 metadata: [
-                    'po_number' => $po->po_number,
-                    'amount' => $amount,
+                    'po_number'       => $po->po_number,
+                    'amount'          => $amount,
                     'remaining_balance' => (string) $po->remaining_balance,
-                    'reference' => $payment['reference'] ?? null,
+                    'reference'       => $payment['reference'] ?? null,
+                    'has_slip_images' => ! empty($payment['slip_images']),
                 ],
                 actorId: $actor->id,
             );
 
-            return $po->fresh(['items.product', 'supplier', 'createdBy']);
+            return $po->fresh(['items.product', 'supplier', 'createdBy', 'paymentLogs']);
         });
     }
 

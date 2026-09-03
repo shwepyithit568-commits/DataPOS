@@ -4,6 +4,8 @@
 
 @section('content')
 @php
+    /** @var \Illuminate\Pagination\LengthAwarePaginator<\App\Models\Product> $products */
+
     // Accent color tokens for the 4 stat cards + featured/online pill badges.
     // Matches the Master Data hub visual language for cross-page consistency.
     $statAccents = [

@@ -69,6 +69,7 @@ class CustomerDebtService
         User $actor,
         ?string $notes = null,
         ?string $clientTransactionId = null,
+        ?string $slipImage = null,
     ): CustomerLedgerEntry {
         if (bccomp($amount, '0', 2) <= 0) {
             throw new InventoryException('Collection amount must be positive.');
@@ -87,6 +88,7 @@ class CustomerDebtService
             'amount' => '-' . $amount,
             'source_type' => 'manual',
             'notes' => $notes ?: 'Debt collection',
+            'slip_image' => $slipImage,
             'created_by' => $actor->id,
             'client_transaction_id' => $clientTransactionId,
         ]);

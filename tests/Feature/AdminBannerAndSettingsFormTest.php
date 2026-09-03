@@ -114,4 +114,60 @@ class AdminBannerAndSettingsFormTest extends TestCase
         $response->assertSee('maxlength="160"', false);
         $response->assertSee('value="Tagline On Form"', false);
     }
+
+    /** UI/UX Standard v4.1: Compact 2px padding, centered stat cards, card/table view toggles. */
+    public function test_banner_page_renders_with_standard_v4_1_compact_layout(): void
+    {
+        $this->store->homeBanners()->create([
+            'page' => 'home',
+            'title' => 'Summer Promo Banner',
+            'description' => 'Discounts on all phones.',
+            'image_path' => 'banners/summer.webp',
+            'link_url' => 'https://example.com/summer',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($this->manager)
+            ->get('/store/form-store/admin/banners');
+
+        $response->assertOk();
+        // 2px ultra-dense main padding on mobile
+        $response->assertSee('p-0.5 sm:p-1', false);
+        // Centered row-based stat cards
+        $response->assertSee('flex items-center justify-center gap-2.5 sm:gap-3', false);
+        // Excel export button / toolbar present
+        $response->assertSee('/store/form-store/admin/banners/export', false);
+        // Both card view and table view are present in DOM
+        $response->assertSee('id="banners-grid"', false);
+        $response->assertSee('id="banners-table"', false);
+    }
+
+    /** UI/UX Standard v4.1: Banner export supports CSV and XLSX. */
+    public function test_banner_export_csv_and_xlsx(): void
+    {
+        $this->store->homeBanners()->create([
+            'page' => 'home',
+            'title' => 'Export Promo Banner',
+            'description' => 'Test export desc',
+            'image_path' => 'banners/test.webp',
+            'link_url' => '/products',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        // CSV export
+        $csvResponse = $this->actingAs($this->manager)
+            ->get('/store/form-store/admin/banners/export?format=csv');
+
+        $csvResponse->assertOk();
+        $this->assertStringContainsString('text/csv', $csvResponse->headers->get('content-type', ''));
+
+        // XLSX export
+        $xlsxResponse = $this->actingAs($this->manager)
+            ->get('/store/form-store/admin/banners/export?format=xlsx');
+
+        $xlsxResponse->assertOk();
+        $this->assertStringContainsString('spreadsheetml.sheet', $xlsxResponse->headers->get('content-type', ''));
+    }
 }

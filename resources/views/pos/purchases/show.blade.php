@@ -25,8 +25,9 @@
              returnOpen: false,
              returnItems: [],
              returnSubmitting: false,
-             fmt2(n) { return Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); },
-             fmt(n) { return Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 }); },
+             fmt2(n) { return typeof window.formatCurrency === 'function' ? window.formatCurrency(n) : Number(n).toLocaleString(); },
+             fmt(n) { return typeof window.formatCurrency === 'function' ? window.formatCurrency(n) : Number(n).toLocaleString(); },
+             fmtQty(n) { return typeof window.formatQuantity === 'function' ? window.formatQuantity(n) : String(n); },
              get payAmt() { return parseFloat(this.payAmount) || 0; },
              get payOver() { return this.payAmt > this.payBalance; },
              get payValid() { return this.payAmt > 0 && this.payAmt <= this.payBalance; },
@@ -71,11 +72,51 @@
                 <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">{{ __('messages.sidebar_purchases') }}</p>
                 <h1 class="text-lg sm:text-xl font-black mt-0.5 font-mono truncate">{{ $po->po_number }}</h1>
             </div>
-            <a href="{{ url('/store/' . $store->slug . '/pos/purchases') }}"
-               class="shrink-0 rounded-xl px-3 sm:px-4 py-2.5 text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition">
-                ← {{ __('messages.back') }}
-            </a>
+            <div class="flex items-center gap-1.5 flex-wrap">
+                @if (auth()->user() && auth()->user()->isStoreManager($store->id))
+                    <a href="{{ route('pos.purchases.edit', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id]) }}"
+                       class="shrink-0 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold bg-amber-500 hover:bg-amber-600 text-white transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                        <span>✏️</span>
+                        <span>{{ __('messages.po_edit') }}</span>
+                    </a>
+                    <form method="POST" action="{{ route('pos.purchases.destroy', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id]) }}"
+                          onsubmit="return confirm('{{ __('messages.po_confirm_delete', ['number' => $po->po_number]) }}');"
+                          class="contents">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                                class="shrink-0 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition flex items-center gap-1.5 cursor-pointer">
+                            <span>🗑️</span>
+                            <span>{{ __('messages.po_delete') }}</span>
+                        </button>
+                    </form>
+                @endif
+                <a href="{{ url('/store/' . $store->slug . '/pos/purchases') }}"
+                   class="shrink-0 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                    ← {{ __('messages.back') }}
+                </a>
+            </div>
         </div>
+
+        {{-- Flash Alerts --}}
+        @if (session('success'))
+            <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-2.5 sm:p-3 flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-200 shadow-2xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-emerald-200 dark:bg-emerald-900 grid place-items-center text-xs font-black">✓</span>
+                    <span>{{ session('success') }}</span>
+                </div>
+                <button type="button" @click="$el.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold px-1.5 py-0.5 cursor-pointer" aria-label="Close">&times;</button>
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-2.5 sm:p-3 flex items-center justify-between text-xs font-bold text-rose-800 dark:text-rose-200 shadow-2xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-rose-200 dark:bg-rose-900 grid place-items-center text-xs font-black">⚠️</span>
+                    <span>{{ session('error') }}</span>
+                </div>
+                <button type="button" @click="$el.parentElement.remove()" class="text-rose-500 hover:text-rose-700 dark:hover:text-rose-300 font-bold px-1.5 py-0.5 cursor-pointer" aria-label="Close">&times;</button>
+            </div>
+        @endif
 
         @php
             $statusColors = [
@@ -109,7 +150,7 @@
                         @if ($po->isReceived() && !$po->isPaid())
                             <span class="inline-flex items-baseline gap-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/50 px-2.5 py-1">
                                 <span class="text-[10px] font-bold text-rose-500 uppercase">{{ __('messages.payables_balance') }}</span>
-                                <span class="text-sm font-black text-rose-600 dark:text-rose-400 font-mono">Ks {{ number_format((float) $po->remaining_balance) }}</span>
+                                <span class="text-sm font-black text-rose-600 dark:text-rose-400 font-mono">{{ format_currency($po->remaining_balance, $store) }}</span>
                             </span>
                         @endif
                     </div>
@@ -280,9 +321,9 @@
                                         <span class="text-[10px] font-mono text-slate-400 ml-1.5">{{ $item->product->sku }}</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3 text-right font-mono">{{ number_format((float) $item->quantity, 3) }}</td>
-                                <td class="px-4 py-3 text-right font-mono">Ks {{ number_format((float) $item->unit_cost) }}</td>
-                                <td class="px-4 py-3 text-right font-mono font-bold">Ks {{ number_format((float) $item->line_total) }}</td>
+                                <td class="px-4 py-3 text-right font-mono">{{ format_quantity($item->quantity, $store) }}</td>
+                                <td class="px-4 py-3 text-right font-mono">{{ format_currency($item->unit_cost, $store) }}</td>
+                                <td class="px-4 py-3 text-right font-mono font-bold">{{ format_currency($item->line_total, $store) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -291,8 +332,8 @@
                         @if ((float) $po->discount_amount > 0 || (float) $po->delivery_fee > 0)
                             <tr class="border-t border-slate-200 dark:border-slate-700">
                                 <td colspan="2" class="px-4 py-2 font-bold text-right text-slate-500">{{ __('messages.po_subtotal') }}</td>
-                                <td class="px-4 py-2 text-right font-mono font-bold">{{ number_format((float) $po->total_quantity, 3) }}</td>
-                                <td colspan="2" class="px-4 py-2 text-right font-mono font-bold">Ks {{ number_format((float) ($po->subtotal > 0 ? $po->subtotal : $po->total_cost)) }}</td>
+                                <td class="px-4 py-2 text-right font-mono font-bold">{{ format_quantity($po->total_quantity, $store) }}</td>
+                                <td colspan="2" class="px-4 py-2 text-right font-mono font-bold">{{ format_currency($po->subtotal > 0 ? $po->subtotal : $po->total_cost, $store) }}</td>
                             </tr>
                         @endif
 
@@ -303,7 +344,7 @@
                                     {{ __('messages.po_discount_amount') }} (-)
                                 </td>
                                 <td class="px-4 py-1.5 text-right font-mono font-bold">
-                                    - Ks {{ number_format((float) $po->discount_amount) }}
+                                    - {{ format_currency($po->discount_amount, $store) }}
                                 </td>
                             </tr>
                         @endif
@@ -315,7 +356,7 @@
                                     {{ __('messages.po_delivery_fee') }} (+)
                                 </td>
                                 <td class="px-4 py-1.5 text-right font-mono font-bold">
-                                    + Ks {{ number_format((float) $po->delivery_fee) }}
+                                    + {{ format_currency($po->delivery_fee, $store) }}
                                 </td>
                             </tr>
                         @endif
@@ -323,9 +364,9 @@
                         {{-- Grand Total --}}
                         <tr class="border-t-2 border-slate-300 dark:border-slate-700 font-bold text-slate-900 dark:text-slate-100">
                             <td colspan="2" class="px-4 py-3 font-black text-right text-sm">{{ __('messages.po_net_total') }}</td>
-                            <td class="px-4 py-3 text-right font-mono font-bold text-sm">{{ number_format((float) $po->total_quantity, 3) }}</td>
+                            <td class="px-4 py-3 text-right font-mono font-bold text-sm">{{ format_quantity($po->total_quantity, $store) }}</td>
                             <td colspan="2" class="px-4 py-3 text-right font-mono font-black text-base text-emerald-600 dark:text-emerald-400">
-                                Ks {{ number_format((float) $po->total_cost) }}
+                                {{ format_currency($po->total_cost, $store) }}
                             </td>
                         </tr>
                     </tfoot>
@@ -346,12 +387,12 @@
                                     <p class="text-[10px] font-mono text-slate-400 mt-0.5">{{ $item->product->sku }}</p>
                                 @endif
                             </div>
-                            <p class="font-mono font-black text-sm whitespace-nowrap">Ks {{ number_format((float) $item->line_total) }}</p>
+                            <p class="font-mono font-black text-sm whitespace-nowrap">{{ format_currency($item->line_total, $store) }}</p>
                         </div>
                         <div class="mt-1.5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                            <span class="font-mono font-bold">{{ number_format((float) $item->quantity, 3) }}</span>
+                            <span class="font-mono font-bold">{{ format_quantity($item->quantity, $store) }}</span>
                             <span>×</span>
-                            <span class="font-mono">Ks {{ number_format((float) $item->unit_cost) }}</span>
+                            <span class="font-mono">{{ format_currency($item->unit_cost, $store) }}</span>
                         </div>
                     </div>
                 @endforeach
@@ -359,26 +400,26 @@
                     @if ((float) $po->discount_amount > 0 || (float) $po->delivery_fee > 0)
                         <div class="flex items-center justify-between text-xs text-slate-500">
                             <span>{{ __('messages.po_subtotal') }}</span>
-                            <span class="font-mono font-bold">Ks {{ number_format((float) ($po->subtotal > 0 ? $po->subtotal : $po->total_cost)) }}</span>
+                            <span class="font-mono font-bold">{{ format_currency($po->subtotal > 0 ? $po->subtotal : $po->total_cost, $store) }}</span>
                         </div>
                     @endif
                     @if ((float) $po->discount_amount > 0)
                         <div class="flex items-center justify-between text-xs text-rose-600 font-bold">
                             <span>{{ __('messages.po_discount_amount') }} (-)</span>
-                            <span class="font-mono">- Ks {{ number_format((float) $po->discount_amount) }}</span>
+                            <span class="font-mono">- {{ format_currency($po->discount_amount, $store) }}</span>
                         </div>
                     @endif
                     @if ((float) $po->delivery_fee > 0)
                         <div class="flex items-center justify-between text-xs text-amber-600 font-bold">
                             <span>{{ __('messages.po_delivery_fee') }} (+)</span>
-                            <span class="font-mono">+ Ks {{ number_format((float) $po->delivery_fee) }}</span>
+                            <span class="font-mono">+ {{ format_currency($po->delivery_fee, $store) }}</span>
                         </div>
                     @endif
                     <div class="flex items-center justify-between pt-1.5 border-t border-slate-200 dark:border-slate-700">
                         <span class="text-sm font-black">{{ __('messages.po_net_total') }}</span>
                         <div class="text-right">
-                            <p class="text-[10px] text-slate-400 font-mono">{{ number_format((float) $po->total_quantity, 3) }} {{ __('messages.reports_units') }}</p>
-                            <p class="font-mono font-black text-base text-emerald-600 dark:text-emerald-400">Ks {{ number_format((float) $po->total_cost) }}</p>
+                            <p class="text-[10px] text-slate-400 font-mono">{{ format_quantity($po->total_quantity, $store) }} {{ __('messages.reports_units') }}</p>
+                            <p class="font-mono font-black text-base text-emerald-600 dark:text-emerald-400">{{ format_currency($po->total_cost, $store) }}</p>
                         </div>
                     </div>
                 </div>
@@ -507,15 +548,15 @@
                 <div class="grid grid-cols-3 gap-2 sm:gap-4 mt-2">
                     <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5">
                         <p class="text-[10px] font-bold uppercase text-slate-400">{{ __('messages.po_total_cost') }}</p>
-                        <p class="font-mono font-black mt-0.5 text-sm sm:text-base">Ks {{ number_format((float) $po->total_cost) }}</p>
+                        <p class="font-mono font-black mt-0.5 text-sm sm:text-base">{{ format_currency($po->total_cost, $store) }}</p>
                     </div>
                     <div class="rounded-xl bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2.5">
                         <p class="text-[10px] font-bold uppercase text-emerald-500">{{ __('messages.payables_paid') }}</p>
-                        <p class="font-mono font-black mt-0.5 text-sm sm:text-base text-emerald-600 dark:text-emerald-400">Ks {{ number_format((float) $po->paid_amount) }}</p>
+                        <p class="font-mono font-black mt-0.5 text-sm sm:text-base text-emerald-600 dark:text-emerald-400">{{ format_currency($po->paid_amount, $store) }}</p>
                     </div>
                     <div class="rounded-xl {{ (float) $po->remaining_balance > 0 ? 'bg-rose-50 dark:bg-rose-950/30' : 'bg-slate-50 dark:bg-slate-800/60' }} px-3 py-2.5">
                         <p class="text-[10px] font-bold uppercase {{ (float) $po->remaining_balance > 0 ? 'text-rose-500' : 'text-slate-400' }}">{{ __('messages.payables_balance') }}</p>
-                        <p class="font-mono font-black mt-0.5 text-sm sm:text-base {{ (float) $po->remaining_balance > 0 ? 'text-rose-600 dark:text-rose-400' : '' }}">Ks {{ number_format((float) $po->remaining_balance) }}</p>
+                        <p class="font-mono font-black mt-0.5 text-sm sm:text-base {{ (float) $po->remaining_balance > 0 ? 'text-rose-600 dark:text-rose-400' : '' }}">{{ format_currency($po->remaining_balance, $store) }}</p>
                     </div>
                 </div>
             </div>
@@ -553,23 +594,23 @@
                     <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 px-4 py-3 space-y-1.5">
                         <div class="flex items-center justify-between text-sm">
                             <span class="text-xs font-bold text-slate-500">{{ __('messages.payables_balance') }}</span>
-                            <span class="font-mono font-black text-rose-600 dark:text-rose-400" x-text="'Ks ' + fmt2(payBalance)"></span>
+                            <span class="font-mono font-black text-rose-600 dark:text-rose-400" x-text="fmt(payBalance)"></span>
                         </div>
                         <div class="flex items-center justify-between text-sm border-t border-slate-200 dark:border-slate-700 pt-1.5" x-show="payAmt > 0 && !payOver" x-cloak>
                             <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">+ {{ __('messages.payables_paid') }}</span>
-                            <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400" x-text="'Ks ' + fmt2(payAmt)"></span>
+                            <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400" x-text="fmt(payAmt)"></span>
                         </div>
                         <div class="flex items-center justify-between text-sm border-t border-slate-200 dark:border-slate-700 pt-1.5" x-show="payAmt > 0 && !payOver" x-cloak>
                             <span class="text-xs font-bold text-slate-500">{{ __('messages.payables_balance') }}</span>
                             <span class="font-mono font-black"
                                   :class="payAfter === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'"
-                                  x-text="payAfter === 0 ? '✓ {{ __('messages.po_payment_paid') }}' : 'Ks ' + fmt2(payAfter)"></span>
+                                  x-text="payAfter === 0 ? '✓ {{ __('messages.po_payment_paid') }}' : fmt(payAfter)"></span>
                         </div>
                     </div>
 
                     {{-- Amount --}}
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ __('messages.payables_amount') }} (Ks)</label>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ __('messages.payables_amount') }}</label>
                         <input x-ref="payAmount" type="number" name="amount" step="0.01" min="0.01" :max="payBalance" x-model="payAmount" inputmode="decimal"
                                :class="payOver ? 'border-rose-400 focus:ring-rose-500' : 'focus:ring-emerald-500'"
                                class="w-full h-12 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 text-base font-bold focus:ring-2 focus:border-transparent outline-none transition">
@@ -578,17 +619,17 @@
                         <div class="flex items-center gap-2 mt-2">
                             <button type="button" @click="setHalf()"
                                     class="flex-1 rounded-lg px-3 py-2.5 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                                ½ Ks <span x-text="Number(Math.round(payBalance / 2 * 100) / 100).toLocaleString()"></span>
+                                ½ <span x-text="fmt(Math.round(payBalance / 2 * 100) / 100)"></span>
                             </button>
                             <button type="button" @click="setFull()"
                                     class="flex-1 rounded-lg px-3 py-2.5 text-xs font-black bg-emerald-600 text-white hover:bg-emerald-500 transition">
-                                ⚡ 100% (Ks <span x-text="Number(payBalance).toLocaleString()"></span>)
+                                ⚡ 100% (<span x-text="fmt(payBalance)"></span>)
                             </button>
                         </div>
 
                         {{-- Inline validation --}}
                         <p x-show="payOver" x-cloak x-transition.opacity class="mt-2 text-xs font-bold text-rose-600 dark:text-rose-400">
-                            ⚠ {{ __('messages.payables_amount') }} &gt; {{ __('messages.payables_balance') }} (Ks <span x-text="fmt2(payBalance)"></span>)
+                            ⚠ {{ __('messages.payables_amount') }} &gt; {{ __('messages.payables_balance') }} (<span x-text="fmt(payBalance)"></span>)
                         </p>
                         <p x-show="payAmount !== '' && payAmt <= 0" x-cloak class="mt-2 text-xs font-bold text-rose-500">⚠ &gt; 0</p>
                     </div>
@@ -669,13 +710,13 @@
                                     <div class="flex-1 min-w-0">
                                         <p class="font-bold text-sm truncate" x-text="item.name"></p>
                                         <p class="text-xs text-slate-400 mt-0.5">
-                                            {{ __('messages.reports_qty') }}: <span class="font-bold" x-text="item.quantity"></span>
-                                            · <span x-text="'Ks ' + Number(item.unit_cost).toLocaleString()"></span>
+                                            {{ __('messages.reports_qty') }}: <span class="font-bold" x-text="fmtQty(item.quantity)"></span>
+                                            · <span x-text="fmt(item.unit_cost)"></span>
                                         </p>
                                     </div>
                                     <span class="text-[11px] font-mono font-black text-orange-600 dark:text-orange-400 shrink-0 mt-0.5"
                                           x-show="(parseFloat(item.returnQty) || 0) > 0" x-cloak
-                                          x-text="'Ks ' + fmt((parseFloat(item.returnQty) || 0) * (parseFloat(item.unit_cost) || 0))"></span>
+                                          x-text="fmt((parseFloat(item.returnQty) || 0) * (parseFloat(item.unit_cost) || 0))"></span>
                                 </div>
                                 <div class="flex items-center gap-2 mt-2.5 pl-9">
                                     <div class="flex items-center rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 overflow-hidden h-10 focus-within:ring-2 focus-within:ring-orange-500 transition">
@@ -698,7 +739,7 @@
                         {{-- Return total --}}
                         <div class="flex items-center justify-between rounded-xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 px-3.5 py-2.5" x-show="retSelected > 0" x-cloak x-transition.opacity>
                             <span class="text-xs font-bold text-orange-700 dark:text-orange-400">{{ __('messages.receiving_total') }}: <span x-text="retSelected"></span> {{ __('messages.reports_items') }}</span>
-                            <span class="font-mono font-black text-orange-700 dark:text-orange-400" x-text="'Ks ' + fmt(retTotal)"></span>
+                            <span class="font-mono font-black text-orange-700 dark:text-orange-400" x-text="fmt(retTotal)"></span>
                         </div>
 
                         <div>

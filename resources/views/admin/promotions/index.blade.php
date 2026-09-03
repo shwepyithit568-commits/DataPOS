@@ -1,9 +1,10 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.promotion_title') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @php
+    /** @var \Illuminate\Pagination\LengthAwarePaginator|\Illuminate\Database\Eloquent\Collection $promotions */
     $storeRouteParams = ['store_slug' => $store->slug];
     $baseParams = $storeRouteParams;
     $currentSort = request()->only('sort', 'search');
@@ -25,10 +26,11 @@
         'uses'      => 'hover:border-amber-300 dark:hover:border-amber-700/80',
         'discount'  => 'hover:border-rose-300 dark:hover:border-rose-700/80',
     ];
+    $fmtTotalDiscount = format_currency($stats['total_discount'], $store);
 @endphp
 
 @section('content')
-<div class="w-full space-y-2 sm:space-y-2.5"
+<div class="w-full space-y-0.5 pb-6"
      x-data="{
         viewMode: localStorage.getItem('admin_promotions_view_mode') || 'table',
         showCreateModal: false,
@@ -127,25 +129,26 @@
     {{-- ============================================================
          PAGE HEADER — eyebrow badge, title, subtitle, CTA row
          ============================================================ --}}
-    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-        <div class="min-w-0">
-            <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                {{ __('messages.promotion_title') }}
-            </h1>
-            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {{ $store->name }} · {{ __('messages.promotion_subtitle') }}
-            </p>
+    <header class="w-full flex flex-wrap items-center justify-between gap-1 bg-white dark:bg-slate-900 rounded-lg px-2 py-1.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition min-h-[42px]">
+        <div class="flex items-center gap-2 min-w-0">
+            <div class="shrink-0 w-7 h-7 rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-950/70 dark:text-violet-300 grid place-items-center shadow-inner">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+            </div>
+            <div class="min-w-0">
+                <h1 class="text-sm font-black text-slate-900 dark:text-white tracking-tight truncate leading-none">{{ __('messages.promotion_title') }}</h1>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ $store->name }}</p>
+            </div>
         </div>
-        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0">
-            <button type="button" @click="showValidateModal = true"
-                    class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1.5 shadow-2xs active:scale-95">
-                <svg class="w-3.5 h-3.5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span>{{ __('messages.promotion_test_coupon') }}</span>
+        <div class="flex items-center gap-1 shrink-0">
+            <button type="button" @click="showValidateModal = true" id="btn-test-coupon"
+                    class="h-7 px-2.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1.5 shadow-2xs active:scale-95">
+                <svg class="w-3 h-3 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="hidden sm:inline">{{ __('messages.promotion_test_coupon') }}</span>
             </button>
-            <button type="button" @click="showCreateModal = true"
-                    class="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition flex items-center gap-1.5 active:scale-95">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                <span>{{ __('messages.promotion_add') }}</span>
+            <button type="button" @click="showCreateModal = true" id="btn-create-promotion"
+                    class="h-7 px-2.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition flex items-center gap-1.5 active:scale-95">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                {{ __('messages.promotion_add') }}
             </button>
         </div>
     </header>
@@ -168,94 +171,64 @@
     {{-- ============================================================
          KPI STAT CARDS — 5 responsive interactive cards
          ============================================================ --}}
-    <div class="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5" role="list" aria-label="{{ __('messages.promotion_title') }}">
+    <div class="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-0.5 sm:gap-1" role="list" aria-label="{{ __('messages.promotion_title') }}">
         {{-- Total --}}
         <a href="{{ $clearFiltersUrl }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['total'] }}">
+           class="group bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-2 py-2 flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['total'] }}">
             <div class="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg grid place-items-center {{ $statAccents['total'] }} shadow-inner">
-                <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-xl font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums font-outfit">
-                    {{ number_format($stats['total']) }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
-                    {{ __('messages.promotion_total') }}
-                </p>
+            <div class="text-center">
+                <p class="text-base sm:text-xl font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums font-outfit">{{ number_format($stats['total']) }}</p>
+                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-bold uppercase tracking-wider">{{ __('messages.promotion_total') }}</p>
             </div>
         </a>
 
         {{-- Active --}}
         <a href="{{ route('store.admin.promotions.index', array_merge($baseParams, $currentSort, ['status' => 'active'])) }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['active'] }}">
+           class="group bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-2 py-2 flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['active'] }}">
             <div class="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg grid place-items-center {{ $statAccents['active'] }} shadow-inner">
-                <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                </svg>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-xl font-black text-emerald-600 dark:text-emerald-400 leading-none tabular-nums font-outfit">
-                    {{ number_format($stats['active']) }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
-                    {{ __('messages.promotion_active') }}
-                </p>
+            <div class="text-center">
+                <p class="text-base sm:text-xl font-black text-emerald-600 dark:text-emerald-400 leading-none tabular-nums font-outfit">{{ number_format($stats['active']) }}</p>
+                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-bold uppercase tracking-wider">{{ __('messages.promotion_active') }}</p>
             </div>
         </a>
 
         {{-- Expired / Inactive --}}
         <a href="{{ route('store.admin.promotions.index', array_merge($baseParams, $currentSort, ['status' => 'expired'])) }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['expired'] }}">
+           class="group bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-2 py-2 flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['expired'] }}">
             <div class="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg grid place-items-center {{ $statAccents['expired'] }} shadow-inner">
-                <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-xl font-black text-slate-700 dark:text-slate-300 leading-none tabular-nums font-outfit">
-                    {{ number_format($stats['expired']) }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
-                    {{ __('messages.promotion_expired') }}
-                </p>
+            <div class="text-center">
+                <p class="text-base sm:text-xl font-black text-slate-700 dark:text-slate-300 leading-none tabular-nums font-outfit">{{ number_format($stats['expired']) }}</p>
+                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-bold uppercase tracking-wider">{{ __('messages.promotion_expired') }}</p>
             </div>
         </a>
 
         {{-- Total Uses --}}
         <div role="listitem"
-             class="w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5">
+             class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-2 py-2 flex items-center justify-center gap-2.5 sm:gap-3">
             <div class="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg grid place-items-center {{ $statAccents['uses'] }} shadow-inner">
-                <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                </svg>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-xl font-black text-amber-600 dark:text-amber-400 leading-none tabular-nums font-outfit">
-                    {{ number_format($stats['total_uses']) }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
-                    {{ __('messages.promotion_total_uses') }}
-                </p>
+            <div class="text-center">
+                <p class="text-base sm:text-xl font-black text-amber-600 dark:text-amber-400 leading-none tabular-nums font-outfit">{{ number_format($stats['total_uses']) }}</p>
+                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-bold uppercase tracking-wider">{{ __('messages.promotion_total_uses') }}</p>
             </div>
         </div>
 
         {{-- Total Discount Given --}}
         <div role="listitem"
-             class="w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5 col-span-2 sm:col-span-1">
+             class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 px-2 py-2 flex items-center justify-center gap-2.5 sm:gap-3 col-span-2 sm:col-span-1">
             <div class="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg grid place-items-center {{ $statAccents['discount'] }} shadow-inner">
-                <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-xl font-black text-rose-600 dark:text-rose-400 leading-none tabular-nums font-outfit">
-                    {{ number_format($stats['total_discount']) }} <span class="text-xs font-bold text-slate-400 font-sans">Ks</span>
-                </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
-                    {{ __('messages.promotion_total_discount') }}
-                </p>
+            <div class="text-center">
+                <p class="text-base sm:text-xl font-black text-rose-600 dark:text-rose-400 leading-none tabular-nums font-outfit">{{ $fmtTotalDiscount }}</p>
+                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-bold uppercase tracking-wider">{{ __('messages.promotion_total_discount') }}</p>
             </div>
         </div>
     </div>
@@ -362,14 +335,14 @@
                                     @if($promo->type === 'percent_off')
                                         {{ $promo->value }}% Off
                                     @elseif($promo->type === 'flat_off')
-                                        {{ number_format($promo->value) }} Ks Off
+                                        {{ format_currency($promo->value, $store) }} Off
                                     @else
                                         BOGO (1+1)
                                     @endif
                                 </span>
                                 @if($promo->min_order_amount > 0)
                                     <div class="text-[10px] text-slate-400 font-mono mt-0.5">
-                                        Min: {{ number_format($promo->min_order_amount) }} Ks
+                                        Min: {{ format_currency($promo->min_order_amount, $store) }}
                                     </div>
                                 @endif
                             </td>
@@ -496,6 +469,13 @@
                 </tbody>
             </table>
         </div>
+
+        {{-- Pagination --}}
+        @if($promotions->hasPages())
+            <div class="px-2.5 py-2 border-t border-slate-200/80 dark:border-slate-800">
+                {{ $promotions->links() }}
+            </div>
+        @endif
     </div>
 
     {{-- ============================================================
@@ -503,7 +483,7 @@
          ============================================================ --}}
     <div id="promotions-cards" x-show="viewMode === 'card'" class="w-full">
         @if($promotions->count() > 0)
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-0.5 sm:gap-1">
                 @foreach($promotions as $promo)
                     @php
                         $status = $promo->statusLabel();
@@ -582,7 +562,7 @@
                                         @if($promo->type === 'percent_off')
                                             {{ $promo->value }}% Off
                                         @elseif($promo->type === 'flat_off')
-                                            {{ number_format($promo->value) }} Ks Off
+                                            {{ format_currency($promo->value, $store) }} Off
                                         @else
                                             BOGO (1+1)
                                         @endif
@@ -592,7 +572,7 @@
                                     <div class="text-right">
                                         <div class="text-[9px] uppercase font-bold text-slate-400">{{ __('messages.promotion_min_order') }}</div>
                                         <div class="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
-                                            {{ number_format($promo->min_order_amount) }} Ks
+                                            {{ format_currency($promo->min_order_amount, $store) }}
                                         </div>
                                     </div>
                                 @endif
@@ -731,11 +711,11 @@
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Starts At</label>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.promotion_starts_at') }}</label>
                         <input type="date" name="starts_at" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500">
                     </div>
                     <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Expires At</label>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.promotion_expires_at') }}</label>
                         <input type="date" name="expires_at" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500">
                     </div>
                 </div>
@@ -868,11 +848,11 @@
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Starts At</label>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.promotion_starts_at') }}</label>
                         <input type="date" name="starts_at" x-model="editPromo.starts_at" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500">
                     </div>
                     <div>
-                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Expires At</label>
+                        <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.promotion_expires_at') }}</label>
                         <input type="date" name="expires_at" x-model="editPromo.expires_at" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500">
                     </div>
                 </div>
@@ -947,7 +927,7 @@
                            class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 uppercase focus:ring-2 focus:ring-violet-500">
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.total') }} (MMK)</label>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.total') }}</label>
                     <input type="number" x-model="validateTotal" step="1000" min="0"
                            class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500">
                 </div>

@@ -46,9 +46,9 @@ class WebCatalogService
     }
 
     /**
-     * Get paginated products with filtering for Web Catalog management.
+     * Get products query with filtering and sorting for Web Catalog management.
      */
-    public function getProducts(Store $store, array $filters = [], int $perPage = 20): LengthAwarePaginator
+    public function getProductsQuery(Store $store, array $filters = []): Builder
     {
         $query = Product::where('store_id', $store->id)
             ->with(['category', 'brand', 'variants']);
@@ -146,7 +146,15 @@ class WebCatalogService
                 break;
         }
 
-        return $query->paginate($perPage)->withQueryString();
+        return $query;
+    }
+
+    /**
+     * Get paginated products with filtering for Web Catalog management.
+     */
+    public function getProducts(Store $store, array $filters = [], int $perPage = 20): LengthAwarePaginator
+    {
+        return $this->getProductsQuery($store, $filters)->paginate($perPage)->withQueryString();
     }
 
     /**

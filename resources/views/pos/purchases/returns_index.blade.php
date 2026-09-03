@@ -20,6 +20,81 @@
         setView(mode) {
             this.viewMode = mode;
             localStorage.setItem('pos_returns_view_mode', mode);
+        },
+        // Modal State for New Purchase Return
+        modalOpen: false,
+        receivedOrders: @js($receivedOrders ?? []),
+        poSearch: '',
+        selectedPo: null,
+        returnReason: '',
+        isSubmitting: false,
+
+        get filteredOrders() {
+            const q = this.poSearch.toLowerCase().trim();
+            if (!q) return this.receivedOrders;
+            return this.receivedOrders.filter(po => 
+                (po.po_number && po.po_number.toLowerCase().includes(q)) ||
+                (po.supplier_name && po.supplier_name.toLowerCase().includes(q))
+            );
+        },
+
+        openNewReturn() {
+            this.modalOpen = true;
+            this.poSearch = '';
+            this.selectedPo = null;
+            this.returnReason = '';
+            this.isSubmitting = false;
+        },
+
+        selectPo(po) {
+            this.selectedPo = {
+                ...po,
+                items: po.items.map(i => ({ ...i, return_qty: '0' }))
+            };
+        },
+
+        retMax(item) {
+            item.return_qty = String(item.returnable_qty);
+        },
+
+        retZero(item) {
+            item.return_qty = '0';
+        },
+
+        retMaxAll() {
+            if (!this.selectedPo) return;
+            this.selectedPo.items.forEach(i => i.return_qty = String(i.returnable_qty));
+        },
+
+        retZeroAll() {
+            if (!this.selectedPo) return;
+            this.selectedPo.items.forEach(i => i.return_qty = '0');
+        },
+
+        get activeReturnItems() {
+            if (!this.selectedPo) return [];
+            return this.selectedPo.items.filter(i => (parseFloat(i.return_qty) || 0) > 0);
+        },
+
+        get totalReturnQty() {
+            return this.activeReturnItems.reduce((s, i) => s + (parseFloat(i.return_qty) || 0), 0);
+        },
+
+        get totalReturnValue() {
+            return this.activeReturnItems.reduce((s, i) => s + (parseFloat(i.return_qty) || 0) * (parseFloat(i.unit_cost) || 0), 0);
+        },
+
+        get canSubmit() {
+            return this.activeReturnItems.length > 0 && !this.isSubmitting;
+        },
+
+        fmt(n) { return typeof window.formatCurrency === 'function' ? window.formatCurrency(n) : Number(n).toLocaleString(); },
+        fmtQty(n) { return typeof window.formatQuantity === 'function' ? window.formatQuantity(n) : String(n); },
+
+        submitReturn() {
+            if (!this.canSubmit) return;
+            this.isSubmitting = true;
+            this.$refs.returnForm.submit();
         }
      }">
 
@@ -40,11 +115,20 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-1.5 self-start sm:self-auto shrink-0">
+        <div class="flex items-center gap-1.5 self-start sm:self-auto shrink-0 flex-wrap">
+            {{-- Primary Action: New Return Button --}}
+            <button type="button" @click.stop="openNewReturn()"
+                    class="h-7 px-3 rounded-md bg-orange-600 hover:bg-orange-500 text-white text-xs font-black shadow-2xs hover:shadow-orange-500/20 transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 4v16m8-8H4"/>
+                </svg>
+                <span>{{ __('messages.po_return_new_btn') }}</span>
+            </button>
+
             <a href="{{ url('/store/' . $store->slug . '/pos/purchases') }}"
-               class="h-7 px-3 rounded-md bg-sky-600 hover:bg-sky-500 text-white text-xs font-black shadow-2xs hover:shadow-sky-500/20 transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer">
+               class="h-7 px-2.5 rounded-md bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/60 border border-sky-200 dark:border-sky-800 text-xs font-bold transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer">
                 <span>🛒</span>
-                <span>{{ __('messages.po_list_title') }}</span>
+                <span class="hidden sm:inline">{{ __('messages.po_list_title') }}</span>
             </a>
             <a href="{{ url('/store/' . $store->slug . '/pos') }}"
                class="h-7 px-2.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-bold transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
@@ -100,7 +184,7 @@
             </div>
             <div class="min-w-0">
                 <div class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums font-outfit">
-                    {{ $fmtQty($summary['total_qty'] ?? 0) }}
+                    {{ format_quantity($summary['total_qty'] ?? 0, $store) }}
                 </div>
                 <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.po_returns_total_qty') }}
@@ -115,7 +199,7 @@
             </div>
             <div class="min-w-0">
                 <div class="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400 leading-none tabular-nums font-outfit truncate">
-                    Ks {{ number_format((float) ($summary['total_cost'] ?? 0)) }}
+                    {{ format_currency($summary['total_cost'] ?? 0, $store) }}
                 </div>
                 <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.po_returns_total_val') }}
@@ -257,12 +341,12 @@
 
                             {{-- Returned Quantity (Soft highlighted & Clean $fmtQty) --}}
                             <td class="py-2 px-2.5 text-right font-mono font-black text-slate-900 dark:text-slate-100 bg-slate-50/40 dark:bg-slate-800/30">
-                                {{ $fmtQty($return->total_quantity) }}
+                                {{ format_quantity($return->total_quantity, $store) }}
                             </td>
 
                             {{-- Returned Value (Bold Amber) --}}
                             <td class="py-2 px-2.5 text-right font-mono font-black text-amber-600 dark:text-amber-400 whitespace-nowrap">
-                                Ks {{ number_format((float) $return->total_cost, 0) }}
+                                {{ format_currency($return->total_cost, $store) }}
                             </td>
 
                             {{-- Reason --}}
@@ -290,10 +374,18 @@
                             <td colspan="7" class="p-8 text-center text-slate-400">
                                 <div class="text-3xl mb-2 opacity-55">🔄</div>
                                 <div class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.po_return_none') }}</div>
-                                <a href="{{ url('/store/' . $store->slug . '/pos/purchases') }}"
-                                   class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 transition shadow-sm">
-                                    🛒 {{ __('messages.po_list_title') }}
-                                </a>
+                                <div class="flex items-center justify-center gap-2 mt-2">
+                                    <button type="button" @click="openNewReturn()"
+                                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-500 transition shadow-sm">
+                                        <span>↩️</span>
+                                        <span>{{ __('messages.po_return_new_btn') }}</span>
+                                    </button>
+                                    <a href="{{ url('/store/' . $store->slug . '/pos/purchases') }}"
+                                       class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition">
+                                        <span>🛒</span>
+                                        <span>{{ __('messages.po_list_title') }}</span>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
@@ -352,11 +444,11 @@
                     <div class="bg-slate-50 dark:bg-slate-800/60 p-1.5 rounded-md border border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-1.5 text-xs">
                         <div>
                             <span class="text-[9px] text-slate-400 block uppercase font-bold">{{ __('messages.reports_qty') }}</span>
-                            <span class="font-mono font-black text-slate-800 dark:text-slate-200">{{ $fmtQty($return->total_quantity) }}</span>
+                            <span class="font-mono font-black text-slate-800 dark:text-slate-200">{{ format_quantity($return->total_quantity, $store) }}</span>
                         </div>
                         <div class="text-right">
                             <span class="text-[9px] text-slate-400 block uppercase font-bold">{{ __('messages.reports_value') }}</span>
-                            <span class="font-mono font-black text-amber-600 dark:text-amber-400">Ks {{ number_format((float) $return->total_cost, 0) }}</span>
+                            <span class="font-mono font-black text-amber-600 dark:text-amber-400">{{ format_currency($return->total_cost, $store) }}</span>
                         </div>
                     </div>
 
@@ -384,10 +476,18 @@
             <div class="col-span-full bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 p-8 rounded-lg text-center text-slate-400 shadow-2xs">
                 <div class="text-3xl mb-2 opacity-55">🔄</div>
                 <div class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.po_return_none') }}</div>
-                <a href="{{ url('/store/' . $store->slug . '/pos/purchases') }}"
-                   class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 transition shadow-sm">
-                    🛒 {{ __('messages.po_list_title') }}
-                </a>
+                <div class="flex items-center justify-center gap-2 mt-2">
+                    <button type="button" @click.stop="openNewReturn()"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-500 transition shadow-sm cursor-pointer">
+                        <span>↩️</span>
+                        <span>{{ __('messages.po_return_new_btn') }}</span>
+                    </button>
+                    <a href="{{ url('/store/' . $store->slug . '/pos/purchases') }}"
+                       class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition">
+                        <span>🛒</span>
+                        <span>{{ __('messages.po_list_title') }}</span>
+                    </a>
+                </div>
             </div>
         @endforelse
     </div>
@@ -398,6 +498,190 @@
             {{ $returns->links() }}
         </div>
     @endif
+
+    {{-- ── 6. New Purchase Return Modal Dialog ─────────────────────────── --}}
+    <div x-show="modalOpen" x-cloak
+         @click.self="modalOpen = false"
+         class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-2.5 sm:p-4 bg-black/60 backdrop-blur-xs"
+         role="dialog" aria-modal="true" @keydown.escape.window="modalOpen = false">
+         
+        <div class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
+
+            {{-- Modal Header --}}
+            <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/50 shrink-0">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-7 h-7 rounded-lg bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 grid place-items-center text-sm font-bold shrink-0">
+                        ↩️
+                    </span>
+                    <div>
+                        <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate">
+                            <span x-show="!selectedPo">{{ __('messages.po_return_select_po') }}</span>
+                            <span x-show="selectedPo" x-text="'{{ __('messages.po_return_title') }} · ' + (selectedPo ? selectedPo.po_number : '')"></span>
+                        </h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate" x-show="selectedPo" x-text="selectedPo ? (selectedPo.supplier_name + ' (' + selectedPo.received_at + ')') : ''"></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <button type="button" x-show="selectedPo" @click="selectedPo = null"
+                            class="h-6 px-2 rounded text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition inline-flex items-center gap-1 cursor-pointer">
+                        <span>←</span>
+                        <span>{{ __('messages.po_return_change_po') }}</span>
+                    </button>
+                    <button type="button" @click="modalOpen = false"
+                            class="w-6 h-6 rounded-md grid place-items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-black cursor-pointer">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            {{-- Step 1: Select Received PO --}}
+            <div x-show="!selectedPo" class="p-3 sm:p-4 space-y-3 overflow-y-auto flex-1">
+                {{-- Search Input --}}
+                <div class="relative">
+                    <input type="text" x-model="poSearch"
+                           placeholder="{{ __('messages.po_return_select_po_search') }}"
+                           class="w-full h-8 pl-8 pr-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:bg-white dark:focus:bg-slate-900 transition" />
+                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                </div>
+
+                {{-- POs List --}}
+                <div class="space-y-1.5 max-h-[55vh] overflow-y-auto pr-1">
+                    <template x-for="po in filteredOrders" :key="po.id">
+                        <div @click="selectPo(po)"
+                             class="p-2.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-orange-400 dark:hover:border-orange-500 hover:shadow-xs cursor-pointer transition flex items-center justify-between gap-3 group">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono font-black text-sky-600 dark:text-sky-400 text-xs sm:text-sm" x-text="po.po_number"></span>
+                                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold">Received</span>
+                                </div>
+                                <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate mt-0.5" x-text="po.supplier_name"></p>
+                                <p class="text-[10px] text-slate-400 font-mono" x-text="po.received_at + ' · ' + po.items_count + ' {{ __('messages.reports_items') }}'"></p>
+                            </div>
+
+                            <div class="text-right shrink-0">
+                                <span class="block font-mono font-black text-slate-900 dark:text-slate-100 text-xs sm:text-sm" x-text="fmt(po.total_cost)"></span>
+                                <span class="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-orange-600 dark:text-orange-400 group-hover:underline">
+                                    <span>{{ __('messages.po_return_new_btn') }}</span>
+                                    <span>→</span>
+                                </span>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div x-show="filteredOrders.length === 0" class="py-8 text-center text-slate-400">
+                        <div class="text-2xl mb-1 opacity-50">🔍</div>
+                        <p class="text-xs font-bold">{{ __('messages.po_return_no_returnable_pos') }}</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Step 2: Return Items Steppers & Reason Form --}}
+            <template x-if="selectedPo">
+                <form x-ref="returnForm" method="POST" :action="`{{ url('/store/' . $store->slug . '/pos/purchases') }}/${selectedPo.id}/return`"
+                      @submit.prevent="submitReturn()" class="flex flex-col flex-1 overflow-hidden">
+                    @csrf
+
+                    {{-- Scrollable Items List --}}
+                    <div class="p-3 sm:p-4 space-y-2 overflow-y-auto flex-1 max-h-[52vh]">
+                        {{-- Bulk Actions Bar --}}
+                        <div class="flex items-center justify-between gap-2 pb-1 border-b border-slate-100 dark:border-slate-800">
+                            <span class="text-xs font-bold text-slate-500 dark:text-slate-400"
+                                  x-text="activeReturnItems.length > 0 ? (activeReturnItems.length + ' {{ __('messages.reports_items') }} selected') : '{{ __('messages.po_return_qty') }}'"></span>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" @click="retMaxAll()"
+                                        class="rounded-md px-2 py-0.5 text-[11px] font-black bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/60 transition cursor-pointer">
+                                    MAX ALL
+                                </button>
+                                <button type="button" @click="retZeroAll()"
+                                        class="rounded-md px-2 py-0.5 text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer">
+                                    ✕ 0
+                                </button>
+                            </div>
+                        </div>
+
+                        <template x-for="(item, idx) in selectedPo.items" :key="item.id">
+                            <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-2.5 transition"
+                                 :class="(parseFloat(item.return_qty) || 0) > 0 ? 'ring-1.5 ring-orange-500 dark:ring-orange-400 bg-orange-50/20 dark:bg-orange-950/20' : ''">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="min-w-0 flex-1">
+                                        <p class="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate" x-text="item.name"></p>
+                                        <p class="text-[11px] text-slate-400 mt-0.5">
+                                            <span>{{ __('messages.po_returnable_qty') }}:</span>
+                                            <span class="font-bold text-slate-700 dark:text-slate-300 font-mono" x-text="fmtQty(item.returnable_qty)"></span>
+                                            <span>· </span>
+                                            <span class="font-mono" x-text="fmt(item.unit_cost)"></span>
+                                        </p>
+                                    </div>
+
+                                    <span class="text-xs font-mono font-black text-orange-600 dark:text-orange-400 shrink-0"
+                                          x-show="(parseFloat(item.return_qty) || 0) > 0"
+                                          x-text="fmt((parseFloat(item.return_qty) || 0) * (parseFloat(item.unit_cost) || 0))"></span>
+                                </div>
+
+                                <div class="flex items-center gap-2 mt-2">
+                                    <div class="flex items-center rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 overflow-hidden h-7 focus-within:ring-1 focus-within:ring-orange-500 transition">
+                                        <button type="button" @click="retZero(item)" tabindex="-1"
+                                                class="w-7 h-7 grid place-items-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-[11px] font-black cursor-pointer">0</button>
+                                        <input type="number" step="0.001" min="0" :max="item.returnable_qty" x-model="item.return_qty" inputmode="decimal"
+                                               class="w-16 text-center text-xs font-black bg-transparent outline-none tabular-nums text-slate-900 dark:text-slate-100"/>
+                                        <button type="button" @click="retMax(item)" tabindex="-1"
+                                                class="w-8 h-7 grid place-items-center text-orange-600 dark:text-orange-400 text-[10px] font-black hover:bg-orange-50 dark:hover:bg-orange-950/40 transition cursor-pointer">MAX</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    {{-- Hidden dynamic inputs for ONLY active return items (to strictly pass server validation) --}}
+                    <template x-for="(item, idx) in activeReturnItems" :key="'active-' + item.id">
+                        <div>
+                            <input type="hidden" :name="`items[${idx}][product_id]`" :value="item.product_id">
+                            <input type="hidden" :name="`items[${idx}][product_variant_id]`" :value="item.product_variant_id || ''">
+                            <input type="hidden" :name="`items[${idx}][quantity]`" :value="item.return_qty">
+                        </div>
+                    </template>
+
+                    {{-- Footer Summary & Submission --}}
+                    <div class="p-3 sm:p-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5 bg-white dark:bg-slate-900 shrink-0">
+                        {{-- Return Total Banner --}}
+                        <div class="flex items-center justify-between rounded-lg bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-900/50 px-3 py-1.5"
+                             x-show="activeReturnItems.length > 0">
+                            <span class="text-xs font-bold text-orange-700 dark:text-orange-400">
+                                {{ __('messages.receiving_total') }}: <span x-text="activeReturnItems.length"></span> {{ __('messages.reports_items') }} (<span x-text="fmtQty(totalReturnQty)"></span> units)
+                            </span>
+                            <span class="font-mono font-black text-orange-700 dark:text-orange-400 text-xs sm:text-sm" x-text="fmt(totalReturnValue)"></span>
+                        </div>
+
+                        {{-- Reason input --}}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 mb-1">{{ __('messages.po_return_reason') }}</label>
+                            <input type="text" name="reason" x-model="returnReason" maxlength="500"
+                                   placeholder="{{ __('messages.po_return_reason_placeholder') }}"
+                                   class="w-full h-8 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2.5 text-xs text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-orange-500 outline-none transition" />
+                        </div>
+
+                        {{-- Actions --}}
+                        <div class="flex items-center gap-2 pt-1">
+                            <button type="button" @click="selectedPo = null"
+                                    class="rounded-lg px-3 h-8 text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition cursor-pointer">
+                                {{ __('messages.cancel') }}
+                            </button>
+                            <button type="submit" :disabled="!canSubmit"
+                                    :class="canSubmit ? 'bg-orange-600 hover:bg-orange-500 text-white cursor-pointer active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'"
+                                    class="flex-1 rounded-lg px-4 h-8 text-xs font-black shadow-2xs transition inline-flex items-center justify-center gap-1.5">
+                                <svg x-show="isSubmitting" x-cloak class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                                <span x-text="isSubmitting ? '…' : '🔄 {{ __('messages.po_return_confirm') }}'"></span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </template>
+        </div>
+    </div>
 
 </div>
 @endsection

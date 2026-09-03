@@ -23,6 +23,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -48,6 +51,7 @@ class RepairController extends Controller
         'processing' => ['received', 'diagnosing', 'awaiting_approval', 'awaiting_parts', 'in_repair'],
         'ready'      => ['ready'],
         'history'    => ['delivered', 'cancelled', 'unrepairable'],
+        'debt'       => [],
     ];
 
     public function index(Request $request, StoreContext $context): View
@@ -82,16 +86,90 @@ class RepairController extends Controller
     }
 
     /**
-     * Stream the currently-filtered job list as an Excel-friendly CSV.
+     * Stream the currently-filtered job list as styled Excel (.xlsx) or CSV.
      */
-    public function export(Request $request, StoreContext $context): StreamedResponse
+    public function export(Request $request, StoreContext $context): Response
     {
         $store = $context->getStore();
         $tab = $this->normalizeTab($request->input('tab'));
+        $format = strtolower((string) $request->query('format', 'csv'));
 
         $jobs = $this->filteredQuery($request, $store, $tab)
             ->with(['customer', 'technician', 'payments', 'items'])
             ->get();
+
+        if ($format === 'xlsx') {
+            $filename = 'Repairs_' . ($tab ?: 'all') . '_' . $store->slug . '_' . now()->format('Ymd_His') . '.xlsx';
+            $tempFile = tempnam(sys_get_temp_dir(), 'datapos_repairs_');
+
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Repairs');
+
+            $sheet->setCellValue('A1', $store->name . ' - Repair Center Export (' . strtoupper($tab ?: 'all') . ')');
+            $sheet->setCellValue('A2', 'Export Date: ' . now()->format('d/m/Y h:i A') . ' | Total Count: ' . $jobs->count());
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('4C1D95');
+            $sheet->getStyle('A2')->getFont()->setSize(10)->getColor()->setRGB('64748B');
+
+            $row = 4;
+            $headers = [
+                'A' => 'Job #',
+                'B' => 'Date',
+                'C' => 'Customer',
+                'D' => 'Phone',
+                'E' => 'Device Type',
+                'F' => 'Model',
+                'G' => 'IMEI / Serial',
+                'H' => 'Status',
+                'I' => 'Technician',
+                'J' => 'Estimated Charge',
+                'K' => 'Final Charge',
+                'L' => 'Paid Amount',
+                'M' => 'Outstanding',
+                'N' => 'Line Items',
+            ];
+            foreach ($headers as $col => $title) {
+                $sheet->setCellValue("{$col}{$row}", $title);
+            }
+            $sheet->getStyle("A{$row}:N{$row}")->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
+                'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '6D28D9']],
+            ]);
+
+            $row++;
+            foreach ($jobs as $job) {
+                $items = $job->items
+                    ->map(fn ($item) => $item->name . ' ×' . $item->quantity . ' (' . $item->item_type . ')')
+                    ->implode('; ');
+
+                $sheet->setCellValue("A{$row}", $job->job_number);
+                $sheet->setCellValue("B{$row}", $job->created_at->format('Y-m-d H:i'));
+                $sheet->setCellValue("C{$row}", $job->contact_name ?: ($job->customer?->name ?? ''));
+                $sheet->setCellValue("D{$row}", $job->contact_phone ?: ($job->customer?->phone ?? ''));
+                $sheet->setCellValue("E{$row}", $job->device_type);
+                $sheet->setCellValue("F{$row}", $job->model ?? '');
+                $sheet->setCellValue("G{$row}", $job->imei_serial ?? '');
+                $sheet->setCellValue("H{$row}", __('messages.repair_status_' . $job->status));
+                $sheet->setCellValue("I{$row}", $job->technician?->name ?? '');
+                $sheet->setCellValue("J{$row}", (float) $job->estimated_charge);
+                $sheet->setCellValue("K{$row}", $job->final_charge !== null ? (float) $job->final_charge : '');
+                $sheet->setCellValue("L{$row}", (float) $job->paidAmount());
+                $sheet->setCellValue("M{$row}", (float) $job->outstanding());
+                $sheet->setCellValue("N{$row}", $items);
+                $row++;
+            }
+
+            foreach (range('A', 'N') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($tempFile);
+
+            return response()->download($tempFile, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])->deleteFileAfterSend(true);
+        }
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -106,7 +184,7 @@ class RepairController extends Controller
 
             fputcsv($stream, [
                 'Job #', 'Date', 'Customer', 'Phone', 'Device Type', 'Model', 'IMEI/Serial',
-                'Status', 'Technician', 'Estimate (Ks)', 'Final (Ks)', 'Paid (Ks)', 'Outstanding (Ks)',
+                'Status', 'Technician', 'Estimate', 'Final', 'Paid', 'Outstanding',
                 'Line Items',
             ]);
 
@@ -237,17 +315,24 @@ class RepairController extends Controller
 
         $repair->load(['customer', 'technician', 'statusHistory.changer', 'payments.creator', 'items.product']);
 
+        $trackingUrl = route('storefront.service.track.token', [
+            'store_slug' => $store->slug,
+            'token' => $repair->tracking_token,
+        ]);
+
         return view('admin.repairs.show', [
             'store' => $store,
             'storeRouteParams' => $context->getRouteParams(),
             'repair' => $repair,
+            'trackingUrl' => $trackingUrl,
         ]);
     }
 
     /**
-     * Printable A5-style job ticket for the customer handover.
+     * Printable repair ticket / voucher for the customer handover.
+     * Supports multiple paper sizes (80mm, 58mm, A5, A4) loaded from store VoucherTemplate.
      */
-    public function printTicket(StoreContext $context, string $store_slug, ServiceJob $repair): View
+    public function printTicket(StoreContext $context, string $store_slug, ServiceJob $repair, Request $request): View
     {
         $store = $context->getStore();
         if ($repair->store_id !== $store->id) {
@@ -256,10 +341,56 @@ class RepairController extends Controller
 
         $repair->load(['customer', 'technician', 'payments', 'items']);
 
+        // Load active voucher templates from /admin/vouchers for this store
+        $templates = \App\Models\VoucherTemplate::where('store_id', $store->id)
+            ->where('is_active', true)
+            ->get();
+
+        if ($templates->isEmpty()) {
+            app(\App\POS\Services\VoucherTemplateService::class)->ensureDefaultTemplates($store);
+            $templates = \App\Models\VoucherTemplate::where('store_id', $store->id)
+                ->where('is_active', true)
+                ->get();
+        }
+
+        $selectedTemplateId = $request->query('template_id');
+        $requestedPaperSize = $request->query('paper_size');
+
+        $template = null;
+        if ($selectedTemplateId) {
+            $template = $templates->firstWhere('id', (int) $selectedTemplateId);
+        } elseif ($requestedPaperSize) {
+            $template = $templates->firstWhere('paper_size', $requestedPaperSize);
+        }
+
+        if (! $template) {
+            $template = $templates->firstWhere('is_default', true) ?? $templates->first();
+        }
+
+        $paperSize = $requestedPaperSize ?: ($template?->paper_size ?? '80mm');
+
+        $trackingUrl = $repair->tracking_token
+            ? route('storefront.service.track.token', ['store_slug' => $store->slug, 'token' => $repair->tracking_token])
+            : null;
+
+        $trackingQrSvg = null;
+        if ($trackingUrl) {
+            try {
+                $trackingQrSvg = \App\Services\QrCodeEncoder::generateSvg($trackingUrl, 96);
+            } catch (\Throwable $e) {
+                $trackingQrSvg = null;
+            }
+        }
+
         return view('admin.repairs.print', [
             'store' => $store,
             'storeRouteParams' => $context->getRouteParams(),
             'repair' => $repair,
+            'template' => $template,
+            'templates' => $templates,
+            'paperSize' => $paperSize,
+            'trackingUrl' => $trackingUrl,
+            'trackingQrSvg' => $trackingQrSvg,
         ]);
     }
 
@@ -330,6 +461,8 @@ class RepairController extends Controller
             return back()->withErrors(['status' => __('messages.repair_same_status')]);
         }
 
+        $notify = $request->boolean('notify_customer');
+
         DB::transaction(function () use ($repair, $validated) {
             $repair->update(['status' => $validated['status']]);
 
@@ -341,7 +474,12 @@ class RepairController extends Controller
             ]);
         });
 
-        return back()->with('success', __('messages.repair_status_updated'));
+        $redirect = back()->with('success', __('messages.repair_status_updated'));
+        if ($notify) {
+            $redirect->with('notify_customer', true);
+        }
+
+        return $redirect;
     }
 
     /**
@@ -469,7 +607,19 @@ class RepairController extends Controller
         }
 
         // Tab buckets.
-        if ($tab !== 'all') {
+        if ($tab === 'debt') {
+            $query->whereNotIn('status', ['cancelled', 'unrepairable'])
+                ->where(function ($q) {
+                    $q->where(function ($sub) {
+                        $sub->whereNotNull('final_charge')
+                            ->whereRaw('(final_charge - COALESCE((SELECT SUM(amount) FROM service_job_payments WHERE service_job_payments.service_job_id = service_jobs.id), 0)) > 0');
+                    })->orWhere(function ($sub) {
+                        $sub->whereNull('final_charge')
+                            ->where('estimated_charge', '>', 0)
+                            ->whereRaw('(estimated_charge - COALESCE((SELECT SUM(amount) FROM service_job_payments WHERE service_job_payments.service_job_id = service_jobs.id), 0)) > 0');
+                    });
+                });
+        } elseif ($tab !== 'all' && isset(self::TAB_BUCKETS[$tab]) && ! empty(self::TAB_BUCKETS[$tab])) {
             $query->whereIn('status', self::TAB_BUCKETS[$tab]);
         }
 
@@ -515,11 +665,25 @@ class RepairController extends Controller
     {
         $byStatus = $this->statusCounts($store);
 
+        $debtCount = ServiceJob::where('store_id', $store->id)
+            ->whereNotIn('status', ['cancelled', 'unrepairable'])
+            ->where(function ($q) {
+                $q->where(function ($sub) {
+                    $sub->whereNotNull('final_charge')
+                        ->whereRaw('(final_charge - COALESCE((SELECT SUM(amount) FROM service_job_payments WHERE service_job_payments.service_job_id = service_jobs.id), 0)) > 0');
+                })->orWhere(function ($sub) {
+                    $sub->whereNull('final_charge')
+                        ->where('estimated_charge', '>', 0)
+                        ->whereRaw('(estimated_charge - COALESCE((SELECT SUM(amount) FROM service_job_payments WHERE service_job_payments.service_job_id = service_jobs.id), 0)) > 0');
+                });
+            })->count();
+
         return [
             'all'        => array_sum($byStatus),
             'processing' => array_sum(array_intersect_key($byStatus, array_flip(self::TAB_BUCKETS['processing']))),
             'ready'      => $byStatus['ready'] ?? 0,
             'history'    => array_sum(array_intersect_key($byStatus, array_flip(self::TAB_BUCKETS['history']))),
+            'debt'       => $debtCount,
         ];
     }
 

@@ -36,8 +36,8 @@ class OrderAdminController extends Controller
             __('messages.pricing_type'),
             __('messages.status'),
             __('messages.payment_status'),
-            __('messages.total_amount') . ' (Ks)',
-            __('messages.agreed_amount') . ' (Ks)',
+            __('messages.total_amount'),
+            __('messages.agreed_amount'),
             __('messages.items_summary'),
         ];
     }

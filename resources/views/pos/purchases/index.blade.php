@@ -63,12 +63,33 @@
         </div>
     </div>
 
+    {{-- Flash Alerts --}}
+    @if (session('success'))
+        <div class="rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-2 sm:p-2.5 flex items-center justify-between text-xs font-bold text-emerald-800 dark:text-emerald-200 shadow-2xs">
+            <div class="flex items-center gap-2">
+                <span class="text-sm">✓</span>
+                <span>{{ session('success') }}</span>
+            </div>
+            <button type="button" @click="$el.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold px-1.5 py-0.5 cursor-pointer" aria-label="Close">&times;</button>
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="rounded bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-2 sm:p-2.5 flex items-center justify-between text-xs font-bold text-rose-800 dark:text-rose-200 shadow-2xs">
+            <div class="flex items-center gap-2">
+                <span class="text-sm">⚠️</span>
+                <span>{{ session('error') }}</span>
+            </div>
+            <button type="button" @click="$el.parentElement.remove()" class="text-rose-500 hover:text-rose-700 dark:hover:text-rose-300 font-bold px-1.5 py-0.5 cursor-pointer" aria-label="Close">&times;</button>
+        </div>
+    @endif
+
     {{-- 2. 4-Column Compact Centered Stat Cards --}}
     @php
         $totalOutstanding = $pos->sum(fn ($po) => (float) $po->remaining_balance);
         $pendingAndOrdered = ($statusCounts['pending'] ?? 0) + ($statusCounts['ordered'] ?? 0);
         $receivedCount = $statusCounts['received'] ?? 0;
         $totalPOs = $statusCounts->sum();
+        $canManage = auth()->user() && auth()->user()->isStoreManager($store->id);
     @endphp
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1">
         {{-- Card 1: Total POs --}}
@@ -126,7 +147,7 @@
                     {{ __('messages.payables_title') }}
                 </p>
                 <div class="text-xs sm:text-sm font-black font-mono {{ $totalOutstanding > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100' }} tabular-nums mt-0.5 truncate">
-                    Ks {{ number_format($totalOutstanding, 0) }}
+                    {{ format_currency($totalOutstanding, $store) }}
                 </div>
             </div>
         </div>
@@ -289,14 +310,14 @@
 
                             {{-- Total Cost Valuation --}}
                             <td class="py-1.5 px-2.5 text-right font-mono font-black text-slate-900 dark:text-slate-100 whitespace-nowrap">
-                                Ks {{ number_format((float) $po->total_cost, 0) }}
+                                {{ format_currency($po->total_cost, $store) }}
                             </td>
 
                             {{-- Remaining Balance / Payables --}}
                             <td class="py-1.5 px-2.5 text-right whitespace-nowrap">
                                 @if ((float) $po->remaining_balance > 0)
                                     <span class="inline-flex items-center px-1.5 py-0.2 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-black font-mono">
-                                        Ks {{ number_format((float) $po->remaining_balance, 0) }}
+                                        {{ format_currency($po->remaining_balance, $store) }}
                                     </span>
                                 @else
                                     <span class="text-xs text-slate-400 font-mono">—</span>
@@ -305,11 +326,31 @@
 
                             {{-- Actions --}}
                             <td class="py-1.5 px-2.5 text-right whitespace-nowrap">
-                                <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}"
-                                   class="px-2 py-1 rounded text-xs font-bold bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/50 dark:hover:bg-sky-900/60 text-sky-600 dark:text-sky-300 transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
-                                    <span>{{ __('messages.po_view') }}</span>
-                                    <span>→</span>
-                                </a>
+                                <div class="inline-flex items-center gap-1">
+                                    <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}"
+                                       class="h-6 px-2 rounded text-xs font-bold bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/50 dark:hover:bg-sky-900/60 text-sky-600 dark:text-sky-300 transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                                        <span>{{ __('messages.po_view') }}</span>
+                                        <span>→</span>
+                                    </a>
+                                    @if ($canManage)
+                                        <a href="{{ route('pos.purchases.edit', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id]) }}"
+                                           class="h-6 w-6 rounded text-xs font-bold bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition inline-grid place-items-center active:scale-95 cursor-pointer"
+                                           title="{{ __('messages.po_edit') }}">
+                                            <span>✏️</span>
+                                        </a>
+                                        <form method="POST" action="{{ route('pos.purchases.destroy', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id]) }}"
+                                              onsubmit="return confirm('{{ __('messages.po_confirm_delete', ['number' => $po->po_number]) }}');"
+                                              class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                    class="h-6 w-6 rounded text-xs font-bold bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 transition inline-grid place-items-center active:scale-95 cursor-pointer"
+                                                    title="{{ __('messages.po_delete') }}">
+                                                <span>🗑️</span>
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -392,25 +433,43 @@
                         </div>
                         <div class="text-right">
                             <span class="text-[10px] text-slate-400 block uppercase font-bold">Total Cost</span>
-                            <span class="font-mono font-black text-slate-900 dark:text-slate-100">Ks {{ number_format((float) $po->total_cost, 0) }}</span>
+                            <span class="font-mono font-black text-slate-900 dark:text-slate-100">{{ format_currency($po->total_cost, $store) }}</span>
                         </div>
                     </div>
 
                     @if ((float) $po->remaining_balance > 0)
                         <div class="flex items-center justify-between text-xs px-0.5">
                             <span class="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase">Payables:</span>
-                            <span class="font-mono font-black text-amber-600 dark:text-amber-400">Ks {{ number_format((float) $po->remaining_balance, 0) }}</span>
+                            <span class="font-mono font-black text-amber-600 dark:text-amber-400">{{ format_currency($po->remaining_balance, $store) }}</span>
                         </div>
                     @endif
                 </div>
 
                 {{-- Card Footer Action --}}
-                <div class="p-2 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
+                <div class="p-2 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1.5">
                     <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}"
-                       class="w-full text-center px-2 py-1 rounded bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/60 dark:hover:bg-sky-900/60 text-sky-600 dark:text-sky-300 text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer">
+                       class="flex-1 text-center h-7 px-2 rounded bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/60 dark:hover:bg-sky-900/60 text-sky-600 dark:text-sky-300 text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer">
                         <span>{{ __('messages.po_view') }}</span>
                         <span>→</span>
                     </a>
+                    @if ($canManage)
+                        <a href="{{ route('pos.purchases.edit', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id]) }}"
+                           class="h-7 w-7 shrink-0 rounded bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition grid place-items-center text-xs active:scale-95 cursor-pointer"
+                           title="{{ __('messages.po_edit') }}">
+                            <span>✏️</span>
+                        </a>
+                        <form method="POST" action="{{ route('pos.purchases.destroy', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id]) }}"
+                              onsubmit="return confirm('{{ __('messages.po_confirm_delete', ['number' => $po->po_number]) }}');"
+                              class="inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit"
+                                    class="h-7 w-7 shrink-0 rounded bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 transition grid place-items-center text-xs active:scale-95 cursor-pointer"
+                                    title="{{ __('messages.po_delete') }}">
+                                <span>🗑️</span>
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
         @empty

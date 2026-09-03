@@ -1,12 +1,28 @@
 @extends('layouts.admin.app')
 
-@section('title', __('messages.po_create_title') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('title', __('messages.po_edit_title') . ' (' . $po->po_number . ') - ' . ($store->name ?? 'DataPOS'))
 @section('main_padding', 'p-0.5 sm:p-1')
+
+@php
+    $initialRows = $po->items->map(function ($item) {
+        return [
+            'product_id' => $item->product_id,
+            'product_variant_id' => $item->product_variant_id,
+            'name' => $item->product?->name ?? ('Product #' . $item->product_id),
+            'sku' => $item->variant?->sku ?? $item->product?->sku ?? '',
+            'balance' => 0,
+            'quantity' => (string) (float) $item->quantity,
+            'unit_cost' => (string) (float) $item->unit_cost,
+        ];
+    })->values();
+    $isReceived = $po->isReceived();
+@endphp
 
 @section('content')
 <div class="w-full space-y-0.5 pb-6"
      x-data="{
-         rows: [],
+         rows: @js($initialRows),
+         isReceived: @js($isReceived),
          q: '',
          results: [],
          open: false,
@@ -14,31 +30,12 @@
          searched: false,
          filterBrand: '',
          filterCategory: '',
-         supplierId: '',
-         supplierName: '',
-         discountAmount: 0,
-         deliveryFee: 0,
-         paymentMode: 'credit',
-         paidAmount: 0,
+         supplierId: '{{ $po->supplier_id ?? '' }}',
+         supplierName: '{{ $po->supplier?->name ?? '' }}',
+         discountAmount: {{ (float) $po->discount_amount }},
+         deliveryFee: {{ (float) $po->delivery_fee }},
          voucherPreviews: [],
-         get effectivePaid() {
-             const total = this.netTotal;
-             if (this.paymentMode !== 'cash') return 0;
-             let amt = parseFloat(this.paidAmount) || 0;
-             if (amt <= 0) amt = total;
-             return Math.min(Math.max(0, amt), total);
-         },
-         get paidStatus() {
-             if (this.paymentMode !== 'cash') return '';
-             return this.effectivePaid >= this.netTotal ? 'paid' : 'partial';
-         },
-         setPaymentMode(mode) {
-             this.paymentMode = mode;
-             if (mode === 'cash' && (!this.paidAmount || this.paidAmount <= 0)) {
-                 this.paidAmount = this.netTotal;
-             }
-         },
-         get canSearch() { return this.q.trim() !== '' || this.filterBrand !== '' || this.filterCategory !== ''; },
+         get canSearch() { return !this.isReceived && (this.q.trim() !== '' || this.filterBrand !== '' || this.filterCategory !== ''); },
          async search(open = true) {
              if (!this.canSearch) { this.results = []; this.open = false; this.searched = false; return; }
              this.searching = true;
@@ -82,9 +79,15 @@
              this.searched = false;
              this.$nextTick(() => { this.$refs.searchInput && this.$refs.searchInput.focus(); });
          },
-         removeRow(i) { this.rows.splice(i, 1); },
-         incQty(r) { r.quantity = String((parseFloat(r.quantity) || 0) + 1); },
-         decQty(r) { r.quantity = String(Math.max(1, (parseFloat(r.quantity) || 0) - 1)); },
+         removeRow(i) {
+             this.rows.splice(i, 1);
+         },
+         incQty(r) {
+             r.quantity = String((parseFloat(r.quantity) || 0) + 1);
+         },
+         decQty(r) {
+             r.quantity = String(Math.max(1, (parseFloat(r.quantity) || 0) - 1));
+         },
          lineTotal(r) { return (parseFloat(r.quantity) || 0) * (parseFloat(r.unit_cost) || 0); },
          fmt(n) { return typeof window.formatCurrency === 'function' ? window.formatCurrency(n) : Number(n).toLocaleString(); },
          fmtQty(n) { return typeof window.formatQuantity === 'function' ? window.formatQuantity(n) : String(n); },
@@ -96,7 +99,10 @@
              const deliv = parseFloat(this.deliveryFee) || 0;
              return Math.max(0, sub - disc + deliv);
          },
-         get valid() { return this.rows.length > 0 && this.rows.every(r => r.product_id && (parseFloat(r.quantity) || 0) > 0 && (parseFloat(r.unit_cost) || 0) >= 0); },
+         get valid() {
+             if (this.isReceived) return true;
+             return this.rows.length > 0 && this.rows.every(r => r.product_id && (parseFloat(r.quantity) || 0) > 0 && (parseFloat(r.unit_cost) || 0) >= 0);
+         },
          handleFiles(event) {
              const files = Array.from(event.target.files || []);
              this.voucherPreviews = [];
@@ -117,37 +123,51 @@
     {{-- 1. Top Header Banner (Ultra-Dense 36px) --}}
     <div class="px-2 py-1.5 bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 select-none">
         <div class="flex items-center gap-2 min-w-0">
-            <span class="w-7 h-7 rounded bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800 grid place-items-center text-sm font-black shrink-0">
-                🛒
+            <span class="w-7 h-7 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 grid place-items-center text-sm font-black shrink-0">
+                ✏️
             </span>
             <div class="min-w-0">
                 <div class="flex items-center gap-1.5 flex-wrap">
                     <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 truncate">
-                        {{ __('messages.po_create_title') }}
+                        {{ __('messages.po_edit_title') }}
                     </h1>
+                    <span class="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                        {{ $po->po_number }}
+                    </span>
                     <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                         {{ $store->name }}
                     </span>
                 </div>
                 <p class="text-[10px] text-slate-400 font-mono truncate hidden sm:block">
-                    {{ __('messages.po_create_hint') }}
+                    {{ __('messages.po_created_at') }}: {{ $po->created_at->format('d M Y, H:i') }} · Status: <span class="uppercase font-bold text-slate-600 dark:text-slate-300">{{ $po->status }}</span>
                 </p>
             </div>
         </div>
 
         <div class="flex items-center gap-1.5 flex-wrap shrink-0">
-            <a href="{{ url('/store/' . $store->slug . '/pos/purchases') }}"
+            <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}"
                class="h-7 px-2.5 rounded text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition inline-flex items-center gap-1 shadow-2xs">
-                <span>🛒</span>
-                <span>{{ __('messages.po_list_title') }}</span>
+                <span>👁️</span>
+                <span>{{ __('messages.po_view') }}</span>
             </a>
-            <a href="{{ url('/store/' . $store->slug . '/pos') }}"
+            <a href="{{ url('/store/' . $store->slug . '/pos/purchases') }}"
                class="h-7 px-2 rounded text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-1 shadow-2xs">
                 <span>←</span>
-                <span>{{ __('messages.back_to_pos') }}</span>
+                <span>{{ __('messages.po_list_title') }}</span>
             </a>
         </div>
     </div>
+
+    @if ($isReceived)
+        {{-- Informational Banner for Received PO --}}
+        <div class="p-2 rounded bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs flex items-center gap-2 shadow-2xs">
+            <span class="text-base shrink-0">ℹ️</span>
+            <div class="min-w-0">
+                <span class="font-black">{{ __('messages.po_received_info') }}</span>
+                <span class="text-[11px] block text-amber-700 dark:text-amber-300">{{ __('messages.po_edit_received_hint') }}</span>
+            </div>
+        </div>
+    @endif
 
     {{-- 2. 4-Column Compact Centered Stat Cards --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1">
@@ -210,9 +230,10 @@
     </div>
 
     {{-- 3. Main Form Card --}}
-    <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/purchases') }}" enctype="multipart/form-data"
+    <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}" enctype="multipart/form-data"
           class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded shadow-2xs overflow-hidden space-y-0">
         @csrf
+        @method('PUT')
 
         {{-- Section 1: Supplier, Reference, Discount, Delivery & Voucher Uploads --}}
         <div class="p-2 sm:p-2.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2">
@@ -236,6 +257,7 @@
                         {{ __('messages.receiving_reference') }}
                     </label>
                     <input id="po-reference" type="text" name="reference" maxlength="100"
+                           value="{{ old('reference', $po->reference) }}"
                            placeholder="{{ __('messages.receiving_reference_placeholder') }}"
                            class="w-full h-7 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 text-xs font-mono text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-sky-500">
                 </div>
@@ -244,6 +266,7 @@
                         {{ __('messages.notes') }}
                     </label>
                     <input id="po-notes" type="text" name="notes" maxlength="1000"
+                           value="{{ old('notes', $po->notes) }}"
                            placeholder="{{ __('messages.notes_placeholder') }}"
                            class="w-full h-7 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 text-xs text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-sky-500">
                 </div>
@@ -254,7 +277,7 @@
                 {{-- Wholesale Trade Discount --}}
                 <div>
                     <label for="po-discount" class="block text-xs font-bold text-rose-600 dark:text-rose-400 mb-0.5 flex items-center justify-between">
-                        <span>{{ __('messages.po_discount_amount') }}</span>
+                        <span>{{ __('messages.po_discount_amount') }} (Ks)</span>
                         <span class="text-[10px] font-normal text-slate-400">(-) နုတ်ပေးမည်</span>
                     </label>
                     <input id="po-discount" type="number" inputmode="decimal" name="discount_amount" min="0" step="any"
@@ -265,19 +288,20 @@
                 {{-- Delivery Fee / Shipping Cost --}}
                 <div>
                     <label for="po-delivery" class="block text-xs font-bold text-amber-600 dark:text-amber-400 mb-0.5 flex items-center justify-between">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-0.5 flex items-center justify-between">
                         <span>{{ __('messages.po_delivery_fee') }}</span>
-                        <span class="text-[10px] font-normal text-slate-400">(+) ပေါင်းပေးမည်</span>
+                        <span class="text-[10px] text-amber-500 font-semibold uppercase">(+)</span>
                     </label>
                     <input id="po-delivery" type="number" inputmode="decimal" name="delivery_fee" min="0" step="any"
                            x-model.number="deliveryFee" placeholder="0"
                            class="w-full h-7 rounded border border-amber-200 dark:border-amber-900/60 bg-white dark:bg-slate-800 px-2 py-1 text-xs font-mono font-bold text-amber-600 dark:text-amber-400 outline-none focus:ring-1 focus:ring-amber-500">
                 </div>
 
-                {{-- Multiple Voucher Photos Upload Box --}}
+                {{-- Voucher Photos Upload Box --}}
                 <div>
                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-0.5 flex items-center justify-between">
                         <span>📷 {{ __('messages.po_voucher_images') }}</span>
-                        <span class="text-[10px] text-slate-400 font-mono" x-text="voucherPreviews.length + ' files'"></span>
+                        <span class="text-[10px] text-slate-400 font-mono" x-text="voucherPreviews.length + ' new files'"></span>
                     </label>
                     <input type="file" name="voucher_images[]" multiple accept="image/*,.pdf" capture="environment"
                            @change="handleFiles($event)" id="po-voucher-files" class="sr-only">
@@ -289,49 +313,42 @@
                 </div>
             </div>
 
-            {{-- Row 3: Payment Terms (Paid-now / Credit) --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
-                {{-- Payment Mode Toggle: Cash (paid now) vs Credit --}}
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-0.5">
-                        💳 {{ __('messages.po_payment_mode') }}
-                    </label>
-                    <div class="flex items-center gap-1">
-                        <button type="button" @click="setPaymentMode('cash')"
-                                :class="paymentMode === 'cash' ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700'"
-                                class="flex-1 h-7 px-2 rounded text-xs font-bold border transition flex items-center justify-center gap-1 cursor-pointer">
-                            <span>💰</span>
-                            <span>{{ __('messages.po_paid_now') }}</span>
-                        </button>
-                        <button type="button" @click="setPaymentMode('credit')"
-                                :class="paymentMode === 'credit' ? 'bg-amber-500 text-white border-amber-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700'"
-                                class="flex-1 h-7 px-2 rounded text-xs font-bold border transition flex items-center justify-center gap-1 cursor-pointer">
-                            <span>🕐</span>
-                            <span>{{ __('messages.po_credit') }}</span>
-                        </button>
+            {{-- Existing Vouchers Thumbnails Display --}}
+            @if (!empty($po->voucher_images) && is_array($po->voucher_images))
+                <div class="pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
+                    <p class="text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center gap-1">
+                        <span>📎 {{ __('messages.po_vouchers_title') }}:</span>
+                        <span class="text-slate-400 font-normal">({{ count($po->voucher_images) }} saved)</span>
+                    </p>
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+                        @foreach ($po->voucher_images as $idx => $vPath)
+                            <div class="relative shrink-0 w-16 h-16 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-2xs group flex items-center justify-center p-0.5">
+                                @if (Str::endsWith(strtolower($vPath), '.pdf'))
+                                    <a href="{{ asset('storage/' . $vPath) }}" target="_blank" class="text-center">
+                                        <span class="text-xl">📄</span>
+                                        <span class="text-[8px] block text-slate-500 truncate max-w-[55px]">PDF #{{ $idx + 1 }}</span>
+                                    </a>
+                                @else
+                                    <a href="{{ asset('storage/' . $vPath) }}" target="_blank" class="w-full h-full block">
+                                        <img src="{{ asset('storage/' . $vPath) }}" class="w-full h-full object-cover rounded" alt="Voucher">
+                                    </a>
+                                @endif
+                                <button type="button"
+                                        onclick="if (confirm('Delete this voucher image?')) { document.getElementById('del-voucher-{{ $idx }}').submit(); }"
+                                        class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-rose-600 text-white grid place-items-center text-[9px] font-black opacity-0 group-hover:opacity-100 transition shadow cursor-pointer"
+                                        title="Delete voucher">
+                                    ✕
+                                </button>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
+            @endif
 
-                {{-- Paid Amount (only when cash/paid-now) --}}
-                <div x-show="paymentMode === 'cash'" x-cloak>
-                    <label for="po-paid-amount" class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-0.5 flex items-center justify-between">
-                        <span>{{ __('messages.po_paid_amount') }}</span>
-                        <span class="text-[10px] font-normal text-slate-400">(≤ {{ __('messages.po_net_total') }})</span>
-                    </label>
-                    <input id="po-paid-amount" type="number" inputmode="decimal" min="0" step="any"
-                           x-model.number="paidAmount" placeholder="0"
-                           class="w-full h-7 rounded border border-emerald-200 dark:border-emerald-900/60 bg-white dark:bg-slate-800 px-2 py-1 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 outline-none focus:ring-1 focus:ring-emerald-500">
-                </div>
-
-                {{-- Hidden payment fields submitted only when paid-now --}}
-                <input type="hidden" name="payment_status" :value="paidStatus">
-                <input type="hidden" name="paid_amount" :value="effectivePaid">
-            </div>
-
-            {{-- Voucher Previews Carousel / Grid (If files selected) --}}
+            {{-- New Voucher Previews (If files selected) --}}
             <div x-show="voucherPreviews.length > 0" x-cloak class="pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
                 <p class="text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center gap-1">
-                    <span>🖼️ Selected Vouchers / Invoices:</span>
+                    <span>🖼️ New Vouchers to Upload:</span>
                     <span class="text-slate-400 font-normal" x-text="'(' + voucherPreviews.length + ' items)'"></span>
                 </p>
                 <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
@@ -355,6 +372,12 @@
 
         {{-- Section 2: Product Finder & Live Search --}}
         <div class="p-2 sm:p-2.5 border-b border-slate-100 dark:border-slate-800">
+            @if ($po->isReceived())
+                <div class="mb-2 px-2.5 py-1.5 rounded bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-200 text-xs flex items-center gap-2 font-bold">
+                    <span class="text-sm">ℹ️</span>
+                    <span>{{ __('messages.po_edit_received_hint') }}</span>
+                </div>
+            @endif
             <div class="flex flex-col sm:flex-row gap-1.5">
                 {{-- Live Search Autocomplete Box --}}
                 <div class="relative flex-1">
@@ -399,55 +422,37 @@
                     </div>
                 </div>
 
-                {{-- Category & Brand Filters --}}
+                {{-- Brand & Category Filter Selects --}}
                 <div class="flex items-center gap-1.5">
-                    <select x-model="filterCategory" @change="onFilterChange()"
-                            class="h-7 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:ring-1 focus:ring-sky-500">
-                        <option value="">{{ __('messages.filter_all_categories') }}</option>
-                        @foreach ($categories as $c)
-                            <option value="{{ $c->id }}">{{ $c->name }}</option>
-                        @endforeach
-                    </select>
-
                     <select x-model="filterBrand" @change="onFilterChange()"
-                            class="h-7 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:ring-1 focus:ring-sky-500">
-                        <option value="">{{ __('messages.filter_all_brands') }}</option>
+                            class="h-7 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none">
+                        <option value="">{{ __('messages.all_brands') }}</option>
                         @foreach ($brands as $b)
                             <option value="{{ $b->id }}">{{ $b->name }}</option>
+                        @endforeach
+                    </select>
+                    <select x-model="filterCategory" @change="onFilterChange()"
+                            class="h-7 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none">
+                        <option value="">{{ __('messages.all_categories') }}</option>
+                        @foreach ($categories as $c)
+                            <option value="{{ $c->id }}">{{ $c->name }}</option>
                         @endforeach
                     </select>
                 </div>
             </div>
         </div>
 
-        {{-- Section 3: Selected Line Items Spreadsheet Table --}}
-        <div class="p-2 sm:p-2.5 space-y-2">
-            <div class="flex items-center justify-between">
-                <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <span>📋</span>
-                    <span>{{ __('messages.products') }}</span>
-                </h3>
-                <span class="text-xs font-mono font-bold text-slate-400" x-text="rows.length + ' lines selected'"></span>
-            </div>
-
-            {{-- Empty State --}}
-            <div x-show="rows.length === 0"
-                 class="rounded border-2 border-dashed border-slate-200 dark:border-slate-800 py-6 text-center bg-slate-50/50 dark:bg-slate-900/30">
-                <div class="text-2xl mb-1 opacity-50">🛒</div>
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('messages.receiving_product_placeholder') }}</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.po_scan_prompt') }}</p>
-            </div>
-
-            {{-- Line Items Table for Tablet & Desktop --}}
-            <div x-show="rows.length > 0" class="overflow-x-auto border border-slate-200/90 dark:border-slate-800 rounded shadow-2xs">
-                <table class="w-full text-left text-xs border-collapse font-sans">
-                    <thead class="bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 font-black uppercase text-[11px]">
+        {{-- Section 3: Selected Purchase Lines Table (Ultra-Dense 28px rows) --}}
+        <div class="p-2 sm:p-2.5">
+            <div class="overflow-x-auto rounded border border-slate-200/90 dark:border-slate-800">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-slate-100 dark:bg-slate-800 text-[11px] font-black uppercase text-slate-600 dark:text-slate-300 select-none border-b border-slate-200 dark:border-slate-700">
                         <tr class="divide-x divide-slate-200 dark:divide-slate-700">
-                            <th class="py-1.5 px-2 text-center w-8">#</th>
-                            <th class="py-1.5 px-2.5 min-w-[180px]">{{ __('messages.products') }}</th>
-                            <th class="py-1.5 px-2 text-center min-w-[130px]">{{ __('messages.reports_qty') }}</th>
-                            <th class="py-1.5 px-2 text-right min-w-[120px]">{{ __('messages.po_unit_cost') }}</th>
-                            <th class="py-1.5 px-2.5 text-right min-w-[120px]">{{ __('messages.receiving_total') }}</th>
+                            <th class="py-1.5 px-2 text-center w-10">#</th>
+                            <th class="py-1.5 px-2.5">{{ __('messages.products') }}</th>
+                            <th class="py-1.5 px-2 text-center w-36">{{ __('messages.quantity') }}</th>
+                            <th class="py-1.5 px-2 text-right w-36">{{ __('messages.receiving_unit_cost') }}</th>
+                            <th class="py-1.5 px-2.5 text-right w-36">{{ __('messages.receiving_total') }}</th>
                             <th class="py-1.5 px-2 text-center w-10"></th>
                         </tr>
                     </thead>
@@ -459,7 +464,7 @@
                                 {{-- Product Name & SKU --}}
                                 <td class="py-1 px-2.5">
                                     <span class="block font-bold text-xs text-slate-900 dark:text-slate-100 truncate" x-text="r.name"></span>
-                                    <span class="block font-mono text-[10px] text-slate-400" x-text="r.sku + ' · Bal: ' + fmtQty(r.balance)"></span>
+                                    <span class="block font-mono text-[10px] text-slate-400" x-text="r.sku"></span>
                                     <input type="hidden" :name="'items[' + i + '][product_id]'" :value="r.product_id">
                                     <input type="hidden" :name="'items[' + i + '][product_variant_id]'" :value="r.product_variant_id || ''">
                                 </td>
@@ -499,7 +504,7 @@
             </div>
         </div>
 
-        {{-- Section 4: Sticky Bottom Action Bar with Detailed Financial Breakdown --}}
+        {{-- Section 4: Sticky Bottom Action Bar --}}
         <div class="sticky bottom-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs border-t border-slate-200/90 dark:border-slate-800 p-2 sm:p-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-lg">
             <div class="flex items-center gap-3 flex-wrap">
                 <div>
@@ -525,17 +530,28 @@
             </div>
 
             <div class="flex items-center gap-1.5 shrink-0">
-                <a href="{{ url('/store/' . $store->slug . '/pos/purchases') }}"
+                <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}"
                    class="h-7 px-3 rounded text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition inline-flex items-center justify-center cursor-pointer">
                     {{ __('messages.cancel') }}
                 </a>
                 <button type="submit" :disabled="!valid"
                         class="h-7 px-4 rounded text-xs font-black text-white bg-sky-600 hover:bg-sky-500 shadow-2xs hover:shadow-sky-500/20 transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer inline-flex items-center gap-1">
-                    <span>📋</span>
-                    <span>{{ __('messages.po_save_pending') }}</span>
+                    <span>💾</span>
+                    <span>{{ __('messages.save_changes') }}</span>
                 </button>
             </div>
         </div>
     </form>
 </div>
+
+{{-- Hidden Delete Voucher Form Hooks --}}
+@if (!empty($po->voucher_images) && is_array($po->voucher_images))
+    @foreach ($po->voucher_images as $idx => $vPath)
+        <form id="del-voucher-{{ $idx }}" method="POST" action="{{ route('pos.purchases.delete-voucher', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id, 'index' => $idx]) }}" class="hidden">
+            @csrf
+            @method('DELETE')
+        </form>
+    @endforeach
+@endif
+
 @endsection

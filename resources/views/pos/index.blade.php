@@ -2,6 +2,9 @@
 
 @section('content')
     @php
+        /** @var array<int, array{customer_id: int, name: string, phone: string|null, balance: string|float, last_activity: string|null}> $outstanding */
+        /** @var string|float $outstandingTotal */
+
         $posLabels = [
             'added' => __('messages.pos_item_added'),
             'held' => __('messages.sale_held'),
@@ -1736,7 +1739,7 @@
                             <h2 class="text-lg font-black mt-0.5">{{ __('messages.outstanding_debt') }}</h2>
                         </div>
                         <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
-                            Ks {{ number_format((float) $outstandingTotal) }}
+                            {{ format_currency($outstandingTotal, $store) }}
                         </span>
                     </div>
 
@@ -1758,13 +1761,13 @@
                                                 <p class="font-semibold">{{ $customer['name'] }}</p>
                                                 <p class="text-xs text-slate-500 font-mono">{{ $customer['phone'] ?? '—' }}</p>
                                             </td>
-                                            <td class="px-3 py-2.5 text-right font-black text-amber-600 dark:text-amber-400">Ks {{ number_format((float) $customer['balance']) }}</td>
+                                            <td class="px-3 py-2.5 text-right font-black text-amber-600 dark:text-amber-400">{{ format_currency($customer['balance'], $store) }}</td>
                                             <td class="px-3 py-2.5 text-xs text-slate-500">{{ $customer['last_activity'] ? \Illuminate\Support\Carbon::parse($customer['last_activity'])->diffForHumans() : '—' }}</td>
                                             <td class="px-3 py-2.5 text-right">
                                                 <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/customers/' . $customer['customer_id'] . '/collect') }}"
                                                       class="inline-flex items-center gap-1" x-data="{ amount: '' }">
                                                     @csrf
-                                                    <input type="number" name="amount" min="0.01" :max="{{ $customer['balance'] }}" step="any" required placeholder="Ks" x-model="amount"
+                                                    <input type="number" name="amount" min="0.01" :max="{{ $customer['balance'] }}" step="any" required placeholder="0" x-model="amount"
                                                            class="w-28 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 text-right text-sm font-semibold">
                                                     <button type="submit" :disabled="!amount || parseFloat(amount) <= 0"
                                                             class="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition">

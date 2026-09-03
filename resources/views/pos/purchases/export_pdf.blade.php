@@ -44,9 +44,9 @@
                     <td>{{ $po->supplier?->name ?? '-' }}</td>
                     <td>{{ ucfirst($po->status) }}</td>
                     <td>{{ ucfirst($po->payment_status) }}</td>
-                    <td class="text-right">Ks {{ number_format((float) $po->total_cost) }}</td>
-                    <td class="text-right text-emerald">Ks {{ number_format((float) $po->paid_amount) }}</td>
-                    <td class="text-right text-danger">Ks {{ number_format((float) $po->remaining_balance) }}</td>
+                    <td class="text-right">{{ format_currency($po->total_cost, $store) }}</td>
+                    <td class="text-right text-emerald">{{ format_currency($po->paid_amount, $store) }}</td>
+                    <td class="text-right text-danger">{{ format_currency($po->remaining_balance, $store) }}</td>
                     <td>{{ $po->created_at?->format('Y-m-d') }}</td>
                 </tr>
             @endforeach

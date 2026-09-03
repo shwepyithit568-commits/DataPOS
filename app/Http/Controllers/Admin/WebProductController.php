@@ -8,10 +8,15 @@ use App\Models\Category;
 use App\Models\Product;
 use App\POS\Services\WebCatalogService;
 use App\Services\StoreContext;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class WebProductController extends Controller
 {
@@ -199,5 +204,125 @@ class WebProductController extends Controller
         }
 
         return back()->with('success', __('messages.web_catalog_bulk_updated_msg', ['count' => $count]));
+    }
+
+    /**
+     * Export web catalog products to Excel (.xlsx) or CSV (.csv).
+     */
+    public function export(Request $request, StoreContext $context): BinaryFileResponse|StreamedResponse
+    {
+        $store = $context->getStore();
+        abort_if(!$store, 404);
+
+        $format = strtolower((string) $request->query('format', 'xlsx'));
+        $products = $this->webCatalogService->getProductsQuery($store, $request->all())->get();
+
+        $headers = [
+            __('messages.product_name'),
+            __('messages.sku'),
+            __('messages.category'),
+            __('messages.brand'),
+            __('messages.retail_price'),
+            __('messages.old_price'),
+            __('messages.stock_status'),
+            __('messages.web_catalog_filter_visibility_label'),
+            __('messages.web_catalog_filter_featured_label'),
+        ];
+
+        $timestamp = now()->format('Y-m-d_His');
+        $baseFilename = 'web_products_' . $store->slug . '_' . $timestamp;
+
+        if ($format === 'csv') {
+            return $this->exportCsv($products, $headers, $baseFilename . '.csv');
+        }
+
+        return $this->exportXlsx($products, $headers, $baseFilename . '.xlsx');
+    }
+
+    private function productExportRow(Product $product): array
+    {
+        return [
+            $product->name,
+            $product->sku ?: '',
+            $product->category?->name ?? '',
+            $product->brand?->name ?? '',
+            (float) $product->retail_price,
+            $product->old_price !== null ? (float) $product->old_price : '',
+            match ($product->stock_status) {
+                'in_stock' => __('messages.in_stock'),
+                'low_stock' => __('messages.web_catalog_filter_low_stock'),
+                'out_of_stock' => __('messages.out_of_stock'),
+                default => (string) $product->stock_status,
+            },
+            $product->is_ecommerce ? __('messages.web_catalog_status_online') : __('messages.web_catalog_status_counter'),
+            $product->is_featured ? __('messages.web_catalog_status_featured') : __('messages.web_catalog_status_standard'),
+        ];
+    }
+
+    private function exportCsv(Collection $products, array $headers, string $filename): StreamedResponse
+    {
+        return response()->streamDownload(function () use ($products, $headers) {
+            $handle = fopen('php://output', 'w');
+            // BOM for UTF-8 Excel support
+            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fputcsv($handle, $headers);
+
+            foreach ($products as $product) {
+                fputcsv($handle, $this->productExportRow($product));
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    private function exportXlsx(Collection $products, array $headers, string $filename): BinaryFileResponse
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'web_products_') . '.xlsx';
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Web Products');
+
+        $colChar = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($colChar . '1', $header);
+            $colChar++;
+        }
+
+        $highestCol = chr(ord('A') + count($headers) - 1);
+        $sheet->getStyle('A1:' . $highestCol . '1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '0284C7'],
+            ],
+            'alignment' => ['vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER],
+        ]);
+        $sheet->getRowDimension(1)->setRowHeight(24);
+
+        $rowIdx = 2;
+        foreach ($products as $product) {
+            $row = $this->productExportRow($product);
+            $colChar = 'A';
+            foreach ($row as $val) {
+                $sheet->setCellValue($colChar . $rowIdx, $val);
+                $colChar++;
+            }
+            $rowIdx++;
+        }
+
+        foreach (range('A', $highestCol) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+        $spreadsheet->disconnectWorksheets();
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 }

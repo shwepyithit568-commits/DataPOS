@@ -75,7 +75,7 @@ class AdminCustomerDirectoryTest extends TestCase
             ->get("/store/{$this->store->slug}/admin/customers");
 
         $response->assertStatus(200);
-        $response->assertSeeText('15,000 MMK');
+        $response->assertSeeText(format_currency(15000, $this->store));
     }
 
     public function test_index_search_filters_by_name(): void
@@ -123,7 +123,7 @@ class AdminCustomerDirectoryTest extends TestCase
         $response->assertStatus(200);
         $response->assertSeeText('Aung Retail');
         $response->assertSeeText('R-1001');
-        $response->assertSeeText('50,000 MMK');
+        $response->assertSeeText(format_currency(50000, $this->store));
     }
 
     public function test_show_returns_404_for_customer_not_in_store(): void
@@ -199,7 +199,7 @@ class AdminCustomerDirectoryTest extends TestCase
     public function test_customer_directory_export_csv(): void
     {
         $response = $this->actingAs($this->manager)
-            ->get("/store/{$this->store->slug}/admin/customers/export");
+            ->get("/store/{$this->store->slug}/admin/customers/export?format=csv");
 
         $response->assertOk();
         $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
@@ -210,5 +210,31 @@ class AdminCustomerDirectoryTest extends TestCase
         $this->assertStringContainsString('Customer Directory', $csv);
         $this->assertStringContainsString('Aung Retail', $csv);
         $this->assertStringContainsString('Moe Wholesale', $csv);
+    }
+
+    public function test_customer_directory_export_xlsx(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/customers/export?format=xlsx");
+
+        $response->assertOk();
+        $this->assertStringContainsString('spreadsheetml.sheet', $response->headers->get('content-type', ''));
+    }
+
+    public function test_customer_directory_ui_ux_standard_v4_1_compact_layout(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/customers");
+
+        $response->assertOk();
+        // 2px ultra-dense main padding on mobile
+        $response->assertSee('p-0.5 sm:p-1', false);
+        // Centered row-based stat cards
+        $response->assertSee('flex items-center justify-center gap-2.5 sm:gap-3', false);
+        // Both card grid and spreadsheet table view containers are present
+        $response->assertSee('id="customers-grid"', false);
+        $response->assertSee('id="customers-table"', false);
+        // Export button link is present
+        $response->assertSee('/store/' . $this->store->slug . '/admin/customers/export', false);
     }
 }

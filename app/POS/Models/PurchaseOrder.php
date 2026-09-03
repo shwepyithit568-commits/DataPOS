@@ -138,6 +138,14 @@ class PurchaseOrder extends Model
         return $this->hasMany(\App\POS\Models\PurchaseReturn::class);
     }
 
+    /**
+     * All payment log entries for this PO (each payment attempt).
+     */
+    public function paymentLogs(): HasMany
+    {
+        return $this->hasMany(\App\POS\Models\PoPaymentLog::class)->latest('paid_at');
+    }
+
     /* ------------------------------------------------------------------ */
     /*  Status helpers                                                      */
     /* ------------------------------------------------------------------ */

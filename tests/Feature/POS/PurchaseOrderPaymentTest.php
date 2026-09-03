@@ -691,6 +691,23 @@ class PurchaseOrderPaymentTest extends TestCase
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
     }
 
+    public function test_payables_export_excel(): void
+    {
+        $store = $this->makeStore();
+        $actor = $this->staff($store);
+        $product = $this->makeProduct($store);
+        $supplier = $this->makeSupplier($store);
+
+        $this->receivedPo($store, $actor, $product, '10', '5000', $supplier->id);
+
+        $response = $this->actingAs($actor)
+            ->get("/store/{$store->slug}/pos/purchases/payables/export?format=excel");
+
+        $response->assertOk();
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class, $response->baseResponse);
+        $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
     public function test_admin_payables_redirects_to_pos_purchases_payables(): void
     {
         $store = $this->makeStore();

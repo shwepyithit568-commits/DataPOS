@@ -98,7 +98,7 @@
 }"
 @notify.window="add($event.detail)"
 @toast.window="add($event.detail)"
-class="fixed top-2.5 right-2.5 sm:top-3 sm:right-3 z-[100] flex flex-col gap-1.5 max-w-sm sm:max-w-md w-[calc(100vw-1.25rem)] pointer-events-none select-none"
+class="fixed top-[calc(3.75rem+env(safe-area-inset-top))] right-2.5 sm:top-[calc(4rem+env(safe-area-inset-top))] sm:right-4 z-[110] flex flex-col gap-2 max-w-sm sm:max-w-md w-[calc(100vw-1.25rem)] pointer-events-none select-none"
 aria-live="polite">
 
     <template x-for="toast in toasts" :key="toast.id">
@@ -145,7 +145,7 @@ aria-live="polite">
                 <template x-if="toast.message">
                     <p class="text-xs font-bold leading-relaxed break-words" x-text="toast.message"></p>
                 </template>
-                <template x-if="toast.messages && toast.messages.length">
+                <template x-if="toast.messages && toast.messages['length']">
                     <ul class="text-xs space-y-0.5 list-disc pl-3.5 font-medium leading-relaxed">
                         <template x-for="(msg, i) in toast.messages" :key="i">
                             <li x-text="msg"></li>

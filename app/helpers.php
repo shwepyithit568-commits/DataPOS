@@ -26,6 +26,27 @@ if (! function_exists('format_currency')) {
     }
 }
 
+if (! function_exists('format_quantity')) {
+    /**
+     * Format a numerical quantity according to the store's currency/number settings.
+     */
+    function format_quantity(float|int|string|null $quantity, ?Store $store = null): string
+    {
+        if (! $store && app()->bound(StoreContext::class)) {
+            try {
+                $store = app(StoreContext::class)->getStore();
+            } catch (\Throwable) {
+                $store = null;
+            }
+        }
+
+        $setting = $store?->setting;
+        $currencySettings = $setting?->currency_settings ?? [];
+
+        return CurrencyFormatter::formatQuantity($quantity, $currencySettings);
+    }
+}
+
 if (! function_exists('store_can')) {
     /**
      * Determine if the current active store has a specific capability.

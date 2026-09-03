@@ -30,15 +30,25 @@ class CustomerLedgerEntry extends Model
         'source_type',
         'source_id',
         'notes',
+        'slip_image',
         'occurred_at',
         'created_by',
         'client_transaction_id',
+    ];
+
+    protected $appends = [
+        'slip_url',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'occurred_at' => 'datetime',
     ];
+
+    public function getSlipUrlAttribute(): ?string
+    {
+        return $this->slip_image ? \Illuminate\Support\Facades\Storage::url($this->slip_image) : null;
+    }
 
     public function store(): BelongsTo
     {

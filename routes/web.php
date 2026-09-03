@@ -403,6 +403,7 @@ Route::prefix('store/{store_slug}')
 
         // Admin Home Banners CRUD
         Route::get('/admin/banners', [HomeBannerController::class, 'index'])->name('store.admin.banners.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+        Route::get('/admin/banners/export', [HomeBannerController::class, 'export'])->name('store.admin.banners.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/banners', [HomeBannerController::class, 'store'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/banners/{banner}/edit', [HomeBannerController::class, 'edit'])->name('store.admin.banners.edit')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::put('/admin/banners/{banner}', [HomeBannerController::class, 'update'])->middleware(EnsureStoreAccess::class . ':store_manager,staff');
@@ -681,6 +682,7 @@ Route::prefix('store/{store_slug}')
         Route::delete('/admin/promotions/{promotion}', [\App\Http\Controllers\Admin\PromotionController::class, 'destroy'])->name('store.admin.promotions.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
 
         // Web Catalog Product Visibility (sidebar_web_products)
+        Route::get('/admin/web-products/export', [\App\Http\Controllers\Admin\WebProductController::class, 'export'])->name('store.admin.web_products.export')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::get('/admin/web-products', [\App\Http\Controllers\Admin\WebProductController::class, 'index'])->name('store.admin.web_products.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');
         Route::post('/admin/web-products/toggle-visibility', [\App\Http\Controllers\Admin\WebProductController::class, 'toggleVisibility'])->name('store.admin.web_products.toggle_visibility')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::post('/admin/web-products/toggle-featured', [\App\Http\Controllers\Admin\WebProductController::class, 'toggleFeatured'])->name('store.admin.web_products.toggle_featured')->middleware(EnsureStoreAccess::class . ':store_manager');
@@ -872,6 +874,15 @@ Route::prefix('store/{store_slug}')
             Route::get('/purchases/returns', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'returnsIndex'])->name('pos.purchases.returns');
             Route::get('/purchases/returns/export', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'returnsExport'])->name('pos.purchases.returns.export');
             Route::get('/purchases/{purchaseOrder}', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'show'])->name('pos.purchases.show');
+            Route::get('/purchases/{purchaseOrder}/edit', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'edit'])
+                ->name('pos.purchases.edit')
+                ->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::put('/purchases/{purchaseOrder}', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'update'])
+                ->name('pos.purchases.update')
+                ->middleware(EnsureStoreAccess::class . ':store_manager');
+            Route::delete('/purchases/{purchaseOrder}', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'destroy'])
+                ->name('pos.purchases.destroy')
+                ->middleware(EnsureStoreAccess::class . ':store_manager');
             Route::post('/purchases/{purchaseOrder}/order', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'order'])->name('pos.purchases.order');
             Route::post('/purchases/{purchaseOrder}/receive', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('pos.purchases.receive');
             Route::post('/purchases/{purchaseOrder}/cancel', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'cancel'])->name('pos.purchases.cancel');

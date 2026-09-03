@@ -1,7 +1,7 @@
 # DataPOS - Admin UI/UX Standard Guide
 
-**Document Version:** 4.1.0  
-**Last Updated:** 2026-09-01  
+**Document Version:** 4.2.0  
+**Last Updated:** 2026-09-03  
 **System Base:** Laravel 12.64.0, Blade, Alpine.js, Tailwind CSS 4, Vite, PhpSpreadsheet  
 **Purpose:** DataPOS Admin & POS Management စာမျက်နှာများကို Myanmar SME users များအတွက် ဖတ်လွယ်၊ သုံးလွယ်၊ အလွန်ကျစ်လစ်သွက်လက်ပြီး Consistent ဖြစ်သော စံသတ်မှတ်ချက်များအတိုင်း ထိန်းသိမ်းရန်။
 
@@ -208,27 +208,67 @@ Toolbar အပိုင်းသည် Search input, Filter pills, Excel export 
 
 ---
 
-## Quantity & Decimal Formatting Standard (စတော့အရေအတွက်နှင့် ဂဏန်းဖော်ပြမှု စံနှုန်း)
+## Currency, Price & Quantity Formatting Standard (ငွေကြေး၊ စျေးနှုန်းနှင့် အရေအတွက် ဖော်ပြမှုဆိုင်ရာ စံနှုန်း)
 
-DataPOS တွင် စတော့စာရင်း၊ ကုန်ပစ္စည်းအရေအတွက်နှင့် အဝင်/အထွက် စာရင်းဇယားများကို ပြသရာတွင် အောက်ပါ စံနှုန်းများအတိုင်း တိကျစွာ လိုက်နာရမည်:
+DataPOS တွင် စျေးနှုန်း၊ ငွေပမာဏ၊ စတော့စာရင်း၊ ကုန်ပစ္စည်းအရေအတွက်နှင့် အဝင်/အထွက် စာရင်းဇယားများကို ပြသရာတွင် `/admin/settings/currency` (`stores.setting.currency_settings`) တွင် သတ်မှတ်ထားသော ဆိုင်ခွဲအလိုက် စံနှုန်းများအတိုင်း တိကျစွာ လိုက်နာရမည်:
 
-### ၁။ Clean Quantity Formatting (မလိုအပ်သော `.000` များ လုံးဝမထည့်ရ)
+### ၁။ Zero Hardcoded Currency & Strict Setting Compliance (ငွေကြေးသင်္ကေတ Hardcode မရေးရ)
+- ဘယ်စာမျက်နှာ၊ ဘယ် Blade View၊ ဘယ် JavaScript/Alpine.js logic တွင်မှ `Ks {{ number_format(...) }}` သို့မဟုတ် `'Ks ' + ...` လုံးဝ (လုံးဝ) hardcode မရေးရ။
+- ဆိုင်တစ်ဆိုင်ချင်းစီ၏ `/admin/settings/currency` Setting တွင် သတ်မှတ်ထားသည့်:
+  - **Currency Symbol:** (`Ks`, `$`, `฿`, `¥`, စသည်)
+  - **Symbol Position:**
+    - `after_space` (ဥပမာ- `100,000 Ks`)
+    - `after_tight` (ဥပမာ- `100,000Ks`)
+    - `before_space` (ဥပမာ- `Ks 100,000`)
+    - `before_tight` (ဥပမာ- `$100,000`)
+  - **Decimal Places:** (`0, 1, 2, 3, 4`)
+  - **Thousand Separator:** (`,`, `.`, `space`, `none`)
+  - **Negative Format:** (`minus`, `parentheses`, `dr_cr`)
+  စသည်တို့နှင့် အမြဲတမ်း ၁၀၀% Dynamic ကိုက်ညီနေရမည်။
+
+### ၂။ Backend & Blade Formatting Helpers
+- **ငွေပမာဏ / စျေးနှုန်းများအတွက်:** `format_currency($amount, $store)` helper ကိုသာ မဖြစ်မနေ သုံးရမည်:
+  ```blade
+  {{-- မှန်ကန်သော ပုံစံ --}}
+  {{ format_currency($item->unit_price, $store) }}
+  {{ format_currency($order->total_amount, $store) }}
+  
+  {{-- ရှောင်ရှားရမည့်ပုံစံ (Avoid) --}}
+  Ks {{ number_format($order->total_amount, 0) }}
+  ```
+- **အရေအတွက်များအတွက်:** `format_quantity($quantity, $store)` helper သို့မဟုတ် `$fmtQty($quantity)` ကို သုံးရမည်။
+
+### ၃။ Frontend / JavaScript / Alpine.js Formatting Standard
+Admin layout တွင် `<x-currency-js-init :store="$store" />` component ပါဝင်ပြီးဖြစ်၍ global window object ပေါ်တွင် အောက်ပါ function များ အသင့်ရှိသည်:
+- `window.formatCurrency(val)` (သို့မဟုတ် `window.formatPrice(val)`)
+- `window.formatQuantity(val)`
+
+Alpine.js component များ ရေးသားရာတွင် hardcoded string concatenation များ မသုံးဘဲ helper ဖြင့်သာ ခေါ်ယူရမည်:
+```javascript
+x-data="{
+    fmt(n) { return typeof window.formatCurrency === 'function' ? window.formatCurrency(n) : Number(n).toLocaleString(); },
+    fmtQty(n) { return typeof window.formatQuantity === 'function' ? window.formatQuantity(n) : String(n); },
+}"
+```
+```blade
+{{-- မှန်ကန်သော အသုံးပြုပုံ --}}
+<span x-text="fmt(lineTotal)"></span>
+<span x-text="fmt(netTotal)"></span>
+<span x-text="fmtQty(item.quantity)"></span>
+
+{{-- ရှောင်ရှားရမည့်ပုံစံ (Avoid) --}}
+<span x-text="'Ks ' + Number(lineTotal).toLocaleString()"></span>
+```
+
+### ၄။ Input Labels & Column Headers (အညွှန်းစာသားများ သန့်ရှင်းစေခြင်း)
+- Form input label များ သို့မဟုတ် Table column header များတွင် `(Ks)` သို့မဟုတ် `($)` စသည့် Hardcoded currency သင်္ကေတများ မထည့်ရ။ (ဥပမာ- `{{ __('messages.po_unit_cost') }} (Ks)` အစား `{{ __('messages.po_unit_cost') }}` ဟုသာ ရေးရမည်)။
+- သို့မှသာ အခြားသော ငွေကြေးသုံးစွဲသည့် ဆိုင်ခွဲများတွင်လည်း UI ရှုပ်ထွေးမှားယွင်းမှု ကင်းရှင်းမည်ဖြစ်သည်။
+
+### ၅။ Clean Quantity Formatting (မလိုအပ်သော `.000` များ လုံးဝမထည့်ရ)
 - စတော့လက်ကျန်အရေအတွက် (On-Hand Quantity)၊ အဝင်/အထွက် အရေအတွက် (Inflow/Outflow Delta) နှင့် ကုန်ပစ္စည်းအရေအတွက်များတွင် မလိုအပ်သော ဒဿမနေရာ `.000` များ လုံးဝ မထည့်ရ။ (ဥပမာ- `10.000` အစား **`10`**၊ `2,600.000` အစား **`2,600`**၊ `+5.000` အစား **`+5`**၊ `-2.000` အစား **`-2`**)။
 - အကယ်၍ အလေးချိန်/မီတာ ကဲ့သို့ ဒဿမပါဝင်သော fractional quantity ဖြစ်ပါက မလိုအပ်သော နောက်ပိတ် သုညများကို ဖယ်ရှား၍ (ဥပမာ- `1.500` အစား **`1.5`**၊ `2.250` အစား **`2.25`**) အဖြစ် တိကျစွာ ပြသရမည်။
 
-### ၂။ Standard Quantity Formatting Helper (`$fmtQty`)
-Blade View များတွင် အောက်ပါ Helper ကို ထည့်သွင်းသုံးစွဲရမည်:
-
-```php
-@php
-    $fmtQty = function($v) {
-        $val = (float) $v;
-        return $val == (int) $val ? number_format($val, 0) : rtrim(rtrim(number_format($val, 3), '0'), '.');
-    };
-@endphp
-```
-
-### ၃။ Table View On-Hand Qty Prominence (Table View တွင် စတော့လက်ကျန် ပေါ်လွင်စေခြင်း)
+### ၆။ Table View On-Hand Qty Prominence (Table View တွင် စတော့လက်ကျန် ပေါ်လွင်စေခြင်း)
 - Table View တွင် **Stock On-Hand Quantity (`messages.on_hand_qty`)** ကော်လံသည် အဓိက အရေးပါဆုံး အချက်အလက် ဖြစ်သောကြောင့် Column Header အား Contrast ပေးထားပြီး Row တစ်ခုချင်းစီ၏ လက်ကျန်အရေအတွက်ကို Soft background highlight နှင့် Bold font (`font-black font-mono text-xs sm:text-sm`) ဖြင့် မျက်စိထဲ ချက်ချင်း မြင်သာစေရမည်။
 - လက်ကျန်ပြတ်/သုည သို့မဟုတ် အနုတ်ဖြစ်ပါက အနီရောင် (`text-rose-600 dark:text-rose-400`)၊ လက်ကျန်ရှိပါက Dark/Light contrast ကောင်းသော text (`text-slate-900 dark:text-slate-100`) ဖြင့် ပြသရမည်:
 
@@ -239,7 +279,7 @@ Blade View များတွင် အောက်ပါ Helper ကို ထ�
 </th>
 
 <td class="py-1.5 px-2.5 text-right font-mono font-black text-xs sm:text-sm tabular-nums bg-slate-50/50 dark:bg-slate-800/30 {{ $qty <= 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100' }}">
-    {{ $fmtQty($qty) }}
+    {{ format_quantity($qty, $store) }}
 </td>
 ```
 
@@ -305,7 +345,9 @@ Blade View များတွင် အောက်ပါ Helper ကို ထ�
 - [ ] Search Input အမြင့်သည် `h-7` ဖြစ်ပြီး Icon ပါဝင်ခြင်း။
 - [ ] Excel Export ခလုတ် ပါဝင်ပြီး `.xlsx` နှင့် `.csv` နှစ်မျိုးစလုံး Download ပြုလုပ်နိုင်ခြင်း။
 - [ ] Table/Cards View Switcher ချိတ်ဆက်ထားပြီး LocalStorage ဖြင့် ရွေးချယ်မှု မှတ်သားနိုင်ခြင်း။
-- [ ] စတော့လက်ကျန်နှင့် အဝင်/အထွက် အရေအတွက်များတွင် `.000` မပါဝင်စေဘဲ `$fmtQty` helper ဖြင့် သန့်ရှင်းစွာ ပြသထားခြင်း။
+- [ ] စျေးနှုန်းနှင့် ငွေကြေးဖော်ပြမှုများတွင် Hardcoded `Ks` လုံးဝမသုံးဘဲ `/admin/settings/currency` Setting အတိုင်း `format_currency()` သို့မဟုတ် `window.formatCurrency()` ဖြင့် စနစ်တကျ ပြသထားခြင်း။
+- [ ] Input Label နှင့် Table Column Header များတွင် hardcoded `(Ks)` သို့မဟုတ် `($)` များ မပါရှိစေခြင်း။
+- [ ] စတော့လက်ကျန်နှင့် အဝင်/အထွက် အရေအတွက်များတွင် `.000` မပါဝင်စေဘဲ `format_quantity()` သို့မဟုတ် `$fmtQty` helper ဖြင့် သန့်ရှင်းစွာ ပြသထားခြင်း။
 - [ ] Table View တွင် Stock On-Hand Quantity (`messages.on_hand_qty`) ကော်လံအား Soft highlight နှင့် Bold font ဖြင့် ထင်ရှားစွာ ပေါ်လွင်စေခြင်း။
 - [ ] မြန်မာစာသားများသည် တိုတိုရှင်းရှင်းနှင့် သဘာဝကျသော ဝေါဟာရများ ဖြစ်ခြင်း (ကွင်းစကွင်းပိတ်အပိုများ မပါရှိခြင်း)။
 - [ ] ဘာသာစကားဖိုင် ၃ ခု (`lang/my`, `lang/en`, `lang/zh_CN`) အပြည့်အစုံ update ပြုလုပ်ထားခြင်း။

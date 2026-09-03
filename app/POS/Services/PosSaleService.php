@@ -485,7 +485,7 @@ class PosSaleService
         // Attach the approver's name once for the whole cart (no per-row query).
         $approverIds = array_values(array_filter(array_column($out, 'approved_by')));
         $approverNames = $approverIds
-            ? \App\Models\User::whereIn('id', $approverIds)->pluck('name', 'id')->all()
+            ? User::whereIn('id', $approverIds)->pluck('name', 'id')->all()
             : [];
         foreach ($out as &$line) {
             $line['approved_by_name'] = $line['approved_by'] !== null

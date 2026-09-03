@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Store;
 use App\POS\Exceptions\InventoryException;
 use App\POS\Models\PurchaseOrder;
+use App\POS\Models\PurchaseReturn;
+use App\POS\Models\PurchaseReturnItem;
 use App\POS\Services\PurchaseOrderService;
 use App\POS\Services\SupplierDebtService;
 use App\Services\StoreContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -226,7 +229,7 @@ class PurchaseOrderController extends Controller
         $currentVouchers = is_array($po->voucher_images) ? $po->voucher_images : [];
         if (isset($currentVouchers[$index])) {
             $pathToDelete = $currentVouchers[$index];
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($pathToDelete);
+            Storage::disk('public')->delete($pathToDelete);
             unset($currentVouchers[$index]);
             $po->update(['voucher_images' => array_values($currentVouchers)]);
         }
@@ -245,6 +248,103 @@ class PurchaseOrderController extends Controller
         }
 
         return view('pos.purchases.show', compact('store', 'po'));
+    }
+
+    /** Edit form for an existing PO. */
+    public function edit(StoreContext $context, string $store_slug, int $purchaseOrder): View
+    {
+        $store = $context->getStore();
+        $po = $this->purchaseOrders->findForStore($store, $purchaseOrder);
+
+        if (! $po) {
+            abort(404);
+        }
+
+        $suppliers = \App\Models\Supplier::where('store_id', $store->id)->orderBy('name')->get();
+        $brands = \App\Models\Brand::where('store_id', $store->id)->orderBy('name')->get();
+        $categories = \App\Models\Category::where('store_id', $store->id)->whereNull('parent_id')->orderBy('name')->get();
+
+        // Preload items with products and variants
+        $po->load(['items.product', 'items.variant', 'supplier']);
+
+        return view('pos.purchases.edit', compact('store', 'po', 'suppliers', 'brands', 'categories'));
+    }
+
+    /** Update an existing PO. */
+    public function update(Request $request, StoreContext $context, string $store_slug, int $purchaseOrder): RedirectResponse
+    {
+        $store = $context->getStore();
+        $po = $this->purchaseOrders->findForStore($store, $purchaseOrder);
+
+        if (! $po) {
+            abort(404);
+        }
+
+        if ($po->isCancelled()) {
+            return back()->with('error', 'Cancelled PO cannot be edited.');
+        }
+
+        // Full validation for all editable POs
+        $data = $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'integer', \Illuminate\Validation\Rule::exists('products', 'id')->where('store_id', $store->id)],
+            'items.*.product_variant_id' => ['nullable', 'integer'],
+            'items.*.quantity' => ['required', 'decimal:0,3', 'gt:0'],
+            'items.*.unit_cost' => ['required', 'decimal:0,2', 'min:0'],
+            'supplier_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('suppliers', 'id')->where('store_id', $store->id)],
+            'reference' => ['nullable', 'string', 'max:100'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'discount_amount' => ['nullable', 'decimal:0,2', 'min:0'],
+            'delivery_fee' => ['nullable', 'decimal:0,2', 'min:0'],
+            'voucher_images' => ['nullable', 'array'],
+            'voucher_images.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf,heic', 'max:10240'],
+        ]);
+
+        $vouchers = is_array($po->voucher_images) ? $po->voucher_images : [];
+        if ($request->hasFile('voucher_images')) {
+            foreach ($request->file('voucher_images') as $file) {
+                if ($file && $file->isValid()) {
+                    $vouchers[] = $file->store("purchase_vouchers/{$store->id}", 'public');
+                }
+            }
+        }
+
+        try {
+            $this->purchaseOrders->update($po, [
+                'items' => $data['items'],
+                'supplier_id' => $data['supplier_id'] ?? null,
+                'reference' => $data['reference'] ?? null,
+                'notes' => $data['notes'] ?? null,
+                'discount_amount' => $data['discount_amount'] ?? '0',
+                'delivery_fee' => $data['delivery_fee'] ?? '0',
+                'voucher_images' => array_values($vouchers),
+            ], $request->user());
+        } catch (InventoryException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('pos.purchases.show', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id])
+            ->with('success', __('messages.po_updated') . ' — ' . $po->po_number);
+    }
+
+    /** Delete a purchase order. */
+    public function destroy(Request $request, StoreContext $context, string $store_slug, int $purchaseOrder): RedirectResponse
+    {
+        $store = $context->getStore();
+        $po = $this->purchaseOrders->findForStore($store, $purchaseOrder);
+
+        if (! $po) {
+            abort(404);
+        }
+
+        try {
+            $this->purchaseOrders->delete($po, $request->user());
+        } catch (InventoryException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('pos.purchases.index', ['store_slug' => $store->slug])
+            ->with('success', __('messages.po_deleted'));
     }
 
     /** pending → ordered. */
@@ -360,7 +460,7 @@ class PurchaseOrderController extends Controller
         $returns = $query->paginate(25)->withQueryString();
         $totalCount = $returns->total();
 
-        $allReturns = \App\POS\Models\PurchaseReturn::where('store_id', $store->id)->get();
+        $allReturns = PurchaseReturn::where('store_id', $store->id)->get();
         $summary = [
             'total_count' => $allReturns->count(),
             'total_qty' => (float) $allReturns->sum('total_quantity'),
@@ -368,7 +468,45 @@ class PurchaseOrderController extends Controller
             'suppliers_count' => $allReturns->pluck('supplier_id')->filter()->unique()->count(),
         ];
 
-        return view('pos.purchases.returns_index', compact('store', 'returns', 'totalCount', 'search', 'sort', 'summary'));
+        $receivedOrders = PurchaseOrder::where('store_id', $store->id)
+            ->where('status', 'received')
+            ->with(['supplier', 'items.product', 'items.variant'])
+            ->latest('received_at')
+            ->take(50)
+            ->get()
+            ->map(function ($po) use ($store) {
+                $items = $po->items->map(function ($item) use ($store, $po) {
+                    $alreadyReturned = (float) PurchaseReturnItem::where('store_id', $store->id)
+                        ->whereHas('purchaseReturn', fn ($q) => $q->where('purchase_order_id', $po->id))
+                        ->where('product_id', $item->product_id)
+                        ->where('product_variant_id', $item->product_variant_id)
+                        ->sum('quantity');
+                    $returnableQty = max(0, (float) $item->quantity - $alreadyReturned);
+                    return [
+                        'id' => $item->id,
+                        'product_id' => $item->product_id,
+                        'product_variant_id' => $item->product_variant_id,
+                        'name' => $item->product?->name . ($item->variant?->name ? ' (' . $item->variant->name . ')' : ''),
+                        'sku' => $item->variant?->sku ?: $item->product?->sku,
+                        'unit_cost' => (float) $item->unit_cost,
+                        'original_qty' => (float) $item->quantity,
+                        'returnable_qty' => $returnableQty,
+                        'return_qty' => '0',
+                    ];
+                })->filter(fn ($i) => $i['returnable_qty'] > 0)->values();
+
+                return [
+                    'id' => $po->id,
+                    'po_number' => $po->po_number,
+                    'supplier_name' => $po->supplier?->name ?? '—',
+                    'received_at' => $po->received_at?->format('d M Y') ?? $po->created_at?->format('d M Y'),
+                    'total_cost' => (float) $po->total_cost,
+                    'items' => $items,
+                    'items_count' => $items->count(),
+                ];
+            })->filter(fn ($po) => $po['items_count'] > 0)->values();
+
+        return view('pos.purchases.returns_index', compact('store', 'returns', 'totalCount', 'search', 'sort', 'summary', 'receivedOrders'));
     }
 
     /** Export Purchase Returns to styled Excel (.xlsx). */
@@ -502,7 +640,7 @@ class PurchaseOrderController extends Controller
         ]);
     }
 
-        /** Apply payment to a specific PO. */
+    /** Apply payment to a specific PO. */
     public function pay(Request $request, StoreContext $context, string $store_slug, int $purchaseOrder): RedirectResponse
     {
         $store = $context->getStore();
@@ -510,19 +648,35 @@ class PurchaseOrderController extends Controller
 
         if (! $po) {
             abort(404);
-        }        $data = $request->validate([
-            'amount' => ['required', 'decimal:0,2', 'gt:0'],
-            'reference' => ['nullable', 'string', 'max:100'],
+        }
+
+        $data = $request->validate([
+            'amount'         => ['required', 'decimal:0,2', 'gt:0'],
+            'reference'      => ['nullable', 'string', 'max:120'],
+            'slip_images'    => ['nullable', 'array', 'max:4'],
+            'slip_images.*'  => ['file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],  // 5 MB each
         ]);
 
+        // Store uploaded images
+        $imagePaths = [];
+        if ($request->hasFile('slip_images')) {
+            $dir = 'payment-slips/' . $store->slug . '/' . $po->id;
+            foreach ($request->file('slip_images') as $file) {
+                $imagePaths[] = $file->store($dir, 'public');
+            }
+        }
+
         try {
-
-
             $this->purchaseOrders->applyPayment($po, [
-                'amount' => $data['amount'],
-                'reference' => $data['reference'] ?? null,
+                'amount'      => $data['amount'],
+                'reference'   => $data['reference'] ?? null,
+                'slip_images' => $imagePaths ?: null,
             ], $request->user());
         } catch (InventoryException $e) {
+            // Clean up uploaded files on failure
+            foreach ($imagePaths as $path) {
+                Storage::disk('public')->delete($path);
+            }
             return back()->with('error', $e->getMessage());
         }
 
@@ -533,22 +687,142 @@ class PurchaseOrderController extends Controller
     /*  Payables Screen (Supplier Debt)                                      */
     /* ------------------------------------------------------------------ */
 
-    /** List suppliers with outstanding balances (payables screen). */
+    /** List suppliers with outstanding balances and unpaid PO vouchers (payables screen). */
     public function payablesIndex(StoreContext $context): View
     {
         $store = $context->getStore();
         $suppliers = $this->supplierDebt->listSuppliersWithBalances($store);
 
-        $totalOutstanding = $suppliers->sum(fn ($s) => (float) $s['balance']);
+        $unpaidOrders = PurchaseOrder::where('store_id', $store->id)
+            ->where('status', PurchaseOrder::STATUS_RECEIVED)
+            ->whereIn('payment_status', [PurchaseOrder::PAYMENT_UNPAID, PurchaseOrder::PAYMENT_PARTIAL])
+            ->where('remaining_balance', '>', 0)
+            ->with(['supplier', 'items.product', 'createdBy'])
+            ->orderBy('created_at', 'asc')
+            ->get();
 
-        return view('pos.purchases.payables.index', compact('store', 'suppliers', 'totalOutstanding'));
+        $totalOutstanding = (float) $unpaidOrders->sum('remaining_balance');
+
+        return view('pos.purchases.payables.index', compact('store', 'suppliers', 'unpaidOrders', 'totalOutstanding'));
     }
 
-    /** Export payables list as CSV with UTF-8 BOM. */
-    public function payablesExport(StoreContext $context): \Symfony\Component\HttpFoundation\StreamedResponse
+    /** Export payables list as Excel (.xlsx) or CSV with UTF-8 BOM. */
+    public function payablesExport(Request $request, StoreContext $context)
     {
         $store = $context->getStore();
+        $format = $request->query('format', 'csv');
+        $type = $request->query('type', 'vouchers');
+
         $suppliers = $this->supplierDebt->listSuppliersWithBalances($store);
+        $unpaidOrders = PurchaseOrder::where('store_id', $store->id)
+            ->where('status', PurchaseOrder::STATUS_RECEIVED)
+            ->whereIn('payment_status', [PurchaseOrder::PAYMENT_UNPAID, PurchaseOrder::PAYMENT_PARTIAL])
+            ->where('remaining_balance', '>', 0)
+            ->with(['supplier', 'items.product', 'createdBy'])
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        if ($format === 'excel' || $format === 'xlsx') {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle(__('messages.payables_title') ?: 'Supplier Payables');
+
+            // Header Title
+            $sheet->setCellValue('A1', ($store->name ?? 'DataPOS') . ' - ' . __('messages.sidebar_payables'));
+            $sheet->mergeCells('A1:G1');
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF0F172A');
+            $sheet->getStyle('A1')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getRowDimension(1)->setRowHeight(28);
+
+            // Subtitle
+            $sheet->setCellValue('A2', now()->format('d M Y H:i') . ' | ' . count($suppliers) . ' Suppliers Owed');
+            $sheet->mergeCells('A2:F2');
+            $sheet->getStyle('A2')->getFont()->setSize(10)->getColor()->setARGB('FF64748B');
+            $sheet->getRowDimension(2)->setRowHeight(18);
+
+            // Table Column Headers (Row 4)
+            $headers = [
+                'A4' => __('messages.report_supplier_name'),
+                'B4' => __('messages.report_contact_person'),
+                'C4' => __('messages.phone'),
+                'D4' => __('messages.report_unpaid_po_count'),
+                'E4' => __('messages.report_outstanding_debt') . ' (Ks)',
+                'F4' => __('messages.report_oldest_unpaid_date'),
+            ];
+
+            foreach ($headers as $cell => $text) {
+                $sheet->setCellValue($cell, $text);
+            }
+
+            $sheet->getStyle('A4:F4')->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFE11D48']],
+                'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
+            ]);
+            $sheet->getStyle('D4:E4')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->getRowDimension(4)->setRowHeight(24);
+
+            $rowNum = 5;
+            $totalDebt = 0;
+            $totalUnpaidCount = 0;
+
+            foreach ($suppliers as $s) {
+                $balance = (float) $s['balance'];
+                $unpaidCount = (int) $s['unpaid_count'];
+                $totalDebt += $balance;
+                $totalUnpaidCount += $unpaidCount;
+
+                $sheet->setCellValue('A' . $rowNum, $s['supplier']->name);
+                $sheet->setCellValue('B' . $rowNum, $s['supplier']->contact_person ?? '—');
+                $sheet->setCellValue('C' . $rowNum, $s['supplier']->phone ?? '—');
+                $sheet->setCellValue('D' . $rowNum, $unpaidCount);
+                $sheet->setCellValue('E' . $rowNum, $balance);
+                $sheet->setCellValue('F' . $rowNum, $s['oldest_unpaid_date'] ? $s['oldest_unpaid_date']->format('Y-m-d') : '—');
+
+                $sheet->getStyle('A' . $rowNum . ':F' . $rowNum)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+                $sheet->getStyle('D' . $rowNum)->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle('E' . $rowNum)->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle('D' . $rowNum . ':E' . $rowNum)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+                if ($rowNum % 2 === 0) {
+                    $sheet->getStyle('A' . $rowNum . ':F' . $rowNum)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFF1F2');
+                }
+                $rowNum++;
+            }
+
+            // Summary Total Row
+            if (count($suppliers) > 0) {
+                $sheet->setCellValue('A' . $rowNum, __('messages.total'));
+                $sheet->mergeCells('A' . $rowNum . ':C' . $rowNum);
+                $sheet->setCellValue('D' . $rowNum, $totalUnpaidCount);
+                $sheet->setCellValue('E' . $rowNum, $totalDebt);
+                $sheet->getStyle('A' . $rowNum . ':F' . $rowNum)->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 11, 'color' => ['argb' => 'FF881337']],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFFECDD3']],
+                    'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
+                ]);
+                $sheet->getStyle('D' . $rowNum)->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle('E' . $rowNum)->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle('D' . $rowNum . ':E' . $rowNum)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->getRowDimension($rowNum)->setRowHeight(22);
+                $rowNum++;
+            }
+
+            foreach (['A', 'B', 'C', 'D', 'E', 'F'] as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            $writer = new Xlsx($spreadsheet);
+            $filename = 'payables_' . now()->format('Ymd_His') . '.xlsx';
+
+            return response()->streamDownload(function () use ($writer, $spreadsheet) {
+                $writer->save('php://output');
+                $spreadsheet->disconnectWorksheets();
+            }, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Cache-Control' => 'max-age=0',
+            ]);
+        }
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',

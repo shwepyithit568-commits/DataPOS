@@ -131,8 +131,8 @@ class PurchaseReturnsIndexTest extends TestCase
             'search' => 'Alpha',
         ]));
         $resSearch->assertOk();
-        $resSearch->assertSee('Alpha Supply');
-        $resSearch->assertDontSee('Beta Electronics');
+        $resSearch->assertSee('Alpha return reason');
+        $resSearch->assertDontSee('Beta return reason');
     }
 
     public function test_returns_export_excel(): void

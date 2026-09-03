@@ -400,6 +400,25 @@ class AdminRepairCenterTest extends TestCase
         $response->assertDontSeeText('StillOpen');
     }
 
+    public function test_index_tab_debt_buckets_unpaid_jobs(): void
+    {
+        $this->makeJob(['status' => 'ready', 'model' => 'UnpaidPhone', 'final_charge' => '25000.00']);
+        $paidJob = $this->makeJob(['status' => 'delivered', 'model' => 'FullyPaidPhone', 'final_charge' => '20000.00']);
+        $paidJob->payments()->create([
+            'store_id' => $this->store->id,
+            'amount' => '20000.00',
+            'method' => 'cash',
+            'created_by' => $this->manager->id,
+        ]);
+
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/repairs?tab=debt");
+
+        $response->assertStatus(200);
+        $response->assertSeeText('UnpaidPhone');
+        $response->assertDontSeeText('FullyPaidPhone');
+    }
+
     public function test_index_date_range_filter(): void
     {
         $this->makeJob(['model' => 'OldJob', 'created_at' => '2026-08-01 09:00:00']);
@@ -493,6 +512,22 @@ class AdminRepairCenterTest extends TestCase
         $this->assertStringContainsString($job->job_number, $csv);
         $this->assertStringContainsString('Export Customer', $csv);
         $this->assertStringContainsString('Screen replacement', $csv);
+    }
+
+    public function test_export_downloads_xlsx_of_filtered_jobs(): void
+    {
+        $job = $this->makeJob([
+            'model' => 'ExportPhoneXLSX',
+            'contact_name' => 'Export Customer XLSX',
+            'estimated_charge' => '30000.00',
+            'status' => 'received',
+        ]);
+
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/repairs/export?format=xlsx");
+
+        $response->assertStatus(200);
+        $this->assertStringContainsString('spreadsheetml.sheet', $response->headers->get('Content-Type') ?? '');
     }
 
     public function test_create_job_persists_line_items_with_subtotals(): void
@@ -701,6 +736,47 @@ class AdminRepairCenterTest extends TestCase
         $response->assertStatus(200);
         $response->assertSeeText($job->job_number);
         $response->assertSeeText('Battery replacement');
+    }
+
+    public function test_print_ticket_supports_voucher_paper_sizes_and_share(): void
+    {
+        $job = $this->makeJob(['model' => 'PrintMeAllSizes']);
+
+        foreach (['58mm', '80mm', 'a5', 'a4'] as $size) {
+            $response = $this->actingAs($this->manager)
+                ->get("/store/{$this->store->slug}/admin/repairs/{$job->id}/print?paper_size={$size}");
+
+            $response->assertStatus(200);
+            $response->assertSeeText($job->job_number);
+            $response->assertSee("size-{$size}", false);
+            $response->assertSee('html2pdf', false);
+            $response->assertSee('btnDownloadPdf', false);
+            $response->assertSee('btnShare', false);
+        }
+    }
+
+    public function test_status_transition_supports_notify_customer_session_and_modal(): void
+    {
+        $job = $this->makeJob(['status' => 'diagnosing', 'model' => 'NotifyMePhone']);
+
+        $response = $this->actingAs($this->manager)
+            ->post("/store/{$this->store->slug}/admin/repairs/{$job->id}/status", [
+                'status' => 'ready',
+                'note' => 'Fixed and ready for customer pickup',
+                'notify_customer' => '1',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('notify_customer', true);
+
+        $showResponse = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/repairs/{$job->id}");
+
+        $showResponse->assertStatus(200);
+        $showResponse->assertSee('openRepairNotifyModal', false);
+        $showResponse->assertSee('notifySendViber', false);
+        $showResponse->assertSee('notifySendTelegram', false);
+        $showResponse->assertSee('notifySendSms', false);
     }
 
     public function test_quick_add_technician(): void

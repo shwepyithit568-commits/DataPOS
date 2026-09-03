@@ -41,4 +41,38 @@ window.formatCurrency = function(val) {
     if (cfg.negative_format === 'dr_cr') return withSym + ' (DR)';
     return '-' + withSym;
 };
+window.formatQuantity = function(val) {
+    const cfg = window.__currencyConfig || {};
+    const num = parseFloat(val) || 0;
+    const qtyDecimals = cfg.qty_decimal_places !== undefined ? cfg.qty_decimal_places : 'auto';
+    const trimZeros = cfg.qty_trim_zeros !== undefined ? Boolean(cfg.qty_trim_zeros) : true;
+    const decSep = cfg.decimal_separator === ',' ? ',' : '.';
+    let tSep = ',';
+    if (cfg.thousand_separator === 'dot' || cfg.thousand_separator === '.') tSep = '.';
+    else if (cfg.thousand_separator === 'space' || cfg.thousand_separator === ' ') tSep = ' ';
+    else if (cfg.thousand_separator === 'none' || cfg.thousand_separator === '') tSep = '';
+
+    const formatWithParts = (n, decs) => {
+        const fixed = n.toFixed(decs);
+        const parts = fixed.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, tSep);
+        if (decs > 0 && trimZeros) {
+            let decimalPart = parts[1].replace(/0+$/, '');
+            return decimalPart.length > 0 ? parts[0] + decSep + decimalPart : parts[0];
+        }
+        return decs > 0 ? parts.join(decSep) : parts[0];
+    };
+
+    if (qtyDecimals === 'auto') {
+        if (Number.isInteger(num)) {
+            return formatWithParts(num, 0);
+        }
+        return formatWithParts(num, 3);
+    }
+
+    const d = Math.max(0, parseInt(qtyDecimals) || 0);
+    return formatWithParts(num, d);
+};
+window.format_currency = window.formatCurrency;
+window.format_quantity = window.formatQuantity;
 </script>

@@ -196,6 +196,24 @@ class ServiceSettingTest extends TestCase
         $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
     }
 
+    public function test_service_settings_export_xlsx(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/service-settings/export?tab=brand&format=xlsx");
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    public function test_service_settings_export_all_masters_xlsx(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/service-settings/export?scope=all&format=xlsx");
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
     public function test_service_settings_download_template(): void
     {
         $response = $this->actingAs($this->manager)
@@ -204,6 +222,15 @@ class ServiceSettingTest extends TestCase
         $response->assertStatus(200);
         $this->assertInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class, $response->baseResponse);
         $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_service_settings_download_template_all_xlsx(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/service-settings/template?scope=all&format=xlsx");
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
     public function test_service_settings_import_csv(): void

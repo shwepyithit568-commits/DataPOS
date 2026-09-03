@@ -166,6 +166,56 @@ class CustomerReceivableTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_collect_customer_debt_with_payment_slip(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $this->debtService->recordOpeningBalance(
+            store: $this->store,
+            customerId: $this->customer->id,
+            amount: '100000.00',
+            actor: $this->admin,
+        );
+
+        $fakeSlip = \Illuminate\Http\UploadedFile::fake()->image('kpay_transfer_slip.jpg', 600, 800);
+
+        $response = $this->actingAs($this->admin)->post(route('store.admin.receivables.collect', [
+            'store_slug' => $this->store->slug,
+            'customer' => $this->customer->id,
+        ]), [
+            'amount' => '30000',
+            'payment_method' => 'kpay',
+            'reference_no' => 'KP99887766',
+            'notes' => 'Settled with screenshot',
+            'slip_image' => $fakeSlip,
+        ]);
+
+        $response->assertRedirect(route('store.admin.receivables.show', [
+            'store_slug' => $this->store->slug,
+            'customer' => $this->customer->id,
+        ]));
+        $response->assertSessionHas('success');
+
+        $entry = CustomerLedgerEntry::where('store_id', $this->store->id)
+            ->where('customer_id', $this->customer->id)
+            ->where('type', CustomerLedgerEntry::TYPE_COLLECTION)
+            ->first();
+
+        $this->assertNotNull($entry);
+        $this->assertNotNull($entry->slip_image);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($entry->slip_image);
+
+        // Check show page displays the slip preview trigger and URL
+        $showResponse = $this->actingAs($this->admin)->get(route('store.admin.receivables.show', [
+            'store_slug' => $this->store->slug,
+            'customer' => $this->customer->id,
+        ]));
+
+        $showResponse->assertStatus(200);
+        $showResponse->assertSee($entry->slip_image, false);
+        $showResponse->assertSee('openSlip', false);
+    }
+
     public function test_admin_cannot_collect_more_than_outstanding_balance(): void
     {
         $this->debtService->recordOpeningBalance(
@@ -227,11 +277,46 @@ class CustomerReceivableTest extends TestCase
 
         $response = $this->actingAs($this->admin)->get(route('store.admin.receivables.export', [
             'store_slug' => $this->store->slug,
+            'format' => 'csv',
         ]));
 
         $response->assertStatus(200);
         $this->assertInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class, $response->baseResponse);
         $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_admin_can_export_receivables_xlsx(): void
+    {
+        $this->debtService->recordOpeningBalance(
+            store: $this->store,
+            customerId: $this->customer->id,
+            amount: '65000.00',
+            actor: $this->admin,
+        );
+
+        $response = $this->actingAs($this->admin)->get(route('store.admin.receivables.export', [
+            'store_slug' => $this->store->slug,
+            'format' => 'xlsx',
+        ]));
+
+        $response->assertStatus(200);
+        $this->assertStringContainsString('spreadsheetml.sheet', $response->headers->get('content-type', ''));
+    }
+
+    public function test_receivables_ui_ux_standard_v4_1_compact_layout(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('store.admin.receivables.index', [
+            'store_slug' => $this->store->slug,
+        ]));
+
+        $response->assertStatus(200);
+        // Ultra-dense 2px mobile padding
+        $response->assertSee('p-0.5 sm:p-1', false);
+        // Centered row-based stat cards
+        $response->assertSee('flex items-center justify-center gap-2.5 sm:gap-3', false);
+        // Both card grid and spreadsheet table view containers are present
+        $response->assertSee('id="receivables-grid"', false);
+        $response->assertSee('id="receivables-table"', false);
     }
 
     public function test_receivables_index_renders_without_translation_key_leaks(): void

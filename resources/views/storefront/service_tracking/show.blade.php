@@ -319,11 +319,11 @@
                                             <span class="font-bold text-slate-800 dark:text-slate-200 block">{{ $item->name }}</span>
                                             <span class="text-[11px] text-slate-400 uppercase font-mono">{{ $item->item_type }}</span>
                                         </td>
-                                        <td class="py-2.5 text-center font-bold text-slate-600 dark:text-slate-300">
-                                            x{{ $item->quantity }}
+                                        <td class="py-2.5 text-center font-bold text-slate-600 dark:text-slate-300 font-mono">
+                                            {{ format_quantity($item->quantity, $store) }}
                                         </td>
                                         <td class="py-2.5 text-right font-black text-slate-900 dark:text-white font-mono">
-                                            {{ number_format((float) $item->subtotal) }} MMK
+                                            {{ format_currency($item->subtotal, $store) }}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -390,18 +390,18 @@
                     @if ($job->final_charge !== null)
                         <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                             <span class="text-slate-500">သတ်မှတ်ကျသင့်ငွေ:</span>
-                            <span class="font-black text-slate-900 dark:text-white font-mono">{{ number_format((float) $job->final_charge) }} MMK</span>
+                            <span class="font-black text-slate-900 dark:text-white font-mono">{{ format_currency($job->final_charge, $store) }}</span>
                         </div>
                     @elseif ($job->estimated_charge > 0)
                         <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                             <span class="text-slate-500">ခန့်မှန်းကျသင့်ငွေ:</span>
-                            <span class="font-bold text-slate-700 dark:text-slate-300 font-mono">{{ number_format((float) $job->estimated_charge) }} MMK</span>
+                            <span class="font-bold text-slate-700 dark:text-slate-300 font-mono">{{ format_currency($job->estimated_charge, $store) }}</span>
                         </div>
                     @endif
 
                     <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                         <span class="text-slate-500">ပေးချေပြီးငွေ (Paid):</span>
-                        <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono">{{ number_format($job->paidAmount()) }} MMK</span>
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono">{{ format_currency($job->paidAmount(), $store) }}</span>
                     </div>
 
                     <div class="p-3.5 rounded-xl bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/40 dark:to-emerald-950/40 border border-teal-200 dark:border-teal-800/80 flex items-center justify-between">
@@ -410,7 +410,7 @@
                             <span class="text-[10px] text-teal-600 dark:text-teal-400 font-mono">Outstanding</span>
                         </div>
                         <span class="text-base sm:text-lg font-black text-teal-700 dark:text-teal-300 font-mono">
-                            {{ number_format($job->outstanding()) }} MMK
+                            {{ format_currency($job->outstanding(), $store) }}
                         </span>
                     </div>
                 </div>

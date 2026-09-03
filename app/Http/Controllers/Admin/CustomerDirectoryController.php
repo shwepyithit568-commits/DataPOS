@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CustomerDirectoryController extends Controller
@@ -329,63 +333,201 @@ class CustomerDirectoryController extends Controller
     }
 
     /**
-     * Export Customers Directory to CSV.
+     * Export Customers Directory to Excel (.xlsx) or CSV.
      */
-    public function exportCsv(Request $request, StoreContext $context): StreamedResponse
+    public function exportCsv(Request $request, StoreContext $context): BinaryFileResponse|StreamedResponse
+    {
+        return $this->export($request, $context);
+    }
+
+    /**
+     * Export Customers Directory to Excel (.xlsx) or CSV.
+     */
+    public function export(Request $request, StoreContext $context): BinaryFileResponse|StreamedResponse
     {
         $store = $context->getStore();
         if (! $store) {
             abort(404);
         }
 
-        $customers = User::query()
+        $query = User::query()
             ->whereHas('stores', function ($q) use ($store) {
                 $q->where('stores.id', $store->id)
                   ->whereIn('store_user.role', ['retail_customer', 'wholesale_customer']);
             })
-            ->with(['stores' => fn ($rel) => $rel->where('stores.id', $store->id)])
-            ->orderBy('name')
-            ->get();
+            ->with(['stores' => fn ($rel) => $rel->where('stores.id', $store->id)]);
 
-        $filename = 'customers-directory-' . $store->slug . '-' . now()->format('Ymd-His') . '.csv';
+        // Filter persistence matching index query
+        if ($request->filled('search')) {
+            $search = trim($request->input('search'));
+            $query->where(function ($w) use ($search) {
+                $w->where('name', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
 
-        return response()->streamDownload(function () use ($store, $customers) {
-            $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+        $tab = $request->query('tab', 'all');
+        if ($tab === 'retail') {
+            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.role', 'retail_customer'));
+        } elseif ($tab === 'wholesale') {
+            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.role', 'wholesale_customer'));
+        } elseif ($tab === 'debt') {
+            $debtCustomerIds = CustomerLedgerEntry::where('store_id', $store->id)
+                ->groupBy('customer_id')
+                ->havingRaw('SUM(amount) < 0 OR SUM(amount) > 0')
+                ->pluck('customer_id');
+            $query->whereIn('users.id', $debtCustomerIds);
+        } elseif ($request->filled('role') && in_array($request->input('role'), ['retail_customer', 'wholesale_customer'], true)) {
+            $filterRole = $request->input('role');
+            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.role', $filterRole));
+        }
 
-            fputcsv($handle, ['Customer Directory', $store->name]);
-            fputcsv($handle, ['Exported Date', now()->toFormattedDateString() . ' ' . now()->format('h:i A')]);
-            fputcsv($handle, []);
+        if ($request->filled('status')) {
+            $status = $request->input('status');
+            $query->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->where('store_user.status', $status));
+        }
 
-            fputcsv($handle, [
-                'Customer Name',
-                'Phone',
-                'Email',
-                'Customer Type',
-                'Store Status',
-                'Debt Balance (MMK)',
-                'Joined Date',
-            ]);
+        $sort = $request->input('sort', 'name_asc');
+        $query = match ($sort) {
+            'newest'   => $query->latest('users.created_at'),
+            'oldest'   => $query->oldest('users.created_at'),
+            'name_desc'=> $query->orderByDesc('users.name'),
+            'phone'    => $query->orderBy('users.phone'),
+            default    => $query->orderBy('users.name'),
+        };
 
-            foreach ($customers as $c) {
-                $membership = $c->stores->first()?->pivot;
-                $debt = $this->debts->balanceFor($store->id, $c->id);
+        $customers = $query->get();
+        $format = strtolower((string) $request->query('format', 'xlsx'));
+
+        if ($format === 'csv') {
+            $filename = 'customers-directory-' . $store->slug . '-' . now()->format('Ymd-His') . '.csv';
+
+            return response()->streamDownload(function () use ($store, $customers) {
+                $handle = fopen('php://output', 'w');
+                fwrite($handle, "\xEF\xBB\xBF"); // UTF-8 BOM
+
+                fputcsv($handle, ['Customer Directory', $this->csvCell($store->name)]);
+                fputcsv($handle, ['Exported Date', now()->toFormattedDateString() . ' ' . now()->format('h:i A')]);
+                fputcsv($handle, []);
 
                 fputcsv($handle, [
-                    $c->name,
-                    $c->phone ?? '-',
-                    $c->email ?? '-',
-                    $membership?->role === 'wholesale_customer' ? 'Wholesale Customer' : 'Retail Customer',
-                    ucfirst($membership?->status ?? 'active'),
-                    number_format($debt, 0, '.', ''),
-                    $c->created_at ? $c->created_at->format('Y-m-d') : '-',
+                    '#',
+                    'Customer Name',
+                    'Phone',
+                    'Email',
+                    'Customer Type',
+                    'Store Status',
+                    'Debt Balance',
+                    'Joined Date',
                 ]);
-            }
 
-            fclose($handle);
-        }, $filename, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+                foreach ($customers as $idx => $c) {
+                    $membership = $c->stores->first()?->pivot;
+                    $debt = $this->debts->balanceFor($store->id, $c->id);
+
+                    fputcsv($handle, [
+                        $idx + 1,
+                        $this->csvCell($c->name),
+                        $this->csvCell($c->phone ?? '-'),
+                        $this->csvCell($c->email ?? '-'),
+                        $membership?->role === 'wholesale_customer' ? 'Wholesale Customer' : 'Retail Customer',
+                        ucfirst($membership?->status ?? 'active'),
+                        number_format($debt, 0, '.', ''),
+                        $c->created_at ? $c->created_at->format('Y-m-d') : '-',
+                    ]);
+                }
+
+                fclose($handle);
+            }, $filename, [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            ]);
+        }
+
+        // PhpSpreadsheet XLSX export
+        $filename = 'Customers_' . $store->slug . '_' . now()->format('Ymd_His') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_customers_');
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Customers');
+
+        // Header Title Block
+        $sheet->setCellValue('A1', $store->name . ' - ' . __('messages.customer_admin_title'));
+        $sheet->setCellValue('A2', 'Export Date: ' . now()->format('d/m/Y h:i A') . ' | Total Count: ' . $customers->count());
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(13)->getColor()->setRGB('059669'); // Emerald green
+        $sheet->getStyle('A2')->getFont()->setSize(10)->getColor()->setRGB('64748B');
+
+        $row = 4;
+        $headers = [
+            'A' => '#',
+            'B' => 'Customer Name',
+            'C' => 'Phone',
+            'D' => 'Email',
+            'E' => 'Customer Type',
+            'F' => 'Store Status',
+            'G' => 'Debt Balance',
+            'H' => 'Joined Date',
+        ];
+
+        foreach ($headers as $col => $title) {
+            $sheet->setCellValue("{$col}{$row}", $title);
+        }
+
+        $sheet->getStyle("A{$row}:H{$row}")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '059669']],
         ]);
+
+        $row++;
+        foreach ($customers as $idx => $c) {
+            $membership = $c->stores->first()?->pivot;
+            $debt = $this->debts->balanceFor($store->id, $c->id);
+
+            $sheet->setCellValue("A{$row}", $idx + 1);
+            $sheet->setCellValue("B{$row}", $c->name);
+            $sheet->setCellValue("C{$row}", $c->phone ?? '-');
+            $sheet->setCellValue("D{$row}", $c->email ?? '-');
+            $sheet->setCellValue("E{$row}", $membership?->role === 'wholesale_customer' ? 'Wholesale Customer' : 'Retail Customer');
+            $sheet->setCellValue("F{$row}", ucfirst($membership?->status ?? 'active'));
+            $sheet->setCellValue("G{$row}", (float) $debt);
+            $sheet->setCellValue("H{$row}", $c->created_at ? $c->created_at->format('d/m/Y') : '-');
+
+            // Format Debt Balance column as accounting number
+            $sheet->getStyle("G{$row}")->getNumberFormat()->setFormatCode('#,##0');
+
+            // Alternate row shading
+            if ($row % 2 === 0) {
+                $sheet->getStyle("A{$row}:H{$row}")->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()->setRGB('F8FAFC');
+            }
+            $row++;
+        }
+
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Escape special characters to prevent CSV formula injection.
+     */
+    private function csvCell(mixed $value): string
+    {
+        $value = (string) $value;
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@'], true)) {
+            return "'" . $value;
+        }
+
+        return $value;
     }
 }

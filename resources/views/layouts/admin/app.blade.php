@@ -31,6 +31,7 @@
     @endphp
     @vite(['resources/css/admin.css', 'resources/js/app-admin.js'])
     <style>
+        [x-cloak] { display: none !important; }
         :root { --admin-accent: {{ $adminAccent }}; }
         /* Restrained: only the active sidebar nav link uses the brand accent */
         aside a.bg-violet-600,
@@ -1399,6 +1400,8 @@
 
     {{-- Global Floating Toast Notifications (Auto-dismiss & Close [X]) --}}
     <x-floating-toast />
+    {{-- Page-specific scripts injected outside Alpine body scope --}}
+    @stack('scripts')
 </body>
 </html>
 

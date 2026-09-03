@@ -49,7 +49,7 @@
                         $isServiceOrDigital = in_array($product->product_type, ['service', 'digital'], true);
                         $onHand = (float) ($product->on_hand_qty ?? $product->stock_on_hand ?? 0);
                         $reorder = (float) ($product->reorder_level ?? 0);
-                        $fmtQty = (fmod($onHand, 1) !== 0.0) ? number_format($onHand, 3) : number_format($onHand, 0);
+                        $fmtQty = format_quantity($onHand, $store ?? null);
 
                         if ($isServiceOrDigital) {
                             $badgeClass = 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700';
@@ -123,12 +123,12 @@
             <div class="flex flex-wrap items-baseline gap-3 pt-1">
                 <div class="flex items-baseline gap-1.5">
                     <span class="text-xs font-bold text-slate-500 uppercase">{{ __('messages.retail') }}:</span>
-                    <span class="text-lg sm:text-xl font-black text-slate-900 dark:text-white tabular-nums font-outfit">Ks {{ number_format($product->retail_price) }}</span>
+                    <span class="text-lg sm:text-xl font-black text-slate-900 dark:text-white tabular-nums font-outfit">{{ format_currency($product->retail_price, $store ?? null) }}</span>
                 </div>
                 @if ($product->wholesale_price > 0)
                     <div class="flex items-baseline gap-1.5 text-emerald-600 dark:text-emerald-400">
                         <span class="text-xs font-bold uppercase">{{ __('messages.wholesale') }}:</span>
-                        <span class="text-sm sm:text-base font-black tabular-nums font-outfit">Ks {{ number_format($product->wholesale_price) }}</span>
+                        <span class="text-sm sm:text-base font-black tabular-nums font-outfit">{{ format_currency($product->wholesale_price, $store ?? null) }}</span>
                     </div>
                 @endif
                 @if ($margin !== null)
@@ -237,14 +237,14 @@
                 @if ($product->purchase_cost > 0)
                     <div class="p-3 rounded-2xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('messages.details_purchase_cost') }}</span>
-                        <span class="text-xs font-black text-slate-900 dark:text-slate-100">Ks {{ number_format($product->purchase_cost) }}</span>
+                        <span class="text-xs font-black text-slate-900 dark:text-slate-100">{{ format_currency($product->purchase_cost, $store ?? null) }}</span>
                     </div>
                 @endif
 
                 @if ($product->reorder_level > 0)
                     <div class="p-3 rounded-2xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('messages.details_reorder_level') }}</span>
-                        <span class="text-xs font-black text-amber-600 dark:text-amber-400">{{ number_format($product->reorder_level) }}</span>
+                        <span class="text-xs font-black text-amber-600 dark:text-amber-400">{{ format_quantity($product->reorder_level, $store ?? null) }}</span>
                     </div>
                 @endif
             </div>
@@ -307,12 +307,12 @@
                                         @endif
                                     </td>
                                     <td class="p-2.5 font-mono text-[11px] text-violet-700 dark:text-violet-300">{{ $v->sku }}</td>
-                                    <td class="p-2.5 font-black text-slate-900 dark:text-slate-100 tabular-nums">Ks {{ number_format($v->retail_price) }}</td>
-                                    <td class="p-2.5 font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{{ $v->wholesale_price > 0 ? 'Ks ' . number_format($v->wholesale_price) : '—' }}</td>
+                                    <td class="p-2.5 font-black text-slate-900 dark:text-slate-100 tabular-nums">{{ format_currency($v->retail_price, $store ?? null) }}</td>
+                                    <td class="p-2.5 font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{{ $v->wholesale_price > 0 ? format_currency($v->wholesale_price, $store ?? null) : '—' }}</td>
                                     <td class="p-2.5 text-center whitespace-nowrap">
                                         @php
                                             $vOnHand = (float) ($v->stock_on_hand ?? $v->quantity_on_hand ?? 0);
-                                            $vFmtQty = (fmod($vOnHand, 1) !== 0.0) ? number_format($vOnHand, 3) : number_format($vOnHand, 0);
+                                            $vFmtQty = format_quantity($vOnHand, $store ?? null);
                                             $vReorder = (float) ($product->reorder_level ?? 0);
 
                                             if ($vOnHand <= 0 || ($v->stock_status ?? 'in_stock') === 'out_of_stock') {
