@@ -12,6 +12,7 @@ use App\POS\Models\InventoryReconciliation;
 use App\POS\Models\InventoryReconciliationItem;
 use App\POS\Models\OpeningStockRequestItem;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -52,44 +53,9 @@ class ReconciliationService
      */
     public function report(Store $store): array
     {
-        // Imported opening stock = approved opening-stock request lines.
-        $imported = OpeningStockRequestItem::query()
-            ->join('opening_stock_requests', 'opening_stock_requests.id', '=', 'opening_stock_request_items.opening_stock_request_id')
-            ->where('opening_stock_request_items.store_id', $store->id)
-            ->where('opening_stock_requests.status', 'approved')
-            ->select('opening_stock_request_items.product_id', 'opening_stock_request_items.product_variant_id')
-            ->selectRaw('SUM(opening_stock_request_items.quantity) as qty')
-            ->groupBy('opening_stock_request_items.product_id', 'opening_stock_request_items.product_variant_id')
-            ->get();
-
-        // Recorded opening position = opening_balance + their reversals + prior
-        // reconciliation corrections (so the report converges to 0 after approval).
-        $openingMovementIds = InventoryMovement::query()
-            ->where('store_id', $store->id)
-            ->where('movement_type', 'opening_balance')
-            ->pluck('id');
-
-        $recorded = InventoryMovement::query()
-            ->where('store_id', $store->id)
-            ->where(function ($q) use ($openingMovementIds) {
-                $q->where('movement_type', 'opening_balance')
-                    ->orWhere(function ($q2) use ($openingMovementIds) {
-                        $q2->where('movement_type', 'reversal')->whereIn('reversal_of_id', $openingMovementIds);
-                    })
-                    ->orWhere('source_type', 'inventory_reconciliation');
-            })
-            ->select('product_id', 'product_variant_id')
-            ->selectRaw('SUM(quantity_delta) as qty')
-            ->groupBy('product_id', 'product_variant_id')
-            ->get();
-
-        // Current on-hand per product/variant (all warehouses) — context column.
-        $onHand = DB::table('inventory_balances')
-            ->where('store_id', $store->id)
-            ->select('product_id', 'product_variant_id')
-            ->selectRaw('SUM(quantity_on_hand) as qty')
-            ->groupBy('product_id', 'product_variant_id')
-            ->get();
+        $imported = $this->importedOpeningStock($store);
+        $recorded = $this->recordedOpeningStock($store);
+        $onHand = $this->onHandBalances($store);
 
         $key = fn ($productId, $variantId) => (int) $productId . ':' . (int) ($variantId ?? 0);
 
@@ -286,6 +252,59 @@ class ReconciliationService
     /* ------------------------------------------------------------------ */
     /*  Internals                                                          */
     /* ------------------------------------------------------------------ */
+
+    /**
+     * @return \Illuminate\Support\Collection<int, object>
+     */
+    private function importedOpeningStock(Store $store): Collection
+    {
+        return OpeningStockRequestItem::query()
+            ->join('opening_stock_requests', 'opening_stock_requests.id', '=', 'opening_stock_request_items.opening_stock_request_id')
+            ->where('opening_stock_request_items.store_id', $store->id)
+            ->where('opening_stock_requests.status', 'approved')
+            ->select('opening_stock_request_items.product_id', 'opening_stock_request_items.product_variant_id')
+            ->selectRaw('SUM(opening_stock_request_items.quantity) as qty')
+            ->groupBy('opening_stock_request_items.product_id', 'opening_stock_request_items.product_variant_id')
+            ->get();
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, object>
+     */
+    private function recordedOpeningStock(Store $store): Collection
+    {
+        $openingMovementIds = InventoryMovement::query()
+            ->where('store_id', $store->id)
+            ->where('movement_type', 'opening_balance')
+            ->pluck('id');
+
+        return InventoryMovement::query()
+            ->where('store_id', $store->id)
+            ->where(function ($q) use ($openingMovementIds) {
+                $q->where('movement_type', 'opening_balance')
+                    ->orWhere(function ($q2) use ($openingMovementIds) {
+                        $q2->where('movement_type', 'reversal')->whereIn('reversal_of_id', $openingMovementIds);
+                    })
+                    ->orWhere('source_type', 'inventory_reconciliation');
+            })
+            ->select('product_id', 'product_variant_id')
+            ->selectRaw('SUM(quantity_delta) as qty')
+            ->groupBy('product_id', 'product_variant_id')
+            ->get();
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, object>
+     */
+    private function onHandBalances(Store $store): Collection
+    {
+        return DB::table('inventory_balances')
+            ->where('store_id', $store->id)
+            ->select('product_id', 'product_variant_id')
+            ->selectRaw('SUM(quantity_on_hand) as qty')
+            ->groupBy('product_id', 'product_variant_id')
+            ->get();
+    }
 
     /** Normalize a quantity to an exact 3-decimal string. */
     private function qty(string $value): string

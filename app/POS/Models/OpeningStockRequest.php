@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * Pending → approved (posts `opening_balance` ledger movements + sets the
  * initial weighted average) | rejected. Approved is immutable.
+ *
+ * @mixin \Illuminate\Database\Eloquent\Builder
  */
 class OpeningStockRequest extends Model
 {

@@ -302,6 +302,7 @@ class InventoryAdjustmentTest extends TestCase
             ])
             ->assertRedirect();
 
+        /** @var InventoryAdjustment $request */
         $request = InventoryAdjustment::firstOrFail();
         $this->assertTrue($request->isPending());
 

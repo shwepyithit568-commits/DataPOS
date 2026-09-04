@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * Signed line quantities: + → adjustment_in, − → adjustment_out. Approved is
  * immutable; the movements carry the current average cost (avg unchanged).
+ *
+ * @mixin \Illuminate\Database\Eloquent\Builder
  */
 class InventoryAdjustment extends Model
 {

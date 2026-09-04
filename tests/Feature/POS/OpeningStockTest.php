@@ -254,6 +254,7 @@ class OpeningStockTest extends TestCase
             ])
             ->assertRedirect();
 
+        /** @var OpeningStockRequest $request */
         $request = OpeningStockRequest::firstOrFail();
         $this->assertTrue($request->isPending());
 
