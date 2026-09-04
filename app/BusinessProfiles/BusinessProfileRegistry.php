@@ -208,6 +208,9 @@ class BusinessProfileRegistry
 
         $type = strtolower(trim((string) $businessType));
 
+        if (str_contains($type, 'repair')) {
+            return BusinessProfile::REPAIR_SERVICE;
+        }
         if (str_contains($type, 'pharmacy') || str_contains($type, 'medicine') || str_contains($type, 'health')) {
             return BusinessProfile::PHARMACY;
         }
@@ -217,7 +220,10 @@ class BusinessProfileRegistry
         if (str_contains($type, 'food') || str_contains($type, 'restaurant') || str_contains($type, 'bar') || str_contains($type, 'cafe')) {
             return BusinessProfile::FOOD_BEVERAGE;
         }
-        if (str_contains($type, 'repair') || str_contains($type, 'service')) {
+        if (str_contains($type, 'mobile') || str_contains($type, 'phone') || str_contains($type, 'electronic') || str_contains($type, 'cctv') || str_contains($type, 'computer')) {
+            return BusinessProfile::MOBILE_ELECTRONICS;
+        }
+        if (str_contains($type, 'service')) {
             return BusinessProfile::REPAIR_SERVICE;
         }
         if (str_contains($type, 'retail') || str_contains($type, 'mart') || str_contains($type, 'grocery') || str_contains($type, 'shop')) {

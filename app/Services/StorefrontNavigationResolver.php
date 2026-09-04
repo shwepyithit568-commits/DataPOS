@@ -59,28 +59,25 @@ class StorefrontNavigationResolver
                 ->get();
         }
 
-        // 2. Filter items according to capability, authentication and page publication status
+        // 2. Filter items according to authentication and page publication status (Admin-controlled freedom)
         $resolved = collect();
 
         foreach ($items as $item) {
-            // Check capability
+            // Check capability if specified on the item or system destination
             if (!empty($item->required_capability) && !store_can($item->required_capability, $store)) {
                 continue;
             }
 
-            // Check authentication requirement
+            // Check authentication requirement if explicitly required
             if ($item->requires_auth && !$user) {
                 continue;
             }
 
-            // System destination specific checks
+            // System destination specific checks (e.g. login/register hidden when already authenticated)
             if ($item->destination_type === 'system') {
                 $sysConfig = StorefrontNavigationRegistry::SYSTEM_DESTINATIONS[$item->destination_key] ?? null;
                 if ($sysConfig) {
                     if (!empty($sysConfig['required_capability']) && !store_can($sysConfig['required_capability'], $store)) {
-                        continue;
-                    }
-                    if (($sysConfig['requires_auth'] ?? false) && !$user) {
                         continue;
                     }
                     if (($sysConfig['guest_only'] ?? false) && $user) {
