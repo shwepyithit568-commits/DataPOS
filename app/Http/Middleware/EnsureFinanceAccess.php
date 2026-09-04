@@ -40,10 +40,19 @@ class EnsureFinanceAccess
             abort(400, 'Store context is missing.');
         }
 
-        if (! $user->hasStoreRole($store->id, ['store_owner', 'store_manager'])) {
-            abort(403, 'Finance access requires manager or owner role.');
+        if ($user->hasStoreRole($store->id, ['store_owner', 'store_manager'])) {
+            return $next($request);
         }
 
-        return $next($request);
+        // Dedicated Accountant staff role also has finance access
+        $membership = $user->getStoreMembership($store->id);
+        if ($membership && $membership->status === 'active' && !empty($membership->staff_role_id)) {
+            $staffRole = \App\Models\StaffRole::find($membership->staff_role_id);
+            if ($staffRole && $staffRole->is_active && $staffRole->slug === 'accountant') {
+                return $next($request);
+            }
+        }
+
+        abort(403, 'Finance access requires manager, owner, or accountant role.');
     }
 }

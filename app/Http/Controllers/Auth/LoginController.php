@@ -81,6 +81,7 @@ class LoginController extends Controller
             ->map(function ($u) {
                 $isPlatformOwner = in_array($u->role, ['platform_owner', 'admin'], true);
                 $pivotRoles = $u->stores->pluck('pivot.role')->unique()->all();
+                $isStoreOwner = in_array('store_owner', $pivotRoles, true);
                 $isStoreManager = in_array('store_manager', $pivotRoles, true);
                 $isStaff = in_array('staff', $pivotRoles, true);
                 $isWholesale = in_array('wholesale_customer', $pivotRoles, true);
@@ -94,23 +95,38 @@ class LoginController extends Controller
                     $category = 'super_admin';
                     $roleLabel = 'Platform Owner (Super Admin)';
                     $badgeColor = 'violet';
+                    $icon = '⚡';
+                } elseif ($isStoreOwner) {
+                    $category = 'owner';
+                    $roleLabel = 'Store Owner (ဆိုင်ပိုင်ရှင်)';
+                    $badgeColor = 'amber';
                     $icon = '👑';
                 } elseif ($isStoreManager) {
                     $category = 'manager';
                     $roleLabel = 'Store Manager (ဆိုင်မန်နေဂျာ)';
                     $badgeColor = 'sky';
                     $icon = '👔';
-                } elseif (str_contains(strtolower($u->name), 'cashier') || str_contains($u->name, 'လှလှ') || $u->phone === '09222333444') {
+                } elseif (str_contains(strtolower($u->name), 'cashier') || str_contains($u->name, 'ငွေကိုင်') || $u->phone === '09160000003') {
                     $category = 'cashier';
                     $roleLabel = 'Cashier (အရောင်းစာရေး)';
                     $badgeColor = 'emerald';
                     $icon = '💵';
-                } elseif (str_contains(strtolower($u->name), 'tech') || str_contains($u->name, 'မင်းမင်း') || $u->phone === '09333444555' || $isStaff) {
+                } elseif (str_contains(strtolower($u->name), 'stock') || str_contains($u->name, 'စတော့') || $u->phone === '09100000003') {
                     $category = 'staff';
-                    $roleLabel = 'Technician / Staff (စက်ပြင်/ဝန်ထမ်း)';
-                    $badgeColor = 'amber';
+                    $roleLabel = 'Stock Keeper (စတော့မှူး)';
+                    $badgeColor = 'indigo';
+                    $icon = '📦';
+                } elseif (str_contains(strtolower($u->name), 'accountant') || str_contains($u->name, 'စာရင်းကိုင်') || $u->phone === '09100000008') {
+                    $category = 'staff';
+                    $roleLabel = 'Accountant (စာရင်းကိုင်)';
+                    $badgeColor = 'teal';
+                    $icon = '📊';
+                } elseif (str_contains(strtolower($u->name), 'tech') || str_contains($u->name, 'စက်ပြင်') || $u->phone === '09160000002') {
+                    $category = 'staff';
+                    $roleLabel = 'Technician (စက်ပြင်ပညာရှင်)';
+                    $badgeColor = 'orange';
                     $icon = '🔧';
-                } elseif ($isWholesale || str_contains($u->name, 'ဘသိန်း') || $u->phone === '09988776655') {
+                } elseif ($isWholesale || $u->phone === '09100000004') {
                     $category = 'wholesale';
                     $roleLabel = 'Wholesale Buyer (လက်ကားဝယ်သူ)';
                     $badgeColor = 'purple';
@@ -150,36 +166,12 @@ class LoginController extends Controller
             return [];
         }
 
-        $users = \App\Models\User::with(['stores'])->get();
-        $superAdmin = $users->firstWhere('phone', '09777000111') ?? $users->firstWhere('role', 'platform_owner');
+        $allUsers = \App\Models\User::with(['stores'])->get();
+        $superAdmin = $allUsers->firstWhere('role', 'platform_owner') ?? $allUsers->firstWhere('phone', '09100000001');
 
         $groups = [];
 
-        // 1. Platform Super Admin Group (Boss Only)
-        if ($superAdmin) {
-            $groups[] = [
-                'id'            => 'platform',
-                'name'          => 'Platform Super Admin',
-                'slug'          => 'platform-admin',
-                'icon'          => '👑',
-                'type_label'    => 'Platform Head (Boss)',
-                'subtitle'      => 'ဆိုင်ခွဲအားလုံး ထိန်းချုပ်မှု',
-                'accounts'      => [
-                    [
-                        'id'          => $superAdmin->id,
-                        'name'        => $superAdmin->name,
-                        'phone'       => $superAdmin->phone,
-                        'role_title'  => 'Platform Owner',
-                        'role_desc'   => 'Store စီမံခန့်ခွဲမှု စာမျက်နှာ',
-                        'icon'        => '👑',
-                        'color'       => 'violet',
-                        'redirect_to' => '/admin/stores',
-                    ],
-                ],
-            ];
-        }
-
-        // 2. Active Stores Groups
+        // 1. Active Stores Groups (Primary store first)
         foreach ($stores as $store) {
             $slug = $store->slug;
             $icon = match ($slug) {
@@ -202,61 +194,39 @@ class LoginController extends Controller
                 default => 'အထွေထွေ အရောင်းဆိုင်',
             };
 
-            // Find store-specific accounts matching phone prefixes or memberships
-            $owner = match ($slug) {
-                'diamond-stone-agri'    => $users->firstWhere('phone', '09130000001'),
-                'datapos-mobile'        => $users->firstWhere('phone', '09150000001'),
-                'cctv-network-computer' => $users->firstWhere('phone', '09170000001'),
-                'mobile-sale-service'   => $users->firstWhere('phone', '09160000001'),
-                'pharmacy'              => $users->firstWhere('phone', '09180000001'),
-                'si-taw-gyi-food-bar'   => $users->firstWhere('phone', '09140000001'),
-                default                 => null,
-            } ?? $users->firstWhere('phone', '09111222333');
+            $storeUsers = $store->users()->withPivot(['role', 'staff_role_id'])->get();
 
-            $manager = match ($slug) {
-                'diamond-stone-agri'    => $users->firstWhere('phone', '09130000002'),
-                'datapos-mobile'        => $users->firstWhere('phone', '09150000002'),
-                'cctv-network-computer' => $users->firstWhere('phone', '09170000002'),
-                'mobile-sale-service'   => $users->firstWhere('phone', '09160000002'),
-                'pharmacy'              => $users->firstWhere('phone', '09180000002'),
-                'si-taw-gyi-food-bar'   => $users->firstWhere('phone', '09140000002'),
-                default                 => null,
-            } ?? $users->firstWhere('phone', '09111222333');
+            // 1. Store Owner
+            $owner = $storeUsers->first(fn($u) => $u->pivot->role === 'store_owner')
+                ?? $allUsers->firstWhere('phone', '09100000099');
 
-            $cashier = match ($slug) {
-                'diamond-stone-agri'    => $users->firstWhere('phone', '09130000003'),
-                'datapos-mobile'        => $users->firstWhere('phone', '09150000003'),
-                'cctv-network-computer' => $users->firstWhere('phone', '09170000003'),
-                'mobile-sale-service'   => $users->firstWhere('phone', '09160000003'),
-                'pharmacy'              => $users->firstWhere('phone', '09180000003'),
-                'si-taw-gyi-food-bar'   => $users->firstWhere('phone', '09140000003'),
-                default                 => null,
-            } ?? $users->firstWhere('phone', '09222333444');
+            // 2. Store Manager
+            $manager = $storeUsers->first(fn($u) => $u->pivot->role === 'store_manager' && (!$owner || $u->id !== $owner->id))
+                ?? $allUsers->firstWhere('phone', '09100000002');
 
-            $technician = match ($slug) {
-                'mobile-sale-service'   => $users->firstWhere('phone', '09160000004') ?? $users->firstWhere('phone', '09333444555'),
-                'cctv-network-computer' => $users->firstWhere('phone', '09170000004') ?? $users->firstWhere('phone', '09333444555'),
-                default                 => null,
-            };
+            // 3. Cashier (Front Counter Cashier / Sales Staff)
+            $cashier = $storeUsers->first(fn($u) => $u->pivot->staff_role_id == 3 || str_contains(strtolower($u->name), 'cashier') || str_contains($u->name, 'ငွေကိုင်'))
+                ?? $allUsers->firstWhere('phone', '09160000003');
 
-            $wholesale = match ($slug) {
-                'diamond-stone-agri'    => $users->firstWhere('phone', '09130000004'),
-                'datapos-mobile'        => $users->firstWhere('phone', '09150000004'),
-                'cctv-network-computer' => $users->firstWhere('phone', '09170000005'),
-                'mobile-sale-service'   => $users->firstWhere('phone', '09160000005'),
-                'pharmacy'              => $users->firstWhere('phone', '09180000004'),
-                default                 => null,
-            } ?? ($slug !== 'si-taw-gyi-food-bar' ? $users->firstWhere('phone', '09988776655') : null);
+            // 4. Stock Keeper (Inventory & Warehouse)
+            $stockKeeper = $storeUsers->first(fn($u) => $u->pivot->staff_role_id == 6 || str_contains(strtolower($u->name), 'stock') || str_contains($u->name, 'စတော့'))
+                ?? $allUsers->firstWhere('phone', '09100000003');
 
-            $retail = match ($slug) {
-                'diamond-stone-agri'    => $users->firstWhere('phone', '09130000005'),
-                'datapos-mobile'        => $users->firstWhere('phone', '09150000005'),
-                'cctv-network-computer' => $users->firstWhere('phone', '09170000006'),
-                'mobile-sale-service'   => $users->firstWhere('phone', '09160000006'),
-                'pharmacy'              => $users->firstWhere('phone', '09180000005'),
-                'si-taw-gyi-food-bar'   => $users->firstWhere('phone', '09140000004'),
-                default                 => null,
-            } ?? $users->firstWhere('phone', '09776655443');
+            // 5. Technician (Service & Repair Master)
+            $technician = $storeUsers->first(fn($u) => $u->pivot->staff_role_id == 5 || str_contains(strtolower($u->name), 'technician') || str_contains($u->name, 'စက်ပြင်'))
+                ?? $allUsers->firstWhere('phone', '09160000002');
+
+            // 6. Accountant (Finance & Profit/Loss)
+            $accountant = $storeUsers->first(fn($u) => $u->pivot->staff_role_id == 4 || str_contains(strtolower($u->name), 'accountant') || str_contains($u->name, 'စာရင်းကိုင်'))
+                ?? $allUsers->firstWhere('phone', '09100000008');
+
+            // 7. Wholesale Customer (B2B Buyer)
+            $wholesale = $storeUsers->first(fn($u) => $u->pivot->role === 'wholesale_customer')
+                ?? $allUsers->firstWhere('phone', '09100000004');
+
+            // 8. Retail Customer (Public Shopper)
+            $retail = $storeUsers->first(fn($u) => $u->pivot->role === 'retail_customer')
+                ?? $allUsers->firstWhere('phone', '09100000006');
 
             $accounts = [];
 
@@ -266,7 +236,7 @@ class LoginController extends Controller
                     'name'        => $owner->name,
                     'phone'       => $owner->phone,
                     'role_title'  => 'ဆိုင်ပိုင်ရှင် (Store Owner)',
-                    'role_desc'   => 'Admin Dashboard',
+                    'role_desc'   => 'အုပ်ချုပ်ခွင့် အပြည့်အစုံ & ဆက်တင်',
                     'icon'        => '👑',
                     'color'       => 'amber',
                     'redirect_to' => '/store/' . $slug . '/admin/dashboard',
@@ -279,7 +249,7 @@ class LoginController extends Controller
                     'name'        => $manager->name,
                     'phone'       => $manager->phone,
                     'role_title'  => 'ဆိုင်မန်နေဂျာ (Manager)',
-                    'role_desc'   => 'Admin Dashboard',
+                    'role_desc'   => 'စတော့၊ အရောင်းနှင့် နေ့စဉ်လုပ်ငန်း',
                     'icon'        => '👔',
                     'color'       => 'sky',
                     'redirect_to' => '/store/' . $slug . '/admin/dashboard',
@@ -292,10 +262,23 @@ class LoginController extends Controller
                     'name'        => $cashier->name,
                     'phone'       => $cashier->phone,
                     'role_title'  => 'အရောင်းစာရေး (Cashier)',
-                    'role_desc'   => 'POS Terminal',
+                    'role_desc'   => 'POS ကောင်တာ အရောင်း & ဘေလ်ထုတ်',
                     'icon'        => '💵',
                     'color'       => 'emerald',
                     'redirect_to' => '/store/' . $slug . '/pos',
+                ];
+            }
+
+            if ($stockKeeper) {
+                $accounts[] = [
+                    'id'          => $stockKeeper->id,
+                    'name'        => $stockKeeper->name,
+                    'phone'       => $stockKeeper->phone,
+                    'role_title'  => 'စတော့မှူး (Stock Keeper)',
+                    'role_desc'   => 'ကုန်ပစ္စည်းလက်ကျန် & ဂိုဒေါင်စာရင်း',
+                    'icon'        => '📦',
+                    'color'       => 'indigo',
+                    'redirect_to' => '/store/' . $slug . '/admin/products',
                 ];
             }
 
@@ -304,11 +287,24 @@ class LoginController extends Controller
                     'id'          => $technician->id,
                     'name'        => $technician->name,
                     'phone'       => $technician->phone,
-                    'role_title'  => 'နည်းပညာ/စက်ပြင် (Technician)',
-                    'role_desc'   => 'Service Jobs',
+                    'role_title'  => 'စက်ပြင်ပညာရှင် (Technician)',
+                    'role_desc'   => 'စက်ပြင်နှင့် ဝန်ဆောင်မှု မှတ်တမ်း',
                     'icon'        => '🔧',
                     'color'       => 'orange',
                     'redirect_to' => '/store/' . $slug . '/admin/service-jobs',
+                ];
+            }
+
+            if ($accountant) {
+                $accounts[] = [
+                    'id'          => $accountant->id,
+                    'name'        => $accountant->name,
+                    'phone'       => $accountant->phone,
+                    'role_title'  => 'စာရင်းကိုင် (Accountant)',
+                    'role_desc'   => 'အသုံးစရိတ်၊ အမြတ်/အရှုံး စာရင်းများ',
+                    'icon'        => '📊',
+                    'color'       => 'teal',
+                    'redirect_to' => '/store/' . $slug . '/admin/profit-loss',
                 ];
             }
 
@@ -318,10 +314,10 @@ class LoginController extends Controller
                     'name'        => $wholesale->name,
                     'phone'       => $wholesale->phone,
                     'role_title'  => 'လက်ကားဝယ်သူ (Wholesale)',
-                    'role_desc'   => 'Wholesale Portal',
+                    'role_desc'   => 'B2B လက်ကားဈေးနှုန်း & အော်ဒါ',
                     'icon'        => '🏬',
                     'color'       => 'purple',
-                    'redirect_to' => '/store/' . $slug . '/wholesale',
+                    'redirect_to' => '/store/' . $slug,
                 ];
             }
 
@@ -330,8 +326,8 @@ class LoginController extends Controller
                     'id'          => $retail->id,
                     'name'        => $retail->name,
                     'phone'       => $retail->phone,
-                    'role_title'  => 'လက်လီဝယ်သူ (Retail)',
-                    'role_desc'   => 'Storefront Shopping',
+                    'role_title'  => 'လက်လီဝယ်သူ (Retail Customer)',
+                    'role_desc'   => 'အွန်လိုင်းစတိုး ကုန်ပစ္စည်းဝယ်ယူမှု',
                     'icon'        => '🛒',
                     'color'       => 'slate',
                     'redirect_to' => '/store/' . $slug,
@@ -346,6 +342,30 @@ class LoginController extends Controller
                 'type_label'  => $typeLabel,
                 'subtitle'    => $typeLabel,
                 'accounts'    => $accounts,
+            ];
+        }
+
+        // 2. Platform Super Admin Group (Boss Only)
+        if ($superAdmin) {
+            $groups[] = [
+                'id'            => 'platform',
+                'name'          => 'Platform Super Admin',
+                'slug'          => 'platform-admin',
+                'icon'          => '⚡',
+                'type_label'    => 'Platform Head (Boss)',
+                'subtitle'      => 'ဆိုင်ခွဲအားလုံး ထိန်းချုပ်မှု',
+                'accounts'      => [
+                    [
+                        'id'          => $superAdmin->id,
+                        'name'        => $superAdmin->name,
+                        'phone'       => $superAdmin->phone,
+                        'role_title'  => 'စနစ်ပိုင်ရှင် (Platform Owner)',
+                        'role_desc'   => 'ဆိုင်ခွဲအားလုံး စီမံခန့်ခွဲမှု စာမျက်နှာ',
+                        'icon'        => '⚡',
+                        'color'       => 'violet',
+                        'redirect_to' => '/admin/stores',
+                    ],
+                ],
             ];
         }
 

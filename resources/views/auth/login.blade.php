@@ -7,7 +7,7 @@
         password: '',
         showPassword: false,
         loading: false,
-        selectedStore: '{{ request('store_slug', !empty($quickLoginStores[1]['slug']) ? $quickLoginStores[1]['slug'] : (!empty($quickLoginStores[0]['slug']) ? $quickLoginStores[0]['slug'] : 'all')) }}'
+        selectedStore: '{{ request('store_slug', !empty($quickLoginStores[0]['slug']) ? $quickLoginStores[0]['slug'] : 'all') }}'
     }"
     x-init="$watch('phone', v => phone = v.replace(/[^0-9]/g, ''))"
     class="backdrop-blur-2xl bg-white/95 dark:bg-slate-900/90 rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-slate-800/90 shadow-[0_20px_50px_rgba(79,70,229,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] space-y-5 animate-card-in"
