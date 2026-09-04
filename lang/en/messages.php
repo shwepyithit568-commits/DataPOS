@@ -4253,4 +4253,11 @@ return array (
   'group_operations' => 'Operations & POS',
   'enable' => 'Enable',
   'disable' => 'Disable',
+  'unauthenticated' => 'Unauthenticated.',
+  'unauthorized' => 'You are not authorized to perform this action.',
+  'permission_denied' => 'You do not have permission to perform this action.',
+  'store_not_found' => 'Store not found.',
+  'store_context_missing' => 'Store context is missing.',
+  'channel_not_active' => 'This sales channel is not active for this store.',
+  'feature_not_enabled' => 'This feature is not enabled for your store profile.',
 );

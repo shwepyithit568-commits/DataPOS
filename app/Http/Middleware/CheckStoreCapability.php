@@ -22,42 +22,39 @@ class CheckStoreCapability
     public function handle(Request $request, Closure $next, string $capability): Response
     {
         $store = $this->context->getStore();
+        $routeSlug = $request->route('store_slug');
 
-        if (! $store) {
-            $slug = $request->route('store_slug')
-                ?? $request->input('store_slug')
-                ?? $request->query('store_slug')
-                ?? $request->header('X-Store-Slug');
-
-            if ($slug) {
-                $store = Store::where('slug', $slug)->first();
-            }
-        }
-
-        if (! $store && $request->filled('glass_finder_item_id')) {
-            $item = \App\Models\GlassFinderItem::find($request->input('glass_finder_item_id'));
-            if ($item?->store) {
-                $store = $item->store;
-            }
-        }
-
-        if (! $store) {
+        // Fail closed if context store does not match route-bound slug (anti-tampering)
+        if ($store && $routeSlug && $store->slug !== $routeSlug) {
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Store not found.'], 404);
+                return response()->json(['message' => __('messages.unauthorized')], 403);
             }
-
-            abort(404, 'Store not found.');
+            abort(403, __('messages.unauthorized'));
         }
 
-        if (! $store->hasCapability($capability)) {
+        if (!$store) {
+            if ($routeSlug) {
+                $store = Store::where('slug', $routeSlug)->first();
+            }
+        }
+
+        if (!$store) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => __('messages.store_not_found')], 404);
+            }
+
+            abort(404, __('messages.store_not_found'));
+        }
+
+        if (!$store->hasCapability($capability)) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message'    => 'This feature is not enabled for your store profile.',
+                    'message'    => __('messages.feature_not_enabled'),
                     'capability' => $capability,
                 ], 403);
             }
 
-            abort(403, 'This feature is not enabled for your store profile.');
+            abort(403, __('messages.feature_not_enabled'));
         }
 
         return $next($request);

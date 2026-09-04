@@ -26,31 +26,40 @@ class CheckStorePermission
         $user = $request->user();
         if (!$user) {
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Unauthenticated.'], 401);
+                return response()->json(['message' => __('messages.unauthenticated')], 401);
             }
 
             return redirect()->guest(route('login'));
         }
 
+        // Platform Owner bypasses store-level permission checks
+        if ($user->isPlatformOwner()) {
+            return $next($request);
+        }
+
         $store = $this->context->getStore();
+        $routeSlug = $request->route('store_slug');
+
+        // Fail closed if context store does not match route-bound slug (anti-tampering)
+        if ($store && $routeSlug && $store->slug !== $routeSlug) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => __('messages.unauthorized')], 403);
+            }
+            abort(403, __('messages.unauthorized'));
+        }
 
         if (!$store) {
-            $slug = $request->route('store_slug')
-                ?? $request->input('store_slug')
-                ?? $request->query('store_slug')
-                ?? $request->header('X-Store-Slug');
-
-            if ($slug) {
-                $store = Store::where('slug', $slug)->first();
+            if ($routeSlug) {
+                $store = Store::where('slug', $routeSlug)->first();
             }
         }
 
         if (!$store) {
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Store not found.'], 404);
+                return response()->json(['message' => __('messages.store_not_found')], 404);
             }
 
-            abort(404, 'Store not found.');
+            abort(404, __('messages.store_not_found'));
         }
 
         // Support multiple permissions via pipe (OR logic) or comma (AND logic)
@@ -68,12 +77,12 @@ class CheckStorePermission
         if (!$hasAccess) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'You do not have permission to perform this action.',
+                    'message' => __('messages.permission_denied'),
                     'permission' => $permission,
                 ], 403);
             }
 
-            abort(403, 'You do not have permission to perform this action.');
+            abort(403, __('messages.permission_denied'));
         }
 
         return $next($request);

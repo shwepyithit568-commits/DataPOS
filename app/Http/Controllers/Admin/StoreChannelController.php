@@ -10,6 +10,7 @@ use App\Services\StoreContext;
 use App\Services\StorePermissionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class StoreChannelController extends Controller
@@ -24,7 +25,14 @@ class StoreChannelController extends Controller
     public function index(Request $request, string $store_slug, StoreContext $context): View
     {
         $store = $context->getStore();
-        abort_if(!$store, 404);
+        abort_if(!$store, 404, __('messages.store_not_found'));
+
+        $user = $request->user();
+        abort_unless(
+            $user && ($user->isPlatformOwner() || $user->isStoreOwner($store->id)),
+            403,
+            __('messages.unauthorized')
+        );
 
         $channels = [
             Store::CHANNEL_POS => [
@@ -75,12 +83,19 @@ class StoreChannelController extends Controller
     }
 
     /**
-     * Toggle a sales channel on/off.
+     * Toggle a sales channel on/off with pessimistic row locking and atomic transaction.
      */
     public function toggle(Request $request, string $store_slug, StoreContext $context): RedirectResponse
     {
         $store = $context->getStore();
-        abort_if(!$store, 404);
+        abort_if(!$store, 404, __('messages.store_not_found'));
+
+        $user = $request->user();
+        abort_unless(
+            $user && ($user->isPlatformOwner() || $user->isStoreOwner($store->id)),
+            403,
+            __('messages.unauthorized')
+        );
 
         $validated = $request->validate([
             'channel' => 'required|string|in:pos,online_store,online_ordering',
@@ -93,56 +108,65 @@ class StoreChannelController extends Controller
             return back()->with('error', __('messages.channel_pos_protected'));
         }
 
-        $currentStatus = $store->hasSalesChannel($channel);
-        $newStatus = !$currentStatus;
+        try {
+            DB::transaction(function () use ($store, $channel, $validated, $request, $user) {
+                /** @var Store $lockedStore */
+                $lockedStore = Store::where('id', $store->id)->lockForUpdate()->firstOrFail();
 
-        // If disabling, check for blockers
-        if (!$newStatus) {
-            $blockers = $this->blockerService->getBlockersForChannel($store, $channel);
-            if (!empty($blockers)) {
-                $reasons = array_map(fn ($b) => __($b['message_key'], ['count' => $b['count']]), $blockers);
-                return back()->with('error', __('messages.channel_cannot_disable_blockers', [
-                    'reasons' => implode(', ', $reasons),
-                ]));
-            }
+                $currentStatus = $lockedStore->hasSalesChannel($channel);
+                $newStatus = !$currentStatus;
+
+                // If disabling, check for domain blockers
+                if (!$newStatus) {
+                    $blockers = $this->blockerService->getBlockersForChannel($lockedStore, $channel);
+                    if (!empty($blockers)) {
+                        $reasons = array_map(fn ($b) => __($b['message_key'], ['count' => $b['count']]), $blockers);
+                        throw new \DomainException(__('messages.channel_cannot_disable_blockers', [
+                            'reasons' => implode(', ', $reasons),
+                        ]));
+                    }
+                }
+
+                // Channel dependency rules
+                $channelOverrides = is_array($lockedStore->sales_channels) ? $lockedStore->sales_channels : [];
+
+                if ($newStatus && $channel === Store::CHANNEL_ONLINE_ORDERING) {
+                    // Enabling online_ordering requires online_store
+                    if (!$lockedStore->hasSalesChannel(Store::CHANNEL_ONLINE_STORE)) {
+                        $channelOverrides[Store::CHANNEL_ONLINE_STORE] = true;
+                    }
+                }
+
+                if (!$newStatus && $channel === Store::CHANNEL_ONLINE_STORE) {
+                    // Disabling online_store also disables online_ordering
+                    $channelOverrides[Store::CHANNEL_ONLINE_ORDERING] = false;
+                }
+
+                $channelOverrides[$channel] = $newStatus;
+                $lockedStore->sales_channels = $channelOverrides;
+                $lockedStore->save();
+
+                // Audit Trail inside same transaction
+                AuditLog::write(
+                    storeId: $lockedStore->id,
+                    action: 'store_channel_toggle',
+                    entityType: 'store',
+                    entityId: $lockedStore->id,
+                    metadata: [
+                        'channel' => $channel,
+                        'previous_status' => $currentStatus,
+                        'new_status' => $newStatus,
+                        'reason' => $validated['reason'] ?? null,
+                        'request_id' => $request->header('X-Request-ID') ?? null,
+                        'user_agent' => $request->userAgent(),
+                    ],
+                    actorId: $user->id,
+                    ipAddress: $request->ip()
+                );
+            });
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        // Channel dependency rules
-        $channelOverrides = is_array($store->sales_channels) ? $store->sales_channels : [];
-
-        if ($newStatus && $channel === Store::CHANNEL_ONLINE_ORDERING) {
-            // Enabling online_ordering requires online_store
-            if (!$store->hasSalesChannel(Store::CHANNEL_ONLINE_STORE)) {
-                $channelOverrides[Store::CHANNEL_ONLINE_STORE] = true;
-            }
-        }
-
-        if (!$newStatus && $channel === Store::CHANNEL_ONLINE_STORE) {
-            // Disabling online_store also disables online_ordering
-            $channelOverrides[Store::CHANNEL_ONLINE_ORDERING] = false;
-        }
-
-        $channelOverrides[$channel] = $newStatus;
-        $store->sales_channels = $channelOverrides;
-        $store->save();
-
-        // Audit Trail
-        AuditLog::write(
-            storeId: $store->id,
-            action: 'store_channel_toggle',
-            entityType: 'store',
-            entityId: $store->id,
-            metadata: [
-                'channel' => $channel,
-                'previous_status' => $currentStatus,
-                'new_status' => $newStatus,
-                'reason' => $validated['reason'] ?? null,
-                'request_id' => $request->header('X-Request-ID') ?? null,
-                'user_agent' => $request->userAgent(),
-            ],
-            actorId: auth()->id(),
-            ipAddress: $request->ip()
-        );
 
         StorePermissionService::invalidateCache();
 

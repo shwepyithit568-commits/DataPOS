@@ -264,8 +264,20 @@ class Phase2FoundationsTest extends TestCase
         $this->assertTrue($this->permissionService->can($platform, $store, 'products.view'));
 
         // Disabled capability (service.repair_jobs) cannot be bypassed even by Store Owner or Platform Owner!
-        $this->assertFalse($this->permissionService->can($owner, $store, 'repair_jobs.view'));
-        $this->assertFalse($this->permissionService->can($platform, $store, 'repair_jobs.view'));
+        $this->assertFalse($store->hasCapability(Capability::SERVICE_REPAIR_JOBS));
+
+        // Orthogonal CheckStoreCapability middleware blocks requests when capability is disabled
+        $context = app(StoreContext::class);
+        $context->setStore($store);
+        $capMiddleware = app(\App\Http\Middleware\CheckStoreCapability::class);
+        $req = \Illuminate\Http\Request::create('/store/boundary-store/admin/repairs', 'GET');
+        $req->setUserResolver(fn () => $owner);
+        try {
+            $capMiddleware->handle($req, fn () => response('OK'), Capability::SERVICE_REPAIR_JOBS);
+            $this->fail('CheckStoreCapability did not throw 403 on disabled capability');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->assertSame(403, $e->getStatusCode());
+        }
     }
 
     public function test_manager_privilege_ceiling_and_last_owner_invariants(): void

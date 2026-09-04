@@ -12,68 +12,6 @@ use Illuminate\Support\Facades\Log;
 class StorePermissionService
 {
     /**
-     * Map permissions or modules to required store capabilities.
-     * If a capability is disabled, neither owner nor staff can execute this permission.
-     */
-    protected const PERMISSION_CAPABILITY_MAP = [
-        // Operations
-        'pos_closing' => Capability::OPERATIONS_CASHIER_SHIFTS,
-        'pos_eload' => Capability::OPERATIONS_ELOAD,
-        'branches' => Capability::OPERATIONS_BRANCHES,
-        'warehouses' => Capability::OPERATIONS_WAREHOUSES,
-
-        // Service
-        'repair' => Capability::SERVICE_REPAIR_JOBS,
-        'repair_jobs' => Capability::SERVICE_REPAIR_JOBS,
-        'technicians' => Capability::SERVICE_REPAIR_JOBS,
-        'warranty' => Capability::SERVICE_WARRANTY_TRACKING,
-        'spare_parts' => Capability::SERVICE_SPARE_PARTS,
-
-        // Inventory
-        'transfers' => Capability::INVENTORY_TRANSFERS,
-        'stock_transfers' => Capability::INVENTORY_TRANSFERS,
-        'stock_audit' => Capability::INVENTORY_STOCK_AUDIT,
-        'stock_count' => Capability::INVENTORY_STOCK_AUDIT,
-        'stock_reconciliation' => Capability::INVENTORY_STOCK_AUDIT,
-
-        // Catalog
-        'barcode' => Capability::CATALOG_BARCODE_PRINTING,
-        'price_wizard' => Capability::CATALOG_PRICE_WIZARD,
-
-        // Commerce
-        'wholesale' => Capability::COMMERCE_WHOLESALE,
-        'wholesale_pricing' => Capability::COMMERCE_WHOLESALE,
-        'customer_debt' => Capability::COMMERCE_CUSTOMER_DEBT,
-        'debts' => Capability::COMMERCE_CUSTOMER_DEBT,
-        'loyalty' => Capability::COMMERCE_LOYALTY,
-        'loyalty_points' => Capability::COMMERCE_LOYALTY,
-        'payables' => Capability::COMMERCE_SUPPLIER_PAYABLES,
-        'supplier_debt' => Capability::COMMERCE_SUPPLIER_PAYABLES,
-
-        // Storefront
-        'ecommerce_orders' => Capability::STOREFRONT_ONLINE_ORDERING,
-        'web_products' => Capability::STOREFRONT_ECOMMERCE,
-        'promotions' => Capability::STOREFRONT_ECOMMERCE,
-        'reviews' => Capability::STOREFRONT_REVIEWS,
-        'blog' => Capability::STOREFRONT_BLOG,
-    ];
-
-    /**
-     * Map permissions or modules to required sales channels.
-     */
-    protected const PERMISSION_CHANNEL_MAP = [
-        'pos_sales' => Store::CHANNEL_POS,
-        'pos_closing' => Store::CHANNEL_POS,
-        'pos_returns' => Store::CHANNEL_POS,
-        'pos_buyback' => Store::CHANNEL_POS,
-        'pos_eload' => Store::CHANNEL_POS,
-        'ecommerce_orders' => Store::CHANNEL_ONLINE_ORDERING,
-        'web_products' => Store::CHANNEL_ONLINE_STORE,
-        'promotions' => Store::CHANNEL_ONLINE_STORE,
-        'reviews' => Store::CHANNEL_ONLINE_STORE,
-    ];
-
-    /**
      * Protected permissions that regular managers cannot grant or alter.
      */
     protected const PROTECTED_PERMISSIONS = [
@@ -95,25 +33,24 @@ class StorePermissionService
 
     /**
      * Check if a user has a specific permission in the store.
+     *
+     * Note: Store capabilities and sales channel availability are orthogonal
+     * concerns verified by store.capability and store.channel middleware and
+     * route/navigation metadata, NOT guessed from permission string prefixes.
      */
     public function can(User $user, Store $store, string $permission): bool
     {
-        // 1. Capability & Channel boundary check (Owners cannot bypass disabled capabilities/channels)
-        if (!$this->isPermissionCapabilityAndChannelEnabled($store, $permission)) {
-            return false;
-        }
-
-        // 2. Platform Owner has universal authority within enabled capabilities/channels
+        // 1. Platform Owner has universal authority across all stores
         if ($user->isPlatformOwner()) {
             return true;
         }
 
-        // 3. Store Owner has full authority in their own store within enabled capabilities/channels
+        // 2. Store Owner has full authority in their own store
         if ($user->isStoreOwner($store->id)) {
             return true;
         }
 
-        // 4. Regular staff and managers evaluate effective permissions
+        // 3. Regular staff and managers evaluate effective permissions
         $effective = $this->effectivePermissions($user, $store);
 
         if (empty($effective)) {
@@ -123,6 +60,19 @@ class StorePermissionService
         // Exact match
         if (in_array($permission, $effective, true)) {
             return true;
+        }
+
+        // Aliasing: orders.* <-> ecommerce_orders.*
+        if (str_starts_with($permission, 'orders.')) {
+            $ecomPerm = 'ecommerce_orders.' . substr($permission, 7);
+            if (in_array($ecomPerm, $effective, true)) {
+                return true;
+            }
+        } elseif (str_starts_with($permission, 'ecommerce_orders.')) {
+            $orderPerm = 'orders.' . substr($permission, 17);
+            if (in_array($orderPerm, $effective, true)) {
+                return true;
+            }
         }
 
         // Handle .edit <-> .update aliasing (Plan §6.1: .edit aliases .update only; it must not grant create)
@@ -186,13 +136,18 @@ class StorePermissionService
             return self::$requestCache[$cacheKey];
         }
 
+        // Platform Owner has universal authority without needing a store membership pivot
+        if ($user->isPlatformOwner()) {
+            return self::$requestCache[$cacheKey] = $this->getAllCanonicalPermissions();
+        }
+
         $membership = $user->getStoreMembership($store->id);
         if (!$membership || $membership->status !== 'active') {
             return self::$requestCache[$cacheKey] = [];
         }
 
         // Store Owner gets all system role permissions
-        if ($membership->role === 'store_owner' || $user->isPlatformOwner()) {
+        if ($membership->role === 'store_owner') {
             return self::$requestCache[$cacheKey] = $this->getAllCanonicalPermissions();
         }
 
@@ -203,6 +158,27 @@ class StorePermissionService
             $role = StaffRole::find($membership->staff_role_id);
             if ($role && $role->is_active && is_array($role->permissions)) {
                 $rolePermissions = $role->permissions;
+            }
+        } elseif (empty($membership->custom_permissions)) {
+            // Backward-compatible fallback for legacy memberships where neither staff_role_id nor custom_permissions is populated:
+            if ($membership->role === 'store_manager') {
+                // Store Manager gets all operational canonical permissions except protected permissions
+                $rolePermissions = array_values(array_diff($this->getAllCanonicalPermissions(), self::PROTECTED_PERMISSIONS));
+            } elseif ($membership->role === 'staff') {
+                // Default staff gets non-delete, non-protected operational permissions
+                $allPerms = $this->getAllCanonicalPermissions();
+                $rolePermissions = array_values(array_filter($allPerms, function ($perm) {
+                    if (in_array($perm, self::PROTECTED_PERMISSIONS, true)) {
+                        return false;
+                    }
+                    if (str_ends_with($perm, '.delete')) {
+                        return false;
+                    }
+                    if (str_starts_with($perm, 'settings.') || str_starts_with($perm, 'backups.') || str_starts_with($perm, 'database.') || str_starts_with($perm, 'roles.') || str_starts_with($perm, 'staff.')) {
+                        return false;
+                    }
+                    return true;
+                }));
             }
         }
 
@@ -355,32 +331,6 @@ class StorePermissionService
     }
 
     /**
-     * Verify if capability and sales channel requirements for this permission are met by the store.
-     */
-    protected function isPermissionCapabilityAndChannelEnabled(Store $store, string $permission): bool
-    {
-        $prefix = explode('.', $permission)[0];
-
-        // Check capability requirement
-        if (isset(self::PERMISSION_CAPABILITY_MAP[$prefix])) {
-            $requiredCap = self::PERMISSION_CAPABILITY_MAP[$prefix];
-            if (!$store->hasCapability($requiredCap)) {
-                return false;
-            }
-        }
-
-        // Check channel requirement
-        if (isset(self::PERMISSION_CHANNEL_MAP[$prefix])) {
-            $requiredChannel = self::PERMISSION_CHANNEL_MAP[$prefix];
-            if (!$store->hasChannel($requiredChannel)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
      * Parse custom_permissions JSON/array into grants and denies.
      *
      * @return array{0: array<string>, 1: array<string>} [grants, denies]
@@ -451,6 +401,9 @@ class StorePermissionService
             foreach ($group['modules'] ?? [] as $module) {
                 foreach ($module['permissions'] ?? [] as $perm) {
                     $permissions[] = $perm;
+                    if (str_starts_with($perm, 'ecommerce_orders.')) {
+                        $permissions[] = 'orders.' . substr($perm, 17);
+                    }
                 }
             }
         }

@@ -4252,5 +4252,12 @@ return array (
   'group_commerce' => '商业与客户往来',
   'group_operations' => '店内运营与收银',
   'enable' => '启用',
-  'disable' => '停用',
+  'disable' => '禁用',
+  'unauthenticated' => '未通过身份验证。',
+  'unauthorized' => '您无权执行此操作。',
+  'permission_denied' => '您没有执行此操作的权限。',
+  'store_not_found' => '未找到店铺。',
+  'store_context_missing' => '缺少店铺上下文信息。',
+  'channel_not_active' => '该销售渠道在此店铺未启用。',
+  'feature_not_enabled' => '您的店铺配置未启用此功能。',
 );

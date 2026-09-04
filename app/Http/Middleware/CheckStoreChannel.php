@@ -22,35 +22,39 @@ class CheckStoreChannel
     public function handle(Request $request, Closure $next, string $channel): Response
     {
         $store = $this->context->getStore();
+        $routeSlug = $request->route('store_slug');
+
+        // Fail closed if context store does not match route-bound slug (anti-tampering)
+        if ($store && $routeSlug && $store->slug !== $routeSlug) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => __('messages.unauthorized')], 403);
+            }
+            abort(403, __('messages.unauthorized'));
+        }
 
         if (!$store) {
-            $slug = $request->route('store_slug')
-                ?? $request->input('store_slug')
-                ?? $request->query('store_slug')
-                ?? $request->header('X-Store-Slug');
-
-            if ($slug) {
-                $store = Store::where('slug', $slug)->first();
+            if ($routeSlug) {
+                $store = Store::where('slug', $routeSlug)->first();
             }
         }
 
         if (!$store) {
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Store not found.'], 404);
+                return response()->json(['message' => __('messages.store_not_found')], 404);
             }
 
-            abort(404, 'Store not found.');
+            abort(404, __('messages.store_not_found'));
         }
 
         if (!$store->hasChannel($channel)) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'This sales channel is not active for this store.',
+                    'message' => __('messages.channel_not_active'),
                     'channel' => $channel,
                 ], 403);
             }
 
-            abort(403, 'This sales channel is not active for this store.');
+            abort(403, __('messages.channel_not_active'));
         }
 
         return $next($request);
