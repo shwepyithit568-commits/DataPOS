@@ -63,7 +63,8 @@
          x-data="posApp({
              baseUrl: '{{ url('/store/' . $store->slug . '/pos') }}',
              csrf: '{{ csrf_token() }}',
-             labels: {{ \Illuminate\Support\Js::from($posLabels) }}
+             labels: {{ \Illuminate\Support\Js::from($posLabels) }},
+             shiftsEnabled: {{ $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS) ? 'true' : 'false' }}
          })"
          x-init="init()">
 
@@ -169,7 +170,7 @@
         {{-- ── No open shift: an "open register" modal greets the cashier on
                entry and reappears on demand (toolbar shift pill). Once the
                shift is opened the page is completely clean. ─────────────── --}}
-        @if (!$openShift)
+        @if ($store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS) && !$openShift)
             <div x-data="{ open: true }" @pos:open-register.window="open = true">
                 <div x-show="open" x-cloak x-transition.opacity
                      class="fixed inset-0 z-[95] grid place-items-center p-4"
@@ -418,6 +419,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/><path d="M7 8h10"/><path d="M7 16h10"/></svg>
                     </button>
 
+                    @if ($store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS))
                     {{-- Shift status --}}
                     <button type="button" @click="if (shiftOpen) { switchTab('registers'); $nextTick(() => document.getElementById('pos-shift-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } else { window.dispatchEvent(new CustomEvent('pos:open-register')); }"
                             class="shrink-0 inline-flex items-center justify-center min-h-11 px-3 gap-1.5 rounded-xl text-[11px] font-black uppercase tracking-wide border transition cursor-pointer"
@@ -433,6 +435,7 @@
                             title="{{ __('messages.pos_end_shift') }}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
                     </button>
+                    @endif
 
                     {{-- Mobile filters drawer button --}}
                     <button type="button" @click="window.dispatchEvent(new CustomEvent('pos:open-filters'))"
@@ -456,6 +459,7 @@
                 {{-- Desktop top toolbar (Shift status + End shift + Held sales + Daily closing + Keyboard shortcuts) --}}
                 <div class="hidden lg:flex items-center justify-between gap-3 px-4 py-2.5 min-w-0">
                     <div class="flex items-center gap-2 shrink-0 min-w-0">
+                        @if ($store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS))
                         {{-- Shift status pill --}}
                         <button type="button" @click="if (shiftOpen) { switchTab('registers'); $nextTick(() => document.getElementById('pos-shift-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } else { window.dispatchEvent(new CustomEvent('pos:open-register')); }"
                                 class="shrink-0 inline-flex items-center gap-2 h-9 px-3 rounded-xl text-xs font-black uppercase tracking-wide border transition cursor-pointer whitespace-nowrap"
@@ -474,6 +478,7 @@
                         </button>
 
                         <div class="h-5 w-px bg-slate-200 dark:bg-slate-700 shrink-0"></div>
+                        @endif
 
                         {{-- Held sales toggle (ဆိုင်းငံ့ထားသော အရောင်းများ) --}}
                         <button type="button" id="pos-held-toggle"
@@ -1217,14 +1222,14 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                         </button>
                         <button type="button" id="pos-checkout-btn"
-                                @click="if (!shiftOpen) { window.dispatchEvent(new CustomEvent('pos:open-register')); mobileCartOpen = false; return; } if (!cart.lines.length) return; openPayment(); mobileCartOpen = false"
-                                :class="(!cart.lines.length || !shiftOpen) ? 'opacity-40 cursor-not-allowed' : ''"
-                                :aria-disabled="(!cart.lines.length || !shiftOpen) ? 'true' : 'false'"
+                                @click="if (shiftsEnabled && !shiftOpen) { window.dispatchEvent(new CustomEvent('pos:open-register')); mobileCartOpen = false; return; } if (!cart.lines.length) return; openPayment(); mobileCartOpen = false"
+                                :class="(!cart.lines.length || (shiftsEnabled && !shiftOpen)) ? 'opacity-40 cursor-not-allowed' : ''"
+                                :aria-disabled="(!cart.lines.length || (shiftsEnabled && !shiftOpen)) ? 'true' : 'false'"
                                 class="flex-[2] rounded-xl px-3 py-3 text-sm font-black text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30 transition">
                             {{ __('messages.post_sale') }}
                         </button>
                     </div>
-                    <p x-show="!shiftOpen" class="mt-2 text-[11px] font-bold text-amber-600 dark:text-amber-400" x-text="labels.shift_required"></p>
+                    <p x-show="shiftsEnabled && !shiftOpen" class="mt-2 text-[11px] font-bold text-amber-600 dark:text-amber-400" x-text="labels.shift_required"></p>
                 </div>
             </aside>
 
@@ -1521,10 +1526,11 @@
             <nav class="bg-slate-100/90 dark:bg-slate-800/80 p-1 rounded-t-2xl" role="tablist" aria-label="{{ __('messages.today_summary') }}">
                 <div class="flex items-stretch gap-1 overflow-x-auto scrollbar-thin">
                     @foreach ([
-                        ['today', 'pos_tab_today', 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z'],
-                        ['registers', 'pos_tab_registers', 'M4 5h16v5H4V5Zm2 5v9h12v-9M7 12h2m-2 4h2m5-4h3m-3 4h3'],
-                        ['debt', 'pos_tab_debt', 'M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9Z'],
-                    ] as [$key, $labelKey, $icon])
+                        ['today', 'pos_tab_today', 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z', true],
+                        ['registers', 'pos_tab_registers', 'M4 5h16v5H4V5Zm2 5v9h12v-9M7 12h2m-2 4h2m5-4h3m-3 4h3', $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS)],
+                        ['debt', 'pos_tab_debt', 'M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9Z', true],
+                    ] as [$key, $labelKey, $icon, $visible])
+                        @if ($visible)
                         <button type="button" role="tab" @click="activeTab = '{{ $key }}'"
                                 :aria-selected="activeTab === '{{ $key }}' ? 'true' : 'false'"
                                 class="group relative flex-1 sm:flex-none min-w-0 inline-flex items-center justify-center sm:justify-start gap-2 rounded-xl px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-black transition min-h-[44px]"
@@ -1532,6 +1538,7 @@
                             <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ $icon }}"/></svg>
                             <span class="truncate">{{ __('messages.' . $labelKey) }}</span>
                         </button>
+                        @endif
                     @endforeach
                 </div>
             </nav>
@@ -1604,6 +1611,7 @@
                     @endif
                 </div>
 
+                @if ($store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS))
                 {{-- REGISTERS: shift card + today's closing summary --}}
                 <div x-show="activeTab === 'registers'" class="space-y-1">
                     @if ($openShift)
@@ -1730,6 +1738,7 @@
                         @endif
                     </section>
                 </div>
+                @endif
 
                 {{-- DEBT: customer balances (receivables — SoT §17) --}}
                 <div x-show="activeTab === 'debt'">

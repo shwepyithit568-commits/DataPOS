@@ -567,8 +567,11 @@ class PosSaleService
 
         $customer = $this->cartCustomer($store);
 
+        $shiftsEnabled = $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS);
+
         return [
-            'shift_open' => (bool) $this->shifts->openShiftFor($store, $actor),
+            'shifts_enabled' => $shiftsEnabled,
+            'shift_open' => $shiftsEnabled ? (bool) $this->shifts->openShiftFor($store, $actor) : true,
             'lines' => array_values($lines),
             'totals' => $this->cartTotals($store),
             'held_count' => $held->count(),
@@ -788,8 +791,10 @@ class PosSaleService
         ?PosSale $heldSale = null,
         ?int $customerId = null,
     ): PosSale {
-        if (! $shift?->isOpen() || (int) $shift->store_id !== (int) $store->id) {
-            throw new InventoryException('An open cashier shift is required to post a sale.');
+        if ($store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS)) {
+            if (! $shift?->isOpen() || (int) $shift->store_id !== (int) $store->id) {
+                throw new InventoryException('An open cashier shift is required to post a sale.');
+            }
         }
 
         if ($lines === []) {
@@ -975,8 +980,8 @@ class PosSaleService
             }
 
             $sale->fill([
-                'branch_id' => $shift->branch_id,
-                'cashier_shift_id' => $shift->id,
+                'branch_id' => $shift?->branch_id,
+                'cashier_shift_id' => $shift?->id,
                 'cashier_id' => $actor->id,
                 'customer_id' => $customerId,
                 'receipt_number' => $this->nextReceiptNumber($store),
@@ -1055,12 +1060,12 @@ class PosSaleService
                     amount: $creditTotal,
                     actor: $actor,
                     clientTransactionId: "pos_sale:{$sale->id}:debt",
-                    branchId: $shift->branch_id,
+                    branchId: $shift?->branch_id,
                 );
             }
 
             // Only the net cash actually kept goes into the drawer.
-            if (bccomp($cashKept, '0', 2) > 0) {
+            if ($shift && bccomp($cashKept, '0', 2) > 0) {
                 $this->shifts->recordCashSale($shift, $cashKept);
             }
 

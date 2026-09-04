@@ -16,6 +16,7 @@ class Store extends Model
         'business_profile',
         'operation_mode',
         'capabilities_override',
+        'sales_channels',
         'slug',
         'viber_number',
         'telegram_username',
@@ -26,12 +27,23 @@ class Store extends Model
         'max_branches',
     ];
 
+    public const CHANNEL_POS = 'pos';
+    public const CHANNEL_ONLINE_STORE = 'online_store';
+    public const CHANNEL_ONLINE_ORDERING = 'online_ordering';
+
+    public const CHANNELS = [
+        self::CHANNEL_POS,
+        self::CHANNEL_ONLINE_STORE,
+        self::CHANNEL_ONLINE_ORDERING,
+    ];
+
     protected $casts = [
         'is_active'              => 'boolean',
         'is_primary'             => 'boolean',
         'max_products'           => 'integer',
         'max_branches'           => 'integer',
         'capabilities_override'  => 'array',
+        'sales_channels'         => 'array',
     ];
 
     public function users(): BelongsToMany
@@ -155,6 +167,92 @@ class Store extends Model
     public function isOmnichannel(): bool
     {
         return $this->getOperationMode() === \App\BusinessProfiles\BusinessProfile::MODE_OMNICHANNEL;
+    }
+
+    /**
+     * Determine if this store is running in Catalog-only mode (POS + Online Catalog, no ordering).
+     */
+    public function isCatalogOnly(): bool
+    {
+        return $this->getOperationMode() === \App\BusinessProfiles\BusinessProfile::MODE_CATALOG_ONLY;
+    }
+
+    /**
+     * Resolve effective sales channels for this store.
+     *
+     * Precedence (Plan §5):
+     * protected invariant/dependency -> explicit channel override -> operation-mode preset default.
+     *
+     * @return array<string, bool> Map of channel identifier to boolean state
+     */
+    public function getSalesChannels(): array
+    {
+        // 1. Preset defaults from operation_mode
+        $mode = $this->getOperationMode();
+        $channels = match ($mode) {
+            \App\BusinessProfiles\BusinessProfile::MODE_POS_ONLY => [
+                self::CHANNEL_POS => true,
+                self::CHANNEL_ONLINE_STORE => false,
+                self::CHANNEL_ONLINE_ORDERING => false,
+            ],
+            \App\BusinessProfiles\BusinessProfile::MODE_CATALOG_ONLY => [
+                self::CHANNEL_POS => true,
+                self::CHANNEL_ONLINE_STORE => true,
+                self::CHANNEL_ONLINE_ORDERING => false,
+            ],
+            default => [ // omnichannel, custom, or unspecified
+                self::CHANNEL_POS => true,
+                self::CHANNEL_ONLINE_STORE => true,
+                self::CHANNEL_ONLINE_ORDERING => true,
+            ],
+        };
+
+        // 2. Explicit channel overrides (only recognized keys)
+        if (is_array($this->sales_channels)) {
+            foreach (self::CHANNELS as $channel) {
+                if (array_key_exists($channel, $this->sales_channels)) {
+                    $channels[$channel] = (bool) $this->sales_channels[$channel];
+                }
+            }
+        }
+
+        // 3. Protected invariants & dependencies
+        // POS is protected in this phase (Plan §5)
+        $channels[self::CHANNEL_POS] = true;
+
+        // Dependency: online_store requires storefront.ecommerce capability
+        if (!$this->hasCapability(\App\Capabilities\Capability::STOREFRONT_ECOMMERCE)) {
+            $channels[self::CHANNEL_ONLINE_STORE] = false;
+        }
+
+        // Dependency: online_ordering requires online_store=true AND storefront.online_ordering capability
+        if (!$channels[self::CHANNEL_ONLINE_STORE] || !$this->hasCapability(\App\Capabilities\Capability::STOREFRONT_ONLINE_ORDERING)) {
+            $channels[self::CHANNEL_ONLINE_ORDERING] = false;
+        }
+
+        return $channels;
+    }
+
+    /**
+     * Determine if the store has a specific sales channel enabled.
+     */
+    public function hasChannel(string $channel): bool
+    {
+        if (!in_array($channel, self::CHANNELS, true)) {
+            return false;
+        }
+
+        $channels = $this->getSalesChannels();
+
+        return !empty($channels[$channel]);
+    }
+
+    /**
+     * Alias for hasChannel().
+     */
+    public function hasSalesChannel(string $channel): bool
+    {
+        return $this->hasChannel($channel);
     }
 
     /**

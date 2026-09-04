@@ -108,6 +108,7 @@ Alpine.data('posApp', (opts = {}) => ({
     baseUrl: opts.baseUrl || '',
     csrf: opts.csrf || '',
     labels: opts.labels || {},
+    shiftsEnabled: opts.shiftsEnabled ?? true,
 
     // Product grid
     q: '',
@@ -435,7 +436,7 @@ Alpine.data('posApp', (opts = {}) => ({
     },
 
     openPayment() {
-        if (!this.shiftOpen) { this.flash(this.labels.shift_required || 'Open a shift first', 'error'); return; }
+        if (this.shiftsEnabled && !this.shiftOpen) { this.flash(this.labels.shift_required || 'Open a shift first', 'error'); return; }
         if (!this.cart.lines.length) return;
         // Pre-fill cash with the exact total unless the cashier already typed one.
         if (!this.cash || parseFloat(this.cash) === 0) this.cash = this.cart.totals.total;
@@ -546,7 +547,11 @@ Alpine.data('posApp', (opts = {}) => ({
     },
     get remaining() { return parseFloat(this.cart.totals.total || 0) - this.paid; },
     get change() { return this.remaining < 0 ? -this.remaining : 0; },
-    get shiftOpen() { return !!this.cart.shift_open; },
+    get shiftOpen() {
+        if (!this.shiftsEnabled) return true;
+        if (this.cart && typeof this.cart.shifts_enabled !== 'undefined' && !this.cart.shifts_enabled) return true;
+        return !!this.cart.shift_open;
+    },
     get exact() {
         if (this.credit > 0 && !this.customer) return false;
         return this.remaining <= 0.005;

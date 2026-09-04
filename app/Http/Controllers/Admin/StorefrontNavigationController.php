@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\StorefrontNavigationItem;
 use App\Models\StorefrontPage;
+use App\Rules\SafeNavigationUrlRule;
 use App\Services\StoreContext;
 use App\Services\StorefrontNavigationDefaultsService;
 use App\Services\StorefrontNavigationRegistry;
@@ -103,24 +104,26 @@ class StorefrontNavigationController extends Controller
         $store = $context->getStore();
         abort_if(!$store, 404);
 
-        $validated = $this->validateItem($request, $store->id);
+        return DB::transaction(function () use ($request, $store) {
+            $validated = $this->validateItem($request, $store->id);
 
-        // Enforce placement constraints
-        $this->enforcePlacementLimits($store->id, $validated);
+            // Enforce placement constraints with lock
+            $this->enforcePlacementLimits($store->id, $validated);
 
-        if (empty($validated['menu_key'])) {
-            $validated['menu_key'] = Str::slug($validated['label_en'] ?: $validated['label_my'], '_') . '_' . Str::random(4);
-        }
+            if (empty($validated['menu_key'])) {
+                $validated['menu_key'] = Str::slug($validated['label_en'] ?: $validated['label_my'], '_') . '_' . Str::random(4);
+            }
 
-        // Set sort_order to max + 10
-        $maxOrder = StorefrontNavigationItem::where('store_id', $store->id)->max('sort_order') ?? 0;
-        $validated['sort_order'] = $maxOrder + 10;
-        $validated['store_id'] = $store->id;
+            // Set sort_order to max + 10
+            $maxOrder = StorefrontNavigationItem::where('store_id', $store->id)->lockForUpdate()->max('sort_order') ?? 0;
+            $validated['sort_order'] = $maxOrder + 10;
+            $validated['store_id'] = $store->id;
 
-        StorefrontNavigationItem::create($validated);
+            StorefrontNavigationItem::create($validated);
 
-        return redirect()->route('store.admin.navigation.index', ['store_slug' => $store->slug])
-            ->with('success', __('messages.saved_successfully'));
+            return redirect()->route('store.admin.navigation.index', ['store_slug' => $store->slug])
+                ->with('success', __('messages.saved_successfully'));
+        });
     }
 
     /**
@@ -147,15 +150,17 @@ class StorefrontNavigationController extends Controller
         $store = $context->getStore();
         abort_if(!$store, 404);
 
-        $item = StorefrontNavigationItem::where('store_id', $store->id)->findOrFail($id);
-        $validated = $this->validateItem($request, $store->id, $item->id);
+        return DB::transaction(function () use ($request, $store, $id) {
+            $item = StorefrontNavigationItem::where('store_id', $store->id)->lockForUpdate()->findOrFail($id);
+            $validated = $this->validateItem($request, $store->id, $item->id);
 
-        $this->enforcePlacementLimits($store->id, $validated, $item->id);
+            $this->enforcePlacementLimits($store->id, $validated, $item->id);
 
-        $item->update($validated);
+            $item->update($validated);
 
-        return redirect()->route('store.admin.navigation.index', ['store_slug' => $store->slug])
-            ->with('success', __('messages.saved_successfully'));
+            return redirect()->route('store.admin.navigation.index', ['store_slug' => $store->slug])
+                ->with('success', __('messages.saved_successfully'));
+        });
     }
 
     /**
@@ -210,18 +215,31 @@ class StorefrontNavigationController extends Controller
     }
 
     /**
-     * Quick toggle enabled status.
+     * Quick toggle enabled status with locking and placement constraint validation.
      */
     public function toggleStatus(Request $request, string $store_slug, int $id, StoreContext $context): RedirectResponse
     {
         $store = $context->getStore();
         abort_if(!$store, 404);
 
-        $item = StorefrontNavigationItem::where('store_id', $store->id)->findOrFail($id);
-        $item->is_enabled = !$item->is_enabled;
-        $item->save();
+        return DB::transaction(function () use ($store, $id) {
+            $item = StorefrontNavigationItem::where('store_id', $store->id)->lockForUpdate()->findOrFail($id);
+            $newStatus = !$item->is_enabled;
 
-        return back()->with('success', __('messages.saved_successfully'));
+            if ($newStatus) {
+                // If re-enabling, enforce placement limits with lock
+                $this->enforcePlacementLimits($store->id, [
+                    'show_desktop' => $item->show_desktop,
+                    'show_mobile_bottom' => $item->show_mobile_bottom,
+                    'is_enabled' => true,
+                ], $item->id);
+            }
+
+            $item->is_enabled = $newStatus;
+            $item->save();
+
+            return back()->with('success', __('messages.saved_successfully'));
+        });
     }
 
     /**
@@ -347,7 +365,7 @@ class StorefrontNavigationController extends Controller
                 'required_if:destination_type,page',
                 Rule::exists('storefront_pages', 'id')->where('store_id', $storeId),
             ],
-            'custom_url'          => 'nullable|required_if:destination_type,custom_url|string|max:2000',
+            'custom_url'          => ['nullable', 'required_if:destination_type,custom_url', 'string', 'max:2000', new SafeNavigationUrlRule()],
             'show_desktop'        => 'boolean',
             'show_mobile_drawer'  => 'boolean',
             'show_mobile_bottom'  => 'boolean',
@@ -358,12 +376,13 @@ class StorefrontNavigationController extends Controller
     }
 
     /**
-     * Enforce maximum placement limits (Desktop Max 10, Mobile Bottom Max 5).
+     * Enforce maximum placement limits (Desktop Max 10, Mobile Bottom Max 5) with pessimistic concurrency locking.
      */
     protected function enforcePlacementLimits(int $storeId, array $validated, ?int $ignoreId = null): void
     {
         if (!empty($validated['show_desktop']) && !empty($validated['is_enabled'])) {
             $desktopCount = StorefrontNavigationItem::where('store_id', $storeId)
+                ->lockForUpdate()
                 ->where('show_desktop', true)
                 ->where('is_enabled', true)
                 ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
@@ -377,6 +396,7 @@ class StorefrontNavigationController extends Controller
 
         if (!empty($validated['show_mobile_bottom']) && !empty($validated['is_enabled'])) {
             $bottomCount = StorefrontNavigationItem::where('store_id', $storeId)
+                ->lockForUpdate()
                 ->where('show_mobile_bottom', true)
                 ->where('is_enabled', true)
                 ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))

@@ -36,22 +36,37 @@ class CashierShiftController extends Controller
         $store = $context->getStore();
         $user = auth()->user();
 
-        // Only the cashier's OWN open shift is shown. Showing another
-        // cashier's open shift would be misleading — posting already requires
-        // an own shift via openShiftFor().
-        $openShift = $this->shifts->openShiftFor($store, $user);
+        $shiftsEnabled = $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS);
+
+        // Only the cashier's OWN open shift is shown when shift tracking is enabled.
+        $openShift = $shiftsEnabled ? $this->shifts->openShiftFor($store, $user) : null;
 
         // Open shifts held by OTHER cashiers — surfaced so the page can say
         // "Register X is in use" instead of a silent "no shift" + rejection.
-        $occupiedRegisters = CashierShift::query()
-            ->with('cashier')
-            ->where('store_id', $store->id)
-            ->where('status', 'open')
-            ->when($openShift, fn ($q) => $q->where('id', '!=', $openShift->id))
-            ->orderBy('register_name')
-            ->get();
+        $occupiedRegisters = $shiftsEnabled
+            ? CashierShift::query()
+                ->with('cashier')
+                ->where('store_id', $store->id)
+                ->where('status', 'open')
+                ->when($openShift, fn ($q) => $q->where('id', '!=', $openShift->id))
+                ->orderBy('register_name')
+                ->get()
+            : collect();
 
-        $summary = $this->shifts->dailySummary($store, now());
+        $summary = $shiftsEnabled
+            ? $this->shifts->dailySummary($store, now())
+            : [
+                'shifts' => collect(),
+                'shift_count' => 0,
+                'opening_cash' => '0.00',
+                'cash_sales' => '0.00',
+                'cash_refunds' => '0.00',
+                'cash_in' => '0.00',
+                'cash_out' => '0.00',
+                'expected' => '0.00',
+                'actual' => '0.00',
+                'difference' => '0.00',
+            ];
 
         $cart = $this->sales->cartResolved($store);
         $cartTotals = $this->sales->cartTotals($store);

@@ -207,8 +207,10 @@ class PosReturnService
             }
 
             if ($method === 'cash') {
-                if (! $shift?->isOpen() || (int) $shift->store_id !== (int) $store->id) {
-                    throw new InventoryException('An open cashier shift is required to refund cash.');
+                if ($store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS)) {
+                    if (! $shift?->isOpen() || (int) $shift->store_id !== (int) $store->id) {
+                        throw new InventoryException('An open cashier shift is required to refund cash.');
+                    }
                 }
                 $cashRefund = bcadd($cashRefund, $amount, 2);
             } else {
@@ -307,7 +309,7 @@ class PosReturnService
             }
 
             // Cash refunds leave the drawer; credit refunds reduce the receivable.
-            if (bccomp($cashRefund, '0', 2) > 0) {
+            if ($shift && bccomp($cashRefund, '0', 2) > 0) {
                 $this->shifts->recordCashRefund($shift, $cashRefund);
             }
             if (bccomp($creditRefund, '0', 2) > 0) {

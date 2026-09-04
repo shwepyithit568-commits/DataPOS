@@ -31,6 +31,10 @@ class CashierShiftService
      */
     public function openShift(Store $store, array $data, ?User $actor = null): CashierShift
     {
+        if (! $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS)) {
+            throw new InventoryException('Cashier shifts are disabled for this store.');
+        }
+
         $registerName = trim($data['register_name'] ?? '');
         if ($registerName === '') {
             throw new InventoryException('A register name is required to open a shift.');
@@ -72,6 +76,10 @@ class CashierShiftService
      */
     public function openShiftFor(Store $store, User $cashier): ?CashierShift
     {
+        if (! $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS)) {
+            return null;
+        }
+
         return CashierShift::query()
             ->where('store_id', $store->id)
             ->where('cashier_id', $cashier->id)
@@ -191,10 +199,11 @@ class CashierShiftService
      *
      * @return array{shifts: \Illuminate\Support\Collection<int, CashierShift>, shift_count:int, opening_cash:string, cash_sales:string, cash_refunds:string, cash_in:string, cash_out:string, expected:string, actual:string, difference:string}
      */
-    public function dailySummary(Store $store, Carbon $date): array
+    public function dailySummary(Store $store, \DateTimeInterface $date): array
     {
-        $start = $date->copy()->startOfDay();
-        $end = $date->copy()->endOfDay();
+        $carbonDate = Carbon::parse($date);
+        $start = $carbonDate->copy()->startOfDay();
+        $end = $carbonDate->copy()->endOfDay();
 
         $shifts = CashierShift::query()
             ->where('store_id', $store->id)

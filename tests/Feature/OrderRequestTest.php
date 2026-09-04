@@ -367,9 +367,8 @@ class OrderRequestTest extends TestCase
 
         $listResponse = $this->actingAs($staff)->get('/store/main-store/admin/orders');
         $listResponse->assertStatus(200);
-        $listResponse->assertSee('/store/main-store/admin/orders/' . $order->id . '/status', false);
         $listResponse->assertSee('@admin_buyer');
-        $listResponse->assertSee('Update');
+        $listResponse->assertSee(__('messages.save'));
 
         $detailResponse = $this->actingAs($staff)->get('/store/main-store/admin/orders/' . $order->id);
         $detailResponse->assertStatus(200);

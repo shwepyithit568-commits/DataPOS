@@ -17,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'platform_owner' => \App\Http\Middleware\EnsurePlatformOwner::class,
             'cache.public_page' => \App\Http\Middleware\CachePublicPage::class,
             'store.capability' => \App\Http\Middleware\CheckStoreCapability::class,
+            'store.channel' => \App\Http\Middleware\CheckStoreChannel::class,
+            'store.permission' => \App\Http\Middleware\CheckStorePermission::class,
             'finance_access' => \App\Http\Middleware\EnsureFinanceAccess::class,
         ]);
 

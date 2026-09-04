@@ -208,7 +208,24 @@ class UserManagementController extends Controller
     public function update(Request $request, string $store_slug, User $user, StoreContext $context): RedirectResponse
     {
         $store = $this->resolveStore($context);
+        $actor = auth()->user();
+        $permService = app(\App\Services\StorePermissionService::class);
+
+        // Plan §6.1: canManageStaffPermissions check
+        if (! $permService->canManageStaffPermissions($actor, $store, $user)) {
+            abort(403, 'You do not have authority to modify this user.');
+        }
+
         $validated = $this->validatePayload($request, $user, $store);
+
+        // Plan §6.1: Last active Store Owner cannot be demoted
+        $currentMembership = $user->stores()->where('stores.id', $store->id)->first()?->pivot;
+        $isCurrentlyOwner = $currentMembership && $currentMembership->role === 'store_owner';
+        $willBeOwner = $validated['role'] === 'store_owner';
+
+        if ($isCurrentlyOwner && ! $willBeOwner && $permService->isLastStoreOwner($store, $user)) {
+            return back()->withErrors(['role' => 'ဆိုင်၏ နောက်ဆုံးကျန်ရှိသော Store Owner အား အခြားရာထူးသို့ ပြောင်းလဲခွင့်မရှိပါ။ (The last active Store Owner cannot be demoted.)']);
+        }
 
         DB::transaction(function () use ($validated, $user, $store) {
             $user->fill([
@@ -248,6 +265,8 @@ class UserManagementController extends Controller
             ]);
         });
 
+        \App\Services\StorePermissionService::invalidateCache($store->id, $user->id);
+
         return redirect(AdminListReturn::resolve('admin_users_return', route('store.admin.users.index', ['store_slug' => $store->slug])))
             ->with('success', 'အသုံးပြုသူ အချက်အလက်များ အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။ (User updated successfully.)');
     }
@@ -255,22 +274,27 @@ class UserManagementController extends Controller
     public function destroy(string $store_slug, User $user, StoreContext $context): RedirectResponse
     {
         $store = $this->resolveStore($context);
+        $actor = auth()->user();
+        $permService = app(\App\Services\StorePermissionService::class);
 
         if ($user->id === auth()->id()) {
             return back()->withErrors(['user' => 'မိမိကိုယ်ပိုင် အကောင့်အား ဖျက်ခွင့်/ဖယ်ရှားခွင့် မရှိပါ။ (You cannot remove your own account.)']);
         }
 
-        if ($user->isPlatformOwner() && ! auth()->user()?->isPlatformOwner()) {
-            return back()->withErrors(['user' => 'Platform Owner အကောင့်အား ဖယ်ရှားခွင့်မရှိပါ။ (Platform owner accounts cannot be removed.)']);
+        // Plan §6.1: canManageStaffPermissions check
+        if (! $permService->canManageStaffPermissions($actor, $store, $user)) {
+            abort(403, 'You do not have authority to remove this user.');
         }
 
-        // Store Owner accounts cannot be removed by Store Managers
-        if ($user->stores()->where('stores.id', $store->id)->wherePivot('role', 'store_owner')->exists() && ! auth()->user()?->isStoreOwner($store->id)) {
-            return back()->withErrors(['user' => 'ဆိုင်ပိုင်ရှင် (Store Owner) အကောင့်အား ဖယ်ရှားခွင့်မရှိပါ။ (Store Owner accounts cannot be removed.)']);
+        // Plan §6.1: Last active Store Owner cannot be deleted/removed
+        if ($permService->isLastStoreOwner($store, $user)) {
+            return back()->withErrors(['user' => 'ဆိုင်၏ နောက်ဆုံးကျန်ရှိသော Store Owner အကောင့်အား ဖယ်ရှားခွင့်မရှိပါ။ (The last active Store Owner cannot be removed.)']);
         }
 
         // Detach user membership from this specific store
         $user->stores()->detach($store->id);
+
+        \App\Services\StorePermissionService::invalidateCache($store->id, $user->id);
 
         return redirect(AdminListReturn::resolve('admin_users_return', route('store.admin.users.index', ['store_slug' => $store->slug])))
             ->with('success', 'ဝန်ထမ်း/အသုံးပြုသူအား ဤဆိုင်စာရင်းမှ အောင်မြင်စွာ ဖယ်ရှားပြီးပါပြီ။ (User removed from store successfully.)');
@@ -279,21 +303,33 @@ class UserManagementController extends Controller
     public function suspend(string $store_slug, User $user, StoreContext $context): RedirectResponse
     {
         $store = $this->resolveStore($context);
+        $actor = auth()->user();
+        $permService = app(\App\Services\StorePermissionService::class);
 
         if ($user->id === auth()->id()) {
             return back()->withErrors(['user' => 'မိမိကိုယ်ပိုင် အကောင့်အား ပိတ်ပင်ခွင့်မရှိပါ။ (You cannot suspend your own account.)']);
         }
 
-        if ($user->isPlatformOwner()) {
-            return back()->withErrors(['user' => 'Platform owner accounts cannot be suspended from a store page.']);
+        // Plan §6.1: canManageStaffPermissions check
+        if (! $permService->canManageStaffPermissions($actor, $store, $user)) {
+            abort(403, 'You do not have authority to suspend this user.');
         }
 
         $currentMembership = $user->stores()->where('stores.id', $store->id)->first()?->pivot;
+        $isCurrentlyActive = $currentMembership && $currentMembership->status === 'active';
+
+        // Plan §6.1: Last active Store Owner cannot be suspended
+        if ($isCurrentlyActive && $permService->isLastStoreOwner($store, $user)) {
+            return back()->withErrors(['user' => 'ဆိုင်၏ နောက်ဆုံးကျန်ရှိသော Store Owner အကောင့်အား ပိတ်ပင်ခွင့်မရှိပါ။ (The last active Store Owner cannot be suspended.)']);
+        }
+
         $newStatus = ($currentMembership && $currentMembership->status === 'suspended') ? 'active' : 'suspended';
 
         $user->stores()->syncWithoutDetaching([
             $store->id => ['status' => $newStatus],
         ]);
+
+        \App\Services\StorePermissionService::invalidateCache($store->id, $user->id);
 
         $message = $newStatus === 'active'
             ? 'အသုံးပြုသူ အကောင့်အား ပြန်လည် အသုံးပြုခွင့် ပေးလိုက်ပါပြီ။ (Account activated.)'

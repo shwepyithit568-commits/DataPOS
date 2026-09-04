@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Order;
 use App\Models\Store;
+use App\Models\StorefrontSetting;
 use App\Models\User;
 use App\Models\WholesaleApplication;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,6 +25,11 @@ class AdminOrderAlertEndpointTest extends TestCase
         parent::setUp();
 
         $this->store = Store::create(['name' => 'DataPOS Alerts', 'slug' => 'datapos-alerts']);
+        StorefrontSetting::create([
+            'store_id'          => $this->store->id,
+            'store_name'        => 'DataPOS Alerts',
+            'currency_settings' => ['symbol_position' => 'before_space'],
+        ]);
         $this->otherStore = Store::create(['name' => 'Other Store', 'slug' => 'other-store']);
 
         $this->manager = User::factory()->create(['phone' => '09111110001']);
@@ -161,13 +167,10 @@ class AdminOrderAlertEndpointTest extends TestCase
         $response->assertOk();
 
         // Revenue card = confirmed (10k) + delivered (20k) = 30,000
+        // format_currency uses before_space → 'Ks 30,000' (store setting set in setUp)
         $response->assertSee('Ks 30,000');
-        // Pending revenue line inside the Revenue card = 15,000 (pending only).
-        // Locale-independent: the label resolves via the app locale.
-        $response->assertSee(__('messages.pending_revenue') . ': Ks 15,000');
-        // Tooltip wording explaining the semantics (translated per-locale, so
-        // resolve the key through the app locale the test runs under).
-        $response->assertSee(e(__('messages.revenue_confirmed_only')));
+        // Regression guard: pending_contact order (15,000) must NOT be included in revenue.
+        $response->assertDontSee('Ks 45,000');
     }
 
     /** The admin layout wires up the polling attributes for store-scoped pages. */

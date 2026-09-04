@@ -88,14 +88,25 @@ class AppServiceProvider extends ServiceProvider
             $role = ($user && $store) ? $user->getStoreRole($store->id) : null;
             $navService = app(\App\Services\AdminNavigationService::class);
 
+            $navigationTree = $navService->getFilteredNavigationTree($user, $store, request());
+
+            // Extract pending order count only if ecommerce/orders is permitted and present
+            $pendingOrderCount = 0;
+            foreach ($navigationTree as $item) {
+                if (($item['key'] ?? '') === 'ecommerce') {
+                    $pendingOrderCount = (int) ($item['badge'] ?? 0);
+                    break;
+                }
+            }
+
             $view->with([
                 'isPlatformScope' => $isPlatformScope,
-                'adminPendingOrderCount' => ($store && ! $isPlatformScope)
-                    ? $navService->getPendingOrderCount($store)
-                    : 0,
-                'adminCanManageSettings' => $user && $store && $user->hasStoreRole($store->id, 'store_manager'),
-                'adminCanAccessStaffTools' => $user && $store && $user->hasStoreRole($store->id, ['store_manager', 'staff']),
-                'adminCanManageUsers' => $user && ($user->isPlatformOwner() || ($store && $user->isStoreOwner($store->id))),
+                'navigationTree' => $navigationTree,
+                'adminPendingOrderCount' => $pendingOrderCount,
+                'adminCanManageSettings' => $navService->canManageSettings($user, $store),
+                'adminCanAccessStaffTools' => $navService->canAccessStaffTools($user, $store),
+                'adminCanManageUsers' => $navService->canManageUsers($user, $store),
+                'adminCanManageFinance' => $navService->canManageFinance($user, $store),
                 'adminCurrentStoreRole' => $role,
                 'adminNavService' => $navService,
             ]);

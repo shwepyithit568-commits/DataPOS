@@ -131,7 +131,8 @@ class StaffRoleController extends Controller
             abort(404);
         }
 
-        if (! auth()->user()?->isStoreOwner($store->id)) {
+        $actor = auth()->user();
+        if (! $actor || (! $actor->isStoreOwner($store->id) && ! $actor->isPlatformOwner())) {
             return back()->withErrors(['error' => 'ဆိုင်ပိုင်ရှင် (Store Owner) သာလျှင် ဝန်ထမ်းရာထူးများနှင့် လုပ်ပိုင်ခွင့်များကို ပြင်ဆင်ဖန်တီးနိုင်ပါသည်။ (Only Store Owner can create new staff roles.)']);
         }
 
@@ -143,18 +144,35 @@ class StaffRoleController extends Controller
             'permissions.*' => 'string',
         ]);
 
+        $submittedPermissions = $validated['permissions'] ?? [];
+
+        // Plan §6.1: Reject individual '*' wildcard submissions with 422
+        if (in_array('*', $submittedPermissions, true)) {
+            abort(422, 'Wildcard (*) permission is not allowed for custom roles.');
+        }
+
+        // Privilege Ceiling (Plan §6.1)
+        $permService = app(\App\Services\StorePermissionService::class);
+        if (! $permService->canAssignPermissions($actor, $store, $submittedPermissions)) {
+            abort(422, 'Cannot assign permissions exceeding your own privilege ceiling or protected permissions.');
+        }
+
         $slug = Str::slug($validated['name']) . '-' . rand(100, 999);
 
-        StaffRole::create([
-            'store_id'    => $store->id,
-            'name'        => $validated['name'],
-            'slug'        => $slug,
-            'description' => $validated['description'] ?? null,
-            'color'       => $validated['color'] ?? '#0284c7',
-            'permissions' => $validated['permissions'] ?? [],
-            'is_system'   => false,
-            'is_active'   => true,
-        ]);
+        DB::transaction(function () use ($store, $validated, $slug, $submittedPermissions) {
+            StaffRole::create([
+                'store_id'    => $store->id,
+                'name'        => $validated['name'],
+                'slug'        => $slug,
+                'description' => $validated['description'] ?? null,
+                'color'       => $validated['color'] ?? '#0284c7',
+                'permissions' => $submittedPermissions,
+                'is_system'   => false,
+                'is_active'   => true,
+            ]);
+        });
+
+        \App\Services\StorePermissionService::invalidateCache($store->id);
 
         return back()->with('success', __('messages.role_created_success'));
     }
@@ -169,7 +187,8 @@ class StaffRoleController extends Controller
             abort(404);
         }
 
-        if (! auth()->user()?->isStoreOwner($store->id)) {
+        $actor = auth()->user();
+        if (! $actor || (! $actor->isStoreOwner($store->id) && ! $actor->isPlatformOwner())) {
             return back()->withErrors(['error' => 'ဆိုင်ပိုင်ရှင် (Store Owner) သာလျှင် ဝန်ထမ်းရာထူးများနှင့် လုပ်ပိုင်ခွင့်များကို ပြင်ဆင်ဖန်တီးနိုင်ပါသည်။ (Only Store Owner can update staff roles.)']);
         }
 
@@ -184,13 +203,30 @@ class StaffRoleController extends Controller
             'is_active'   => 'nullable|boolean',
         ]);
 
-        $staffRole->update([
-            'name'        => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'color'       => $validated['color'] ?? $staffRole->color,
-            'permissions' => $validated['permissions'] ?? [],
-            'is_active'   => $request->has('is_active') ? (bool) $request->input('is_active') : $staffRole->is_active,
-        ]);
+        $submittedPermissions = $validated['permissions'] ?? [];
+
+        // Plan §6.1: Reject individual '*' wildcard submissions with 422 for non-owner roles
+        if (in_array('*', $submittedPermissions, true) && $staffRole->slug !== 'store_owner') {
+            abort(422, 'Wildcard (*) permission is not allowed for custom roles.');
+        }
+
+        // Privilege Ceiling (Plan §6.1)
+        $permService = app(\App\Services\StorePermissionService::class);
+        if (! $permService->canAssignPermissions($actor, $store, $submittedPermissions)) {
+            abort(422, 'Cannot assign permissions exceeding your own privilege ceiling or protected permissions.');
+        }
+
+        DB::transaction(function () use ($staffRole, $validated, $request, $submittedPermissions) {
+            $staffRole->update([
+                'name'        => $validated['name'],
+                'description' => $validated['description'] ?? null,
+                'color'       => $validated['color'] ?? $staffRole->color,
+                'permissions' => $submittedPermissions,
+                'is_active'   => $request->has('is_active') ? (bool) $request->input('is_active') : $staffRole->is_active,
+            ]);
+        });
+
+        \App\Services\StorePermissionService::invalidateCache($store->id);
 
         return back()->with('success', __('messages.role_updated_success'));
     }
@@ -236,8 +272,18 @@ class StaffRoleController extends Controller
             abort(404);
         }
 
-        if (! auth()->user()?->isStoreOwner($store->id)) {
-            return back()->withErrors(['error' => 'ဆိုင်ပိုင်ရှင် (Store Owner) သာလျှင် ဝန်ထမ်းများအား ရာထူးတာဝန် ခွဲဝေပေးအပ်နိုင်ပါသည်။ (Only Store Owner can assign staff roles.)']);
+        $actor = auth()->user();
+        $permService = app(\App\Services\StorePermissionService::class);
+
+        $targetUserId = (int) $request->input('user_id');
+        $targetUser = User::find($targetUserId);
+        if (! $targetUser) {
+            abort(404, 'Target user not found.');
+        }
+
+        // Plan §6.1: canManageStaffPermissions check
+        if (! $permService->canManageStaffPermissions($actor, $store, $targetUser)) {
+            abort(403, 'You do not have authority to modify staff permissions for this user.');
         }
 
         $actionMode = $request->input('action_mode', 'select');
@@ -256,26 +302,42 @@ class StaffRoleController extends Controller
                 'role_permissions.*' => 'string',
             ]);
 
+            $submittedPermissions = $validated['role_permissions'] ?? [];
+
+            // Reject wildcard '*'
+            if (in_array('*', $submittedPermissions, true)) {
+                abort(422, 'Wildcard (*) permission is not allowed for custom roles.');
+            }
+
+            // Privilege Ceiling (Plan §6.1)
+            if (! $permService->canAssignPermissions($actor, $store, $submittedPermissions)) {
+                abort(422, 'Cannot assign permissions exceeding your own privilege ceiling or protected permissions.');
+            }
+
             $baseSlug = Str::slug($validated['role_name']) ?: 'custom-role';
             $uniqueSlug = $baseSlug . '-' . Str::lower(Str::random(4));
 
-            $newRole = StaffRole::create([
-                'store_id'    => $store->id,
-                'name'        => $validated['role_name'],
-                'slug'        => $uniqueSlug,
-                'description' => $validated['role_description'] ?? null,
-                'color'       => $validated['role_color'] ?? '#0284c7',
-                'permissions' => $validated['role_permissions'] ?? [],
-                'is_system'   => false,
-                'is_active'   => true,
-            ]);
+            DB::transaction(function () use ($store, $validated, $uniqueSlug, $submittedPermissions) {
+                $newRole = StaffRole::create([
+                    'store_id'    => $store->id,
+                    'name'        => $validated['role_name'],
+                    'slug'        => $uniqueSlug,
+                    'description' => $validated['role_description'] ?? null,
+                    'color'       => $validated['role_color'] ?? '#0284c7',
+                    'permissions' => $submittedPermissions,
+                    'is_system'   => false,
+                    'is_active'   => true,
+                ]);
 
-            DB::table('store_user')
-                ->where('store_id', $store->id)
-                ->where('user_id', $validated['user_id'])
-                ->update(['staff_role_id' => $newRole->id]);
+                DB::table('store_user')
+                    ->where('store_id', $store->id)
+                    ->where('user_id', $validated['user_id'])
+                    ->update(['staff_role_id' => $newRole->id]);
+            });
 
-            return back()->with('success', __('messages.staff_role_assigned_success') . ' (' . $newRole->name . ')');
+            \App\Services\StorePermissionService::invalidateCache($store->id, $targetUser->id);
+
+            return back()->with('success', __('messages.staff_role_assigned_success'));
         }
 
         $validated = $request->validate([
@@ -291,10 +353,20 @@ class StaffRoleController extends Controller
             ],
         ]);
 
+        // If assigning a specific role, verify actor can assign it
+        if (! empty($validated['staff_role_id'])) {
+            $assignedRole = StaffRole::find($validated['staff_role_id']);
+            if ($assignedRole && ! $permService->canAssignPermissions($actor, $store, $assignedRole->permissions ?? [])) {
+                abort(422, 'Cannot assign a role that exceeds your privilege ceiling.');
+            }
+        }
+
         DB::table('store_user')
             ->where('store_id', $store->id)
             ->where('user_id', $validated['user_id'])
             ->update(['staff_role_id' => $validated['staff_role_id']]);
+
+        \App\Services\StorePermissionService::invalidateCache($store->id, $targetUser->id);
 
         return back()->with('success', __('messages.staff_role_assigned_success'));
     }

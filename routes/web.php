@@ -24,6 +24,8 @@ use App\Http\Controllers\Admin\SparePartController;
 use App\Http\Controllers\Admin\StoreManagementController;
 use App\Http\Controllers\Admin\ThemeGovernanceController;
 use App\Http\Controllers\Admin\StoreSettingController;
+use App\Http\Controllers\Admin\StoreModuleController;
+use App\Http\Controllers\Admin\StoreChannelController;
 use App\Http\Controllers\Admin\AppearanceDraftController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\WarehouseController;
@@ -266,6 +268,12 @@ Route::prefix('store/{store_slug}')
         })
             ->name('store.admin.root')
             ->middleware(EnsureStoreAccess::class . ':store_manager,staff');
+
+        // Business Modules & Sales Channels Settings
+        Route::get('/admin/settings/modules', [StoreModuleController::class, 'index'])->name('store.admin.modules.index')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/settings/modules/toggle', [StoreModuleController::class, 'toggle'])->name('store.admin.modules.toggle')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::get('/admin/settings/channels', [StoreChannelController::class, 'index'])->name('store.admin.channels.index')->middleware(EnsureStoreAccess::class . ':store_manager');
+        Route::post('/admin/settings/channels/toggle', [StoreChannelController::class, 'toggle'])->name('store.admin.channels.toggle')->middleware(EnsureStoreAccess::class . ':store_manager');
 
         // Admin Store Settings CRUD (split into sidebar sections: general /
         // contact / delivery / how-to-order — see StoreSettingController)
@@ -845,9 +853,9 @@ Route::prefix('store/{store_slug}')
         // Statically registered, store-scoped, staff/store_manager only.
         Route::prefix('/pos')->middleware(EnsureStoreAccess::class . ':store_manager,staff')->group(function () {
             Route::get('/', [\App\POS\Http\Controllers\CashierShiftController::class, 'index'])->name('pos.index');
-            Route::post('/shifts', [\App\POS\Http\Controllers\CashierShiftController::class, 'open'])->name('pos.shifts.open');
-            Route::post('/shifts/{shift}/cash-events', [\App\POS\Http\Controllers\CashierShiftController::class, 'cashEvent'])->name('pos.shifts.cash-event');
-            Route::post('/shifts/{shift}/close', [\App\POS\Http\Controllers\CashierShiftController::class, 'close'])->name('pos.shifts.close');
+            Route::post('/shifts', [\App\POS\Http\Controllers\CashierShiftController::class, 'open'])->name('pos.shifts.open')->middleware('store.capability:operations.cashier_shifts');
+            Route::post('/shifts/{shift}/cash-events', [\App\POS\Http\Controllers\CashierShiftController::class, 'cashEvent'])->name('pos.shifts.cash-event')->middleware('store.capability:operations.cashier_shifts');
+            Route::post('/shifts/{shift}/close', [\App\POS\Http\Controllers\CashierShiftController::class, 'close'])->name('pos.shifts.close')->middleware('store.capability:operations.cashier_shifts');
 
             // POS cart + sale posting (target-design §2.8).
             Route::get('/products', [\App\POS\Http\Controllers\PosSaleController::class, 'search'])->name('pos.products.search');
@@ -878,10 +886,10 @@ Route::prefix('store/{store_slug}')
             Route::post('/sales/{sale}/refunds', [\App\POS\Http\Controllers\PosReturnController::class, 'store'])->name('pos.refund.store');
 
             // Branch daily closing (SoT §18) — view/create by staff, approve by manager.
-            Route::get('/closing', [\App\POS\Http\Controllers\DailyClosingController::class, 'index'])->name('pos.closing.index');
-            Route::post('/closing', [\App\POS\Http\Controllers\DailyClosingController::class, 'store'])->name('pos.closing.store');
+            Route::get('/closing', [\App\POS\Http\Controllers\DailyClosingController::class, 'index'])->name('pos.closing.index')->middleware('store.capability:operations.cashier_shifts');
+            Route::post('/closing', [\App\POS\Http\Controllers\DailyClosingController::class, 'store'])->name('pos.closing.store')->middleware('store.capability:operations.cashier_shifts');
             Route::post('/closing/{closing}/approve', [\App\POS\Http\Controllers\DailyClosingController::class, 'approve'])->name('pos.closing.approve')
-                ->middleware(EnsureStoreAccess::class . ':store_manager');
+                ->middleware([EnsureStoreAccess::class . ':store_manager', 'store.capability:operations.cashier_shifts']);
 
             // POS Reports (Sales / Cash Drawer / Stock / Services & Repairs)
             Route::get('/reports/sales', [\App\POS\Http\Controllers\PosReportController::class, 'sales'])->name('pos.reports.sales');

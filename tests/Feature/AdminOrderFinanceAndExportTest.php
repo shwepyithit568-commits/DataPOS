@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Order;
 use App\Models\Store;
+use App\Models\StorefrontSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -21,6 +22,11 @@ class AdminOrderFinanceAndExportTest extends TestCase
         parent::setUp();
 
         $this->store = Store::create(['name' => 'DataPOS Finance', 'slug' => 'datapos-finance']);
+        StorefrontSetting::create([
+            'store_id'          => $this->store->id,
+            'store_name'        => 'DataPOS Finance',
+            'currency_settings' => ['symbol_position' => 'before_space'],
+        ]);
         $this->admin = User::factory()->create(['phone' => '09123456789']);
         $this->admin->stores()->attach($this->store->id, ['role' => 'store_manager']);
     }
