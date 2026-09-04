@@ -12,7 +12,7 @@
 /.vscode
 /.zed
 /auth.json
-/data_ecommerce.zip
+*.zip
 /database/*.sqlite
 /database/*.sqlite-*
 /database/*.sqlite.bak*
