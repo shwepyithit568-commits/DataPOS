@@ -25,7 +25,7 @@
 
         <div class="flex items-center gap-1.5 self-end sm:self-auto">
             <a
-                href="{{ route('admin.pages.create', ['store_slug' => $store->slug]) }}"
+                href="{{ route('store.admin.pages.create', ['store_slug' => $store->slug]) }}"
                 class="inline-flex h-7 items-center gap-1 rounded-lg bg-sky-600 px-2.5 text-[11px] font-black text-white hover:bg-sky-700 transition shadow-2xs"
             >
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
@@ -118,7 +118,7 @@
     {{-- Interactive Toolbar --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-1.5 shadow-2xs">
         {{-- Search Input --}}
-        <form method="GET" action="{{ route('admin.pages.index', ['store_slug' => $store->slug]) }}" class="flex items-center gap-1 flex-1 max-w-md">
+        <form method="GET" action="{{ route('store.admin.pages.index', ['store_slug' => $store->slug]) }}" class="flex items-center gap-1 flex-1 max-w-md">
             <input type="hidden" name="status" value="{{ $status }}">
             <div class="relative w-full">
                 <input
@@ -133,7 +133,7 @@
                 </svg>
             </div>
             @if ($search)
-                <a href="{{ route('admin.pages.index', ['store_slug' => $store->slug, 'status' => $status]) }}" class="inline-flex h-7 items-center px-2 text-[11px] font-bold text-slate-500 hover:text-slate-800">
+                <a href="{{ route('store.admin.pages.index', ['store_slug' => $store->slug, 'status' => $status]) }}" class="inline-flex h-7 items-center px-2 text-[11px] font-bold text-slate-500 hover:text-slate-800">
                     {{ __('messages.clear') }}
                 </a>
             @endif
@@ -143,15 +143,15 @@
         <div class="flex items-center gap-1 flex-wrap">
             {{-- Status Pills --}}
             <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 p-0.5 text-[11px] font-extrabold">
-                <a href="{{ route('admin.pages.index', ['store_slug' => $store->slug, 'status' => 'all', 'search' => $search]) }}"
+                <a href="{{ route('store.admin.pages.index', ['store_slug' => $store->slug, 'status' => 'all', 'search' => $search]) }}"
                    class="rounded-md px-2 py-0.5 transition {{ $status === 'all' ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-2xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
                     {{ __('messages.all') }}
                 </a>
-                <a href="{{ route('admin.pages.index', ['store_slug' => $store->slug, 'status' => 'published', 'search' => $search]) }}"
+                <a href="{{ route('store.admin.pages.index', ['store_slug' => $store->slug, 'status' => 'published', 'search' => $search]) }}"
                    class="rounded-md px-2 py-0.5 transition {{ $status === 'published' ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-2xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
                     {{ __('messages.published') }}
                 </a>
-                <a href="{{ route('admin.pages.index', ['store_slug' => $store->slug, 'status' => 'draft', 'search' => $search]) }}"
+                <a href="{{ route('store.admin.pages.index', ['store_slug' => $store->slug, 'status' => 'draft', 'search' => $search]) }}"
                    class="rounded-md px-2 py-0.5 transition {{ $status === 'draft' ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-2xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
                     {{ __('messages.draft') }}
                 </a>
@@ -159,7 +159,7 @@
 
             {{-- Export Buttons --}}
             <a
-                href="{{ route('admin.pages.export', ['store_slug' => $store->slug, 'format' => 'xlsx']) }}"
+                href="{{ route('store.admin.pages.export', ['store_slug' => $store->slug, 'format' => 'xlsx']) }}"
                 class="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-[11px] font-extrabold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                 title="Export Excel"
             >
@@ -169,7 +169,7 @@
                 <span>Excel</span>
             </a>
             <a
-                href="{{ route('admin.pages.export', ['store_slug' => $store->slug, 'format' => 'csv']) }}"
+                href="{{ route('store.admin.pages.export', ['store_slug' => $store->slug, 'format' => 'csv']) }}"
                 class="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-[11px] font-extrabold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                 title="Export CSV"
             >
@@ -247,7 +247,7 @@
 
                         {{-- Status Toggle --}}
                         <td class="py-1.5 px-2.5 text-center">
-                            <form method="POST" action="{{ route('admin.pages.toggle', ['store_slug' => $store->slug, 'id' => $page->id]) }}">
+                            <form method="POST" action="{{ route('store.admin.pages.toggle', ['store_slug' => $store->slug, 'id' => $page->id]) }}">
                                 @csrf
                                 <button type="submit" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black transition {{ $page->isPublished() ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 hover:bg-amber-200' }}">
                                     <span class="h-1.5 w-1.5 rounded-full {{ $page->isPublished() ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
@@ -278,7 +278,7 @@
                         <td class="py-1.5 px-2.5 text-right">
                             <div class="inline-flex items-center gap-1">
                                 <a
-                                    href="{{ route('admin.pages.edit', ['store_slug' => $store->slug, 'id' => $page->id]) }}"
+                                    href="{{ route('store.admin.pages.edit', ['store_slug' => $store->slug, 'id' => $page->id]) }}"
                                     class="p-1 rounded-md text-slate-500 hover:text-sky-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                                     title="{{ __('messages.edit') }}"
                                 >
@@ -287,7 +287,7 @@
                                     </svg>
                                 </a>
 
-                                <form method="POST" action="{{ route('admin.pages.destroy', ['store_slug' => $store->slug, 'id' => $page->id]) }}" onsubmit="return confirm('{{ __('messages.confirm_delete_page') }}');">
+                                <form method="POST" action="{{ route('store.admin.pages.destroy', ['store_slug' => $store->slug, 'id' => $page->id]) }}" onsubmit="return confirm('{{ __('messages.confirm_delete_page') }}');">
                                     @csrf
                                     @method('DELETE')
                                     <button

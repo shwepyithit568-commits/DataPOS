@@ -119,7 +119,7 @@ class StorefrontNavigationController extends Controller
 
         StorefrontNavigationItem::create($validated);
 
-        return redirect()->route('admin.navigation.index', ['store_slug' => $store->slug])
+        return redirect()->route('store.admin.navigation.index', ['store_slug' => $store->slug])
             ->with('success', __('messages.saved_successfully'));
     }
 
@@ -154,7 +154,7 @@ class StorefrontNavigationController extends Controller
 
         $item->update($validated);
 
-        return redirect()->route('admin.navigation.index', ['store_slug' => $store->slug])
+        return redirect()->route('store.admin.navigation.index', ['store_slug' => $store->slug])
             ->with('success', __('messages.saved_successfully'));
     }
 
@@ -169,7 +169,7 @@ class StorefrontNavigationController extends Controller
         $item = StorefrontNavigationItem::where('store_id', $store->id)->findOrFail($id);
         $item->delete();
 
-        return redirect()->route('admin.navigation.index', ['store_slug' => $store->slug])
+        return redirect()->route('store.admin.navigation.index', ['store_slug' => $store->slug])
             ->with('success', __('messages.deleted_successfully'));
     }
 
@@ -205,7 +205,7 @@ class StorefrontNavigationController extends Controller
             $adjacent->save();
         }
 
-        return redirect()->route('admin.navigation.index', ['store_slug' => $store->slug])
+        return redirect()->route('store.admin.navigation.index', ['store_slug' => $store->slug])
             ->with('success', __('messages.reordered_successfully'));
     }
 
@@ -234,7 +234,7 @@ class StorefrontNavigationController extends Controller
 
         $this->defaultsService->seedDefaultsForStore($store, true);
 
-        return redirect()->route('admin.navigation.index', ['store_slug' => $store->slug])
+        return redirect()->route('store.admin.navigation.index', ['store_slug' => $store->slug])
             ->with('success', __('messages.reset_to_defaults_successfully'));
     }
 

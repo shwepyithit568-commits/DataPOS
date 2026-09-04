@@ -69,12 +69,12 @@
         </button>
     </div>
 
-    {{-- Mobile: in-sidebar accordion (no teleport needed) --}}
+    {{-- In-sidebar accordion (mobile and expanded desktop) --}}
     <div id="sidebar-sub-{{ $name }}"
-         x-show="!viewportLg && {{ $name }}Open"
+         x-show="(!sidebarCollapsed || !viewportLg) && {{ $name }}Open"
          x-transition
          :class="sidebarCollapsed ? 'lg:hidden' : ''"
-         class="lg:hidden mt-1 pl-7 space-y-1">
+         class="mt-1 pl-7 space-y-1">
         {{ $slot }}
     </div>
 

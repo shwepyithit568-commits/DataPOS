@@ -120,7 +120,7 @@ class StorefrontPageController extends Controller
 
         StorefrontPage::create($validated);
 
-        return redirect()->route('admin.pages.index', ['store_slug' => $store->slug])
+        return redirect()->route('store.admin.pages.index', ['store_slug' => $store->slug])
             ->with('success', __('messages.saved_successfully'));
     }
 
@@ -173,7 +173,7 @@ class StorefrontPageController extends Controller
 
         $page->update($validated);
 
-        return redirect()->route('admin.pages.index', ['store_slug' => $store->slug])
+        return redirect()->route('store.admin.pages.index', ['store_slug' => $store->slug])
             ->with('success', __('messages.saved_successfully'));
     }
 
@@ -199,7 +199,7 @@ class StorefrontPageController extends Controller
 
         $page->delete();
 
-        return redirect()->route('admin.pages.index', ['store_slug' => $store->slug])
+        return redirect()->route('store.admin.pages.index', ['store_slug' => $store->slug])
             ->with('success', __('messages.deleted_successfully'));
     }
 

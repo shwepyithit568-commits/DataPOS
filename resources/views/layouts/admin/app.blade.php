@@ -225,8 +225,9 @@
         }
     ">
     @php
-        $activeStore = $store ?? app(\App\Services\StoreContext::class)->getStore();
-        $currentSlug = request()->route('store_slug') ?? $activeStore?->slug;
+        $isPlatformScope = request()->is('admin/*') && ! request()->is('store/*');
+        $activeStore = $isPlatformScope ? null : ($store ?? app(\App\Services\StoreContext::class)->getStore());
+        $currentSlug = $isPlatformScope ? null : (request()->route('store_slug') ?? $activeStore?->slug);
         $hasStoreContext = filled($currentSlug);
         $storeRouteParams = $hasStoreContext ? ['store_slug' => $currentSlug] : [];
         $pendingOrderCount = $adminPendingOrderCount ?? 0;
@@ -251,7 +252,7 @@
             posOpen: {{ (request()->routeIs('pos.index', 'pos.closing.*', 'pos.returns.*', 'pos.buybacks.*', 'store.admin.eload.*') || (request()->is('store/*/pos', 'store/*/pos/', 'store/*/pos/closing*', 'store/*/pos/returns*', 'store/*/pos/buy-back*') && !request()->is('store/*/admin/*'))) ? 'true' : 'false' }},
             inventoryOpen: {{ (((Str::contains($currentPath, 'products') && !Str::contains($currentPath, 'web-products')) || Str::contains($currentPath, ['admin/categories', 'brands', 'variant-presets', 'pos/opening-stock', 'pos/adjustments', 'pos/reconciliation', 'stock-count', 'stock-ledger', 'price-wizard', 'barcode', 'warranty', 'pos/reports/stock'])) && !Str::contains($currentPath, 'expense-categories')) ? 'true' : 'false' }},
             purchasingOpen: {{ Str::contains($currentPath, ['suppliers', 'pos/purchases', 'pos/transfers', 'warehouses']) ? 'true' : 'false' }},
-            ecommerceOpen: {{ Str::contains($currentPath, ['orders', 'reviews', 'banners', 'blog', 'glass-finder', 'push', 'promotions', 'web-products']) ? 'true' : 'false' }},
+            ecommerceOpen: {{ Str::contains($currentPath, ['orders', 'reviews', 'banners', 'blog', 'glass-finder', 'push', 'promotions', 'web-products', 'pages', 'navigation']) ? 'true' : 'false' }},
             customersOpen: {{ Str::contains($currentPath, ['customers', 'wholesale', 'membership']) ? 'true' : 'false' }},
             serviceOpen: {{ Str::contains($currentPath, ['repairs', 'service-jobs', 'spare-parts', 'service-settings']) ? 'true' : 'false' }},
             financeOpen: {{ Str::contains($currentPath, ['expenses', 'expense-categories', 'receivables', 'payables', 'profit-loss', 'transactions']) ? 'true' : 'false' }},
@@ -278,7 +279,7 @@
             hoverFlyoutSidebarRight: 0,
             hoverTimer: null,
             openHoverGroup(name, trigger) {
-                if (!this.viewportLg) return;
+                if (!this.viewportLg || !this.sidebarCollapsed) return;
                 if (this.hoverTimer) clearTimeout(this.hoverTimer);
 
                 const triggerRect = trigger.getBoundingClientRect();
@@ -355,49 +356,75 @@
             </button>
         </div>
 
-        <nav class="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto lg:overflow-visible text-sm" aria-label="{{ __('messages.admin_navigation') }}">
-            <div>
-                @php $isDashboard = request()->is('store/*/admin/dashboard') || request()->is('admin/dashboard'); @endphp
-                <x-admin.nav-link variant="main"
-                    :href="$hasStoreContext ? route('store.admin.dashboard', $storeRouteParams) : route('admin.dashboard')"
-                    :route-name="$hasStoreContext ? 'store.admin.dashboard' : 'admin.dashboard'"
-                    :active="$isDashboard"
-                    :label="__('messages.admin_dashboard')">
-                    <x-slot:icon>
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13h8V3H3v10Zm0 8h8v-4H3v4Zm12 0h6V11h-6v10Zm0-14h6V3h-6v4Z"/></svg>
-                    </x-slot:icon>
-                </x-admin.nav-link>
-            </div>
-
-            @if (auth()->user()?->isPlatformOwner())
-                @php $isStoreManagement = request()->is('admin/stores*'); @endphp
+        <nav class="flex-1 min-h-0 px-3 py-4 space-y-1.5 overflow-y-auto overscroll-contain text-sm" aria-label="{{ __('messages.admin_navigation') }}" data-scope="{{ $isPlatformScope ? 'platform' : 'store' }}">
+            @if ($isPlatformScope)
                 <div>
+                    @php $isDashboard = request()->routeIs('admin.dashboard') || request()->is('admin/dashboard'); @endphp
                     <x-admin.nav-link variant="main"
-                        :href="route('admin.stores.index')"
-                        route-name="admin.stores.index"
-                        :active="$isStoreManagement"
-                        :label="__('messages.store_management')">
+                        :href="route('admin.dashboard')"
+                        route-name="admin.dashboard"
+                        :active="$isDashboard"
+                        :label="__('messages.admin_dashboard')">
                         <x-slot:icon>
-                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21V8l9-5 9 5v13M9 21v-6h6v6M3 21h18"/></svg>
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13h8V3H3v10Zm0 8h8v-4H3v4Zm12 0h6V11h-6v10Zm0-14h6V3h-6v4Z"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
                 </div>
-                @php $isThemeGovernance = request()->is('admin/theme-governance*'); @endphp
+
+                @if (auth()->user()?->isPlatformOwner())
+                    @php $isStoreManagement = request()->is('admin/stores*'); @endphp
+                    <div>
+                        <x-admin.nav-link variant="main"
+                            :href="route('admin.stores.index')"
+                            route-name="admin.stores.index"
+                            :active="$isStoreManagement"
+                            :label="__('messages.store_management')">
+                            <x-slot:icon>
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21V8l9-5 9 5v13M9 21v-6h6v6M3 21h18"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    </div>
+                    @php $isThemeGovernance = request()->is('admin/theme-governance*'); @endphp
+                    <div>
+                        <x-admin.nav-link variant="main"
+                            :href="route('admin.theme-governance.index')"
+                            route-name="admin.theme-governance.index"
+                            :active="$isThemeGovernance"
+                            :label="__('messages.theme_governance')">
+                            <x-slot:icon>
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                            </x-slot:icon>
+                        </x-admin.nav-link>
+                    </div>
+                @endif
+            @else
                 <div>
+                    @php $isDashboard = request()->is('store/*/admin/dashboard'); @endphp
                     <x-admin.nav-link variant="main"
-                        :href="route('admin.theme-governance.index')"
-                        route-name="admin.theme-governance.index"
-                        :active="$isThemeGovernance"
-                        :label="__('messages.theme_governance')">
+                        :href="route('store.admin.dashboard', $storeRouteParams)"
+                        route-name="store.admin.dashboard"
+                        :active="$isDashboard"
+                        :label="__('messages.admin_dashboard')">
                         <x-slot:icon>
-                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13h8V3H3v10Zm0 8h8v-4H3v4Zm12 0h6V11h-6v10Zm0-14h6V3h-6v4Z"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
                 </div>
-            @endif
 
-            @if ($canAccessStaffTools)
-                <x-admin.nav-group name="pos" :label="__('messages.sidebar_pos_group')" icon-class="bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
+                @if (auth()->user()?->isPlatformOwner())
+                    <div class="pt-0.5 pb-0.5">
+                        <a href="{{ route('admin.dashboard') }}"
+                           class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-300 hover:bg-violet-50/60 dark:hover:bg-slate-800/60 transition"
+                           :class="sidebarCollapsed ? 'lg:justify-center' : ''"
+                           title="← Platform Admin">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                            <span :class="sidebarCollapsed ? 'lg:hidden' : ''">Platform Admin</span>
+                        </a>
+                    </div>
+                @endif
+
+                @if ($canAccessStaffTools)
+                    <x-admin.nav-group name="pos" :label="__('messages.sidebar_pos_group')" icon-class="bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
                     <x-slot:icon>
                         {{-- Cash register / POS terminal icon --}}
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M4 5h16v5H4V5Zm2 5v9h12v-9M7 12h2m-2 4h2m5-4h3m-3 4h3"/></svg>
@@ -678,10 +705,17 @@
                     @endif
 
                     @php $isPages = request()->is('store/*/admin/pages*'); @endphp
-                    <x-admin.nav-link :href="route('admin.pages.index', $storeRouteParams)" :active="$isPages" :label="__('messages.custom_pages')" route-name="admin.pages.index">
+                    <x-admin.nav-link :href="route('store.admin.pages.index', $storeRouteParams)" :active="$isPages" :label="__('messages.custom_pages')" route-name="store.admin.pages.index">
                         <x-slot:icon>
                             {{-- Pages / Document icon --}}
                             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9z"/></svg>
+                        </x-slot:icon>
+                    </x-admin.nav-link>
+
+                    @php $isNav = request()->is('store/*/admin/navigation*'); @endphp
+                    <x-admin.nav-link :href="route('store.admin.navigation.index', $storeRouteParams)" route-name="store.admin.navigation.index" :active="$isNav" :label="__('messages.storefront_navigation')">
+                        <x-slot:icon>
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
                         </x-slot:icon>
                     </x-admin.nav-link>
 
@@ -999,13 +1033,6 @@
                             </x-slot:icon>
                         </x-admin.nav-link>
 
-                        @php $isNav = request()->is('store/*/admin/navigation*'); @endphp
-                        <x-admin.nav-link :href="route('admin.navigation.index', $storeRouteParams)" route-name="admin.navigation.index" :active="$isNav" :label="__('messages.storefront_navigation')">
-                            <x-slot:icon>
-                                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
-                            </x-slot:icon>
-                        </x-admin.nav-link>
-
                         @if (store_can('operations.branches', $activeStore))
                             @php $isBranches = request()->is('store/*/admin/branches*'); @endphp
                             <x-admin.nav-link :href="route('store.admin.branches.index', $storeRouteParams)" route-name="store.admin.branches.index" :active="$isBranches" :label="__('messages.sidebar_branches')">
@@ -1039,6 +1066,7 @@
                 </x-admin.nav-group>
                 @endif
             @endif
+        @endif
         </nav>
     </aside>
 

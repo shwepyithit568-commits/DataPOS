@@ -307,28 +307,28 @@ Route::prefix('store/{store_slug}')
 
         // Admin Storefront Navigation Management (tabs, mobile drawer, mobile bottom bar)
         Route::middleware(EnsureStoreAccess::class . ':store_manager')->group(function () {
-            Route::get('/admin/navigation', [StorefrontNavigationController::class, 'index'])->name('admin.navigation.index');
-            Route::get('/admin/navigation/create', [StorefrontNavigationController::class, 'create'])->name('admin.navigation.create');
-            Route::post('/admin/navigation', [StorefrontNavigationController::class, 'store'])->name('admin.navigation.store');
-            Route::get('/admin/navigation/{id}/edit', [StorefrontNavigationController::class, 'edit'])->name('admin.navigation.edit');
-            Route::put('/admin/navigation/{id}', [StorefrontNavigationController::class, 'update'])->name('admin.navigation.update');
-            Route::delete('/admin/navigation/{id}', [StorefrontNavigationController::class, 'destroy'])->name('admin.navigation.destroy');
-            Route::post('/admin/navigation/{id}/reorder/{direction}', [StorefrontNavigationController::class, 'reorder'])->name('admin.navigation.reorder')->whereIn('direction', ['up', 'down']);
-            Route::post('/admin/navigation/{id}/toggle', [StorefrontNavigationController::class, 'toggleStatus'])->name('admin.navigation.toggle');
-            Route::post('/admin/navigation/reset-defaults', [StorefrontNavigationController::class, 'resetDefaults'])->name('admin.navigation.reset_defaults');
-            Route::get('/admin/navigation/export/{format}', [StorefrontNavigationController::class, 'export'])->name('admin.navigation.export')->whereIn('format', ['xlsx', 'csv']);
+            Route::get('/admin/navigation', [StorefrontNavigationController::class, 'index'])->name('store.admin.navigation.index');
+            Route::get('/admin/navigation/create', [StorefrontNavigationController::class, 'create'])->name('store.admin.navigation.create');
+            Route::post('/admin/navigation', [StorefrontNavigationController::class, 'store'])->name('store.admin.navigation.store');
+            Route::get('/admin/navigation/{id}/edit', [StorefrontNavigationController::class, 'edit'])->name('store.admin.navigation.edit');
+            Route::put('/admin/navigation/{id}', [StorefrontNavigationController::class, 'update'])->name('store.admin.navigation.update');
+            Route::delete('/admin/navigation/{id}', [StorefrontNavigationController::class, 'destroy'])->name('store.admin.navigation.destroy');
+            Route::post('/admin/navigation/{id}/reorder/{direction}', [StorefrontNavigationController::class, 'reorder'])->name('store.admin.navigation.reorder')->whereIn('direction', ['up', 'down']);
+            Route::post('/admin/navigation/{id}/toggle', [StorefrontNavigationController::class, 'toggleStatus'])->name('store.admin.navigation.toggle');
+            Route::post('/admin/navigation/reset-defaults', [StorefrontNavigationController::class, 'resetDefaults'])->name('store.admin.navigation.reset_defaults');
+            Route::get('/admin/navigation/export/{format}', [StorefrontNavigationController::class, 'export'])->name('store.admin.navigation.export')->whereIn('format', ['xlsx', 'csv']);
         });
 
         // Admin Custom Storefront Pages CRUD
         Route::middleware(EnsureStoreAccess::class . ':store_manager,staff')->group(function () {
-            Route::get('/admin/pages', [StorefrontPageController::class, 'index'])->name('admin.pages.index');
-            Route::get('/admin/pages/create', [StorefrontPageController::class, 'create'])->name('admin.pages.create');
-            Route::post('/admin/pages', [StorefrontPageController::class, 'store'])->name('admin.pages.store');
-            Route::get('/admin/pages/{id}/edit', [StorefrontPageController::class, 'edit'])->name('admin.pages.edit');
-            Route::put('/admin/pages/{id}', [StorefrontPageController::class, 'update'])->name('admin.pages.update');
-            Route::delete('/admin/pages/{id}', [StorefrontPageController::class, 'destroy'])->name('admin.pages.destroy');
-            Route::post('/admin/pages/{id}/toggle', [StorefrontPageController::class, 'toggleStatus'])->name('admin.pages.toggle');
-            Route::get('/admin/pages/export/{format}', [StorefrontPageController::class, 'export'])->name('admin.pages.export')->whereIn('format', ['xlsx', 'csv']);
+            Route::get('/admin/pages', [StorefrontPageController::class, 'index'])->name('store.admin.pages.index');
+            Route::get('/admin/pages/create', [StorefrontPageController::class, 'create'])->name('store.admin.pages.create');
+            Route::post('/admin/pages', [StorefrontPageController::class, 'store'])->name('store.admin.pages.store');
+            Route::get('/admin/pages/{id}/edit', [StorefrontPageController::class, 'edit'])->name('store.admin.pages.edit');
+            Route::put('/admin/pages/{id}', [StorefrontPageController::class, 'update'])->name('store.admin.pages.update');
+            Route::delete('/admin/pages/{id}', [StorefrontPageController::class, 'destroy'])->name('store.admin.pages.destroy');
+            Route::post('/admin/pages/{id}/toggle', [StorefrontPageController::class, 'toggleStatus'])->name('store.admin.pages.toggle');
+            Route::get('/admin/pages/export/{format}', [StorefrontPageController::class, 'export'])->name('store.admin.pages.export')->whereIn('format', ['xlsx', 'csv']);
         });
 
         // Admin Blog CRUD (storefront blog posts)

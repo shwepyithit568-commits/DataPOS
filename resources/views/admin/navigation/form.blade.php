@@ -4,8 +4,8 @@
     $isEdit = $item->exists;
     $title = $isEdit ? __('messages.edit_navigation_item') : __('messages.new_navigation_item');
     $actionUrl = $isEdit
-        ? route('admin.navigation.update', ['store_slug' => $store->slug, 'id' => $item->id])
-        : route('admin.navigation.store', ['store_slug' => $store->slug]);
+        ? route('store.admin.navigation.update', ['store_slug' => $store->slug, 'id' => $item->id])
+        : route('store.admin.navigation.store', ['store_slug' => $store->slug]);
 @endphp
 
 @section('title', $title . ' - ' . ($store->setting?->store_name ?? $store->name))
@@ -16,7 +16,7 @@
     {{-- Top Header Row --}}
     <div class="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 shadow-2xs">
         <div class="flex items-center gap-2">
-            <a href="{{ route('admin.navigation.index', ['store_slug' => $store->slug]) }}" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
+            <a href="{{ route('store.admin.navigation.index', ['store_slug' => $store->slug]) }}" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                 </svg>
@@ -171,7 +171,7 @@
                     @if ($pages->isEmpty())
                         <div class="rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 p-2 text-xs text-amber-800 dark:text-amber-300">
                             {{ __('messages.no_published_pages_found') }}
-                            <a href="{{ route('admin.pages.create', ['store_slug' => $store->slug]) }}" class="font-bold underline ml-1">
+                            <a href="{{ route('store.admin.pages.create', ['store_slug' => $store->slug]) }}" class="font-bold underline ml-1">
                                 {{ __('messages.create_page_now') }}
                             </a>
                         </div>
@@ -346,7 +346,7 @@
         {{-- Form Actions Bar --}}
         <div class="flex items-center justify-end gap-2 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-2.5 shadow-2xs">
             <a
-                href="{{ route('admin.navigation.index', ['store_slug' => $store->slug]) }}"
+                href="{{ route('store.admin.navigation.index', ['store_slug' => $store->slug]) }}"
                 class="inline-flex h-8 items-center px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 transition"
             >
                 {{ __('messages.cancel') }}

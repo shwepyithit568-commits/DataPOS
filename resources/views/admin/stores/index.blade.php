@@ -122,6 +122,12 @@
                                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.3 4.5 3 9l7.3 4.5L17.6 9 10.3 4.5Zm0 6L3 15l7.3 4.5L17.6 15l-7.3-4.5Z"/></svg>
                                             {{ __('messages.store_open_admin') }}
                                         </a>
+                                        <a href="{{ url('/store/' . $store->slug . '/pos') }}"
+                                            class="min-h-11 inline-flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition"
+                                            title="Open POS">
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                            POS
+                                        </a>
                                     @endif
                                     <a href="{{ route('admin.stores.edit', $store) }}"
                                         class="min-h-11 inline-flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition"

@@ -33,7 +33,7 @@ class StorefrontPagesManagementTest extends TestCase
     public function test_admin_can_view_pages_index(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->get(route('admin.pages.index', ['store_slug' => $this->store->slug]));
+            ->get(route('store.admin.pages.index', ['store_slug' => $this->store->slug]));
 
         $response->assertOk();
         $response->assertSee(__('messages.custom_pages'));
@@ -53,9 +53,9 @@ class StorefrontPagesManagementTest extends TestCase
         ];
 
         $response = $this->actingAs($this->adminUser)
-            ->post(route('admin.pages.store', ['store_slug' => $this->store->slug]), $payload);
+            ->post(route('store.admin.pages.store', ['store_slug' => $this->store->slug]), $payload);
 
-        $response->assertRedirect(route('admin.pages.index', ['store_slug' => $this->store->slug]));
+        $response->assertRedirect(route('store.admin.pages.index', ['store_slug' => $this->store->slug]));
 
         $this->assertDatabaseHas('storefront_pages', [
             'store_id' => $this->store->id,
@@ -76,7 +76,7 @@ class StorefrontPagesManagementTest extends TestCase
         ];
 
         $response = $this->actingAs($this->adminUser)
-            ->post(route('admin.pages.store', ['store_slug' => $this->store->slug]), $payload);
+            ->post(route('store.admin.pages.store', ['store_slug' => $this->store->slug]), $payload);
 
         $response->assertSessionHasErrors(['slug']);
     }
@@ -102,7 +102,7 @@ class StorefrontPagesManagementTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->adminUser)
-            ->delete(route('admin.pages.destroy', ['store_slug' => $this->store->slug, 'id' => $page->id]));
+            ->delete(route('store.admin.pages.destroy', ['store_slug' => $this->store->slug, 'id' => $page->id]));
 
         $response->assertSessionHas('error');
         $this->assertDatabaseHas('storefront_pages', ['id' => $page->id]);
@@ -119,9 +119,9 @@ class StorefrontPagesManagementTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->adminUser)
-            ->delete(route('admin.pages.destroy', ['store_slug' => $this->store->slug, 'id' => $page->id]));
+            ->delete(route('store.admin.pages.destroy', ['store_slug' => $this->store->slug, 'id' => $page->id]));
 
-        $response->assertRedirect(route('admin.pages.index', ['store_slug' => $this->store->slug]));
+        $response->assertRedirect(route('store.admin.pages.index', ['store_slug' => $this->store->slug]));
         $this->assertDatabaseMissing('storefront_pages', ['id' => $page->id]);
     }
 }

@@ -33,7 +33,7 @@ class StorefrontNavigationManagementTest extends TestCase
     public function test_admin_can_view_navigation_management_index(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->get(route('admin.navigation.index', ['store_slug' => $this->store->slug]));
+            ->get(route('store.admin.navigation.index', ['store_slug' => $this->store->slug]));
 
         $response->assertOk();
         $response->assertSee(__('messages.storefront_navigation'));
@@ -58,9 +58,9 @@ class StorefrontNavigationManagementTest extends TestCase
         ];
 
         $response = $this->actingAs($this->adminUser)
-            ->post(route('admin.navigation.store', ['store_slug' => $this->store->slug]), $payload);
+            ->post(route('store.admin.navigation.store', ['store_slug' => $this->store->slug]), $payload);
 
-        $response->assertRedirect(route('admin.navigation.index', ['store_slug' => $this->store->slug]));
+        $response->assertRedirect(route('store.admin.navigation.index', ['store_slug' => $this->store->slug]));
 
         $this->assertDatabaseHas('storefront_navigation_items', [
             'store_id'         => $this->store->id,
@@ -88,9 +88,9 @@ class StorefrontNavigationManagementTest extends TestCase
         ];
 
         $response = $this->actingAs($this->adminUser)
-            ->post(route('admin.navigation.store', ['store_slug' => $this->store->slug]), $payload);
+            ->post(route('store.admin.navigation.store', ['store_slug' => $this->store->slug]), $payload);
 
-        $response->assertRedirect(route('admin.navigation.index', ['store_slug' => $this->store->slug]));
+        $response->assertRedirect(route('store.admin.navigation.index', ['store_slug' => $this->store->slug]));
 
         $this->assertDatabaseHas('storefront_navigation_items', [
             'store_id'         => $this->store->id,
@@ -125,13 +125,13 @@ class StorefrontNavigationManagementTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->adminUser)
-            ->post(route('admin.navigation.reorder', [
+            ->post(route('store.admin.navigation.reorder', [
                 'store_slug' => $this->store->slug,
                 'id'         => $item2->id,
                 'direction'  => 'up',
             ]));
 
-        $response->assertRedirect(route('admin.navigation.index', ['store_slug' => $this->store->slug]));
+        $response->assertRedirect(route('store.admin.navigation.index', ['store_slug' => $this->store->slug]));
 
         $item1->refresh();
         $item2->refresh();
@@ -153,7 +153,7 @@ class StorefrontNavigationManagementTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->adminUser)
-            ->post(route('admin.navigation.toggle', [
+            ->post(route('store.admin.navigation.toggle', [
                 'store_slug' => $this->store->slug,
                 'id'         => $item->id,
             ]));
@@ -165,20 +165,20 @@ class StorefrontNavigationManagementTest extends TestCase
     public function test_admin_can_reset_to_defaults(): void
     {
         $response = $this->actingAs($this->adminUser)
-            ->post(route('admin.navigation.reset_defaults', ['store_slug' => $this->store->slug]));
+            ->post(route('store.admin.navigation.reset_defaults', ['store_slug' => $this->store->slug]));
 
-        $response->assertRedirect(route('admin.navigation.index', ['store_slug' => $this->store->slug]));
+        $response->assertRedirect(route('store.admin.navigation.index', ['store_slug' => $this->store->slug]));
         $this->assertTrue(StorefrontNavigationItem::where('store_id', $this->store->id)->exists());
     }
 
     public function test_admin_can_export_navigation_items_to_excel_and_csv(): void
     {
         $responseXlsx = $this->actingAs($this->adminUser)
-            ->get(route('admin.navigation.export', ['store_slug' => $this->store->slug, 'format' => 'xlsx']));
+            ->get(route('store.admin.navigation.export', ['store_slug' => $this->store->slug, 'format' => 'xlsx']));
         $responseXlsx->assertOk();
 
         $responseCsv = $this->actingAs($this->adminUser)
-            ->get(route('admin.navigation.export', ['store_slug' => $this->store->slug, 'format' => 'csv']));
+            ->get(route('store.admin.navigation.export', ['store_slug' => $this->store->slug, 'format' => 'csv']));
         $responseCsv->assertOk();
     }
 }

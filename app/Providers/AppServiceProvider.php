@@ -79,20 +79,25 @@ class AppServiceProvider extends ServiceProvider
         });
 
         View::composer('layouts.admin.app', function ($view) {
-            $store = $view->getData()['store'] ?? app(\App\Services\StoreContext::class)->getStore();
+            $isPlatformScope = request()->is('admin/*') && ! request()->is('store/*');
+            $store = $isPlatformScope
+                ? ($view->getData()['store'] ?? null)
+                : ($view->getData()['store'] ?? app(\App\Services\StoreContext::class)->getStore());
+
             $user = auth()->user();
             $role = ($user && $store) ? $user->getStoreRole($store->id) : null;
+            $navService = app(\App\Services\AdminNavigationService::class);
 
             $view->with([
-                'adminPendingOrderCount' => $store
-                    ? \App\Models\Order::where('store_id', $store->id)
-                        ->where('status', 'pending_contact')
-                        ->count()
+                'isPlatformScope' => $isPlatformScope,
+                'adminPendingOrderCount' => ($store && ! $isPlatformScope)
+                    ? $navService->getPendingOrderCount($store)
                     : 0,
                 'adminCanManageSettings' => $user && $store && $user->hasStoreRole($store->id, 'store_manager'),
                 'adminCanAccessStaffTools' => $user && $store && $user->hasStoreRole($store->id, ['store_manager', 'staff']),
                 'adminCanManageUsers' => $user && ($user->isPlatformOwner() || ($store && $user->isStoreOwner($store->id))),
                 'adminCurrentStoreRole' => $role,
+                'adminNavService' => $navService,
             ]);
         });
 

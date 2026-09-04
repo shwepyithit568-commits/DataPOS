@@ -7,6 +7,7 @@ use App\Models\GlassFinderItem;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
+use App\Models\User;
 use App\Models\WholesaleApplication;
 use App\POS\Services\CashierShiftService;
 use App\Services\StoreContext;
@@ -38,8 +39,18 @@ class DashboardController extends Controller
 
         // If user is platform owner and no specific store context, load store selector list
         if ($user->isPlatformOwner() && !$context->getStore()) {
-            $stores = Store::all();
-            return view('admin.dashboard_select_store', compact('stores'));
+            $totalStores = Store::count();
+            $activeStores = Store::where('is_active', true)->count();
+            $inactiveStores = Store::where('is_active', false)->count();
+            $totalUsers = User::count();
+            $stores = Store::withCount(['products'])->orderBy('name')->get();
+            return view('admin.dashboard_select_store', compact(
+                'stores',
+                'totalStores',
+                'activeStores',
+                'inactiveStores',
+                'totalUsers'
+            ));
         }
 
         $store = $context->getStore()

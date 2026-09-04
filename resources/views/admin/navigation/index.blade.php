@@ -38,7 +38,7 @@
 
             {{-- New Item Button --}}
             <a
-                href="{{ route('admin.navigation.create', ['store_slug' => $store->slug]) }}"
+                href="{{ route('store.admin.navigation.create', ['store_slug' => $store->slug]) }}"
                 class="inline-flex h-7 items-center gap-1 rounded-lg bg-sky-600 px-2.5 text-[11px] font-black text-white hover:bg-sky-700 transition shadow-2xs"
             >
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
@@ -131,7 +131,7 @@
     {{-- Interactive Toolbar --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-1.5 shadow-2xs">
         {{-- Search Input --}}
-        <form method="GET" action="{{ route('admin.navigation.index', ['store_slug' => $store->slug]) }}" class="flex items-center gap-1 flex-1 max-w-md">
+        <form method="GET" action="{{ route('store.admin.navigation.index', ['store_slug' => $store->slug]) }}" class="flex items-center gap-1 flex-1 max-w-md">
             <input type="hidden" name="placement" value="{{ $placement }}">
             <div class="relative w-full">
                 <input
@@ -146,7 +146,7 @@
                 </svg>
             </div>
             @if ($search)
-                <a href="{{ route('admin.navigation.index', ['store_slug' => $store->slug, 'placement' => $placement]) }}" class="inline-flex h-7 items-center px-2 text-[11px] font-bold text-slate-500 hover:text-slate-800">
+                <a href="{{ route('store.admin.navigation.index', ['store_slug' => $store->slug, 'placement' => $placement]) }}" class="inline-flex h-7 items-center px-2 text-[11px] font-bold text-slate-500 hover:text-slate-800">
                     {{ __('messages.clear') }}
                 </a>
             @endif
@@ -156,19 +156,19 @@
         <div class="flex items-center gap-1 flex-wrap">
             {{-- Placement Pills --}}
             <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 p-0.5 text-[11px] font-extrabold">
-                <a href="{{ route('admin.navigation.index', ['store_slug' => $store->slug, 'placement' => 'all', 'search' => $search]) }}"
+                <a href="{{ route('store.admin.navigation.index', ['store_slug' => $store->slug, 'placement' => 'all', 'search' => $search]) }}"
                    class="rounded-md px-2 py-0.5 transition {{ $placement === 'all' ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-2xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
                     {{ __('messages.all') }}
                 </a>
-                <a href="{{ route('admin.navigation.index', ['store_slug' => $store->slug, 'placement' => 'desktop', 'search' => $search]) }}"
+                <a href="{{ route('store.admin.navigation.index', ['store_slug' => $store->slug, 'placement' => 'desktop', 'search' => $search]) }}"
                    class="rounded-md px-2 py-0.5 transition {{ $placement === 'desktop' ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-2xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
                     {{ __('messages.desktop') }}
                 </a>
-                <a href="{{ route('admin.navigation.index', ['store_slug' => $store->slug, 'placement' => 'mobile_bottom', 'search' => $search]) }}"
+                <a href="{{ route('store.admin.navigation.index', ['store_slug' => $store->slug, 'placement' => 'mobile_bottom', 'search' => $search]) }}"
                    class="rounded-md px-2 py-0.5 transition {{ $placement === 'mobile_bottom' ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-2xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
                     {{ __('messages.bottom_bar') }}
                 </a>
-                <a href="{{ route('admin.navigation.index', ['store_slug' => $store->slug, 'placement' => 'mobile_drawer', 'search' => $search]) }}"
+                <a href="{{ route('store.admin.navigation.index', ['store_slug' => $store->slug, 'placement' => 'mobile_drawer', 'search' => $search]) }}"
                    class="rounded-md px-2 py-0.5 transition {{ $placement === 'mobile_drawer' ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-2xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
                     {{ __('messages.drawer') }}
                 </a>
@@ -176,7 +176,7 @@
 
             {{-- Export Buttons --}}
             <a
-                href="{{ route('admin.navigation.export', ['store_slug' => $store->slug, 'format' => 'xlsx']) }}"
+                href="{{ route('store.admin.navigation.export', ['store_slug' => $store->slug, 'format' => 'xlsx']) }}"
                 class="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-[11px] font-extrabold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                 title="Export Excel"
             >
@@ -186,7 +186,7 @@
                 <span>Excel</span>
             </a>
             <a
-                href="{{ route('admin.navigation.export', ['store_slug' => $store->slug, 'format' => 'csv']) }}"
+                href="{{ route('store.admin.navigation.export', ['store_slug' => $store->slug, 'format' => 'csv']) }}"
                 class="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-[11px] font-extrabold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                 title="Export CSV"
             >
@@ -215,7 +215,7 @@
                         {{-- Reorder Controls --}}
                         <td class="py-1.5 px-2 text-center">
                             <div class="inline-flex flex-col items-center justify-center gap-0.5">
-                                <form method="POST" action="{{ route('admin.navigation.reorder', ['store_slug' => $store->slug, 'id' => $item->id, 'direction' => 'up']) }}">
+                                <form method="POST" action="{{ route('store.admin.navigation.reorder', ['store_slug' => $store->slug, 'id' => $item->id, 'direction' => 'up']) }}">
                                     @csrf
                                     <button type="submit" class="p-0.5 text-slate-400 hover:text-sky-600 transition" title="Move Up">
                                         <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
@@ -224,7 +224,7 @@
                                     </button>
                                 </form>
                                 <span class="text-[10px] font-black text-slate-400">{{ $item->sort_order }}</span>
-                                <form method="POST" action="{{ route('admin.navigation.reorder', ['store_slug' => $store->slug, 'id' => $item->id, 'direction' => 'down']) }}">
+                                <form method="POST" action="{{ route('store.admin.navigation.reorder', ['store_slug' => $store->slug, 'id' => $item->id, 'direction' => 'down']) }}">
                                     @csrf
                                     <button type="submit" class="p-0.5 text-slate-400 hover:text-sky-600 transition" title="Move Down">
                                         <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
@@ -303,7 +303,7 @@
 
                         {{-- Enabled / Disabled Status Toggle --}}
                         <td class="py-1.5 px-2.5 text-center">
-                            <form method="POST" action="{{ route('admin.navigation.toggle', ['store_slug' => $store->slug, 'id' => $item->id]) }}">
+                            <form method="POST" action="{{ route('store.admin.navigation.toggle', ['store_slug' => $store->slug, 'id' => $item->id]) }}">
                                 @csrf
                                 <button type="submit" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black transition {{ $item->is_enabled ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-200' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200' }}">
                                     <span class="h-1.5 w-1.5 rounded-full {{ $item->is_enabled ? 'bg-emerald-500' : 'bg-slate-400' }}"></span>
@@ -316,7 +316,7 @@
                         <td class="py-1.5 px-2.5 text-right">
                             <div class="inline-flex items-center gap-1">
                                 <a
-                                    href="{{ route('admin.navigation.edit', ['store_slug' => $store->slug, 'id' => $item->id]) }}"
+                                    href="{{ route('store.admin.navigation.edit', ['store_slug' => $store->slug, 'id' => $item->id]) }}"
                                     class="p-1 rounded-md text-slate-500 hover:text-sky-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                                     title="{{ __('messages.edit') }}"
                                 >
@@ -325,7 +325,7 @@
                                     </svg>
                                 </a>
 
-                                <form method="POST" action="{{ route('admin.navigation.destroy', ['store_slug' => $store->slug, 'id' => $item->id]) }}" onsubmit="return confirm('{{ __('messages.confirm_delete_navigation_item') }}');">
+                                <form method="POST" action="{{ route('store.admin.navigation.destroy', ['store_slug' => $store->slug, 'id' => $item->id]) }}" onsubmit="return confirm('{{ __('messages.confirm_delete_navigation_item') }}');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition" title="{{ __('messages.delete') }}">
@@ -381,7 +381,7 @@
             >
                 {{ __('messages.cancel') }}
             </button>
-            <form method="POST" action="{{ route('admin.navigation.reset_defaults', ['store_slug' => $store->slug]) }}">
+            <form method="POST" action="{{ route('store.admin.navigation.reset_defaults', ['store_slug' => $store->slug]) }}">
                 @csrf
                 <button
                     type="submit"
