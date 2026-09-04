@@ -64,6 +64,11 @@
 
         {{-- Top Right Actions --}}
         <div class="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
+            <a href="{{ route('admin.navigation.index', ['store_slug' => $store->slug]) }}"
+               class="px-3.5 py-2 rounded-xl text-xs font-black bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/60 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800 transition flex items-center gap-1.5 shadow-sm active:scale-95">
+                <span>🧭</span>
+                <span>{{ __('messages.storefront_navigation') }}</span>
+            </a>
             <a href="{{ url('/store/' . $store->slug) }}" target="_blank" rel="noopener noreferrer"
                class="px-3.5 py-2 rounded-xl text-xs font-black bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1.5 shadow-sm active:scale-95">
                 <span>👁️</span>

@@ -437,6 +437,11 @@
                 ->filter(fn ($row) => $row['brand'])
                 ->values())
         : collect();
+
+    $navResolver = app(\App\Services\StorefrontNavigationResolver::class);
+    $desktopNavItems = $activeStoreContext ? $navResolver->resolveForPlacement($activeStoreContext, 'desktop') : collect();
+    $mobileDrawerNavItems = $activeStoreContext ? $navResolver->resolveForPlacement($activeStoreContext, 'mobile_drawer') : collect();
+    $mobileBottomNavItems = $activeStoreContext ? $navResolver->resolveForPlacement($activeStoreContext, 'mobile_bottom') : collect();
 @endphp
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased min-h-screen relative selection:bg-sky-500 selection:text-white pb-[calc(env(safe-area-inset-bottom,0px)+6rem)] md:pb-8">
 
@@ -949,192 +954,86 @@
 
                 {{-- Mobile Nav Links --}}
                 <nav aria-label="{{ __('messages.menu') }}" data-mobile-nav class="grid grid-cols-1 gap-1.5">
-                    {{-- 1. Home --}}
-                    <a
-                        href="{{ $homeUrl }}"
-                        @click="mobileMenuOpen = false"
-                        class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isHome ? 'bg-gradient-to-r from-sky-500/15 via-sky-500/5 to-transparent border-l-4 border-sky-500 text-sky-900 dark:text-sky-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
-                    >
-                        <div class="flex items-center gap-3 min-w-0">
-                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isHome ? 'bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/30' : 'bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 group-hover:scale-105' }}">
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/>
-                                </svg>
-                            </span>
-                            <span class="text-sm truncate">{{ __('messages.home') }}</span>
-                        </div>
-                        <div class="flex items-center gap-1.5 shrink-0">
-                            @if ($isHome)
-                                <span class="h-2 w-2 rounded-full bg-sky-500 shadow-xs shadow-sky-500/50 animate-pulse"></span>
-                            @endif
-                            <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                            </svg>
-                        </div>
-                    </a>
-
-                    {{-- 2. Products --}}
-                    <a
-                        href="{{ $productsUrl }}"
-                        @click="mobileMenuOpen = false"
-                        class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isProducts ? 'bg-gradient-to-r from-violet-500/15 via-violet-500/5 to-transparent border-l-4 border-violet-500 text-violet-900 dark:text-violet-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
-                    >
-                        <div class="flex items-center gap-3 min-w-0">
-                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isProducts ? 'bg-gradient-to-tr from-violet-600 to-fuchsia-500 text-white shadow-md shadow-violet-500/30' : 'bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 group-hover:scale-105' }}">
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/>
-                                </svg>
-                            </span>
-                            <span class="text-sm truncate">{{ __('messages.products') }}</span>
-                        </div>
-                        <div class="flex items-center gap-1.5 shrink-0">
-                            @if ($isProducts)
-                                <span class="h-2 w-2 rounded-full bg-violet-500 shadow-xs shadow-violet-500/50 animate-pulse"></span>
-                            @endif
-                            <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                            </svg>
-                        </div>
-                    </a>
-
-                    {{-- 3. Categories --}}
-                    <a
-                        href="{{ $browseUrl }}"
-                        @click="mobileMenuOpen = false"
-                        class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isBrowse ? 'bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-4 border-amber-500 text-amber-900 dark:text-amber-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
-                    >
-                        <div class="flex items-center gap-3 min-w-0">
-                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isBrowse ? 'bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/30' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 group-hover:scale-105' }}">
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                    <rect x="3" y="3.6" width="4" height="5.4" rx="2.7"/>
-                                    <rect x="9" y="3.6" width="12" height="5.4" rx="2.7"/>
-                                    <rect x="3" y="9.3" width="4" height="5.4" rx="2.7"/>
-                                    <rect x="9" y="9.3" width="12" height="5.4" rx="2.7"/>
-                                    <rect x="3" y="15" width="4" height="5.4" rx="2.7"/>
-                                    <rect x="9" y="15" width="12" height="5.4" rx="2.7"/>
-                                </svg>
-                            </span>
-                            <span class="text-sm truncate">{{ __('messages.categories') }}</span>
-                        </div>
-                        <div class="flex items-center gap-2 shrink-0">
-                            @if ($navCategories->count() > 0)
-                                <span class="rounded-full bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 text-[11px] font-black text-amber-700 dark:text-amber-300">
-                                    {{ $navCategories->count() }}
-                                </span>
-                            @endif
-                            @if ($isBrowse)
-                                <span class="h-2 w-2 rounded-full bg-amber-500 shadow-xs shadow-amber-500/50 animate-pulse"></span>
-                            @endif
-                            <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                            </svg>
-                        </div>
-                    </a>
-
-                    {{-- 4. Glass Finder (if enabled) --}}
-                    @if (store_can('storefront.glass_finder', $activeStoreContext))
+                    @forelse ($mobileDrawerNavItems as $navItem)
                         <a
-                            href="{{ $glassFinderUrl }}"
+                            href="{{ $navItem->url }}"
+                            @if ($navItem->is_external) target="{{ $navItem->target }}" rel="{{ $navItem->rel }}" @endif
                             @click="mobileMenuOpen = false"
-                            class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isGlassFinder ? 'bg-gradient-to-r from-cyan-500/15 via-cyan-500/5 to-transparent border-l-4 border-cyan-500 text-cyan-900 dark:text-cyan-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
+                            class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $navItem->is_active ? 'bg-gradient-to-r from-sky-500/15 via-sky-500/5 to-transparent border-l-4 border-sky-500 text-sky-900 dark:text-sky-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
                         >
                             <div class="flex items-center gap-3 min-w-0">
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isGlassFinder ? 'bg-gradient-to-tr from-cyan-500 to-teal-500 text-white shadow-md shadow-cyan-500/30' : 'bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 group-hover:scale-105' }}">
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/>
-                                    </svg>
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $navItem->is_active ? 'bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/30' : 'bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 group-hover:scale-105' }}">
+                                    <x-storefront.navigation-icon :name="$navItem->icon_key" class="h-5 w-5" />
                                 </span>
-                                <span class="text-sm truncate">{{ __('messages.glass_finder') }}</span>
+                                <span class="text-sm truncate">{{ $navItem->label }}</span>
                             </div>
                             <div class="flex items-center gap-1.5 shrink-0">
-                                @if ($isGlassFinder)
-                                    <span class="h-2 w-2 rounded-full bg-cyan-500 shadow-xs shadow-cyan-500/50 animate-pulse"></span>
+                                @if ($navItem->is_active)
+                                    <span class="h-2 w-2 rounded-full bg-sky-500 shadow-xs shadow-sky-500/50 animate-pulse"></span>
                                 @endif
                                 <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
                                 </svg>
                             </div>
                         </a>
-                    @endif
-
-                    {{-- 5. Service Tracking / Repair (if enabled) --}}
-                    @if (store_can('service.repair_jobs', $activeStoreContext))
-                        <a
-                            href="{{ $serviceTrackingUrl }}"
-                            @click="mobileMenuOpen = false"
-                            class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isServiceTracking ? 'bg-gradient-to-r from-emerald-500/15 via-emerald-500/5 to-transparent border-l-4 border-emerald-500 text-emerald-900 dark:text-emerald-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
-                        >
+                    @empty
+                        <a href="{{ $homeUrl }}" @click="mobileMenuOpen = false" class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isHome ? 'bg-gradient-to-r from-sky-500/15 via-sky-500/5 to-transparent border-l-4 border-sky-500 text-sky-900 dark:text-sky-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}">
                             <div class="flex items-center gap-3 min-w-0">
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isServiceTracking ? 'bg-gradient-to-tr from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/30' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 group-hover:scale-105' }}">
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    </svg>
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isHome ? 'bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/30' : 'bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 group-hover:scale-105' }}">
+                                    <x-storefront.navigation-icon name="home" class="h-5 w-5" />
                                 </span>
-                                <span class="text-sm truncate">{{ __('messages.nav_service_track') }}</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 shrink-0">
-                                @if ($isServiceTracking)
-                                    <span class="h-2 w-2 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500/50 animate-pulse"></span>
-                                @endif
-                                <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                                </svg>
+                                <span class="text-sm truncate">{{ __('messages.home') }}</span>
                             </div>
                         </a>
-                    @endif
-
-                    {{-- 6. How to Order (if enabled) --}}
-                    @if (store_can('storefront.online_ordering', $activeStoreContext))
-                        <a
-                            href="{{ $howToOrderUrl }}"
-                            @click="mobileMenuOpen = false"
-                            class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isHowToOrder ? 'bg-gradient-to-r from-rose-500/15 via-rose-500/5 to-transparent border-l-4 border-rose-500 text-rose-900 dark:text-rose-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
-                        >
+                        <a href="{{ $productsUrl }}" @click="mobileMenuOpen = false" class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isProducts ? 'bg-gradient-to-r from-violet-500/15 via-violet-500/5 to-transparent border-l-4 border-violet-500 text-violet-900 dark:text-violet-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}">
                             <div class="flex items-center gap-3 min-w-0">
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isHowToOrder ? 'bg-gradient-to-tr from-rose-500 to-red-500 text-white shadow-md shadow-rose-500/30' : 'bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 group-hover:scale-105' }}">
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
-                                    </svg>
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isProducts ? 'bg-gradient-to-tr from-violet-600 to-fuchsia-500 text-white shadow-md shadow-violet-500/30' : 'bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 group-hover:scale-105' }}">
+                                    <x-storefront.navigation-icon name="products" class="h-5 w-5" />
                                 </span>
-                                <span class="text-sm truncate">{{ __('messages.how_to_order') }}</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 shrink-0">
-                                @if ($isHowToOrder)
-                                    <span class="h-2 w-2 rounded-full bg-rose-500 shadow-xs shadow-rose-500/50 animate-pulse"></span>
-                                @endif
-                                <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                                </svg>
+                                <span class="text-sm truncate">{{ __('messages.products') }}</span>
                             </div>
                         </a>
-                    @endif
-
-                    {{-- 7. Blog (if enabled) --}}
-                    @if (store_can('storefront.blog', $activeStoreContext))
-                        <a
-                            href="{{ $blogUrl }}"
-                            @click="mobileMenuOpen = false"
-                            class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isBlog ? 'bg-gradient-to-r from-purple-500/15 via-purple-500/5 to-transparent border-l-4 border-purple-500 text-purple-900 dark:text-purple-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}"
-                        >
-                            <div class="flex items-center gap-3 min-w-0">
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isBlog ? 'bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/30' : 'bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 group-hover:scale-105' }}">
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"/>
-                                    </svg>
-                                </span>
-                                <span class="text-sm truncate">{{ __('messages.blog') }}</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 shrink-0">
-                                @if ($isBlog)
-                                    <span class="h-2 w-2 rounded-full bg-purple-500 shadow-xs shadow-purple-500/50 animate-pulse"></span>
-                                @endif
-                                <svg class="h-4 w-4 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                                </svg>
-                            </div>
-                        </a>
-                    @endif
+                        @if (store_can('storefront.glass_finder', $activeStoreContext))
+                            <a href="{{ $glassFinderUrl }}" @click="mobileMenuOpen = false" class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isGlassFinder ? 'bg-gradient-to-r from-cyan-500/15 via-cyan-500/5 to-transparent border-l-4 border-cyan-500 text-cyan-900 dark:text-cyan-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isGlassFinder ? 'bg-gradient-to-tr from-cyan-500 to-teal-500 text-white shadow-md shadow-cyan-500/30' : 'bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 group-hover:scale-105' }}">
+                                        <x-storefront.navigation-icon name="glass" class="h-5 w-5" />
+                                    </span>
+                                    <span class="text-sm truncate">{{ __('messages.glass_finder') }}</span>
+                                </div>
+                            </a>
+                        @endif
+                        @if (store_can('service.repair_jobs', $activeStoreContext))
+                            <a href="{{ $serviceTrackingUrl }}" @click="mobileMenuOpen = false" class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isServiceTracking ? 'bg-gradient-to-r from-emerald-500/15 via-emerald-500/5 to-transparent border-l-4 border-emerald-500 text-emerald-900 dark:text-emerald-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isServiceTracking ? 'bg-gradient-to-tr from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/30' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 group-hover:scale-105' }}">
+                                        <x-storefront.navigation-icon name="repair" class="h-5 w-5" />
+                                    </span>
+                                    <span class="text-sm truncate">{{ __('messages.nav_service_track') }}</span>
+                                </div>
+                            </a>
+                        @endif
+                        @if (store_can('storefront.online_ordering', $activeStoreContext))
+                            <a href="{{ $howToOrderUrl }}" @click="mobileMenuOpen = false" class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isHowToOrder ? 'bg-gradient-to-r from-rose-500/15 via-rose-500/5 to-transparent border-l-4 border-rose-500 text-rose-900 dark:text-rose-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isHowToOrder ? 'bg-gradient-to-tr from-rose-500 to-red-500 text-white shadow-md shadow-rose-500/30' : 'bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 group-hover:scale-105' }}">
+                                        <x-storefront.navigation-icon name="book" class="h-5 w-5" />
+                                    </span>
+                                    <span class="text-sm truncate">{{ __('messages.how_to_order') }}</span>
+                                </div>
+                            </a>
+                        @endif
+                        @if (store_can('storefront.blog', $activeStoreContext))
+                            <a href="{{ $blogUrl }}" @click="mobileMenuOpen = false" class="group relative flex items-center justify-between rounded-2xl p-2.5 transition-all duration-200 {{ $isBlog ? 'bg-gradient-to-r from-purple-500/15 via-purple-500/5 to-transparent border-l-4 border-purple-500 text-purple-900 dark:text-purple-200 shadow-2xs font-black' : 'text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-800/80 hover:shadow-2xs font-extrabold' }}">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all duration-200 {{ $isBlog ? 'bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/30' : 'bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 group-hover:scale-105' }}">
+                                        <x-storefront.navigation-icon name="blog" class="h-5 w-5" />
+                                    </span>
+                                    <span class="text-sm truncate">{{ __('messages.blog') }}</span>
+                                </div>
+                            </a>
+                        @endif
+                    @endforelse
                 </nav>
             </div>
 
@@ -1316,69 +1215,78 @@
         :class="navHidden ? 'translate-y-[180%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'"
         class="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch text-xs transition-all duration-300 ease-out will-change-transform bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 shadow-[0_-6px_24px_rgba(15,23,42,0.08)] pb-[env(safe-area-inset-bottom)]"
     >
-        <a href="{{ $homeUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isHome ? 'text-sky-700 dark:text-sky-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
-            <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isHome ? 'bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/40 scale-110' : 'bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-300 group-hover:bg-sky-200 dark:group-hover:bg-sky-900/60' }}">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>
-            </span>
-            <span class="text-xs font-bold tracking-tight {{ $isHome ? 'font-black' : '' }}">{{ __('messages.nav_home') }}</span>
-        </a>
-        <a href="{{ $productsUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isProducts ? 'text-violet-700 dark:text-violet-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
-            <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isProducts ? 'bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-violet-500/40 scale-110' : 'bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-300 group-hover:bg-violet-200 dark:group-hover:bg-violet-900/60' }}">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg>
-            </span>
-            <span class="text-xs font-bold tracking-tight {{ $isProducts ? 'font-black' : '' }}">{{ __('messages.nav_products') }}</span>
-        </a>
-        @if (store_can('service.repair_jobs', $activeStoreContext))
-            <a href="{{ $serviceTrackingUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isServiceTracking ? 'text-teal-700 dark:text-teal-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
-                <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isServiceTracking ? 'bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-500/40 scale-110' : 'bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-300 group-hover:bg-teal-200 dark:group-hover:bg-teal-900/60' }}">
-                    {{-- Wrench/service icon --}}
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        @forelse ($mobileBottomNavItems as $navItem)
+            <a href="{{ $navItem->url }}"
+               @if ($navItem->is_external) target="{{ $navItem->target }}" rel="{{ $navItem->rel }}" @endif
+               class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $navItem->is_active ? 'text-sky-700 dark:text-sky-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl relative transition-all duration-200 {{ $navItem->is_active ? 'bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/40 scale-110' : 'bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-300 group-hover:bg-sky-200 dark:group-hover:bg-sky-900/60' }}">
+                    <x-storefront.navigation-icon :name="$navItem->icon_key" class="h-5 w-5" />
+                    @if ($navItem->destination_key === 'cart')
+                        <span x-show="$store.orderBuilder && $store.orderBuilder.totalCount > 0" 
+                              class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-br from-rose-500 to-rose-600 text-white font-black text-xs flex items-center justify-center border border-white/40 shadow-lg"
+                              x-text="$store.orderBuilder.totalCount"></span>
+                    @endif
                 </span>
-                <span class="text-xs font-bold tracking-tight {{ $isServiceTracking ? 'font-black' : '' }}">{{ __('messages.nav_service_track') }}</span>
+                <span class="text-xs font-bold tracking-tight {{ $navItem->is_active ? 'font-black' : '' }}">{{ $navItem->label }}</span>
             </a>
-        @else
-            <a href="{{ $browseUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isBrowse ? 'text-teal-700 dark:text-teal-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
-                <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isBrowse ? 'bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-500/40 scale-110' : 'bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-300 group-hover:bg-teal-200 dark:group-hover:bg-teal-900/60' }}">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <rect x="3" y="3.6" width="4" height="5.4" rx="2.7"/>
-                        <rect x="9" y="3.6" width="12" height="5.4" rx="2.7"/>
-                        <rect x="3" y="9.3" width="4" height="5.4" rx="2.7"/>
-                        <rect x="9" y="9.3" width="12" height="5.4" rx="2.7"/>
-                        <rect x="3" y="15" width="4" height="5.4" rx="2.7"/>
-                        <rect x="9" y="15" width="12" height="5.4" rx="2.7"/>
-                    </svg>
+        @empty
+            <a href="{{ $homeUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isHome ? 'text-sky-700 dark:text-sky-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isHome ? 'bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/40 scale-110' : 'bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-300 group-hover:bg-sky-200 dark:group-hover:bg-sky-900/60' }}">
+                    <x-storefront.navigation-icon name="home" class="h-5 w-5" />
                 </span>
-                <span class="text-xs font-bold tracking-tight {{ $isBrowse ? 'font-black' : '' }}">{{ __('messages.categories') }}</span>
+                <span class="text-xs font-bold tracking-tight {{ $isHome ? 'font-black' : '' }}">{{ __('messages.nav_home') }}</span>
             </a>
-        @endif
-        @if (store_can('storefront.online_ordering', $activeStoreContext))
-        <a href="{{ $orderBuilderUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isOrderBuilder ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
-            <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl relative transition-all duration-200 {{ $isOrderBuilder ? 'bg-gradient-to-br from-rose-500 to-red-500 text-white shadow-lg shadow-rose-500/40 scale-110' : 'bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 group-hover:bg-rose-200 dark:group-hover:bg-rose-900/60' }}">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>
-                <span x-show="$store.orderBuilder && $store.orderBuilder.totalCount > 0" 
-                      class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-br from-rose-500 to-rose-600 text-white font-black text-xs flex items-center justify-center border border-white/40 shadow-lg"
-                      x-text="$store.orderBuilder.totalCount"></span>
-            </span>
-            <span class="text-xs font-bold tracking-tight {{ $isOrderBuilder ? 'font-black' : '' }}">{{ __('messages.nav_cart') }}</span>
-        </a>
-        @endif
-        @if (store_can('storefront.customer_portal', $activeStoreContext))
-        @auth
-            <a href="{{ $accountUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isAccount ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
-                <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isAccount ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/40 scale-110' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/60' }}">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+            <a href="{{ $productsUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isProducts ? 'text-violet-700 dark:text-violet-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isProducts ? 'bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-violet-500/40 scale-110' : 'bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-300 group-hover:bg-violet-200 dark:group-hover:bg-violet-900/60' }}">
+                    <x-storefront.navigation-icon name="products" class="h-5 w-5" />
                 </span>
-                <span class="text-xs font-bold tracking-tight {{ $isAccount ? 'font-black' : '' }}">{{ __('messages.nav_account') }}</span>
+                <span class="text-xs font-bold tracking-tight {{ $isProducts ? 'font-black' : '' }}">{{ __('messages.nav_products') }}</span>
             </a>
-        @else
-            <a href="{{ route('login') }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isAccount ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
-                <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isAccount ? 'bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/40 scale-110' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-300 group-hover:bg-amber-200 dark:group-hover:bg-amber-900/60' }}">
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg>
+            @if (store_can('service.repair_jobs', $activeStoreContext))
+                <a href="{{ $serviceTrackingUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isServiceTracking ? 'text-teal-700 dark:text-teal-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
+                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isServiceTracking ? 'bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-500/40 scale-110' : 'bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-300 group-hover:bg-teal-200 dark:group-hover:bg-teal-900/60' }}">
+                        <x-storefront.navigation-icon name="repair" class="h-5 w-5" />
+                    </span>
+                    <span class="text-xs font-bold tracking-tight {{ $isServiceTracking ? 'font-black' : '' }}">{{ __('messages.nav_service_track') }}</span>
+                </a>
+            @else
+                <a href="{{ $browseUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isBrowse ? 'text-teal-700 dark:text-teal-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
+                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isBrowse ? 'bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-500/40 scale-110' : 'bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-300 group-hover:bg-teal-200 dark:group-hover:bg-teal-900/60' }}">
+                        <x-storefront.navigation-icon name="categories" class="h-5 w-5" />
+                    </span>
+                    <span class="text-xs font-bold tracking-tight {{ $isBrowse ? 'font-black' : '' }}">{{ __('messages.categories') }}</span>
+                </a>
+            @endif
+            @if (store_can('storefront.online_ordering', $activeStoreContext))
+            <a href="{{ $orderBuilderUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isOrderBuilder ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl relative transition-all duration-200 {{ $isOrderBuilder ? 'bg-gradient-to-br from-rose-500 to-red-500 text-white shadow-lg shadow-rose-500/40 scale-110' : 'bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 group-hover:bg-rose-200 dark:group-hover:bg-rose-900/60' }}">
+                    <x-storefront.navigation-icon name="cart" class="h-5 w-5" />
+                    <span x-show="$store.orderBuilder && $store.orderBuilder.totalCount > 0" 
+                          class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-br from-rose-500 to-rose-600 text-white font-black text-xs flex items-center justify-center border border-white/40 shadow-lg"
+                          x-text="$store.orderBuilder.totalCount"></span>
                 </span>
-                <span class="text-xs font-bold tracking-tight {{ $isAccount ? 'font-black' : '' }}">{{ __('messages.login') }}</span>
+                <span class="text-xs font-bold tracking-tight {{ $isOrderBuilder ? 'font-black' : '' }}">{{ __('messages.nav_cart') }}</span>
             </a>
-        @endauth
-        @endif
+            @endif
+            @if (store_can('storefront.customer_portal', $activeStoreContext))
+            @auth
+                <a href="{{ $accountUrl }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isAccount ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
+                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isAccount ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/40 scale-110' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/60' }}">
+                        <x-storefront.navigation-icon name="account" class="h-5 w-5" />
+                    </span>
+                    <span class="text-xs font-bold tracking-tight {{ $isAccount ? 'font-black' : '' }}">{{ __('messages.nav_account') }}</span>
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="group relative flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-all duration-200 {{ $isAccount ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-600 hover:text-slate-800 dark:hover:text-slate-200 active:scale-95' }}">
+                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200 {{ $isAccount ? 'bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/40 scale-110' : 'bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-300 group-hover:bg-amber-200 dark:group-hover:bg-amber-900/60' }}">
+                        <x-storefront.navigation-icon name="login" class="h-5 w-5" />
+                    </span>
+                    <span class="text-xs font-bold tracking-tight {{ $isAccount ? 'font-black' : '' }}">{{ __('messages.login') }}</span>
+                </a>
+            @endauth
+            @endif
+        @endforelse
+    </div>
     </div>
 
     {{-- Floating Contact Button (mobile) — opens popup listing the chat/social channels Admin configured --}}

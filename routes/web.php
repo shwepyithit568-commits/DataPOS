@@ -38,10 +38,13 @@ use App\Http\Controllers\HowToOrderController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PushNotificationController;
+use App\Http\Controllers\Admin\StorefrontNavigationController;
+use App\Http\Controllers\Admin\StorefrontPageController;
 use App\Http\Controllers\Storefront\BlogController;
 use App\Http\Controllers\Storefront\BrowseController;
 use App\Http\Controllers\Storefront\CatalogController;
 use App\Http\Controllers\Storefront\HomeController;
+use App\Http\Controllers\Storefront\PageController;
 use App\Http\Controllers\Storefront\ReviewController;
 use App\Http\Controllers\WholesaleController;
 use App\Http\Middleware\EnsureStoreAccess;
@@ -115,6 +118,12 @@ Route::get('/store/{store_slug}/track/service/{token}', [\App\Http\Controllers\S
 // Public Blog Routes
 Route::get('/blog', [BlogController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.blog']);
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.blog']);
+
+// Public Custom Pages Route
+Route::get('/store/{store_slug}/page/{slug}', [PageController::class, 'show'])
+    ->middleware([ResolveStoreContext::class, SetLocale::class])
+    ->middleware('cache.public_page')
+    ->name('storefront.page');
 
 // Customer Wholesale Application Routes
 Route::prefix('store/{store_slug}')
@@ -295,6 +304,32 @@ Route::prefix('store/{store_slug}')
         Route::post('/admin/settings/delivery-methods', [StoreSettingController::class, 'storeDeliveryMethod'])->name('store.admin.settings.delivery-methods.store')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::put('/admin/settings/delivery-methods/{method}', [StoreSettingController::class, 'updateDeliveryMethod'])->name('store.admin.settings.delivery-methods.update')->middleware(EnsureStoreAccess::class . ':store_manager');
         Route::delete('/admin/settings/delivery-methods/{method}', [StoreSettingController::class, 'destroyDeliveryMethod'])->name('store.admin.settings.delivery-methods.destroy')->middleware(EnsureStoreAccess::class . ':store_manager');
+
+        // Admin Storefront Navigation Management (tabs, mobile drawer, mobile bottom bar)
+        Route::middleware(EnsureStoreAccess::class . ':store_manager')->group(function () {
+            Route::get('/admin/navigation', [StorefrontNavigationController::class, 'index'])->name('admin.navigation.index');
+            Route::get('/admin/navigation/create', [StorefrontNavigationController::class, 'create'])->name('admin.navigation.create');
+            Route::post('/admin/navigation', [StorefrontNavigationController::class, 'store'])->name('admin.navigation.store');
+            Route::get('/admin/navigation/{id}/edit', [StorefrontNavigationController::class, 'edit'])->name('admin.navigation.edit');
+            Route::put('/admin/navigation/{id}', [StorefrontNavigationController::class, 'update'])->name('admin.navigation.update');
+            Route::delete('/admin/navigation/{id}', [StorefrontNavigationController::class, 'destroy'])->name('admin.navigation.destroy');
+            Route::post('/admin/navigation/{id}/reorder/{direction}', [StorefrontNavigationController::class, 'reorder'])->name('admin.navigation.reorder')->whereIn('direction', ['up', 'down']);
+            Route::post('/admin/navigation/{id}/toggle', [StorefrontNavigationController::class, 'toggleStatus'])->name('admin.navigation.toggle');
+            Route::post('/admin/navigation/reset-defaults', [StorefrontNavigationController::class, 'resetDefaults'])->name('admin.navigation.reset_defaults');
+            Route::get('/admin/navigation/export/{format}', [StorefrontNavigationController::class, 'export'])->name('admin.navigation.export')->whereIn('format', ['xlsx', 'csv']);
+        });
+
+        // Admin Custom Storefront Pages CRUD
+        Route::middleware(EnsureStoreAccess::class . ':store_manager,staff')->group(function () {
+            Route::get('/admin/pages', [StorefrontPageController::class, 'index'])->name('admin.pages.index');
+            Route::get('/admin/pages/create', [StorefrontPageController::class, 'create'])->name('admin.pages.create');
+            Route::post('/admin/pages', [StorefrontPageController::class, 'store'])->name('admin.pages.store');
+            Route::get('/admin/pages/{id}/edit', [StorefrontPageController::class, 'edit'])->name('admin.pages.edit');
+            Route::put('/admin/pages/{id}', [StorefrontPageController::class, 'update'])->name('admin.pages.update');
+            Route::delete('/admin/pages/{id}', [StorefrontPageController::class, 'destroy'])->name('admin.pages.destroy');
+            Route::post('/admin/pages/{id}/toggle', [StorefrontPageController::class, 'toggleStatus'])->name('admin.pages.toggle');
+            Route::get('/admin/pages/export/{format}', [StorefrontPageController::class, 'export'])->name('admin.pages.export')->whereIn('format', ['xlsx', 'csv']);
+        });
 
         // Admin Blog CRUD (storefront blog posts)
         Route::get('/admin/blog', [AdminBlogController::class, 'index'])->name('store.admin.blog.index')->middleware(EnsureStoreAccess::class . ':store_manager,staff');

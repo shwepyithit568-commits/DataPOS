@@ -79,6 +79,16 @@ class Store extends Model
         return $this->hasMany(StoreDeliveryMethod::class);
     }
 
+    public function navigationItems(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StorefrontNavigationItem::class)->orderBy('sort_order', 'asc');
+    }
+
+    public function storefrontPages(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StorefrontPage::class)->latest();
+    }
+
     public function productMasterPresets(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(ProductMasterPreset::class)->orderBy('sort_order')->orderBy('name');
