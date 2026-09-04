@@ -43,7 +43,7 @@ class Phase3AuthorizationAndStaffPermissionsTest extends TestCase
             'store_id' => $this->store->id,
             'name' => 'Shop Manager Role',
             'slug' => 'shop-manager',
-            'permissions' => ['staff.edit', 'roles.edit', 'products.view', 'products.edit', 'pos_sales.view'],
+            'permissions' => ['staff.view', 'staff.edit', 'roles.view', 'roles.edit', 'products.view', 'products.edit', 'pos_sales.view'],
             'is_system' => false,
             'is_active' => true,
         ]);

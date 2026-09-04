@@ -263,8 +263,10 @@ class StorePermissionService
         }
 
         // Regular Manager / Staff checks
-        // Must have staff.manage or roles.manage explicit permission
-        if (!$this->canAny($actor, $store, ['roles.edit', 'staff.edit', 'staff_roles.edit'])) {
+        // Must hold at least one management-class permission (checked against
+        // raw role permissions to avoid enforceParentViewDependency stripping
+        // roles.edit / staff.edit when roles.view / staff.view are absent).
+        if (!$this->actorHasRawManagementPermission($actor, $store)) {
             return false;
         }
 
@@ -326,6 +328,54 @@ class StorePermissionService
             ->count();
 
         return $activeOwnerCount <= 1;
+    }
+
+    /**
+     * Check whether the actor holds at least one role-management permission in
+     * the store.  Intentionally checks RAW StaffRole permissions (before
+     * enforceParentViewDependency) because management meta-permissions like
+     * roles.edit / staff.edit are gateway permissions, not resource-view guards.
+     * Consulting effective permissions would incorrectly strip them when the role
+     * omits the corresponding *.view key.
+     */
+    protected function actorHasRawManagementPermission(User $actor, Store $store): bool
+    {
+        $membership = $actor->getStoreMembership($store->id);
+        if (!$membership || $membership->status !== 'active') {
+            return false;
+        }
+
+        // Canonical management keys + legacy .edit aliases both accepted
+        $managementKeys = [
+            'roles.view', 'roles.create', 'roles.update', 'roles.delete', 'roles.export', 'roles.edit',
+            'staff.view', 'staff.create', 'staff.update', 'staff.delete', 'staff.edit',
+            'staff_roles.view', 'staff_roles.create', 'staff_roles.update', 'staff_roles.delete', 'staff_roles.edit',
+        ];
+
+        // Raw StaffRole permissions (before parent-view stripping)
+        if (!empty($membership->staff_role_id)) {
+            $role = StaffRole::find($membership->staff_role_id);
+            if ($role && $role->is_active && is_array($role->permissions)) {
+                if (array_intersect($managementKeys, $role->permissions)) {
+                    return true;
+                }
+            }
+        }
+
+        // Custom individual grants on the pivot
+        [$grants] = $this->parseCustomPermissions($membership->custom_permissions);
+        if (array_intersect($managementKeys, $grants)) {
+            return true;
+        }
+
+        // Legacy fallback: store_manager with no staff_role_id is authorised
+        // by convention (matches bootstrapDefaultRoles store_manager preset)
+        if (empty($membership->staff_role_id) && empty($membership->custom_permissions)
+            && $membership->role === 'store_manager') {
+            return true;
+        }
+
+        return false;
     }
 
     /**

@@ -316,7 +316,11 @@ class StaffRoleController extends Controller
             }
 
             // Parent-view dependency validation
-            $this->validateParentViewDependencies($submittedPermissions, 'role_permissions');
+            try {
+                $this->validateParentViewDependencies($submittedPermissions, 'role_permissions');
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                abort(422, $e->getMessage());
+            }
 
             // Privilege Ceiling (Plan §6.1)
             if (! $permService->canAssignPermissions($actor, $store, $submittedPermissions)) {
@@ -444,6 +448,17 @@ class StaffRoleController extends Controller
      */
     protected function validateParentViewDependencies(array $permissions, string $field = 'permissions'): void
     {
+        $canonicalViewResources = [];
+        foreach (StaffRole::allPermissionKeys() as $key) {
+            if (str_ends_with($key, '.view')) {
+                $canonicalViewResources[substr($key, 0, -5)] = true;
+            }
+        }
+        $canonicalViewResources['ecommerce_orders'] = true;
+        $canonicalViewResources['orders'] = true;
+        $canonicalViewResources['product_import'] = true;
+        $canonicalViewResources['import_history'] = true;
+
         $viewResources = [];
         foreach ($permissions as $perm) {
             if (str_ends_with($perm, '.view')) {
@@ -474,7 +489,7 @@ class StaffRoleController extends Controller
             if ($action === 'view') {
                 continue;
             }
-            if (empty($viewResources[$resource])) {
+            if (!empty($canonicalViewResources[$resource]) && empty($viewResources[$resource])) {
                 $missingViews[] = "{$resource}.view (required by {$perm})";
             }
         }
