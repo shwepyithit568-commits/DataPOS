@@ -4260,4 +4260,6 @@ return array (
   'store_context_missing' => 'Store context is missing.',
   'channel_not_active' => 'This sales channel is not active for this store.',
   'feature_not_enabled' => 'This feature is not enabled for your store profile.',
+  'disabled' => 'Disabled',
+  'modules' => 'Modules',
 );
