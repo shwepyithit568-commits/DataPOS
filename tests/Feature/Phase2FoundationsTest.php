@@ -208,7 +208,7 @@ class Phase2FoundationsTest extends TestCase
             'store_id' => $store->id,
             'name' => 'Editor Role',
             'slug' => 'editor-role',
-            'permissions' => ['products.edit'],
+            'permissions' => ['products.view', 'products.edit'],
             'is_active' => true,
         ]);
 
@@ -298,7 +298,7 @@ class Phase2FoundationsTest extends TestCase
             'store_id' => $store->id,
             'name' => 'Manager Role',
             'slug' => 'manager-role',
-            'permissions' => ['staff.edit', 'products.view', 'pos_sales.view'],
+            'permissions' => ['roles.view', 'roles.edit', 'staff.view', 'staff.edit', 'products.view', 'pos_sales.view'],
             'is_active' => true,
         ]);
 

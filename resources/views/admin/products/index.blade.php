@@ -144,11 +144,13 @@
                 </svg>
                 <span>{{ __('messages.product_import') }}</span>
             </a>
+            @if (store_can('products.create', $store))
             <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}"
                class="h-7 px-3 rounded-md text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-2xs hover:shadow-violet-500/20 transition flex items-center gap-1 active:scale-95 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 <span>{{ __('messages.add_product') }}</span>
             </a>
+            @endif
         </div>
     </div>
 
@@ -608,12 +610,15 @@
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                     </button>
                                     {{-- Edit --}}
+                                    @if (store_can('products.update', $store))
                                     <a href="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id . '/edit') }}"
                                         title="{{ __('messages.edit') }}"
                                         class="w-7 h-7 rounded border border-violet-200 dark:border-violet-800/80 inline-flex items-center justify-center text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/50 hover:bg-violet-100 dark:hover:bg-violet-900/50 transition">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.4-9.4a2 2 0 1 1 2.8 2.8L11 14l-4 1 1-4 9.6-9.4Z"/></svg>
                                     </a>
+                                    @endif
                                     {{-- Duplicate --}}
+                                    @if (store_can('products.create', $store))
                                     <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id . '/duplicate') }}" class="inline">
                                         @csrf
                                         <button type="submit" title="{{ __('messages.duplicate_title') }}"
@@ -621,7 +626,9 @@
                                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                                         </button>
                                     </form>
+                                    @endif
                                     {{-- Delete --}}
+                                    @if (store_can('products.delete', $store))
                                     <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id) }}" class="inline"
                                         onsubmit="return confirm('{{ __('messages.delete') }} ?')">
                                         @csrf
@@ -631,6 +638,7 @@
                                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -643,11 +651,13 @@
                                     </div>
                                     <p class="font-black text-slate-800 dark:text-slate-200 text-sm sm:text-base">{{ __('messages.no_products_found') }}</p>
                                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ __('messages.no_products_hint') }}</p>
+                                    @if (store_can('products.create', $store))
                                     <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}"
                                        class="px-4 py-2 mt-4 inline-flex items-center gap-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white shadow-xs transition">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                                         <span>{{ __('messages.add_product') }}</span>
                                     </a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -762,29 +772,34 @@
                 </div>
 
                 {{-- Card Action Footer (4 Quick Action Buttons) --}}
-                <div class="grid grid-cols-4 gap-1 p-1 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800">
+                <div class="flex items-center justify-around gap-1 p-1 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800">
                     {{-- Quick View --}}
                     <button type="button" @click="openDetails('{{ url('/store/' . $store->slug . '/admin/products/' . $product->id . '/details') }}')"
                         title="{{ __('messages.action_view') }}"
-                        class="min-h-[30px] inline-flex items-center justify-center rounded text-xs font-bold text-teal-700 dark:text-teal-400 bg-white dark:bg-slate-700/80 hover:bg-teal-50 dark:hover:bg-teal-950/50 border border-slate-200/60 dark:border-slate-600 shadow-2xs transition">
+                        class="min-h-[30px] flex-1 inline-flex items-center justify-center rounded text-xs font-bold text-teal-700 dark:text-teal-400 bg-white dark:bg-slate-700/80 hover:bg-teal-50 dark:hover:bg-teal-950/50 border border-slate-200/60 dark:border-slate-600 shadow-2xs transition">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     </button>
                     {{-- Edit --}}
+                    @if (store_can('products.update', $store))
                     <a href="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id . '/edit') }}"
                         title="{{ __('messages.edit') }}"
-                        class="min-h-[30px] inline-flex items-center justify-center rounded text-xs font-bold text-violet-700 dark:text-violet-400 bg-white dark:bg-slate-700/80 hover:bg-violet-50 dark:hover:bg-violet-950/50 border border-slate-200/60 dark:border-slate-600 shadow-2xs transition">
+                        class="min-h-[30px] flex-1 inline-flex items-center justify-center rounded text-xs font-bold text-violet-700 dark:text-violet-400 bg-white dark:bg-slate-700/80 hover:bg-violet-50 dark:hover:bg-violet-950/50 border border-slate-200/60 dark:border-slate-600 shadow-2xs transition">
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.4-9.4a2 2 0 1 1 2.8 2.8L11 14l-4 1 1-4 9.6-9.4Z"/></svg>
                     </a>
+                    @endif
                     {{-- Duplicate --}}
-                    <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id . '/duplicate') }}" class="inline">
+                    @if (store_can('products.create', $store))
+                    <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id . '/duplicate') }}" class="inline flex-1">
                         @csrf
                         <button type="submit" title="{{ __('messages.duplicate_title') }}"
                             class="min-h-[30px] w-full inline-flex items-center justify-center rounded text-xs font-bold text-sky-700 dark:text-sky-400 bg-white dark:bg-slate-700/80 hover:bg-sky-50 dark:hover:bg-sky-950/50 border border-slate-200/60 dark:border-slate-600 shadow-2xs transition">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         </button>
                     </form>
+                    @endif
                     {{-- Delete --}}
-                    <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id) }}" class="inline"
+                    @if (store_can('products.delete', $store))
+                    <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id) }}" class="inline flex-1"
                         onsubmit="return confirm('{{ __('messages.delete') }} ?')">
                         @csrf
                         @method('DELETE')
@@ -793,6 +808,7 @@
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
                         </button>
                     </form>
+                    @endif
                 </div>
             </div>
         @empty
@@ -802,11 +818,13 @@
                 </div>
                 <p class="font-black text-slate-800 dark:text-slate-200 text-sm sm:text-base">{{ __('messages.no_products_found') }}</p>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ __('messages.no_products_hint') }}</p>
+                @if (store_can('products.create', $store))
                 <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}"
                    class="px-4 py-2 mt-4 inline-flex items-center gap-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white shadow-xs transition">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                     <span>{{ __('messages.add_product') }}</span>
                 </a>
+                @endif
             </div>
         @endforelse
     </div>

@@ -75,40 +75,86 @@
             if (!targetObj || !Array.isArray(targetObj.permissions)) return false;
             return targetObj.permissions.includes(permKey);
         },
-        togglePerm(targetObj, permKey) {
+        togglePerm(targetObj, permKey, pView = null) {
             if (!targetObj || !Array.isArray(targetObj.permissions)) return;
+            const isView = permKey.endsWith('.view');
+            const resource = isView ? permKey.slice(0, -5) : permKey.substring(0, permKey.lastIndexOf('.'));
+            const viewKey = pView || (resource + '.view');
+
             if (this.hasPerm(targetObj, permKey)) {
-                targetObj.permissions = targetObj.permissions.filter(p => p !== permKey);
+                if (isView) {
+                    // Unchecking view automatically unchecks all action permissions for this resource / module
+                    targetObj.permissions = targetObj.permissions.filter(p => {
+                        if (p === permKey) return false;
+                        const lastDot = p.lastIndexOf('.');
+                        if (lastDot !== -1 && p.substring(0, lastDot) === resource) {
+                            return false;
+                        }
+                        return true;
+                    });
+                } else {
+                    targetObj.permissions = targetObj.permissions.filter(p => p !== permKey);
+                }
             } else {
-                targetObj.permissions.push(permKey);
+                if (!isView) {
+                    // Checking an action automatically checks its parent view
+                    const toAdd = [permKey];
+                    if (viewKey && !targetObj.permissions.includes(viewKey)) {
+                        toAdd.push(viewKey);
+                    }
+                    targetObj.permissions = [...new Set([...targetObj.permissions, ...toAdd])];
+                } else {
+                    targetObj.permissions.push(permKey);
+                }
             }
         },
-        toggleModuleRow(targetObj, pView, pEdit, pDelete) {
-            const rowKeys = [pView, pEdit, pDelete].filter(Boolean);
-            const hasAll = rowKeys.every(k => this.hasPerm(targetObj, k));
+        toggleModuleRow(targetObj, moduleKeys) {
+            const keys = Array.isArray(moduleKeys) ? moduleKeys : Array.from(arguments).slice(1).filter(Boolean);
+            const hasAll = keys.every(k => this.hasPerm(targetObj, k));
             if (hasAll) {
-                targetObj.permissions = targetObj.permissions.filter(p => !rowKeys.includes(p));
+                targetObj.permissions = targetObj.permissions.filter(p => !keys.includes(p));
             } else {
-                targetObj.permissions = [...new Set([...targetObj.permissions, ...rowKeys])];
+                targetObj.permissions = [...new Set([...targetObj.permissions, ...keys])];
             }
         },
-        isModuleFull(targetObj, pView, pEdit, pDelete) {
-            const rowKeys = [pView, pEdit, pDelete].filter(Boolean);
-            return rowKeys.length > 0 && rowKeys.every(k => this.hasPerm(targetObj, k));
+        isModuleFull(targetObj, moduleKeys) {
+            const keys = Array.isArray(moduleKeys) ? moduleKeys : Array.from(arguments).slice(1).filter(Boolean);
+            return keys.length > 0 && keys.every(k => this.hasPerm(targetObj, k));
+        },
+        isModulePartial(targetObj, moduleKeys) {
+            const keys = Array.isArray(moduleKeys) ? moduleKeys : Array.from(arguments).slice(1).filter(Boolean);
+            return keys.some(k => this.hasPerm(targetObj, k)) && !keys.every(k => this.hasPerm(targetObj, k));
         },
         toggleGroupColumn(targetObj, groupKey, actionType) {
             const modules = this.moduleActionMap[groupKey] || {};
             const colKeys = [];
+            const viewKeys = [];
             for (const mKey in modules) {
-                if (modules[mKey][actionType]) {
-                    colKeys.push(modules[mKey][actionType]);
+                const mPerms = modules[mKey];
+                if (mPerms[actionType]) {
+                    colKeys.push(mPerms[actionType]);
+                    if (mPerms['view']) {
+                        viewKeys.push(mPerms['view']);
+                    }
                 }
             }
+            if (colKeys.length === 0) return;
             const hasAll = colKeys.every(k => this.hasPerm(targetObj, k));
             if (hasAll) {
-                targetObj.permissions = targetObj.permissions.filter(p => !colKeys.includes(p));
+                if (actionType === 'view') {
+                    // Unchecking all views in group unchecks all permissions in this group
+                    const allGroupKeys = this.permissionGroups[groupKey] || [];
+                    targetObj.permissions = targetObj.permissions.filter(p => !allGroupKeys.includes(p));
+                } else {
+                    targetObj.permissions = targetObj.permissions.filter(p => !colKeys.includes(p));
+                }
             } else {
-                targetObj.permissions = [...new Set([...targetObj.permissions, ...colKeys])];
+                if (actionType !== 'view') {
+                    // Enabling action column also ensures view is checked for those modules
+                    targetObj.permissions = [...new Set([...targetObj.permissions, ...colKeys, ...viewKeys])];
+                } else {
+                    targetObj.permissions = [...new Set([...targetObj.permissions, ...colKeys])];
+                }
             }
         },
         toggleGroupAll(targetObj, groupKey) {
@@ -770,6 +816,11 @@
                                class="w-full pl-8 pr-3 py-1.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
+                    {{-- Hidden permissions serialization inputs --}}
+                    <template x-for="p in newRole.permissions" :key="p">
+                        <input type="hidden" name="permissions[]" :value="p">
+                    </template>
+
                     {{-- Grouped Permissions Cards --}}
                     <div class="space-y-3.5">
                         @foreach ($permissionGroups as $groupKey => $group)
@@ -780,7 +831,7 @@
                                         <span class="text-lg">{{ $group['icon'] ?? '📁' }}</span>
                                         <div>
                                             <span class="text-xs font-black text-slate-900 dark:text-slate-100 block">{{ $group['label'] }}</span>
-                                            <span class="text-[10px] font-mono text-slate-400" x-text="`${groupCount(newRole, '{{ $groupKey }}')} of {{ count($group['modules']) * 3 }} actions selected`"></span>
+                                            <span class="text-[10px] font-mono text-slate-400" x-text="`${groupCount(newRole, '{{ $groupKey }}')} of {{ count($allPermGroupKeys[$groupKey] ?? []) }} actions selected`"></span>
                                         </div>
                                     </div>
 
@@ -790,9 +841,13 @@
                                                 class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300 border border-sky-200/60 dark:border-sky-800 hover:bg-sky-100 transition">
                                             👁️ All VIEW
                                         </button>
-                                        <button type="button" @click="toggleGroupColumn(newRole, '{{ $groupKey }}', 'edit')"
+                                        <button type="button" @click="toggleGroupColumn(newRole, '{{ $groupKey }}', 'create')"
+                                                class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800 hover:bg-indigo-100 transition">
+                                            ➕ All CREATE
+                                        </button>
+                                        <button type="button" @click="toggleGroupColumn(newRole, '{{ $groupKey }}', 'update')"
                                                 class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800 hover:bg-emerald-100 transition">
-                                            ✏️ All EDIT
+                                            ✏️ All UPDATE
                                         </button>
                                         <button type="button" @click="toggleGroupColumn(newRole, '{{ $groupKey }}', 'delete')"
                                                 class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800 hover:bg-rose-100 transition">
@@ -805,26 +860,29 @@
                                     </div>
                                 </div>
 
-                                {{-- Module Rows with Individual VIEW, EDIT, DELETE Buttons on the Right --}}
+                                {{-- Module Rows with Individual VIEW, CREATE, UPDATE, DELETE Buttons on the Right --}}
                                 <div class="space-y-1.5">
                                     @foreach ($group['modules'] as $moduleKey => $module)
                                         @php
                                             $pView = $module['permissions']['view'] ?? null;
-                                            $pEdit = $module['permissions']['edit'] ?? null;
+                                            $pCreate = $module['permissions']['create'] ?? null;
+                                            $pUpdate = $module['permissions']['update'] ?? ($module['permissions']['edit'] ?? null);
                                             $pDelete = $module['permissions']['delete'] ?? null;
-                                            $searchString = strtolower($module['name'] . ' ' . $module['desc'] . ' ' . $pView . ' ' . $pEdit . ' ' . $pDelete);
+                                            $modulePermsList = array_values($module['permissions']);
+                                            $extras = array_diff_key($module['permissions'], ['view' => 1, 'create' => 1, 'update' => 1, 'edit' => 1, 'delete' => 1]);
+                                            $searchString = strtolower($module['name'] . ' ' . $module['desc'] . ' ' . implode(' ', $modulePermsList));
                                         @endphp
                                         <div x-show="!permSearch || '{{ $searchString }}'.includes(permSearch.toLowerCase())"
                                              class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 sm:p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 transition">
                                             
                                             {{-- Module Left Side: Row Checkbox + Module Name + Description --}}
                                             <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                                                <button type="button" @click="toggleModuleRow(newRole, '{{ $pView }}', '{{ $pEdit }}', '{{ $pDelete }}')"
+                                                <button type="button" @click="toggleModuleRow(newRole, {{ Illuminate\Support\Js::from($modulePermsList) }})"
                                                         title="Toggle all actions for this module"
                                                         class="w-5 h-5 rounded-md border flex items-center justify-center text-[10px] font-bold transition shrink-0"
-                                                        :class="isModuleFull(newRole, '{{ $pView }}', '{{ $pEdit }}', '{{ $pDelete }}') 
+                                                        :class="isModuleFull(newRole, {{ Illuminate\Support\Js::from($modulePermsList) }}) 
                                                             ? 'bg-blue-600 border-blue-600 text-white' 
-                                                            : (hasPerm(newRole, '{{ $pView }}') || hasPerm(newRole, '{{ $pEdit }}') || hasPerm(newRole, '{{ $pDelete }}') 
+                                                            : (isModulePartial(newRole, {{ Illuminate\Support\Js::from($modulePermsList) }}) 
                                                                 ? 'bg-blue-100 dark:bg-blue-950 border-blue-400 text-blue-700 dark:text-blue-300' 
                                                                 : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-transparent')">
                                                     ✓
@@ -839,11 +897,11 @@
                                                 </div>
                                             </div>
 
-                                            {{-- Module Right Side: VIEW, EDIT, DELETE Action Buttons --}}
-                                            <div class="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
+                                            {{-- Module Right Side: VIEW, CREATE, UPDATE, DELETE Action Buttons --}}
+                                            <div class="flex items-center gap-1.5 self-end sm:self-auto shrink-0 flex-wrap">
                                                 {{-- VIEW BUTTON --}}
                                                 @if ($pView)
-                                                    <button type="button" @click="togglePerm(newRole, '{{ $pView }}')"
+                                                    <button type="button" @click="togglePerm(newRole, '{{ $pView }}', '{{ $pView }}')"
                                                             :class="hasPerm(newRole, '{{ $pView }}') 
                                                                 ? 'bg-sky-600 text-white border-sky-600 shadow-xs' 
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-sky-600 dark:hover:text-sky-400'"
@@ -853,21 +911,33 @@
                                                     </button>
                                                 @endif
 
-                                                {{-- EDIT BUTTON --}}
-                                                @if ($pEdit)
-                                                    <button type="button" @click="togglePerm(newRole, '{{ $pEdit }}')"
-                                                            :class="hasPerm(newRole, '{{ $pEdit }}') 
+                                                {{-- CREATE BUTTON --}}
+                                                @if ($pCreate)
+                                                    <button type="button" @click="togglePerm(newRole, '{{ $pCreate }}', '{{ $pView }}')"
+                                                            :class="hasPerm(newRole, '{{ $pCreate }}') 
+                                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                                                                : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400'"
+                                                            class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
+                                                        <span :class="hasPerm(newRole, '{{ $pCreate }}') ? 'opacity-100' : 'opacity-40'">➕</span>
+                                                        <span>CREATE</span>
+                                                    </button>
+                                                @endif
+
+                                                {{-- UPDATE BUTTON --}}
+                                                @if ($pUpdate)
+                                                    <button type="button" @click="togglePerm(newRole, '{{ $pUpdate }}', '{{ $pView }}')"
+                                                            :class="hasPerm(newRole, '{{ $pUpdate }}') 
                                                                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400'"
                                                             class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
-                                                        <span :class="hasPerm(newRole, '{{ $pEdit }}') ? 'opacity-100' : 'opacity-40'">✏️</span>
-                                                        <span>EDIT</span>
+                                                        <span :class="hasPerm(newRole, '{{ $pUpdate }}') ? 'opacity-100' : 'opacity-40'">✏️</span>
+                                                        <span>UPDATE</span>
                                                     </button>
                                                 @endif
 
                                                 {{-- DELETE BUTTON --}}
                                                 @if ($pDelete)
-                                                    <button type="button" @click="togglePerm(newRole, '{{ $pDelete }}')"
+                                                    <button type="button" @click="togglePerm(newRole, '{{ $pDelete }}', '{{ $pView }}')"
                                                             :class="hasPerm(newRole, '{{ $pDelete }}') 
                                                                 ? 'bg-rose-600 text-white border-rose-600 shadow-xs' 
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-rose-600 dark:hover:text-rose-400'"
@@ -876,6 +946,18 @@
                                                         <span>DELETE</span>
                                                     </button>
                                                 @endif
+
+                                                {{-- EXTRA ACTION BUTTONS --}}
+                                                @foreach ($extras as $extraAction => $extraPerm)
+                                                    <button type="button" @click="togglePerm(newRole, '{{ $extraPerm }}', '{{ $pView }}')"
+                                                            :class="hasPerm(newRole, '{{ $extraPerm }}') 
+                                                                ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
+                                                                : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-amber-600 dark:hover:text-amber-400'"
+                                                            class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
+                                                        <span>⚙️</span>
+                                                        <span>{{ strtoupper($extraAction) }}</span>
+                                                    </button>
+                                                @endforeach
                                             </div>
                                         </div>
                                     @endforeach
@@ -986,6 +1068,11 @@
                                class="w-full pl-8 pr-3 py-1.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
+                    {{-- Hidden permissions serialization inputs --}}
+                    <template x-for="p in editingRole.permissions" :key="p">
+                        <input type="hidden" name="permissions[]" :value="p">
+                    </template>
+
                     {{-- Grouped Permissions Cards --}}
                     <div class="space-y-3.5">
                         @foreach ($permissionGroups as $groupKey => $group)
@@ -996,7 +1083,7 @@
                                         <span class="text-lg">{{ $group['icon'] ?? '📁' }}</span>
                                         <div>
                                             <span class="text-xs font-black text-slate-900 dark:text-slate-100 block">{{ $group['label'] }}</span>
-                                            <span class="text-[10px] font-mono text-slate-400" x-text="`${groupCount(editingRole, '{{ $groupKey }}')} of {{ count($group['modules']) * 3 }} actions selected`"></span>
+                                            <span class="text-[10px] font-mono text-slate-400" x-text="`${groupCount(editingRole, '{{ $groupKey }}')} of {{ count($allPermGroupKeys[$groupKey] ?? []) }} actions selected`"></span>
                                         </div>
                                     </div>
 
@@ -1006,9 +1093,13 @@
                                                 class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300 border border-sky-200/60 dark:border-sky-800 hover:bg-sky-100 transition">
                                             👁️ All VIEW
                                         </button>
-                                        <button type="button" @click="toggleGroupColumn(editingRole, '{{ $groupKey }}', 'edit')"
+                                        <button type="button" @click="toggleGroupColumn(editingRole, '{{ $groupKey }}', 'create')"
+                                                class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800 hover:bg-indigo-100 transition">
+                                            ➕ All CREATE
+                                        </button>
+                                        <button type="button" @click="toggleGroupColumn(editingRole, '{{ $groupKey }}', 'update')"
                                                 class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800 hover:bg-emerald-100 transition">
-                                            ✏️ All EDIT
+                                            ✏️ All UPDATE
                                         </button>
                                         <button type="button" @click="toggleGroupColumn(editingRole, '{{ $groupKey }}', 'delete')"
                                                 class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800 hover:bg-rose-100 transition">
@@ -1021,26 +1112,29 @@
                                     </div>
                                 </div>
 
-                                {{-- Module Rows with Individual VIEW, EDIT, DELETE Buttons on the Right --}}
+                                {{-- Module Rows with Individual VIEW, CREATE, UPDATE, DELETE Buttons on the Right --}}
                                 <div class="space-y-1.5">
                                     @foreach ($group['modules'] as $moduleKey => $module)
                                         @php
                                             $pView = $module['permissions']['view'] ?? null;
-                                            $pEdit = $module['permissions']['edit'] ?? null;
+                                            $pCreate = $module['permissions']['create'] ?? null;
+                                            $pUpdate = $module['permissions']['update'] ?? ($module['permissions']['edit'] ?? null);
                                             $pDelete = $module['permissions']['delete'] ?? null;
-                                            $searchString = strtolower($module['name'] . ' ' . $module['desc'] . ' ' . $pView . ' ' . $pEdit . ' ' . $pDelete);
+                                            $modulePermsList = array_values($module['permissions']);
+                                            $extras = array_diff_key($module['permissions'], ['view' => 1, 'create' => 1, 'update' => 1, 'edit' => 1, 'delete' => 1]);
+                                            $searchString = strtolower($module['name'] . ' ' . $module['desc'] . ' ' . implode(' ', $modulePermsList));
                                         @endphp
                                         <div x-show="!permSearch || '{{ $searchString }}'.includes(permSearch.toLowerCase())"
                                              class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 sm:p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 transition">
                                             
                                             {{-- Module Left Side: Row Checkbox + Module Name + Description --}}
                                             <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                                                <button type="button" @click="toggleModuleRow(editingRole, '{{ $pView }}', '{{ $pEdit }}', '{{ $pDelete }}')"
+                                                <button type="button" @click="toggleModuleRow(editingRole, {{ Illuminate\Support\Js::from($modulePermsList) }})"
                                                         title="Toggle all actions for this module"
                                                         class="w-5 h-5 rounded-md border flex items-center justify-center text-[10px] font-bold transition shrink-0"
-                                                        :class="isModuleFull(editingRole, '{{ $pView }}', '{{ $pEdit }}', '{{ $pDelete }}') 
+                                                        :class="isModuleFull(editingRole, {{ Illuminate\Support\Js::from($modulePermsList) }}) 
                                                             ? 'bg-blue-600 border-blue-600 text-white' 
-                                                            : (hasPerm(editingRole, '{{ $pView }}') || hasPerm(editingRole, '{{ $pEdit }}') || hasPerm(editingRole, '{{ $pDelete }}') 
+                                                            : (isModulePartial(editingRole, {{ Illuminate\Support\Js::from($modulePermsList) }}) 
                                                                 ? 'bg-blue-100 dark:bg-blue-950 border-blue-400 text-blue-700 dark:text-blue-300' 
                                                                 : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-transparent')">
                                                     ✓
@@ -1055,11 +1149,11 @@
                                                 </div>
                                             </div>
 
-                                            {{-- Module Right Side: VIEW, EDIT, DELETE Action Buttons --}}
-                                            <div class="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
+                                            {{-- Module Right Side: VIEW, CREATE, UPDATE, DELETE Action Buttons --}}
+                                            <div class="flex items-center gap-1.5 self-end sm:self-auto shrink-0 flex-wrap">
                                                 {{-- VIEW BUTTON --}}
                                                 @if ($pView)
-                                                    <button type="button" @click="togglePerm(editingRole, '{{ $pView }}')"
+                                                    <button type="button" @click="togglePerm(editingRole, '{{ $pView }}', '{{ $pView }}')"
                                                             :class="hasPerm(editingRole, '{{ $pView }}') 
                                                                 ? 'bg-sky-600 text-white border-sky-600 shadow-xs' 
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-sky-600 dark:hover:text-sky-400'"
@@ -1069,21 +1163,33 @@
                                                     </button>
                                                 @endif
 
-                                                {{-- EDIT BUTTON --}}
-                                                @if ($pEdit)
-                                                    <button type="button" @click="togglePerm(editingRole, '{{ $pEdit }}')"
-                                                            :class="hasPerm(editingRole, '{{ $pEdit }}') 
+                                                {{-- CREATE BUTTON --}}
+                                                @if ($pCreate)
+                                                    <button type="button" @click="togglePerm(editingRole, '{{ $pCreate }}', '{{ $pView }}')"
+                                                            :class="hasPerm(editingRole, '{{ $pCreate }}') 
+                                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                                                                : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400'"
+                                                            class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
+                                                        <span :class="hasPerm(editingRole, '{{ $pCreate }}') ? 'opacity-100' : 'opacity-40'">➕</span>
+                                                        <span>CREATE</span>
+                                                    </button>
+                                                @endif
+
+                                                {{-- UPDATE BUTTON --}}
+                                                @if ($pUpdate)
+                                                    <button type="button" @click="togglePerm(editingRole, '{{ $pUpdate }}', '{{ $pView }}')"
+                                                            :class="hasPerm(editingRole, '{{ $pUpdate }}') 
                                                                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400'"
                                                             class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
-                                                        <span :class="hasPerm(editingRole, '{{ $pEdit }}') ? 'opacity-100' : 'opacity-40'">✏️</span>
-                                                        <span>EDIT</span>
+                                                        <span :class="hasPerm(editingRole, '{{ $pUpdate }}') ? 'opacity-100' : 'opacity-40'">✏️</span>
+                                                        <span>UPDATE</span>
                                                     </button>
                                                 @endif
 
                                                 {{-- DELETE BUTTON --}}
                                                 @if ($pDelete)
-                                                    <button type="button" @click="togglePerm(editingRole, '{{ $pDelete }}')"
+                                                    <button type="button" @click="togglePerm(editingRole, '{{ $pDelete }}', '{{ $pView }}')"
                                                             :class="hasPerm(editingRole, '{{ $pDelete }}') 
                                                                 ? 'bg-rose-600 text-white border-rose-600 shadow-xs' 
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-rose-600 dark:hover:text-rose-400'"
@@ -1092,6 +1198,18 @@
                                                         <span>DELETE</span>
                                                     </button>
                                                 @endif
+
+                                                {{-- EXTRA ACTION BUTTONS --}}
+                                                @foreach ($extras as $extraAction => $extraPerm)
+                                                    <button type="button" @click="togglePerm(editingRole, '{{ $extraPerm }}', '{{ $pView }}')"
+                                                            :class="hasPerm(editingRole, '{{ $extraPerm }}') 
+                                                                ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
+                                                                : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-amber-600 dark:hover:text-amber-400'"
+                                                            class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
+                                                        <span>⚙️</span>
+                                                        <span>{{ strtoupper($extraAction) }}</span>
+                                                    </button>
+                                                @endforeach
                                             </div>
                                         </div>
                                     @endforeach
@@ -1162,7 +1280,12 @@
             <form action="{{ route('store.admin.roles.assign_staff', $storeRouteParams) }}" method="POST" class="space-y-4">
                 @csrf
                 <input type="hidden" name="user_id" :value="assignData.user_id">
-                <input type="hidden" name="action_mode" :value="assignData.mode">
+                <input type="hidden" name="action_mode" :value="assignData.mode === 'create_custom' ? 'create_and_assign' : 'select'">
+
+                {{-- Hidden permissions serialization inputs for create_custom mode --}}
+                <template x-for="p in assignData.permissions" :key="p">
+                    <input type="hidden" name="role_permissions[]" :value="p">
+                </template>
 
                 {{-- MODE 1: SELECT EXISTING STANDARD OR CUSTOM ROLE --}}
                 <div x-show="assignData.mode === 'select'" class="space-y-3">
@@ -1240,13 +1363,13 @@
                         </div>
                     </div>
 
-                    {{-- Dedicated VIEW, EDIT, DELETE matrix for this custom role --}}
+                    {{-- Dedicated VIEW, CREATE, UPDATE, DELETE matrix for this custom role --}}
                     <div class="space-y-3 pt-2">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div>
                                 <h4 class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                                     <span>🛡️</span>
-                                    <span>Configure Individual Permissions (VIEW, EDIT, DELETE)</span>
+                                    <span>Configure Individual Permissions (VIEW, CREATE, UPDATE, DELETE)</span>
                                 </h4>
                                 <p class="text-[11px] text-slate-400">Toggle permissions granted specifically to this staff member's role</p>
                             </div>
@@ -1274,7 +1397,7 @@
                                             <span class="text-base">{{ $group['icon'] ?? '📁' }}</span>
                                             <div>
                                                 <span class="text-xs font-black text-slate-900 dark:text-slate-100 block">{{ $group['label'] }}</span>
-                                                <span class="text-[10px] font-mono text-slate-400" x-text="`${groupCount(assignData, '{{ $groupKey }}')} of {{ count($group['modules']) * 3 }} selected`"></span>
+                                                <span class="text-[10px] font-mono text-slate-400" x-text="`${groupCount(assignData, '{{ $groupKey }}')} of {{ count($allPermGroupKeys[$groupKey] ?? []) }} selected`"></span>
                                             </div>
                                         </div>
 
@@ -1283,9 +1406,13 @@
                                                     class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300 border border-sky-200/60 hover:bg-sky-100 transition">
                                                 👁️ VIEW
                                             </button>
-                                            <button type="button" @click="toggleGroupColumn(assignData, '{{ $groupKey }}', 'edit')"
+                                            <button type="button" @click="toggleGroupColumn(assignData, '{{ $groupKey }}', 'create')"
+                                                    class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200/60 hover:bg-indigo-100 transition">
+                                                ➕ CREATE
+                                            </button>
+                                            <button type="button" @click="toggleGroupColumn(assignData, '{{ $groupKey }}', 'update')"
                                                     class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/60 hover:bg-emerald-100 transition">
-                                                ✏️ EDIT
+                                                ✏️ UPDATE
                                             </button>
                                             <button type="button" @click="toggleGroupColumn(assignData, '{{ $groupKey }}', 'delete')"
                                                     class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200/60 hover:bg-rose-100 transition">
@@ -1302,19 +1429,22 @@
                                         @foreach ($group['modules'] as $moduleKey => $module)
                                             @php
                                                 $pView = $module['permissions']['view'] ?? null;
-                                                $pEdit = $module['permissions']['edit'] ?? null;
+                                                $pCreate = $module['permissions']['create'] ?? null;
+                                                $pUpdate = $module['permissions']['update'] ?? ($module['permissions']['edit'] ?? null);
                                                 $pDelete = $module['permissions']['delete'] ?? null;
-                                                $searchString = strtolower($module['name'] . ' ' . $module['desc'] . ' ' . $pView . ' ' . $pEdit . ' ' . $pDelete);
+                                                $modulePermsList = array_values($module['permissions']);
+                                                $extras = array_diff_key($module['permissions'], ['view' => 1, 'create' => 1, 'update' => 1, 'edit' => 1, 'delete' => 1]);
+                                                $searchString = strtolower($module['name'] . ' ' . $module['desc'] . ' ' . implode(' ', $modulePermsList));
                                             @endphp
                                             <div x-show="!permSearch || '{{ $searchString }}'.includes(permSearch.toLowerCase())"
                                                  class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 transition">
                                                 
                                                 <div class="flex items-center gap-2 min-w-0 flex-1">
-                                                    <button type="button" @click="toggleModuleRow(assignData, '{{ $pView }}', '{{ $pEdit }}', '{{ $pDelete }}')"
+                                                    <button type="button" @click="toggleModuleRow(assignData, {{ Illuminate\Support\Js::from($modulePermsList) }})"
                                                             class="w-4 h-4 rounded border flex items-center justify-center text-[9px] font-bold transition shrink-0"
-                                                            :class="isModuleFull(assignData, '{{ $pView }}', '{{ $pEdit }}', '{{ $pDelete }}') 
+                                                            :class="isModuleFull(assignData, {{ Illuminate\Support\Js::from($modulePermsList) }}) 
                                                                 ? 'bg-blue-600 border-blue-600 text-white' 
-                                                                : (hasPerm(assignData, '{{ $pView }}') || hasPerm(assignData, '{{ $pEdit }}') || hasPerm(assignData, '{{ $pDelete }}') 
+                                                                : (isModulePartial(assignData, {{ Illuminate\Support\Js::from($modulePermsList) }}) 
                                                                     ? 'bg-blue-100 dark:bg-blue-950 border-blue-400 text-blue-700 dark:text-blue-300' 
                                                                     : 'bg-slate-100 dark:bg-slate-800 border-slate-300 text-transparent')">
                                                         ✓
@@ -1324,39 +1454,56 @@
                                                     </span>
                                                 </div>
 
-                                                <div class="flex items-center gap-1 shrink-0 self-end sm:self-auto">
+                                                <div class="flex items-center gap-1 shrink-0 self-end sm:self-auto flex-wrap">
                                                     @if ($pView)
-                                                        <label class="cursor-pointer">
-                                                            <input type="checkbox" name="role_permissions[]" value="{{ $pView }}"
-                                                                   x-model="assignData.permissions" class="sr-only">
-                                                            <span :class="hasPerm(assignData, '{{ $pView }}') ? 'bg-sky-600 text-white border-sky-600 shadow-xs' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'"
-                                                                  class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase border transition inline-flex items-center gap-0.5">
-                                                                <span>👁️</span><span>VIEW</span>
-                                                            </span>
-                                                        </label>
+                                                        <button type="button" @click="togglePerm(assignData, '{{ $pView }}', '{{ $pView }}')"
+                                                                :class="hasPerm(assignData, '{{ $pView }}') 
+                                                                    ? 'bg-sky-600 text-white border-sky-600 shadow-xs' 
+                                                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-sky-600 dark:hover:text-sky-400'"
+                                                                class="px-2 py-0.5 rounded-md text-[9px] font-black tracking-wider uppercase border transition flex items-center gap-0.5 active:scale-95">
+                                                            <span>👁️</span><span>VIEW</span>
+                                                        </button>
                                                     @endif
 
-                                                    @if ($pEdit)
-                                                        <label class="cursor-pointer">
-                                                            <input type="checkbox" name="role_permissions[]" value="{{ $pEdit }}"
-                                                                   x-model="assignData.permissions" class="sr-only">
-                                                            <span :class="hasPerm(assignData, '{{ $pEdit }}') ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'"
-                                                                  class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase border transition inline-flex items-center gap-0.5">
-                                                                <span>✏️</span><span>EDIT</span>
-                                                            </span>
-                                                        </label>
+                                                    @if ($pCreate)
+                                                        <button type="button" @click="togglePerm(assignData, '{{ $pCreate }}', '{{ $pView }}')"
+                                                                :class="hasPerm(assignData, '{{ $pCreate }}') 
+                                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
+                                                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400'"
+                                                                class="px-2 py-0.5 rounded-md text-[9px] font-black tracking-wider uppercase border transition flex items-center gap-0.5 active:scale-95">
+                                                            <span>➕</span><span>CREATE</span>
+                                                        </button>
+                                                    @endif
+
+                                                    @if ($pUpdate)
+                                                        <button type="button" @click="togglePerm(assignData, '{{ $pUpdate }}', '{{ $pView }}')"
+                                                                :class="hasPerm(assignData, '{{ $pUpdate }}') 
+                                                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
+                                                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400'"
+                                                                class="px-2 py-0.5 rounded-md text-[9px] font-black tracking-wider uppercase border transition flex items-center gap-0.5 active:scale-95">
+                                                            <span>✏️</span><span>UPDATE</span>
+                                                        </button>
                                                     @endif
 
                                                     @if ($pDelete)
-                                                        <label class="cursor-pointer">
-                                                            <input type="checkbox" name="role_permissions[]" value="{{ $pDelete }}"
-                                                                   x-model="assignData.permissions" class="sr-only">
-                                                            <span :class="hasPerm(assignData, '{{ $pDelete }}') ? 'bg-rose-600 text-white border-rose-600 shadow-xs' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700'"
-                                                                  class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase border transition inline-flex items-center gap-0.5">
-                                                                <span>🗑️</span><span>DELETE</span>
-                                                            </span>
-                                                        </label>
+                                                        <button type="button" @click="togglePerm(assignData, '{{ $pDelete }}', '{{ $pView }}')"
+                                                                :class="hasPerm(assignData, '{{ $pDelete }}') 
+                                                                    ? 'bg-rose-600 text-white border-rose-600 shadow-xs' 
+                                                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-rose-600 dark:hover:text-rose-400'"
+                                                                class="px-2 py-0.5 rounded-md text-[9px] font-black tracking-wider uppercase border transition flex items-center gap-0.5 active:scale-95">
+                                                            <span>🗑️</span><span>DELETE</span>
+                                                        </button>
                                                     @endif
+
+                                                    @foreach ($extras as $extraAction => $extraPerm)
+                                                        <button type="button" @click="togglePerm(assignData, '{{ $extraPerm }}', '{{ $pView }}')"
+                                                                :class="hasPerm(assignData, '{{ $extraPerm }}') 
+                                                                    ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
+                                                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-amber-600 dark:hover:text-amber-400'"
+                                                                class="px-2 py-0.5 rounded-md text-[9px] font-black tracking-wider uppercase border transition flex items-center gap-0.5 active:scale-95">
+                                                            <span>⚙️</span><span>{{ strtoupper($extraAction) }}</span>
+                                                        </button>
+                                                    @endforeach
                                                 </div>
                                             </div>
                                         @endforeach

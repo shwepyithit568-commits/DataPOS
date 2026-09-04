@@ -84,11 +84,13 @@
                 <span class="hidden xs:inline">{{ __('messages.customer_ledger_btn') }}</span>
             </a>
 
+            @if (store_can('customers.create', $store))
             <button type="button" @click.stop="openCreateModal()"
                     class="h-7 px-2.5 sm:px-3 rounded-md text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs transition flex items-center gap-1 active:scale-95 cursor-pointer">
                 <span class="text-xs font-black leading-none">+</span>
                 <span>{{ __('messages.customer_add_btn') }}</span>
             </button>
+            @endif
         </div>
     </header>
 
@@ -293,10 +295,12 @@
                                 {{ __('messages.customer_collect_debt') }}
                             </a>
                         @endif
+                        @if (store_can('customers.update', $store))
                         <button type="button" @click.stop="openEditModal({{ json_encode($customer) }})"
                                 class="h-6 px-2 rounded text-[11px] font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition cursor-pointer">
                             {{ __('messages.edit') }}
                         </button>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -397,10 +401,12 @@
                                         </a>
                                     @endif
 
+                                    @if (store_can('customers.update', $store))
                                     <button type="button" @click.stop="openEditModal({{ json_encode($customer) }})"
                                             class="h-6 px-2 rounded text-xs font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition cursor-pointer">
                                         {{ __('messages.edit') }}
                                     </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

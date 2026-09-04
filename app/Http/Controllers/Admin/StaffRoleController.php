@@ -151,6 +151,9 @@ class StaffRoleController extends Controller
             abort(422, 'Wildcard (*) permission is not allowed for custom roles.');
         }
 
+        // Parent-view dependency validation
+        $this->validateParentViewDependencies($submittedPermissions, 'permissions');
+
         // Privilege Ceiling (Plan §6.1)
         $permService = app(\App\Services\StorePermissionService::class);
         if (! $permService->canAssignPermissions($actor, $store, $submittedPermissions)) {
@@ -209,6 +212,9 @@ class StaffRoleController extends Controller
         if (in_array('*', $submittedPermissions, true) && $staffRole->slug !== 'store_owner') {
             abort(422, 'Wildcard (*) permission is not allowed for custom roles.');
         }
+
+        // Parent-view dependency validation
+        $this->validateParentViewDependencies($submittedPermissions, 'permissions');
 
         // Privilege Ceiling (Plan §6.1)
         $permService = app(\App\Services\StorePermissionService::class);
@@ -308,6 +314,9 @@ class StaffRoleController extends Controller
             if (in_array('*', $submittedPermissions, true)) {
                 abort(422, 'Wildcard (*) permission is not allowed for custom roles.');
             }
+
+            // Parent-view dependency validation
+            $this->validateParentViewDependencies($submittedPermissions, 'role_permissions');
 
             // Privilege Ceiling (Plan §6.1)
             if (! $permService->canAssignPermissions($actor, $store, $submittedPermissions)) {
@@ -424,5 +433,57 @@ class StaffRoleController extends Controller
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
+    }
+
+    /**
+     * Validate that all non-view permissions have their corresponding parent view permission.
+     *
+     * @param array<string> $permissions
+     * @param string $field
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    protected function validateParentViewDependencies(array $permissions, string $field = 'permissions'): void
+    {
+        $viewResources = [];
+        foreach ($permissions as $perm) {
+            if (str_ends_with($perm, '.view')) {
+                $resource = substr($perm, 0, -5);
+                $viewResources[$resource] = true;
+                if ($resource === 'ecommerce_orders' || $resource === 'orders') {
+                    $viewResources['ecommerce_orders'] = true;
+                    $viewResources['orders'] = true;
+                }
+                if ($resource === 'product_import' || $resource === 'import_history') {
+                    $viewResources['product_import'] = true;
+                    $viewResources['import_history'] = true;
+                }
+            }
+        }
+
+        $missingViews = [];
+        foreach ($permissions as $perm) {
+            if ($perm === '*') {
+                continue;
+            }
+            $lastDot = strrpos($perm, '.');
+            if ($lastDot === false) {
+                continue;
+            }
+            $resource = substr($perm, 0, $lastDot);
+            $action = substr($perm, $lastDot + 1);
+            if ($action === 'view') {
+                continue;
+            }
+            if (empty($viewResources[$resource])) {
+                $missingViews[] = "{$resource}.view (required by {$perm})";
+            }
+        }
+
+        if (!empty($missingViews)) {
+            $uniqueMissing = array_values(array_unique($missingViews));
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                $field => 'Action permissions require parent view permission: ' . implode(', ', $uniqueMissing),
+            ]);
+        }
     }
 }

@@ -75,6 +75,19 @@ class StorePermissionService
             }
         }
 
+        // Aliasing: import_history.* <-> product_import.*
+        if (str_starts_with($permission, 'import_history.')) {
+            $prodImportPerm = 'product_import.' . substr($permission, 15);
+            if (in_array($prodImportPerm, $effective, true)) {
+                return true;
+            }
+        } elseif (str_starts_with($permission, 'product_import.')) {
+            $importHistPerm = 'import_history.' . substr($permission, 15);
+            if (in_array($importHistPerm, $effective, true)) {
+                return true;
+            }
+        }
+
         // Handle .edit <-> .update aliasing (Plan §6.1: .edit aliases .update only; it must not grant create)
         if (str_ends_with($permission, '.update')) {
             $editAlias = substr($permission, 0, -7) . '.edit';
@@ -196,6 +209,9 @@ class StorePermissionService
 
         // − denies (Denies win)
         $effective = array_values(array_diff($combined, $denies));
+
+        // Enforce parent-view dependency: non-view permissions require module view
+        $effective = $this->enforceParentViewDependency($effective);
 
         return self::$requestCache[$cacheKey] = $effective;
     }
@@ -390,6 +406,56 @@ class StorePermissionService
     }
 
     /**
+     * Filter effective permissions by enforcing parent-view dependency.
+     * Non-view permissions (e.g. products.create, products.update, products.delete, products.export)
+     * require the corresponding module view permission (e.g. products.view) to be present.
+     *
+     * @param array<string> $permissions
+     * @return array<string>
+     */
+    protected function enforceParentViewDependency(array $permissions): array
+    {
+        $viewResources = [];
+        foreach ($permissions as $perm) {
+            if (str_ends_with($perm, '.view')) {
+                $resource = substr($perm, 0, -5);
+                $viewResources[$resource] = true;
+                if ($resource === 'ecommerce_orders' || $resource === 'orders') {
+                    $viewResources['ecommerce_orders'] = true;
+                    $viewResources['orders'] = true;
+                }
+                if ($resource === 'product_import' || $resource === 'import_history') {
+                    $viewResources['product_import'] = true;
+                    $viewResources['import_history'] = true;
+                }
+            }
+        }
+
+        $filtered = [];
+        foreach ($permissions as $perm) {
+            $lastDot = strrpos($perm, '.');
+            if ($lastDot === false) {
+                $filtered[] = $perm;
+                continue;
+            }
+
+            $resource = substr($perm, 0, $lastDot);
+            $action = substr($perm, $lastDot + 1);
+
+            if ($action === 'view') {
+                $filtered[] = $perm;
+                continue;
+            }
+
+            if (!empty($viewResources[$resource])) {
+                $filtered[] = $perm;
+            }
+        }
+
+        return array_values($filtered);
+    }
+
+    /**
      * Get all registered canonical permissions across StaffRole::PERMISSION_GROUPS.
      *
      * @return array<string>
@@ -403,6 +469,9 @@ class StorePermissionService
                     $permissions[] = $perm;
                     if (str_starts_with($perm, 'ecommerce_orders.')) {
                         $permissions[] = 'orders.' . substr($perm, 17);
+                    }
+                    if (str_starts_with($perm, 'product_import.')) {
+                        $permissions[] = 'import_history.' . substr($perm, 15);
                     }
                 }
             }

@@ -39,8 +39,10 @@ class StaffRole extends Model
                     'desc' => 'Counter checkout, discounts, price overrides & receipts',
                     'permissions' => [
                         'view'   => 'pos_sales.view',
-                        'edit'   => 'pos_sales.edit',
+                        'create' => 'pos_sales.create',
+                        'update' => 'pos_sales.update',
                         'delete' => 'pos_sales.delete',
+                        'refund' => 'pos_sales.refund',
                     ]
                 ],
                 'pos_closing' => [
@@ -48,7 +50,8 @@ class StaffRole extends Model
                     'desc' => 'Shift handover & cash register closing',
                     'permissions' => [
                         'view'   => 'pos_closing.view',
-                        'edit'   => 'pos_closing.edit',
+                        'create' => 'pos_closing.create',
+                        'update' => 'pos_closing.update',
                         'delete' => 'pos_closing.delete',
                     ]
                 ],
@@ -57,7 +60,8 @@ class StaffRole extends Model
                     'desc' => 'Customer product returns & invoice refunds',
                     'permissions' => [
                         'view'   => 'pos_returns.view',
-                        'edit'   => 'pos_returns.edit',
+                        'create' => 'pos_returns.create',
+                        'update' => 'pos_returns.update',
                         'delete' => 'pos_returns.delete',
                     ]
                 ],
@@ -66,7 +70,8 @@ class StaffRole extends Model
                     'desc' => 'Secondhand device trade-in & buy back appraisal',
                     'permissions' => [
                         'view'   => 'pos_buyback.view',
-                        'edit'   => 'pos_buyback.edit',
+                        'create' => 'pos_buyback.create',
+                        'update' => 'pos_buyback.update',
                         'delete' => 'pos_buyback.delete',
                     ]
                 ],
@@ -75,7 +80,8 @@ class StaffRole extends Model
                     'desc' => 'Carrier top-up transactions & PIN balances',
                     'permissions' => [
                         'view'   => 'pos_eload.view',
-                        'edit'   => 'pos_eload.edit',
+                        'create' => 'pos_eload.create',
+                        'update' => 'pos_eload.update',
                         'delete' => 'pos_eload.delete',
                     ]
                 ],
@@ -91,7 +97,8 @@ class StaffRole extends Model
                     'desc' => 'Categories, brands, units, and variant presets',
                     'permissions' => [
                         'view'   => 'master_data.view',
-                        'edit'   => 'master_data.edit',
+                        'create' => 'master_data.create',
+                        'update' => 'master_data.update',
                         'delete' => 'master_data.delete',
                     ]
                 ],
@@ -100,8 +107,10 @@ class StaffRole extends Model
                     'desc' => 'Item catalog, SKU, barcodes, retail & wholesale prices',
                     'permissions' => [
                         'view'   => 'products.view',
-                        'edit'   => 'products.edit',
+                        'create' => 'products.create',
+                        'update' => 'products.update',
                         'delete' => 'products.delete',
+                        'export' => 'products.export',
                     ]
                 ],
                 'barcode' => [
@@ -109,7 +118,8 @@ class StaffRole extends Model
                     'desc' => 'Generate and print thermal barcode labels',
                     'permissions' => [
                         'view'   => 'barcode.view',
-                        'edit'   => 'barcode.edit',
+                        'create' => 'barcode.create',
+                        'update' => 'barcode.update',
                         'delete' => 'barcode.delete',
                     ]
                 ],
@@ -118,7 +128,8 @@ class StaffRole extends Model
                     'desc' => 'Bulk profit margin adjustments & retail markup',
                     'permissions' => [
                         'view'   => 'price_wizard.view',
-                        'edit'   => 'price_wizard.edit',
+                        'create' => 'price_wizard.create',
+                        'update' => 'price_wizard.update',
                         'delete' => 'price_wizard.delete',
                     ]
                 ],
@@ -127,7 +138,8 @@ class StaffRole extends Model
                     'desc' => 'Warranty policy setup, serial lookups & claims',
                     'permissions' => [
                         'view'   => 'warranty.view',
-                        'edit'   => 'warranty.edit',
+                        'create' => 'warranty.create',
+                        'update' => 'warranty.update',
                         'delete' => 'warranty.delete',
                     ]
                 ],
@@ -136,8 +148,7 @@ class StaffRole extends Model
                     'desc' => 'Detailed stock movement audit trail and historical ledger',
                     'permissions' => [
                         'view'   => 'stock_ledger.view',
-                        'edit'   => 'stock_ledger.edit',
-                        'delete' => 'stock_ledger.delete',
+                        'export' => 'stock_ledger.export',
                     ]
                 ],
                 'stock_balance' => [
@@ -145,8 +156,7 @@ class StaffRole extends Model
                     'desc' => 'Real-time inventory levels by warehouse & branch',
                     'permissions' => [
                         'view'   => 'stock_balance.view',
-                        'edit'   => 'stock_balance.edit',
-                        'delete' => 'stock_balance.delete',
+                        'export' => 'stock_balance.export',
                     ]
                 ],
                 'stock_count' => [
@@ -154,7 +164,8 @@ class StaffRole extends Model
                     'desc' => 'Physical stock count worksheets and discrepancy check',
                     'permissions' => [
                         'view'   => 'stock_count.view',
-                        'edit'   => 'stock_count.edit',
+                        'create' => 'stock_count.create',
+                        'update' => 'stock_count.update',
                         'delete' => 'stock_count.delete',
                     ]
                 ],
@@ -163,7 +174,8 @@ class StaffRole extends Model
                     'desc' => 'Increase / decrease manual stock adjustments',
                     'permissions' => [
                         'view'   => 'stock_adjustments.view',
-                        'edit'   => 'stock_adjustments.edit',
+                        'create' => 'stock_adjustments.create',
+                        'update' => 'stock_adjustments.update',
                         'delete' => 'stock_adjustments.delete',
                     ]
                 ],
@@ -172,7 +184,8 @@ class StaffRole extends Model
                     'desc' => 'Reconcile counted vs system stock variance',
                     'permissions' => [
                         'view'   => 'stock_reconciliation.view',
-                        'edit'   => 'stock_reconciliation.edit',
+                        'create' => 'stock_reconciliation.create',
+                        'update' => 'stock_reconciliation.update',
                         'delete' => 'stock_reconciliation.delete',
                     ]
                 ],
@@ -181,7 +194,8 @@ class StaffRole extends Model
                     'desc' => 'Initial inventory balance setup upon shop onboarding',
                     'permissions' => [
                         'view'   => 'opening_stock.view',
-                        'edit'   => 'opening_stock.edit',
+                        'create' => 'opening_stock.create',
+                        'update' => 'opening_stock.update',
                         'delete' => 'opening_stock.delete',
                     ]
                 ],
@@ -190,7 +204,7 @@ class StaffRole extends Model
                     'desc' => 'Excel & CSV batch product import and mapping',
                     'permissions' => [
                         'view'   => 'product_import.view',
-                        'edit'   => 'product_import.edit',
+                        'create' => 'product_import.create',
                         'delete' => 'product_import.delete',
                     ]
                 ],
@@ -206,7 +220,8 @@ class StaffRole extends Model
                     'desc' => 'Vendor contact info, payment terms & catalog',
                     'permissions' => [
                         'view'   => 'suppliers.view',
-                        'edit'   => 'suppliers.edit',
+                        'create' => 'suppliers.create',
+                        'update' => 'suppliers.update',
                         'delete' => 'suppliers.delete',
                     ]
                 ],
@@ -215,7 +230,8 @@ class StaffRole extends Model
                     'desc' => 'Purchase orders, bills, receive goods & cost tracking',
                     'permissions' => [
                         'view'   => 'purchases.view',
-                        'edit'   => 'purchases.edit',
+                        'create' => 'purchases.create',
+                        'update' => 'purchases.update',
                         'delete' => 'purchases.delete',
                     ]
                 ],
@@ -224,7 +240,8 @@ class StaffRole extends Model
                     'desc' => 'Return damaged/excess goods to supplier',
                     'permissions' => [
                         'view'   => 'purchase_returns.view',
-                        'edit'   => 'purchase_returns.edit',
+                        'create' => 'purchase_returns.create',
+                        'update' => 'purchase_returns.update',
                         'delete' => 'purchase_returns.delete',
                     ]
                 ],
@@ -233,7 +250,8 @@ class StaffRole extends Model
                     'desc' => 'Supplier payables, credit balance & payment vouchers',
                     'permissions' => [
                         'view'   => 'payables.view',
-                        'edit'   => 'payables.edit',
+                        'create' => 'payables.create',
+                        'update' => 'payables.update',
                         'delete' => 'payables.delete',
                     ]
                 ],
@@ -242,7 +260,8 @@ class StaffRole extends Model
                     'desc' => 'Inter-branch and warehouse stock transfer orders',
                     'permissions' => [
                         'view'   => 'transfers.view',
-                        'edit'   => 'transfers.edit',
+                        'create' => 'transfers.create',
+                        'update' => 'transfers.update',
                         'delete' => 'transfers.delete',
                     ]
                 ],
@@ -251,7 +270,8 @@ class StaffRole extends Model
                     'desc' => 'Multiple warehouse locations, racks & bin setup',
                     'permissions' => [
                         'view'   => 'warehouses.view',
-                        'edit'   => 'warehouses.edit',
+                        'create' => 'warehouses.create',
+                        'update' => 'warehouses.update',
                         'delete' => 'warehouses.delete',
                     ]
                 ],
@@ -267,7 +287,8 @@ class StaffRole extends Model
                     'desc' => 'Order fulfillment, packing, delivery & payments',
                     'permissions' => [
                         'view'   => 'ecommerce_orders.view',
-                        'edit'   => 'ecommerce_orders.edit',
+                        'create' => 'ecommerce_orders.create',
+                        'update' => 'ecommerce_orders.update',
                         'delete' => 'ecommerce_orders.delete',
                     ]
                 ],
@@ -276,7 +297,8 @@ class StaffRole extends Model
                     'desc' => 'Online storefront visibility, descriptions & SEO',
                     'permissions' => [
                         'view'   => 'web_products.view',
-                        'edit'   => 'web_products.edit',
+                        'create' => 'web_products.create',
+                        'update' => 'web_products.update',
                         'delete' => 'web_products.delete',
                     ]
                 ],
@@ -285,7 +307,8 @@ class StaffRole extends Model
                     'desc' => 'Coupon codes, buy-x-get-y & flash sales',
                     'permissions' => [
                         'view'   => 'promotions.view',
-                        'edit'   => 'promotions.edit',
+                        'create' => 'promotions.create',
+                        'update' => 'promotions.update',
                         'delete' => 'promotions.delete',
                     ]
                 ],
@@ -294,7 +317,7 @@ class StaffRole extends Model
                     'desc' => 'Moderate, approve or remove customer product ratings',
                     'permissions' => [
                         'view'   => 'reviews.view',
-                        'edit'   => 'reviews.edit',
+                        'update' => 'reviews.update',
                         'delete' => 'reviews.delete',
                     ]
                 ],
@@ -303,7 +326,8 @@ class StaffRole extends Model
                     'desc' => 'Storefront advertising banners & slider artwork',
                     'permissions' => [
                         'view'   => 'banners.view',
-                        'edit'   => 'banners.edit',
+                        'create' => 'banners.create',
+                        'update' => 'banners.update',
                         'delete' => 'banners.delete',
                     ]
                 ],
@@ -312,7 +336,8 @@ class StaffRole extends Model
                     'desc' => 'Tech guides, news articles and promotions blog',
                     'permissions' => [
                         'view'   => 'blog.view',
-                        'edit'   => 'blog.edit',
+                        'create' => 'blog.create',
+                        'update' => 'blog.update',
                         'delete' => 'blog.delete',
                     ]
                 ],
@@ -321,7 +346,8 @@ class StaffRole extends Model
                     'desc' => 'Screen protector compatibility database for phone models',
                     'permissions' => [
                         'view'   => 'glass_finder.view',
-                        'edit'   => 'glass_finder.edit',
+                        'create' => 'glass_finder.create',
+                        'update' => 'glass_finder.update',
                         'delete' => 'glass_finder.delete',
                     ]
                 ],
@@ -330,8 +356,31 @@ class StaffRole extends Model
                     'desc' => 'Send push notifications to subscriber browsers',
                     'permissions' => [
                         'view'   => 'web_push.view',
-                        'edit'   => 'web_push.edit',
+                        'create' => 'web_push.create',
+                        'update' => 'web_push.update',
                         'delete' => 'web_push.delete',
+                    ]
+                ],
+                'pages' => [
+                    'name' => 'Custom Storefront Pages (ဝဘ်ဆိုင် စာမျက်နှာများ)',
+                    'desc' => 'Manage custom informational pages and policy documents',
+                    'permissions' => [
+                        'view'   => 'pages.view',
+                        'create' => 'pages.create',
+                        'update' => 'pages.update',
+                        'delete' => 'pages.delete',
+                        'export' => 'pages.export',
+                    ]
+                ],
+                'navigation' => [
+                    'name' => 'Storefront Navigation (ဝဘ်ဆိုင် မီနူးစီမံမှု)',
+                    'desc' => 'Configure storefront header menus, mobile drawer and footer links',
+                    'permissions' => [
+                        'view'   => 'navigation.view',
+                        'create' => 'navigation.create',
+                        'update' => 'navigation.update',
+                        'delete' => 'navigation.delete',
+                        'export' => 'navigation.export',
                     ]
                 ],
             ]
@@ -346,8 +395,10 @@ class StaffRole extends Model
                     'desc' => 'Customer contact profiles, history & address book',
                     'permissions' => [
                         'view'   => 'customers.view',
-                        'edit'   => 'customers.edit',
+                        'create' => 'customers.create',
+                        'update' => 'customers.update',
                         'delete' => 'customers.delete',
+                        'export' => 'customers.export',
                     ]
                 ],
                 'receivables' => [
@@ -355,7 +406,8 @@ class StaffRole extends Model
                     'desc' => 'Credit ledger, payment collection & debt receipts',
                     'permissions' => [
                         'view'   => 'receivables.view',
-                        'edit'   => 'receivables.edit',
+                        'create' => 'receivables.create',
+                        'update' => 'receivables.update',
                         'delete' => 'receivables.delete',
                     ]
                 ],
@@ -364,7 +416,7 @@ class StaffRole extends Model
                     'desc' => 'Approve/reject B2B wholesale customer accounts',
                     'permissions' => [
                         'view'   => 'wholesale.view',
-                        'edit'   => 'wholesale.edit',
+                        'update' => 'wholesale.update',
                         'delete' => 'wholesale.delete',
                     ]
                 ],
@@ -373,7 +425,8 @@ class StaffRole extends Model
                     'desc' => 'Customer tiers, loyalty reward points & benefits',
                     'permissions' => [
                         'view'   => 'membership.view',
-                        'edit'   => 'membership.edit',
+                        'create' => 'membership.create',
+                        'update' => 'membership.update',
                         'delete' => 'membership.delete',
                     ]
                 ],
@@ -389,7 +442,8 @@ class StaffRole extends Model
                     'desc' => 'Intake, diagnostics, technician repair jobs & delivery',
                     'permissions' => [
                         'view'   => 'repairs.view',
-                        'edit'   => 'repairs.edit',
+                        'create' => 'repairs.create',
+                        'update' => 'repairs.update',
                         'delete' => 'repairs.delete',
                     ]
                 ],
@@ -398,7 +452,8 @@ class StaffRole extends Model
                     'desc' => 'Service parts inventory, labor costs & estimation',
                     'permissions' => [
                         'view'   => 'spare_parts.view',
-                        'edit'   => 'spare_parts.edit',
+                        'create' => 'spare_parts.create',
+                        'update' => 'spare_parts.update',
                         'delete' => 'spare_parts.delete',
                     ]
                 ],
@@ -407,7 +462,8 @@ class StaffRole extends Model
                     'desc' => 'Job status workflows, terms & print layouts',
                     'permissions' => [
                         'view'   => 'service_settings.view',
-                        'edit'   => 'service_settings.edit',
+                        'create' => 'service_settings.create',
+                        'update' => 'service_settings.update',
                         'delete' => 'service_settings.delete',
                     ]
                 ],
@@ -423,8 +479,7 @@ class StaffRole extends Model
                     'desc' => 'Monthly / period gross profit and net income report',
                     'permissions' => [
                         'view'   => 'profit_loss.view',
-                        'edit'   => 'profit_loss.edit',
-                        'delete' => 'profit_loss.delete',
+                        'export' => 'profit_loss.export',
                     ]
                 ],
                 'expenses' => [
@@ -432,7 +487,8 @@ class StaffRole extends Model
                     'desc' => 'Record, edit, approve and attach expense receipts',
                     'permissions' => [
                         'view'   => 'expenses.view',
-                        'edit'   => 'expenses.edit',
+                        'create' => 'expenses.create',
+                        'update' => 'expenses.update',
                         'delete' => 'expenses.delete',
                     ]
                 ],
@@ -441,7 +497,8 @@ class StaffRole extends Model
                     'desc' => 'Expense type classification (Utilities, Rent, Salaries)',
                     'permissions' => [
                         'view'   => 'expense_categories.view',
-                        'edit'   => 'expense_categories.edit',
+                        'create' => 'expense_categories.create',
+                        'update' => 'expense_categories.update',
                         'delete' => 'expense_categories.delete',
                     ]
                 ],
@@ -450,7 +507,8 @@ class StaffRole extends Model
                     'desc' => 'Cash register vaults, KPay, WavePay, bank transfers',
                     'permissions' => [
                         'view'   => 'transactions.view',
-                        'edit'   => 'transactions.edit',
+                        'create' => 'transactions.create',
+                        'update' => 'transactions.update',
                         'delete' => 'transactions.delete',
                     ]
                 ],
@@ -466,8 +524,7 @@ class StaffRole extends Model
                     'desc' => 'Daily, monthly, payment method breakdown',
                     'permissions' => [
                         'view'   => 'reports_sales.view',
-                        'edit'   => 'reports_sales.edit',
-                        'delete' => 'reports_sales.delete',
+                        'export' => 'reports_sales.export',
                     ]
                 ],
                 'sales_analytics' => [
@@ -475,8 +532,7 @@ class StaffRole extends Model
                     'desc' => 'Deep product sales trends, top sellers & margin curves',
                     'permissions' => [
                         'view'   => 'sales_analytics.view',
-                        'edit'   => 'sales_analytics.edit',
-                        'delete' => 'sales_analytics.delete',
+                        'export' => 'sales_analytics.export',
                     ]
                 ],
                 'reports_cash' => [
@@ -484,8 +540,7 @@ class StaffRole extends Model
                     'desc' => 'Cash in / cash out audit, cash float tracking',
                     'permissions' => [
                         'view'   => 'reports_cash.view',
-                        'edit'   => 'reports_cash.edit',
-                        'delete' => 'reports_cash.delete',
+                        'export' => 'reports_cash.export',
                     ]
                 ],
                 'inventory_valuation' => [
@@ -493,8 +548,7 @@ class StaffRole extends Model
                     'desc' => 'Stock valuation by FIFO / moving average cost',
                     'permissions' => [
                         'view'   => 'inventory_valuation.view',
-                        'edit'   => 'inventory_valuation.edit',
-                        'delete' => 'inventory_valuation.delete',
+                        'export' => 'inventory_valuation.export',
                     ]
                 ],
                 'debt_aging' => [
@@ -502,8 +556,7 @@ class StaffRole extends Model
                     'desc' => 'Overdue aging brackets (0-30, 31-60, 61-90, 90+ days)',
                     'permissions' => [
                         'view'   => 'debt_aging.view',
-                        'edit'   => 'debt_aging.edit',
-                        'delete' => 'debt_aging.delete',
+                        'export' => 'debt_aging.export',
                     ]
                 ],
                 'reports_services' => [
@@ -511,8 +564,7 @@ class StaffRole extends Model
                     'desc' => 'Technician performance, parts usage & repair profit',
                     'permissions' => [
                         'view'   => 'reports_services.view',
-                        'edit'   => 'reports_services.edit',
-                        'delete' => 'reports_services.delete',
+                        'export' => 'reports_services.export',
                     ]
                 ],
             ]
@@ -527,8 +579,10 @@ class StaffRole extends Model
                     'desc' => 'Configure granular access matrices and assign staff',
                     'permissions' => [
                         'view'   => 'roles.view',
-                        'edit'   => 'roles.edit',
+                        'create' => 'roles.create',
+                        'update' => 'roles.update',
                         'delete' => 'roles.delete',
+                        'export' => 'roles.export',
                     ]
                 ],
                 'audit_logs' => [
@@ -536,8 +590,7 @@ class StaffRole extends Model
                     'desc' => 'Track admin actions, price edits, deletes & IP logs',
                     'permissions' => [
                         'view'   => 'audit_logs.view',
-                        'edit'   => 'audit_logs.edit',
-                        'delete' => 'audit_logs.delete',
+                        'export' => 'audit_logs.export',
                     ]
                 ],
                 'alerts' => [
@@ -545,7 +598,8 @@ class StaffRole extends Model
                     'desc' => 'Low stock notifications, overdue debt alerts & broadcast',
                     'permissions' => [
                         'view'   => 'alerts.view',
-                        'edit'   => 'alerts.edit',
+                        'create' => 'alerts.create',
+                        'update' => 'alerts.update',
                         'delete' => 'alerts.delete',
                     ]
                 ],
@@ -554,8 +608,7 @@ class StaffRole extends Model
                     'desc' => 'Table optimization, vacuum, indexes & integrity check',
                     'permissions' => [
                         'view'   => 'database.view',
-                        'edit'   => 'database.edit',
-                        'delete' => 'database.delete',
+                        'update' => 'database.update',
                     ]
                 ],
                 'backups' => [
@@ -563,7 +616,7 @@ class StaffRole extends Model
                     'desc' => 'Automated snapshot creation & secure SQL downloads',
                     'permissions' => [
                         'view'   => 'backups.view',
-                        'edit'   => 'backups.edit',
+                        'create' => 'backups.create',
                         'delete' => 'backups.delete',
                     ]
                 ],
@@ -572,7 +625,7 @@ class StaffRole extends Model
                     'desc' => 'Store profile, receipt header/footer, thermal printers',
                     'permissions' => [
                         'view'   => 'settings.view',
-                        'edit'   => 'settings.edit',
+                        'update' => 'settings.update',
                         'delete' => 'settings.delete',
                     ]
                 ],
@@ -649,58 +702,113 @@ class StaffRole extends Model
                 'color'       => '#0284c7', // Sky blue
                 'permissions' => [
                     'pos_sales.view',
+                    'pos_sales.create',
+                    'pos_sales.update',
                     'pos_sales.edit',
                     'pos_closing.view',
+                    'pos_closing.create',
+                    'pos_closing.update',
                     'pos_closing.edit',
                     'pos_returns.view',
+                    'pos_returns.create',
+                    'pos_returns.update',
                     'pos_returns.edit',
                     'pos_buyback.view',
+                    'pos_buyback.create',
+                    'pos_buyback.update',
                     'pos_buyback.edit',
                     'pos_eload.view',
+                    'pos_eload.create',
+                    'pos_eload.update',
                     'pos_eload.edit',
                     'master_data.view',
+                    'master_data.create',
+                    'master_data.update',
+                    'master_data.edit',
                     'products.view',
+                    'products.create',
+                    'products.update',
                     'products.edit',
                     'stock_balance.view',
                     'stock_ledger.view',
                     'stock_count.view',
+                    'stock_count.create',
+                    'stock_count.update',
                     'stock_count.edit',
                     'stock_adjustments.view',
+                    'stock_adjustments.create',
+                    'stock_adjustments.update',
                     'stock_adjustments.edit',
                     'transfers.view',
+                    'transfers.create',
+                    'transfers.update',
                     'transfers.edit',
                     'warehouses.view',
+                    'warehouses.create',
+                    'warehouses.update',
+                    'warehouses.edit',
                     'barcode.view',
+                    'barcode.create',
+                    'barcode.update',
                     'barcode.edit',
                     'purchases.view',
+                    'purchases.create',
+                    'purchases.update',
                     'purchases.edit',
                     'purchase_returns.view',
+                    'purchase_returns.create',
+                    'purchase_returns.update',
                     'purchase_returns.edit',
                     'suppliers.view',
+                    'suppliers.create',
+                    'suppliers.update',
                     'suppliers.edit',
                     'orders.view',
+                    'orders.create',
+                    'orders.update',
                     'orders.edit',
+                    'ecommerce_orders.view',
+                    'ecommerce_orders.create',
+                    'ecommerce_orders.update',
+                    'ecommerce_orders.edit',
                     'flash_sales.view',
                     'coupons.view',
                     'promotions.view',
+                    'promotions.create',
+                    'promotions.update',
+                    'promotions.edit',
                     'shipping_rates.view',
                     'storefront_design.view',
                     'customers.view',
+                    'customers.create',
+                    'customers.update',
                     'customers.edit',
                     'membership_tiers.view',
+                    'membership_tiers.create',
+                    'membership_tiers.update',
                     'membership_tiers.edit',
                     'loyalty.view',
                     'loyalty.edit',
                     'customer_groups.view',
                     'repairs.view',
+                    'repairs.create',
+                    'repairs.update',
                     'repairs.edit',
                     'spare_parts.view',
+                    'spare_parts.create',
+                    'spare_parts.update',
                     'spare_parts.edit',
                     'expenses.view',
+                    'expenses.create',
+                    'expenses.update',
                     'expenses.edit',
                     'receivables.view',
+                    'receivables.create',
+                    'receivables.update',
                     'receivables.edit',
                     'payables.view',
+                    'payables.create',
+                    'payables.update',
                     'payables.edit',
                     'profit_loss.view',
                     'reports_sales.view',
@@ -726,15 +834,25 @@ class StaffRole extends Model
                 'color'       => '#10b981', // Emerald
                 'permissions' => [
                     'pos_sales.view',
+                    'pos_sales.create',
+                    'pos_sales.update',
                     'pos_sales.edit',
                     'pos_closing.view',
+                    'pos_closing.create',
+                    'pos_closing.update',
                     'pos_closing.edit',
                     'pos_returns.view',
+                    'pos_returns.create',
+                    'pos_returns.update',
                     'pos_returns.edit',
                     'pos_buyback.view',
+                    'pos_buyback.create',
+                    'pos_buyback.update',
                     'pos_buyback.edit',
                     'products.view',
                     'customers.view',
+                    'customers.create',
+                    'customers.update',
                     'customers.edit',
                     'reports_sales.view',
                 ],
@@ -756,15 +874,23 @@ class StaffRole extends Model
                     'stock_ledger.view',
                     'purchases.view',
                     'payables.view',
+                    'payables.create',
+                    'payables.update',
                     'payables.edit',
                     'customers.view',
                     'receivables.view',
+                    'receivables.create',
+                    'receivables.update',
                     'receivables.edit',
                     'profit_loss.view',
                     'expenses.view',
+                    'expenses.create',
+                    'expenses.update',
                     'expenses.edit',
                     'expenses.delete',
                     'transactions.view',
+                    'transactions.create',
+                    'transactions.update',
                     'transactions.edit',
                     'reports_sales.view',
                     'sales_analytics.view',
@@ -786,8 +912,12 @@ class StaffRole extends Model
                 'color'       => '#f59e0b', // Amber
                 'permissions' => [
                     'repairs.view',
+                    'repairs.create',
+                    'repairs.update',
                     'repairs.edit',
                     'spare_parts.view',
+                    'spare_parts.create',
+                    'spare_parts.update',
                     'spare_parts.edit',
                     'products.view',
                     'reports_services.view',
@@ -806,18 +936,31 @@ class StaffRole extends Model
                 'color'       => '#06b6d4', // Cyan
                 'permissions' => [
                     'products.view',
+                    'products.create',
+                    'products.update',
                     'products.edit',
                     'stock_ledger.view',
                     'stock_balance.view',
                     'stock_count.view',
+                    'stock_count.create',
+                    'stock_count.update',
                     'stock_count.edit',
                     'stock_adjustments.view',
+                    'stock_adjustments.create',
+                    'stock_adjustments.update',
                     'stock_adjustments.edit',
                     'stock_reconciliation.view',
                     'transfers.view',
+                    'transfers.create',
+                    'transfers.update',
                     'transfers.edit',
                     'warehouses.view',
+                    'warehouses.create',
+                    'warehouses.update',
+                    'warehouses.edit',
                     'barcode.view',
+                    'barcode.create',
+                    'barcode.update',
                     'barcode.edit',
                 ],
                 'is_system'   => true,
