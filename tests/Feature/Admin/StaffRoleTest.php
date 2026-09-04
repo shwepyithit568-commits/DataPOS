@@ -197,4 +197,62 @@ class StaffRoleTest extends TestCase
         $csvRes->assertOk();
         $csvRes->assertHeader('content-type', 'text/csv; charset=UTF-8');
     }
+
+    public function test_roles_type_filter_system_and_custom(): void
+    {
+        StaffRole::bootstrapDefaultRoles($this->store);
+
+        $customRole = StaffRole::create([
+            'store_id'    => $this->store->id,
+            'name'        => 'Custom Shift Lead',
+            'slug'        => 'custom-shift-lead',
+            'permissions' => ['pos.view'],
+            'is_system'   => false,
+            'is_active'   => true,
+        ]);
+
+        // Filter system roles
+        $sysRes = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/security/roles?type=system");
+
+        $sysRes->assertOk();
+        $sysRoles = collect($sysRes->viewData('roles')->items());
+        $this->assertTrue($sysRoles->contains('slug', 'store_manager'));
+        $this->assertTrue($sysRoles->contains('slug', 'cashier'));
+        $this->assertFalse($sysRoles->contains('slug', 'custom-shift-lead'));
+
+        // Filter custom roles
+        $customRes = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/security/roles?type=custom");
+
+        $customRes->assertOk();
+        $customRoles = collect($customRes->viewData('roles')->items());
+        $this->assertTrue($customRoles->contains('slug', 'custom-shift-lead'));
+        $this->assertFalse($customRoles->contains('slug', 'store_manager'));
+        $this->assertFalse($customRoles->contains('slug', 'cashier'));
+    }
+
+    public function test_store_owner_role_cannot_have_wildcard_stripped_or_be_deactivated(): void
+    {
+        StaffRole::bootstrapDefaultRoles($this->store);
+        $ownerRole = StaffRole::where('store_id', $this->store->id)->where('slug', 'store_owner')->firstOrFail();
+
+        // Attempt to restrict store_owner role to only pos.view and deactivate
+        $response = $this->actingAs($this->manager)
+            ->put("/store/{$this->store->slug}/admin/security/roles/{$ownerRole->id}", [
+                'name'        => 'Store Owner Modified',
+                'description' => 'Attempted restriction',
+                'color'       => '#ff0000',
+                'is_active'   => '0',
+                'permissions' => ['pos.view'],
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $ownerRole->refresh();
+        $this->assertSame('Store Owner Modified', $ownerRole->name);
+        $this->assertTrue((bool) $ownerRole->is_active, 'Store owner role must remain active');
+        $this->assertSame(['*'], $ownerRole->permissions, 'Store owner role must retain wildcard full permissions');
+    }
 }

@@ -434,7 +434,7 @@
                     </x-admin.nav-group>
                 @endif
             @endforeach
-        </nav>       </nav>
+        </nav>
     </aside>
 
     <div x-show="sidebarOpen" x-transition.opacity.duration.200ms @click="closeDrawer()"

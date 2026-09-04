@@ -1,6 +1,6 @@
 @extends('layouts.admin.app')
 
-@section('title', __('messages.sidebar_users', [], 'en') ? __('messages.sidebar_users') . ' - ' . $store->name : 'Users & Staff - ' . $store->name)
+@section('title', __('messages.users_staff_title') . ' - ' . $store->name)
 
 @php
     $storeRouteParams = ['store_slug' => $store->slug];
@@ -12,7 +12,7 @@
         createOpen: {{ $errors->any() ? 'true' : 'false' }},
         selectedRole: '{{ old('role', 'staff') }}',
         isStaffRole(r) {
-            return r === 'staff' || r === 'store_manager';
+            return r === 'staff' || r === 'store_manager' || r === 'store_owner';
         }
      }">
 
@@ -20,21 +20,28 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
             <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
-                <span>👥 အသုံးပြုသူနှင့် ဝန်ထမ်းများ (Users & Customers)</span>
+                <span>👨‍💼 {{ __('messages.users_staff_title') }}</span>
             </h1>
+            <span class="text-xs text-slate-400 hidden md:inline">· {{ __('messages.users_staff_subtitle') }}</span>
         </div>
 
-        {{-- Top Right Action (Create User Button) --}}
-        <div class="flex items-center gap-2.5 self-start sm:self-auto">
+        {{-- Top Right Action (Customer Directory, Role Templates, Create Staff) --}}
+        <div class="flex items-center flex-wrap gap-2.5 self-start sm:self-auto">
+            <a href="{{ route('store.admin.customers.index', $storeRouteParams) }}"
+               class="px-3.5 py-2.5 rounded-2xl text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition flex items-center gap-2 border border-emerald-200/80 dark:border-emerald-800/80 shadow-sm"
+               title="{{ __('messages.users_customer_directory_link') }}">
+                <span>🛍️</span>
+                <span>{{ __('messages.users_customer_directory_link') }} →</span>
+            </a>
             <a href="{{ route('store.admin.roles.index', $storeRouteParams) }}"
                class="px-3.5 py-2.5 rounded-2xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition flex items-center gap-2">
                 <span>🛡️</span>
-                <span>Role Templates</span>
+                <span>{{ __('messages.sidebar_roles') }}</span>
             </a>
             <button type="button" @click.stop="createOpen = !createOpen"
                     class="px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20 transition flex items-center gap-2 active:scale-95">
                 <span class="text-base leading-none" x-text="createOpen ? '✕' : '+'">+</span>
-                <span>အကောင့်အသစ် ဖွင့်မည်</span>
+                <span>{{ __('messages.users_enroll_staff') }}</span>
             </button>
         </div>
     </div>
@@ -59,49 +66,49 @@
         </div>
     @endif
 
-    {{-- 2. 4 Key Users KPI Cards --}}
+    {{-- 2. 4 Key Staff KPI Cards --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         <a href="{{ route('store.admin.users.index', array_merge($storeRouteParams, ['tab' => 'all'])) }}"
            class="rounded-3xl bg-white dark:bg-slate-900 border {{ $currentTab === 'all' ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
             <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">စုစုပေါင်း အကောင့်များ (Total)</p>
-                <h3 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{{ $metrics['total_users'] }}</h3>
-                <p class="text-[11px] text-slate-400 font-semibold mt-0.5">All registered users</p>
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.users_total_staff') }}</p>
+                <h3 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{{ $metrics['total_staff'] }}</h3>
+                <p class="text-[11px] text-slate-400 font-semibold mt-0.5">All Store Employees</p>
             </div>
             <span class="w-12 h-12 rounded-2xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                👥
+                👨‍💼
             </span>
         </a>
 
-        <a href="{{ route('store.admin.users.index', array_merge($storeRouteParams, ['tab' => 'staff'])) }}"
-           class="rounded-3xl bg-white dark:bg-slate-900 border {{ $currentTab === 'staff' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
+        <a href="{{ route('store.admin.users.index', array_merge($storeRouteParams, ['tab' => 'active'])) }}"
+           class="rounded-3xl bg-white dark:bg-slate-900 border {{ $currentTab === 'active' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
             <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">ဆိုင်ဝန်ထမ်းများ (Store Staff)</p>
-                <h3 class="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight">{{ $metrics['staff_count'] }}</h3>
-                <p class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5">Managers & Staff</p>
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.users_active_staff') }}</p>
+                <h3 class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">{{ $metrics['active_staff'] }}</h3>
+                <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Active & Operating</p>
+            </div>
+            <span class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
+                🟢
+            </span>
+        </a>
+
+        <a href="{{ route('store.admin.users.index', array_merge($storeRouteParams, ['tab' => 'leadership'])) }}"
+           class="rounded-3xl bg-white dark:bg-slate-900 border {{ $currentTab === 'leadership' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
+            <div class="min-w-0">
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.users_leadership') }}</p>
+                <h3 class="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight">{{ $metrics['leadership_count'] }}</h3>
+                <p class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5">Owners & Managers</p>
             </div>
             <span class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
                 🛡️
             </span>
         </a>
 
-        <a href="{{ route('store.admin.users.index', array_merge($storeRouteParams, ['tab' => 'customers'])) }}"
-           class="rounded-3xl bg-white dark:bg-slate-900 border {{ $currentTab === 'customers' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">ဖောက်သည်များ (Customers)</p>
-                <h3 class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">{{ $metrics['customer_count'] }}</h3>
-                <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Retail & Wholesale</p>
-            </div>
-            <span class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                🛍️
-            </span>
-        </a>
-
         <a href="{{ route('store.admin.users.index', array_merge($storeRouteParams, ['tab' => 'suspended'])) }}"
            class="rounded-3xl bg-white dark:bg-slate-900 border {{ $currentTab === 'suspended' ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
             <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">ပိတ်ပင်ထားသူများ (Suspended)</p>
-                <h3 class="text-xl sm:text-2xl font-black {{ $metrics['suspended_count'] > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white' }} font-mono tracking-tight">{{ $metrics['suspended_count'] }}</h3>
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.users_suspended_staff') }}</p>
+                <h3 class="text-xl sm:text-2xl font-black {{ $metrics['suspended_staff'] > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white' }} font-mono tracking-tight">{{ $metrics['suspended_staff'] }}</h3>
                 <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Access disabled</p>
             </div>
             <span class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
@@ -117,11 +124,21 @@
             <div class="flex items-center gap-2">
                 <span class="text-lg">✨</span>
                 <div>
-                    <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">အကောင့်အသစ် ဖွင့်လှစ်ခြင်း (Create User Account)</h3>
-                    <p class="text-xs text-slate-400">ဆိုင်ဝန်ထမ်း သို့မဟုတ် ဖောက်သည် အကောင့်သစ် ဖွင့်လှစ်ပြီး ရာထူးသတ်မှတ်ပါ</p>
+                    <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">{{ __('messages.users_enroll_staff') }} (Enroll Store Staff)</h3>
+                    <p class="text-xs text-slate-400">ဆိုင်ဝန်ထမ်း (Manager, Cashier, Service Technician, etc.) အကောင့်သစ် ဖွင့်လှစ်ပြီး ရာထူးနှင့် အခွင့်အရေးများ သတ်မှတ်ပါ</p>
                 </div>
             </div>
             <button type="button" @click="createOpen = false" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+        </div>
+
+        <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <span>💡</span>
+                <span>ဖောက်သည် (Customer) များ စာရင်းသွင်းရန်နှင့် စီမံခန့်ခွဲရန် ဖောက်သည်စာမျက်နှာကို အသုံးပြုပါ။</span>
+            </div>
+            <a href="{{ route('store.admin.customers.index', $storeRouteParams) }}" class="underline font-black text-emerald-700 dark:text-emerald-400 shrink-0">
+                {{ __('messages.users_customer_directory_link') }} →
+            </a>
         </div>
 
         <form method="POST" action="{{ route('store.admin.users.store', $storeRouteParams) }}" class="space-y-4">
@@ -277,7 +294,7 @@
             <table class="w-full text-left text-xs">
                 <thead>
                     <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                        <th class="py-3.5 px-4">အမည်နှင့် အဆက်အသွယ် (User Info)</th>
+                        <th class="py-3.5 px-4">အမည်နှင့် အဆက်အသွယ် (Staff Info)</th>
                         <th class="py-3.5 px-4">စနစ်အဆင့် (System Role)</th>
                         <th class="py-3.5 px-4">ရာထူးအခွင့်အရေးပုံစံ (Assigned Role)</th>
                         <th class="py-3.5 px-4 text-center">အခြေအနေ (Status)</th>
@@ -288,7 +305,7 @@
                     @forelse ($users as $user)
                         @php
                             $membership = $user->stores->first()?->pivot;
-                            $storeRole = $membership?->role ?? ($user->role === 'platform_owner' ? 'platform_owner' : 'retail_customer');
+                            $storeRole = $membership?->role ?? ($user->role === 'platform_owner' ? 'platform_owner' : 'staff');
                             $staffRoleId = $membership?->staff_role_id;
                             $assignedStaffRole = $staffRoleId ? ($allStaffRolesMap[$staffRoleId] ?? null) : null;
                             $status = $membership?->status ?? ($user->role === 'platform_owner' ? 'active' : 'active');
@@ -320,16 +337,15 @@
                             <td class="py-3.5 px-4">
                                 <span class="px-2.5 py-1 rounded-full text-xs font-bold capitalize
                                     {{ $storeRole === 'platform_owner' ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300' : '' }}
+                                    {{ $storeRole === 'store_owner' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : '' }}
                                     {{ $storeRole === 'store_manager' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' : '' }}
-                                    {{ $storeRole === 'staff' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300' : '' }}
-                                    {{ $storeRole === 'wholesale_customer' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : '' }}
-                                    {{ $storeRole === 'retail_customer' ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' : '' }}">
+                                    {{ $storeRole === 'staff' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300' : '' }}">
                                     {{ str_replace('_', ' ', $storeRole) }}
                                 </span>
                             </td>
 
                             <td class="py-3.5 px-4">
-                                @if (in_array($storeRole, ['store_manager', 'staff'], true))
+                                @if (in_array($storeRole, ['store_owner', 'store_manager', 'staff'], true))
                                     @if ($assignedStaffRole)
                                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border"
                                               style="background-color: {{ $assignedStaffRole->color }}15; color: {{ $assignedStaffRole->color }}; border-color: {{ $assignedStaffRole->color }}30;">
@@ -390,7 +406,7 @@
                     @empty
                         <tr>
                             <td colspan="5" class="py-12 text-center text-slate-400 dark:text-slate-500 text-sm">
-                                ရှာဖွေမှုနှင့် ကိုက်ညီသော အသုံးပြုသူ မရှိသေးပါ။ (No users found.)
+                                {{ __('messages.users_no_staff_found') }}
                             </td>
                         </tr>
                     @endforelse

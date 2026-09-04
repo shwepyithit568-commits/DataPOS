@@ -44,8 +44,9 @@ class AdminUserManagementTest extends TestCase
         $this->actingAs($this->owner)
             ->get("/store/{$this->store->slug}/admin/users")
             ->assertOk()
-            ->assertSee('Users & Customers', false)
-            ->assertSee('Create User Account');
+            ->assertSee('ဆိုင်ဝန်ထမ်းများ စီမံခန့်ခွဲမှု', false)
+            ->assertSee('ဝန်ထမ်းသစ် ထည့်သွင်းမည်', false)
+            ->assertSee('ဖောက်သည်များ စာရင်း', false);
     }
 
     public function test_store_manager_cannot_view_users_page(): void
@@ -83,18 +84,18 @@ class AdminUserManagementTest extends TestCase
     public function test_platform_owner_can_update_user_and_reset_password(): void
     {
         $user = User::create([
-            'name' => 'Retail Customer',
+            'name' => 'Junior Staff',
             'phone' => '09444444444',
             'password' => bcrypt('OldPass@1234'),
             'role' => 'customer',
         ]);
-        $user->stores()->attach($this->store->id, ['role' => 'retail_customer', 'status' => 'active']);
+        $user->stores()->attach($this->store->id, ['role' => 'staff', 'status' => 'active']);
 
         $this->actingAs($this->owner)
             ->put("/store/{$this->store->slug}/admin/users/{$user->id}", [
-                'name' => 'Wholesale Customer',
+                'name' => 'Senior Manager',
                 'phone' => '09555555555',
-                'role' => 'wholesale_customer',
+                'role' => 'store_manager',
                 'status' => 'pending',
                 'password' => 'NewPass@12345',
                 'password_confirmation' => 'NewPass@12345',
@@ -103,13 +104,13 @@ class AdminUserManagementTest extends TestCase
 
         $user->refresh();
 
-        $this->assertSame('Wholesale Customer', $user->name);
+        $this->assertSame('Senior Manager', $user->name);
         $this->assertSame('09555555555', $user->phone);
         $this->assertTrue(Hash::check('NewPass@12345', $user->password));
         $this->assertDatabaseHas('store_user', [
             'user_id' => $user->id,
             'store_id' => $this->store->id,
-            'role' => 'wholesale_customer',
+            'role' => 'store_manager',
             'status' => 'pending',
         ]);
     }
@@ -117,12 +118,12 @@ class AdminUserManagementTest extends TestCase
     public function test_platform_owner_can_suspend_store_access_without_deleting_user(): void
     {
         $user = User::create([
-            'name' => 'Customer',
+            'name' => 'Staff Member',
             'phone' => '09666666666',
-            'password' => bcrypt('Customer@1234'),
+            'password' => bcrypt('Staff@1234'),
             'role' => 'customer',
         ]);
-        $user->stores()->attach($this->store->id, ['role' => 'retail_customer', 'status' => 'active']);
+        $user->stores()->attach($this->store->id, ['role' => 'staff', 'status' => 'active']);
 
         $this->actingAs($this->owner)
             ->patch("/store/{$this->store->slug}/admin/users/{$user->id}/suspend")
@@ -134,6 +135,47 @@ class AdminUserManagementTest extends TestCase
             'store_id' => $this->store->id,
             'status' => 'suspended',
         ]);
+    }
+
+    public function test_customers_are_strictly_excluded_from_store_users_page(): void
+    {
+        $staff = User::create([
+            'name' => 'Active Staff Ko Ko',
+            'phone' => '09777777771',
+            'password' => bcrypt('Staff@1234'),
+            'role' => 'customer',
+        ]);
+        $staff->stores()->attach($this->store->id, ['role' => 'staff', 'status' => 'active']);
+
+        $retailCustomer = User::create([
+            'name' => 'Retail Customer Daw Aye',
+            'phone' => '09777777772',
+            'password' => bcrypt('Customer@1234'),
+            'role' => 'customer',
+        ]);
+        $retailCustomer->stores()->attach($this->store->id, ['role' => 'retail_customer', 'status' => 'active']);
+
+        $wholesaleCustomer = User::create([
+            'name' => 'Wholesale Customer U Ba',
+            'phone' => '09777777773',
+            'password' => bcrypt('Customer@1234'),
+            'role' => 'customer',
+        ]);
+        $wholesaleCustomer->stores()->attach($this->store->id, ['role' => 'wholesale_customer', 'status' => 'active']);
+
+        $response = $this->actingAs($this->owner)
+            ->get("/store/{$this->store->slug}/admin/users");
+
+        $response->assertOk();
+        // Assert Staff is visible
+        $response->assertSee('Active Staff Ko Ko');
+        $response->assertSee('09777777771');
+
+        // Assert Customers are STRICTLY NOT visible on the users/staff page
+        $response->assertDontSee('Retail Customer Daw Aye');
+        $response->assertDontSee('09777777772');
+        $response->assertDontSee('Wholesale Customer U Ba');
+        $response->assertDontSee('09777777773');
     }
 
     public function test_platform_owner_cannot_remove_own_owner_role(): void

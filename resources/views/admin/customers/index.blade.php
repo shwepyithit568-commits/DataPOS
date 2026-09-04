@@ -2,7 +2,6 @@
 
 @php
     $storeRouteParams = ['store_slug' => $store->slug];
-    $customersArray = ($customers instanceof \Illuminate\Pagination\LengthAwarePaginator ? $customers->items() : $customers->all());
     $exportUrl = route('store.admin.customers.export', array_merge($storeRouteParams, request()->only(['search', 'sort', 'tab', 'role', 'status'])));
 @endphp
 
@@ -15,7 +14,6 @@
         viewMode: localStorage.getItem('admin_customer_view_mode') || 'card',
         createModalOpen: false,
         editModalOpen: false,
-        allCustomers: {{ Illuminate\Support\Js::from($customersArray) }},
         newCustomer: {
             name: '',
             phone: '',

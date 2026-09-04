@@ -44,6 +44,15 @@ class StaffRoleController extends Controller
             $query->where('is_active', $request->query('status') === 'active');
         }
 
+        if ($request->filled('type')) {
+            $type = $request->query('type');
+            if ($type === 'system') {
+                $query->where('is_system', true);
+            } elseif ($type === 'custom') {
+                $query->where('is_system', false);
+            }
+        }
+
         $sort = $request->query('sort', 'name_asc');
         $query = match ($sort) {
             'newest'    => $query->latest(),
@@ -84,6 +93,8 @@ class StaffRoleController extends Controller
         // Metrics
         $totalRoles = StaffRole::where('store_id', $store->id)->count();
         $activeRoles = StaffRole::where('store_id', $store->id)->where('is_active', true)->count();
+        $systemRolesCount = StaffRole::where('store_id', $store->id)->where('is_system', true)->count();
+        $customRolesCount = StaffRole::where('store_id', $store->id)->where('is_system', false)->count();
         $assignedStaffCount = DB::table('store_user')
             ->where('store_id', $store->id)
             ->whereIn('role', ['store_owner', 'store_manager', 'staff'])
@@ -96,21 +107,44 @@ class StaffRoleController extends Controller
             ->count();
 
         $metrics = [
-            'total_roles'      => $totalRoles,
-            'active_roles'     => $activeRoles,
-            'total_staff'      => $staffMembers->count(),
-            'assigned_staff'   => $assignedStaffCount,
-            'unassigned_staff' => $unassignedStaffCount,
+            'total_roles'        => $totalRoles,
+            'active_roles'       => $activeRoles,
+            'system_roles'       => $systemRolesCount,
+            'custom_roles'       => $customRolesCount,
+            'total_staff'        => $staffMembers->count(),
+            'assigned_staff'     => $assignedStaffCount,
+            'unassigned_staff'   => $unassignedStaffCount,
         ];
+
+        // Prepare System Role Templates for instant frontend preset loading
+        $roleTemplates = StaffRole::where('store_id', $store->id)
+            ->where('is_system', true)
+            ->orderBy('id')
+            ->get(['id', 'name', 'slug', 'description', 'color', 'permissions'])
+            ->map(function ($r) {
+                return [
+                    'id'          => $r->id,
+                    'name'        => $r->name,
+                    'slug'        => $r->slug,
+                    'description' => $r->description,
+                    'color'       => $r->color,
+                    'permissions' => in_array('*', (array) $r->permissions, true) ? ['*'] : array_values((array) $r->permissions),
+                ];
+            })
+            ->values()
+            ->toArray();
 
         return view('admin.roles.index', [
             'store'                 => $store,
             'roles'                 => $roles,
             'staffMembers'          => $staffMembers,
             'allRolesForSelect'     => $allRolesForSelect,
+            'roleTemplates'         => $roleTemplates,
             'metrics'               => $metrics,
             'totalRoles'            => $totalRoles,
             'activeRoles'           => $activeRoles,
+            'systemRolesCount'      => $systemRolesCount,
+            'customRolesCount'      => $customRolesCount,
             'assignedStaffCount'    => $assignedStaffCount,
             'unassignedStaffCount'  => $unassignedStaffCount,
             'permissionGroups'      => StaffRole::PERMISSION_GROUPS,
@@ -206,29 +240,37 @@ class StaffRoleController extends Controller
             'is_active'   => 'nullable|boolean',
         ]);
 
-        $submittedPermissions = $validated['permissions'] ?? [];
+        // If this is the store_owner system role, it must ALWAYS retain full wildcard access ['*'] and cannot be deactivated
+        if ($staffRole->slug === 'store_owner') {
+            $submittedPermissions = ['*'];
+            $isActive = true;
+        } else {
+            $submittedPermissions = $validated['permissions'] ?? [];
 
-        // Plan §6.1: Reject individual '*' wildcard submissions with 422 for non-owner roles
-        if (in_array('*', $submittedPermissions, true) && $staffRole->slug !== 'store_owner') {
-            abort(422, 'Wildcard (*) permission is not allowed for custom roles.');
+            // Plan §6.1: Reject individual '*' wildcard submissions with 422 for non-owner roles
+            if (in_array('*', $submittedPermissions, true)) {
+                abort(422, 'Wildcard (*) permission is not allowed for custom roles.');
+            }
+
+            // Parent-view dependency validation
+            $this->validateParentViewDependencies($submittedPermissions, 'permissions');
+
+            // Privilege Ceiling (Plan §6.1)
+            $permService = app(\App\Services\StorePermissionService::class);
+            if (! $permService->canAssignPermissions($actor, $store, $submittedPermissions)) {
+                abort(422, 'Cannot assign permissions exceeding your own privilege ceiling or protected permissions.');
+            }
+
+            $isActive = $request->has('is_active') ? (bool) $request->input('is_active') : $staffRole->is_active;
         }
 
-        // Parent-view dependency validation
-        $this->validateParentViewDependencies($submittedPermissions, 'permissions');
-
-        // Privilege Ceiling (Plan §6.1)
-        $permService = app(\App\Services\StorePermissionService::class);
-        if (! $permService->canAssignPermissions($actor, $store, $submittedPermissions)) {
-            abort(422, 'Cannot assign permissions exceeding your own privilege ceiling or protected permissions.');
-        }
-
-        DB::transaction(function () use ($staffRole, $validated, $request, $submittedPermissions) {
+        DB::transaction(function () use ($staffRole, $validated, $isActive, $submittedPermissions) {
             $staffRole->update([
                 'name'        => $validated['name'],
                 'description' => $validated['description'] ?? null,
                 'color'       => $validated['color'] ?? $staffRole->color,
                 'permissions' => $submittedPermissions,
-                'is_active'   => $request->has('is_active') ? (bool) $request->input('is_active') : $staffRole->is_active,
+                'is_active'   => $isActive,
             ]);
         });
 
@@ -394,7 +436,30 @@ class StaffRoleController extends Controller
             abort(404);
         }
 
-        $roles = StaffRole::where('store_id', $store->id)->orderBy('name')->get();
+        $query = StaffRole::where('store_id', $store->id);
+
+        if ($request->filled('search')) {
+            $search = trim($request->query('search'));
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->query('status') === 'active');
+        }
+
+        if ($request->filled('type')) {
+            $type = $request->query('type');
+            if ($type === 'system') {
+                $query->where('is_system', true);
+            } elseif ($type === 'custom') {
+                $query->where('is_system', false);
+            }
+        }
+
+        $roles = $query->orderBy('name')->get();
         $filename = 'staff-roles-' . $store->slug . '-' . now()->format('Ymd-His') . '.csv';
 
         return response()->streamDownload(function () use ($store, $roles) {

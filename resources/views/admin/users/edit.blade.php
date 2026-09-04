@@ -1,10 +1,10 @@
 @extends('layouts.admin.app')
 
-@section('title', 'Edit User - ' . ($managedUser->name ?? 'DataPOS'))
+@section('title', 'Edit Staff Member - ' . ($managedUser->name ?? 'DataPOS'))
 
 @php
     $storeRouteParams = ['store_slug' => $store->slug];
-    $currentRole = $managedUser->role === 'platform_owner' ? 'platform_owner' : ($membership?->role ?? 'retail_customer');
+    $currentRole = $managedUser->role === 'platform_owner' ? 'platform_owner' : ($membership?->role ?? 'staff');
     $currentStaffRoleId = (string) old('staff_role_id', $membership?->staff_role_id ?? '');
 @endphp
 
@@ -13,7 +13,7 @@
      x-data="{
         selectedRole: '{{ old('role', $currentRole) }}',
         isStaffRole(r) {
-            return r === 'staff' || r === 'store_manager';
+            return r === 'staff' || r === 'store_manager' || r === 'store_owner';
         }
      }">
 
@@ -27,10 +27,10 @@
             <div>
                 <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
                     <a href="{{ route('store.admin.users.index', $storeRouteParams) }}" class="hover:text-slate-600 dark:hover:text-slate-300 transition">
-                        Users & Staff
+                        {{ __('messages.users_staff_title') }}
                     </a>
                     <span>/</span>
-                    <span class="text-violet-600 dark:text-violet-400">Edit User</span>
+                    <span class="text-violet-600 dark:text-violet-400">Edit Staff Member</span>
                 </div>
                 <h1 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
                     <span>{{ $managedUser->name }}</span>
@@ -204,19 +204,19 @@
             <div>
                 <h4 class="text-sm font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2">
                     <span>🗑️</span>
-                    <span>ဆိုင်စာရင်းမှ ဖယ်ရှားမည် (Remove User from Store)</span>
+                    <span>ဆိုင်စာရင်းမှ ဖယ်ရှားမည် (Remove Staff from Store)</span>
                 </h4>
                 <p class="text-xs text-rose-600/80 dark:text-rose-400/70 mt-0.5">
-                    ဤအသုံးပြုသူအား {{ $store->name }} ၏ ဝန်ထမ်း/အသင်းဝင်စာရင်းမှ အပြီးတိုင် ဖယ်ရှားပါမည်။
+                    ဤဝန်ထမ်းအား {{ $store->name }} ၏ ဝန်ထမ်းစာရင်းမှ အပြီးတိုင် ဖယ်ရှားပါမည်။
                 </p>
             </div>
             <form method="POST" action="{{ route('store.admin.users.destroy', array_merge($storeRouteParams, ['user' => $managedUser->id])) }}"
-                  onsubmit="return confirm('အသုံးပြုသူ {{ $managedUser->name }} ({{ $managedUser->phone }}) အား ဤဆိုင်စာရင်းမှ ဖယ်ရှားမှာ သေချာပါသလား?');">
+                  onsubmit="return confirm('ဝန်ထမ်း {{ $managedUser->name }} ({{ $managedUser->phone }}) အား ဤဆိုင်စာရင်းမှ ဖယ်ရှားမှာ သေချာပါသလား?');">
                 @csrf
                 @method('DELETE')
                 <button type="submit"
                         class="px-4 py-2.5 rounded-xl text-xs font-black bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition flex-shrink-0">
-                    Remove from Store (ဆိုင်မှ ဖယ်ရှားမည်)
+                    Remove Staff Member (ဆိုင်မှ ဖယ်ရှားမည်)
                 </button>
             </form>
         </div>

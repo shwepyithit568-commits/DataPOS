@@ -20,7 +20,9 @@ class UserManagementController extends Controller
 {
     private const GLOBAL_ROLES = ['customer', 'platform_owner'];
 
-    private const STORE_ROLES = ['store_owner', 'store_manager', 'staff', 'wholesale_customer', 'retail_customer'];
+    private const STORE_STAFF_ROLES = ['store_owner', 'store_manager', 'staff'];
+
+    private const STORE_ROLES = self::STORE_STAFF_ROLES;
 
     private const MEMBERSHIP_STATUSES = ['active', 'pending', 'suspended'];
 
@@ -31,11 +33,15 @@ class UserManagementController extends Controller
         // Ensure default staff roles exist
         StaffRole::bootstrapDefaultRoles($store);
 
+        // Strictly query store staff members (store_owner, store_manager, staff, or global platform_owner)
+        // Customers are strictly isolated to the Customer Directory page.
         $query = User::query()
             ->with(['stores' => fn ($query) => $query->where('stores.id', $store->id)])
             ->where(function ($q) use ($store) {
-                $q->whereHas('stores', fn ($storeQuery) => $storeQuery->where('stores.id', $store->id))
-                  ->orWhere('role', 'platform_owner');
+                $q->whereHas('stores', fn ($storeQuery) => $storeQuery
+                    ->where('stores.id', $store->id)
+                    ->whereIn('store_user.role', self::STORE_STAFF_ROLES)
+                )->orWhere('role', 'platform_owner');
             });
 
         if ($request->filled('search')) {
@@ -51,7 +57,7 @@ class UserManagementController extends Controller
             $role = $request->string('role')->toString();
             if ($role === 'platform_owner') {
                 $query->where('role', 'platform_owner');
-            } elseif (in_array($role, self::STORE_ROLES, true)) {
+            } elseif (in_array($role, self::STORE_STAFF_ROLES, true)) {
                 $query->whereHas('stores', fn ($storeQuery) => $storeQuery
                     ->where('stores.id', $store->id)
                     ->wherePivot('role', $role));
@@ -75,14 +81,18 @@ class UserManagementController extends Controller
         }
 
         $tab = $request->query('tab', 'all');
-        if ($tab === 'staff') {
+        if ($tab === 'leadership') {
             $query->whereHas('stores', fn ($storeQuery) => $storeQuery
                 ->where('stores.id', $store->id)
-                ->wherePivotIn('role', ['store_owner', 'store_manager', 'staff']));
-        } elseif ($tab === 'customers') {
+                ->wherePivotIn('role', ['store_owner', 'store_manager']));
+        } elseif ($tab === 'staff') {
             $query->whereHas('stores', fn ($storeQuery) => $storeQuery
                 ->where('stores.id', $store->id)
-                ->wherePivotIn('role', ['retail_customer', 'wholesale_customer']));
+                ->wherePivot('role', 'staff'));
+        } elseif ($tab === 'active') {
+            $query->whereHas('stores', fn ($storeQuery) => $storeQuery
+                ->where('stores.id', $store->id)
+                ->wherePivot('status', 'active'));
         } elseif ($tab === 'suspended') {
             $query->whereHas('stores', fn ($storeQuery) => $storeQuery
                 ->where('stores.id', $store->id)
@@ -95,22 +105,39 @@ class UserManagementController extends Controller
         $staffRoles = StaffRole::where('store_id', $store->id)->where('is_active', true)->orderBy('name')->get();
         $allStaffRolesMap = StaffRole::where('store_id', $store->id)->get()->keyBy('id');
 
-        // Calculate KPI metrics
-        $totalUsers = DB::table('store_user')->where('store_id', $store->id)->count();
-        $staffCount = DB::table('store_user')->where('store_id', $store->id)->whereIn('role', ['store_owner', 'store_manager', 'staff'])->count();
-        $customerCount = DB::table('store_user')->where('store_id', $store->id)->whereIn('role', ['retail_customer', 'wholesale_customer'])->count();
-        $suspendedCount = DB::table('store_user')->where('store_id', $store->id)->where('status', 'suspended')->count();
+        // Calculate KPI metrics exclusively for staff
+        $totalStaff = DB::table('store_user')
+            ->where('store_id', $store->id)
+            ->whereIn('role', self::STORE_STAFF_ROLES)
+            ->count();
+
+        $activeStaff = DB::table('store_user')
+            ->where('store_id', $store->id)
+            ->whereIn('role', self::STORE_STAFF_ROLES)
+            ->where('status', 'active')
+            ->count();
+
+        $leadershipCount = DB::table('store_user')
+            ->where('store_id', $store->id)
+            ->whereIn('role', ['store_owner', 'store_manager'])
+            ->count();
+
+        $suspendedStaff = DB::table('store_user')
+            ->where('store_id', $store->id)
+            ->whereIn('role', self::STORE_STAFF_ROLES)
+            ->where('status', 'suspended')
+            ->count();
 
         $metrics = [
-            'total_users'     => $totalUsers,
-            'staff_count'     => $staffCount,
-            'customer_count'  => $customerCount,
-            'suspended_count' => $suspendedCount,
+            'total_staff'      => $totalStaff,
+            'active_staff'     => $activeStaff,
+            'leadership_count' => $leadershipCount,
+            'suspended_staff'  => $suspendedStaff,
         ];
 
         $availableRoles = auth()->user()?->isPlatformOwner()
-            ? ['platform_owner', ...self::STORE_ROLES]
-            : self::STORE_ROLES;
+            ? ['platform_owner', ...self::STORE_STAFF_ROLES]
+            : self::STORE_STAFF_ROLES;
 
         AdminListReturn::capture($request, 'admin_users_return');
 

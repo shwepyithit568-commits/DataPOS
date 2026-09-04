@@ -19,8 +19,10 @@ cd D:\xmapp\htdocs\DataPOS
 Laravel server ဖွင့်ရန်:
 
 ```powershell
-php artisan serve --host=127.0.0.1 --port=8501
+$env:PHP_CLI_SERVER_WORKERS=4; php artisan serve --host=127.0.0.1 --port=8501
 ```
+
+
 
 > Note: Local `.env` ထဲက `APP_URL` က `8502` ဖြစ်နေနိုင်သည်။ Docs standard က `8501` ဖြစ်သည်။ Browser link generation မှားနေလျှင် `.env` ကို `APP_URL=http://127.0.0.1:8501` ပြောင်းပြီး `php artisan config:clear` run ပါ။
 

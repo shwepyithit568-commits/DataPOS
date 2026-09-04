@@ -26,7 +26,7 @@
         $allPermGroupKeys[$gKey] = $groupPerms;
     }
 
-    $exportUrl = route('store.admin.roles.export', array_merge($storeRouteParams, request()->only(['search', 'sort', 'status'])));
+    $exportUrl = route('store.admin.roles.export', array_merge($storeRouteParams, request()->only(['search', 'sort', 'status', 'type'])));
 @endphp
 
 @section('content')
@@ -45,6 +45,8 @@
         permissionGroups: {{ Illuminate\Support\Js::from($allPermGroupKeys) }},
         allAvailablePermissions: {{ Illuminate\Support\Js::from(array_unique($allAvailableKeys)) }},
         moduleActionMap: {{ Illuminate\Support\Js::from($allModuleActionMap) }},
+        roleTemplates: {{ Illuminate\Support\Js::from($roleTemplates ?? []) }},
+        templateLoadedBanner: null,
         colorPresets: ['#0284c7', '#10b981', '#8b5cf6', '#f59e0b', '#e11d48', '#06b6d4', '#475569'],
         newRole: {
             name: '',
@@ -69,7 +71,37 @@
             custom_role_name: '',
             custom_role_desc: '',
             custom_role_color: '#0284c7',
-            custom_role_permissions: []
+            custom_role_permissions: [],
+            permissions: []
+        },
+        applyTemplate(targetObj, tmplKey) {
+            const tmpl = (this.roleTemplates || []).find(t => t.slug === tmplKey);
+            if (!tmpl) return;
+            if (targetObj.name !== undefined && !targetObj.name) {
+                targetObj.name = tmpl.name;
+            }
+            if (targetObj.custom_role_name !== undefined && (!targetObj.custom_role_name || targetObj.custom_role_name.includes('Role'))) {
+                targetObj.custom_role_name = tmpl.name;
+            }
+            if (targetObj.color !== undefined) {
+                targetObj.color = tmpl.color;
+            }
+            if (targetObj.custom_role_color !== undefined) {
+                targetObj.custom_role_color = tmpl.color;
+            }
+            if (targetObj.description !== undefined && !targetObj.description) {
+                targetObj.description = tmpl.description;
+            }
+            if (targetObj.custom_role_desc !== undefined && (!targetObj.custom_role_desc || targetObj.custom_role_desc.includes('Custom assigned'))) {
+                targetObj.custom_role_desc = tmpl.description;
+            }
+            if (Array.isArray(tmpl.permissions) && tmpl.permissions.includes('*')) {
+                targetObj.permissions = [...this.allAvailablePermissions];
+            } else {
+                targetObj.permissions = Array.isArray(tmpl.permissions) ? [...tmpl.permissions] : [];
+            }
+            this.templateLoadedBanner = tmpl.name;
+            setTimeout(() => { if (this.templateLoadedBanner === tmpl.name) this.templateLoadedBanner = null; }, 3500);
         },
         hasPerm(targetObj, permKey) {
             if (!targetObj || !Array.isArray(targetObj.permissions)) return false;
@@ -300,7 +332,10 @@
             <div class="min-w-0">
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">{{ __('messages.roles_total') }}</p>
                 <h3 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{{ $metrics['total_roles'] }}</h3>
-                <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">{{ $metrics['active_roles'] }} {{ __('messages.roles_status_active') }}</p>
+                <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">
+                    <span class="text-indigo-600 dark:text-indigo-400 font-semibold">{{ $metrics['system_roles_count'] ?? 0 }} {{ __('messages.roles_type_system') }}</span> · 
+                    <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $metrics['custom_roles_count'] ?? 0 }} {{ __('messages.roles_type_custom') }}</span>
+                </p>
             </div>
             <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 grid place-items-center text-lg sm:text-xl font-bold shadow-inner shrink-0">
                 🎭
@@ -369,6 +404,11 @@
                 'active'   => __('messages.roles_status_active'),
                 'inactive' => __('messages.roles_status_inactive'),
             ];
+            $typeFilterOptions = [
+                'all'    => __('messages.roles_type_all'),
+                'system' => __('messages.roles_type_system'),
+                'custom' => __('messages.roles_type_custom'),
+            ];
         @endphp
 
         <x-admin.toolbar
@@ -382,6 +422,10 @@
                 'oldest'     => __('messages.roles_sort_oldest'),
             ]"
             :filters="[
+                'type' => [
+                    'label' => __('messages.roles_filter_type'),
+                    'options' => $typeFilterOptions,
+                ],
                 'status' => [
                     'label' => __('messages.roles_filter_status'),
                     'options' => $statusFilterOptions,
@@ -791,6 +835,32 @@
                     </div>
                 </div>
 
+                {{-- Quick Role Template Preset Loader --}}
+                <div class="p-3 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-slate-800/80 dark:to-slate-800/50 border border-blue-100 dark:border-slate-700 rounded-2xl space-y-2">
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs">⚡</span>
+                            <span class="text-xs font-black text-slate-800 dark:text-slate-200">{{ __('messages.roles_load_from_template') }}:</span>
+                        </div>
+                        <span x-show="templateLoadedBanner" x-transition class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                            ✓ <span x-text="templateLoadedBanner"></span> {{ __('messages.roles_template_loaded_hint') }}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <template x-for="tmpl in roleTemplates" :key="tmpl.slug">
+                            <button type="button" @click="applyTemplate(newRole, tmpl.slug)"
+                                    class="px-2.5 py-1 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 shadow-xs active:scale-95 text-slate-700 dark:text-slate-200">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="`background-color: ${tmpl.color};`"></span>
+                                <span x-text="tmpl.name"></span>
+                            </button>
+                        </template>
+                        <button type="button" @click="deselectAll(newRole)"
+                                class="px-2 py-1 rounded-xl text-xs font-bold transition text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
+                            {{ __('messages.roles_template_reset') }}
+                        </button>
+                    </div>
+                </div>
+
                 {{-- Granular Permissions Matrix Section (Row-by-Row Sidebar Modules with VIEW, EDIT, DELETE) --}}
                 <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1037,9 +1107,17 @@
                     <div class="sm:col-span-2">
                         <label class="inline-flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" name="is_active" value="1" x-model="editingRole.is_active"
-                                   class="rounded text-blue-600 focus:ring-blue-500">
+                                   :disabled="editingRole.id && allRolesList.find(r => r.id === editingRole.id && r.slug === 'store_owner')"
+                                   class="rounded text-blue-600 focus:ring-blue-500 disabled:opacity-50">
                             <span class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ __('messages.roles_active_desc') }}</span>
                         </label>
+                    </div>
+
+                    {{-- Store Owner Permanent Full Access Alert Banner --}}
+                    <div x-show="editingRole.id && allRolesList.find(r => r.id === editingRole.id && r.slug === 'store_owner')"
+                         class="sm:col-span-2 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl flex items-center gap-2.5 text-xs font-bold text-amber-800 dark:text-amber-300">
+                        <span class="text-base shrink-0">👑</span>
+                        <span>{{ __('messages.roles_owner_full_access_hint') }}</span>
                     </div>
                 </div>
 
@@ -1363,6 +1441,32 @@
                         </div>
                     </div>
 
+                    {{-- Quick Role Template Preset Loader for Tailor-made Role --}}
+                    <div class="p-3 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-slate-800/80 dark:to-slate-800/50 border border-blue-100 dark:border-slate-700 rounded-2xl space-y-2">
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs">⚡</span>
+                                <span class="text-xs font-black text-slate-800 dark:text-slate-200">{{ __('messages.roles_load_from_template') }}:</span>
+                            </div>
+                            <span x-show="templateLoadedBanner" x-transition class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                                ✓ <span x-text="templateLoadedBanner"></span> {{ __('messages.roles_template_loaded_hint') }}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <template x-for="tmpl in roleTemplates" :key="tmpl.slug">
+                                <button type="button" @click="applyTemplate(assignData, tmpl.slug)"
+                                        class="px-2.5 py-1 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 shadow-xs active:scale-95 text-slate-700 dark:text-slate-200">
+                                    <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="`background-color: ${tmpl.color};`"></span>
+                                    <span x-text="tmpl.name"></span>
+                                </button>
+                            </template>
+                            <button type="button" @click="deselectAll(assignData)"
+                                    class="px-2 py-1 rounded-xl text-xs font-bold transition text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                {{ __('messages.roles_template_reset') }}
+                            </button>
+                        </div>
+                    </div>
+
                     {{-- Dedicated VIEW, CREATE, UPDATE, DELETE matrix for this custom role --}}
                     <div class="space-y-3 pt-2">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1376,7 +1480,7 @@
                             <div class="flex items-center gap-2 flex-wrap">
                                 <button type="button" @click="selectAll(assignData)" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 hover:bg-blue-100 transition">{{ __('messages.roles_select_all') }}</button>
                                 <button type="button" @click="deselectAll(assignData)" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 transition">{{ __('messages.roles_clear_all') }}</button>
-                                <span class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-blue-600 text-white font-mono" x-text="`${assignData.permissions.length} / ${allAvailablePermissions.length} selected`"></span>
+                                <span class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-blue-600 text-white font-mono" x-text="`${(assignData.permissions || []).length} / ${(allAvailablePermissions || []).length} selected`"></span>
                             </div>
                         </div>
 
