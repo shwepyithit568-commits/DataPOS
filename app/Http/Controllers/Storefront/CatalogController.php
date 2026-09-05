@@ -35,16 +35,17 @@ class CatalogController extends Controller
             ->filter(fn (Category $category) => $category->products_count > 0)
             ->values();
 
-        // Main → Sub tree for the nested storefront filters: a main category is
-        // listed when it (or any of its sub-categories) has products; its
-        // children are only the sub-categories that actually carry products.
-        $withProducts = $categories;
+        // Main → Sub tree for the nested storefront filters: matches HomeController
+        // so all sub-categories configured in Admin Master Data are available in the flyout.
         $categoryTree = $allCategories
             ->whereNull('parent_id')
-            ->map(function (Category $main) use ($withProducts) {
-                $children = $withProducts
+            ->map(function (Category $main) use ($allCategories) {
+                $children = $allCategories
                     ->where('parent_id', $main->id)
-                    ->sortBy('name')
+                    ->sortBy([
+                        ['products_count', 'desc'],
+                        ['name', 'asc'],
+                    ])
                     ->values();
 
                 return (object) [
@@ -53,7 +54,8 @@ class CatalogController extends Controller
                     'total' => $main->products_count + $children->sum('products_count'),
                 ];
             })
-            ->filter(fn ($row) => $row->category->products_count > 0 || $row->children->isNotEmpty())
+            ->filter(fn ($row) => $row->total > 0 || $row->children->isNotEmpty())
+            ->sortByDesc('total')
             ->values();
 
         // Group categories by brand in a single efficient query for the hover flyout

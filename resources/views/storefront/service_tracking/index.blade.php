@@ -23,7 +23,7 @@
 
     {{-- Page Header (Glass Finder & Storefront matching style) --}}
     <div class="text-center max-w-2xl mx-auto space-y-2.5 pt-2 sm:pt-4">
-        <div class="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-teal-500/10 text-teal-700 dark:text-teal-300 text-xs font-extrabold border border-teal-400/30">
+        <div class="sf-btn-3d active inline-flex items-center space-x-2 px-3.5 py-1 rounded-full text-xs font-extrabold pointer-events-none">
             <span>🔧 {{ $store->name ?? config('app.name') }}</span>
             <span>·</span>
             <span>{{ __('messages.nav_service_track') }}</span>
@@ -73,9 +73,9 @@
 
                     <button
                         type="submit"
-                        class="px-6 py-3 bg-gradient-to-r from-teal-600 via-emerald-500 to-teal-500 hover:from-teal-500 hover:to-emerald-400 text-white rounded-xl font-extrabold text-sm shadow-md shadow-teal-500/20 flex items-center justify-center space-x-2 transition active:scale-95 cursor-pointer shrink-0"
+                        class="sf-btn-3d-success px-6 py-3 flex items-center justify-center space-x-2 cursor-pointer shrink-0"
                     >
-                        <span>🔍</span>
+                        <span aria-hidden="true">🔍</span>
                         <span>{{ __('messages.track_service_btn') }}</span>
                     </button>
                 </div>

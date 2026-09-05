@@ -26,9 +26,9 @@
                     >
                         <h2 class="text-sm sm:text-xl lg:text-2xl font-black font-outfit leading-snug text-white drop-shadow-lg line-clamp-2 sm:line-clamp-1">{{ $banner->title }}</h2>
                         @if ($banner->link_url)
-                            <a href="{{ $banner->link_url }}" class="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 text-white font-extrabold text-[11px] sm:text-xs rounded-lg shadow-lg shadow-sky-500/20 transition active:scale-95 hover:brightness-110">
+                            <a href="{{ $banner->link_url }}" class="sf-btn-3d-primary inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs rounded-lg">
                                 {{ __('messages.view_detail') }}
-                                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </a>
                         @endif
                     </div>
@@ -101,7 +101,7 @@
                     </div>
 
                     {{-- Submit Button --}}
-                    <button type="submit" class="shrink-0 px-5 sm:px-5 py-3 sm:py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-500 hover:from-violet-600 to-fuchsia-500 text-white font-extrabold text-sm rounded-xl shadow-md shadow-sky-500/20 transition flex items-center space-x-1 min-h-[44px]">
+                    <button type="submit" class="sf-btn-3d-primary shrink-0 px-5 sm:px-5 py-3 sm:py-2.5 font-extrabold text-sm rounded-xl flex items-center space-x-1 min-h-[44px]">
                         <span>{{ __('messages.search') }}</span>
                     </button>
 
@@ -121,8 +121,8 @@
                         <button
                             type="button"
                             @click="brand = ''; $nextTick(() => $el.closest('form').submit())"
-                            class="shrink-0 px-3.5 sm:px-4 py-2.5 rounded-full text-sm font-extrabold border-2 transition-all duration-200 whitespace-nowrap min-h-[40px]"
-                            :class="!brand ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white border-transparent shadow-md shadow-sky-500/30 scale-105' : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-600 border-slate-300 dark:border-slate-700 hover:border-sky-400 hover:text-sky-700 dark:hover:text-sky-300'"
+                            class="shrink-0 px-3.5 sm:px-4 py-2.5 rounded-full text-sm font-extrabold transition-all duration-200 whitespace-nowrap min-h-[40px]"
+                            :class="!brand ? 'sf-btn-3d-primary scale-105 border-0' : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-600 border-2 border-slate-300 dark:border-slate-700 hover:border-sky-400 hover:text-sky-700 dark:hover:text-sky-300'"
                         >
                             ✨ {{ __('messages.all_brands') }}
                         </button>
@@ -131,8 +131,8 @@
                             <button
                                 type="button"
                                 @click="brand = '{{ $b }}'; $nextTick(() => $el.closest('form').submit())"
-                                class="shrink-0 px-3.5 sm:px-4 py-2.5 rounded-full text-sm font-extrabold border-2 transition-all duration-200 whitespace-nowrap min-h-[40px]"
-                                :class="brand === '{{ $b }}' ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white border-transparent shadow-md shadow-sky-500/30 scale-105' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:border-sky-400 hover:text-sky-700 dark:hover:text-sky-300'"
+                                class="shrink-0 px-3.5 sm:px-4 py-2.5 rounded-full text-sm font-extrabold transition-all duration-200 whitespace-nowrap min-h-[40px]"
+                                :class="brand === '{{ $b }}' ? 'sf-btn-3d-primary scale-105 border-0' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-2 border-slate-300 dark:border-slate-700 hover:border-sky-400 hover:text-sky-700 dark:hover:text-sky-300'"
                             >
                                 {{ $b }}
                             </button>
@@ -184,7 +184,7 @@
                 <button
                     type="button"
                     @click="glassView = 'list'; localStorage.setItem('glass_view', 'list')"
-                    :class="glassView === 'list' ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
+                    :class="glassView === 'list' ? 'sf-btn-3d-primary' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-slate-300'"
                     class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-extrabold transition active:scale-95"
                     :aria-pressed="glassView === 'list'"
                 >
@@ -193,7 +193,7 @@
                 <button
                     type="button"
                     @click="glassView = 'table'; localStorage.setItem('glass_view', 'table')"
-                    :class="glassView === 'table' ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'"
+                    :class="glassView === 'table' ? 'sf-btn-3d-primary' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-slate-300'"
                     class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-extrabold transition active:scale-95"
                     :aria-pressed="glassView === 'table'"
                 >
@@ -237,10 +237,10 @@
                                 <button 
                                     @click.stop.prevent="$store.orderBuilder.addGlassCodeItem({{ json_encode($displayCode) }}, {{ json_encode($modelsSummary) }}, {{ $firstItemId ?? 'null' }})"
                                     type="button"
-                                    class="relative px-3 py-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 hover:from-violet-600 hover:to-rose-500 text-white rounded-xl font-extrabold text-xs shadow-md shadow-sky-500/20 flex items-center space-x-1.5 transition active:scale-95"
+                                    class="sf-btn-3d-primary relative px-3 py-1.5 rounded-xl font-extrabold text-xs flex items-center space-x-1.5"
                                     title="{{ __('messages.add_glass_code_title') }}"
                                 >
-                                    <span>🛒</span>
+                                    <span aria-hidden="true">🛒</span>
                                     <span class="break-words">{{ __('messages.add_glass_code', ['code' => $displayCode]) }}</span>
                                     <span x-show="$store.orderBuilder && $store.orderBuilder.getCodeQty({{ json_encode($displayCode) }}) > 0" class="px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-xs border border-white shadow-sm" x-text="$store.orderBuilder.getCodeQty({{ json_encode($displayCode) }})"></span>
                                 </button>
@@ -256,10 +256,10 @@
                                     </svg>
                                 </button>
                                 @if ($codeViberUrl)
-                                    <a href="{{ $codeViberUrl }}" data-ios-href="{{ $codeViberIosUrl }}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 bg-purple-600 text-white rounded-xl font-bold text-xs hover:bg-purple-500 transition whitespace-nowrap">Viber</a>
+                                    <a href="{{ $codeViberUrl }}" data-ios-href="{{ $codeViberIosUrl }}" target="_blank" rel="noopener noreferrer" class="sf-btn-3d px-2.5 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap">Viber</a>
                                 @endif
                                 @if ($codeTgUrl)
-                                    <a href="{{ $codeTgUrl }}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 bg-sky-500 text-white rounded-xl font-bold text-xs hover:bg-sky-400 transition whitespace-nowrap">Telegram</a>
+                                    <a href="{{ $codeTgUrl }}" target="_blank" rel="noopener noreferrer" class="sf-btn-3d px-2.5 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap">Telegram</a>
                                 @endif
                             </div>
                         </div>
@@ -324,7 +324,7 @@
                                         <button
                                             @click.stop.prevent="$store.orderBuilder.addGlassCodeItem({{ json_encode($displayCode) }}, {{ json_encode($modelsSummary) }}, {{ $firstItemId ?? 'null' }})"
                                             type="button"
-                                            class="relative w-8 h-8 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white flex items-center justify-center transition active:scale-95 shrink-0"
+                                            class="sf-btn-3d-primary relative w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                                             title="{{ __('messages.add_glass_code_title') }}"
                                         >
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
@@ -342,10 +342,10 @@
                                             </svg>
                                         </button>
                                         @if ($codeViberUrl)
-                                            <a href="{{ $codeViberUrl }}" data-ios-href="{{ $codeViberIosUrl }}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 bg-purple-600 text-white rounded-lg font-bold text-[11px] hover:bg-purple-500 transition whitespace-nowrap">Viber</a>
+                                            <a href="{{ $codeViberUrl }}" data-ios-href="{{ $codeViberIosUrl }}" target="_blank" rel="noopener noreferrer" class="sf-btn-3d px-2.5 py-1.5 rounded-lg font-bold text-[11px] whitespace-nowrap">Viber</a>
                                         @endif
                                         @if ($codeTgUrl)
-                                            <a href="{{ $codeTgUrl }}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 bg-sky-500 text-white rounded-lg font-bold text-[11px] hover:bg-sky-400 transition whitespace-nowrap">Telegram</a>
+                                            <a href="{{ $codeTgUrl }}" target="_blank" rel="noopener noreferrer" class="sf-btn-3d px-2.5 py-1.5 rounded-lg font-bold text-[11px] whitespace-nowrap">Telegram</a>
                                         @endif
                                     </div>
                                 </td>

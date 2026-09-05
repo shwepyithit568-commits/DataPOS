@@ -18,9 +18,13 @@
         {{ __('messages.language_switcher_label') }}
     </span>
 
+@php
+    $customBtnClass = $attributes->get('btn-class');
+    $defaultBtnClass = 'h-10 w-10 inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-base shadow-sm transition hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500';
+@endphp
     <button
         type="button"
-            class="h-10 w-10 inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-base shadow-sm transition hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
+        class="{{ $customBtnClass ?: $defaultBtnClass }}"
         aria-labelledby="locale-switcher-{{ $attributes->get('id', 'default') }}-label"
         aria-haspopup="menu"
         :aria-expanded="open.toString()"

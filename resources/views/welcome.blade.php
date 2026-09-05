@@ -51,15 +51,15 @@
              @mouseenter="if (closeTimeout) clearTimeout(closeTimeout)"
         >
             <div class="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-100 dark:border-slate-800 px-1">
-                <span class="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white font-myanmar">
-                    <span class="text-sky-500 text-sm">🗂️</span> {{ __('messages.categories') }}
+                <span class="flex items-center gap-2 text-base sm:text-lg font-black uppercase tracking-wider text-slate-900 dark:text-white font-myanmar">
+                    <span class="text-sky-500 text-lg">🗂️</span> {{ __('messages.categories') }}
                 </span>
-                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline font-myanmar">
+                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="sf-btn-3d active !flex-row px-3 py-1 text-xs sm:text-sm font-black font-myanmar leading-none">
                     {{ __('messages.view_all') }} →
                 </a>
             </div>
 
-            <nav class="space-y-0.5 max-h-[440px] overflow-y-auto pr-0.5 select-none">
+            <nav class="hero-cat-nav space-y-1 overflow-y-auto pr-0.5 select-none scrollbar-thin" style="max-height: 384px;">
                 @forelse ($categoryTree as $catRow)
                     @php
                         $cMain = $catRow->category;
@@ -70,32 +70,27 @@
                          @mouseenter="if (closeTimeout) clearTimeout(closeTimeout); activeHover = {{ $cMain->id }}"
                     >
                         <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $cMain->id) }}"
-                           class="group flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all"
-                           :class="activeHover === {{ $cMain->id }} ? 'bg-sky-50 dark:bg-slate-800 text-sky-600 dark:text-sky-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-sky-600 dark:hover:text-sky-400'">
-                            <span class="flex items-center gap-2.5 min-w-0">
+                           class="sf-btn-3d w-full !flex-row !justify-between px-3 py-1.5 rounded-xl text-sm sm:text-[15px] font-black transition-all group"
+                           :class="activeHover === {{ $cMain->id }} ? 'active' : ''">
+                            <span class="flex items-center gap-2 min-w-0 flex-1 text-left">
                                 <span class="text-base shrink-0 group-hover:scale-110 transition-transform">{{ $cIcon }}</span>
-                                <span class="truncate font-myanmar">{{ $cMain->name }}</span>
+                                <span class="truncate font-black text-sm sm:text-[15px]">{{ $cMain->name }}</span>
                             </span>
-                            <div class="flex items-center gap-1 shrink-0">
-                                @if ($catRow->total > 0)
-                                    <span class="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover:bg-sky-100 group-hover:text-sky-700 dark:group-hover:bg-sky-950 dark:group-hover:text-sky-300">
-                                        {{ number_format($catRow->total) }}
-                                    </span>
-                                @endif
-                                @if ($hasChildren)
-                                    <svg class="h-3 w-3 text-slate-400 group-hover:text-sky-500 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            @if ($hasChildren)
+                                <div class="flex items-center shrink-0">
+                                    <svg class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" :class="activeHover === {{ $cMain->id }} ? 'text-white' : 'text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                                     </svg>
-                                @endif
-                            </div>
+                                </div>
+                            @endif
                         </a>
                     </div>
                 @empty
-                    <div class="text-xs text-slate-400 p-2 font-myanmar">{{ __('messages.no_products_hint') }}</div>
+                    <div class="text-sm font-bold text-slate-400 p-2 font-myanmar">{{ __('messages.no_products_hint') }}</div>
                 @endforelse
             </nav>
 
-            {{-- Subcategory Flyout Panels (Full Height inset-y-0 directly matching Category Sidebar) --}}
+            {{-- Subcategory Flyout Panels (Compact Width & Pure Localized Microcopy) --}}
             @foreach ($categoryTree as $catRow)
                 @if ($catRow->children->isNotEmpty())
                     @php
@@ -111,38 +106,33 @@
                          x-transition:leave-end="opacity-0 translate-x-1"
                          @mouseenter="if (closeTimeout) clearTimeout(closeTimeout); activeHover = {{ $cMain->id }}"
                          @mouseleave="closeTimeout = setTimeout(() => { activeHover = null }, 200)"
-                         class="absolute left-full inset-y-0 ml-2 w-80 sm:w-88 md:w-96 bg-white/95 dark:bg-slate-900/95 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xl p-3.5 z-50 backdrop-blur-xl flex flex-col before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3 before:content-['']"
+                         class="absolute left-full inset-y-0 ml-2 w-56 sm:w-64 bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-200 dark:border-slate-800 shadow-2xl p-2.5 sm:p-3 z-50 flex flex-col before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3 before:content-['']"
                          style="display: none;"
                     >
-                        <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-100 dark:border-slate-800 px-1 shrink-0">
-                            <span class="text-xs font-black text-slate-900 dark:text-white font-myanmar flex items-center gap-2 truncate">
-                                <span class="text-base">{{ $cIcon }}</span>
+                        <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800 px-1 shrink-0">
+                            <span class="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                                <span class="text-base sm:text-lg">{{ $cIcon }}</span>
                                 <span class="truncate">{{ $cMain->name }}</span>
                             </span>
-                            <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $cMain->id) }}" class="shrink-0 text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline font-myanmar flex items-center gap-1">
+                            <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $cMain->id) }}" class="sf-btn-3d active !flex-row px-2.5 py-1 text-xs font-black font-myanmar leading-none">
                                 <span>{{ __('messages.view_all') }}</span>
                                 <span>→</span>
                             </a>
                         </div>
 
-                        <div class="flex-1 overflow-y-auto pr-1 space-y-0.5 select-none scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+                        <div class="flex-1 overflow-y-auto pr-1 space-y-1 select-none scrollbar-thin">
                             @foreach ($catRow->children as $subCat)
                                 @php
                                     $subIcon = ($subCat->icon && $subCat->icon !== 'NULL' && $subCat->icon !== 'null') ? $subCat->icon : '▫️';
                                 @endphp
                                 <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $subCat->id) }}"
-                                   class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 transition group/sub">
-                                    <span class="flex items-center gap-2.5 min-w-0">
-                                        <span class="text-xs shrink-0 text-slate-400 group-hover/sub:text-sky-500">{{ $subIcon }}</span>
-                                        <span class="truncate font-myanmar">{{ $subCat->name }}</span>
+                                   class="sf-btn-3d w-full !flex-row !justify-between px-3 py-1.5 rounded-xl text-sm sm:text-[15px] font-black transition-all group/sub">
+                                    <span class="flex items-center gap-2 min-w-0 flex-1 text-left">
+                                        <span class="text-sm shrink-0 text-slate-500 group-hover/sub:text-sky-500">{{ $subIcon }}</span>
+                                        <span class="truncate font-black">{{ $subCat->name }}</span>
                                     </span>
-                                    <div class="flex items-center gap-1 shrink-0">
-                                        @if ($subCat->products_count > 0)
-                                            <span class="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover/sub:bg-sky-100 group-hover/sub:text-sky-700 dark:group-hover/sub:bg-sky-950 dark:group-hover/sub:text-sky-300">
-                                                {{ number_format($subCat->products_count) }}
-                                            </span>
-                                        @endif
-                                        <svg class="h-3 w-3 text-slate-400 opacity-0 group-hover/sub:opacity-100 group-hover/sub:text-sky-500 transition-all group-hover/sub:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <div class="flex items-center shrink-0">
+                                        <svg class="h-3.5 w-3.5 text-slate-400 opacity-0 group-hover/sub:opacity-100 group-hover/sub:text-sky-500 transition-all group-hover/sub:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                                         </svg>
                                     </div>
@@ -242,11 +232,11 @@
                         {{ __('messages.hero_description') }}
                     </p>
                     <div class="flex flex-wrap gap-2.5 pt-4">
-                        <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-sky-600 hover:brightness-110 text-white font-bold text-xs rounded-xl shadow-sm transition active:scale-95 font-myanmar">
+                        <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="sf-btn-3d active !flex-row px-5 py-2.5 text-xs font-black rounded-xl font-myanmar">
                             {{ __('messages.view_products') }} →
                         </a>
                         @if (store_can('storefront.glass_finder', $store))
-                            <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white font-bold text-xs rounded-xl hover:bg-slate-50 transition active:scale-95 font-myanmar">
+                            <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="sf-btn-3d !flex-row px-5 py-2.5 text-xs font-black rounded-xl font-myanmar">
                                 {{ __('messages.glass_finder') }}
                             </a>
                         @endif
@@ -256,45 +246,45 @@
 
             {{-- Compact 4-Item Value & Service Trust Strip (Directly below Banner Image) --}}
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 mt-2.5 sm:mt-3">
-                <div class="flex items-center gap-2 sm:gap-2.5 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs min-w-0">
-                    <span class="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 text-sm sm:text-base border border-sky-200/70 dark:border-sky-900/50 shadow-2xs">⚡</span>
+                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="sf-btn-3d !flex-row !justify-start text-left p-2.5 sm:p-3 rounded-xl gap-2.5 sm:gap-3 min-w-0 group">
+                    <span class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 text-lg sm:text-xl border border-sky-300/60 dark:border-sky-800 shadow-2xs group-hover:scale-105 transition-transform">⚡</span>
                     <div class="min-w-0">
-                        <h4 class="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white font-myanmar leading-tight truncate">{{ __('messages.fast_delivery') }}</h4>
-                        <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-myanmar truncate font-medium">{{ __('messages.doorstep_and_bus_gate') }}</p>
+                        <h4 class="text-sm sm:text-base font-black text-slate-900 dark:text-white font-myanmar leading-tight truncate">{{ __('messages.fast_delivery') }}</h4>
+                        <p class="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 font-myanmar truncate font-bold mt-0.5">{{ __('messages.doorstep_and_bus_gate') }}</p>
                     </div>
-                </div>
-                <div class="flex items-center gap-2 sm:gap-2.5 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs min-w-0">
-                    <span class="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 text-sm sm:text-base border border-emerald-200/70 dark:border-emerald-900/50 shadow-2xs">🛡️</span>
+                </a>
+                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="sf-btn-3d !flex-row !justify-start text-left p-2.5 sm:p-3 rounded-xl gap-2.5 sm:gap-3 min-w-0 group">
+                    <span class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 text-lg sm:text-xl border border-emerald-300/60 dark:border-emerald-800 shadow-2xs group-hover:scale-105 transition-transform">🛡️</span>
                     <div class="min-w-0">
-                        <h4 class="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white font-myanmar leading-tight truncate">{{ __('messages.genuine_warranty') }}</h4>
-                        <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-myanmar truncate font-medium">100% Original Brand</p>
+                        <h4 class="text-sm sm:text-base font-black text-slate-900 dark:text-white font-myanmar leading-tight truncate">{{ __('messages.genuine_warranty') }}</h4>
+                        <p class="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 font-myanmar truncate font-bold mt-0.5">100% Original Brand</p>
                     </div>
-                </div>
+                </a>
                 @if (store_can('service.repair_jobs', $store))
-                    <a href="{{ url('/service-tracking?store_slug=' . $storeSlug) }}" class="flex items-center gap-2 sm:gap-2.5 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs group hover:border-violet-300 transition min-w-0">
-                        <span class="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 text-sm sm:text-base border border-violet-200/70 dark:border-violet-900/50 group-hover:scale-105 transition-transform shadow-2xs">🔧</span>
+                    <a href="{{ url('/service-tracking?store_slug=' . $storeSlug) }}" class="sf-btn-3d !flex-row !justify-start text-left p-2.5 sm:p-3 rounded-xl gap-2.5 sm:gap-3 min-w-0 group">
+                        <span class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400 text-lg sm:text-xl border border-violet-300/60 dark:border-violet-800 shadow-2xs group-hover:scale-105 transition-transform">🔧</span>
                         <div class="min-w-0">
-                            <h4 class="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white font-myanmar leading-tight group-hover:text-violet-600 truncate">{{ __('messages.nav_service_track') }}</h4>
-                            <p class="text-[9px] sm:text-[10px] text-violet-600 dark:text-violet-400 font-myanmar truncate font-bold">{{ __('messages.check_repair_status') }}</p>
+                            <h4 class="text-sm sm:text-base font-black text-slate-900 dark:text-white font-myanmar leading-tight group-hover:text-violet-600 truncate">{{ __('messages.nav_service_track') }}</h4>
+                            <p class="text-xs sm:text-[13px] text-violet-600 dark:text-violet-400 font-myanmar truncate font-bold mt-0.5">{{ __('messages.check_repair_status') }}</p>
                         </div>
                     </a>
                 @else
-                    <div class="flex items-center gap-2 sm:gap-2.5 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs min-w-0">
-                        <span class="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400 text-sm sm:text-base border border-violet-200/70 dark:border-violet-900/50 shadow-2xs">💎</span>
+                    <div class="sf-btn-3d !flex-row !justify-start text-left p-2.5 sm:p-3 rounded-xl gap-2.5 sm:gap-3 min-w-0">
+                        <span class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400 text-lg sm:text-xl border border-violet-300/60 dark:border-violet-800 shadow-2xs">💎</span>
                         <div class="min-w-0">
-                            <h4 class="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white font-myanmar leading-tight truncate">100% Quality</h4>
-                            <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-myanmar truncate font-medium">Trusted & Certified</p>
+                            <h4 class="text-sm sm:text-base font-black text-slate-900 dark:text-white font-myanmar leading-tight truncate">100% Quality</h4>
+                            <p class="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 font-myanmar truncate font-bold mt-0.5">Trusted & Certified</p>
                         </div>
                     </div>
                 @endif
                 <div x-data="{ directHelpOpen: false }">
                     <button type="button"
                             @click="directHelpOpen = true"
-                            class="w-full h-full flex items-center gap-2 sm:gap-2.5 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-2xs min-w-0 text-left hover:border-sky-400 hover:shadow-sm transition active:scale-95 cursor-pointer group">
-                        <span class="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400 text-sm sm:text-base border border-sky-200/70 dark:border-sky-900/50 shadow-2xs group-hover:scale-105 transition-transform">💬</span>
+                            class="sf-btn-3d !flex-row !justify-start text-left w-full h-full p-2.5 sm:p-3 rounded-xl gap-2.5 sm:gap-3 min-w-0 cursor-pointer group">
+                        <span class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 text-lg sm:text-xl border border-sky-300/60 dark:border-sky-800 shadow-2xs group-hover:scale-105 transition-transform">💬</span>
                         <div class="min-w-0">
-                            <h4 class="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white font-myanmar leading-tight truncate group-hover:text-sky-600 transition-colors">{{ __('messages.direct_support') }}</h4>
-                            <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-myanmar truncate font-medium">{{ __('messages.viber_telegram_chat') }}</p>
+                            <h4 class="text-sm sm:text-base font-black text-slate-900 dark:text-white font-myanmar leading-tight truncate group-hover:text-sky-600 transition-colors">{{ __('messages.direct_support') }}</h4>
+                            <p class="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 font-myanmar truncate font-bold mt-0.5">{{ __('messages.viber_telegram_chat') }}</p>
                         </div>
                     </button>
 
@@ -346,8 +336,8 @@
                                 @if ($ftViberUrl)
                                     <a href="{{ $ftViberUrl }}"
                                        @if ($ftViberIosUrl) data-ios-href="{{ $ftViberIosUrl }}" @endif
-                                       style="background: linear-gradient(135deg, #7360F2 0%, #5f4de0 100%) !important; color: #ffffff !important;"
-                                       class="w-full min-h-[46px] flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-black text-white shadow-md shadow-purple-500/25 hover:brightness-110 active:scale-95 transition cursor-pointer select-none border-0">
+                                       style="background: linear-gradient(135deg, #7360F2 0%, #5f4de0 100%) !important; color: #ffffff !important; border-bottom: 3px solid #4a3cb8 !important;"
+                                       class="sf-btn-3d w-full min-h-[46px] !flex-row items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-black text-white shadow-md shadow-purple-500/25 cursor-pointer select-none">
                                         <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/20 shrink-0">
                                             <x-brand-icon brand="viber" class="h-4 w-4 fill-white text-white"/>
                                         </span>
@@ -359,8 +349,8 @@
                                     <a href="{{ $ftTelegramUrl }}"
                                        target="_blank"
                                        rel="noopener noreferrer"
-                                       style="background: linear-gradient(135deg, #229ED9 0%, #0284c7 100%) !important; color: #ffffff !important;"
-                                       class="w-full min-h-[46px] flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-black text-white shadow-md shadow-sky-500/25 hover:brightness-110 active:scale-95 transition cursor-pointer select-none border-0">
+                                       style="background: linear-gradient(135deg, #229ED9 0%, #0284c7 100%) !important; color: #ffffff !important; border-bottom: 3px solid #0369a1 !important;"
+                                       class="sf-btn-3d w-full min-h-[46px] !flex-row items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-black text-white shadow-md shadow-sky-500/25 cursor-pointer select-none">
                                         <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/20 shrink-0">
                                             <x-brand-icon brand="telegram" class="h-4 w-4 fill-white text-white"/>
                                         </span>
@@ -370,8 +360,8 @@
 
                                 @if ($phone)
                                     <a href="tel:{{ \App\Support\ContactLinkBuilder::normalizeMyanmarPhone($phone) }}"
-                                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: #ffffff !important;"
-                                       class="w-full min-h-[46px] flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-black text-white shadow-md shadow-emerald-500/25 hover:brightness-110 active:scale-95 transition cursor-pointer select-none border-0">
+                                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: #ffffff !important; border-bottom: 3px solid #047857 !important;"
+                                       class="sf-btn-3d w-full min-h-[46px] !flex-row items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-black text-white shadow-md shadow-emerald-500/25 cursor-pointer select-none">
                                         <span class="text-base">📞</span>
                                         <span>ဖုန်းတိုက်ရိုက်ခေါ်မည် ({{ $phone }})</span>
                                     </a>
@@ -515,7 +505,7 @@
                     </h2>
                 </div>
 
-                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline whitespace-nowrap font-myanmar">
+                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="sf-btn-3d active !flex-row px-2.5 sm:px-3 py-1 text-xs font-black font-myanmar leading-none shrink-0">
                     {{ __('messages.view_all_products') }} →
                 </a>
             </div>
@@ -546,7 +536,7 @@
                     </span>
                     <span>{{ __('messages.most_popular_category') }}</span>
                 </h2>
-                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline font-myanmar">
+                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="sf-btn-3d active !flex-row px-2.5 sm:px-3 py-1 text-xs font-black font-myanmar leading-none shrink-0">
                     {{ __('messages.view_all') }} →
                 </a>
             </div>
@@ -610,7 +600,7 @@
                     </h2>
                 </div>
 
-                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline whitespace-nowrap font-myanmar">
+                <a href="{{ url('/products?store_slug=' . $storeSlug) }}" class="sf-btn-3d active !flex-row px-2.5 sm:px-3 py-1 text-xs font-black font-myanmar leading-none shrink-0">
                     {{ __('messages.view_all_products') }} →
                 </a>
             </div>
@@ -648,7 +638,7 @@
                 </div>
             </div>
 
-            <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="btn-3d shrink-0 px-3.5 py-2 bg-gradient-to-r from-violet-600 to-sky-600 hover:brightness-110 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1 font-myanmar">
+            <a href="{{ url('/glass-finder?store_slug=' . $storeSlug) }}" class="sf-btn-3d active shrink-0 !flex-row px-4 py-2 text-xs font-black rounded-xl font-myanmar leading-none shadow-xs">
                 <span>{{ __('messages.glass_finder') }}</span> →
             </a>
         </div>

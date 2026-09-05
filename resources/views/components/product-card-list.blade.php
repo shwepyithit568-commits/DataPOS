@@ -86,7 +86,7 @@
                 <button
                     @click.stop.prevent="if ($store.orderBuilder) $store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: {{ $defaultVariant?->id ?? 'null' }}, variant_id: {{ $defaultVariant?->id ?? 'null' }}, name: {{ json_encode($cartName) }}, price: {{ $effectivePrice }}, sku: {{ json_encode($effectiveSku ?? '') }}, image_path: {{ json_encode($cardImage ?? '') }} })"
                     type="button"
-                    class="shrink-0 w-11 h-11 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-md shadow-sky-500/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
+                    class="sf-btn-3d-primary !rounded-full shrink-0 w-11 h-11 !p-0 flex items-center justify-center shadow-md ring-1 ring-white/60"
                     title="{{ __('messages.add_to_order') }}"
                     aria-label="{{ __('messages.add_to_order') }}"
                 >
@@ -98,19 +98,21 @@
             <button
                 @click.stop.prevent="if ($store.favoritesStore) $store.favoritesStore.toggle({ id: {{ $product->id }}, name: {{ json_encode($product->name) }}, brand: {{ json_encode($product->brand?->name ?? 'General') }}, url: {{ json_encode($productUrl) }}, image_path: {{ json_encode($cardImage ?? '') }} })"
                 type="button"
-                class="shrink-0 w-11 h-11 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-500 border border-rose-200 dark:border-rose-800 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
-                :class="$store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }}) ? 'bg-rose-500 text-white border-rose-500' : ''"
+                class="shrink-0 w-11 h-11 rounded-full flex items-center justify-center p-0 ring-1 ring-white/70 transition-all duration-150 transform hover:-translate-y-0.5 active:translate-y-0.5 select-none"
+                :class="$store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }})
+                    ? 'bg-gradient-to-b from-rose-500 via-rose-600 to-rose-700 border border-rose-300 border-b-[3px] border-b-rose-900 shadow-md shadow-rose-950/40'
+                    : 'bg-gradient-to-b from-amber-300 via-amber-400 to-amber-600 border border-amber-200 border-b-[3px] border-b-amber-700 shadow-md shadow-amber-900/30'"
                 title="{{ __('messages.favorites') }}"
                 aria-label="{{ __('messages.favorites') }}"
             >
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-4 h-4 text-white drop-shadow-sm transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.684a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                 </svg>
             </button>
             <button
                 type="button"
                 @click.stop.prevent="shareOpen = !shareOpen"
-                class="shrink-0 w-11 h-11 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
+                class="sf-btn-3d-accent !rounded-full shrink-0 w-11 h-11 !p-0 flex items-center justify-center shadow-md ring-1 ring-white/60"
                 title="{{ __('messages.share') }}"
                 aria-label="{{ __('messages.share') }}"
             >
@@ -121,7 +123,7 @@
             <a
                 href="{{ $productUrl }}"
                 @click.stop
-                class="shrink-0 w-11 h-11 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center hover:scale-110 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 active:scale-95 transition-all duration-200"
+                class="sf-btn-3d-success !rounded-full shrink-0 w-11 h-11 !p-0 flex items-center justify-center shadow-md ring-1 ring-white/60"
                 title="{{ __('messages.details') }}"
                 aria-label="{{ __('messages.details') }}"
             >

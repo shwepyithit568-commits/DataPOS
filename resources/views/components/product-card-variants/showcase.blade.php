@@ -24,29 +24,49 @@
     $cartName = $defaultVariant ? "{$product->name} - {$defaultVariant->name}" : $product->name;
     $cardInStock = $defaultVariant ? $defaultVariant->isInStock() : $product->isInStock();
     $showRetailSale = ! $isWholesaleApproved && $product->isOnSale();
+    $allImages = $product->getAllImagePathsAttribute();
+    $hoverImage = $allImages[1] ?? null;
     $cardKey = 'sc' . ($product->id ?? 'x') . '-' . \Illuminate\Support\Str::random(6);
 @endphp
 
 <div
-    x-data="{ shareOpen: false, cardKey: '{{ $cardKey }}', sharePayload: {{ \Illuminate\Support\Js::from(['title' => $product->name, 'text' => $product->name . ' — ' . config('app.name', 'DataPOS'), 'url' => $productUrl]) }} }"
+    x-data="{ shareOpen: false, hoverImg: false, cardKey: '{{ $cardKey }}', sharePayload: {{ \Illuminate\Support\Js::from(['title' => $product->name, 'text' => $product->name . ' — ' . config('app.name', 'DataPOS'), 'url' => $productUrl]) }} }"
     @keyup.escape.window="shareOpen = false"
     class="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900 sm:p-4"
 >
     {{-- Padded image area (the showcase look) --}}
-    <div class="relative overflow-hidden rounded-xl bg-slate-50 dark:bg-slate-800/60">
+    <div class="relative overflow-hidden rounded-xl bg-slate-50 dark:bg-slate-800/60" @mouseenter="hoverImg = true; $refs.hoverImg && ($refs.hoverImg.src = $refs.hoverImg.dataset.src)" @mouseleave="hoverImg = false">
         <a href="{{ $productUrl }}" class="block touch-manipulation">
-            <x-product-image :path="$cardImage" :alt="$product->name" class="aspect-square w-full object-contain transition-transform duration-300 group-hover:scale-105" />
+            <div class="transition-opacity duration-300 group-hover:opacity-0" :class="hoverImg ? 'opacity-0' : 'opacity-100'">
+                <x-product-image :path="$cardImage" :alt="$product->name" class="aspect-square w-full object-contain transition-transform duration-300 group-hover:scale-105" />
+            </div>
+            @if ($hoverImage)
+                <div class="absolute inset-0 transition-opacity duration-300 pointer-events-none z-10 bg-slate-950 opacity-0 group-hover:opacity-100" :class="hoverImg ? 'opacity-100' : ''">
+                    <img
+                        x-ref="hoverImg"
+                        src="{{ asset('storage/' . $hoverImage) }}?v={{ @filemtime(public_path('storage/' . $hoverImage)) ?: '2' }}"
+                        alt="{{ $product->name }}"
+                        loading="lazy"
+                        decoding="async"
+                        class="w-full h-full object-contain"
+                        data-img-fallback="hide"
+                    />
+                </div>
+            @endif
         </a>
 
-        {{-- Favorite — top-right over the image --}}
+        {{-- Favorite — 3D tactile push button top-right over the image --}}
         <button
             @click.stop.prevent="$store.favoritesStore.toggle({ id: {{ $product->id }}, name: {{ json_encode($product->name) }}, brand: {{ json_encode($product->brand?->name ?? 'General') }}, url: {{ json_encode($productUrl) }}, image_path: {{ json_encode($cardImage ?? '') }} })"
             type="button"
-            class="absolute right-2 top-2 z-10 grid h-9 w-9 place-items-center rounded-full bg-white/90 shadow ring-1 ring-slate-200/70 transition hover:scale-110 active:scale-95 dark:bg-slate-800/90 dark:ring-slate-700"
-            :class="$store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }}) ? 'text-emerald-500' : 'text-rose-500'"
+            style="position: absolute;"
+            class="absolute right-2 top-2 z-10 w-9 h-9 rounded-full flex items-center justify-center p-0 ring-1 ring-white/70 transition-all duration-150 transform hover:-translate-y-0.5 active:translate-y-0.5 select-none"
+            :class="$store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }})
+                ? 'bg-gradient-to-b from-rose-500 via-rose-600 to-rose-700 border border-rose-300 border-b-[3px] border-b-rose-900 shadow-md shadow-rose-950/40'
+                : 'bg-gradient-to-b from-amber-300 via-amber-400 to-amber-600 border border-amber-200 border-b-[3px] border-b-amber-700 shadow-md shadow-amber-900/30'"
             :aria-label="$store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }}) ? '{{ __('messages.favorites') }}' : '{{ __('messages.favorites') }}'"
         >
-            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-4 h-4 text-white drop-shadow-sm transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.684a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
             </svg>
         </button>
@@ -91,7 +111,7 @@
             <button
                 @click.stop.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: {{ $defaultVariant?->id ?? 'null' }}, variant_id: {{ $defaultVariant?->id ?? 'null' }}, name: {{ json_encode($cartName) }}, price: {{ $effectivePrice }}, sku: {{ json_encode($effectiveSku ?? '') }}, image_path: {{ json_encode($cardImage ?? '') }} })"
                 type="button"
-                class="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3 py-2 text-xs font-black text-white shadow-md shadow-sky-500/25 transition hover:brightness-110 active:scale-95"
+                class="sf-btn-3d-primary min-h-9 flex-1 !text-xs !py-1.5 inline-flex items-center justify-center gap-1.5"
             >
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M3 3h2l.4 2M7 13h10l3-8H5.4M7 13 5.4 5M7 13l-2 5h14M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
@@ -102,7 +122,7 @@
         @endif
 
         <a href="{{ $productUrl }}"
-           class="inline-flex min-h-9 items-center justify-center rounded-xl border border-slate-300 px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 active:scale-95 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">
+           class="sf-btn-3d min-h-9 !text-xs !py-1.5 inline-flex items-center justify-center">
             {{ __('messages.details') }}
         </a>
     </div>

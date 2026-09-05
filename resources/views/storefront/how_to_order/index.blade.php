@@ -1,4 +1,4 @@
-@extends('layouts.storefront.app')
+﻿@extends('layouts.storefront.app')
 
 @section('content')
 @php
@@ -62,8 +62,7 @@
     {{-- ===================== Hero Header ===================== --}}
     <header class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-6">
         <div class="space-y-3">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black text-white uppercase shadow-2xs border-0"
-                 style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;">
+            <div class="sf-btn-3d active inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase pointer-events-none">
                 <span>📖</span>
                 <span>How to Order Guide · ဝယ်ယူနည်း လမ်းညွှန်</span>
             </div>
@@ -95,8 +94,7 @@
             <div class="flex flex-wrap gap-2.5 pt-1">
                 @if ($viberUrl)
                     <a href="{{ $viberUrl }}" data-ios-href="{{ $viberIosUrl }}"
-                       style="background: linear-gradient(135deg, #7360F2 0%, #5f4de0 100%) !important; color: #ffffff !important;"
-                       class="inline-flex min-h-[40px] items-center gap-2 rounded-full px-4 py-2 text-xs font-black text-white shadow-md shadow-purple-500/25 hover:brightness-110 active:scale-95 transition cursor-pointer select-none border-0">
+                       class="sf-btn-3d inline-flex min-h-[40px] items-center gap-2 rounded-full px-4 py-2 text-xs font-black cursor-pointer select-none">
                         <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20">
                             <x-brand-icon brand="viber" class="h-3.5 w-3.5 fill-white text-white"/>
                         </span>
@@ -105,8 +103,7 @@
                 @endif
                 @if ($callNumber)
                     <a href="tel:{{ $callNumber }}"
-                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: #ffffff !important;"
-                       class="inline-flex min-h-[40px] items-center gap-2 rounded-full px-4 py-2 text-xs font-black text-white shadow-md shadow-emerald-500/25 hover:brightness-110 active:scale-95 transition cursor-pointer select-none border-0">
+                       class="sf-btn-3d-success inline-flex min-h-[40px] items-center gap-2 rounded-full px-4 py-2 text-xs font-black cursor-pointer select-none">
                         <span>📞</span>
                         <span>ဖုန်းတိုက်ရိုက်ခေါ်မည် ({{ $callNumber }})</span>
                     </a>
@@ -149,9 +146,8 @@
     {{-- ===================== 5 Steps Visual Guide ===================== --}}
     <section class="space-y-6">
         <div class="space-y-1">
-            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-black tracking-wide text-white uppercase shadow-2xs border-0"
-                 style="background: linear-gradient(135deg, #7360F2 0%, #5f4de0 100%) !important;">
-                <span>✨</span>
+            <div class="sf-btn-3d active inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-black tracking-wide uppercase pointer-events-none">
+                <span aria-hidden="true">✨</span>
                 <span>Step by Step Instructions</span>
             </div>
             <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-sans">
@@ -167,7 +163,7 @@
                 <div class="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 flex flex-col justify-between shadow-2xs hover:shadow-md hover:border-sky-400 dark:hover:border-sky-600 transition space-y-4">
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="w-12 h-12 rounded-2xl bg-gradient-to-br {{ $stepGradients[$i % count($stepGradients)] }} text-white text-xl flex items-center justify-center shadow-md">
+                            <span class="sf-btn-3d active w-12 h-12 rounded-2xl text-xl flex items-center justify-center pointer-events-none">
                                 {{ $step['icon'] }}
                             </span>
                             <span class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono font-black text-xs flex items-center justify-center">
@@ -235,16 +231,14 @@
             <div class="space-y-2 pt-1 mt-auto">
                 @if ($callNumber)
                     <a href="tel:{{ $callNumber }}"
-                       style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: #ffffff !important;"
-                       class="w-full min-h-[42px] inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black text-white shadow-md shadow-emerald-500/20 hover:brightness-110 active:scale-95 transition cursor-pointer select-none border-0">
+                       class="sf-btn-3d-success w-full min-h-[42px] inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black cursor-pointer select-none">
                         <span>📞</span>
                         <span>ဖုန်းခေါ်မည် ({{ $callNumber }})</span>
                     </a>
                 @endif
                 @if ($viberUrl)
                     <a href="{{ $viberUrl }}" data-ios-href="{{ $viberIosUrl }}"
-                       style="background: linear-gradient(135deg, #7360F2 0%, #5f4de0 100%) !important; color: #ffffff !important;"
-                       class="w-full min-h-[42px] inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black text-white shadow-md shadow-purple-500/20 hover:brightness-110 active:scale-95 transition cursor-pointer select-none border-0">
+                       class="sf-btn-3d w-full min-h-[42px] inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black cursor-pointer select-none">
                         <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20">
                             <x-brand-icon brand="viber" class="h-3.5 w-3.5 fill-white text-white"/>
                         </span>
@@ -253,8 +247,7 @@
                 @endif
                 @if ($telegramUrl)
                     <a href="{{ $telegramUrl }}" target="_blank" rel="noopener noreferrer"
-                       style="background: linear-gradient(135deg, #229ED9 0%, #0284c7 100%) !important; color: #ffffff !important;"
-                       class="w-full min-h-[42px] inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black text-white shadow-md shadow-sky-500/20 hover:brightness-110 active:scale-95 transition cursor-pointer select-none border-0">
+                       class="sf-btn-3d w-full min-h-[42px] inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black cursor-pointer select-none">
                         <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20">
                             <x-brand-icon brand="telegram" class="h-3.5 w-3.5 fill-white text-white"/>
                         </span>
@@ -358,8 +351,7 @@
     <section class="rounded-3xl bg-white dark:bg-slate-900 p-6 sm:p-8 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div class="space-y-1">
-                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-black tracking-wide text-white uppercase shadow-2xs border-0"
-                     style="background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%) !important;">
+                <div class="sf-btn-3d active inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-black tracking-wide uppercase pointer-events-none">
                     <span>📍</span>
                     <span>Store Location</span>
                 </div>
@@ -381,9 +373,8 @@
                 @endif
                 @if ($setting->mapDirectionsUrl())
                     <a href="{{ $setting->mapDirectionsUrl() }}" target="_blank" rel="noopener noreferrer"
-                       style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important; color: #ffffff !important;"
-                       class="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black text-white shadow-sm hover:brightness-110 active:scale-95 transition border-0">
-                        <span>🧭</span>
+                       class="sf-btn-3d-primary inline-flex min-h-[40px] items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black">
+                        <span aria-hidden="true">🧭</span>
                         <span>{{ __('messages.get_directions') }}</span>
                     </a>
                 @endif

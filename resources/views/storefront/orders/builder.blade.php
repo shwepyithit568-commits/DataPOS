@@ -15,14 +15,14 @@
             @if ($storeLogoUrl)
                 <img src="{{ $storeLogoUrl }}" alt="{{ $store->name }}" class="h-9 w-9 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shadow-xs" />
             @else
-                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white font-black text-sm shadow-xs">
+                <div class="sf-btn-3d active flex h-9 w-9 items-center justify-center rounded-xl text-white font-black text-sm pointer-events-none">
                     {{ mb_substr($store?->name ?? 'D', 0, 1) }}
                 </div>
             @endif
             <div>
                 <h1 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2 font-sans">
                     <span>{{ __('messages.order_builder') }}</span>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-black bg-orange-100 dark:bg-orange-950/60 text-[#f85606] dark:text-orange-400 border border-orange-200/60 dark:border-orange-800/60">
+                    <span class="sf-btn-3d active inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-black pointer-events-none">
                         ⚡ Fast Checkout
                     </span>
                 </h1>
@@ -33,8 +33,8 @@
         </div>
 
         <a href="{{ url('/products?store_slug=' . ($store?->slug ?? request('store_slug'))) }}"
-           class="inline-flex items-center gap-1.5 self-start sm:self-auto text-xs font-bold text-slate-600 hover:text-[#f85606] dark:text-slate-300 dark:hover:text-orange-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-2xs transition">
-            <span>←</span>
+           class="sf-btn-3d self-start sm:self-auto !inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold">
+            <span aria-hidden="true">←</span>
             <span>{{ __('messages.view_products') }}</span>
         </a>
     </div>
@@ -61,10 +61,9 @@
                             <p class="text-xs text-slate-500 font-medium">{{ __('messages.order_list_empty_hint') }}</p>
                         </div>
                         <a href="{{ url('/products?store_slug=' . ($store?->slug ?? request('store_slug'))) }}"
-                           style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;"
-                           class="btn-3d inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-white font-black text-xs shadow-md shadow-orange-500/20 hover:brightness-110 border-0">
+                           class="sf-btn-3d-primary inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-black text-xs">
                             <span>{{ __('messages.view_products') }}</span>
-                            <span>→</span>
+                            <span aria-hidden="true">→</span>
                         </a>
                     </div>
                 </template>
@@ -255,47 +254,43 @@
                         </label>
 
                         <div class="grid grid-cols-2 gap-2.5">
-                            {{-- 1. Viber Channel Button --}}
+                            {{-- 1. Viber Channel Button — sf-btn-3d neutral + active state driven by token --}}
                             <button type="button" @click="contactChannel = 'viber'"
-                                style="background: linear-gradient(135deg, #7360F2 0%, #5f4de0 100%) !important; color: #ffffff !important;"
-                                class="btn-3d flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-black select-none border-0"
-                                :class="contactChannel === 'viber' ? 'ring-2 ring-purple-400 ring-offset-2 scale-[1.02] brightness-110' : 'opacity-85 hover:opacity-100'">
-                                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 shrink-0">
-                                    <x-brand-icon brand="viber" class="h-3.5 w-3.5 shrink-0 fill-white text-white"/>
+                                class="sf-btn-3d !flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-black select-none transition"
+                                :class="contactChannel === 'viber' ? 'active ring-2 ring-[color:var(--sf-primary)]/40 ring-offset-1' : 'opacity-85 hover:opacity-100'">
+                                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-current/10 shrink-0" :class="contactChannel === 'viber' ? 'bg-white/20' : ''">
+                                    <x-brand-icon brand="viber" class="h-3.5 w-3.5 shrink-0"/>
                                 </span>
-                                <span class="!text-white font-black">Viber</span>
+                                <span class="font-black">Viber</span>
                             </button>
 
                             {{-- 2. Telegram Channel Button --}}
                             <button type="button" @click="contactChannel = 'telegram'"
-                                style="background: linear-gradient(135deg, #229ED9 0%, #0284c7 100%) !important; color: #ffffff !important;"
-                                class="btn-3d flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-black select-none border-0"
-                                :class="contactChannel === 'telegram' ? 'ring-2 ring-sky-400 ring-offset-2 scale-[1.02] brightness-110' : 'opacity-85 hover:opacity-100'">
-                                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 shrink-0">
-                                    <x-brand-icon brand="telegram" class="h-3.5 w-3.5 shrink-0 fill-white text-white"/>
+                                class="sf-btn-3d !flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-black select-none transition"
+                                :class="contactChannel === 'telegram' ? 'active ring-2 ring-[color:var(--sf-primary)]/40 ring-offset-1' : 'opacity-85 hover:opacity-100'">
+                                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-current/10 shrink-0" :class="contactChannel === 'telegram' ? 'bg-white/20' : ''">
+                                    <x-brand-icon brand="telegram" class="h-3.5 w-3.5 shrink-0"/>
                                 </span>
-                                <span class="!text-white font-black">Telegram</span>
+                                <span class="font-black">Telegram</span>
                             </button>
 
                             {{-- 3. Phone Channel Button --}}
                             <button type="button" @click="contactChannel = 'phone'"
-                                style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: #ffffff !important;"
-                                class="btn-3d flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-black select-none border-0"
-                                :class="contactChannel === 'phone' ? 'ring-2 ring-emerald-400 ring-offset-2 scale-[1.02] brightness-110' : 'opacity-85 hover:opacity-100'">
-                                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 shrink-0 text-xs">📞</span>
-                                <span class="!text-white font-black">Phone</span>
+                                class="sf-btn-3d-success !flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-xs font-black select-none transition"
+                                :class="contactChannel === 'phone' ? 'ring-2 ring-emerald-400/50 ring-offset-1' : 'opacity-85 hover:opacity-100'">
+                                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 shrink-0 text-xs" aria-hidden="true">📞</span>
+                                <span class="font-black text-white">Phone</span>
                             </button>
 
-                            {{-- 4. Submit Button --}}
+                            {{-- 4. Submit (Send Order) — sf-btn-3d-primary --}}
                             <button
                                 type="submit"
                                 :disabled="!$store.orderBuilder || $store.orderBuilder.items.length === 0"
-                                style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;"
-                                class="btn-3d flex items-center justify-center gap-1.5 py-3 px-3 rounded-xl text-xs font-black text-white shadow-md shadow-orange-500/25 hover:brightness-110 disabled:opacity-50 border-0 select-none cursor-pointer"
+                                class="sf-btn-3d-primary !flex items-center justify-center gap-1.5 py-3 px-3 rounded-xl text-xs font-black disabled:opacity-50 disabled:pointer-events-none select-none cursor-pointer"
                             >
-                                <span class="text-sm">⚡</span>
-                                <span class="font-black text-white whitespace-nowrap">{{ __('messages.send_order') }}</span>
-                                <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                <span class="text-sm" aria-hidden="true">⚡</span>
+                                <span class="font-black whitespace-nowrap">{{ __('messages.send_order') }}</span>
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </button>
                         </div>
                     </div>

@@ -345,7 +345,7 @@
             <span class="text-slate-300 dark:text-slate-600 shrink-0">/</span>
             <span class="text-slate-700 dark:text-slate-200 font-bold truncate max-w-[180px] sm:max-w-xs">{{ $product->name }}</span>
         </nav>
-        <a href="{{ url()->previous() }}" class="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-orange-600 hover:border-orange-300 text-xs font-bold transition shadow-2xs active:scale-95 shrink-0">
+        <a href="{{ url()->previous() }}" class="sf-btn-3d px-3 py-1 text-xs font-bold shrink-0 cursor-pointer">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             <span>{{ __('messages.back') }}</span>
         </a>
@@ -399,7 +399,7 @@
                                 <img src="{{ $storeLogoUrl }}" alt="{{ $store?->name }}" class="h-4 max-w-[80px] object-contain" />
                             </span>
                         @else
-                            <span style="background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%) !important; color: #ffffff !important;" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-white font-black text-[11px] tracking-wide uppercase shadow-xs border-0">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 border border-sky-200 border-b-2 border-b-sky-800 text-white font-black text-[11px] tracking-wide uppercase shadow-xs">
                                 ★ {{ $store?->name ?? 'Official' }}
                             </span>
                         @endif
@@ -507,8 +507,8 @@
                                 <img src="{{ $storeLogoUrl }}" alt="{{ $store?->name }}" class="h-3.5 max-w-[80px] object-contain" />
                             </span>
                         @else
-                            <span style="background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%) !important; color: #ffffff !important;" class="px-2 py-0.5 rounded-md text-white font-black text-[10px] tracking-wide uppercase shadow-2xs border-0">
-                                {{ $store?->name ?? 'Official' }}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 border border-sky-200 border-b-2 border-b-sky-800 text-white font-black text-[10px] tracking-wide uppercase shadow-xs">
+                                ★ {{ $store?->name ?? 'Official' }}
                             </span>
                         @endif
                         @if ($product->brand)
@@ -553,31 +553,31 @@
                             </span>
                         </template>
 
-                        {{-- Share / Wishlist Quick Actions (Right-aligned with Vibrant Colors) --}}
+                        {{-- Share / Wishlist Quick Actions (Right-aligned with 3D tactile push buttons) --}}
                         <div class="ml-auto flex items-center gap-2">
-                            {{-- Favorite Heart Button (Vibrant Rose) --}}
+                            {{-- Favorite Heart Button (3D Metallic Gold / Rose Tactile Push Button) --}}
                             <button
                                 @click.stop.prevent="$store.favoritesStore.toggle({ id: {{ $product->id }}, name: {{ json_encode($product->name) }}, brand: {{ json_encode($product->brand?->name ?? 'General') }}, url: {{ json_encode($productUrl) }}, image_path: {{ json_encode($primaryImage ?? '') }} })"
                                 type="button"
-                                class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all duration-200 transform active:scale-95 shadow-2xs cursor-pointer text-xs font-bold"
+                                class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-black text-xs transition-all duration-150 transform hover:-translate-y-0.5 active:translate-y-0.5 select-none cursor-pointer ring-1 ring-white/60"
                                 :class="$store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }}) 
-                                    ? 'bg-rose-500 text-white border-rose-500 shadow-rose-500/30 ring-2 ring-rose-300 dark:ring-rose-900' 
-                                    : 'bg-rose-50/80 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/70 border-rose-200/80 dark:border-rose-800/70 text-rose-600 dark:text-rose-400'"
+                                    ? 'bg-gradient-to-b from-rose-500 via-rose-600 to-rose-700 border border-rose-300 border-b-[3px] border-b-rose-900 shadow-md shadow-rose-950/40 text-white' 
+                                    : 'bg-gradient-to-b from-amber-300 via-amber-400 to-amber-600 border border-amber-200 border-b-[3px] border-b-amber-700 shadow-md shadow-amber-900/30 text-slate-900'"
                                 title="{{ __('messages.favorites') }}"
                             >
-                                <svg class="w-4 h-4 shrink-0 transition-transform" :fill="($store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }})) ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.684a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                <svg class="w-4 h-4 shrink-0 transition-transform drop-shadow-xs" :class="($store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }})) ? 'text-white' : 'text-slate-900'" :fill="($store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }})) ? 'currentColor' : 'currentColor'" viewBox="0 0 24 24">
+                                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.684a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                                 </svg>
-                                <span class="hidden sm:inline" x-text="($store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }})) ? 'သိမ်းဆည်းပြီး' : 'သိမ်းမည်'"></span>
+                                <span class="hidden sm:inline" :class="($store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }})) ? 'text-white' : 'text-slate-900'" x-text="($store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }})) ? 'သိမ်းဆည်းပြီး' : 'သိမ်းမည်'"></span>
                             </button>
 
-                            {{-- Share Button (Vibrant Sky Blue) --}}
+                            {{-- Share Button (3D Vibrant Sky Blue Tactile Button) --}}
                             <x-share-button
                                 :url="$productUrl"
                                 :title="$product->name"
                                 :text="$shareText"
                                 hide-label-on-mobile
-                                button-class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/50 dark:hover:bg-sky-900/60 border border-sky-200 dark:border-sky-800/70 text-sky-700 dark:text-sky-300 text-xs font-bold shadow-2xs transition transform active:scale-95 cursor-pointer"
+                                button-class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-b from-sky-400 via-sky-500 to-sky-600 border border-sky-200 border-b-[3px] border-b-sky-800 text-white text-xs font-black shadow-md shadow-sky-950/30 transition transform hover:-translate-y-0.5 active:translate-y-0.5 cursor-pointer ring-1 ring-white/40"
                                 :show-viber="(bool) $directViberUrl"
                                 :show-telegram="(bool) $directTelegramUrl"
                                 :show-facebook="(bool) ($storeSetting?->facebook_url ?? '')"
@@ -586,8 +586,8 @@
                     </div>
                 </div>
 
-                {{-- Lazada Signature Price Box --}}
-                <div class="p-4 rounded-xl bg-orange-50/60 dark:bg-slate-800/80 border border-orange-100 dark:border-slate-700/60 space-y-2">
+                {{-- Lazada Signature Price Box with 3D Wholesale & Promo Badges --}}
+                <div class="p-4 rounded-2xl bg-orange-50/70 dark:bg-slate-800/80 border border-orange-200/90 dark:border-slate-700/80 shadow-xs space-y-2">
                     <div class="flex items-baseline gap-3 flex-wrap">
                         <div class="text-2xl sm:text-3xl lg:text-4xl font-black text-[#f85606] dark:text-orange-400 font-outfit" x-text="fmt(price)">
                             {{ format_currency($effectivePrice, $store) }}
@@ -595,21 +595,26 @@
                         <template x-if="onSale">
                             <div class="flex items-center gap-2">
                                 <span class="text-sm text-slate-400 line-through decoration-slate-400 font-mono" x-text="fmt(baseOld)"></span>
-                                <span class="text-xs font-black text-[#f85606] bg-orange-100 dark:bg-orange-950/60 px-1.5 py-0.5 rounded" x-text="'-' + discountPct + '%'"></span>
+                                <span class="text-xs font-black text-white bg-gradient-to-b from-rose-500 to-rose-600 border border-rose-300 border-b-2 border-b-rose-800 px-2 py-0.5 rounded-lg shadow-xs" x-text="'-' + discountPct + '%'"></span>
                             </div>
                         </template>
+                        @if ($isWholesaleApproved)
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-gradient-to-b from-emerald-500 to-emerald-600 border border-emerald-300 border-b-2 border-b-emerald-800 text-white font-black text-xs shadow-xs uppercase tracking-wide">
+                                💼 {{ __('messages.wholesale') }}
+                            </span>
+                        @endif
                     </div>
 
-                    {{-- Promotion Tag --}}
-                    <div class="flex items-center gap-2 text-xs pt-1">
-                        <span class="px-2 py-0.5 rounded bg-orange-500 text-white font-bold text-[10px]">
-                            Promotions
+                    {{-- Promotion Tag & Perks --}}
+                    <div class="flex items-center gap-2 text-xs pt-1 flex-wrap">
+                        <span class="px-2.5 py-0.5 rounded-lg bg-gradient-to-b from-amber-500 to-orange-500 border border-amber-300 border-b-2 border-b-orange-700 text-white font-black text-[10px] shadow-2xs uppercase tracking-wider">
+                            ⚡ PROMOTION
                         </span>
-                        <span class="text-slate-600 dark:text-slate-300 font-medium">
+                        <span class="text-slate-700 dark:text-slate-300 font-bold">
                             {{ $isWholesaleApproved ? __('messages.wholesale') : 'Best Price Guarantee' }}
                         </span>
                         @if ($showRetailSale && $product->saleWindowLabel())
-                            <span class="text-rose-600 dark:text-rose-400 font-bold ml-auto">{{ $product->saleWindowLabel() }}</span>
+                            <span class="text-rose-600 dark:text-rose-400 font-black ml-auto">{{ $product->saleWindowLabel() }}</span>
                         @endif
                     </div>
                 </div>
@@ -667,17 +672,17 @@
                             <div class="space-y-2.5">
                                 <template x-for="label in attrLabels" :key="label">
                                     <div>
-                                        <p class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5" x-text="label + ':'"></p>
-                                        <div class="flex flex-wrap gap-1.5">
+                                        <p class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5" x-text="label + ':'"></p>
+                                        <div class="flex flex-wrap gap-2">
                                             <template x-for="value in attrValues(label)" :key="label + ':' + value">
                                                 <button type="button" @click="selectAttr(label, value)"
                                                     :disabled="!isAttrAvailable(label, value)"
-                                                    class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition border"
+                                                    class="sf-btn-3d px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer"
                                                     :class="selectedAttrs[label] === value
-                                                        ? 'bg-orange-50 border-[#f85606] text-[#f85606] ring-1 ring-[#f85606]'
+                                                        ? 'sf-btn-3d-orange'
                                                         : (isAttrAvailable(label, value)
-                                                            ? 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-orange-400'
-                                                            : 'bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/60 text-slate-300 dark:text-slate-600 line-through cursor-not-allowed')">
+                                                            ? ''
+                                                            : 'opacity-40 line-through cursor-not-allowed')">
                                                     <span x-text="value"></span>
                                                 </button>
                                             </template>
@@ -688,14 +693,14 @@
                         </template>
                         <template x-if="!hasStructuredAttrs">
                             <div>
-                                <p class="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">{{ __('messages.variants') }}:</p>
-                                <div class="flex flex-wrap gap-1.5">
+                                <p class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">{{ __('messages.variants') }}:</p>
+                                <div class="flex flex-wrap gap-2">
                                     <template x-for="(v, i) in variants" :key="v.id">
                                         <button type="button" @click="selectedIndex = i"
-                                            class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition border"
-                                            :class="selectedIndex === i ? 'bg-orange-50 border-[#f85606] text-[#f85606] ring-1 ring-[#f85606]' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-orange-400'">
+                                            class="sf-btn-3d px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer"
+                                            :class="selectedIndex === i ? 'sf-btn-3d-orange' : ''">
                                             <span x-text="v.name"></span>
-                                            <span class="opacity-70" x-show="(isWholesale && (v.wholesale_price || 0) > 0 ? v.wholesale_price : v.retail_price) > 0" x-text="'· ' + fmt(isWholesale && (v.wholesale_price || 0) > 0 ? v.wholesale_price : v.retail_price)"></span>
+                                            <span class="opacity-70 font-mono" x-show="(isWholesale && (v.wholesale_price || 0) > 0 ? v.wholesale_price : v.retail_price) > 0" x-text="'· ' + fmt(isWholesale && (v.wholesale_price || 0) > 0 ? v.wholesale_price : v.retail_price)"></span>
                                         </button>
                                     </template>
                                 </div>
@@ -704,31 +709,29 @@
                     </div>
                 </template>
 
-                {{-- Action Buttons Row (Lazada Signature Dual Buttons: Buy Now + Add to Cart) --}}
+                {{-- Action Buttons Row (Lazada Signature Dual 3D Tactile Buttons: Buy Now + Add to Cart) --}}
                 <div class="flex items-center gap-2.5 sm:gap-3 pt-2">
                     @if ($product->isInStock())
-                        {{-- Buy Now (Primary Solid Orange Button) --}}
+                        {{-- Buy Now (Primary 3D Orange Push Button) --}}
                         <button
                             @click.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: variantId, variant_id: variantId, name: cartName, price: price, sku: sku, image_path: selectedImagePath }); window.location.href='{{ url('/order-builder?store_slug=' . $storeSlug) }}'"
                             :disabled="!inStock"
                             type="button"
-                            style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;"
-                            class="flex-1 h-12 px-4 sm:px-6 hover:brightness-110 disabled:opacity-50 text-white font-black text-xs sm:text-sm rounded-xl shadow-md shadow-orange-500/25 transition transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer select-none border-0"
+                            class="sf-btn-3d-orange flex-1 h-12 px-4 sm:px-6 disabled:opacity-50 text-white font-black text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 cursor-pointer select-none"
                         >
                             <span class="text-base">⚡</span>
-                            <span style="color: #ffffff !important;" class="font-black text-white">Buy Now</span>
+                            <span class="font-black text-white">{{ __('messages.buy_now') }}</span>
                         </button>
 
-                        {{-- Add to Cart / Order (Secondary Sky Blue Button) --}}
+                        {{-- Add to Cart / Order (Secondary 3D Primary Dynamic Sky/Brand Button) --}}
                         <button
                             @click.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: variantId, variant_id: variantId, name: cartName, price: price, sku: sku, image_path: selectedImagePath })"
                             :disabled="!inStock"
                             type="button"
-                            style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important; color: #ffffff !important;"
-                            class="flex-1 h-12 px-4 sm:px-6 hover:brightness-110 disabled:opacity-50 text-white font-black text-xs sm:text-sm rounded-xl shadow-md shadow-sky-500/25 transition transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer select-none border-0"
+                            class="sf-btn-3d-primary flex-1 h-12 px-4 sm:px-6 disabled:opacity-50 text-white font-black text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 cursor-pointer select-none"
                         >
                             <span class="text-base">🛒</span>
-                            <span style="color: #ffffff !important;" class="font-black text-white">{{ __('messages.add_to_order') }}</span>
+                            <span class="font-black text-white">{{ __('messages.add_to_order') }}</span>
                         </button>
                     @else
                         <div class="w-full space-y-2.5">
@@ -741,16 +744,14 @@
                                     <div class="grid {{ ($storeViberUrl && $storeTelegramUrl) ? 'grid-cols-2' : 'grid-cols-1' }} gap-2">
                                         @if ($storeViberUrl)
                                             <a href="{{ $storeViberUrl }}" target="_blank" rel="noopener noreferrer"
-                                               style="background: linear-gradient(135deg, #7360F2 0%, #5f4de0 100%) !important; color: #ffffff !important;"
-                                               class="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl hover:brightness-110 px-3 py-2 text-xs font-black text-white shadow-md shadow-purple-500/20 transition transform active:scale-95 cursor-pointer select-none border-0">
+                                               class="sf-btn-3d-viber inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-black text-white cursor-pointer select-none">
                                                 <x-brand-icon brand="viber" class="h-4 w-4 shrink-0 text-white fill-white"/>
                                                 <span class="font-black text-white">{{ __('messages.open_viber') }}</span>
                                             </a>
                                         @endif
                                         @if ($storeTelegramUrl)
                                             <a href="{{ $storeTelegramUrl }}" target="_blank" rel="noopener noreferrer"
-                                               style="background: linear-gradient(135deg, #229ED9 0%, #1b8ec5 100%) !important; color: #ffffff !important;"
-                                               class="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl hover:brightness-110 px-3 py-2 text-xs font-black text-white shadow-md shadow-sky-500/20 transition transform active:scale-95 cursor-pointer select-none border-0">
+                                               class="sf-btn-3d-telegram inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-black text-white cursor-pointer select-none">
                                                 <x-brand-icon brand="telegram" class="h-4 w-4 shrink-0 text-white fill-white"/>
                                                 <span class="font-black text-white">Telegram</span>
                                             </a>
@@ -771,11 +772,11 @@
                     @endif
                 </div>
 
-                {{-- Direct Order Box (Viber & Telegram) --}}
+                {{-- Direct Order Box (Viber & Telegram 3D Push Action Buttons) --}}
                 @if ($product->isInStock() && ($directViberUrl || $directTelegramUrl))
-                    <div class="rounded-xl border border-purple-200/80 dark:border-slate-700/80 bg-purple-50/40 dark:bg-slate-800/60 p-3 space-y-2.5">
+                    <div class="rounded-2xl border border-purple-200/80 dark:border-slate-700/80 bg-purple-50/40 dark:bg-slate-800/60 p-3.5 space-y-3 shadow-2xs">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <span class="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                                 <span>💬</span>
                                 <span>{{ __('messages.direct_order') }} (Chat)</span>
                             </span>
@@ -787,13 +788,12 @@
                                     :href="viberHref"
                                     :data-ios-href="viberIosHref"
                                     @click.prevent="openViberModal()"
-                                    style="background: linear-gradient(135deg, #7360F2 0%, #5f4de0 100%) !important; color: #ffffff !important;"
-                                    class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full hover:brightness-110 px-4 py-2.5 text-xs sm:text-sm font-black text-white shadow-md shadow-purple-500/30 transition transform active:scale-95 cursor-pointer select-none border-0 ring-1 ring-white/20"
+                                    class="sf-btn-3d-viber inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-black text-white cursor-pointer select-none"
                                 >
                                     <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 shrink-0">
                                         <x-brand-icon brand="viber" class="h-3.5 w-3.5 shrink-0 fill-white text-white"/>
                                     </span>
-                                    <span style="color: #ffffff !important;" class="font-black text-white">{{ __('messages.open_viber') }}</span>
+                                    <span class="font-black text-white">{{ __('messages.open_viber') }}</span>
                                 </a>
                             @endif
                             @if ($directTelegramUrl)
@@ -802,13 +802,12 @@
                                     :href="telegramHref"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    style="background: linear-gradient(135deg, #229ED9 0%, #0284c7 100%) !important; color: #ffffff !important;"
-                                    class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full hover:brightness-110 px-4 py-2.5 text-xs sm:text-sm font-black text-white shadow-md shadow-sky-500/30 transition transform active:scale-95 cursor-pointer select-none border-0 ring-1 ring-white/20"
+                                    class="sf-btn-3d-telegram inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-black text-white cursor-pointer select-none"
                                 >
                                     <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20 shrink-0">
                                         <x-brand-icon brand="telegram" class="h-3.5 w-3.5 shrink-0 fill-white text-white"/>
                                     </span>
-                                    <span style="color: #ffffff !important;" class="font-black text-white">Telegram Chat</span>
+                                    <span class="font-black text-white">Telegram Chat</span>
                                 </a>
                             @endif
                         </div>
@@ -892,8 +891,8 @@
                                 <input type="text" name="contact_identifier" value="{{ old('contact_identifier') }}" :type="contactChannel === 'viber' ? 'tel' : 'text'" :inputmode="contactChannel === 'viber' ? 'tel' : 'text'" :placeholder="contactChannel === 'viber' ? '09xxxxxxxxx' : '@username'" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-orange-500 focus:outline-none" />
                             </div>
 
-                            <button type="submit" :disabled="!inStock" style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;" class="w-full mt-3 min-h-[44px] py-2.5 px-4 hover:brightness-110 disabled:opacity-50 text-white font-black text-xs rounded-xl shadow-md shadow-orange-500/25 transition transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer border-0">
-                                <span style="color: #ffffff !important;" class="font-black text-white">{{ __('messages.send_order') }}</span>
+                            <button type="submit" :disabled="!inStock" class="sf-btn-3d-orange w-full mt-3 min-h-[44px] py-2.5 px-4 disabled:opacity-50 text-white font-black text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer">
+                                <span class="font-black text-white">{{ __('messages.send_order') }}</span>
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </button>
                         </form>
@@ -978,9 +977,9 @@
                     </h3>
                 </div>
                 @if ($product->category)
-                    <a href="{{ url('/products?category_id=' . $product->category_id . '&store_slug=' . $storeSlug) }}" class="text-xs font-bold text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-1">
+                    <a href="{{ url('/products?category_id=' . $product->category_id . '&store_slug=' . $storeSlug) }}" class="sf-btn-3d px-3 py-1 text-xs font-bold shrink-0 cursor-pointer">
                         <span>{{ __('messages.view_all') ?? 'အားလုံးကြည့်ရန်' }}</span>
-                        <span>→</span>
+                        <span class="ml-1">→</span>
                     </a>
                 @endif
             </div>
@@ -1064,9 +1063,8 @@
                 @error('comment')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
             </div>
             <button type="submit"
-                style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;"
-                class="rounded-xl px-5 py-2.5 text-xs font-black text-white shadow-md shadow-orange-500/25 hover:brightness-110 transition transform active:scale-95 border-0 cursor-pointer">
-                <span style="color: #ffffff !important;" class="font-black text-white">{{ __('messages.submit_review') }}</span>
+                class="sf-btn-3d-orange rounded-xl px-5 py-2.5 text-xs font-black text-white cursor-pointer">
+                <span class="font-black text-white">{{ __('messages.submit_review') }}</span>
             </button>
         </form>
 

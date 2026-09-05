@@ -266,4 +266,380 @@ h1, h2, h3, h4 {
     font-weight: 800;
 }
 
+/* ============================================================
+   3D EMBOSSED TACTILE PUSH BUTTONS (Admin & Storefront Universal)
+   Zero backdrop-filter overhead for pure 60/120fps smoothness.
+   Inspired by Admin Dashboard Daily Quick Actions Hub.
+   ============================================================ */
+/* Hero Section Category Nav Height Matching Banner + Trust Cards */
+.hero-cat-nav {
+    max-height: 384px;
+}
+@media (max-width: 1279px) and (min-width: 1024px) {
+    .hero-cat-nav {
+        max-height: 364px;
+    }
+}
+
+.sf-btn-3d,
+.sf-btn-3d-primary,
+.sf-btn-3d-accent,
+.sf-btn-3d-success,
+.sf-btn-3d-danger,
+.sf-btn-3d-gold {
+    position: relative;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transform: translateZ(0);
+    transition: transform 120ms ease, border-bottom-width 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(203, 213, 225, 0.9);
+    border-bottom: 3px solid #cbd5e1;
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    color: #1e293b;
+    text-decoration: none !important;
+}
+.sf-btn-3d.flex-col {
+    flex-direction: column;
+}
+.sf-btn-3d.absolute,
+.sf-btn-3d-gold.absolute,
+.sf-btn-3d-danger.absolute {
+    position: absolute !important;
+}
+.sf-btn-3d:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+    border-bottom: 4px solid #94a3b8;
+    box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+    color: #0f172a;
+}
+.sf-btn-3d:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #cbd5e1;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.sf-btn-3d.active,
+.sf-btn-3d-primary {
+    background: linear-gradient(180deg, var(--sf-primary, #0ea5e9) 0%, color-mix(in srgb, var(--sf-primary, #0ea5e9) 85%, #000000) 100%);
+    color: #ffffff !important;
+    border: 1px solid color-mix(in srgb, var(--sf-primary, #0ea5e9) 80%, #ffffff);
+    border-bottom: 3px solid var(--sf-primary-bevel, #0369a1);
+    box-shadow: 0 2px 6px -1px color-mix(in srgb, var(--sf-primary, #0ea5e9) 35%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d.active:hover,
+.sf-btn-3d-primary:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, var(--sf-primary-hover, #38bdf8) 0%, var(--sf-primary, #0ea5e9) 100%);
+    border-bottom: 4px solid var(--sf-primary-bevel, #075985);
+    box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--sf-primary, #0ea5e9) 50%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+.sf-btn-3d.active:active,
+.sf-btn-3d-primary:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid var(--sf-primary-bevel, #0369a1);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--sf-primary, #0ea5e9) 25%, transparent), inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* Accent 3D Button (Dynamic Admin Accent Token) */
+.sf-btn-3d-accent {
+    background: linear-gradient(180deg, var(--sf-accent, #6366f1) 0%, color-mix(in srgb, var(--sf-accent, #6366f1) 85%, #000000) 100%);
+    color: #ffffff !important;
+    border: 1px solid color-mix(in srgb, var(--sf-accent, #6366f1) 80%, #ffffff);
+    border-bottom: 3px solid var(--sf-accent-bevel, #4338ca);
+    box-shadow: 0 2px 6px -1px color-mix(in srgb, var(--sf-accent, #6366f1) 35%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-accent:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, var(--sf-accent-hover, #818cf8) 0%, var(--sf-accent, #6366f1) 100%);
+    border-bottom: 4px solid var(--sf-accent-bevel, #3730a3);
+    box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--sf-accent, #6366f1) 50%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+.sf-btn-3d-accent:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid var(--sf-accent-bevel, #4338ca);
+}
+
+/* Success 3D Button (Direct Viber/Checkout Confirm) */
+.sf-btn-3d-success {
+    background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+    color: #ffffff !important;
+    border: 1px solid #34d399;
+    border-bottom: 3px solid #047857;
+    box-shadow: 0 2px 6px -1px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-success:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+    border-bottom: 4px solid #065f46;
+    box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+.sf-btn-3d-success:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #047857;
+}
+
+/* Danger 3D Button (Cancel / Clear Cart) */
+.sf-btn-3d-danger {
+    background: linear-gradient(180deg, #f43f5e 0%, #e11d48 100%);
+    color: #ffffff !important;
+    border: 1px solid #fb7185;
+    border-bottom: 3px solid #be123c;
+    box-shadow: 0 2px 6px -1px rgba(244, 63, 94, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-danger:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #fb7185 0%, #f43f5e 100%);
+    border-bottom: 4px solid #9f1239;
+    box-shadow: 0 4px 12px -2px rgba(244, 63, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+.sf-btn-3d-danger:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #be123c;
+}
+
+/* Gold 3D Button (Luxury Wishlist / Special Action) */
+.sf-btn-3d-gold {
+    background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+    color: #ffffff !important;
+    border: 1px solid #fde68a;
+    border-bottom: 3px solid #b45309;
+    box-shadow: 0 2px 6px -1px rgba(217, 119, 6, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.sf-btn-3d-gold:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #fde047 0%, #f59e0b 100%);
+    border-bottom: 4px solid #92400e;
+    box-shadow: 0 4px 12px -2px rgba(217, 119, 6, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    color: #ffffff !important;
+}
+.sf-btn-3d-gold:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #b45309;
+    box-shadow: 0 1px 2px rgba(217, 119, 6, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.dark .sf-btn-3d {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(51, 65, 85, 0.9);
+    border-bottom: 3px solid #020617;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+}
+.dark .sf-btn-3d:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+    border-bottom: 4px solid #000000;
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+.dark .sf-btn-3d:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #020617;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.dark .sf-btn-3d.active,
+.dark .sf-btn-3d-primary {
+    background: linear-gradient(180deg, var(--sf-primary, #0284c7) 0%, color-mix(in srgb, var(--sf-primary, #0284c7) 80%, #000000) 100%);
+    color: #ffffff !important;
+    border: 1px solid color-mix(in srgb, var(--sf-primary, #0284c7) 70%, #ffffff);
+    border-bottom: 3px solid var(--sf-primary-bevel, #082f49);
+    box-shadow: 0 2px 8px -1px color-mix(in srgb, var(--sf-primary, #0284c7) 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d.active:hover,
+.dark .sf-btn-3d-primary:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, var(--sf-primary-hover, #0ea5e9) 0%, var(--sf-primary, #0284c7) 100%);
+    border-bottom: 4px solid var(--sf-primary-bevel, #082f49);
+    box-shadow: 0 4px 14px -2px color-mix(in srgb, var(--sf-primary, #0284c7) 60%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d.active:active,
+.dark .sf-btn-3d-primary:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid var(--sf-primary-bevel, #082f49);
+}
+
+.dark .sf-btn-3d-accent {
+    background: linear-gradient(180deg, var(--sf-accent, #4f46e5) 0%, color-mix(in srgb, var(--sf-accent, #4f46e5) 80%, #000000) 100%);
+    border-bottom: 3px solid var(--sf-accent-bevel, #1e1b4b);
+}
+.dark .sf-btn-3d-accent:hover {
+    background: linear-gradient(180deg, var(--sf-accent-hover, #6366f1) 0%, var(--sf-accent, #4f46e5) 100%);
+    border-bottom: 4px solid var(--sf-accent-bevel, #1e1b4b);
+}
+.dark .sf-btn-3d-accent:active {
+    border-bottom: 1.5px solid var(--sf-accent-bevel, #1e1b4b);
+}
+
+.dark .sf-btn-3d-gold {
+    background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
+    border: 1px solid rgba(253, 230, 138, 0.7);
+    border-bottom: 3px solid #78350f;
+    box-shadow: 0 2px 8px -1px rgba(245, 158, 11, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-gold:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+    border-bottom: 4px solid #451a03;
+    box-shadow: 0 4px 14px -2px rgba(245, 158, 11, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-gold:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #78350f;
+}
+
+/* Orange 3D Button (Lazada Signature Buy Now CTA) */
+.sf-btn-3d-orange {
+    position: relative;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transform: translateZ(0);
+    transition: transform 120ms ease, border-bottom-width 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+    border-radius: 0.75rem;
+    background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
+    color: #ffffff !important;
+    border: 1px solid #fb923c;
+    border-bottom: 3px solid #9a3412;
+    box-shadow: 0 2px 6px -1px rgba(234, 88, 12, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    text-decoration: none !important;
+}
+.sf-btn-3d-orange:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #fb923c 0%, #f97316 100%);
+    border-bottom: 4px solid #7c2d12;
+    box-shadow: 0 4px 12px -2px rgba(234, 88, 12, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-orange:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #9a3412;
+    box-shadow: 0 1px 2px rgba(234, 88, 12, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* Viber 3D Button (Brand Violet Bevel) */
+.sf-btn-3d-viber {
+    position: relative;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transform: translateZ(0);
+    transition: transform 120ms ease, border-bottom-width 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+    border-radius: 0.75rem;
+    background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%);
+    color: #ffffff !important;
+    border: 1px solid #a78bfa;
+    border-bottom: 3px solid #4c1d95;
+    box-shadow: 0 2px 6px -1px rgba(109, 40, 217, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    text-decoration: none !important;
+}
+.sf-btn-3d-viber:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #a78bfa 0%, #7c3aed 100%);
+    border-bottom: 4px solid #3b0764;
+    box-shadow: 0 4px 12px -2px rgba(109, 40, 217, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+.sf-btn-3d-viber:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #4c1d95;
+}
+
+/* Telegram 3D Button (Brand Sky Bevel) */
+.sf-btn-3d-telegram {
+    position: relative;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transform: translateZ(0);
+    transition: transform 120ms ease, border-bottom-width 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+    border-radius: 0.75rem;
+    background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+    color: #ffffff !important;
+    border: 1px solid #7dd3fc;
+    border-bottom: 3px solid #0369a1;
+    box-shadow: 0 2px 6px -1px rgba(2, 132, 199, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    text-decoration: none !important;
+}
+.sf-btn-3d-telegram:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #7dd3fc 0%, #0ea5e9 100%);
+    border-bottom: 4px solid #075985;
+    box-shadow: 0 4px 12px -2px rgba(2, 132, 199, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+.sf-btn-3d-telegram:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #0369a1;
+}
+
+/* Dark Mode Overrides for Orange, Viber & Telegram */
+.dark .sf-btn-3d-orange {
+    background: linear-gradient(180deg, #ea580c 0%, #9a3412 100%);
+    border: 1px solid rgba(251, 146, 60, 0.6);
+    border-bottom: 3px solid #431407;
+    box-shadow: 0 2px 8px -1px rgba(234, 88, 12, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-orange:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #f97316 0%, #c2410c 100%);
+    border-bottom: 4px solid #270b04;
+    box-shadow: 0 4px 14px -2px rgba(234, 88, 12, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.dark .sf-btn-3d-orange:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #431407;
+}
+
+.dark .sf-btn-3d-viber {
+    background: linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%);
+    border: 1px solid rgba(167, 139, 250, 0.6);
+    border-bottom: 3px solid #2e1065;
+}
+.dark .sf-btn-3d-viber:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%);
+    border-bottom: 4px solid #1e053a;
+}
+.dark .sf-btn-3d-viber:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #2e1065;
+}
+
+.dark .sf-btn-3d-telegram {
+    background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+    border: 1px solid rgba(125, 211, 252, 0.6);
+    border-bottom: 3px solid #082f49;
+}
+.dark .sf-btn-3d-telegram:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
+    border-bottom: 4px solid #041b2c;
+}
+.dark .sf-btn-3d-telegram:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #082f49;
+}
+
 

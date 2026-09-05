@@ -36,7 +36,7 @@ http://127.0.0.1:8501/store/datapos-mobile/admin/dashboard
 Phone URL ကိုလည်း IP အသစ်ဖြင့်ဖွင့်ပါ:
 
 ```text
-http://192.168.10.165:8500/store/datapos-mobile
+http://192.168.1.59:8501/store/datapos-mobile
 ```
 
 Vite CSS/JS watcher ဖွင့်ရန်:

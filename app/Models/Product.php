@@ -198,7 +198,20 @@ class Product extends Model
         if ($this->image_path && !in_array($this->image_path, $gallery)) {
             array_unshift($gallery, $this->image_path);
         }
-        return array_values(array_filter($gallery));
+        $gallery = array_values(array_filter($gallery));
+
+        // Auto-pair 2nd image (Software Ad) if only 1 image exists
+        if (count($gallery) === 1) {
+            $primary = $gallery[0];
+            if (preg_match('/data-product-(\d+)\.webp$/', $primary, $matches)) {
+                $gallery[] = "placeholders/datapos-software-ad-{$matches[1]}.webp";
+            } else {
+                $num = ($this->id % 4) + 1;
+                $gallery[] = "placeholders/datapos-software-ad-{$num}.webp";
+            }
+        }
+
+        return $gallery;
     }
 
     public function isInStock(): bool

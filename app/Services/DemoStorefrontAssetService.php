@@ -136,10 +136,12 @@ class DemoStorefrontAssetService
         $muted = imagecolorallocatealpha($image, 255, 255, 255, 28);
 
         imagefilledellipse($image, (int) ($width * .82), (int) ($height * .18), (int) ($width * .62), (int) ($height * .62), $muted);
-        imagefilledrectangle($image, 52, $height - 180, $width - 52, $height - 56, imagecolorallocatealpha($image, 8, 15, 28, 45));
+        imagefilledellipse($image, (int) ($width * .5), (int) ($height * .5), (int) ($width * .7), (int) ($height * .7), imagecolorallocatealpha($image, 255, 255, 255, 110));
 
-        $this->drawText($image, mb_strtoupper($eyebrow), 19, 62, 80, $white, $this->latinFont(), $width - 124, 1);
-        $this->drawText($image, $title, 34, 78, $height - 142, $white, $this->fontFor($title), $width - 156, 3);
+        // Center card with DATA PRODUCTS
+        $this->drawText($image, mb_strtoupper($eyebrow), 18, 62, (int) ($height * 0.38), $white, $this->latinFont(), $width - 124, 1);
+        $this->drawText($image, 'DATA PRODUCTS', 38, 62, (int) ($height * 0.52), $white, $this->latinFont(), $width - 124, 1);
+        $this->drawText($image, 'PREMIUM QUALITY TECH', 16, 62, (int) ($height * 0.64), imagecolorallocatealpha($image, 255, 255, 255, 40), $this->latinFont(), $width - 124, 1);
         $this->writeAtomic($image, $path);
     }
 

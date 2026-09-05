@@ -1,55 +1,48 @@
 {{--
-  Primary navigation — 'underline' variant (clean links, underline active).
+  Primary navigation — 'underline' variant.
   Uses $desktopNavItems resolved by StorefrontNavigationResolver.
 --}}
-<nav aria-label="Storefront primary navigation" class="sf-primary-nav flex flex-wrap items-center justify-center gap-x-7 gap-y-2 text-sm font-extrabold">
+<nav aria-label="Storefront primary navigation" class="sf-primary-nav flex flex-wrap items-center justify-center gap-x-7 gap-1.5 sm:gap-2 text-xs sm:text-sm font-black">
     @forelse ($desktopNavItems as $navItem)
         <a href="{{ $navItem->url }}"
            @if ($navItem->is_external) target="{{ $navItem->target }}" rel="{{ $navItem->rel }}" @endif
-           class="relative inline-flex items-center gap-1.5 px-1 py-2 transition {{ $navItem->is_active ? 'text-sky-600 dark:text-sky-400' : 'text-slate-700 hover:text-sky-600 dark:text-slate-200 dark:hover:text-sky-400' }}">
-            @if ($navItem->icon_key && $navItem->icon_key !== 'home')
+           class="sf-btn-3d !flex-row items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl transition {{ $navItem->is_active ? 'active' : '' }}">
+            @if ($navItem->icon_key)
                 <x-storefront.navigation-icon :name="$navItem->icon_key" class="h-4 w-4 shrink-0" />
             @endif
-            <span class="whitespace-nowrap">{{ $navItem->label }}</span>
-            @if ($navItem->is_active)
-                <span class="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-sky-500"></span>
-            @endif
+            <span class="whitespace-nowrap font-black">{{ $navItem->label }}</span>
         </a>
     @empty
-        <a href="{{ $homeUrl }}" class="relative px-1 py-2 transition {{ $isHome ? 'text-sky-600 dark:text-sky-400' : 'text-slate-700 hover:text-sky-600 dark:text-slate-200 dark:hover:text-sky-400' }}">
-            {{ __('messages.home') }}
-            @if ($isHome)<span class="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-sky-500"></span>@endif
+        <a href="{{ $homeUrl }}" class="sf-btn-3d !flex-row items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl transition {{ $isHome ? 'active' : '' }}">
+            <x-storefront.navigation-icon name="home" class="h-4 w-4 shrink-0" />
+            <span class="whitespace-nowrap font-black">{{ __('messages.nav_home') }}</span>
         </a>
-        <a href="{{ $productsUrl }}" class="relative px-1 py-2 transition {{ $isProducts ? 'text-sky-600 dark:text-sky-400' : 'text-slate-700 hover:text-sky-600 dark:text-slate-200 dark:hover:text-sky-400' }}">
-            {{ __('messages.products') }}
-            @if ($isProducts)<span class="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-sky-500"></span>@endif
+        <a href="{{ $productsUrl }}" class="sf-btn-3d !flex-row items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl transition {{ $isProducts ? 'active' : '' }}">
+            <x-storefront.navigation-icon name="products" class="h-4 w-4 shrink-0" />
+            <span class="whitespace-nowrap font-black">{{ __('messages.nav_products') }}</span>
         </a>
         @if (store_can('storefront.glass_finder', $activeStoreContext))
-            <a href="{{ $glassFinderUrl }}" class="relative inline-flex items-center gap-1 px-1 py-2 transition {{ $isGlassFinder ? 'text-sky-600 dark:text-sky-400' : 'text-slate-700 hover:text-sky-600 dark:text-slate-200 dark:hover:text-sky-400' }}">
+            <a href="{{ $glassFinderUrl }}" class="sf-btn-3d !flex-row items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl transition {{ $isGlassFinder ? 'active' : '' }}">
                 <span aria-hidden="true">📱</span>
-                <span>{{ __('messages.glass_finder') }}</span>
-                @if ($isGlassFinder)<span class="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-sky-500"></span>@endif
+                <span class="whitespace-nowrap font-black">{{ __('messages.nav_glass_finder') }}</span>
             </a>
         @endif
         @if (store_can('service.repair_jobs', $activeStoreContext))
-            <a href="{{ $serviceTrackingUrl }}" class="relative inline-flex items-center gap-1 px-1 py-2 transition {{ $isServiceTracking ? 'text-sky-600 dark:text-sky-400' : 'text-slate-700 hover:text-sky-600 dark:text-slate-200 dark:hover:text-sky-400' }}">
+            <a href="{{ $serviceTrackingUrl }}" class="sf-btn-3d !flex-row items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl transition {{ $isServiceTracking ? 'active' : '' }}">
                 <span aria-hidden="true">🔧</span>
-                <span>{{ __('messages.nav_service_track') }}</span>
-                @if ($isServiceTracking)<span class="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-sky-500"></span>@endif
+                <span class="whitespace-nowrap font-black">{{ __('messages.nav_service_track') }}</span>
             </a>
         @endif
         @if (store_can('storefront.online_ordering', $activeStoreContext))
-            <a href="{{ $howToOrderUrl }}" class="relative inline-flex items-center gap-1 px-1 py-2 transition {{ $isHowToOrder ? 'text-sky-600 dark:text-sky-400' : 'text-slate-700 hover:text-sky-600 dark:text-slate-200 dark:hover:text-sky-400' }}">
+            <a href="{{ $howToOrderUrl }}" class="sf-btn-3d !flex-row items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl transition {{ $isHowToOrder ? 'active' : '' }}">
                 <span aria-hidden="true">📖</span>
-                <span>{{ __('messages.how_to_order') }}</span>
-                @if ($isHowToOrder)<span class="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-sky-500"></span>@endif
+                <span class="whitespace-nowrap font-black">{{ __('messages.nav_how_to_order') }}</span>
             </a>
         @endif
         @if (store_can('storefront.blog', $activeStoreContext))
-            <a href="{{ $blogUrl }}" class="relative inline-flex items-center gap-1 px-1 py-2 transition {{ $isBlog ? 'text-sky-600 dark:text-sky-400' : 'text-slate-700 hover:text-sky-600 dark:text-slate-200 dark:hover:text-sky-400' }}">
+            <a href="{{ $blogUrl }}" class="sf-btn-3d !flex-row items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl transition {{ $isBlog ? 'active' : '' }}">
                 <span aria-hidden="true">📝</span>
-                <span>{{ __('messages.blog') }}</span>
-                @if ($isBlog)<span class="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-sky-500"></span>@endif
+                <span class="whitespace-nowrap font-black">{{ __('messages.nav_blog') }}</span>
             </a>
         @endif
     @endforelse
