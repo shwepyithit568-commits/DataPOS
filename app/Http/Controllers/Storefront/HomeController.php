@@ -57,19 +57,25 @@ class HomeController extends Controller
 
         $categoryTree = $allCategories
             ->whereNull('parent_id')
-            ->map(function ($main) use ($categories, $coverByCategory) {
-                $children = $categories
+            ->map(function ($main) use ($allCategories, $coverByCategory) {
+                $children = $allCategories
                     ->where('parent_id', $main->id)
-                    ->sortByDesc('products_count')
+                    ->sortBy([
+                        ['products_count', 'desc'],
+                        ['id', 'asc'],
+                    ])
                     ->values();
+                $childProductSum = $children->sum('products_count');
+                $total = $main->products_count + $childProductSum;
+
                 return (object) [
                     'category' => $main,
                     'children' => $children,
-                    'total' => $main->products_count + $children->sum('products_count'),
-                    'cover' => $coverByCategory[$main->id] ?? null,
+                    'total'    => $total,
+                    'cover'    => $coverByCategory[$main->id] ?? null,
                 ];
             })
-            ->filter(fn ($row) => $row->category->products_count > 0 || $row->children->isNotEmpty())
+            ->filter(fn ($row) => $row->total > 0 || $row->children->isNotEmpty())
             ->sortByDesc('total')
             ->values();
 

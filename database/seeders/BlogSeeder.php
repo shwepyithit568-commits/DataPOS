@@ -5,14 +5,18 @@ namespace Database\Seeders;
 use App\Models\Post;
 use App\Models\Store;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 /**
- * Seeds the storefront blog with Myanmar articles covering each business line
- * (mobile, accessories, CCTV, computer, network, fashion).
+ * Seeds the storefront blog with authentic AlinnThit Myanmar articles covering each business line
+ * (mobile, accessories, CCTV, computer, network, fashion) with SEO tags, categories,
+ * and featured images.
  *
- * Destructive by design: deletes existing posts for the store first, then
- * recreates them — so the blog always reflects the current business lines.
- * Run with: php artisan db:seed --class=BlogSeeder
+ * Safe to run multiple times (idempotent via updateOrCreate).
+ *
+ * Run with:
+ *   php artisan db:seed --class=BlogSeeder
  */
 class BlogSeeder extends Seeder
 {
@@ -47,14 +51,22 @@ class BlogSeeder extends Seeder
                 }
             }
 
+            // Copy featured image asset to public storage if it exists
+            if (!empty($post['image_path'])) {
+                $assetPath = database_path('seeders/assets/' . $post['image_path']);
+                if (File::exists($assetPath)) {
+                    Storage::disk('public')->put($post['image_path'], File::get($assetPath));
+                }
+            }
+
             Post::updateOrCreate(
                 [
                     'store_id' => $store->id,
-                    'slug' => $slug,
+                    'slug'     => $slug,
                 ],
                 array_merge($post, [
-                    'store_id' => $store->id,
-                    'slug' => $slug,
+                    'store_id'     => $store->id,
+                    'slug'         => $slug,
                     'is_published' => true,
                 ])
             );
@@ -67,53 +79,131 @@ class BlogSeeder extends Seeder
     {
         return [
             [
-                'title'        => 'ဖုန်းဝယ်တဲ့အခါ စစ်ဆေးသင့်တဲ့ အချက် ၇ ချက်',
-                'slug'         => 'phone-buying-checklist',
-                'excerpt'      => 'ဖုန်းအသစ် ဝယ်တော့မယ်ဆိုရင် ဈေးတင်မကြည့်ဘဲ ဒီအချက် ၇ ချက်ကို သေချာစစ်ဆေးပါ — နောက်နောင်မှာ ခေါင်းကိုက်စရာ ရှောင်နိုင်ပါတယ်။',
-                'content'      => "ဖုန်းဝယ်တာက ကြီးမားတဲ့ ရင်းနှီးမြှုပ်နှံမှုတစ်ခုပါ။ ဈေးသက်သာရုံနဲ့ မရွေးဘဲ ဒီအချက် ၇ ချက်ကို စစ်ပြီးမှ ဝယ်ပါ။\n\n၁။ IMEI စစ်ပါ — ဖုန်းထဲမှာ *#06# နှိပ်ပြီး ပေါ်လာတဲ့ IMEI နံပါတ်နဲ့ သေတ္တာပေါ်က နံပါတ် တူညီမှုရှိမရှိ ကြည့်ပါ။\n\n၂။ Official warranty ရှိလား — ဆိုင်တင် အာမခံသာ မဟုတ်ဘဲ brand ရဲ့ တရားဝင် အာမခံပါတဲ့ ဖုန်းကို ရွေးပါ။\n\n၃။ Battery health — ဘက်ထရီ အသစ်လား၊ လဲထားလား မေးပါ။ ဖုန်းအသုံးပြုပြီး ဝယ်ရင် health % ကို သေချာကြည့်ပါ။\n\n၄။ Storage နဲ့ RAM — ကိုယ့်အသုံးပြုပုံနဲ့ ကိုက်တဲ့ 256GB / 12GB လို spec ကို ရွေးပါ။\n\n၅။ ပါဝင်ပစ္စည်းတွေ — charger၊ cable၊ box အကုန်ပါလား စစ်ပါ။\n\n၆။ Network support — Myanmar မှာ သုံးတဲ့ 4G/5G band တွေနဲ့ ကိုက်ညီလား မေးပါ။\n\n၇။ ၇ ရက် exchange — ဖွင့်ပြီး ပြဿနာရှိရင် ပြန်လဲလို့ရတဲ့ ဆိုင်ကို ရွေးပါ။\n\nကျွန်တော်တို့ DataPOS မှာ အထက်ပါ အချက်တွေ အားလုံးကို အာမခံပေးပါတယ် — Viber ကနေ စုံစမ်းနိုင်ပါတယ်။",
-                'image_path'   => null,
-                'published_at' => now()->subDays(6),
+                'image_path'       => 'blog/phone-buying-checklist.webp',
+                'title'            => 'ဖုန်းဝယ်မယ်ဆို မဆုံးဖြတ်ခင် စစ်သင့်တဲ့ အချက် ၇ ချက်',
+                'slug'             => 'phone-buying-checklist',
+                'published_at'     => '2026-07-29 12:55:43',
+                'category'         => 'Mobile Guide',
+                'excerpt'          => 'ဖုန်းအသစ်ဝယ်တော့မယ်ဆို ဈေးတစ်ခုတည်းမကြည့်ပါနဲ့။ Performance, battery, camera, warranty နဲ့ resale value အထိ စစ်ပြီးမှရွေးပါ။',
+                'tags'             => 'mobile buying guide, smartphone, warranty, battery, camera',
+                'meta_keywords'    => 'ဖုန်းဝယ်နည်း, smartphone buying guide Myanmar, mobile shop, AlinnThit',
+                'meta_description' => 'ဖုန်းအသစ်ဝယ်မယ့်သူတွေအတွက် performance, battery, camera, warranty, storage နဲ့ budget စစ်ဆေးနည်းကို ဖတ်ရလွယ်အောင်ရှင်းပြထားသည်။',
+                'content'          => <<<'HTML'
+<h2>ဖုန်းဝယ်တာက ဈေးပေါတာတစ်ခုတည်းနဲ့ မဆုံးဖြတ်သင့်ပါ</h2>\n<p>ဖုန်းတစ်လုံးက နေ့တိုင်းသုံးရတဲ့ပစ္စည်းပါ။ ဈေးသက်သာလို့ဝယ်လိုက်ပေမယ့် battery မခံတာ၊ storage မလုံလောက်တာ၊ warranty မရှင်းတာတွေကြောင့် နောက်ပိုင်းပိုကုန်နိုင်ပါတယ်။ အောက်ကအချက်တွေကို စစ်ပြီးမှရွေးရင် ကိုယ့်ပိုက်ဆံနဲ့တန်တဲ့ဖုန်းကိုပိုမိုမှန်ကန်စွာရွေးနိုင်ပါတယ်။</p>\n<h2>1. ကိုယ်သုံးမယ့်အလုပ်ကိုအရင်သတ်မှတ်ပါ</h2>\n<p>Call, Facebook, Viber, TikTok လောက်ပဲသုံးမလား၊ game ဆော့မလား၊ camera ရိုက်မလား၊ business သုံးမလားဆိုတာအရင်ခွဲပါ။ Usage မတူရင် RAM, storage, chipset လိုအပ်ချက်လည်းမတူပါ။</p>\n<h2>2. RAM နဲ့ Storage ကိုနည်းနည်းပိုယူပါ</h2>\n<p>2026 အတွက် daily use ဆိုရင် RAM 6GB/8GB နဲ့ storage 128GB/256GB ကိုပိုအကြံပြုပါတယ်။ ဓာတ်ပုံ၊ video များသူဆို 256GB က ပိုစိတ်ချရပါတယ်။</p>\n<h2>3. Battery နဲ့ charging ကိုမမေ့ပါနဲ့</h2>\n<p>Battery 5000mAh ဝန်းကျင်နဲ့ fast charging support ပါရင် နေ့စဉ်သုံးရတာပိုအဆင်ပြေပါတယ်။ Charger original ပါ/မပါ၊ cable quality ကိုလည်းစစ်ပါ။</p>\n<h2>4. Camera ကို megapixel တစ်ခုတည်းမကြည့်ပါနဲ့</h2>\n<p>MP များတိုင်းပုံကောင်းတာမဟုတ်ပါ။ Low-light, stabilization, selfie, video quality တွေကို sample ရိုက်ကြည့်ပြီးမှဆုံးဖြတ်ပါ။</p>\n<h2>5. Warranty နဲ့ after-sale service ကိုမေးပါ</h2>\n<p>ဆိုင် warranty ဘယ်နှလ၊ official warranty ရှိ/မရှိ၊ software lock, region issue, replacement policy ရှိ/မရှိကိုဝယ်ခါနီးသေချာမေးပါ။</p>\n<blockquote><p>ဖုန်းဝယ်တဲ့အခါ “အခုသုံးလို့ရမလား” ထက် “နောက် ၂ နှစ် သုံးလို့အဆင်ပြေမလား” ဆိုတာကိုပိုစဉ်းစားပါ။</p></blockquote>\n<h2>AlinnThit မှာ ဘာကူညီပေးနိုင်လဲ</h2>\n<p>Mobile, accessories, screen protector, charger, cable, power bank တွေကို budget အလိုက်ရွေးပေးနိုင်ပါတယ်။ မသေချာရင် ကိုယ်သုံးမယ့်ပုံစံနဲ့ budget ကိုပြောပြီး Viber/Telegram ကနေမေးနိုင်ပါတယ်။</p>
+HTML,
             ],
             [
-                'title'        => 'Power Bank နဲ့ အားသွင်းကြိုး ဝယ်တဲ့အခါ မှားတတ်တဲ့ အမှား ၅ ခု',
-                'slug'         => 'power-bank-and-cable-mistakes',
-                'excerpt'      => 'ဈေးပေါတဲ့ power bank နဲ့ ကြိုးလေးတွေက ဖုန်းဘက်ထရီကို ဘယ်လို ပျက်စီးစေနိုင်လဲ — ရှောင်ရမယ့် အမှား ၅ ခုပါ။',
-                'content'      => "Power bank နဲ့ အားသွင်းကြိုးက နေ့စဉ်သုံးပစ္စည်းမို့ ဈေးပေါတာပဲ ရွေးမိတတ်ပါတယ်။ ဒါပေမဲ့ ဒီအမှား ၅ ခုက သင့်ဖုန်းရဲ့ ဘက်ထရီကို တိတ်တဆိတ် ပျက်စီးစေနိုင်ပါတယ်။\n\n၁။ ဈေးအရမ်းပေါတဲ့ power bank — နာမည်မသိ brand ရဲ့ အလွန်ပေါတဲ့ဟာတွေက လိုအပ်တဲ့ output power မပေးနိုင်ဘဲ ဖုန်းကို ဖြည်းဖြည်း အားသွင်းရုံသာမက ပူလောင်မှုလည်း ဖြစ်စေနိုင်ပါတယ်။\n\n၂။ mAh ကြီးရုံနဲ့ ရွေးတာ — mAh က ဘက်ထရီပမာဏ၊ output watt (W) က အားသွင်းမြန်နှုန်း။ နှစ်ခုလုံး ကြည့်ပါ။\n\n၃။ Fast charging ကိုက်ညီမှု မစစ်တာ — သင့်ဖုန်းရဲ့ fast charging စနစ် (PD / QC) နဲ့ ကိုက်ညီတဲ့ဟာ ရွေးပါ။\n\n၄။ ကြိုးကို watt မကြည့်ဘဲ ဝယ်တာ — 100W ကြိုးနဲ့ 10W ကြိုး ဈေးကွာတာ အကြောင်းရှိပါတယ်။ မြန်မြန်အားသွင်းချင်ရင် watt မြင့်တာကို ရွေးပါ။\n\n၅။ အာမခံ မရှိတဲ့ဆိုင်ကနေ ဝယ်တာ — power bank လိုမျိုးဟာက အနည်းဆုံး ၆ လ အာမခံရှိတဲ့ဆိုင်ကနေ ဝယ်ပါ။\n\nDataPOS မှာ Anker၊ Baseus၊ UGREEN လို နာမည်ကြီး brand တွေကို အာမခံနဲ့ ရောင်းချပေးပါတယ်။",
-                'image_path'   => null,
-                'published_at' => now()->subDays(4),
+                'image_path'       => 'blog/power-bank-and-cable-mistakes.webp',
+                'title'            => 'Power Bank နဲ့ Charging Cable ဝယ်မယ်ဆို ဒီအမှား ၅ ခုကိုရှောင်ပါ',
+                'slug'             => 'power-bank-and-cable-mistakes',
+                'published_at'     => '2026-07-31 12:55:43',
+                'category'         => 'Accessories Guide',
+                'excerpt'          => 'Power bank နဲ့ cable က သေးသေးလေးလိုပေမယ့် quality မကောင်းရင် ဖုန်း battery ကိုထိခိုက်နိုင်ပါတယ်။ ဝယ်ခါနီးစစ်ရမယ့်အချက်တွေပါ။',
+                'tags'             => 'power bank, charging cable, accessories, fast charging, battery safety',
+                'meta_keywords'    => 'power bank ဝယ်နည်း, charging cable, ဖုန်းအားသွင်းကြိုး, accessories Myanmar',
+                'meta_description' => 'Power bank နဲ့ charging cable ဝယ်တဲ့အခါ capacity, watt, cable type, safety protection နဲ့ warranty စစ်နည်းကိုရှင်းပြထားသည်။',
+                'content'          => <<<'HTML'
+<h2>အားသွင်းပစ္စည်းတွေက ဖုန်းရဲ့အသက်ကိုထိန်းပေးတဲ့ပစ္စည်းပါ</h2>\n<p>Power bank နဲ့ charging cable ကို “ပေါလို့ရရင်ပြီးရော” ဆိုပြီးရွေးတတ်ကြပါတယ်။ တကယ်တော့ quality မကောင်းတဲ့အားသွင်းပစ္စည်းတွေက battery health ကျစေခြင်း၊ အားသွင်းနှေးခြင်း၊ အပူတက်ခြင်းတွေဖြစ်စေနိုင်ပါတယ်။</p>\n<h2>1. Capacity ကိုအမှန်တကယ်လိုအပ်သလောက်ရွေးပါ</h2>\n<p>နေ့စဉ်အပြင်သွားသုံးဖို့ဆို 10,000mAh ကလုံလောက်နိုင်ပါတယ်။ ခရီးထွက်သူ၊ ဖုန်း/တက်ဘလက်နှစ်ခုသုံးသူဆို 20,000mAh ကိုစဉ်းစားပါ။ Capacity ကြီးလေ အလေးချိန်လည်းတိုးတာကိုမမေ့ပါနဲ့။</p>\n<h2>2. Fast charging watt ကိုစစ်ပါ</h2>\n<p>ဖုန်းက 33W support လုပ်ပေမယ့် power bank က 10W ပဲပေးနိုင်ရင် အားသွင်းနှေးနေပါလိမ့်မယ်။ USB-C PD, QC support ပါ/မပါကိုစစ်ပါ။</p>\n<h2>3. Cable ကောင်းမှ fast charging အလုပ်လုပ်ပါတယ်</h2>\n<p>ကြိုးမကောင်းရင် charger ကောင်းလည်းအပြည့်မရပါ။ Type-C to Type-C, Type-C to Lightning, USB-A to Type-C မျိုးကို ကိုယ့်ဖုန်း/charger နဲ့ကိုက်အောင်ရွေးပါ။</p>\n<h2>4. Safety protection ပါတဲ့ brand ကိုရွေးပါ</h2>\n<p>Over-charge, over-current, short-circuit protection ပါတဲ့ power bank ကိုရွေးတာပိုစိတ်ချရပါတယ်။ အပူလွန်တာ၊ body ဖောင်းတာရှိရင်ဆက်မသုံးပါနဲ့။</p>\n<h2>5. Warranty နဲ့ original packaging ကိုစစ်ပါ</h2>\n<p>Accessories တောင် warranty ရှိတဲ့ဆိုင်ကနေဝယ်တာပိုကောင်းပါတယ်။ အထူးသဖြင့် fast charger, cable, power bank တို့မှာ quality အာမခံကအရေးကြီးပါတယ်။</p>\n<blockquote><p>ဖုန်းကိုနေ့တိုင်းအားသွင်းတာဖြစ်လို့ charging accessories ကိုလျှော့တွက်မထားပါနဲ့။</p></blockquote>\n<p>AlinnThit မှာ budget သက်သာတဲ့ accessories ကနေ fast charging support ပါတဲ့ quality items တွေအထိ ဖုန်းမော်ဒယ်နဲ့ကိုက်အောင်ရွေးပေးနိုင်ပါတယ်။</p>
+HTML,
             ],
             [
-                'title'        => 'CCTV ဝယ်တဲ့အခါ 2MP / 4MP / 8MP ဘယ်ဟာ ရွေးရမလဲ',
-                'slug'         => 'cctv-buying-guide',
-                'excerpt'      => 'အိမ်၊ ဆိုင်၊ ဂိုဒေါင် ဘယ်နေရာမှာမဆို CCTV ဝယ်တော့မယ်ဆိုရင် resolution၊ recorder နဲ့ storage ကို ဘယ်လို ဆုံးဖြတ်ရမလဲ။',
-                'content'      => "CCTV ဝယ်တာက ကင်မရာတစ်လုံးတည်း ဝယ်တာမဟုတ်ဘဲ စနစ်တစ်ခုလုံး ဝယ်တာပါ။ ဒါတွေကို ကြိုသိထားရင် အမှားနည်းပါတယ်။\n\n၁။ Resolution (MP) — 2MP က ဈေးသက်သာပြီး နေ့ခင်းဘက် ရှင်းတယ်။ 4MP က ညဘက်အရောင် (color night vision) နဲ့ အသေးစိတ်ကောင်းတယ်။ 8MP (4K) က ဈေးကြီးပြီး ကားနံပါတ်ပြား ဖတ်ချင်တာလို နေရာမျိုးအတွက်။\n\n၂။ Recorder — DVR က analog ကင်မရာနဲ့၊ NVR က IP/ကြိုးမဲ့ ကင်မရာနဲ့ တွဲသုံးတယ်။ ကင်မရာရွေးသလို recorder ကိုလည်း ကိုက်ညီအောင် ရွေးရပါတယ်။\n\n၃။ Storage — 4 ကင်မရာ 2MP ဆိုရင် 1TB က တစ်လလောက် မှတ်တမ်းထားနိုင်တယ်။ ကင်မရာများလေ၊ resolution မြင့်လေ storage ပိုလိုပါတယ်။\n\n၄။ Night vision — ညဘက် မှောင်တဲ့နေရာဆိုရင် color night vision ပါတဲ့ဟာ ရွေးပါ။\n\n၅။ ကြိုး ဒါမှမဟုတ် ကြိုးမဲ့ — ကြိုးမဲ့ (Wi-Fi) က တပ်ဆင်လွယ်ပေမယ့် WiFi ကောင်းဖို့လိုတယ်။ အရေးကြီးနေရာဆို ကြိုးပါတဲ့ စနစ် ပိုတည်ငြိမ်ပါတယ်။\n\nDataPOS မှာ Hikvision၊ Dahua၊ TP-Link Tapo kit တွေကို တပ်ဆင်လမ်းညွှန်နဲ့ ရောင်းချပေးပါတယ် — Viber ကနေ မေးပါ။",
-                'image_path'   => null,
-                'published_at' => now()->subDays(3),
+                'image_path'       => 'blog/cctv-buying-guide.webp',
+                'title'            => 'CCTV ဝယ်မယ်ဆို 2MP / 4MP / 8MP ဘယ်ဟာကိုရွေးရမလဲ',
+                'slug'             => 'cctv-buying-guide',
+                'published_at'     => '2026-08-01 12:55:43',
+                'category'         => 'CCTV Guide',
+                'excerpt'          => 'အိမ်၊ ဆိုင်၊ ဂိုဒေါင်၊ ရုံးခန်းအတွက် CCTV တပ်မယ်ဆို resolution တစ်ခုတည်းမဟုတ်ဘဲ storage, night vision, recorder နဲ့ internet ကြည့်နိုင်မှုပါစစ်ပါ။',
+                'tags'             => 'CCTV, security camera, 2MP, 4MP, 8MP, NVR, DVR',
+                'meta_keywords'    => 'CCTV ဝယ်နည်း, security camera Myanmar, 2MP 4MP 8MP CCTV, NVR DVR',
+                'meta_description' => 'CCTV camera ဝယ်မယ့်သူများအတွက် 2MP, 4MP, 8MP ရွေးနည်း၊ storage, night vision, recorder နဲ့ installation အကြံပြုချက်များ။',
+                'content'          => <<<'HTML'
+<h2>CCTV ရွေးတဲ့အခါ “ကင်မရာဘယ်နှလုံး” တစ်ခုတည်းမေးရုံနဲ့မလုံလောက်ပါ</h2>\n<p>CCTV system က camera, recorder, hard disk, cable, power supply, internet viewing အားလုံးပေါင်းမှကောင်းကောင်းအလုပ်လုပ်ပါတယ်။ အရင်ဆုံးတပ်မယ့်နေရာနဲ့လိုချင်တဲ့အသေးစိတ်ကိုသတ်မှတ်ပါ။</p>\n<h2>2MP, 4MP, 8MP ဘယ်လိုကွာလဲ</h2>\n<p><strong>2MP</strong> က basic monitoring အတွက်လုံလောက်ပါတယ်။ ဆိုင်အတွင်းပိုင်း၊ အိမ်အဝင်ဝနီးနီးများအတွက်သင့်တော်ပါတယ်။ <strong>4MP</strong> က ပုံရိပ်ပိုရှင်းပြီး မျက်နှာ/နံပါတ်ပြားကိုပိုကောင်းကောင်းမြင်ချင်တဲ့နေရာတွေအတွက်သင့်တော်ပါတယ်။ <strong>8MP</strong> က wide area, warehouse, parking, high-detail monitoring အတွက်ပိုကောင်းပါတယ်။</p>\n<h2>Night vision ကိုသေချာစစ်ပါ</h2>\n<p>ညဘက်မှာပုံမရှင်းရင် CCTV ရဲ့အကျိုးကျေးဇူးတစ်ဝက်လျော့သွားပါတယ်။ Infrared range, color night vision, light condition တွေကိုတပ်မယ့်နေရာနဲ့ကိုက်အောင်ရွေးပါ။</p>\n<h2>Storage ဘယ်လောက်လိုမလဲ</h2>\n<p>Camera အရေအတွက်၊ resolution, recording mode, သိမ်းထားချင်တဲ့ရက်အရေအတွက်အပေါ်မူတည်ပါတယ်။ 4 cameras ကို ၇ ရက်ထက်ပိုသိမ်းချင်ရင် hard disk size ကိုကြိုတွက်ထားသင့်ပါတယ်။</p>\n<h2>ဖုန်းနဲ့ကြည့်ချင်ရင် internet setup ပါလိုပါတယ်</h2>\n<p>အပြင်ကနေဖုန်းနဲ့ live view ကြည့်ချင်ရင် router/internet connection, app setup, account security တွေပါမှန်ရပါမယ်။ Password ကို default မထားဖို့လည်းအရေးကြီးပါတယ်။</p>\n<blockquote><p>CCTV က တပ်ပြီးရင်ပြီးတာမဟုတ်ပါ။ ကြည့်ရလွယ်၊ ပြန်ရှာရလွယ်၊ ပုံသိမ်းတာမှန်ဖို့လိုပါတယ်။</p></blockquote>\n<p>AlinnThit မှာ အိမ်၊ ဆိုင်၊ ဂိုဒေါင်၊ ရုံးခန်းအတွက် camera resolution, recorder, storage ကိုနေရာအလိုက်အကြံပြုပေးနိုင်ပါတယ်။</p>
+HTML,
             ],
             [
-                'title'        => 'လက်ပ်တော့ ဝယ်တဲ့အခါ ဘယ် Spec တွေ ကြည့်ရမလဲ',
-                'slug'         => 'laptop-buying-guide',
-                'excerpt'      => 'ကျောင်း၊ ရုံး၊ design၊ gaming — ကိုယ့်အသုံးပြုပုံပေါ်မူတည်ပြီး လက်ပ်တော့ spec ရွေးနည်း အပြည့်အစုံ။',
-                'content'      => "လက်ပ်တော့ ဈေးကွက်ကြီးတာနဲ့အမျှ ရွေးရတာ ရှုပ်တတ်ပါတယ်။ ကိုယ့်အလုပ်အမျိုးအစားကို အရင်သတ်မှတ်ပြီး အောက်က spec တွေနဲ့ ယှဉ်ကြည့်ပါ။\n\n၁။ Processor (CPU) — ရုံးသုံး/ကျောင်းသုံးဆို Core i5 (သို့) Ryzen 5 လုံလောက်ပါတယ်။ Video edit/design ဆိုရင် i7/Ryzen 7 အထက် ရွေးပါ။\n\n၂။ RAM — ယနေ့ခေတ်မှာ 8GB က အနည်းဆုံး၊ 16GB က အကြံပြုထားပါတယ်။ Browser tabs အများကြီး ဖွင့်တတ်ရင် 16GB ပိုအဆင်ပြေပါတယ်။\n\n၃။ Storage — SSD ဖြစ်ရပါမယ်။ 256GB က ရုံးသုံးအတွက် လုံလောက်ပြီး 512GB က ပိုစိတ်ချရပါတယ်။\n\n၄။ Screen — နေ့စဉ်သုံးရင် FHD (1920x1080) ဖြစ်ရပါမယ်။ Design ဆို OLED ဒါမှမဟုတ် ရောင်စုံတိကျတဲ့ panel ရွေးပါ။\n\n၅။ Battery — ကျောင်းသွားသယ်ရတဲ့သူဆို 8 နာရီအထက် ခံတဲ့ဟာ ရွေးပါ။\n\n၆။ Weight — ခရီးသွားလေ့ရှိရင် 1.5kg အောက် ပေါ့ပါးတဲ့ဟာ ရွေးပါ။\n\nအမှားများတဲ့အချက်က ဈေးကြီးတဲ့ spec ကို မလိုဘဲ ဝယ်မိတာပါ — ကိုယ့်အသုံးပြုပုံကို ပြောပြရင် DataPOS က လိုအပ်တဲ့ဟာကိုပဲ အကြံပြုပေးပါတယ်။",
-                'image_path'   => null,
-                'published_at' => now()->subDays(2),
+                'image_path'       => 'blog/laptop-buying-guide.webp',
+                'title'            => 'Laptop ဝယ်မယ်ဆို CPU, RAM, SSD ကို ဘယ်လိုရွေးမလဲ',
+                'slug'             => 'laptop-buying-guide',
+                'published_at'     => '2026-08-02 12:55:43',
+                'category'         => 'Computer Guide',
+                'excerpt'          => 'ကျောင်းသုံး၊ ရုံးသုံး၊ design, video editing, gaming အတွက် Laptop spec မတူပါ။ CPU, RAM, SSD, display နဲ့ warranty ကိုရှင်းရှင်းလင်းလင်းရွေးနည်းပါ။',
+                'tags'             => 'laptop buying guide, computer, RAM, SSD, CPU, student laptop, office laptop',
+                'meta_keywords'    => 'Laptop ဝယ်နည်း, computer shop Myanmar, RAM SSD CPU laptop guide',
+                'meta_description' => 'Laptop ဝယ်မယ့်သူများအတွက် usage အလိုက် CPU, RAM, SSD, display, battery နဲ့ warranty ရွေးချယ်နည်းကိုဖော်ပြထားသည်။',
+                'content'          => <<<'HTML'
+<h2>Laptop ဝယ်တာက ကိုယ့်အလုပ်ပေါ်မူတည်ပြီးရွေးရပါတယ်</h2>\n<p>ကျောင်းစာရေးဖို့၊ office သုံးဖို့၊ Photoshop/Design လုပ်ဖို့၊ video editing လုပ်ဖို့၊ game ဆော့ဖို့လိုအပ်တဲ့ spec တွေမတူပါ။ ဈေးကြီးတိုင်းမလိုအပ်သလို ဈေးပေါတိုင်းလည်းမတန်နိုင်ပါ။</p>\n<h2>Office / ကျောင်းသုံး</h2>\n<p>Browser, Word, Excel, Zoom, YouTube လောက်ဆို Intel Core i3/i5 သို့မဟုတ် Ryzen 3/5, RAM 8GB, SSD 256GB/512GB ကအဆင်ပြေပါတယ်။ SSD ပါတာက HDD ထက်အများကြီးမြန်ပါတယ်။</p>\n<h2>Design / Editing သုံး</h2>\n<p>Photoshop, Illustrator, Canva-heavy work, video editing သုံးမယ်ဆို RAM 16GB, SSD 512GB, display color ကောင်းတာ၊ dedicated GPU လို/မလိုကိုစဉ်းစားပါ။</p>\n<h2>Gaming သုံး</h2>\n<p>Gaming laptop မှာ CPU ထက် GPU ကအရေးကြီးလာပါတယ်။ Cooling ကောင်းမကောင်း၊ adapter watt, display refresh rate, upgrade slot ရှိ/မရှိကိုပါစစ်ပါ။</p>\n<h2>Battery နဲ့ weight</h2>\n<p>နေ့တိုင်းသယ်ရမယ်ဆို 14-inch lightweight laptop ကပိုအဆင်ပြေပါတယ်။ အိမ်/ရုံးမှာထားသုံးမယ်ဆို 15.6-inch screen ကြီးတာကအလုပ်လုပ်ရတာပိုကောင်းနိုင်ပါတယ်။</p>\n<h2>Warranty, keyboard, ports</h2>\n<p>Keyboard အဆင်ပြေမပြေ၊ USB-C, HDMI, LAN, card reader လိုအပ်မလား၊ warranty ဘယ်လိုရမလဲကိုဝယ်ခါနီးစစ်ပါ။</p>\n<blockquote><p>Laptop ကို spec စာရွက်နဲ့ပဲမဆုံးဖြတ်ပါနဲ့။ ကိုယ်သုံးမယ့် software နဲ့ကိုက်တာကအရေးကြီးဆုံးပါ။</p></blockquote>\n<p>AlinnThit မှာ student, office, design, gaming, business သုံး laptop/computer accessories တွေကို budget အလိုက်ရွေးပေးနိုင်ပါတယ်။</p>
+HTML,
             ],
             [
-                'title'        => 'WiFi မြန်မြန်ရဖို့ Router ဘယ်လို ရွေးမလဲ',
-                'slug'         => 'how-to-choose-a-wifi-router',
-                'excerpt'      => 'Internet ကြေးဆောင်ထားပေမယ့် WiFi နှေးနေတာလား။ သင့်အိမ်/ရုံးနဲ့ ကိုက်တဲ့ router ရွေးနည်း အဆင့်ဆင့်။',
-                'content'      => "Internet လိုင်းကောင်းပေမယ့် WiFi နှေးတယ်ဆိုရင် အပြစ်က router မှာ ဖြစ်တတ်ပါတယ်။ ဒီလိုရွေးကြည့်ပါ။\n\n၁။ AC လား AX လား — AX (WiFi 6) က အသစ်၊ မြန်ပြီး ပစ္စည်းအများကြီး တစ်ပြိုင်နက်ချိတ်ရင် ပိုတည်ငြိမ်တယ်။ အခုခေတ် ဖုန်းတွေက WiFi 6 ကို ထောက်ပံ့နေပြီမို့ AX ကို ရွေးတာ ရေရှည်စိတ်ချရတယ်။\n\n၂။ Speed နာမည် (AC1200, AX3000, AX5400...) — ဂဏန်းကြီးလေ မြန်လေ မဟုတ်ဘဲ ကိုယ့် internet လိုင်း speed နဲ့ ကိုက်ရင် ရပါတယ်။ ဥပမာ 50Mbps လိုင်းဆို AX1500 လောက်နဲ့ လုံလောက်ပါတယ်။\n\n၃။ Coverage — အိမ်ကြီး/ထပ်ပေါင်းအိမ်ဆိုရင် router တစ်လုံးတည်းနဲ့ မလုံလောက်တတ်ဘူး။ Mesh system (သို့) WiFi extender ထပ်ထည့်ပါ။\n\n၄။ Ports — desktop/ကြိုးသုံးချင်ရင် Gigabit port ပါတဲ့ဟာ ရွေးပါ။\n\n၅။ Band — dual-band (2.4GHz + 5GHz) ဖြစ်ရပါမယ်။ 2.4GHz က အကွာအဝေးဝေး၊ 5GHz က မြန်။\n\nဆိုင်မှာ တပ်ဆင်အသုံးပြုတာ ဒါမှမဟုတ် လူအများသုံးတယ်ဆိုရင် MikroTik လို business-grade ရွေးသင့်ပါတယ် — DataPOS မှာ TP-Link၊ Tenda၊ Mercusys၊ MikroTik အကုန်ရှိပါတယ်။",
-                'image_path'   => null,
-                'published_at' => now()->subDay(),
+                'image_path'       => 'blog/how-to-choose-a-wifi-router.webp',
+                'title'            => 'WiFi နှေးနေလား? Router ရွေးတဲ့အခါစစ်ရမယ့် အချက်များ',
+                'slug'             => 'how-to-choose-a-wifi-router',
+                'published_at'     => '2026-08-03 12:55:43',
+                'category'         => 'Network Guide',
+                'excerpt'          => 'Internet ကြေးပေးထားပေမယ့် WiFi နှေးနေရင် router, coverage, band, placement, device limit တွေကြောင့်ဖြစ်နိုင်ပါတယ်။',
+                'tags'             => 'wifi router, network, dual band, mesh wifi, internet speed',
+                'meta_keywords'    => 'WiFi router ဝယ်နည်း, router Myanmar, dual band router, mesh wifi',
+                'meta_description' => 'WiFi နှေးခြင်းကိုဖြေရှင်းရန် router ရွေးနည်း၊ dual-band, coverage, placement, mesh WiFi အကြံပြုချက်များ။',
+                'content'          => <<<'HTML'
+<h2>Internet speed ကောင်းပေမယ့် WiFi နှေးတာ Router ကြောင့်ဖြစ်နိုင်ပါတယ်</h2>\n<p>တစ်ခါတစ်လေ ISP speed မဟုတ်ဘဲ router မကိုက်တာ၊ တပ်ထားတဲ့နေရာမမှန်တာ၊ device များလွန်းတာကြောင့် WiFi နှေးတတ်ပါတယ်။ Router ဝယ်ခါနီး အောက်ကအချက်တွေကိုစစ်ပါ။</p>\n<h2>Single band နဲ့ Dual band ကွာခြားချက်</h2>\n<p>2.4GHz ကအကွာအဝေးပိုရောက်ပေမယ့် speed နည်းနိုင်ပါတယ်။ 5GHz က speed ပိုကောင်းပေမယ့် နံရံများရင်အကွာအဝေးလျော့နိုင်ပါတယ်။ ဖုန်း/လက်ပ်တော့များတဲ့အိမ်၊ ရုံးငယ်တွေမှာ dual-band router ကိုပိုအကြံပြုပါတယ်။</p>\n<h2>အိမ်အကျယ်နဲ့နံရံအရေအတွက်ကိုတွက်ပါ</h2>\n<p>တစ်ထပ်အိမ်ငယ်ဆို router တစ်လုံးလုံလောက်နိုင်ပေမယ့် နှစ်ထပ်အိမ်၊ အခန်းများ၊ concrete wall များရင် mesh WiFi သို့မဟုတ် access point ထပ်လိုနိုင်ပါတယ်။</p>\n<h2>Device ဘယ်နှခုချိတ်မလဲ</h2>\n<p>ဖုန်း ၅ လုံး၊ laptop ၂ လုံး၊ CCTV, smart TV, printer စသည်ဖြင့် device များရင် router performance ပိုလိုပါတယ်။ Cheap router တစ်လုံးတည်းနဲ့ device များလွန်းရင် lag ဖြစ်နိုင်ပါတယ်။</p>\n<h2>Router placement</h2>\n<p>Router ကို မြင့်တဲ့နေရာ၊ အလယ်ပိုင်း၊ အဖုံးမပိတ်တဲ့နေရာမှာထားပါ။ သံပုံး၊ TV နောက်၊ concrete corner, microwave အနီးတွေကိုရှောင်ပါ။</p>\n<blockquote><p>WiFi ကောင်းချင်ရင် router model ရွေးတာနဲ့ placement နှစ်ခုလုံးမှန်ရပါမယ်။</p></blockquote>\n<p>AlinnThit မှာ home WiFi, office network, CCTV network setup အတွက် router/accessories ကိုလိုအပ်ချက်အလိုက်ရွေးပေးနိုင်ပါတယ်။</p>
+HTML,
             ],
             [
-                'title'        => 'အွန်လိုင်းကနေ အဝတ်အစား ဝယ်တဲ့အခါ Size ရွေးနည်း',
-                'slug'         => 'online-clothing-size-guide',
-                'excerpt'      => 'အွန်လိုင်းဝယ်ရင် size လွဲတတ်တဲ့ ပြဿနာ — ကိုယ့်အရွယ်အစား မှန်မှန်ရွေးနိုင်ဖို့ လွယ်ကူတဲ့ နည်းလမ်းတွေ။',
-                'content'      => "အွန်လိုင်းကနေ အဝတ်အစား ဝယ်တုန်း size လွဲတာက အဖြစ်များဆုံး ပြဿနာပါ။ ဒီနည်းတွေသုံးရင် လွဲနိုင်ခြေ နည်းသွားပါလိမ့်မယ်။\n\n၁။ Measurement ယူပါ — ကိုယ့် chest (ရင်ဘတ်)၊ waist (ခါး)၊ hip (တင်ပါး)၊ shoulder (ပခုံး) ကို ကြိုးနဲ့တိုင်းပြီး မှတ်ထားပါ။\n\n၂။ Size chart ကြည့်ပါ — ဆိုင်တိုင်းမှာ size chart ရှိပါတယ်။ S/M/L နာမည်တွေက brand အလိုက် ကွာတတ်လို့ chart ကိုပဲ ယုံပါ။\n\n၃။ ချုပ်နည်းကြည့်ပါ — slim fit လား regular fit လား ဆိုတာ ဖတ်ပါ။ ကိုယ့်ခန္ဓာကိုယ်ပုံစံနဲ့ ကိုက်တာရွေးပါ။\n\n၄။ Fabric ကြည့်ပါ — 100% cotton လား၊ blend လား။ လျှော်ရင် ကျုံ့နိုင်လား ဆိုတာ ဖတ်ပါ။\n\n၅။ Exchange policy ရှိတဲ့ဆိုင် — size လွဲရင် ၃ ရက်အတွင်း လဲလို့ရတဲ့ဆိုင်ကနေ ဝယ်ပါ။\n\nDataPOS မှာ အဝတ်အစားတိုင်းမှာ size chart ပါပြီး မဖွင့်ရသေးဘဲ tag ပါရင် ၃ ရက်အတွင်း size လဲလှယ်ပေးပါတယ်။",
-                'image_path'   => null,
-                'published_at' => now(),
+                'image_path'       => 'blog/online-clothing-size-guide.webp',
+                'title'            => 'Online Fashion ဝယ်တဲ့အခါ Size မမှားအောင်ရွေးနည်း',
+                'slug'             => 'online-clothing-size-guide',
+                'published_at'     => '2026-08-04 12:55:00',
+                'category'         => 'Fashion Guide',
+                'excerpt'          => 'Online မှာအဝတ်အစားဝယ်တဲ့အခါ S/M/L တစ်ခုတည်းမကြည့်ပါနဲ့။ ကိုယ်တိုင်းတာနည်း၊ fabric, fit type နဲ့ return policy ကိုစစ်ပါ။',
+                'tags'             => 'fashion, online shopping, size guide, clothing, accessories',
+                'meta_keywords'    => 'online fashion size guide, အဝတ်အစား size ရွေးနည်း, Myanmar fashion shop',
+                'meta_description' => 'Online fashion ဝယ်တဲ့အခါ size မမှားစေရန် body measurement, fabric, fit type, size chart နဲ့ return policy စစ်နည်း။',
+                'content'          => <<<'HTML'
+<h2>Online ကနေ Fashion ဝယ်ရင် Size chart ကိုသေချာဖတ်ပါ</h2>\n<p>အဝတ်အစား size မတော်တာက online shopping မှာအများဆုံးကြုံရတဲ့ပြဿနာပါ။ Brand တစ်ခုနဲ့တစ်ခု S/M/L မတူနိုင်လို့ size label တစ်ခုတည်းနဲ့မဆုံးဖြတ်သင့်ပါ။</p>\n<h2>ကိုယ်တိုင်းတာကိုအရင်ယူပါ</h2>\n<p>Chest, waist, hip, shoulder, length တို့ကို measuring tape နဲ့တိုင်းထားပါ။ ကိုယ့်တိုင်းတာနဲ့ size chart ကိုနှိုင်းယှဉ်ပြီးမှရွေးပါ။ မသေချာရင် ပိုကြီးတဲ့ size ကိုစဉ်းစားတာပိုလုံခြုံပါတယ်။</p>\n<h2>Fit type ကိုကြည့်ပါ</h2>\n<p>Regular fit, slim fit, oversized fit ဆိုတာတစ်ခုနဲ့တစ်ခုဝတ်ရတဲ့ feeling မတူပါ။ ကိုယ်ကြိုက်တဲ့ style နဲ့ကိုက်မကိုက်ကို product description ထဲမှာစစ်ပါ။</p>\n<h2>Fabric အမျိုးအစားက size feel ကိုပြောင်းစေပါတယ်</h2>\n<p>Stretch ပါတဲ့အထည်က body နဲ့လိုက်လျောညီထွေဖြစ်နိုင်ပေမယ့် cotton/denim စတဲ့အထည်တွေက stretch နည်းနိုင်ပါတယ်။ Wash ပြီးနောက် shrink ဖြစ်နိုင်တဲ့အထည်မျိုးလည်းရှိပါတယ်။</p>\n<h2>Review/real photo ရှိရင်ကြည့်ပါ</h2>\n<p>Customer photo, height/weight reference, review comment တွေက size မှန်အောင်ရွေးရာမှာအထောက်အကူဖြစ်ပါတယ်။</p>\n<h2>Return / exchange policy ကိုမေးပါ</h2>\n<p>Size မတော်ရင်လဲလို့ရမလား၊ ဘယ်အခြေအနေမှာလက်ခံမလဲ၊ delivery fee ဘယ်သူတာဝန်ယူမလဲကိုဝယ်ခါနီးမေးထားပါ။</p>\n<blockquote><p>Fashion item ဝယ်တဲ့အခါ “လှမလား” အပြင် “ကိုယ်နဲ့အံဝင်မလား” ဆိုတာကိုပါစစ်ပါ။</p></blockquote>\n<p>AlinnThit မှာ Fashion item တွေအတွက် size, color, style ကိုမေးမြန်းပြီးမှမှာယူနိုင်ပါတယ်။ မသေချာရင် Viber/Telegram ကနေတိုင်းတာကိုပို့ပြီးအကြံပြုချက်တောင်းနိုင်ပါတယ်။</p>
+HTML,
             ],
+            [
+                'image_path'       => 'blog/syVxzy1COu4I5jdimCYYbT4eiEIG9wDliyevA1ow.webp',
+                'title'            => 'မီးပျက်ချိန် CCTV ဆက်အလုပ်လုပ်အောင် Backup Power ရွေးနည်း',
+                'slug'             => 'cctv-backup-power-guide-myanmar',
+                'published_at'     => '2026-08-10 00:52:23',
+                'category'         => 'CCTV Guide',
+                'excerpt'          => 'မီးပျက်တာများတဲ့ နယ်မြို့တွေမှာ CCTV၊ DVR/NVR နဲ့ Router ကို ဆက်အလုပ်လုပ်စေဖို့ Backup Power ကို ဘယ်လိုတွက်ချက်ရွေးချယ်ရမလဲ လက်တွေ့ရှင်းပြထားပါတယ်။',
+                'tags'             => 'CCTV, Backup Power, UPS, နယ်မြို့, လုံခြုံရေး',
+                'meta_keywords'    => 'CCTV backup power, CCTV UPS, မီးပျက် CCTV, Myanmar CCTV guide',
+                'meta_description' => 'မီးပျက်ချိန် CCTV မရပ်သွားအောင် UPS သို့မဟုတ် Backup Battery ရွေးနည်း၊ အသုံးခံချိန်တွက်နည်းနှင့် တပ်ဆင်ရာတွင် သတိထားရမည့်အချက်များ။',
+                'content'          => <<<'HTML'
+<p>မြို့ကြီးတွေထက် နယ်မြို့နဲ့ ကျေးလက်ဘက်မှာ မီးအားမတည်ငြိမ်တာ၊ အချိန်ကြာကြာ မီးပျက်တာတွေ ပိုကြုံရတတ်ပါတယ်။ CCTV တပ်ထားပေမယ့် မီးပျက်ချိန်မှာ Camera၊ DVR/NVR ဒါမှမဟုတ် Wi‑Fi Router ပိတ်သွားရင် အရေးကြီးဆုံးအချိန်ကို မှတ်တမ်းမတင်နိုင်တော့ပါဘူး။ ဒါကြောင့် Camera တစ်လုံးရွေးတာနဲ့တင် မပြီးဘဲ Backup Power ကိုပါ စနစ်တကျစဉ်းစားရပါတယ်။</p><p>အရင်ဆုံး ဘယ်ပစ္စည်းတွေကို ဆက်ဖွင့်ထားမလဲ</p><p>CCTV စနစ်တစ်ခုမှာ Camera တင်မကပါဘူး။ DVR/NVR၊ Hard Disk၊ Monitor၊ Router၊ PoE Switch နဲ့ 12V Power Supply စတာတွေ ပါနိုင်ပါတယ်။ မီးပျက်ချိန်မှာ Monitor ကို မဖြစ်မနေဖွင့်ထားစရာမလိုပါက ပိတ်ထားခြင်းက Backup အချိန်ပိုကြာစေပါတယ်။ အနည်းဆုံး Camera + DVR/NVR + Router ကို ဆက်လည်စေဖို့ စီစဉ်တာက လက်တွေ့အသုံးများပါတယ်။</p><p>စုစုပေါင်း Watt ကို ဘယ်လိုတွက်မလဲ</p><p>ပစ္စည်းတစ်ခုချင်းစီရဲ့ Adapter သို့မဟုတ် Label ပေါ်မှာ Watt (W) ကို ရှာကြည့်ပါ။ Watt မရေးထားဘဲ Volt (V) နဲ့ Ampere (A) ပဲရှိရင် “Watt = Volt × Ampere” နဲ့ အကြမ်းဖျင်းတွက်နိုင်ပါတယ်။</p><p>• Camera 4 လုံး — တစ်လုံး 5W ဆိုရင် 20W<br>• DVR/NVR + Hard Disk — ခန့်မှန်း 20W မှ 35W<br>• Router — ခန့်မှန်း 8W မှ 15W<br>• PoE Switch ရှိလျှင် ၎င်းရဲ့အသုံးအားကိုပါ ထည့်တွက်ရန်</p><p>ဥပမာ စုစုပေါင်း 60W အသုံးပြုတယ်ဆိုရင် အစွန်းရောက်အထိမသုံးဘဲ အနည်းဆုံး 20% မှ 30% အပိုခံနိုင်ရည်ရှိတဲ့ UPS/Backup စနစ်ကိုရွေးတာ ပိုကောင်းပါတယ်။ ပစ္စည်းအမျိုးအစားအလိုက် တကယ့် Watt ကွာနိုင်လို့ Label ကိုအဓိကထားပါ။</p><p>UPS နဲ့ Battery Backup ဘယ်ဟာရွေးမလဲ</p><p>မီးခဏခဏပျက်ပေမယ့် ၁၅ မိနစ်ကနေ ၁ နာရီအတွင်း ပြန်လာတတ်ရင် သင့်တော်တဲ့ UPS တစ်လုံးနဲ့ အဆင်ပြေနိုင်ပါတယ်။ UPS က မီးပြတ်တာနဲ့ ချက်ချင်းပြောင်းပေးလို့ DVR reboot ဖြစ်တာ၊ Recording ပြတ်တာကို လျော့ချပေးပါတယ်။</p><p>နာရီအတော်ကြာ မီးပျက်တတ်ရင် Backup Battery အရွယ်ကြီး၊ Inverter စနစ် သို့မဟုတ် Solar ပါဝင်တဲ့ စနစ်လိုနိုင်ပါတယ်။ ဒီလိုစနစ်ကို Battery အမျိုးအစား၊ Charger၊ Inverter output နဲ့ လုံခြုံရေးအပိုင်းတို့ မှန်ကန်အောင် ကျွမ်းကျင်သူနဲ့ တပ်ဆင်သင့်ပါတယ်။ Battery ကို မိုးစိုနိုင်တဲ့နေရာ၊ အပူလွန်ကဲတဲ့နေရာ ဒါမှမဟုတ် ကလေးလက်လှမ်းမီရာမှာ မထားပါနဲ့။</p><p>Backup ခံချိန်ကို အကြမ်းဖျင်းတွက်ခြင်း</p><p>Battery ပေါ်က Ah နံပါတ်တစ်ခုတည်းကြည့်ပြီး ဘယ်နှနာရီခံမယ်လို့ အတိအကျမပြောနိုင်ပါဘူး။ System voltage၊ inverter efficiency၊ battery အဟောင်း/အသစ်နဲ့ အသုံးပြုတဲ့ Watt ပေါ်မူတည်ပါတယ်။ လက်တွေ့မှာ conversion loss နဲ့ battery ကို အကုန်မကုန်အောင်ထားရတာကြောင့် အကြမ်းဖျင်းရလဒ်ထက် ပိုနည်းတတ်ပါတယ်။ ရောင်းသူကို “Camera ဘယ်နှလုံး၊ DVR/NVR၊ Router နဲ့ ဘယ်နှနာရီခံချင်တယ်” လို့ စာရင်းအပြည့်ပြောပြီးတွက်ခိုင်းပါ။</p><p>မီးအားမတည်ငြိမ်တဲ့နေရာမှာ သတိထားရမယ့်အချက်များ</p><p>• Surge protection — မီးပြန်လာချိန် voltage တက်ခြင်းက Adapter နဲ့ DVR ကိုထိခိုက်နိုင်လို့ အရည်အသွေးကောင်းတဲ့ protection သုံးပါ။<br>• Ventilation — UPS၊ DVR နဲ့ Battery ကို ပိတ်လှောင်ထားတဲ့သေတ္တာထဲမထားဘဲ လေဝင်လေထွက်ကောင်းစေပါ။<br>• Wiring — ကြိုးဆက်များကို ရေစိုခြင်း၊ ကြွက်ကိုက်ခြင်းနဲ့ အပူတက်ခြင်းမှ ကာကွယ်ပါ။<br>• Maintenance — လစဉ် မီးဖြုတ်စမ်းပြီး Recording ဆက်ရှိ/မရှိ၊ Battery အားကျမြန်/မမြန် စစ်ပါ။<br>• Date and time — မီးပျက်ပြီးနောက် DVR ရဲ့ နေ့စွဲနဲ့အချိန် မလွဲသွားကြောင်း စစ်ပါ။<br>• Remote viewing — Router ပိတ်သွားရင် ဖုန်းကနေကြည့်မရနိုင်လို့ Router ကိုပါ Backup ထဲထည့်ပါ။ Internet provider ဘက်က network ပြတ်နေရင်တော့ Backup Power ရှိလည်း အဝေးကကြည့်မရနိုင်ပါ။</p><p>နယ်မြို့ဆိုင်ခန်းအတွက် လက်တွေ့အကြံပြုချက်</p><p>ကုန်စုံဆိုင်၊ ဖုန်းဆိုင်နဲ့ အိမ်တွဲဆိုင်တွေမှာ Camera အားလုံးကိုတစ်ခါတည်း မထားနိုင်ရင် ငွေကောင်တာ၊ ဝင်ပေါက်နဲ့ ပစ္စည်းထားရာနေရာကို ဦးစားပေးပါ။ မီးပျက်ချိန် Monitor ကိုပိတ်ထားပြီး Recording စနစ်ကိုပဲ ဆက်လည်စေခြင်းက Backup အချိန်ရှည်စေပါတယ်။</p><p>မဝယ်ခင် ပြင်ဆင်လာသင့်တဲ့ အချက် ၅ ချက်</p><p>၁။ Camera အရေအတွက်နှင့် Model<br>၂။ DVR/NVR နှင့် Hard Disk အရွယ်အစား<br>၃။ Router/PoE Switch ရှိမရှိ<br>၄။ ပုံမှန်မီးပျက်ချိန် ဘယ်နှနာရီလဲ<br>၅။ အနာဂတ် Camera ထပ်တိုးမလား</p><p>ဒီအချက်တွေကို အပြည့်အစုံပေးနိုင်ရင် မလိုအပ်ဘဲ အရွယ်ကြီးဝယ်မိတာ၊ Backup မလောက်တာတွေကိုရှောင်နိုင်ပါတယ်။</p><p>အနှစ်ချုပ်</p><p>CCTV ရဲ့တကယ့်တန်ဖိုးက အရေးကြီးတဲ့အချိန်မှာ မှတ်တမ်းရှိနေခြင်းပါ။ မီးပျက်ချိန်များတဲ့နေရာမှာ System Watt၊ လိုချင်တဲ့ Backup နာရီနဲ့ လုံခြုံစိတ်ချရတဲ့တပ်ဆင်မှုကို အတူစဉ်းစားပါ။ မိမိ CCTV စနစ်အတွက် Backup Power ဘယ်လောက်လိုမလဲ မသေချာရင် Camera၊ DVR/NVR နဲ့ Adapter label ဓာတ်ပုံတွေကို ALINN THIT ထံပို့ပြီး မေးမြန်းနိုင်ပါတယ်။</p>
+HTML,
+            ],
+            [
+                'image_path'       => 'blog/ou1BdNX5Fwr0on3WjAAT5FdGf1pw51DZtvaF69zg.webp',
+                'title'            => 'မိုးရာသီမှာ ဖုန်း၊ Charger နဲ့ CCTV မပျက်အောင် ကာကွယ်နည်း',
+                'slug'             => 'monsoon-phone-charger-cctv-safety',
+                'published_at'     => '2026-08-10 16:38:49',
+                'category'         => 'Tips & Tricks',
+                'excerpt'          => 'မိုးကြီး၊ မိုးကြိုးနဲ့ မီးအားမတည်ငြိမ်တဲ့အချိန် ဖုန်း၊ Charger၊ Router နဲ့ CCTV ပစ္စည်းတွေ မပျက်စီးအောင် လက်တွေ့ကာကွယ်နည်းများ။',
+                'tags'             => 'မိုးရာသီ, ဖုန်း, Charger, CCTV, လျှပ်စစ်လုံခြုံရေး',
+                'meta_keywords'    => 'မိုးရာသီ ဖုန်းကာကွယ်နည်း, charger safety, CCTV မိုးကြိုး, surge protector Myanmar',
+                'meta_description' => 'မိုးရာသီတွင် ဖုန်း၊ Charger၊ Router နှင့် CCTV ကို ရေစိုခြင်း၊ မီးအားတက်ခြင်းနှင့် မိုးကြိုးအန္တရာယ်မှ ကာကွယ်ရန် လက်တွေ့အချက်များ။',
+                'content'          => <<<'HTML'
+<p>မိုးရာသီရောက်လာရင် ဖုန်းရေစိုတာတင်မကဘဲ မိုးကြိုးပစ်ချိန် မီးအားတက်ခြင်း၊ မီးပြတ်ပြီးချက်ချင်းပြန်လာခြင်းနဲ့ စိုထိုင်းဆများခြင်းတို့ကြောင့် Charger၊ Router၊ DVR နဲ့ CCTV Camera တွေပါ ထိခိုက်နိုင်ပါတယ်။ နယ်မြို့နဲ့ ကျေးလက်ဘက်မှာ မီးအားမတည်ငြိမ်တာ ပိုကြုံရတတ်လို့ ကြိုတင်ကာကွယ်မှုက ပစ္စည်းအသစ်ပြန်ဝယ်ရတာထက် ပိုသက်သာပါတယ်။</p><p>မိုးကြိုးပစ်နေချိန် ဖုန်းအားသွင်းသင့်လား</p><p>မိုးကြိုးနီးကပ်စွာပစ်နေပြီး မီးအားလှုပ်ရှားနေရင် မလိုအပ်သော Charger နဲ့ Electronics ပစ္စည်းများကို Wall Socket မှ ဖြုတ်ထားတာ အကောင်းဆုံးပါ။ Power Strip ခလုတ်ပိတ်ရုံနဲ့ မလုံလောက်နိုင်လို့ အခြေအနေဘေးကင်းချိန်တွင် Plug ကိုပါဖြုတ်ထားပါ။ လက်စိုနေချိန်၊ မြေပြင်ရေစိုနေချိန် သို့မဟုတ် Socket နား ရေဝင်နေချိန်မှာ လုံးဝမကိုင်ပါနဲ့။ မိမိဘေးကင်းရေးကို ပစ္စည်းထက် အရင်ဦးစားပေးပါ။</p><p>ဖုန်းရေစိုသွားရင် မလုပ်သင့်တာများ</p><p>• ချက်ချင်းအားမသွင်းပါနဲ့။<br>• Power ပိတ်နိုင်ရင် ပိတ်ထားပါ။<br>• Charging Port ကို အပူပြင်းတဲ့ Hair Dryer နဲ့ မမှုတ်ပါနဲ့။<br>• ဖုန်းကို လှုပ်ခါပြီး ရေကိုအတွင်းပိုဝင်အောင် မလုပ်ပါနဲ့။<br>• ဆန်အိုးထဲထည့်တာကို အားကိုးမနေပါနဲ့။ အမှုန့်တွေ Port ထဲဝင်နိုင်ပါတယ်။<br>• Battery ဖောင်းလာခြင်း၊ အနံ့ထွက်ခြင်း သို့မဟုတ် အပူတက်ခြင်းရှိရင် မသုံးဘဲ ပြုပြင်သူထံ ယူသွားပါ။</p><p>အပြင်ဘက်ကို အဝတ်ခြောက်နဲ့သုတ်ပြီး SIM Tray ဖြုတ်နိုင်လျှင် ဖြုတ်ထားပါ။ လေဝင်လေထွက်ကောင်းတဲ့ အရိပ်နေရာမှာထားပြီး လုံးဝခြောက်သွားမှ စစ်ဆေးအားသွင်းပါ။ ရေငန်၊ အချိုရည် ဒါမှမဟုတ် ရွှံ့ရေဝင်ခဲ့ရင် အတွင်းပိုင်းချေးတက်နိုင်လို့ အမြန်ဆုံးကျွမ်းကျင်သူထံ ပြသင့်ပါတယ်။</p><p>Charger နဲ့ Extension ကြိုးကို စစ်ပါ</p><p>Plug နားမဲခြင်း၊ မီးပွားထွက်ခြင်း၊ အပူလွန်ခြင်း သို့မဟုတ် အနံ့ထွက်ခြင်းတွေ့ရင် ဆက်မသုံးပါနဲ့။ ရေစိုနိုင်တဲ့ကြမ်းပြင်ပေါ်မှာ Extension မထားဘဲ မြင့်ပြီးခြောက်သွေ့တဲ့နေရာမှာထားပါ။ Plug အများကြီးတစ်ပေါက်တည်းမှာ အလွန်အကျွံမချိတ်ပါနဲ့။</p><p>Surge Protector ရှိရုံနဲ့ အားလုံးကာကွယ်မလား</p><p>အရည်အသွေးကောင်းတဲ့ Surge Protector က မီးအားရုတ်တရက်တက်ခြင်းအချို့ကို လျော့ချပေးနိုင်ပေမယ့် မိုးကြိုးတိုက်ရိုက်ကျမှုကို အာမခံကာကွယ်ပေးနိုင်တာမဟုတ်ပါဘူး။ အဆောက်အဦး Earthing၊ Lightning Protection နဲ့ လျှပ်စစ်စနစ်ကို ကျွမ်းကျင်သူနဲ့ စစ်ဆေးတာက ပိုအရေးကြီးပါတယ်။ UPS ရှိတာနဲ့ Surge Protection ရှိတယ်လို့ မယူဆဘဲ Model specification ကိုကြည့်ပါ။</p><p>CCTV Camera မိုးရေဝင်မဝင် စစ်နည်း</p><p>Outdoor Camera ဖြစ်တာတစ်ခုတည်းနဲ့ နေရာတိုင်းအဆင်ပြေမယ်လို့ မယူဆပါနဲ့။ Camera Body ထက် Cable Joint၊ DC Connector နဲ့ Network Connector နေရာတွေက ရေဝင်လွယ်ပါတယ်။</p><p>• Connector များကို weatherproof junction box ထဲထားပါ။<br>• Cable ကို Camera ဆီ တန်းတက်မလာအောင် ရေစီးကျနိုင်တဲ့ drip loop လုပ်ပါ။<br>• နံရံဖောက်ထားတဲ့အပေါက်များကို သင့်တော်တဲ့ sealant နဲ့ပိတ်ပါ။<br>• Lens အတွင်း အငွေ့တက်ခြင်း၊ ညဘက်ပုံဖြူဝါးခြင်းနဲ့ image ပျောက်လိုက်ပေါ်လိုက်ဖြစ်ခြင်းကို စစ်ပါ။<br>• မိုးရေကျနေချိန် လှေကားတက်ပြီး Camera မပြင်ပါနဲ့။</p><p>DVR၊ Router နဲ့ Power Supply ထားသည့်နေရာ</p><p>ပြတင်းပေါက်နား၊ မိုးပက်နိုင်တဲ့နေရာနဲ့ ခေါင်မိုးယိုတဲ့အောက်မှာ မထားပါနဲ့။ ပစ္စည်းတွေကို မြေပြင်ထက်မြင့်ပြီး လေဝင်လေထွက်ကောင်းတဲ့ Shelf ပေါ်ထားပါ။ DVR ကို ပိတ်လှောင်ထားတဲ့ဗီရိုထဲထည့်ရင် အပူတက်နိုင်တာကြောင့် လေထွက်ပေါက်ထားပါ။</p><p>မီးပြန်လာချိန် စစ်ရမည့် Checklist</p><p>၁။ မီးအားတည်ငြိမ်ပြီလား စောင့်ကြည့်ပါ။<br>၂။ မဲနေသော Plug၊ အနံ့ထွက်သော Adapter မရှိကြောင်းစစ်ပါ။<br>၃။ DVR ရဲ့ နေ့စွဲနဲ့အချိန် မှန်/မမှန်ကြည့်ပါ။<br>၄။ Camera အားလုံး Live View ပေါ်နေကြောင်း စစ်ပါ။<br>၅။ Recording ပြန်ဝင်နေကြောင်း Playback နဲ့စမ်းပါ။<br>၆။ Router ပြန်တက်ပြီး Remote View ရ/မရ စစ်ပါ။</p><p>အနှစ်ချုပ်</p><p>မိုးရာသီကာကွယ်မှုမှာ ရေမစိုအောင်ထားခြင်း၊ မီးအားမတည်ငြိမ်ချိန် Plug ဖြုတ်ခြင်း၊ ပျက်စီးနေသော Charger/ကြိုး မသုံးခြင်းနဲ့ CCTV Connector များကို weatherproof လုပ်ခြင်းက အခြေခံအကျဆုံးပါ။ ဖုန်း၊ Charger သို့မဟုတ် CCTV မှာ ရေဝင်၊ အပူတက်၊ အနံ့ထွက်တဲ့လက္ခဏာရှိရင် ဆက်မသုံးဘဲ ALINN THIT ထံ ဓာတ်ပုံနဲ့တကွ မေးမြန်းနိုင်ပါတယ်။</p>
+HTML,
+            ],
+            [
+                'image_path'       => 'blog/XlBPV2xb209SNp023dnQJQb9SqCNt3WL0SPAZBRn.webp',
+                'title'            => 'အဝေးရောက်နေချိန် အိမ်နဲ့ဆိုင် CCTV ကို ဖုန်းကနေကြည့်ဖို့ ပြင်ဆင်နည်း',
+                'slug'             => 'remote-view-cctv-on-phone-guide',
+                'published_at'     => '2026-08-10 16:44:50',
+                'category'         => 'CCTV Guide',
+                'excerpt'          => 'ခရီးသွားနေချိန် သို့မဟုတ် အဝေးမှာအလုပ်လုပ်နေချိန် အိမ်နဲ့ဆိုင် CCTV ကို ဖုန်းကနေကြည့်နိုင်ဖို့ Internet၊ App နဲ့ လုံခြုံရေး settings ပြင်ဆင်နည်း။',
+                'tags'             => 'CCTV, Remote View, Mobile App, Internet, အိမ်လုံခြုံရေး',
+                'meta_keywords'    => 'CCTV ဖုန်းကနေကြည့်နည်း, remote CCTV Myanmar, DVR mobile app, CCTV internet',
+                'meta_description' => 'အိမ်နှင့်ဆိုင် CCTV ကို ဖုန်းမှ အဝေးကြည့်ရန်လိုအပ်သော Internet၊ DVR/NVR App၊ Password နှင့် Notification settings များကို ရှင်းပြထားသည်။',
+                'content'          => <<<'HTML'
+<p>အလုပ်ကြောင့် မြို့ဝေးရောက်နေသူ၊ ခရီးသွားနေသူနဲ့ ဆိုင်ကိုဝန်ထမ်းထားခဲ့ရသူတွေအတွက် CCTV ကို ဖုန်းကနေကြည့်နိုင်ခြင်းက အလွန်အသုံးဝင်ပါတယ်။ ဒါပေမယ့် Camera တပ်ပြီး App ထည့်ထားရုံနဲ့ မပြီးပါဘူး။ Internet၊ Recorder settings၊ Password နဲ့ Notification တွေကို မှန်ကန်အောင်ပြင်ဆင်ထားမှ လိုအပ်တဲ့အချိန် ယုံကြည်စိတ်ချစွာကြည့်နိုင်မှာပါ။</p><p>Remote View အလုပ်လုပ်ဖို့ ဘာတွေလိုသလဲ</p><p>၁။ DVR/NVR သို့မဟုတ် Wi‑Fi Camera<br>၂။ Recorder/Camera နဲ့ကိုက်ညီတဲ့ Official Mobile App<br>၃။ အိမ် သို့မဟုတ် ဆိုင်ဘက်မှာ တည်ငြိမ်တဲ့ Internet<br>၄။ ဖုန်းဘက်မှာ Mobile Data သို့မဟုတ် Wi‑Fi<br>၅။ မှန်ကန်တဲ့ Device ID/QR setup နဲ့ Login<br>၆။ မီးပျက်ချိန်အတွက် Router နဲ့ CCTV Backup Power</p><p>Camera တချို့က Wi‑Fi တိုက်ရိုက်သုံးပြီး တချို့က DVR/NVR ကနေ Internet ချိတ်ရပါတယ်။ မဝယ်ခင် “ဖုန်းကနေ အဝေးကြည့်လို့ရမလား၊ ဘယ် App သုံးရမလဲ” ကို အတည်ပြုပါ။</p><p>Router ကို ဘယ်နေရာမှာထားမလဲ</p><p>Router ကို ကြမ်းပြင်ပေါ်၊ သတ္တုဗီရိုထဲ၊ DVR ပေါ်တင်ထားခြင်းနဲ့ အုတ်နံရံထူထူနောက်မှာထားခြင်းက Signal ကိုလျော့စေနိုင်ပါတယ်။ ရေမစိုနိုင်တဲ့ အလယ်အလတ်အမြင့်၊ လေဝင်လေထွက်ကောင်းပြီး CCTV Device နဲ့အလွန်မဝေးတဲ့နေရာမှာထားပါ။ Wi‑Fi Camera ဖြစ်ရင် Camera တပ်မယ့်နေရာမှာ ဖုန်းနဲ့ Wi‑Fi Signal အရင်စမ်းပါ။</p><p>Internet speed ဘယ်လောက်လိုသလဲ</p><p>Remote View မှာ Download ထက် ဆိုင်ဘက် Internet ရဲ့ Upload quality ကအရေးကြီးပါတယ်။ Camera အရေအတွက်၊ Resolution နဲ့ တစ်ပြိုင်နက်ကြည့်မယ့် Channel အရေအတွက်ပေါ်မူတည်လို့ Speed နံပါတ်တစ်ခုတည်းနဲ့ အားလုံးကိုမဆုံးဖြတ်နိုင်ပါဘူး။ Internet မကောင်းရင် Sub Stream သို့မဟုတ် Fluent mode သုံးတာက ပုံရိပ်ကိုနည်းနည်းလျော့ပြီး ပိုချောမွေ့စေပါတယ်။ Recording quality ကို မလိုအပ်ဘဲ လျှော့မချဘဲ Mobile View stream ကိုသာ ပြောင်းပါ။</p><p>Official App ကိုသာသုံးပါ</p><p>DVR/NVR သို့မဟုတ် Camera ရဲ့ Manual၊ Box နဲ့ Trusted Seller ကပေးတဲ့ Official App ကိုသာ Play Store/App Store မှဒေါင်းလုဒ်လုပ်ပါ။ မသိတဲ့ Website က APK file မတင်ပါနဲ့။ QR Code စကင်မလုပ်ခင် App developer name နဲ့ download source ကိုစစ်ပါ။</p><p>Password လုံခြုံရေးက အရေးကြီးဆုံး</p><p>• Default password ကိုမထားပါနဲ့။<br>• ခန့်မှန်းလွယ်တဲ့ 123456၊ ဖုန်းနံပါတ်နဲ့ မွေးနေ့ မသုံးပါနဲ့။<br>• အက္ခရာအကြီး/အသေး၊ နံပါတ်နဲ့ သင်္ကေတပါသော ရှည်လျားတဲ့ password သုံးပါ။<br>• Admin account ကို မလိုအပ်သူများထံ မမျှဝေပါနဲ့။<br>• မိသားစုဝင်/ဝန်ထမ်းအတွက် Share User သို့မဟုတ် Limited Permission ရှိလျှင် သီးခြားပေးပါ။<br>• အလုပ်ထွက်သွားသောဝန်ထမ်းရှိရင် Access ပြန်ဖြုတ်ပြီး Password ပြောင်းပါ။<br>• QR Code၊ Device Serial နဲ့ Verification Code ကို လူမှုကွန်ရက်မှာ မတင်ပါနဲ့။</p><p>Notification ကို လိုအပ်သလိုပြင်ပါ</p><p>Motion Notification အားလုံးဖွင့်ထားရင် လမ်းပေါ်ကားနဲ့ သစ်ရွက်လှုပ်တာတိုင်း Alert တက်ပြီး နောက်ဆုံးပိတ်ထားမိနိုင်ပါတယ်။ လူဝင်ပေါက်၊ ငွေကောင်တာနဲ့ ပစ္စည်းထားရာနေရာကို Detection Zone သတ်မှတ်ပါ။ Schedule ရှိလျှင် ဆိုင်ပိတ်ချိန်နဲ့ ညအချိန်ကိုဦးစားပေးပါ။ Device က support လုပ်မှ Human Detection ကိုအသုံးပြုနိုင်ပါတယ်။</p><p>ဖုန်းကနေကြည့်ရပေမယ့် Recording ရှိ/မရှိ မမေ့ပါနဲ့</p><p>Live View ပေါ်တာနဲ့ Recording အမြဲရှိနေတယ်လို့ မဆိုလိုပါဘူး။ Hard Disk status၊ Recording schedule နဲ့ Playback ကိုအနည်းဆုံး လစဉ်စမ်းပါ။ DVR ရဲ့ Date/Time မှားနေရင် အရေးကြီးတဲ့ဖြစ်ရပ်ကို ရှာမတွေ့နိုင်ပါဘူး။ မီးပျက်ပြီးပြန်လာတိုင်း Camera Channel အားလုံးနဲ့ Recording ပြန်စစ်ပါ။</p><p>မီးပျက်ချိန် Remote View ဆက်ရဖို့</p><p>Camera နဲ့ DVR ပဲ Backup ချိတ်ထားပြီး Router ပိတ်သွားရင် Recording ရှိနိုင်ပေမယ့် ဖုန်းကနေအဝေးကြည့်မရပါဘူး။ Remote View ဆက်လိုရင် Router၊ လိုအပ်ပါက ONU/Modem နဲ့ Network Switch ကိုပါ Backup Power ထဲထည့်စဉ်းစားပါ။ Internet provider ရဲ့ အပြင်ဘက် network ပြတ်နေရင်တော့ မိမိဘက် Backup ရှိသော်လည်း Remote View မရနိုင်ပါ။</p><p>ခရီးမထွက်ခင် စမ်းသပ်ရမည့်အချက်များ</p><p>၁။ ဖုန်းကို ဆိုင် Wi‑Fi မှဖြုတ်ပြီး Mobile Data နဲ့ Live View စမ်းပါ။<br>၂။ Camera Channel အားလုံး ပေါ်/မပေါ်စစ်ပါ။<br>၃။ Playback နဲ့ မနေ့က Recording ကိုဖွင့်ကြည့်ပါ။<br>၄။ Notification တက်/မတက် စမ်းပါ။<br>၅။ ဖုန်း Battery အားသက်သာစေရန် Notification ကိုလိုအပ်သလိုထားပါ။<br>၆။ App Login နဲ့ Recovery information ကို လုံခြုံစွာသိမ်းပါ။<br>၇။ ယုံကြည်ရသူတစ်ဦးကို DVR/Router Power ပြန်စစ်နိုင်အောင် ရှင်းပြထားပါ။</p><p>Data အသုံးများမလား</p><p>High Definition နဲ့ Channel အများကြီးကြည့်ရင် Mobile Data ပိုကုန်ပါတယ်။ လိုအပ်ချိန်မှာ Sub Stream သုံးပြီး အရေးကြီးတဲ့အသေးစိတ်ကြည့်မှ HD ကိုပြောင်းပါ။ App ကိုအမြဲဖွင့်ထားခြင်းထက် Alert တက်မှဝင်ကြည့်တာက Data နဲ့ Battery ကိုသက်သာစေပါတယ်။</p><p>အနှစ်ချုပ်</p><p>CCTV ကို ဖုန်းကနေ အဝေးကြည့်နိုင်ဖို့ Camera ထက် စနစ်တစ်ခုလုံးကိုစဉ်းစားရပါတယ်။ တည်ငြိမ်တဲ့ Internet၊ Official App၊ ခိုင်မာတဲ့ Password၊ မှန်ကန်တဲ့ Notification၊ Recorder Playback စစ်ဆေးမှုနဲ့ Backup Power တို့ပြည့်စုံမှ ယုံကြည်စိတ်ချရပါမယ်။ မိမိ DVR/NVR ကို ဘယ် App နဲ့ချိတ်ရမလဲ မသေချာရင် Model နဲ့ Setting စာမျက်နှာဓာတ်ပုံကို ALINN THIT ထံပို့ပြီး မေးမြန်းနိုင်ပါတယ်။</p>
+HTML,
+            ]
         ];
     }
 }

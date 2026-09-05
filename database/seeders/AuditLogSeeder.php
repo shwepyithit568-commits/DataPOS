@@ -8,10 +8,13 @@ use Illuminate\Support\Facades\DB;
 
 class AuditLogSeeder extends Seeder
 {
-    public function run(): void
+    public function run(?int $storeId = null): void
     {
         $now = Carbon::now();
-        $store = DB::table('stores')->where('slug', 'datapos-mobile')->first();
+        $store = $storeId 
+            ? DB::table('stores')->where('id', $storeId)->first()
+            : DB::table('stores')->where('slug', 'datapos-mobile')->first();
+
         if (!$store) {
             return;
         }

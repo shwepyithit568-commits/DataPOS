@@ -65,8 +65,7 @@ class DemoStoresSeeder extends Seeder
                 [
                     'name' => $data['store']['name'],
                     'business_type' => $data['store']['business_type'],
-                    'phone' => $data['store']['phone'],
-                    'viber_number' => $data['store']['viber_number'] ?? $data['store']['phone'],
+                    'viber_number' => $data['store']['viber_number'] ?? $data['store']['phone'] ?? null,
                     'telegram_username' => $data['store']['telegram_username'] ?? null,
                     'is_active' => true,
                 ]
@@ -84,18 +83,15 @@ class DemoStoresSeeder extends Seeder
                 array_merge([
                     'store_name' => $data['store']['name'],
                     'tagline' => $data['setting']['tagline'] ?? 'Smart POS & E-Commerce System',
-                    'about_text' => $data['setting']['about_text'] ?? 'အရည်အသွေးမြင့် ကုန်ပစ္စည်းများကို အထူးစျေးနှုန်းများဖြင့် မြန်မာတစ်နိုင်ငံလုံးသို့ လက်လီ/လက်ကား ပို့ဆောင်ပေးနေပါသည်။',
                     'phone' => $data['store']['phone'],
                     'viber_number' => $data['store']['viber_number'] ?? $data['store']['phone'],
                     'telegram_username' => $data['store']['telegram_username'] ?? null,
                     'address' => $data['setting']['address'] ?? 'ရန်ကုန်မြို့၊ မြန်မာနိုင်ငံ။',
                     'default_language' => 'my',
-                    'currency_symbol' => 'Ks',
                     'theme_preset' => \App\Themes\ThemeRecommendation::recommendForDemoBusinessType($data['store']['business_type']),
-                    'chat_button_enabled' => true,
                     'chat_button_label' => 'စုံစမ်းရန်',
                     'chat_button_icon' => 'viber',
-                    'chat_channel_url' => 'https://msng.link/vi/' . ($data['store']['viber_number'] ?? $data['store']['phone']),
+                    'chat_button_url' => 'https://msng.link/vi/' . ($data['store']['viber_number'] ?? $data['store']['phone']),
                 ], $data['setting'] ?? [])
             );
 
@@ -557,36 +553,52 @@ class DemoStoresSeeder extends Seeder
         StoreDeliveryMethod::updateOrCreate(
             ['store_id' => $store->id, 'name' => 'ရန်ကုန်မြို့တွင်း အမြန်ပို့ဆောင်မှု (Yangon Express)'],
             [
-                'fee' => 2500,
-                'estimated_days' => '၁ - ၂ ရက်',
+                'type' => 'express',
+                'icon' => '⚡',
+                'fee_note' => '2,500 Ks',
+                'estimated_time' => '၁ - ၂ ရက်',
+                'service_area' => 'ရန်ကုန်မြို့တွင်း',
                 'is_active' => true,
+                'sort_order' => 1,
             ]
         );
 
         StoreDeliveryMethod::updateOrCreate(
             ['store_id' => $store->id, 'name' => 'မန္တလေးမြို့တွင်း အမြန်ပို့ဆောင်မှု (Mandalay Express)'],
             [
-                'fee' => 3000,
-                'estimated_days' => '၁ - ၂ ရက်',
+                'type' => 'express',
+                'icon' => '🚚',
+                'fee_note' => '3,000 Ks',
+                'estimated_time' => '၁ - ၂ ရက်',
+                'service_area' => 'မန္တလေးမြို့တွင်း',
                 'is_active' => true,
+                'sort_order' => 2,
             ]
         );
 
         StoreDeliveryMethod::updateOrCreate(
             ['store_id' => $store->id, 'name' => 'နယ်ဝေး ကားဂိတ်ပို့ဆောင်မှု (Nationwide Highway Gate Delivery)'],
             [
-                'fee' => 4000,
-                'estimated_days' => '၂ - ၃ ရက်',
+                'type' => 'highway_bus',
+                'icon' => '🚌',
+                'fee_note' => '4,000 Ks',
+                'estimated_time' => '၂ - ၃ ရက်',
+                'service_area' => 'မြန်မာတစ်နိုင်ငံလုံး',
                 'is_active' => true,
+                'sort_order' => 3,
             ]
         );
 
         StoreDeliveryMethod::updateOrCreate(
             ['store_id' => $store->id, 'name' => 'ဆိုင်တွင် ကိုယ်တိုင် လာရောက်ထုတ်ယူခြင်း (Store Pickup)'],
             [
-                'fee' => 0,
-                'estimated_days' => 'ချက်ချင်း',
+                'type' => 'pickup',
+                'icon' => '🏬',
+                'fee_note' => 'အခမဲ့',
+                'estimated_time' => 'ချက်ချင်း',
+                'service_area' => 'ဆိုင်ခွဲတိုင်း',
                 'is_active' => true,
+                'sort_order' => 4,
             ]
         );
     }

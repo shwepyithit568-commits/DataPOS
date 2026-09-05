@@ -196,8 +196,9 @@ class LoginController extends Controller
 
             $storeUsers = $store->users()->withPivot(['role', 'staff_role_id'])->get();
 
-            // 1. Store Owner
-            $owner = $storeUsers->first(fn($u) => $u->pivot->role === 'store_owner')
+            // 1. Store Owner (strictly exclude platform_owner so actual store owner is selected)
+            $owner = $storeUsers->first(fn($u) => $u->pivot->role === 'store_owner' && $u->role !== 'platform_owner')
+                ?? $storeUsers->first(fn($u) => $u->pivot->role === 'store_owner')
                 ?? $allUsers->firstWhere('phone', '09100000099');
 
             // 2. Store Manager

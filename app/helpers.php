@@ -49,9 +49,10 @@ if (! function_exists('format_quantity')) {
 
 if (! function_exists('store_can')) {
     /**
-     * Determine if the current active store has a specific capability.
+     * Determine if the current active store has a specific capability,
+     * or if the authenticated user has a specific staff permission in this store.
      */
-    function store_can(string $capability, ?Store $store = null): bool
+    function store_can(string $identifier, ?Store $store = null): bool
     {
         if (! $store && app()->bound(StoreContext::class)) {
             try {
@@ -65,6 +66,22 @@ if (! function_exists('store_can')) {
             return false;
         }
 
-        return $store->hasCapability($capability);
+        static $capabilities = null;
+        if ($capabilities === null) {
+            $capabilities = array_values((new \ReflectionClass(\App\Capabilities\Capability::class))->getConstants());
+        }
+
+        // If it is a defined store capability, strictly check store capability
+        if (in_array($identifier, $capabilities, true)) {
+            return $store->hasCapability($identifier);
+        }
+
+        // Otherwise evaluate as a staff permission for the authenticated user
+        $user = auth()->user();
+        if ($user) {
+            return app(\App\Services\StorePermissionService::class)->can($user, $store, $identifier);
+        }
+
+        return false;
     }
 }

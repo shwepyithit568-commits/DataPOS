@@ -130,6 +130,23 @@ class AdminMasterDataPageTest extends TestCase
         $response->assertSeeText('Master Data');
     }
 
+    public function test_master_data_page_highlights_only_master_data_in_sidebar(): void
+    {
+        $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/products/master-data");
+
+        $response->assertStatus(200);
+        $content = $response->getContent();
+
+        // Master data link must be present and active (aria-current="page")
+        $this->assertStringContainsString('data-route-name="store.admin.products.master-data"', $content);
+        $this->assertMatchesRegularExpression('/data-route-name="store\.admin\.products\.master-data"[^>]*aria-current="page"/', $content);
+
+        // All products link must be present but NOT active
+        $this->assertStringContainsString('data-route-name="store.admin.products.index"', $content);
+        $this->assertDoesNotMatchRegularExpression('/data-route-name="store\.admin\.products\.index"[^>]*aria-current="page"/', $content);
+    }
+
     public function test_category_create_from_master_data_returns_to_master_data_page(): void
     {
         $masterDataUrl = "/store/{$this->store->slug}/admin/products/master-data?tab=categories";

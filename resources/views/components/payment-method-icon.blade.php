@@ -84,10 +84,6 @@
                 <path d="M24 11L11 18V21H37V18L24 11ZM14 23V32H17V23H14ZM21 23V32H24V23H21ZM28 23V32H31V23H28ZM10 34V37H38V34H10Z" fill="#FFFFFF"/>
             </svg>
         </span>
-    @elseif ($builtin)
-        <span class="{{ $class }} inline-flex items-center justify-center rounded-lg {{ $builtin['bg'] }} text-white font-black {{ $textClass }} shrink-0 select-none" aria-label="{{ $builtin['label'] }}" title="{{ $builtin['label'] }}">
-            {{ $builtin['text'] }}
-        </span>
     @else
         <span class="{{ $class }} inline-flex items-center justify-center rounded-lg bg-slate-800 dark:bg-slate-700 text-white font-black {{ $textClass }} shrink-0 select-none" aria-label="{{ $label }}" title="{{ $label }}">
             {{ mb_strtoupper(mb_substr($label, 0, 2)) }}

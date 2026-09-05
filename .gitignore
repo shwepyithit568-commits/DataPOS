@@ -51,6 +51,7 @@ Thumbs.db
 # Local product import data + agent tooling
 *.xlsx
 .zcode/
+AlinnThit Mobile Shop Notes data/_storage/
 
 # SSH keys / deploy credentials — never commit
 *.pem

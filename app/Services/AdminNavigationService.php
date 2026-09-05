@@ -319,6 +319,22 @@ class AdminNavigationService
      */
     protected function isNodeActive(array $node, Request $request): bool
     {
+        if (!empty($node['active_exclude_patterns'])) {
+            foreach ($node['active_exclude_patterns'] as $excludePattern) {
+                if (str_starts_with($excludePattern, 'route:')) {
+                    if ($request->routeIs(substr($excludePattern, 6))) {
+                        return false;
+                    }
+                } elseif (str_starts_with($excludePattern, 'path:')) {
+                    if ($request->is(substr($excludePattern, 5))) {
+                        return false;
+                    }
+                } elseif ($request->is($excludePattern)) {
+                    return false;
+                }
+            }
+        }
+
         if (!empty($node['active_patterns'])) {
             foreach ($node['active_patterns'] as $pattern) {
                 if (str_starts_with($pattern, 'route:')) {
@@ -459,7 +475,7 @@ class AdminNavigationService
                             'translation_key' => 'messages.master_data',
                             'route_name' => 'store.admin.products.master-data',
                             'required_permissions' => ['master_data.view', 'master_data.edit'],
-                            'active_patterns' => ['path:store/*/admin/products/master-data*'],
+                            'active_patterns' => ['route:store.admin.products.master-data*', 'path:store/*/admin/products/master-data*'],
                             'icon' => '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l9 5-9 5-9-5 9-5Zm-9 10 9 5 9-5M3 17l9 5 9-5"/></svg>',
                         ],
                         [
@@ -467,7 +483,20 @@ class AdminNavigationService
                             'translation_key' => 'messages.products',
                             'route_name' => 'store.admin.products.index',
                             'required_permissions' => ['products.view', 'products.edit'],
-                            'active_patterns' => ['path:store/*/admin/products*'],
+                            'active_patterns' => [
+                                'route:store.admin.products.index',
+                                'route:store.admin.products.create',
+                                'route:store.admin.products.edit',
+                                'route:store.admin.products.details',
+                                'route:store.admin.products.export',
+                                'path:store/*/admin/products',
+                            ],
+                            'active_exclude_patterns' => [
+                                'route:store.admin.products.master-data*',
+                                'path:store/*/admin/products/master-data*',
+                                'route:store.admin.products.import*',
+                                'path:store/*/admin/products/import*',
+                            ],
                             'icon' => '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 8h12l-1 12H7L6 8Zm3 0a3 3 0 0 1 6 0"/></svg>',
                         ],
                         [

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\StaffRole;
 use App\Models\Store;
 use App\Models\StorefrontSetting;
 use App\Models\Supplier;
@@ -43,9 +44,9 @@ class DemoBusinessScenarioService
                 'limitation' => null,
             ],
             'mobile-sale-service' => [
-                'label' => 'Mobile Sale & Service',
-                'subtitle' => 'ဖုန်းအရောင်းနှင့် Service/Repair ဆိုင်',
-                'description' => 'Phone sales, spare parts, service items, technician workflow စမ်းရန်။',
+                'label' => 'Mobile & CCTV Sale & Service',
+                'subtitle' => 'ဖုန်း၊ CCTV၊ ကွန်ရက်၊ ကွန်ပျူတာ အရောင်းနှင့် ပြုပြင်ရေး/တပ်ဆင်ရေးဆိုင်',
+                'description' => 'ဖုန်း၊ CCTV ကင်မရာ၊ NVR၊ ကွန်ပျူတာ၊ ကွန်ရက်ပစ္စည်း၊ အပိုပစ္စည်း၊ Technician ပြုပြင်စရိတ်နှင့် တပ်ဆင်ရေး Package စာရင်းများ။',
                 'store_slug' => 'mobile-sale-service-demo',
                 'readiness' => 'Core-ready',
                 'limitation' => null,
@@ -134,11 +135,34 @@ class DemoBusinessScenarioService
                 $scenario['setting'] + ['store_id' => $store->id, 'default_language' => 'my']
             );
 
+            // Automatically Seed Master Data Presets (Categories, Brands, Connectors, Colors, Shelves, Warranties, Return Policies, Variant Matrix)
+            $masterDataType = match ($scenarioKey) {
+                'kl-fashion', 'fashion-tailoring' => 'fashion',
+                'general-retail' => 'general',
+                'mobile-accessories', 'mobile-sale-service', 'cctv-network-computer', 'datapos-mobile' => 'tech',
+                default => null,
+            };
+            if ($masterDataType !== null) {
+                app(\Database\Seeders\MasterDataSeedImporter::class)->importForStore(
+                    $store,
+                    ['brands', 'categories', 'connectors', 'colors', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
+                    $masterDataType
+                );
+            }
+
+            // Bootstrap Staff Roles
+            StaffRole::bootstrapDefaultRoles($store);
+
             $locations = $this->storeLocations->ensureDefaults($store);
-            $this->attachUser($store, $actor, 'store_manager');
+            $this->attachUser($store, $actor, 'store_owner', 'store_owner');
 
             foreach ($scenario['users'] as $user) {
-                $this->attachUser($store, $this->user($user), $user['store_role']);
+                $this->attachUser(
+                    $store,
+                    $this->user($user),
+                    $user['store_role'] ?? 'staff',
+                    $user['staff_role'] ?? ($user['store_role'] ?? null)
+                );
             }
 
             $warehouses = [
@@ -159,36 +183,54 @@ class DemoBusinessScenarioService
 
             $categories = [];
             foreach ($scenario['categories'] as $category) {
-                $categories[$category['key']] = Category::updateOrCreate(
-                    ['store_id' => $store->id, 'slug' => $category['slug']],
-                    [
-                        'name' => $category['name'],
-                        'code' => strtoupper(str_replace('-', '_', $category['slug'])),
-                        'description' => $category['description'] ?? null,
-                        'icon' => $category['icon'] ?? null,
-                    ]
-                );
+                $categoryModel = null;
+                if (! empty($category['code'])) {
+                    $categoryModel = Category::where('store_id', $store->id)->where('code', $category['code'])->first();
+                }
+                if (! $categoryModel && ! empty($category['name'])) {
+                    $categoryModel = Category::where('store_id', $store->id)->where('name', $category['name'])->first();
+                }
+                if (! $categoryModel && ! empty($category['slug'])) {
+                    $categoryModel = Category::where('store_id', $store->id)->where('slug', $category['slug'])->first();
+                }
+                if (! $categoryModel) {
+                    $catSlug = ! empty($category['slug']) ? $category['slug'] : (Str::slug($category['name']) . '-' . $store->id);
+                    $categoryModel = Category::updateOrCreate(
+                        ['store_id' => $store->id, 'slug' => $catSlug],
+                        [
+                            'name' => $category['name'],
+                            'code' => $category['code'] ?? strtoupper(str_replace('-', '_', $category['slug'] ?? Str::slug($category['name']))),
+                            'description' => $category['description'] ?? null,
+                            'icon' => $category['icon'] ?? null,
+                        ]
+                    );
+                }
+                $categories[$category['key']] = $categoryModel;
             }
 
             $brands = [];
             foreach ($scenario['brands'] as $brand) {
-                $brandModel = Brand::where('store_id', $store->id)->where('slug', $brand['slug'])->first();
+                $brandModel = null;
+                if (! empty($brand['code'])) {
+                    $brandModel = Brand::where('store_id', $store->id)->where('code', $brand['code'])->first();
+                }
+                if (! $brandModel && ! empty($brand['name'])) {
+                    $brandModel = Brand::where('store_id', $store->id)->where('name', $brand['name'])->first();
+                }
+                if (! $brandModel && ! empty($brand['slug'])) {
+                    $brandModel = Brand::where('store_id', $store->id)->where('slug', $brand['slug'])->first();
+                }
                 if (! $brandModel && ! empty($brand['legacy_slugs'])) {
                     $brandModel = Brand::where('store_id', $store->id)->whereIn('slug', $brand['legacy_slugs'])->first();
                 }
 
-                if ($brandModel) {
-                    $brandModel->update([
-                        'name' => $brand['name'],
-                        'slug' => $brand['slug'],
-                        'code' => strtoupper(str_replace('-', '_', $brand['slug'])),
-                    ]);
-                } else {
+                if (! $brandModel) {
+                    $brandSlug = ! empty($brand['slug']) ? $brand['slug'] : (Str::slug($brand['name']) . '-' . $store->id);
                     $brandModel = Brand::create([
                         'store_id' => $store->id,
                         'name' => $brand['name'],
-                        'slug' => $brand['slug'],
-                        'code' => strtoupper(str_replace('-', '_', $brand['slug'])),
+                        'slug' => $brandSlug,
+                        'code' => $brand['code'] ?? strtoupper(str_replace('-', '_', $brand['slug'] ?? Str::slug($brand['name']))),
                     ]);
                 }
 
@@ -287,18 +329,6 @@ class DemoBusinessScenarioService
                 $productsCreated++;
             }
 
-            // Automatically Seed Master Data Presets (Categories, Brands, Connectors, Colors, Shelves, Warranties, Return Policies, Variant Matrix)
-            $masterDataType = match ($scenarioKey) {
-                'kl-fashion', 'fashion-tailoring' => 'fashion',
-                'general-retail' => 'general',
-                default => 'tech',
-            };
-            app(\Database\Seeders\MasterDataSeedImporter::class)->importForStore(
-                $store,
-                ['brands', 'categories', 'connectors', 'colors', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
-                $masterDataType
-            );
-
             // Automatically Seed Storefront Blog Articles (Myanmar Buying Guides & Tips)
             \Database\Seeders\BlogSeeder::seedForStore($store);
 
@@ -326,8 +356,8 @@ class DemoBusinessScenarioService
         bool $applyStoreIdentity = false
     ): array
     {
-        if (! app()->environment(['local', 'testing', 'uat']) || ! config('app.show_quick_login')) {
-            throw new \RuntimeException('Demo business scenarios are available only in local/UAT quick-login mode.');
+        if (! app()->environment(['local', 'testing', 'uat'])) {
+            throw new \RuntimeException('Demo business scenarios are available only in local/testing/uat environments.');
         }
 
         $scenario = $this->scenarioDefinition($scenarioKey);
@@ -351,11 +381,34 @@ class DemoBusinessScenarioService
                 );
             }
 
+            // Automatically Seed Master Data Presets (Categories, Brands, Connectors, Colors, Shelves, Warranties, Return Policies, Variant Matrix)
+            $masterDataType = match ($scenarioKey) {
+                'kl-fashion', 'fashion-tailoring' => 'fashion',
+                'general-retail' => 'general',
+                'mobile-accessories', 'mobile-sale-service', 'cctv-network-computer', 'datapos-mobile' => 'tech',
+                default => null,
+            };
+            if ($masterDataType !== null) {
+                app(\Database\Seeders\MasterDataSeedImporter::class)->importForStore(
+                    $store,
+                    ['brands', 'categories', 'connectors', 'colors', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
+                    $masterDataType
+                );
+            }
+
+            // Bootstrap Staff Roles
+            StaffRole::bootstrapDefaultRoles($store);
+
             $locations = $this->storeLocations->ensureDefaults($store);
-            $this->attachUser($store, $actor, 'store_manager');
+            $this->attachUser($store, $actor, 'store_owner', 'store_owner');
 
             foreach ($scenario['users'] as $user) {
-                $this->attachUser($store, $this->user($user), $user['store_role']);
+                $this->attachUser(
+                    $store,
+                    $this->user($user),
+                    $user['store_role'] ?? 'staff',
+                    $user['staff_role'] ?? ($user['store_role'] ?? null)
+                );
             }
 
             $warehouses = [
@@ -376,36 +429,54 @@ class DemoBusinessScenarioService
 
             $categories = [];
             foreach ($scenario['categories'] as $category) {
-                $categories[$category['key']] = Category::updateOrCreate(
-                    ['store_id' => $store->id, 'slug' => $category['slug']],
-                    [
-                        'name' => $category['name'],
-                        'code' => strtoupper(str_replace('-', '_', $category['slug'])),
-                        'description' => $category['description'] ?? null,
-                        'icon' => $category['icon'] ?? null,
-                    ]
-                );
+                $categoryModel = null;
+                if (! empty($category['code'])) {
+                    $categoryModel = Category::where('store_id', $store->id)->where('code', $category['code'])->first();
+                }
+                if (! $categoryModel && ! empty($category['name'])) {
+                    $categoryModel = Category::where('store_id', $store->id)->where('name', $category['name'])->first();
+                }
+                if (! $categoryModel && ! empty($category['slug'])) {
+                    $categoryModel = Category::where('store_id', $store->id)->where('slug', $category['slug'])->first();
+                }
+                if (! $categoryModel) {
+                    $catSlug = ! empty($category['slug']) ? $category['slug'] : (Str::slug($category['name']) . '-' . $store->id);
+                    $categoryModel = Category::updateOrCreate(
+                        ['store_id' => $store->id, 'slug' => $catSlug],
+                        [
+                            'name' => $category['name'],
+                            'code' => $category['code'] ?? strtoupper(str_replace('-', '_', $category['slug'] ?? Str::slug($category['name']))),
+                            'description' => $category['description'] ?? null,
+                            'icon' => $category['icon'] ?? null,
+                        ]
+                    );
+                }
+                $categories[$category['key']] = $categoryModel;
             }
 
             $brands = [];
             foreach ($scenario['brands'] as $brand) {
-                $brandModel = Brand::where('store_id', $store->id)->where('slug', $brand['slug'])->first();
+                $brandModel = null;
+                if (! empty($brand['code'])) {
+                    $brandModel = Brand::where('store_id', $store->id)->where('code', $brand['code'])->first();
+                }
+                if (! $brandModel && ! empty($brand['name'])) {
+                    $brandModel = Brand::where('store_id', $store->id)->where('name', $brand['name'])->first();
+                }
+                if (! $brandModel && ! empty($brand['slug'])) {
+                    $brandModel = Brand::where('store_id', $store->id)->where('slug', $brand['slug'])->first();
+                }
                 if (! $brandModel && ! empty($brand['legacy_slugs'])) {
                     $brandModel = Brand::where('store_id', $store->id)->whereIn('slug', $brand['legacy_slugs'])->first();
                 }
 
-                if ($brandModel) {
-                    $brandModel->update([
-                        'name' => $brand['name'],
-                        'slug' => $brand['slug'],
-                        'code' => strtoupper(str_replace('-', '_', $brand['slug'])),
-                    ]);
-                } else {
+                if (! $brandModel) {
+                    $brandSlug = ! empty($brand['slug']) ? $brand['slug'] : (Str::slug($brand['name']) . '-' . $store->id);
                     $brandModel = Brand::create([
                         'store_id' => $store->id,
                         'name' => $brand['name'],
-                        'slug' => $brand['slug'],
-                        'code' => strtoupper(str_replace('-', '_', $brand['slug'])),
+                        'slug' => $brandSlug,
+                        'code' => $brand['code'] ?? strtoupper(str_replace('-', '_', $brand['slug'] ?? Str::slug($brand['name']))),
                     ]);
                 }
 
@@ -505,18 +576,6 @@ class DemoBusinessScenarioService
 
             // Seed Sample Customers & Debts
             $this->seedSampleCustomersAndDebts($store, $actor);
-
-            // Automatically Seed Master Data Presets (Categories, Brands, Connectors, Colors, Shelves, Warranties, Return Policies, Variant Matrix)
-            $masterDataType = match ($scenarioKey) {
-                'kl-fashion', 'fashion-tailoring' => 'fashion',
-                'general-retail' => 'general',
-                default => 'tech',
-            };
-            app(\Database\Seeders\MasterDataSeedImporter::class)->importForStore(
-                $store,
-                ['brands', 'categories', 'connectors', 'colors', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
-                $masterDataType
-            );
 
             // Automatically Seed Storefront Blog Articles (Myanmar Buying Guides & Tips)
             \Database\Seeders\BlogSeeder::seedForStore($store);
@@ -711,9 +770,9 @@ class DemoBusinessScenarioService
     private function seedSampleCustomersAndDebts(Store $store, User $actor): void
     {
         $customersData = [
-            ['name' => 'ဦးဘိုဘို (Farmer/Wholesale)', 'phone' => '09988776655', 'debt' => '150000', 'notes' => 'စိုက်ပျိုးရေး မျိုးစေ့ အကြွေး'],
-            ['name' => 'ဒေါ်သန်းသန်းနွယ် (Retail Buyer)', 'phone' => '09776655443', 'debt' => '45000', 'notes' => 'အပတ်စဉ် ပုံမှန်ဝယ်ယူသူ'],
-            ['name' => 'ကိုမင်းထွန်း (Regular Buyer)', 'phone' => '09665544332', 'debt' => '0', 'notes' => 'Cash Customer'],
+            ['name' => 'ကိုကျော်စွာ (CCTV & Tech Wholesale Partner)', 'phone' => '09988776655', 'debt' => '185000', 'notes' => 'လုံခြုံရေးကင်မရာနှင့် ကွန်ရက်ပစ္စည်း လက်ကားဝယ်ယူသူ', 'role' => 'wholesale_customer'],
+            ['name' => 'ဒေါ်နန်းခင်ခင် (Phone & Accessories Retail)', 'phone' => '09776655443', 'debt' => '45000', 'notes' => 'ဖုန်းအပိုပစ္စည်းနှင့် အားသွင်းကြိုး ပုံမှန်ဝယ်ယူသူ', 'role' => 'retail_customer'],
+            ['name' => 'ကိုအောင်ကို (Regular Cash Customer)', 'phone' => '09665544332', 'debt' => '0', 'notes' => 'Cash Customer', 'role' => 'retail_customer'],
         ];
 
         foreach ($customersData as $c) {
@@ -726,7 +785,7 @@ class DemoBusinessScenarioService
                 ]
             );
 
-            $this->attachUser($store, $user, 'customer');
+            $this->attachUser($store, $user, $c['role'] ?? 'retail_customer');
 
             if (bccomp($c['debt'], '0', 2) > 0) {
                 try {
@@ -777,14 +836,32 @@ class DemoBusinessScenarioService
         );
     }
 
-    private function attachUser(Store $store, User $user, string $role): void
+    private function attachUser(Store $store, User $user, string $role, ?string $staffRoleSlug = null): void
     {
+        $staffRoleId = null;
+        if ($staffRoleSlug) {
+            $staffRoleId = StaffRole::where('store_id', $store->id)->where('slug', $staffRoleSlug)->value('id');
+        } elseif (in_array($role, ['store_owner', 'store_manager', 'staff'])) {
+            $staffRoleId = StaffRole::where('store_id', $store->id)->where('slug', $role)->value('id');
+        }
+
+        $normalizedRole = match ($role) {
+            'customer' => 'retail_customer',
+            default => in_array($role, ['store_owner', 'store_manager', 'staff', 'wholesale_customer', 'retail_customer']) ? $role : 'staff',
+        };
+
+        $pivotData = [
+            'role' => $normalizedRole,
+            'status' => 'active',
+            'updated_at' => now(),
+        ];
+
+        if ($staffRoleId) {
+            $pivotData['staff_role_id'] = $staffRoleId;
+        }
+
         $store->users()->syncWithoutDetaching([
-            $user->id => [
-                'role' => $role,
-                'status' => 'active',
-                'updated_at' => now(),
-            ],
+            $user->id => $pivotData,
         ]);
     }
 
@@ -794,8 +871,14 @@ class DemoBusinessScenarioService
             store: ['name' => 'DataPOS Mobile & Accessories', 'business_type' => 'mobile_accessories', 'slug' => 'datapos-mobile', 'viber_number' => '09150000001', 'telegram_username' => 'datapos_mobile_demo'],
             setting: ['store_name' => 'DataPOS Mobile & Accessories', 'tagline' => 'ဖုန်း၊ ကာဗာ၊ မှန်ကပ်၊ Charger၊ နားကြပ်နှင့် ဆက်စပ်ပစ္စည်း အရောင်းဆိုင်', 'phone' => '09150000001'],
             users: [
-                ['name' => 'Mobile Shop Manager', 'phone' => '09150000001', 'store_role' => 'store_manager', 'pos_pin' => '1234'],
-                ['name' => 'Mobile Shop Sales', 'phone' => '09150000002', 'store_role' => 'staff'],
+                ['name' => 'DataPOS Store Owner', 'phone' => '09100000099', 'store_role' => 'store_owner', 'staff_role' => 'store_owner', 'pos_pin' => '1234'],
+                ['name' => 'Mobile Shop Manager', 'phone' => '09150000001', 'store_role' => 'store_manager', 'staff_role' => 'store_manager', 'pos_pin' => '1234'],
+                ['name' => 'Front Counter Cashier', 'phone' => '09160000003', 'store_role' => 'staff', 'staff_role' => 'cashier', 'pos_pin' => '1234'],
+                ['name' => 'Master Hardware Technician', 'phone' => '09160000002', 'store_role' => 'staff', 'staff_role' => 'technician', 'pos_pin' => '1234'],
+                ['name' => 'Warehouse & Stock Keeper', 'phone' => '09100000003', 'store_role' => 'staff', 'staff_role' => 'stock_keeper', 'pos_pin' => '1234'],
+                ['name' => 'Finance & Accountant', 'phone' => '09100000008', 'store_role' => 'staff', 'staff_role' => 'accountant', 'pos_pin' => '1234'],
+                ['name' => 'Daw Aye (Wholesale Partner)', 'phone' => '09100000004', 'store_role' => 'wholesale_customer'],
+                ['name' => 'Ma Su (Retail Customer)', 'phone' => '09100000006', 'store_role' => 'retail_customer'],
             ],
             warehouses: [
                 ['name' => 'Front Shop Showroom', 'code' => 'FRONT'],
@@ -803,25 +886,25 @@ class DemoBusinessScenarioService
                 ['name' => 'Damaged / Return', 'code' => 'RETURN'],
             ],
             categories: [
-                ['key' => 'phones', 'name' => 'Smartphones & Mobile Devices', 'slug' => 'smartphones-mobile-devices'],
-                ['key' => 'charging', 'name' => 'Cable & Charger (အားသွင်းကြိုး/ခေါင်း)', 'slug' => 'cable-charger'],
-                ['key' => 'power', 'name' => 'Power Bank & Storage (ပါဝါဘဏ်)', 'slug' => 'power-bank-storage'],
-                ['key' => 'audio', 'name' => 'Audio Accessories (နားကြပ်/စပီကာ)', 'slug' => 'audio-accessories'],
-                ['key' => 'cases', 'name' => 'Phone Cases (ဖုန်းကာဗာ)', 'slug' => 'phone-cases'],
-                ['key' => 'glass', 'name' => 'Tempered Glass (မှန်ကပ်)', 'slug' => 'tempered-glass'],
-                ['key' => 'stands', 'name' => 'Stands & Car Mounts (ဖုန်းဒေါက်တိုင်)', 'slug' => 'stands-car-mounts'],
+                ['key' => 'phones', 'name' => 'Smartphones & Tablets', 'code' => 'PHN', 'slug' => 'smartphones-tablets'],
+                ['key' => 'charging', 'name' => 'Cable & Charger', 'code' => 'CBCH', 'slug' => 'cable-charger'],
+                ['key' => 'power', 'name' => 'Power & Storage', 'code' => 'PWR', 'slug' => 'power-storage'],
+                ['key' => 'audio', 'name' => 'Audio & Sound', 'code' => 'AUD', 'slug' => 'audio-sound'],
+                ['key' => 'cases', 'name' => 'Phone Case & Cover', 'code' => 'ACC', 'slug' => 'phone-case-cover'],
+                ['key' => 'glass', 'name' => 'Screen & LCD', 'code' => 'SCR', 'slug' => 'screen-lcd'],
+                ['key' => 'stands', 'name' => 'Phone Stand & Holder', 'code' => 'HLD_GRP', 'slug' => 'phone-stand-holder'],
             ],
             brands: [
-                ['key' => 'apple', 'name' => 'Apple', 'slug' => 'apple'],
-                ['key' => 'samsung', 'name' => 'Samsung', 'slug' => 'samsung'],
-                ['key' => 'xiaomi', 'name' => 'Xiaomi', 'slug' => 'xiaomi'],
-                ['key' => 'anker', 'name' => 'Anker', 'slug' => 'anker'],
-                ['key' => 'baseus', 'name' => 'Baseus', 'slug' => 'baseus'],
-                ['key' => 'remax', 'name' => 'Remax', 'slug' => 'remax'],
-                ['key' => 'hoco', 'name' => 'Hoco', 'slug' => 'hoco'],
-                ['key' => 'joyroom', 'name' => 'Joyroom', 'slug' => 'joyroom'],
-                ['key' => 'kingston', 'name' => 'Kingston', 'slug' => 'kingston'],
-                ['key' => 'sandisk', 'name' => 'SanDisk', 'slug' => 'sandisk'],
+                ['key' => 'apple', 'name' => 'Apple / iPhone', 'code' => 'APL', 'slug' => 'apple-iphone', 'legacy_slugs' => ['apple']],
+                ['key' => 'samsung', 'name' => 'Samsung', 'code' => 'SAM', 'slug' => 'samsung'],
+                ['key' => 'xiaomi', 'name' => 'Xiaomi / Redmi', 'code' => 'RM', 'slug' => 'xiaomi-redmi', 'legacy_slugs' => ['xiaomi']],
+                ['key' => 'anker', 'name' => 'Anker', 'code' => 'ANKER', 'slug' => 'anker'],
+                ['key' => 'baseus', 'name' => 'Baseus', 'code' => 'BASEUS', 'slug' => 'baseus'],
+                ['key' => 'remax', 'name' => 'Remax', 'code' => 'REMAX', 'slug' => 'remax'],
+                ['key' => 'hoco', 'name' => 'Hoco', 'code' => 'HOCO', 'slug' => 'hoco'],
+                ['key' => 'joyroom', 'name' => 'Joyroom', 'code' => 'JOYROOM', 'slug' => 'joyroom'],
+                ['key' => 'kingston', 'name' => 'Kingston', 'code' => 'KST', 'slug' => 'kingston'],
+                ['key' => 'sandisk', 'name' => 'SanDisk', 'code' => 'SDK', 'slug' => 'sandisk'],
             ],
             suppliers: [
                 ['key' => 'yangon_mobile', 'name' => 'Yangon Mobile Wholesale Hub (ဆူးလေ/ပန်းဆိုးတန်း)', 'phone' => '09250000001', 'address' => 'Pansodan Road, Kyauktada, Yangon'],
@@ -962,7 +1045,7 @@ class DemoBusinessScenarioService
                     'reorder_level' => 5,
                     'shelf_location' => 'RACK-CBL',
                     'warranty' => '3 Months Replacement Warranty',
-                    'return_policy' => 'Test on delivery',
+                    'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)',
                     'specs' => ['connector' => 'Type-C to Type-C', 'power' => '100W PD Fast Charge', 'length' => '1.2m', 'material' => 'Nylon Braided'],
                     'description' => 'Remax 100W နိုင်လွန်ကြိုးကျစ် အကြမ်းခံ Type-C to Type-C Fast Charge & Data Cable။',
                 ],
@@ -1018,8 +1101,8 @@ class DemoBusinessScenarioService
                     'opening_stock' => 30,
                     'reorder_level' => 5,
                     'shelf_location' => 'RACK-GLS',
-                    'warranty' => 'Check upon installation',
-                    'return_policy' => 'Free installation at counter',
+                    'warranty' => 'Screen Protector No Warranty (မျက်နှာပြင်ကာ — အာမခံမပါ)',
+                    'return_policy' => 'Touch LCD / Screen — Test Before Purchase',
                     'specs' => ['hardness' => '9H Diamond Grade', 'type' => 'Full Cover HD Clear', 'model' => 'iPhone 15 / 15 Pro'],
                     'description' => 'Baseus Crystal 9H Full Cover Tempered Glass ဖုန်းမျက်နှာပြင် အစင်းထင်ခြင်းနှင့် ကွဲအက်ခြင်းကို ကာကွယ်ပေးသည်။',
                 ],
@@ -1057,7 +1140,7 @@ class DemoBusinessScenarioService
                     'reorder_level' => 5,
                     'shelf_location' => 'RACK-CASE',
                     'warranty' => 'Check upon purchase',
-                    'return_policy' => 'Fitting check allowed at counter',
+                    'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)',
                     'specs' => ['material' => 'High Quality TPU + Acrylic', 'feature' => '4 Corner Airbags Anti-Drop', 'model' => 'Samsung A15'],
                     'description' => 'Samsung A15 လေးထောင့်ဒေါင့် အကြမ်းခံ လေအိတ်ပါ ပွင့်လင်းကြည်လင် ဖုန်းကာဗာ။',
                 ],
@@ -1076,7 +1159,7 @@ class DemoBusinessScenarioService
                     'reorder_level' => 5,
                     'shelf_location' => 'CAB-SD',
                     'warranty' => 'Lifetime Official Warranty',
-                    'return_policy' => 'Warranty card preservation required',
+                    'return_policy' => 'Defective Exchange within Warranty',
                     'specs' => ['capacity' => '64GB', 'speed' => 'Up to 100MB/s Read', 'speed_class' => 'Class 10 UHS-I U1 V10'],
                     'description' => 'Kingston 64GB MicroSD Card ဖုန်းနှင့် ကင်မရာများအတွက် အထူးသင့်လျော်သော မမိုရီကတ် မူရင်းတရားဝင်။',
                 ],
@@ -1095,7 +1178,7 @@ class DemoBusinessScenarioService
                     'reorder_level' => 5,
                     'shelf_location' => 'CAB-SD',
                     'warranty' => '5 Years Official Warranty',
-                    'return_policy' => 'Warranty sticker must be intact',
+                    'return_policy' => 'Defective Exchange within Warranty',
                     'specs' => ['capacity' => '128GB', 'interface' => 'USB 3.1 Gen 1 (Type-C + Type-A)', 'speed' => 'Up to 150MB/s Read'],
                     'description' => 'SanDisk 128GB Type-C နှင့် USB ပေါက် ၂ မျိုးပါ ဖုန်းနှင့် ကွန်ပျူတာ အပြန်အလှန် ဒေတာကူးယူနိုင်သော OTG Drive။',
                 ],
@@ -1113,8 +1196,8 @@ class DemoBusinessScenarioService
                     'opening_stock' => 30,
                     'reorder_level' => 5,
                     'shelf_location' => 'RACK-STND',
-                    'warranty' => '1 Month Quality Warranty',
-                    'return_policy' => 'Defect exchange within 7 days',
+                    'warranty' => '3 Months Replacement Warranty',
+                    'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)',
                     'specs' => ['material' => 'Full Aluminum Alloy + Non-slip Silicone', 'angle' => '0-120 Degree Multi-Angle Foldable'],
                     'description' => 'Joyroom အလူမီနီယမ် အကြမ်းခံ စားပွဲတင် ဖုန်းနှင့် တက်ဘလက် ထောက်တိုင် ခေါက်သိမ်းရလွယ်ကူသည်။',
                 ],
@@ -1126,57 +1209,75 @@ class DemoBusinessScenarioService
     {
         return $this->scenario(
             store: ['name' => 'DataPOS Mobile Sale & Service', 'business_type' => 'mobile_sale_service', 'slug' => 'mobile-sale-service', 'viber_number' => '09160000001', 'telegram_username' => 'mobile_service_demo'],
-            setting: ['store_name' => 'DataPOS Mobile Sale & Service', 'tagline' => 'စမတ်ဖုန်းအရောင်း၊ ဖုန်းအပိုပစ္စည်းနှင့် ကျွမ်းကျင်ဖုန်းပြုပြင်ရေး စင်တာ', 'phone' => '09160000001'],
+            setting: ['store_name' => 'DataPOS Mobile Sale & Service', 'tagline' => 'စမတ်ဖုန်း၊ CCTV လုံခြုံရေးကင်မရာ၊ ကွန်ပျူတာ/ကွန်ရက်ပစ္စည်း အရောင်းနှင့် ပြုပြင်ရေး စင်တာ', 'phone' => '09160000001'],
             users: [
-                ['name' => 'Service Center Manager', 'phone' => '09160000001', 'store_role' => 'store_manager', 'pos_pin' => '1234'],
-                ['name' => 'Master Hardware Technician', 'phone' => '09160000002', 'store_role' => 'staff'],
-                ['name' => 'Front Counter Cashier', 'phone' => '09160000003', 'store_role' => 'staff'],
+                ['name' => 'DataPOS Store Owner', 'phone' => '09100000099', 'store_role' => 'store_owner', 'staff_role' => 'store_owner', 'pos_pin' => '1234'],
+                ['name' => 'Service Center Manager', 'phone' => '09160000001', 'store_role' => 'store_manager', 'staff_role' => 'store_manager', 'pos_pin' => '1234'],
+                ['name' => 'Master Hardware Technician', 'phone' => '09160000002', 'store_role' => 'staff', 'staff_role' => 'technician', 'pos_pin' => '1234'],
+                ['name' => 'Front Counter Cashier', 'phone' => '09160000003', 'store_role' => 'staff', 'staff_role' => 'cashier', 'pos_pin' => '1234'],
+                ['name' => 'Parts & Stock Keeper', 'phone' => '09100000003', 'store_role' => 'staff', 'staff_role' => 'stock_keeper', 'pos_pin' => '1234'],
+                ['name' => 'Finance & Accountant', 'phone' => '09100000008', 'store_role' => 'staff', 'staff_role' => 'accountant', 'pos_pin' => '1234'],
+                ['name' => 'Daw Aye (Wholesale Partner)', 'phone' => '09100000004', 'store_role' => 'wholesale_customer'],
+                ['name' => 'Ma Su (Retail Customer)', 'phone' => '09100000006', 'store_role' => 'retail_customer'],
             ],
             warehouses: [
                 ['name' => 'Showroom & Front Counter', 'code' => 'SHOW'],
                 ['name' => 'Technician Spare Parts Cabinet', 'code' => 'SPARE'],
                 ['name' => 'Repair Intake & Testing Desk', 'code' => 'INTAKE'],
+                ['name' => 'CCTV & Project Stock Warehouse', 'code' => 'PROJECT'],
             ],
             categories: [
-                ['key' => 'phones', 'name' => 'Smartphones & Mobile Devices (ဖုန်းများ)', 'slug' => 'smartphones-devices'],
-                ['key' => 'charging', 'name' => 'Cable & Charger (အားသွင်းကြိုး/ခေါင်း)', 'slug' => 'cable-chargers'],
-                ['key' => 'power', 'name' => 'Power Bank & Battery (ပါဝါဘဏ်)', 'slug' => 'power-banks'],
-                ['key' => 'audio', 'name' => 'Audio Accessories (နားကြပ်/စပီကာ)', 'slug' => 'audio-sound'],
-                ['key' => 'cases_glass', 'name' => 'Cases & Tempered Glass (ကာဗာနှင့် မှန်ကပ်)', 'slug' => 'cases-tempered-glass'],
-                ['key' => 'digital_codes', 'name' => 'Digital Codes & Game Top-Up (ဒစ်ဂျစ်တယ် ကတ်/ကုတ်များ)', 'slug' => 'digital-codes-topup'],
-                ['key' => 'lcd_screens', 'name' => 'Touch LCD & Screen Assembly (ဖုန်းမျက်နှာပြင် အပိုပစ္စည်း)', 'slug' => 'touch-lcd-screens'],
-                ['key' => 'batteries', 'name' => 'Built-in Battery Replacement (ဖုန်းဘက်ထရီ အပိုပစ္စည်း)', 'slug' => 'phone-batteries'],
-                ['key' => 'parts_boards', 'name' => 'Charging Port & Small Parts (အားသွင်းပေါက်နှင့် ဘုတ်)', 'slug' => 'charging-ports-boards'],
-                ['key' => 'repair_tools', 'name' => 'Technician Tools & Supplies (စက်ပြင်ပစ္စည်း)', 'slug' => 'technician-tools'],
-                ['key' => 'services', 'name' => 'Repair & Service Labor Fees (ဖုန်းပြင်ခ ဝန်ဆောင်မှု)', 'slug' => 'repair-service-fees'],
+                ['key' => 'phones', 'name' => 'Smartphones & Tablets', 'code' => 'PHN', 'slug' => 'smartphones-tablets', 'legacy_slugs' => ['smartphones-devices']],
+                ['key' => 'charging', 'name' => 'Cable & Charger', 'code' => 'CBCH', 'slug' => 'cable-chargers'],
+                ['key' => 'power', 'name' => 'Power & Storage', 'code' => 'PWR', 'slug' => 'power-banks'],
+                ['key' => 'audio', 'name' => 'Audio & Sound', 'code' => 'AUD', 'slug' => 'audio-sound'],
+                ['key' => 'cases_glass', 'name' => 'Phone Case & Cover', 'code' => 'ACC', 'slug' => 'cases-tempered-glass'],
+                ['key' => 'digital_codes', 'name' => 'Digital & Gift Cards', 'code' => 'DIG', 'slug' => 'digital-codes-topup'],
+                ['key' => 'lcd_screens', 'name' => 'Screen & LCD', 'code' => 'SCR', 'slug' => 'touch-lcd-screens'],
+                ['key' => 'batteries', 'name' => 'Battery (ဘတ်ထရီ)', 'code' => 'BT_GRP', 'slug' => 'phone-batteries'],
+                ['key' => 'parts_boards', 'name' => 'Phone Spare Parts', 'code' => 'PRT', 'slug' => 'charging-ports-boards'],
+                ['key' => 'repair_tools', 'name' => 'Phone Spare Parts', 'code' => 'PRT', 'slug' => 'technician-tools'],
+                ['key' => 'services', 'name' => 'Service & Repair', 'code' => 'SVC', 'slug' => 'repair-service-fees'],
+                ['key' => 'cctv', 'name' => 'CCTV & Security', 'code' => 'CCTV', 'slug' => 'cctv-security', 'legacy_slugs' => ['cctv-cameras']],
+                ['key' => 'network', 'name' => 'Network & Connectivity', 'code' => 'NET', 'slug' => 'network-connectivity', 'legacy_slugs' => ['network-devices']],
+                ['key' => 'computer', 'name' => 'Computer Peripherals', 'code' => 'ELEC', 'slug' => 'computer-peripherals', 'legacy_slugs' => ['computers']],
             ],
             brands: [
-                ['key' => 'apple', 'name' => 'Apple', 'slug' => 'apple'],
-                ['key' => 'samsung', 'name' => 'Samsung', 'slug' => 'samsung'],
-                ['key' => 'xiaomi', 'name' => 'Xiaomi', 'slug' => 'xiaomi'],
-                ['key' => 'vivo', 'name' => 'Vivo', 'slug' => 'vivo'],
-                ['key' => 'oppo', 'name' => 'OPPO', 'slug' => 'oppo'],
-                ['key' => 'realme', 'name' => 'Realme', 'slug' => 'realme'],
-                ['key' => 'anker', 'name' => 'Anker', 'slug' => 'anker'],
-                ['key' => 'remax', 'name' => 'Remax', 'slug' => 'remax'],
-                ['key' => 'hoco', 'name' => 'Hoco', 'slug' => 'hoco'],
-                ['key' => 'baseus', 'name' => 'Baseus', 'slug' => 'baseus'],
-                ['key' => 'joyroom', 'name' => 'Joyroom', 'slug' => 'joyroom'],
-                ['key' => 'kingston', 'name' => 'Kingston', 'slug' => 'kingston'],
-                ['key' => 'apple_gift', 'name' => 'Apple Gift Card', 'slug' => 'apple-gift-card'],
-                ['key' => 'google_play', 'name' => 'Google Play', 'slug' => 'google-play'],
-                ['key' => 'moonton', 'name' => 'Mobile Legends (Moonton)', 'slug' => 'moonton-mlbb'],
-                ['key' => 'pubg', 'name' => 'PUBG Mobile', 'slug' => 'pubg-mobile'],
-                ['key' => 'mpt', 'name' => 'MPT Telecom', 'slug' => 'mpt-telecom'],
-                ['key' => 'atom', 'name' => 'ATOM Myanmar', 'slug' => 'atom-myanmar'],
-                ['key' => 'kaspersky', 'name' => 'Kaspersky Lab', 'slug' => 'kaspersky'],
-                ['key' => 'service_center', 'name' => 'DataPOS Service Center', 'slug' => 'datapos-service-center'],
+                ['key' => 'apple', 'name' => 'Apple / iPhone', 'code' => 'APL', 'slug' => 'apple-iphone', 'legacy_slugs' => ['apple']],
+                ['key' => 'samsung', 'name' => 'Samsung', 'code' => 'SAM', 'slug' => 'samsung'],
+                ['key' => 'xiaomi', 'name' => 'Xiaomi / Redmi', 'code' => 'RM', 'slug' => 'xiaomi-redmi', 'legacy_slugs' => ['xiaomi']],
+                ['key' => 'vivo', 'name' => 'Vivo', 'code' => 'VV', 'slug' => 'vivo'],
+                ['key' => 'oppo', 'name' => 'OPPO', 'code' => 'OP', 'slug' => 'oppo'],
+                ['key' => 'realme', 'name' => 'Realme', 'code' => 'RL', 'slug' => 'realme'],
+                ['key' => 'anker', 'name' => 'Anker', 'code' => 'ANKER', 'slug' => 'anker'],
+                ['key' => 'remax', 'name' => 'Remax', 'code' => 'REMAX', 'slug' => 'remax'],
+                ['key' => 'hoco', 'name' => 'Hoco', 'code' => 'HOCO', 'slug' => 'hoco'],
+                ['key' => 'baseus', 'name' => 'Baseus', 'code' => 'BASEUS', 'slug' => 'baseus'],
+                ['key' => 'joyroom', 'name' => 'Joyroom', 'code' => 'JOYROOM', 'slug' => 'joyroom'],
+                ['key' => 'kingston', 'name' => 'Kingston', 'code' => 'KST', 'slug' => 'kingston'],
+                ['key' => 'apple_gift', 'name' => 'Apple ID / iTunes', 'code' => 'APL_ID', 'slug' => 'apple-id-itunes', 'legacy_slugs' => ['apple-gift-card']],
+                ['key' => 'google_play', 'name' => 'Google Play', 'code' => 'GGL_PLAY', 'slug' => 'google-play'],
+                ['key' => 'moonton', 'name' => 'Mobile Legends (Moonton)', 'code' => 'MLBB', 'slug' => 'mobile-legends-moonton', 'legacy_slugs' => ['moonton-mlbb']],
+                ['key' => 'pubg', 'name' => 'PUBG Mobile', 'code' => 'PUBG', 'slug' => 'pubg-mobile'],
+                ['key' => 'mpt', 'name' => 'MPT Telecom', 'code' => 'MPT', 'slug' => 'mpt-telecom'],
+                ['key' => 'atom', 'name' => 'ATOM Myanmar', 'code' => 'ATOM', 'slug' => 'atom-myanmar'],
+                ['key' => 'kaspersky', 'name' => 'Kaspersky Lab', 'code' => 'KASP', 'slug' => 'kaspersky-lab', 'legacy_slugs' => ['kaspersky']],
+                ['key' => 'service_center', 'name' => 'DataPOS Service Center', 'code' => 'SVC_CTR', 'slug' => 'datapos-service-center'],
+                ['key' => 'hikvision', 'name' => 'Hikvision', 'code' => 'HIK', 'slug' => 'hikvision'],
+                ['key' => 'dahua', 'name' => 'Dahua', 'code' => 'DAHUA', 'slug' => 'dahua'],
+                ['key' => 'imou', 'name' => 'Imou', 'code' => 'IMOU', 'slug' => 'imou'],
+                ['key' => 'tplink', 'name' => 'TP-Link', 'code' => 'TPLINK', 'slug' => 'tp-link'],
+                ['key' => 'lenovo', 'name' => 'Lenovo', 'code' => 'LNV', 'slug' => 'lenovo'],
+                ['key' => 'dell', 'name' => 'Dell', 'code' => 'DELL', 'slug' => 'dell'],
+                ['key' => 'house', 'name' => 'Project Service', 'code' => 'PRJ_SVC', 'slug' => 'project-service'],
             ],
             suppliers: [
                 ['key' => 'yangon_mobile', 'name' => 'Yangon Mobile Wholesale Hub (ရန်ကုန် မိုဘိုင်း လက်ကား)', 'phone' => '09260000001', 'address' => 'Pansodan Road, Yangon'],
                 ['key' => 'mingalar_parts', 'name' => 'Mingalar Phone Parts Wholesale (မင်္ဂလာဈေး ဖုန်းအပိုပစ္စည်း)', 'phone' => '09260000002', 'address' => 'Mingalar Market, Yangon'],
                 ['key' => 'mandalay_tech', 'name' => 'Mandalay Tech Wholesale (မန္တလေး အီလက်ထရောနစ်)', 'phone' => '09260000003', 'address' => '78th Road, Mandalay'],
                 ['key' => 'digital_distributor', 'name' => 'Global Digital PIN & Top-Up Distributor (ဒစ်ဂျစ်တယ်ကုတ် လက်ကား)', 'phone' => '09260000004', 'address' => 'Yangon Cyber Hub'],
+                ['key' => 'security_supplier', 'name' => 'Security & CCTV Wholesale Hub (လုံခြုံရေးနှင့် CCTV လက်ကား)', 'phone' => '09270000001', 'address' => 'Seikkantha Street, Kyauktada, Yangon'],
+                ['key' => 'computer_supplier', 'name' => 'Computer & Network Wholesale (ကွန်ပျူတာနှင့် ကွန်ရက် လက်ကား)', 'phone' => '09270000002', 'address' => 'Anawrahta Road, Yangon'],
             ],
             products: [
                 [
@@ -1568,6 +1669,247 @@ class DemoBusinessScenarioService
                     'return_policy' => 'Defective exchange within 7 days',
                     'specs' => ['bits' => '24 Magnetic Precision Bits', 'material' => 'S2 Alloy Steel', 'case' => 'Aluminum Magnetic Box'],
                     'description' => 'ဖုန်းနှင့် အီလက်ထရောနစ် ပစ္စည်းများ ပြုပြင်ရန် S2 သံမဏိ သံလိုက်ခေါင်း ၂၄ မျိုးပါ ဝက်အူလှည့်ဘူး။',
+                ],
+
+                // =========================================================================
+                // CCTV, NETWORK, COMPUTER & INSTALLATION SERVICES (AlinnThit / Myanmar Tech)
+                // =========================================================================
+                [
+                    'sku' => 'MSS-CCTV-HIK-2MP-BLT',
+                    'barcode' => '6941234500011',
+                    'name' => 'Hikvision 2MP Outdoor IP Bullet Camera (DS-2CD1023G0-I)',
+                    'category_key' => 'cctv',
+                    'brand_key' => 'hikvision',
+                    'supplier_key' => 'security_supplier',
+                    'warehouse_code' => 'PROJECT',
+                    'retail_price' => 88000,
+                    'wholesale_price' => 81000,
+                    'purchase_cost' => 69000,
+                    'opening_stock' => 20,
+                    'reorder_level' => 5,
+                    'shelf_location' => 'WH-MAIN',
+                    'warranty' => 'CCTV 2 Years Warranty (CCTV ၂ နှစ် အာမခံ)',
+                    'return_policy' => 'CCTV — Installation No Refund (CCTV တပ်ဆင်ပြီး ငွေမပြန်ပေးပါ)',
+                    'specs' => ['resolution' => '2MP (1920x1080)', 'ir_distance' => '30m Night Vision', 'weatherproof' => 'IP67 Waterproof', 'poe' => 'PoE Supported'],
+                    'description' => 'Hikvision 2MP Outdoor IP Bullet ကင်မရာ၊ ညဘက် 30m အထိ ရုပ်ထွက်ကြည်လင်သော Smart IR နှင့် ရေစိုဒဏ်ခံ IP67 အပြည့်အဝ ပါဝင်သည်။',
+                    'is_featured' => true,
+                ],
+                [
+                    'sku' => 'MSS-CCTV-DAH-4MP-FULL',
+                    'barcode' => '6941234500028',
+                    'name' => 'Dahua 4MP Full-Color Smart Dual Light Eyeball Camera (Built-in Mic)',
+                    'category_key' => 'cctv',
+                    'brand_key' => 'dahua',
+                    'supplier_key' => 'security_supplier',
+                    'warehouse_code' => 'PROJECT',
+                    'retail_price' => 115000,
+                    'wholesale_price' => 105000,
+                    'purchase_cost' => 91000,
+                    'opening_stock' => 15,
+                    'reorder_level' => 4,
+                    'shelf_location' => 'WH-MAIN',
+                    'warranty' => 'CCTV 2 Years Warranty (CCTV ၂ နှစ် အာမခံ)',
+                    'return_policy' => 'CCTV — Installation No Refund (CCTV တပ်ဆင်ပြီး ငွေမပြန်ပေးပါ)',
+                    'specs' => ['resolution' => '4MP Full-Color', 'audio' => 'Built-in Mic', 'smart_light' => 'Warm LED + IR 30m', 'ai' => 'Human Detection'],
+                    'description' => 'Dahua 4MP ညဘက် ကာလာအစစ်ရရှိသော Full-Color အသံဖမ်း မိုက်ခရိုဖုန်းပါ ကင်မရာ။',
+                    'is_featured' => true,
+                ],
+                [
+                    'sku' => 'MSS-CCTV-DAH-NVR-8CH',
+                    'barcode' => '6941234500035',
+                    'name' => 'Dahua 8-Channel 4K Network Video Recorder (NVR4108HS-4KS2)',
+                    'category_key' => 'cctv',
+                    'brand_key' => 'dahua',
+                    'supplier_key' => 'security_supplier',
+                    'warehouse_code' => 'PROJECT',
+                    'retail_price' => 195000,
+                    'wholesale_price' => 182000,
+                    'purchase_cost' => 155000,
+                    'opening_stock' => 10,
+                    'reorder_level' => 2,
+                    'shelf_location' => 'WH-MAIN',
+                    'warranty' => 'CCTV 2 Years Warranty (CCTV ၂ နှစ် အာမခံ)',
+                    'return_policy' => 'CCTV — Installation No Refund (CCTV တပ်ဆင်ပြီး ငွေမပြန်ပေးပါ)',
+                    'specs' => ['channels' => '8 Channels IP Video', 'resolution' => 'Up to 4K Ultra HD', 'hdd_support' => '1 SATA HDD up to 10TB', 'h265' => 'Smart H.265+ Codec'],
+                    'description' => 'Dahua 8 လိုင်း 4K ရုပ်ထွက်ထောက်ခံသော Network Recorder စက်၊ ဖုန်းဖြင့် အချိန်မရွေး တိုက်ရိုက် ကြည့်ရှုနိုင်သော P2P Cloud စနစ် ပါဝင်သည်။',
+                ],
+                [
+                    'sku' => 'MSS-CCTV-IMOU-CRUISER',
+                    'barcode' => '6941234500042',
+                    'name' => 'Imou Cruiser 2 5MP Outdoor 360° PTZ Smart WiFi Camera',
+                    'category_key' => 'cctv',
+                    'brand_key' => 'imou',
+                    'supplier_key' => 'security_supplier',
+                    'warehouse_code' => 'SHOW',
+                    'retail_price' => 125000,
+                    'wholesale_price' => 112000,
+                    'purchase_cost' => 98000,
+                    'opening_stock' => 15,
+                    'reorder_level' => 3,
+                    'shelf_location' => 'CAB-01',
+                    'warranty' => '1 Year Official Warranty (၁ နှစ် တရားဝင် အာမခံ)',
+                    'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)',
+                    'specs' => ['resolution' => '3K 5MP', 'ptz' => '360 Panoramic View', 'night_vision' => 'Smart Full-Color', 'ai' => 'Vehicle & Human Tracking'],
+                    'description' => 'Imou Cruiser 2 5MP ပြင်ပသုံး ၃၆၀ ဒီဂရီ လှည့်နိုင်သော စမတ် WiFi ကင်မရာ၊ လူနှင့်ကား အလိုအလျောက် ခြေရာခံခြင်း ပါဝင်သည်။',
+                    'is_featured' => true,
+                ],
+                [
+                    'sku' => 'MSS-CCTV-WD-PURPLE-2TB',
+                    'barcode' => '718037855011',
+                    'name' => 'Western Digital Purple 2TB Surveillance Hard Drive (24/7 CCTV)',
+                    'category_key' => 'power',
+                    'brand_key' => 'house',
+                    'supplier_key' => 'security_supplier',
+                    'warehouse_code' => 'PROJECT',
+                    'retail_price' => 195000,
+                    'wholesale_price' => 185000,
+                    'purchase_cost' => 165000,
+                    'opening_stock' => 12,
+                    'reorder_level' => 3,
+                    'shelf_location' => 'CAB-SD',
+                    'warranty' => '1 Year Official Warranty (၁ နှစ် တရားဝင် အာမခံ)',
+                    'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)',
+                    'specs' => ['capacity' => '2TB', 'interface' => 'SATA 6 Gb/s', 'workload' => '180 TB/year 24/7 DVR/NVR', 'rpm' => '5400 RPM'],
+                    'description' => 'WD Purple 2TB ၂၄ နာရီ မနားတမ်း CCTV မှတ်တမ်းတင်ရန် သီးသန့်ထုတ်လုပ်ထားသော AllFrame နည်းပညာသုံး Hard Drive။',
+                ],
+                [
+                    'sku' => 'MSS-NET-TPL-ARCHER-C6',
+                    'barcode' => '6935364084516',
+                    'name' => 'TP-Link Archer C6 AC1200 Gigabit Dual-Band WiFi Router',
+                    'category_key' => 'network',
+                    'brand_key' => 'tplink',
+                    'supplier_key' => 'computer_supplier',
+                    'warehouse_code' => 'SHOW',
+                    'retail_price' => 92000,
+                    'wholesale_price' => 85000,
+                    'purchase_cost' => 74000,
+                    'opening_stock' => 20,
+                    'reorder_level' => 5,
+                    'shelf_location' => 'RACK-CBL',
+                    'warranty' => '1 Year Official Warranty (၁ နှစ် တရားဝင် အာမခံ)',
+                    'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)',
+                    'specs' => ['wifi' => 'AC1200 (867Mbps at 5GHz + 300Mbps at 2.4GHz)', 'ports' => 'Full Gigabit Ports (1 WAN + 4 LAN)', 'antennas' => '4 External High Gain Antennas'],
+                    'description' => 'TP-Link Archer C6 Dual-Band Gigabit WiFi Router၊ MU-MIMO စနစ်ဖြင့် ဖုန်းနှင့် ကွန်ပျူတာများစွာ တစ်ပြိုင်နက် သုံးနိုင်သော စွမ်းဆောင်ရည်မြင့် ရောက်တာ။',
+                    'is_featured' => true,
+                ],
+                [
+                    'sku' => 'MSS-NET-TPL-SG108-8P',
+                    'barcode' => '6935364020125',
+                    'name' => 'TP-Link TL-SG108 8-Port Gigabit Metal Desktop Switch',
+                    'category_key' => 'network',
+                    'brand_key' => 'tplink',
+                    'supplier_key' => 'computer_supplier',
+                    'warehouse_code' => 'SHOW',
+                    'retail_price' => 58000,
+                    'wholesale_price' => 51000,
+                    'purchase_cost' => 43000,
+                    'opening_stock' => 15,
+                    'reorder_level' => 4,
+                    'shelf_location' => 'RACK-CBL',
+                    'warranty' => '1 Year Official Warranty (၁ နှစ် တရားဝင် အာမခံ)',
+                    'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)',
+                    'specs' => ['ports' => '8 x 10/100/1000Mbps Auto-Negotiation RJ45 Ports', 'case' => 'Durable Metal Casing', 'feature' => 'Plug and Play, Traffic Optimization (QoS)'],
+                    'description' => 'TP-Link 8-Port Gigabit သံကိုယ်ထည် Switch၊ အင်တာနက်လိုင်း ခွဲဝေရန်နှင့် ကင်မရာလိုင်းများ ချိတ်ဆက်ရန် အကြမ်းခံ အရည်အသွေးမြင့် ကိရိယာ။',
+                ],
+                [
+                    'sku' => 'MSS-NET-CAT6-305M',
+                    'barcode' => '8935212390305',
+                    'name' => 'Cat6 Pure Copper UTP Indoor Network Cable Box 305m',
+                    'category_key' => 'charging',
+                    'brand_key' => 'house',
+                    'supplier_key' => 'security_supplier',
+                    'warehouse_code' => 'PROJECT',
+                    'retail_price' => 175000,
+                    'wholesale_price' => 162000,
+                    'purchase_cost' => 138000,
+                    'opening_stock' => 10,
+                    'reorder_level' => 2,
+                    'shelf_location' => 'WH-MAIN',
+                    'warranty' => 'ရောင်းချပြီး ချက်ချင်း စစ်ဆေးပေးပါ (No Warranty)',
+                    'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)',
+                    'specs' => ['category' => 'Cat6 UTP', 'conductor' => '0.57mm Pure Solid Copper 100%', 'length' => '305 Meters / 1000 Feet Box'],
+                    'description' => 'Cat6 ကြေးနီစစ်စစ် ၁၀၀% ၃၀၅ မီတာ အခွေလိုက်ဘူး၊ CCTV ကင်မရာနှင့် Gigabit ရုံးသုံး ကွန်ရက်လိုင်း ဆွဲရန် အထူးသင့်လျော်သည်။',
+                ],
+                [
+                    'sku' => 'MSS-COM-LENOVO-M70Q',
+                    'barcode' => '195892012345',
+                    'name' => 'Lenovo ThinkCentre M70q Tiny Desktop PC (Core i5, 8GB RAM, 256GB SSD)',
+                    'category_key' => 'computer',
+                    'brand_key' => 'lenovo',
+                    'supplier_key' => 'computer_supplier',
+                    'warehouse_code' => 'SHOW',
+                    'retail_price' => 1180000,
+                    'wholesale_price' => 1120000,
+                    'purchase_cost' => 990000,
+                    'opening_stock' => 5,
+                    'reorder_level' => 1,
+                    'shelf_location' => 'CAB-01',
+                    'warranty' => '1 Year Official Warranty (၁ နှစ် တရားဝင် အာမခံ)',
+                    'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)',
+                    'specs' => ['cpu' => 'Intel Core i5-10400T', 'ram' => '8GB DDR4 3200MHz', 'storage' => '256GB NVMe M.2 SSD', 'os' => 'Windows 11 Pro Genuine'],
+                    'description' => 'Lenovo ThinkCentre နေရာယူမှုအလွန်နည်းသော Mini Desktop PC၊ အရောင်းကောင်တာ POS စနစ်နှင့် ရုံးသုံး လုပ်ငန်းသုံးအတွက် အကြမ်းခံ စွမ်းဆောင်ရည်မြင့်မားသည်။',
+                    'is_featured' => true,
+                ],
+                [
+                    'sku' => 'MSS-COM-KST-SSD-512G',
+                    'barcode' => '740617302456',
+                    'name' => 'Kingston KC600 512GB 2.5" SATA III High Performance SSD',
+                    'category_key' => 'power',
+                    'brand_key' => 'kingston',
+                    'supplier_key' => 'computer_supplier',
+                    'warehouse_code' => 'SPARE',
+                    'retail_price' => 115000,
+                    'wholesale_price' => 102000,
+                    'purchase_cost' => 88000,
+                    'opening_stock' => 20,
+                    'reorder_level' => 4,
+                    'shelf_location' => 'CAB-SD',
+                    'warranty' => '1 Year Official Warranty (၁ နှစ် တရားဝင် အာမခံ)',
+                    'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)',
+                    'specs' => ['capacity' => '512GB', 'read_speed' => 'Up to 550 MB/s', 'write_speed' => 'Up to 520 MB/s', 'controller' => 'SM2259 Hardware Encryption'],
+                    'description' => 'Kingston 512GB 2.5" SATA SSD ကွန်ပျူတာ/လက်ပ်တော့ အဟောင်းများ အမြန်နှုန်း မြှင့်တင်ရန် သင့်လျော်သည်။',
+                ],
+                [
+                    'sku' => 'MSS-SVC-CCTV-4CAM-PKG',
+                    'barcode' => '8935212308010',
+                    'name' => 'CCTV 4-Camera Complete Installation & Wiring Service Package (၄ လုံးတပ် ဆင်ခ)',
+                    'category_key' => 'services',
+                    'brand_key' => 'house',
+                    'supplier_key' => 'security_supplier',
+                    'warehouse_code' => 'PROJECT',
+                    'retail_price' => 180000,
+                    'wholesale_price' => 180000,
+                    'purchase_cost' => 0,
+                    'opening_stock' => 1,
+                    'reorder_level' => 0,
+                    'shelf_location' => 'SERVICE-DESK',
+                    'product_type' => 'service',
+                    'service_duration' => '1 day',
+                    'warranty' => '3 Months Workmanship Warranty',
+                    'return_policy' => 'Service Satisfaction Guaranteed (စိတ်တိုင်းမကျပါက ငွေပြန်အမ်း)',
+                    'description' => 'ကျွမ်းကျင် CCTV Technician များမှ အိမ်/ဆိုင် အရောက် ကင်မရာ ၄ လုံး ကြိုးသွယ်တန်းခြင်း၊ တပ်ဆင်ခြင်းနှင့် ဖုန်းဆော့ဖ်ဝဲ ချိတ်ဆက်ပေးခြင်း ဝန်ဆောင်မှု Package။',
+                    'is_ecommerce' => false,
+                ],
+                [
+                    'sku' => 'MSS-SVC-WIFI-SETUP',
+                    'barcode' => '8935212308011',
+                    'name' => 'Office / Shop WiFi Router & Network Configuration Service (ကွန်ရက် စနစ်ချိတ်ဆက်ခ)',
+                    'category_key' => 'services',
+                    'brand_key' => 'house',
+                    'supplier_key' => 'computer_supplier',
+                    'warehouse_code' => 'PROJECT',
+                    'retail_price' => 45000,
+                    'wholesale_price' => 45000,
+                    'purchase_cost' => 0,
+                    'opening_stock' => 1,
+                    'reorder_level' => 0,
+                    'shelf_location' => 'SERVICE-DESK',
+                    'product_type' => 'service',
+                    'service_duration' => '2 hours',
+                    'warranty' => '1 Month Free Service (၁ လ လက်ခမဲ့ ဝန်ဆောင်မှု)',
+                    'return_policy' => 'Service Satisfaction Guaranteed (စိတ်တိုင်းမကျပါက ငွေပြန်အမ်း)',
+                    'description' => 'WiFi Router ချိတ်ဆက်ခြင်း၊ Access Point များ တပ်ဆင်ခြင်း၊ Network IP လိုင်းခွဲခြင်းနှင့် လုံခြုံရေး Password သတ်မှတ်ပေးခြင်း ဝန်ဆောင်မှု။',
+                    'is_ecommerce' => false,
                 ],
 
                 // =========================================================================
@@ -2041,7 +2383,7 @@ class DemoBusinessScenarioService
                     'purchase_cost' => 32000,
                     'opening_stock' => 10,
                     'reorder_level' => 3,
-                    'shelf_location' => 'RACK-MEM',
+                    'shelf_location' => 'CAB-SD',
                     'product_type' => 'variant',
                     'warranty' => 'Lifetime Official Warranty',
                     'return_policy' => 'Lifetime Warranty for Data / Card replacement',
@@ -2304,8 +2646,14 @@ class DemoBusinessScenarioService
             store: ['name' => 'CCTV Network Computer Demo', 'business_type' => 'cctv_network_computer', 'slug' => 'cctv-network-computer-demo', 'viber_number' => '09170000001', 'telegram_username' => 'cctv_network_demo'],
             setting: ['store_name' => 'CCTV Network Computer Demo', 'tagline' => 'CCTV, Network, Computer Sales & Installation', 'phone' => '09170000001'],
             users: [
-                ['name' => 'CCTV Network Manager', 'phone' => '09170000001', 'store_role' => 'store_manager', 'pos_pin' => '1234'],
-                ['name' => 'Installation Technician', 'phone' => '09170000002', 'store_role' => 'staff'],
+                ['name' => 'DataPOS Store Owner', 'phone' => '09100000099', 'store_role' => 'store_owner', 'staff_role' => 'store_owner', 'pos_pin' => '1234'],
+                ['name' => 'CCTV Network Manager', 'phone' => '09170000001', 'store_role' => 'store_manager', 'staff_role' => 'store_manager', 'pos_pin' => '1234'],
+                ['name' => 'Installation Technician', 'phone' => '09170000002', 'store_role' => 'staff', 'staff_role' => 'technician', 'pos_pin' => '1234'],
+                ['name' => 'CCTV Sales Cashier', 'phone' => '09160000003', 'store_role' => 'staff', 'staff_role' => 'cashier', 'pos_pin' => '1234'],
+                ['name' => 'CCTV Stock Keeper', 'phone' => '09100000003', 'store_role' => 'staff', 'staff_role' => 'stock_keeper', 'pos_pin' => '1234'],
+                ['name' => 'CCTV Accountant', 'phone' => '09100000008', 'store_role' => 'staff', 'staff_role' => 'accountant', 'pos_pin' => '1234'],
+                ['name' => 'Daw Aye (Wholesale Partner)', 'phone' => '09100000004', 'store_role' => 'wholesale_customer'],
+                ['name' => 'Ma Su (Retail Customer)', 'phone' => '09100000006', 'store_role' => 'retail_customer'],
             ],
             warehouses: [
                 ['name' => 'Showroom', 'code' => 'SHOW'],
@@ -2313,32 +2661,32 @@ class DemoBusinessScenarioService
                 ['name' => 'Service Spare Parts', 'code' => 'SPARE'],
             ],
             categories: [
-                ['key' => 'cctv', 'name' => 'CCTV Cameras', 'slug' => 'cctv-cameras'],
-                ['key' => 'network', 'name' => 'Network Devices', 'slug' => 'network-devices'],
-                ['key' => 'computer', 'name' => 'Computers', 'slug' => 'computers'],
-                ['key' => 'cables', 'name' => 'Cables & Accessories', 'slug' => 'cables-accessories'],
-                ['key' => 'service', 'name' => 'Installation Services', 'slug' => 'installation-services'],
+                ['key' => 'cctv', 'name' => 'CCTV & Security', 'code' => 'CCTV', 'slug' => 'cctv-security', 'legacy_slugs' => ['cctv-cameras']],
+                ['key' => 'network', 'name' => 'Network & Connectivity', 'code' => 'NET', 'slug' => 'network-connectivity', 'legacy_slugs' => ['network-devices']],
+                ['key' => 'computer', 'name' => 'Computer Peripherals', 'code' => 'ELEC', 'slug' => 'computer-peripherals', 'legacy_slugs' => ['computers']],
+                ['key' => 'cables', 'name' => 'Cable & Charger', 'code' => 'CBCH', 'slug' => 'cable-charger', 'legacy_slugs' => ['cables-accessories']],
+                ['key' => 'service', 'name' => 'Service & Repair', 'code' => 'SVC', 'slug' => 'service-repair', 'legacy_slugs' => ['installation-services']],
             ],
             brands: [
-                ['key' => 'hikvision', 'name' => 'Hikvision', 'slug' => 'hikvision'],
-                ['key' => 'dahua', 'name' => 'Dahua', 'slug' => 'dahua'],
-                ['key' => 'tplink', 'name' => 'TP-Link', 'slug' => 'tp-link'],
-                ['key' => 'lenovo', 'name' => 'Lenovo', 'slug' => 'lenovo'],
-                ['key' => 'house', 'name' => 'Project Service', 'slug' => 'project-service'],
+                ['key' => 'hikvision', 'name' => 'Hikvision', 'code' => 'HIK', 'slug' => 'hikvision'],
+                ['key' => 'dahua', 'name' => 'Dahua', 'code' => 'DAHUA', 'slug' => 'dahua'],
+                ['key' => 'tplink', 'name' => 'TP-Link', 'code' => 'TPLINK', 'slug' => 'tp-link'],
+                ['key' => 'lenovo', 'name' => 'Lenovo', 'code' => 'LNV', 'slug' => 'lenovo'],
+                ['key' => 'house', 'name' => 'Project Service', 'code' => 'PRJ_SVC', 'slug' => 'project-service'],
             ],
             suppliers: [
                 ['key' => 'security_supplier', 'name' => 'Security System Wholesale', 'phone' => '09270000001'],
                 ['key' => 'computer_supplier', 'name' => 'Computer & Network Distributor', 'phone' => '09270000002'],
             ],
             products: [
-                ['sku' => 'CNC-HIK-2MP-DOME', 'name' => 'Hikvision 2MP Dome Camera', 'category_key' => 'cctv', 'brand_key' => 'hikvision', 'supplier_key' => 'security_supplier', 'warehouse_code' => 'PROJECT', 'retail_price' => 85000, 'wholesale_price' => 79000, 'purchase_cost' => 65000, 'opening_stock' => 20, 'reorder_level' => 6, 'warranty' => '1 year'],
-                ['sku' => 'CNC-DAH-NVR-8CH', 'name' => 'Dahua 8CH NVR', 'category_key' => 'cctv', 'brand_key' => 'dahua', 'supplier_key' => 'security_supplier', 'warehouse_code' => 'PROJECT', 'retail_price' => 185000, 'wholesale_price' => 175000, 'purchase_cost' => 148000, 'opening_stock' => 8, 'reorder_level' => 2],
-                ['sku' => 'CNC-TPL-ARCHER-C6', 'name' => 'TP-Link Archer C6 Router', 'category_key' => 'network', 'brand_key' => 'tplink', 'supplier_key' => 'computer_supplier', 'warehouse_code' => 'SHOW', 'retail_price' => 88000, 'wholesale_price' => 83000, 'purchase_cost' => 70000, 'opening_stock' => 15, 'reorder_level' => 4],
-                ['sku' => 'CNC-CAT6-305M', 'name' => 'CAT6 Cable Box 305m', 'category_key' => 'cables', 'brand_key' => 'house', 'supplier_key' => 'security_supplier', 'warehouse_code' => 'PROJECT', 'retail_price' => 165000, 'wholesale_price' => 155000, 'purchase_cost' => 130000, 'opening_stock' => 10, 'reorder_level' => 3],
-                ['sku' => 'CNC-LEN-I5-DESKTOP', 'name' => 'Lenovo i5 Desktop Set', 'category_key' => 'computer', 'brand_key' => 'lenovo', 'supplier_key' => 'computer_supplier', 'warehouse_code' => 'SHOW', 'retail_price' => 1250000, 'wholesale_price' => 1190000, 'purchase_cost' => 1080000, 'opening_stock' => 5, 'reorder_level' => 1],
-                ['sku' => 'CNC-SSD-512-SATA', 'name' => '512GB SATA SSD', 'category_key' => 'computer', 'brand_key' => 'house', 'supplier_key' => 'computer_supplier', 'warehouse_code' => 'SPARE', 'retail_price' => 95000, 'wholesale_price' => 90000, 'purchase_cost' => 76000, 'opening_stock' => 18, 'reorder_level' => 5],
-                ['sku' => 'CNC-SVC-CCTV-4CAM', 'name' => '4 Camera Installation Package', 'category_key' => 'service', 'brand_key' => 'house', 'supplier_key' => 'security_supplier', 'warehouse_code' => 'PROJECT', 'retail_price' => 250000, 'wholesale_price' => 250000, 'purchase_cost' => 0, 'opening_stock' => 1, 'reorder_level' => 0, 'product_type' => 'service', 'service_duration' => '1 day', 'is_ecommerce' => false],
-                ['sku' => 'CNC-SVC-WIFI-SETUP', 'name' => 'WiFi Network Setup Service', 'category_key' => 'service', 'brand_key' => 'house', 'supplier_key' => 'computer_supplier', 'warehouse_code' => 'PROJECT', 'retail_price' => 60000, 'wholesale_price' => 60000, 'purchase_cost' => 0, 'opening_stock' => 1, 'reorder_level' => 0, 'product_type' => 'service', 'service_duration' => '3 hr', 'is_ecommerce' => false],
+                ['sku' => 'CNC-HIK-2MP-DOME', 'name' => 'Hikvision 2MP Dome Camera', 'category_key' => 'cctv', 'brand_key' => 'hikvision', 'supplier_key' => 'security_supplier', 'warehouse_code' => 'PROJECT', 'retail_price' => 85000, 'wholesale_price' => 79000, 'purchase_cost' => 65000, 'opening_stock' => 20, 'reorder_level' => 6, 'shelf_location' => 'WH-MAIN', 'warranty' => 'CCTV 2 Years Warranty (CCTV ၂ နှစ် အာမခံ)', 'return_policy' => 'CCTV — Installation No Refund (CCTV တပ်ဆင်ပြီး ငွေမပြန်ပေးပါ)'],
+                ['sku' => 'CNC-DAH-NVR-8CH', 'name' => 'Dahua 8CH NVR', 'category_key' => 'cctv', 'brand_key' => 'dahua', 'supplier_key' => 'security_supplier', 'warehouse_code' => 'PROJECT', 'retail_price' => 185000, 'wholesale_price' => 175000, 'purchase_cost' => 148000, 'opening_stock' => 8, 'reorder_level' => 2, 'shelf_location' => 'WH-MAIN', 'warranty' => 'CCTV 2 Years Warranty (CCTV ၂ နှစ် အာမခံ)', 'return_policy' => 'CCTV — Installation No Refund (CCTV တပ်ဆင်ပြီး ငွေမပြန်ပေးပါ)'],
+                ['sku' => 'CNC-TPL-ARCHER-C6', 'name' => 'TP-Link Archer C6 Router', 'category_key' => 'network', 'brand_key' => 'tplink', 'supplier_key' => 'computer_supplier', 'warehouse_code' => 'SHOW', 'retail_price' => 88000, 'wholesale_price' => 83000, 'purchase_cost' => 70000, 'opening_stock' => 15, 'reorder_level' => 4, 'shelf_location' => 'WH-MAIN', 'warranty' => '1 Year Official Warranty (၁ နှစ် တရားဝင် အာမခံ)', 'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)'],
+                ['sku' => 'CNC-CAT6-305M', 'name' => 'CAT6 Cable Box 305m', 'category_key' => 'cables', 'brand_key' => 'house', 'supplier_key' => 'security_supplier', 'warehouse_code' => 'PROJECT', 'retail_price' => 165000, 'wholesale_price' => 155000, 'purchase_cost' => 130000, 'opening_stock' => 10, 'reorder_level' => 3, 'shelf_location' => 'WH-MAIN', 'warranty' => 'ရောင်းချပြီး ချက်ချင်း စစ်ဆေးပေးပါ (No Warranty)', 'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)'],
+                ['sku' => 'CNC-LEN-I5-DESKTOP', 'name' => 'Lenovo i5 Desktop Set', 'category_key' => 'computer', 'brand_key' => 'lenovo', 'supplier_key' => 'computer_supplier', 'warehouse_code' => 'SHOW', 'retail_price' => 1250000, 'wholesale_price' => 1190000, 'purchase_cost' => 1080000, 'opening_stock' => 5, 'reorder_level' => 1, 'shelf_location' => 'WH-MAIN', 'warranty' => '1 Year Official Warranty (၁ နှစ် တရားဝင် အာမခံ)', 'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)'],
+                ['sku' => 'CNC-SSD-512-SATA', 'name' => '512GB SATA SSD', 'category_key' => 'computer', 'brand_key' => 'house', 'supplier_key' => 'computer_supplier', 'warehouse_code' => 'SPARE', 'retail_price' => 95000, 'wholesale_price' => 90000, 'purchase_cost' => 76000, 'opening_stock' => 18, 'reorder_level' => 5, 'shelf_location' => 'CAB-SD', 'warranty' => '1 Year Official Warranty (၁ နှစ် တရားဝင် အာမခံ)', 'return_policy' => '7 Days Defect Exchange (ဘူးအကောင်းအတိုင်း)'],
+                ['sku' => 'CNC-SVC-CCTV-4CAM', 'name' => '4 Camera Installation Package', 'category_key' => 'service', 'brand_key' => 'house', 'supplier_key' => 'security_supplier', 'warehouse_code' => 'PROJECT', 'retail_price' => 250000, 'wholesale_price' => 250000, 'purchase_cost' => 0, 'opening_stock' => 1, 'reorder_level' => 0, 'product_type' => 'service', 'service_duration' => '1 day', 'shelf_location' => 'SERVICE-DESK', 'warranty' => '3 Months Workmanship Warranty', 'return_policy' => 'Service Satisfaction Guaranteed', 'is_ecommerce' => false],
+                ['sku' => 'CNC-SVC-WIFI-SETUP', 'name' => 'WiFi Network Setup Service', 'category_key' => 'service', 'brand_key' => 'house', 'supplier_key' => 'computer_supplier', 'warehouse_code' => 'PROJECT', 'retail_price' => 60000, 'wholesale_price' => 60000, 'purchase_cost' => 0, 'opening_stock' => 1, 'reorder_level' => 0, 'product_type' => 'service', 'service_duration' => '3 hr', 'shelf_location' => 'SERVICE-DESK', 'warranty' => '3 Months Workmanship Warranty', 'return_policy' => 'Service Satisfaction Guaranteed', 'is_ecommerce' => false],
             ],
         );
     }
@@ -2349,8 +2697,14 @@ class DemoBusinessScenarioService
             store: ['name' => 'Pharmacy Demo', 'business_type' => 'pharmacy', 'slug' => 'pharmacy-demo', 'viber_number' => '09180000001', 'telegram_username' => 'pharmacy_demo'],
             setting: ['store_name' => 'Pharmacy Demo', 'tagline' => 'ဆေးဝါး၊ Supplement နှင့် Medical Device', 'phone' => '09180000001'],
             users: [
-                ['name' => 'Pharmacy Manager', 'phone' => '09180000001', 'store_role' => 'store_manager', 'pos_pin' => '1234'],
-                ['name' => 'Pharmacy Staff', 'phone' => '09180000002', 'store_role' => 'staff'],
+                ['name' => 'DataPOS Store Owner', 'phone' => '09100000099', 'store_role' => 'store_owner', 'staff_role' => 'store_owner', 'pos_pin' => '1234'],
+                ['name' => 'Pharmacy Manager', 'phone' => '09180000001', 'store_role' => 'store_manager', 'staff_role' => 'store_manager', 'pos_pin' => '1234'],
+                ['name' => 'Pharmacy Staff & Pharmacist', 'phone' => '09180000002', 'store_role' => 'staff', 'staff_role' => 'technician', 'pos_pin' => '1234'],
+                ['name' => 'Pharmacy Cashier', 'phone' => '09160000003', 'store_role' => 'staff', 'staff_role' => 'cashier', 'pos_pin' => '1234'],
+                ['name' => 'Pharmacy Stock Keeper', 'phone' => '09100000003', 'store_role' => 'staff', 'staff_role' => 'stock_keeper', 'pos_pin' => '1234'],
+                ['name' => 'Pharmacy Accountant', 'phone' => '09100000008', 'store_role' => 'staff', 'staff_role' => 'accountant', 'pos_pin' => '1234'],
+                ['name' => 'Daw Aye (Wholesale Clinic)', 'phone' => '09100000004', 'store_role' => 'wholesale_customer'],
+                ['name' => 'Ma Su (Retail Customer)', 'phone' => '09100000006', 'store_role' => 'retail_customer'],
             ],
             warehouses: [
                 ['name' => 'Main Shelf', 'code' => 'SHELF'],
@@ -2391,8 +2745,14 @@ class DemoBusinessScenarioService
             store: ['name' => 'Restaurant Demo', 'business_type' => 'restaurant', 'slug' => 'restaurant-demo', 'viber_number' => '09190000001', 'telegram_username' => 'restaurant_demo'],
             setting: ['store_name' => 'Restaurant Demo', 'tagline' => 'စားသောက်ဆိုင် POS နှင့် Kitchen Stock', 'phone' => '09190000001'],
             users: [
-                ['name' => 'Restaurant Manager', 'phone' => '09190000001', 'store_role' => 'store_manager', 'pos_pin' => '1234'],
-                ['name' => 'Restaurant Cashier', 'phone' => '09190000002', 'store_role' => 'staff'],
+                ['name' => 'DataPOS Store Owner', 'phone' => '09100000099', 'store_role' => 'store_owner', 'staff_role' => 'store_owner', 'pos_pin' => '1234'],
+                ['name' => 'Restaurant Manager', 'phone' => '09190000001', 'store_role' => 'store_manager', 'staff_role' => 'store_manager', 'pos_pin' => '1234'],
+                ['name' => 'Restaurant Head Chef', 'phone' => '09190000003', 'store_role' => 'staff', 'staff_role' => 'technician', 'pos_pin' => '1234'],
+                ['name' => 'Restaurant Cashier', 'phone' => '09190000002', 'store_role' => 'staff', 'staff_role' => 'cashier', 'pos_pin' => '1234'],
+                ['name' => 'Kitchen Stock Keeper', 'phone' => '09100000003', 'store_role' => 'staff', 'staff_role' => 'stock_keeper', 'pos_pin' => '1234'],
+                ['name' => 'Restaurant Accountant', 'phone' => '09100000008', 'store_role' => 'staff', 'staff_role' => 'accountant', 'pos_pin' => '1234'],
+                ['name' => 'Daw Aye (Catering Wholesale)', 'phone' => '09100000004', 'store_role' => 'wholesale_customer'],
+                ['name' => 'Ma Su (Dine-in Customer)', 'phone' => '09100000006', 'store_role' => 'retail_customer'],
             ],
             warehouses: [
                 ['name' => 'Kitchen Stock', 'code' => 'KITCHEN'],
@@ -2468,8 +2828,13 @@ class DemoBusinessScenarioService
                 'payment_info' => 'Cash, KBZ Pay, Wave Pay နှင့် MMQR လက်ခံပါသည်။',
             ],
             users: [
-                ['name' => 'ဒေါ်ခင်မာ (ဆိုင်မန်နေဂျာ)', 'phone' => '09200000001', 'store_role' => 'store_manager', 'pos_pin' => '1234'],
-                ['name' => 'မနွယ်နီ (အရောင်းစာရေး)', 'phone' => '09200000002', 'store_role' => 'staff'],
+                ['name' => 'DataPOS Store Owner', 'phone' => '09100000099', 'store_role' => 'store_owner', 'staff_role' => 'store_owner', 'pos_pin' => '1234'],
+                ['name' => 'ဒေါ်ခင်မာ (ဆိုင်မန်နေဂျာ)', 'phone' => '09200000001', 'store_role' => 'store_manager', 'staff_role' => 'store_manager', 'pos_pin' => '1234'],
+                ['name' => 'မနွယ်နီ (အရောင်းစာရေး/Cashier)', 'phone' => '09200000002', 'store_role' => 'staff', 'staff_role' => 'cashier', 'pos_pin' => '1234'],
+                ['name' => 'ကိုမောင်မောင် (စတော့မှူး)', 'phone' => '09100000003', 'store_role' => 'staff', 'staff_role' => 'stock_keeper', 'pos_pin' => '1234'],
+                ['name' => 'ဒေါ်နီလာ (စာရင်းကိုင်)', 'phone' => '09100000008', 'store_role' => 'staff', 'staff_role' => 'accountant', 'pos_pin' => '1234'],
+                ['name' => 'ဦးဘိုဘို (လက်ကားဖောက်သည်)', 'phone' => '09100000004', 'store_role' => 'wholesale_customer'],
+                ['name' => 'ဒေါ်သန်းသန်းနွယ် (လက်လီဝယ်သူ)', 'phone' => '09100000006', 'store_role' => 'retail_customer'],
             ],
             warehouses: [
                 ['name' => 'အရောင်းစင်', 'code' => 'FRONT'],
@@ -2621,8 +2986,14 @@ class DemoBusinessScenarioService
                 'payment_info' => 'Cash, KBZ Pay, Wave Pay, supplier credit demo.',
             ],
             'users' => [
-                ['name' => 'Diamond Stone Manager', 'phone' => '09130000001', 'store_role' => 'store_manager', 'pos_pin' => '1234'],
-                ['name' => 'Diamond Stone Staff', 'phone' => '09130000002', 'store_role' => 'staff'],
+                ['name' => 'DataPOS Store Owner', 'phone' => '09100000099', 'store_role' => 'store_owner', 'staff_role' => 'store_owner', 'pos_pin' => '1234'],
+                ['name' => 'Diamond Stone Manager', 'phone' => '09130000001', 'store_role' => 'store_manager', 'staff_role' => 'store_manager', 'pos_pin' => '1234'],
+                ['name' => 'Agri Technical Advisor', 'phone' => '09130000002', 'store_role' => 'staff', 'staff_role' => 'technician', 'pos_pin' => '1234'],
+                ['name' => 'Diamond Stone Cashier', 'phone' => '09160000003', 'store_role' => 'staff', 'staff_role' => 'cashier', 'pos_pin' => '1234'],
+                ['name' => 'Warehouse & Stock Keeper', 'phone' => '09100000003', 'store_role' => 'staff', 'staff_role' => 'stock_keeper', 'pos_pin' => '1234'],
+                ['name' => 'Finance & Accountant', 'phone' => '09100000008', 'store_role' => 'staff', 'staff_role' => 'accountant', 'pos_pin' => '1234'],
+                ['name' => 'ဦးဘိုဘို (Wholesale Farmer)', 'phone' => '09100000004', 'store_role' => 'wholesale_customer'],
+                ['name' => 'ဒေါ်သန်းသန်းနွယ် (Retail Buyer)', 'phone' => '09100000006', 'store_role' => 'retail_customer'],
             ],
             'warehouses' => [
                 ['name' => 'Seed Storage', 'code' => 'SEED'],
@@ -2677,8 +3048,14 @@ class DemoBusinessScenarioService
                 'payment_info' => 'Cash, KBZ Pay, Wave Pay.',
             ],
             'users' => [
-                ['name' => 'စည်တော်ကြီး Manager', 'phone' => '09140000001', 'store_role' => 'store_manager', 'pos_pin' => '1234'],
-                ['name' => 'စည်တော်ကြီး Cashier', 'phone' => '09140000002', 'store_role' => 'staff'],
+                ['name' => 'DataPOS Store Owner', 'phone' => '09100000099', 'store_role' => 'store_owner', 'staff_role' => 'store_owner', 'pos_pin' => '1234'],
+                ['name' => 'စည်တော်ကြီး Manager', 'phone' => '09140000001', 'store_role' => 'store_manager', 'staff_role' => 'store_manager', 'pos_pin' => '1234'],
+                ['name' => 'စည်တော်ကြီး Cashier', 'phone' => '09140000002', 'store_role' => 'staff', 'staff_role' => 'cashier', 'pos_pin' => '1234'],
+                ['name' => 'Kitchen Bar Technician', 'phone' => '09140000003', 'store_role' => 'staff', 'staff_role' => 'technician', 'pos_pin' => '1234'],
+                ['name' => 'Stock & Beverage Keeper', 'phone' => '09100000003', 'store_role' => 'staff', 'staff_role' => 'stock_keeper', 'pos_pin' => '1234'],
+                ['name' => 'Finance & Accountant', 'phone' => '09100000008', 'store_role' => 'staff', 'staff_role' => 'accountant', 'pos_pin' => '1234'],
+                ['name' => 'Daw Aye (Event Wholesale)', 'phone' => '09100000004', 'store_role' => 'wholesale_customer'],
+                ['name' => 'Ma Su (Dine-in Customer)', 'phone' => '09100000006', 'store_role' => 'retail_customer'],
             ],
             'warehouses' => [
                 ['name' => 'Kitchen Stock', 'code' => 'KITCHEN'],
@@ -2734,9 +3111,14 @@ class DemoBusinessScenarioService
                 'payment_info' => 'KBZ Pay, CB Pay, Wave Pay, AYA Pay, Cash on Delivery.',
             ],
             'users' => [
-                ['name' => 'KL Fashion Manager', 'phone' => '09170000001', 'store_role' => 'store_manager', 'pos_pin' => '1234'],
-                ['name' => 'KL Master Tailor', 'phone' => '09170000002', 'store_role' => 'staff'],
-                ['name' => 'KL Sales Staff', 'phone' => '09170000003', 'store_role' => 'staff'],
+                ['name' => 'DataPOS Store Owner', 'phone' => '09100000099', 'store_role' => 'store_owner', 'staff_role' => 'store_owner', 'pos_pin' => '1234'],
+                ['name' => 'KL Fashion Manager', 'phone' => '09170000001', 'store_role' => 'store_manager', 'staff_role' => 'store_manager', 'pos_pin' => '1234'],
+                ['name' => 'KL Master Tailor', 'phone' => '09170000002', 'store_role' => 'staff', 'staff_role' => 'technician', 'pos_pin' => '1234'],
+                ['name' => 'KL Sales Cashier', 'phone' => '09170000003', 'store_role' => 'staff', 'staff_role' => 'cashier', 'pos_pin' => '1234'],
+                ['name' => 'Fabric & Material Keeper', 'phone' => '09100000003', 'store_role' => 'staff', 'staff_role' => 'stock_keeper', 'pos_pin' => '1234'],
+                ['name' => 'Finance & Accountant', 'phone' => '09100000008', 'store_role' => 'staff', 'staff_role' => 'accountant', 'pos_pin' => '1234'],
+                ['name' => 'Daw Aye (Boutique Wholesale)', 'phone' => '09100000004', 'store_role' => 'wholesale_customer'],
+                ['name' => 'Ma Su (Retail Customer)', 'phone' => '09100000006', 'store_role' => 'retail_customer'],
             ],
             'warehouses' => [
                 ['name' => 'Showroom & Front Shop', 'code' => 'FRONT'],

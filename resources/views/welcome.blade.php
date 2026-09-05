@@ -47,7 +47,7 @@
         {{-- [Desktop Left Column] 1 col = 25% Category Sidebar with Hover Subcategories Flyout --}}
         <div class="hidden lg:flex lg:col-span-1 min-w-0 flex-col rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900 relative z-30"
              x-data="{ activeHover: null, closeTimeout: null }"
-             @mouseleave="closeTimeout = setTimeout(() => { activeHover = null }, 150)"
+             @mouseleave="closeTimeout = setTimeout(() => { activeHover = null }, 200)"
              @mouseenter="if (closeTimeout) clearTimeout(closeTimeout)"
         >
             <div class="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-100 dark:border-slate-800 px-1">
@@ -59,8 +59,8 @@
                 </a>
             </div>
 
-            <nav class="space-y-0.5">
-                @forelse ($categoryTree->take(10) as $catRow)
+            <nav class="space-y-0.5 max-h-[440px] overflow-y-auto pr-0.5 select-none">
+                @forelse ($categoryTree as $catRow)
                     @php
                         $cMain = $catRow->category;
                         $cIcon = ($cMain->icon && $cMain->icon !== 'NULL' && $cMain->icon !== 'null') ? $cMain->icon : $iconFor($cMain->name);
@@ -70,16 +70,18 @@
                          @mouseenter="if (closeTimeout) clearTimeout(closeTimeout); activeHover = {{ $cMain->id }}"
                     >
                         <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $cMain->id) }}"
-                           class="group flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl text-xs font-bold transition-all"
+                           class="group flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all"
                            :class="activeHover === {{ $cMain->id }} ? 'bg-sky-50 dark:bg-slate-800 text-sky-600 dark:text-sky-400 font-black' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-sky-600 dark:hover:text-sky-400'">
                             <span class="flex items-center gap-2.5 min-w-0">
                                 <span class="text-base shrink-0 group-hover:scale-110 transition-transform">{{ $cIcon }}</span>
                                 <span class="truncate font-myanmar">{{ $cMain->name }}</span>
                             </span>
                             <div class="flex items-center gap-1 shrink-0">
-                                <span class="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover:bg-sky-100 group-hover:text-sky-700 dark:group-hover:bg-sky-950 dark:group-hover:text-sky-300">
-                                    {{ number_format($catRow->total) }}
-                                </span>
+                                @if ($catRow->total > 0)
+                                    <span class="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover:bg-sky-100 group-hover:text-sky-700 dark:group-hover:bg-sky-950 dark:group-hover:text-sky-300">
+                                        {{ number_format($catRow->total) }}
+                                    </span>
+                                @endif
                                 @if ($hasChildren)
                                     <svg class="h-3 w-3 text-slate-400 group-hover:text-sky-500 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
@@ -87,54 +89,69 @@
                                 @endif
                             </div>
                         </a>
-
-                        {{-- Subcategory Flyout Panel --}}
-                        @if ($hasChildren)
-                            <div x-show="activeHover === {{ $cMain->id }}"
-                                 x-transition:enter="transition ease-out duration-150"
-                                 x-transition:enter-start="opacity-0 translate-x-1"
-                                 x-transition:enter-end="opacity-100 translate-x-0"
-                                 x-transition:leave="transition ease-in duration-100"
-                                 x-transition:leave-start="opacity-100 translate-x-0"
-                                 x-transition:leave-end="opacity-0 translate-x-1"
-                                 @mouseenter="if (closeTimeout) clearTimeout(closeTimeout); activeHover = {{ $cMain->id }}"
-                                 class="absolute left-full top-0 ml-2.5 w-72 sm:w-80 bg-white/95 dark:bg-slate-900/95 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xl p-3 z-50 backdrop-blur-xl"
-                                 style="display: none;"
-                            >
-                                <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800 px-1">
-                                    <span class="text-xs font-black text-slate-900 dark:text-white font-myanmar flex items-center gap-1.5 truncate">
-                                        <span>{{ $cIcon }}</span>
-                                        <span class="truncate">{{ $cMain->name }}</span>
-                                    </span>
-                                    <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $cMain->id) }}" class="shrink-0 text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline font-myanmar">
-                                        {{ __('messages.view_all') }} →
-                                    </a>
-                                </div>
-
-                                <div class="grid grid-cols-1 gap-1 max-h-[320px] overflow-y-auto">
-                                    @foreach ($catRow->children as $subCat)
-                                        @php
-                                            $subIcon = ($subCat->icon && $subCat->icon !== 'NULL' && $subCat->icon !== 'null') ? $subCat->icon : '▫️';
-                                        @endphp
-                                        <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $subCat->id) }}"
-                                           class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 transition group/sub">
-                                            <span class="flex items-center gap-2 min-w-0">
-                                                <span class="text-xs shrink-0 text-slate-400 group-hover/sub:text-sky-500">{{ $subIcon }}</span>
-                                                <span class="truncate font-myanmar">{{ $subCat->name }}</span>
-                                            </span>
-                                            <span class="shrink-0 text-[10px] font-black px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover/sub:bg-sky-100 group-hover/sub:text-sky-700 dark:group-hover/sub:bg-sky-950 dark:group-hover/sub:text-sky-300">
-                                                {{ number_format($subCat->products_count) }}
-                                            </span>
-                                        </a>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
                     </div>
                 @empty
                     <div class="text-xs text-slate-400 p-2 font-myanmar">{{ __('messages.no_products_hint') }}</div>
                 @endforelse
             </nav>
+
+            {{-- Subcategory Flyout Panels (Full Height inset-y-0 directly matching Category Sidebar) --}}
+            @foreach ($categoryTree as $catRow)
+                @if ($catRow->children->isNotEmpty())
+                    @php
+                        $cMain = $catRow->category;
+                        $cIcon = ($cMain->icon && $cMain->icon !== 'NULL' && $cMain->icon !== 'null') ? $cMain->icon : $iconFor($cMain->name);
+                    @endphp
+                    <div x-show="activeHover === {{ $cMain->id }}"
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 translate-x-1"
+                         x-transition:enter-end="opacity-100 translate-x-0"
+                         x-transition:leave="transition ease-in duration-100"
+                         x-transition:leave-start="opacity-100 translate-x-0"
+                         x-transition:leave-end="opacity-0 translate-x-1"
+                         @mouseenter="if (closeTimeout) clearTimeout(closeTimeout); activeHover = {{ $cMain->id }}"
+                         @mouseleave="closeTimeout = setTimeout(() => { activeHover = null }, 200)"
+                         class="absolute left-full inset-y-0 ml-2 w-80 sm:w-88 md:w-96 bg-white/95 dark:bg-slate-900/95 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xl p-3.5 z-50 backdrop-blur-xl flex flex-col before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3 before:content-['']"
+                         style="display: none;"
+                    >
+                        <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-100 dark:border-slate-800 px-1 shrink-0">
+                            <span class="text-xs font-black text-slate-900 dark:text-white font-myanmar flex items-center gap-2 truncate">
+                                <span class="text-base">{{ $cIcon }}</span>
+                                <span class="truncate">{{ $cMain->name }}</span>
+                            </span>
+                            <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $cMain->id) }}" class="shrink-0 text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline font-myanmar flex items-center gap-1">
+                                <span>{{ __('messages.view_all') }}</span>
+                                <span>→</span>
+                            </a>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto pr-1 space-y-0.5 select-none scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+                            @foreach ($catRow->children as $subCat)
+                                @php
+                                    $subIcon = ($subCat->icon && $subCat->icon !== 'NULL' && $subCat->icon !== 'null') ? $subCat->icon : '▫️';
+                                @endphp
+                                <a href="{{ url('/products?store_slug=' . $storeSlug . '&category_id=' . $subCat->id) }}"
+                                   class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-sky-50 dark:hover:bg-slate-800 hover:text-sky-600 dark:hover:text-sky-400 transition group/sub">
+                                    <span class="flex items-center gap-2.5 min-w-0">
+                                        <span class="text-xs shrink-0 text-slate-400 group-hover/sub:text-sky-500">{{ $subIcon }}</span>
+                                        <span class="truncate font-myanmar">{{ $subCat->name }}</span>
+                                    </span>
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        @if ($subCat->products_count > 0)
+                                            <span class="text-[10px] font-black px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover/sub:bg-sky-100 group-hover/sub:text-sky-700 dark:group-hover/sub:bg-sky-950 dark:group-hover/sub:text-sky-300">
+                                                {{ number_format($subCat->products_count) }}
+                                            </span>
+                                        @endif
+                                        <svg class="h-3 w-3 text-slate-400 opacity-0 group-hover/sub:opacity-100 group-hover/sub:text-sky-500 transition-all group-hover/sub:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            @endforeach
         </div>
 
         {{-- [Desktop Right Column] 3 cols = 75% Wide Hero Banner Slider --}}

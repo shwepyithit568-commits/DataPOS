@@ -150,6 +150,35 @@
         </div>
     </div>
 
+    {{-- 2. Dense Tab Navigation Bar --}}
+    <div class="flex items-center gap-1 overflow-x-auto scrollbar-thin bg-white dark:bg-slate-900 p-1 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+        <a href="{{ route('store.admin.pilot-import.index', array_merge($storeRouteParams, ['tab' => 'scenarios'])) }}"
+           class="h-8 px-3 rounded-md text-xs font-bold transition flex items-center gap-1.5 shrink-0 {{ $currentTab === 'scenarios' ? 'bg-violet-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800' }}">
+            <span>🌱</span>
+            <span>{{ __('messages.pilot_import_tab_scenarios') }}</span>
+        </a>
+        <a href="{{ route('store.admin.pilot-import.index', array_merge($storeRouteParams, ['tab' => 'products'])) }}"
+           class="h-8 px-3 rounded-md text-xs font-bold transition flex items-center gap-1.5 shrink-0 {{ $currentTab === 'products' ? 'bg-violet-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800' }}">
+            <span>📦</span>
+            <span>{{ __('messages.pilot_import_tab_products') }}</span>
+        </a>
+        <a href="{{ route('store.admin.pilot-import.index', array_merge($storeRouteParams, ['tab' => 'customers'])) }}"
+           class="h-8 px-3 rounded-md text-xs font-bold transition flex items-center gap-1.5 shrink-0 {{ $currentTab === 'customers' ? 'bg-violet-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800' }}">
+            <span>👥</span>
+            <span>{{ __('messages.pilot_import_tab_customers') }}</span>
+        </a>
+        <a href="{{ route('store.admin.pilot-import.index', array_merge($storeRouteParams, ['tab' => 'suppliers'])) }}"
+           class="h-8 px-3 rounded-md text-xs font-bold transition flex items-center gap-1.5 shrink-0 {{ $currentTab === 'suppliers' ? 'bg-violet-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800' }}">
+            <span>🏢</span>
+            <span>{{ __('messages.pilot_import_tab_suppliers') }}</span>
+        </a>
+        <a href="{{ route('store.admin.pilot-import.index', array_merge($storeRouteParams, ['tab' => 'debt'])) }}"
+           class="h-8 px-3 rounded-md text-xs font-bold transition flex items-center gap-1.5 shrink-0 {{ $currentTab === 'debt' ? 'bg-violet-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800' }}">
+            <span>💳</span>
+            <span>{{ __('messages.pilot_import_tab_debt') }}</span>
+        </a>
+    </div>
+
     @if ($currentTab === 'scenarios')
         {{-- ========================================================================= --}}
         {{-- TAB: SCENARIOS & PRESETS SEEDER                                           --}}
@@ -170,7 +199,7 @@
 
                     <h2 class="text-sm sm:text-base font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
                         <span>
-                            @if (str_contains($matchedScenarioKey, 'mobile')) 📱 🔌 🛠️ 💎
+                            @if (str_contains($matchedScenarioKey, 'mobile')) 📱 📹 🌐 💻 🔌 🛠️ 💎
                             @elseif (str_contains($matchedScenarioKey, 'fashion')) 👗 ✂️ 🧵 🪡
                             @elseif (str_contains($matchedScenarioKey, 'cctv')) 📹 🌐 💻 🛠️
                             @else 🏬 📦 ✨
@@ -185,11 +214,14 @@
 
                     <div class="flex flex-wrap gap-1.5 text-[11px] text-slate-700 dark:text-slate-200 pt-0.5">
                         @if (str_contains($matchedScenarioKey, 'mobile'))
-                            <span class="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">📱 စမတ်ဖုန်းများ (iPhone, Galaxy, Xiaomi)</span>
-                            <span class="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">🔌 ကြိုး/ခေါင်း/ပါဝါဘဏ် (Anker, Joyroom)</span>
-                            <span class="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">🛠️ ပြုပြင်ရေး ဝန်ဆောင်မှု & Spare Parts</span>
+                            <span class="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">📱 စမတ်ဖုန်းများ (iPhone, Galaxy, Xiaomi, Vivo, OPPO, Realme)</span>
+                            <span class="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">📹 CCTV & Security (Hikvision, Dahua, Imou IP Cameras, NVR, 2TB HDD)</span>
+                            <span class="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">🌐 Network & Computer (TP-Link Router, Switch, Cat6, Desktop, SSD)</span>
+                            <span class="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">🔌 ကြိုး/ခေါင်း/ပါဝါဘဏ် (Anker, Remax, Joyroom, Hoco)</span>
+                            <span class="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">🛠️ ပြုပြင်ရေး & CCTV တပ်ဆင်ရေး Package</span>
                             <span class="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">💎 Digital Codes / PIN / Top-up</span>
                             <span class="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">📦 Variant Matrix (Stock: 10 ခုစီ)</span>
+                            <span class="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 font-semibold">📂 Master Data ၁၁၅ မျိုး & ၈၄ တံဆိပ် ချိတ်ဆက်ထားသည်</span>
                         @elseif (str_contains($matchedScenarioKey, 'fashion'))
                             <span class="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">✂️ စက်ချုပ်ခ/မင်္ဂလာဝတ်စုံ</span>
                             <span class="px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">👗 ဂါဝန်/ရှပ်/ကုတ်/လုံချည်</span>
@@ -222,21 +254,22 @@
                     </form>
 
                     @if ($demoScenariosEnabled)
-                        <form method="POST" action="{{ route('store.admin.pilot-import.demo-scenarios.store', array_merge($storeRouteParams, ['scenario' => $matchedScenarioKey])) }}">
-                            @csrf
-                            <button type="submit"
-                                    onclick="return confirm('{{ __('messages.pilot_import_demo_store_confirm', ['scenario' => $spotlightScenario['label']]) }}')"
-                                    class="w-full h-9 px-4 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
-                                <span>🏬</span>
-                                <span>{{ __('messages.pilot_import_btn_demo_store') }}</span>
-                            </button>
-                        </form>
+                    <form method="POST" action="{{ route('store.admin.pilot-import.demo-scenarios.store', array_merge($storeRouteParams, ['scenario' => $matchedScenarioKey])) }}">
+                        @csrf
+                        <button type="submit"
+                                onclick="return confirm('{{ __('messages.pilot_import_demo_store_confirm', ['scenario' => $spotlightScenario['label']]) }}')"
+                                class="w-full h-9 px-4 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
+                            <span>🏬</span>
+                            <span>{{ __('messages.pilot_import_btn_demo_store') }}</span>
+                        </button>
+                    </form>
                     @endif
                 </div>
             </div>
         </div>
 
-        {{-- 9 SME Presets Grid --}}
+        {{-- 9 SME Presets Grid (dev/UAT only) --}}
+        @if ($demoScenariosEnabled)
         <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-3 shadow-2xs space-y-3">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-2">
                 <div>
@@ -359,6 +392,7 @@
                 @endforeach
             </div>
         </div>
+        @endif {{-- end demoScenariosEnabled (SME Presets Grid) --}}
 
         {{-- Quick-Start Demo Store Creator (Local / UAT mode) --}}
         @if ($demoScenariosEnabled)

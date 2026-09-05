@@ -440,7 +440,7 @@
     <div x-show="sidebarOpen" x-transition.opacity.duration.200ms @click="closeDrawer()"
         class="fixed inset-0 z-20 bg-black/30 lg:hidden" aria-hidden="true"></div>
 
-    <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
         @php
             $supportService = app(\App\Services\SupportAccessService::class);
             $isSupportActive = $supportService->isSupportModeActive();
@@ -707,7 +707,7 @@
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto @yield('main_padding', 'p-0.5 sm:p-1.5 lg:p-2') bg-slate-50 dark:bg-slate-900/60 transition-colors duration-200">
+        <main class="flex-1 min-w-0 overflow-y-auto @yield('main_padding', 'p-0.5 sm:p-1.5 lg:p-2') bg-slate-50 dark:bg-slate-900/60 transition-colors duration-200">
             {{ $slot ?? '' }}
             @yield('content')
         </main>
