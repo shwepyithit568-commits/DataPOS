@@ -6,8 +6,8 @@
 | Document Meta | Details |
 | :--- | :--- |
 | **Standard Version** | `v1.0.0-Production-Ready` |
-| **Last Updated** | `2026-09-06` |
-| **Applicable Modules** | Storefront Web (`resources/views/welcome.blade.php`, `products/*`, `cart/*`, `checkout/*`, `service-tracking.blade.php`, `layouts/storefront/*`) |
+| **Last Updated** | `2026-09-07` |
+| **Applicable Modules** | Storefront Web (`resources/views/welcome.blade.php`, `storefront/browse/*`, `products/*`, `cart/*`, `checkout/*`, `service-tracking.blade.php`, `layouts/storefront/*`) |
 | **Target Audience** | Software Architects, Full-Stack Engineers, Frontend Developers, QA Engineers, Shop Owners |
 | **Reference Architecture** | Laravel 12.64.0, Tailwind CSS 4, Alpine.js, Pure CSS 3D Tactile Rhythm, Service Worker Offline Caching |
 | **Target Environment** | Myanmar retail SME market, unstable 3G/4G cellular networks, low-to-mid range Android devices (Tecno, Infinix, Redmi, Realme, 2GB–4GB RAM) & Modern Desktop/iOS |
@@ -408,19 +408,35 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
 ### ၉.၁။ ပင်မ အရောင်းနှင့် စျေးဝယ်စာမျက်နှာများ (Core Commerce Pages)
 - [x] **Storefront Home (ပင်မစာမျက်နှာ):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/welcome.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/welcome.blade.php)
-  - **လုပ်ဆောင်ချက်များ:** 3D Desktop Navigation, Compact Category Sidebar (`40px`), Slim Flyout Panel (`256px`), Value Trust Strip 3D Cards, Section Headers ရှိ "အားလုံးကြည့်မည် (View All)" Link များအား `sf-btn-3d active` Mini Push Buttons သို့ ပြောင်းလဲခြင်း၊ Glass Finder CTA အား `sf-btn-3d active` သို့ ပြင်ဆင်ခြင်း၊ Direct Support Modal ခလုတ်များ (Viber, Telegram, Phone) အား 3D Bevel Buttons သို့ ပြောင်းလဲခြင်း၊ Dynamic Theming Tokens အပြည့်အဝ ချိတ်ဆက်ပြီးစီး။
+  - **လုပ်ဆောင်ချက်များ:** 3D Desktop Navigation, Compact Category Sidebar (`40px`), Slim Flyout Panel (`256px`), Value Trust Strip 3D Cards, Section Headers ရှိ "အားလုံးကြည့်မည် (View All)" Link များအား `sf-btn-3d active` Mini Push Buttons သို့ ပြောင်းလဲခြင်း၊ Glass Finder CTA အား `sf-btn-3d active` သို့ ပြင်ဆင်ခြင်း၊ Direct Support Modal ခလုတ်များ (Viber, Telegram, Phone) အား 3D Bevel Buttons သို့ ပြောင်းလဲခြင်း၊ Dynamic Theming Tokens အပြည့်အဝ ချိတ်ဆက်ခြင်း၊ **Browse Left-Rail Style Category Scroll Cards & Smooth Navigation:** "လူကြိုက်အများဆုံး အမျိုးအစားများ" Horizontal Scroll Cards များအား Browse Left-Rail ၏ `sf-btn-3d aspect-[3/4]` စံအတိုင်း Full-bleed edge-to-edge ဓာတ်ပုံ (~၈၀%)၊ ထိပ်ညာဘက် Semi-transparent Count Badge၊ ပါးလွှာကျစ်လျစ်သော အမည်ပြား၊ `/browse?category_id=...` သို့ Deep-link Auto-scroll Active စနစ်၊ Buttery-Smooth Inertial Drag (1:1 Physics with Click Protection) နှင့် Header ရှိ 3D Prev/Next Navigation Arrow Buttons (`❮` / `❯`) တို့ဖြင့် စုံလင်စွာ ပြင်ဆင်ပြီးစီး။ **Hero Section Subtle Corners Standard (`rounded-md sm:rounded-lg`):** Category Sidebar Background Card, Flyout Subcategory Panels, Hero Banner Photo Slider Container, Banner Navigation Controls, Fallback Hero Card နှင့် Trust Strip ကတ်များ/အိုင်ကွန်များအားလုံးတွင် ဖောင်းကြွနေသော `rounded-2xl` / `rounded-3xl` အဝိုက်ကြီးများ အားလုံးကို လျှော့ချပြီး ကျစ်လျစ်သပ်ရပ်သော `rounded-md sm:rounded-lg` (4px–8px) စံနှုန်းသို့ ပြင်ဆင်ပြီးစီး။
 - [x] **Product Catalog & Search (ကုန်ပစ္စည်းစာရင်းနှင့် ရှာဖွေမှု):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/catalog/index.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/catalog/index.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Hardcoded `Ks` နှင့် `(Ks)` များ အကုန်ဖယ်ရှားပြီး `format_currency()` သို့ ပြောင်းလဲခြင်း၊ Hardcoded ကာလာများ ဖယ်ရှားပြီး Dynamic 3D Push Button Suite (`sf-btn-3d`, `sf-btn-3d-primary`, `sf-btn-3d-danger`, `sf-btn-3d-success`, `sf-btn-3d-accent`) တပ်ဆင်ခြင်း၊ Grid/List view switcher 3D ပြောင်းခြင်း၊ Slim Category/Brand Hover Flyout (`256px` Zero GPU Lag) တပ်ဆင်ခြင်း၊ Desktop 2-Column Side-by-Side Grid Layout နှင့် Product Card Action Buttons များကို 3D ပြုလုပ်ပြီးစီး။
 - [x] **Product Details & Variant Specs (ကုန်ပစ္စည်းအသေးစိတ်):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/catalog/show.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/catalog/show.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Hardcoded inline gradient styles အားလုံး ဖယ်ရှားပြီး 3D Tactile Suite ဖြင့် အစားထိုးခြင်း၊ "Buy Now" CTA အား `.sf-btn-3d-orange` ဖြင့်လည်းကောင်း၊ "Add to Order" CTA အား `.sf-btn-3d-primary` ဖြင့်လည်းကောင်း တပ်ဆင်ခြင်း၊ Direct Order (Viber & Telegram) အတွက် `.sf-btn-3d-viber` နှင့် `.sf-btn-3d-telegram` 3D Buttons အသစ်များ တည်ဆောက် တပ်ဆင်ခြင်း၊ 3D Variant Matrix Pills (Color/Storage/Specs) များတွင် Tactile push physics နှင့် active state သတ်မှတ်ခြင်း၊ 3D Wholesale Badge နှင့် Promo Pill များ တပ်ဆင်ခြင်း၊ 3D Metallic Gold / Rose Favorite Heart Button နှင့် 3D Share Button တပ်ဆင်ခြင်း၊ `lang/{en,my,zh_CN}/messages.php` သုံးဘာသာစလုံးတွင် `'buy_now'` key အပြည့်အစုံ ဖြည့်စွက်ပြီးစီး။
-- [ ] **Category Browser (ကုန်ပစ္စည်း ကဏ္ဍစုံ ရှာဖွေမှု):**
+- [x] **Category Browser (ကုန်ပစ္စည်း ကဏ္ဍစုံ ရှာဖွေမှု):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/browse/index.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/browse/index.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Visual Category Grid Cards, Subcategory Accordions, Category Hero Banners, 3D Push Cards။
-- [ ] **Shopping Cart & Order Builder (ခြင်းတောင်းနှင့် အော်ဒါပြင်ဆင်မှု):**
+  - **လုပ်ဆောင်ချက်များ:** Shopee/Lazada ပုံစံ 2-Pane Split-Screen Layout (ဘယ်ဘက် Vertical Categories Rail + ညာဘက် Category Details/Brands/Sub-categories Pane) ဖြင့် စနစ်ကျစွာ တည်ဆောက်ပြီးစီး။
+    - **Admin Master Data Categories Synchronization:** `/admin/categories` တွင် ထည့်သွင်းထားသော Main Categories (၁၅) ခုလုံးအား Storefront တွင် အမည်၊ အရေအတွက်နှင့် အစဉ်လိုက် တိကျစွာ ပြသခြင်း။
+    - **Sharp Rectangular 3D Card Architecture (`rounded-none`):** Category Cards၊ Brand Cards၊ Sub-category Pills နှင့် Product Grid Cards များအားလုံး၏ ထောင့် ၄ ဖက်လုံးမှ Rounded အဝိုက်များအားလုံးကို အပြီးအပိုင် ဖြုတ်ပယ်ပြီး လေးထောင့်စပ်စပ် 3D Tactile Push Tiles စတိုင်လ်သို့ ပြောင်းလဲခြင်း။
+    - **Left Rail Edge-to-Edge Full-Bleed Proportions:** ဘယ်ဘက် Main Category ကတ်များ၏ အပေါ်ပိုင်း ၈၀% (`h-[77%] sm:h-[80%]`) အား အပြည့်ဓာတ်ပုံဧရိယာ ထားရှိပြီး၊ အောက်ဖက် ကဏ္ဍအမည်အကွက်အား ပါးလွှာကျစ်လျစ်သော အမြင့် (`px-0.5 py-0`) သို့ ပြင်ဆင်ခြင်း။
+    - **Brands Card Horizontal Scroll Track:** Sub Category အောက်တည့်တည့်တွင် အမှတ်တံဆိပ် (Brands) ကတ်များအား အပေါ်ပိုင်း ၄ ပုံ ၃ ပုံ ဓာတ်ပုံအပြည့် (`h-[74%] sm:h-[76%]`) နှင့် အောက်ခြေ အမည်ပြား (`text-[8.5px] sm:text-[9.5px]`) ဖြင့် `.sf-brand-card` သီးသန့် တပ်ဆင်ခြင်း။ Brand Card နှိပ်လိုက်သည်နှင့် အောက်ဖက် Product Grid တွင် Realtime စစ်ထုတ်ပြသခြင်း။
+    - **Sub-Category Buttons Ergonomics:** လက်ချောင်းဖြင့် နှိပ်ရလွယ်ကူစေရန် ခလုတ်အမြင့် `h-9 sm:h-10 px-3.5` တိုးမြှင့်ခြင်းနှင့် `rounded-none` သတ်မှတ်ခြင်း။
+    - **Sticky Controls & Top Edge Flush Architecture:** ညာဘက် `<main>` container အား `pt-0` ထားရှိကာ Controls Toolbar (`sticky top-0 z-30`) အား ထိပ်စွန်းနှင့် ကွက်တိကပ်စေခြင်း။ Product Card များတွင် `relative isolate` ထည့်သွင်း၍ Scroll ဆွဲချိန်တွင် Card အတွင်းရှိ Wishlist Button များ Sticky Header ပေါ်သို့ ထိုးဖောက်မတက်စေရန် Stacking Context ကာကွယ်ထားခြင်း။
+    - **Ultra-Dense 2px Rhythm:** Card တစ်ခုနှင့်တစ်ခု ကြားအကွာအဝေးကို `gap-0.5 sm:gap-1` ဖြင့် သိပ်သည်းကျစ်လျစ်စွာ ချိန်ညှိခြင်း။
+    - **Single Search Bar Policy:** ရှုပ်ထွေးမှု ကင်းဝေးစေရန် browse container အပေါ်ရှိ ပိုနေသော ဒုတိယ Search Bar ကို ဖယ်ရှားပြီး Universal Header Search Bar နှင့် ဘယ်ဘက်ခြမ်း Realtime Filter စနစ်ဖြင့်သာ သန့်ရှင်းစွာ ထားရှိခြင်း။
+    - **Localization & Formatting:** ကွင်းစကွင်းပိတ် အပိုများ မပါရှိသော သဘာဝကျသည့် မြန်မာစကား၊ အင်္ဂလိပ်နှင့် တရုတ် သုံးဘာသာစလုံး ပြည့်စုံစွာ ဖြည့်သွင်းထားပြီး Hardcoded "Ks" လုံးဝမပါရှိစေဘဲ Dynamic Currency စနစ်ဖြင့် တည်ဆောက်ပြီးစီး။
+- [x] **Shopping Cart & Order Builder (ခြင်းတောင်းနှင့် အော်ဒါပြင်ဆင်မှု):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/orders/builder.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/orders/builder.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** LocalStorage Resilient Cart, 3D Quantity Steppers (`+`/`-`), Dynamic Order Summary, KPay/WavePay Selector, Delivery Option Toggles, Instant Checkout 3D CTA။
+  - **လုပ်ဆောင်ချက်များ:** Production-ready အဆင့်မီ Fully Responsive Layout နှင့် UI/UX Polish ပြီးစီး။
+    - **Mobile Full-Bleed 2px Padding:** မိုဘိုင်းဖုန်းများတွင် ဘေးဘက် space အလေအလွင့်မရှိစေရန် `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် 2px edge padding တပ်ဆင်ခြင်း။
+    - **Desktop 12-Column Grid:** ဘယ်ဘက် ၇ ကော်လံတွင် ရွေးချယ်ထားသော ပစ္စည်းစာရင်း (Selected Products) နှင့် ညာဘက် ၅ ကော်လံတွင် Sticky Checkout Form သို့ ခွဲခြမ်းပြသခြင်း။
+    - **Sharp Rectangular 3D Card Architecture (`rounded-none`):** ကတ်များ၊ ပစ္စည်းအကွက်များ၊ Input Boxes များနှင့် ခလုတ်များအားလုံး ထောင့်ဝိုက်မပါသော လေးထောင့်စပ်စပ် 3D Push Tiles စတိုင်လ်သို့ ပြောင်းလဲခြင်း။
+    - **Pure CSS 3D Tactile Push Steppers:** အရေအတွက် အတိုး/အလျှော့ (`+` / `-`) ခလုတ်များအား `.sf-btn-3d` tactile steppers များအဖြစ်လည်းကောင်း၊ Remove ခလုတ်အား `.sf-btn-3d-danger` အဖြစ်လည်းကောင်း ပြင်ဆင်ခြင်း။
+    - **Dynamic Confirmation Channels with Official Brand Colors:** Viber, Telegram, Phone ချန်နယ်များအား မရွေးချယ်မီ (Default State) ကတည်းက ၎င်းတို့၏ တရားဝင် Brand Colors များဖြစ်သော `.sf-btn-3d-viber` (Viber Violet `#8b5cf6`), `.sf-btn-3d-telegram` (Telegram Sky Blue `#38bdf8`) နှင့် `.sf-btn-3d-success` (Phone Emerald) တို့ဖြင့် အမြဲတမ်း ပေါ်လွင်နေစေပြီး ရွေးချယ်ချိန်တွင် Active Ring Outline ဖြင့် ထင်ရှားစွာ Highlight ပြသခြင်း၊ သက်ဆိုင်ရာ dynamic identifier fields (Viber Phone, Telegram @username) နှင့် အပြည့်အဝ တွဲဖက်တပ်ဆင်ခြင်း။
+    - **Zero Hardcoding Policy:** Static `#f85606` အရောင်များနှင့် "Ks" အသေရေးသားမှုများအားလုံး ဖယ်ရှားပြီး Dynamic Theme Tokens (`[color:var(--sf-primary)]`) နှင့် `window.formatCurrency()` သို့ ချိတ်ဆက်ခြင်း။
+    - **Tri-Lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) သုံးဘာသာစလုံးအတွက် Translation Keys များ ပြည့်စုံစွာ ဖြည့်သွင်းပြီးစီး။
 - [ ] **Order Confirmation & Slip Attachment (အော်ဒါအတည်ပြုခြင်းနှင့် ပြေစာတင်ခြင်း):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/orders/confirmation.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/orders/confirmation.blade.php)
   - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Order Success Visual Banner, Order Code Copy 3D Button, Slip Upload Compression, Direct Contact Shop Button (`tel:` & `viber:`)။
@@ -503,6 +519,10 @@ Admin Panel ရှိ **Theme Creation & Color Customization (အပြင်အ
 | **Product Card (List Variant)** | [`resources/views/components/product-card-list.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/components/product-card-list.blade.php) | List View ရှိ Favorite ခလုတ်အား 3D Gold / Red Toggle အဖြစ် ပြင်ဆင်ခြင်း။ |
 | **Storefront Home Page** | [`resources/views/welcome.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/welcome.blade.php) | Hero Category Sidebar Nav Height (`max-height: 384px`) နှင့် Banner + Trust Cards ညာဘက်ခြမ်း Pixel-perfect ညီညာအောင် ချိန်ညှိခြင်း။ |
 | **Product Catalog & Filter Toolbar** | [`resources/views/storefront/catalog/index.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/catalog/index.blade.php) | Mobile Filter Toolbar Text ကို Row တစ်တန်းတည်း ညီညာစေခြင်း၊ Desktop Sidebar Categories & Brands ခလုတ်များ `w-full` အပြည့်ထားရှိခြင်း၊ Header Count Pill အပိုများ ရှင်းထုတ်ခြင်း။ |
+| **Category Browser Split View** | [`resources/views/storefront/browse/index.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/browse/index.blade.php) | Sharp Rectangular 3D Cards (`rounded-none`)၊ Left Rail 80% Full-bleed Image၊ Brands Horizontal Scroll Track၊ Subcategory `h-9 sm:h-10`၊ Top-0 Flush Sticky Controls နှင့် Stacking Context Isolation (`relative isolate`) တပ်ဆင်ခြင်း။ |
+| **Shopping Cart & Order Builder** | [`resources/views/storefront/orders/builder.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/orders/builder.blade.php) | Mobile 2px Full-Bleed Padding (`@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')`)၊ Sharp Rectangular 3D Tiles (`rounded-none`)၊ Pure CSS 3D Tactile Steppers (`+`/`-`)၊ Dynamic Theme Tokens၊ Dynamic Currency Formatter နှင့် Tri-Lingual Localization တပ်ဆင်ခြင်း။ |
+| **Product Card Component Dispatcher** | [`resources/views/components/product-card.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/components/product-card.blade.php) | Callers များမှ ကတ်ထောင့်ဝိုက်ခြင်း သတ်မှတ်နိုင်ရန် `:rounded` prop ထည့်သွင်းခြင်း (ဥပမာ- `:rounded="'rounded-none'"` ဖြင့် Sharp 3D Tiles ဖွဲ့စည်းနိုင်ခြင်း)။ |
+| **Product Card (Compact Variant)** | [`resources/views/components/product-card-variants/compact.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/components/product-card-variants/compact.blade.php) | Favorite Button အရွယ်အစားအား `w-7 h-7 sm:w-8 sm:h-8` (`icon: w-3.5 h-3.5 sm:w-4 sm:h-4`) သို့ ကျစ်လျစ်စွာ ပြင်ဆင်ခြင်း၊ `:rounded` prop dynamic binding နှင့် image ပေါ် blocking ဖြစ်မှု ကာကွယ်ခြင်း။ |
 | **Global Storefront CSS** | [`resources/css/app.css`](file:///d:/xmapp/htdocs/DataPOS/resources/css/app.css) | `.sf-btn-3d`, `.hero-cat-nav` နှင့် 3D Push Button Utility Classes များ တည်ဆောက်ခြင်း။ |
 
 ---
@@ -604,5 +624,109 @@ Product Details Page (`resources/views/storefront/catalog/show.blade.php`) တ�
    - **Wishlist Heart Button:** `from-amber-300 via-amber-400 to-amber-600` (Gold 3D) မနှိပ်ရသေးချိန်၊ နှိပ်ပြီးချိန်တွင် Rose 3D
    - **Share Button:** Vibrant Sky 3D push button (`sf-btn-3d` variant with white icon)
    - **Wholesale Badge:** Emerald 3D Badge (`from-emerald-500 to-teal-600` with `border-b-2 border-b-emerald-800 shadow-xs`)
+
+---
+
+### ၁၀.၆။ Category Browser & Sharp 3D Card Architecture Standard (ကဏ္ဍစုံ ရှာဖွေမှုနှင့် လေးထောင့်စပ်စပ် 3D Card စံနှုန်း)
+
+Storefront Category Browser (`resources/views/storefront/browse/index.blade.php`) သည် Customer များအတွက် မိုဘိုင်းဖုန်းနှင့် ကွန်ပျူတာတို့တွင် ကုန်ပစ္စည်းအမျိုးအစားစုံကို မျက်စိရှင်းရှင်းဖြင့် လျင်မြန်စွာ ရှာဖွေနိုင်စေသော Shopee/Lazada ပုံစံ 2-Pane Split-Screen Layout စနစ် ဖြစ်သည်။ အဆိုပါ စာမျက်နှာတွင် လက်တွေ့ကျင့်သုံးထားသော စံနှုန်းသတ်မှတ်ချက်များမှာ အောက်ပါအတိုင်း ဖြစ်သည်-
+
+```
++------------------------------------------------------------------------------------------------+
+|                        CATEGORY BROWSER 2-PANE SPLIT-SCREEN ARCHITECTURE                       |
++------------------------------------------------------------------------------------------------+
+|  [Left Vertical Category Rail]          │  [Right Main Scrollable Content Area]                |
+|  - Aspect 3/4 Tiles                     │  (main.flex-1.min-w-0.pt-0.pb-2)                     |
+|  - rounded-none Sharp 3D                │  ┌────────────────────────────────────────────────┐  |
+|  - Upper 80% Full-bleed Image           │  │ 1. STICKY TOP-0 CONTROLS (sticky.top-0.z-30)   │  |
+|  - Lower Compact Label (px-0.5.py-0)    │  │    - Subcategory Strip (h-9 sm:h-10 px-3.5)    │  |
+|  - Active: Dynamic Primary Gradient     │  │    - Brands Strip (.sf-brand-card rounded-none)│  |
+|  - Rest: bg-white / dark:bg-slate-800   │  ├────────────────────────────────────────────────┤  |
+|  - Pure CSS 3D Push Physics             │  │ 2. PRODUCTS GRID (gap-0.5 sm:gap-1.lg:gap-1.5) │  |
+|                                         │  │    - Product Card (.relative.isolate)          │  |
+|                                         │  │    - Compact Gold/Rose Heart (w-7 sm:w-8)      │  |
+|                                         │  │    - :rounded="'rounded-none'"                 │  |
++-----------------------------------------┴──┴────────────────────────────────────────────────+
+```
+
+#### ၁။ Sharp Rectangular 3D Tiles (`rounded-none` လေးထောင့်စပ်စပ် ကတ်များ)
+- ကုန်ပစ္စည်းအရေအတွက် များပြားသိပ်သည်းသော E-commerce/Browse စာမျက်နှာများတွင် ကြီးမားလွန်းသော ထောင့်ဝိုက်များ (`rounded-xl`, `rounded-2xl`) သည် နေရာလွတ် အလေအလွင့် ဖြစ်စေပြီး Visual Weight လေးလံစေသည်။
+- ထို့ကြောင့် Category Cards, Brand Cards, Sub-category Pills နှင့် Products Grid Cards များအားလုံး၏ ထောင့် ၄ ဖက်လုံးရှိ အဝိုက်များကို လုံးဝဖယ်ရှားပြီး **`rounded-none` (0px)** ဖြင့်သာ တည်ဆောက်ရမည်။
+- ပုံစံသည် ပြတ်သားသန့်ရှင်းသော လေးထောင့်စပ်စပ် 3D Tactile Push Tiles စတိုင်လ်အဖြစ် တညီတညွတ်တည်း ပေါ်လွင်စေသည်။
+
+#### ၂။ Left Rail Category Cards Proportions (ဘယ်ဘက် ကဏ္ဍကတ် အချိုးအစားများ)
+- **Aspect Ratio & Sizing:** `aspect-[3/4]` အချိုးဖြင့် ထောင်လိုက်ကတ် ပြုလုပ်ထားသည်။
+- **Upper Edge-to-Edge Image (`h-[77%] sm:h-[80%]`):** အပေါ်ပိုင်း ၈၀% အား ကတ်၏ ဘေးဘောင်နှင့် ထိပ်စွန်းအထိ ကွက်တိကပ်သော Full-bleed ဓာတ်ပုံဧရိယာ ထားရှိပြီး၊ ဘေးဘောင် padding (`p-0`) မပါရှိစေရ။
+- **Lower Compact Label (`px-0.5 py-0`):** အောက်ဖက် ၂၀% တွင်သာ ကဏ္ဍအမည်ကို `text-[8.5px] sm:text-[9.5px] font-black line-clamp-2` ဖြင့် နေရာယူမှု နည်းပါးစွာ ပြသသည်။
+- **Readable Count Badge:** အပေါ်ညာဘက်ထောင့်တွင် `bg-black/60` (active ဖြစ်ပါက `bg-white/30`) backdrop blur badge ဖြင့် ကုန်ပစ္စည်း အရေအတွက်ကို ဖော်ပြထားသည်။
+- **Admin Master Data Sync:** `/admin/categories` ရှိ Main Categories (၁၅) ခုလုံးနှင့် အမည်၊ အရေအတွက် အစဉ်လိုက် တိကျစွာ ချိတ်ဆက်ထားသည်။
+
+#### ၃။ Brands Card Horizontal Scroll Track (အမှတ်တံဆိပ် အလျားလိုက် ကတ်များ)
+- Sub-category Strip အောက်တည့်တည့်တွင် Category နှင့် ချိတ်ဆက်နေသော Brand များကို အလျားလိုက် ရွှေ့နိုင်သော ကတ်များအဖြစ် တပ်ဆင်ထားသည်။
+- **Dedicated Card Dimensions (`.sf-brand-card`):** Mobile တွင် `76px × 96px`၊ Desktop တွင် `88px × 106px` အတိအကျ သတ်မှတ်ထားသည်။
+- **Upper Image Proportions (`h-[74%] sm:h-[76%]`):** အပေါ်ပိုင်း ၄ ပုံ ၃ ပုံ နေရာတွင် Brand Logo သို့မဟုတ် သက်ဆိုင်ရာ ကုန်ပစ္စည်းဓာတ်ပုံကို ဘေးဘောင်မဲ့ Edge-to-edge ထားရှိသည်။
+- **Slim Lower Brand Label (`px-0.5 py-0`):** အောက်ခြေတွင် `text-[8.5px] sm:text-[9.5px] font-black line-clamp-1` ဖြင့် အမှတ်တံဆိပ်အမည်ကို သပ်ရပ်စွာ ပြသသည်။
+- **Client-Side Real-time Filtering:** Brand Card အား နှိပ်လိုက်သည်နှင့် ချက်ချင်း active ဖြစ်သွားပြီး အောက်ဖက် Product Grid တွင် သက်ဆိုင်ရာ Brand ပစ္စည်းများကိုသာ Instant စစ်ထုတ်ပြသသည်။
+
+#### ၄။ Sub-Category Buttons Ergonomics (အမျိုးအစားခွဲ ခလုတ်များ)
+- မိုဘိုင်းလက်ချောင်းဖြင့် နှိပ်ရ လွယ်ကူစေရန် အမြင့်အား **`h-9 sm:h-10 px-3.5`** သို့ တိုးမြှင့်ထားသည်။
+- အဝိုက်မပါရှိသော **`rounded-none`** ဖြင့် Category Cards များနှင့် ညီညွတ်မှု ရှိစေသည်။
+- ထိပ်ဆုံးတွင် ကဏ္ဍတစ်ခုလုံးရှိ စုစုပေါင်းအရေအတွက် ပြသသော `All (📂 အားလုံး)` ခလုတ် ပါဝင်ရမည်။
+
+#### ၅။ Sticky Controls Toolbar & Stacking Context Isolation (ထိပ်ကပ် ဘားနှင့် အလွှာစနစ် ထိန်းချုပ်မှု)
+- **Top Edge Flush (`pt-0`):** ညာဘက် `<main>` ဧရိယာအား `pt-0` ထားရှိကာ Toolbar အား `sticky top-0 z-30 bg-white dark:bg-slate-900` ဖြင့် Container အပေါ်ထိပ်စွန်းနှင့် ကွက်တိကပ်စေရမည် (Scroll မဆွဲခင် အပေါ်ဘက်တွင် အပေါက်ဟနေခြင်း မရှိစေရ)။
+- **Stacking Context Isolation (`relative isolate`):** Product Card များ အောက်သို့ Scroll ဆွဲတင်ချိန်တွင် Card ပေါ်ရှိ 3D Wishlist Heart Button (သို့မဟုတ် action buttons) များသည် Sticky Toolbar ပေါ်သို့ ထိုးဖောက်တက်ရောက်ခြင်း မရှိစေရန် Product Card Wrapper အား `class="relative isolate"` မဖြစ်မနေ ထည့်သွင်းထားရမည်။
+
+#### ၆။ Compact 3D Wishlist Button Standard (ကျစ်လျစ်သော အသဲနှလုံး 3D ခလုတ်)
+- Product Card ပေါ်ရှိ Favorite Heart Button အား မူလအရွယ်အစား `w-10 h-10` မှ ကုန်ပစ္စည်းဓာတ်ပုံ မကွယ်စေရန် **`w-7 h-7 sm:w-8 sm:h-8`** သို့ လျှော့ချထားသည်။
+- အတွင်းရှိ အသဲအိုင်ကွန်အား **`w-3.5 h-3.5 sm:w-4 sm:h-4`** ဖြင့် ထားရှိပြီး၊ ကတ်၏ အပေါ်ညာဘက်ထောင့် **`top-1.5 right-1.5 sm:top-2 sm:right-2`** တွင် သပ်ရပ်စွာ နေရာချထားသည်။
+- Component Dispatcher (`<x-product-card :rounded="'rounded-none'">`) မှတစ်ဆင့် Outer Shell သို့ Rounded Prop တိုက်ရိုက် လက်ခံနိုင်အောင် တည်ဆောက်ထားသည်။
+
+#### ၇။ Ultra-Dense 2px Rhythm & Single Search Bar Policy
+- Card များ တစ်ခုနှင့်တစ်ခု အကြား နေရာလွတ် မကျယ်စေဘဲ သိပ်သည်းကျစ်လျစ်သော **`gap-0.5 sm:gap-1 lg:gap-1.5`** ဖြင့်သာ နေရာချထားရမည်။
+- Browse Page ပေါ်တွင် Search Bar ၂ ခု ထပ်နေခြင်း မရှိစေရန် အပေါ်ဘက်ရှိ ဒုတိယ Search Bar အား ဖယ်ရှားပြီး Storefront Universal Header Search Bar နှင့် Left Rail Real-time Filter ဖြင့်သာ စနစ်တကျ ထားရှိသည်။
+
+---
+
+### ၁၀.၇။ Shopping Cart & Order Builder Architecture Standard (ခြင်းတောင်းနှင့် အော်ဒါပြင်ဆင်မှု စံနှုန်း)
+
+Storefront Order Builder (`resources/views/storefront/orders/builder.blade.php`) သည် Customer များ ခြင်းတောင်းထဲရှိ ပစ္စည်းများကို စစ်ဆေး၍ အမည်၊ ဖုန်း၊ လိပ်စာ ဖြည့်သွင်းကာ အော်ဒါပေးပို့နိုင်သော စာမျက်နှာ ဖြစ်သည်။ ဤစာမျက်နှာအတွက် လက်တွေ့ကျင့်သုံးထားသော စံနှုန်းများမှာ အောက်ပါအတိုင်း ဖြစ်သည်-
+
+```
++------------------------------------------------------------------------------------------------+
+|                   SHOPPING CART & ORDER BUILDER 12-COLUMN RESPONSIVE LAYOUT                    |
++------------------------------------------------------------------------------------------------+
+|  [Left Column: Selected Products (7 cols)]  │  [Right Column: Sticky Checkout Form (5 cols)]   |
+|  - Full-Bleed Mobile 2px Padding            │  - Sticky Top-16 / Top-20 Docking                |
+|  - Sharp 3D Container (rounded-none)        │  - Sharp Inputs (rounded-none, border-slate-300) |
+|  - Edge-to-Edge Product Rows                │  - Contact Channels Grid (Viber/Telegram/Phone)  |
+|  - Pure CSS 3D Steppers (.sf-btn-3d +/-)    │  - Pure CSS 3D Submit (.sf-btn-3d-primary)       |
+|  - Pure CSS 3D Danger Remove Button         │  - Realtime items_json Payload Binding           |
+|  - Dynamic Currency window.formatCurrency() │  - Tri-lingual Validation & Placeholders         |
+|  - Trust Badges (4x Sharp 3D Tiles)         │                                                  |
++---------------------------------------------┴──────────────────────────────────────────────────+
+|  [Bottom Section: Delivery & Payment Methods (2-Col Responsive Sharp 3D Tiles)]                |
++------------------------------------------------------------------------------------------------+
+```
+
+#### ၁။ Mobile Full-Bleed 2px Edge-to-Edge Layout
+- မိုဘိုင်းဖုန်းမျက်နှာပြင်များတွင် ကတ်ဘေးဘက် အလွတ်များ နေရာမယူစေရန် `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် အစွန်း ၂ ဖက်တွင် 2px edge padding ဖြင့် content များကို screen ပြည့်ပြည့်ဝဝ (full-bleed) ဖော်ပြသည်။
+- Container အတွင်းရှိ padding များကို `p-2 sm:p-3.5 lg:p-4` ဖြင့် အချိုးကျ ထားရှိသဖြင့် မျက်နှာပြင် ကျဉ်းမြောင်းသော 320px–375px ဖုန်းများတွင် အထူး သပ်ရပ်စေသည်။
+
+#### ၂။ Sharp Rectangular 3D Tiles (`rounded-none`)
+- Section 10.6 စံနှုန်းနှင့် တညီတညွတ်တည်းဖြစ်စေရန် Order Builder ရှိ Container Boxes၊ Item Rows၊ Input Text Boxes၊ Textarea၊ Quantity Steppers နှင့် Action Buttons များ အားလုံးကို **`rounded-none` (0px)** လေးထောင့်စပ်စပ် စတိုင်လ်ဖြင့်သာ တည်ဆောက်ထားသည်။
+
+#### ၃။ Pure CSS 3D Tactile Push Steppers & Danger Remove Button
+- အရေအတွက် အတိုး/အလျှော့ ပြုလုပ်သည့် ခလုတ်များအား မူလ Flat ပုံစံမှ **`sf-btn-3d w-7 h-7 sm:w-8 sm:h-8 rounded-none`** tactile push physics သို့ အဆင့်မြှင့်တင်ထားသည်။
+- ပစ္စည်းဖျက်ပယ်သည့် ခလုတ်အား **`.sf-btn-3d-danger w-7 h-7 sm:w-8 sm:h-8 rounded-none`** ဖြင့် ထင်ရှားသော 3D Red Push Button အဖြစ် ပြင်ဆင်ထားသည်။
+
+#### ၄။ Dynamic Theming & Zero Hardcoding Policy
+- စတိုးဆိုင် Theme အရောင်များနှင့် လိုက်လျောညီထွေဖြစ်စေရန် `#f85606` သို့မဟုတ် hardcoded hex colors များကို လုံးဝဖယ်ရှားပြီး **`[color:var(--sf-primary)]`** နှင့် **`.sf-btn-3d-primary`** သို့ ပြောင်းလဲထားသည်။
+- စျေးနှုန်းဖော်ပြမှုတွင် `"Ks"` အသေရေးသားထားခြင်း လုံးဝမပါရှိစေဘဲ Client-side `window.formatCurrency(val)` သို့မဟုတ် Server-side `format_currency()` ဖြင့် Dynamic Currency Setting အတိုင်း ပြသသည်။
+
+#### ၅။ Tri-Lingual Localization Invariance
+- `order_fast_checkout`, `order_confirm_channel_prompt`, `order_select_items_first`, `order_items_unit`, `order_no_image`, `order_payment_info_btn`, `order_payment_qr_btn`, `order_remove_item` နှင့် Input Placeholders များအားလုံးကို `lang/my/messages.php`၊ `lang/en/messages.php` နှင့် `lang/zh_CN/messages.php` သုံးဘာသာစလုံးတွင် တစ်ပြိုင်နက် ပြည့်စုံစွာ ထည့်သွင်းထားသည်။
+
+
 
 

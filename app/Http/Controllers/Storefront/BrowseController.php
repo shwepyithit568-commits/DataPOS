@@ -25,49 +25,48 @@ class BrowseController extends Controller
     {
         $store = $context->getStore();
 
-        abort_unless($store, 404, 'Store not found.');
+        abort_unless($store !== null, 404, 'Store not found.');
 
-        // Only categories that actually have products are shown in the
-        // storefront — empty ones clutter the browser for customers. The
-        // counts count ONLINE products only (counter-only items do not
-        // advertise a category).
+        // Load all categories configured in Admin Master Data Category Tab with online product counts
         $allCategories = Category::where('store_id', $store->id)
             ->withCount(['products' => fn ($q) => $q->where('is_ecommerce', true)])
+            ->orderBy('name')
             ->get();
-        $withProducts = $allCategories
-            ->filter(fn (Category $category) => $category->products_count > 0)
-            ->values();
 
-        // Products grouped by their direct category — the source for the
-        // "brands under this category" strip (brands of the main + its subs).
-        // Wrap in a base collection: Eloquent's Collection::only() treats keys as
-        // model keys, which breaks on grouped (non-model) items.
+        // Products grouped by direct category for brands strip
         $categoryBrands = collect(Product::where('store_id', $store->id)
             ->where('is_ecommerce', true)
             ->whereNotNull('brand_id')
             ->whereNotNull('category_id')
-            ->select(['id', 'brand_id', 'category_id'])
+            ->select(['id', 'brand_id', 'category_id', 'image_path'])
             ->with('brand')
             ->get())
             ->groupBy('category_id');
 
         $browseRows = $allCategories
             ->whereNull('parent_id')
-            ->map(function (Category $main) use ($withProducts, $categoryBrands) {
-                $children = $withProducts
+            ->map(function (Category $main) use ($allCategories, $categoryBrands) {
+                $children = $allCategories
                     ->where('parent_id', $main->id)
                     ->sortBy('name')
                     ->values();
+
+                $total = $main->products_count + $children->sum('products_count');
 
                 $catIds = $children->pluck('id')->push($main->id)->all();
                 $brands = $categoryBrands
                     ->filter(fn ($items, $catId) => in_array($catId, $catIds))
                     ->flatten(1)
                     ->groupBy(fn (Product $product) => $product->brand_id)
-                    ->map(fn ($items) => [
-                        'brand' => $items->first()->brand,
-                        'count' => $items->count(),
-                    ])
+                    ->map(function ($items) {
+                        $first = $items->first();
+                        $imagePath = $first->brand?->logo_path ?? $first->image_path;
+                        return [
+                            'brand' => $first->brand,
+                            'image' => $imagePath ? asset('storage/' . $imagePath) : null,
+                            'count' => $items->count(),
+                        ];
+                    })
                     ->filter(fn ($row) => $row['brand'] !== null)
                     ->sortByDesc('count')
                     ->values();
@@ -76,13 +75,20 @@ class BrowseController extends Controller
                     'category' => $main,
                     'children' => $children,
                     'brands' => $brands,
-                    'total' => $main->products_count + $children->sum('products_count'),
+                    'total' => $total,
                 ];
             })
-            ->filter(fn ($row) => $row->category->products_count > 0 || $row->children->isNotEmpty())
-            ->sortByDesc('total')
             ->values();
 
-        return view("storefront.browse.index", compact("store", "browseRows"));
+        $ecommerceProducts = Product::where('store_id', $store->id)
+            ->where('is_ecommerce', true)
+            ->with(['brand', 'category'])
+            ->get();
+
+        return view('storefront.browse.index', [
+            'store' => $store,
+            'browseRows' => $browseRows,
+            'products' => $ecommerceProducts,
+        ]);
     }
 }

@@ -1026,9 +1026,12 @@
         ></div>
     </header>
 
-    {{-- Main Content Container (mobile: standard 8px outer gutters; desktop keeps comfortable padding) --}}
-    @php $mainPad = $__env->hasSection('noMainPadding') ? 'pt-0 pb-6' : 'py-6'; @endphp
-    <main class="w-full px-2 sm:px-5 lg:px-8 {{ $mainPad }} relative z-10">
+    {{-- Main Content Container (mobile: supports custom main_padding or standard gutters) --}}
+    @php
+        $defaultPadding = 'px-2 sm:px-5 lg:px-8 ' . ($__env->hasSection('noMainPadding') ? 'pt-0 pb-6' : 'py-6');
+        $mainPadClass = $__env->yieldContent('main_padding', $defaultPadding);
+    @endphp
+    <main class="w-full {{ $mainPadClass }} relative z-10">
         {{ $slot ?? '' }}
         @yield('content')
     </main>
@@ -1132,7 +1135,7 @@
                 <span class="text-xs font-black text-slate-900 dark:text-white font-outfit tracking-wide group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors">
                     {{ __('messages.order_builder') }}
                 </span>
-                <span class="text-xs font-extrabold text-sky-700 dark:text-sky-400 font-mono" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency($store.orderBuilder ? $store.orderBuilder.totalAmount : 0) : 'Ks ' + ($store.orderBuilder ? $store.orderBuilder.totalAmount.toLocaleString() : 0)"></span>
+                <span class="text-xs font-extrabold text-sky-700 dark:text-sky-400 font-mono" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency($store.orderBuilder ? $store.orderBuilder.totalAmount : 0) : ($store.orderBuilder ? $store.orderBuilder.totalAmount.toLocaleString() : 0)"></span>
             </div>
         </a>
     </div>

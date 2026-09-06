@@ -3,6 +3,7 @@
     'store',
     'isWholesaleApproved' => false,
     'dense' => false,
+    'rounded' => 'rounded-2xl',
 ])
 
 @once
@@ -46,7 +47,7 @@
     // Dense (glued hairline grid) cards drop the glass border/rounding/hover lift.
     $cardShell = $dense
         ? 'bg-white dark:bg-slate-900'
-        : 'bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800/80 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-sky-500/10';
+        : "bg-white dark:bg-slate-900 {$rounded} border border-slate-200/90 dark:border-slate-800/80 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-sky-500/10";
 @endphp
 
 <div
@@ -120,14 +121,14 @@
                 @click.stop.prevent="$store.favoritesStore.toggle({ id: {{ $product->id }}, name: {{ json_encode($product->name) }}, brand: {{ json_encode($product->brand?->name ?? 'General') }}, url: {{ json_encode($productUrl) }}, image_path: {{ json_encode($cardImage ?? '') }} })"
                 type="button"
                 style="position: absolute;"
-                class="absolute top-2.5 right-2.5 z-20 w-10 h-10 rounded-full flex items-center justify-center p-0 ring-1 ring-white/70 transition-all duration-150 transform hover:-translate-y-0.5 active:translate-y-0.5 select-none"
+                class="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center p-0 ring-1 ring-white/70 transition-all duration-150 transform hover:-translate-y-0.5 active:translate-y-0.5 select-none"
                 :class="$store.favoritesStore && $store.favoritesStore.isFav({{ $product->id }})
-                    ? 'bg-gradient-to-b from-rose-500 via-rose-600 to-rose-700 border border-rose-300 border-b-[3px] border-b-rose-900 shadow-md shadow-rose-950/40'
-                    : 'bg-gradient-to-b from-amber-300 via-amber-400 to-amber-600 border border-amber-200 border-b-[3px] border-b-amber-700 shadow-md shadow-amber-900/30'"
+                    ? 'bg-gradient-to-b from-rose-500 via-rose-600 to-rose-700 border border-rose-300 border-b-[2px] border-b-rose-900 shadow-sm shadow-rose-950/40'
+                    : 'bg-gradient-to-b from-amber-300 via-amber-400 to-amber-600 border border-amber-200 border-b-[2px] border-b-amber-700 shadow-sm shadow-amber-900/30'"
                 title="{{ __('messages.favorites') }}"
                 aria-label="{{ __('messages.favorites') }}"
             >
-                <svg class="w-5 h-5 text-white drop-shadow-sm transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white drop-shadow-sm transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.684a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                 </svg>
             </button>

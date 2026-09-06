@@ -3,6 +3,7 @@
     'store',
     'isWholesaleApproved' => false,
     'dense' => false,
+    'rounded' => 'rounded-2xl',
 ])
 
 {{--
@@ -29,4 +30,5 @@
     'store'                => $store,
     'isWholesaleApproved'  => $isWholesaleApproved,
     'dense'                => $dense,
+    'rounded'              => $rounded,
 ])
