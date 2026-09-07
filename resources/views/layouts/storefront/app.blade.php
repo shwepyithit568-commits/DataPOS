@@ -1,4 +1,4 @@
-@php
+﻿@php
     $cspNonce = $cspNonce ?? \Illuminate\Support\Facades\View::getShared()['cspNonce'] ?? '';
     $activeStoreContext = app(\App\Services\StoreContext::class)->getStore();
     $activeStoreSlug    = request('store_slug') ?? $activeStoreContext?->slug;
@@ -1725,7 +1725,9 @@
         </div>
     </div>
 
-    {{-- PWA install banner — appears when the browser offers installation or on iOS
+    {{-- PWA install banner — cross-platform wizard
+         Detects: iOS Safari, iOS Chrome, MIUI, Huawei, Samsung, Android Chrome,
+                  Firefox Android, Chrome desktop, Edge desktop, Safari macOS, Firefox desktop
          Sits cleanly above the mobile bottom nav --}}
     <div id="pwa-install-banner" class="hidden fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] md:bottom-8 z-50 mx-auto max-w-md rounded-2xl border-2 border-slate-200/95 bg-white/95 shadow-2xl backdrop-blur-xl p-3.5 sm:p-4 md:inset-x-auto md:right-6 md:mx-0 dark:border-slate-700/95 dark:bg-slate-900/95" role="dialog" aria-live="polite" aria-label="{{ __('messages.pwa_install_title') }}">
         <div class="flex items-start gap-3">
@@ -1735,11 +1737,9 @@
                     <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     <p class="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-tight">{{ __('messages.pwa_install_title') }}</p>
                 </div>
-                <p class="mt-1 text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-300 leading-snug">{{ __('messages.pwa_install_desc') }}</p>
-                <div id="pwa-ios-guide" class="hidden mt-2 p-2 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800 text-[11px] font-bold text-sky-800 dark:text-sky-300 flex items-center gap-2">
-                    <span class="text-base shrink-0">⬆️</span>
-                    <span>{{ __('messages.pwa_ios_instructions') }}</span>
-                </div>
+                <p class="mt-1 text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-300 leading-snug" id="pwa-desc-text">{{ __('messages.pwa_install_desc') }}</p>
+                {{-- Platform-specific guide box (shown when native prompt unavailable) --}}
+                <div id="pwa-platform-guide" class="hidden mt-2 p-2.5 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800 text-[11px] font-semibold text-sky-900 dark:text-sky-200 leading-snug"></div>
             </div>
             <button type="button" id="pwa-install-dismiss" class="shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer" aria-label="{{ __('messages.close') }}">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -1753,30 +1753,82 @@
                 {{ __('messages.pwa_install_notnow') }}
             </button>
         </div>
+        {{-- Success toast (hidden by default) --}}
+        <div id="pwa-success-toast" class="hidden mt-2 text-center text-xs font-bold text-emerald-700 dark:text-emerald-400">
+            {{ __('messages.pwa_installed_success') }}
+        </div>
     </div>
 
-    {{-- PWA service-worker registration + install-prompt handling --}}
+    {{-- PWA service-worker registration + cross-platform install-prompt handling --}}
     <script nonce="{{ $cspNonce }}">
         (function () {
-            var KEY_DISMISSED = 'pwa_dismissed';
+            var KEY_DISMISSED    = 'pwa_dismissed';
             var KEY_DISMISSED_AT = 'pwa_dismissed_at';
-            var KEY_INSTALLED = 'pwa_installed';
+            var KEY_INSTALLED    = 'pwa_installed';
+
+            // ── Platform detection ────────────────────────────────────────────
+            var ua = navigator.userAgent || '';
 
             var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
                 || window.navigator.standalone === true;
 
-            var isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            var isIos          = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+            var isIosSafari    = isIos && /Safari/.test(ua) && !/CriOS|FxiOS|OPiOS|mercury/.test(ua);
+            var isIosChrome    = isIos && /CriOS/.test(ua);
+            var isMiui         = /MiuiBrowser/.test(ua) || /XiaoMi/.test(ua);
+            var isHuawei       = /HuaweiBrowser/.test(ua) || /HMSCore/.test(ua);
+            var isSamsung      = /SamsungBrowser/.test(ua);
+            var isAndroid      = /Android/.test(ua);
+            var isFirefox      = /Firefox|FxiOS/.test(ua) && !/Seamonkey/.test(ua);
+            var isEdge         = /Edg\//.test(ua);
+            var isChrome       = /Chrome/.test(ua) && !/Chromium/.test(ua) && !isEdge && !isSamsung && !isMiui && !isHuawei;
+            var isSafariMac    = /^((?!Chrome|Chromium|Android|CriOS).)*Safari/.test(ua) && /Macintosh/.test(ua);
+            var isAndroidChrome = isAndroid && isChrome && !isMiui && !isHuawei && !isSamsung;
+            var isFirefoxAndroid = isAndroid && isFirefox;
+            var hasChromePrompt  = !isIos && !isMiui && !isHuawei && !isSamsung && !isSafariMac && !isFirefox;
 
-            // Reset legacy permanent dismissed flag so users can see the install message again
+            // Per-platform guide text (injected from PHP translations via inline data)
+            var GUIDES = {
+                ios_safari:      '{{ __('messages.pwa_guide_ios_safari') }}',
+                ios_chrome:      '{{ __('messages.pwa_guide_ios_chrome') }}',
+                miui:            '{{ __('messages.pwa_guide_miui') }}',
+                huawei:          '{{ __('messages.pwa_guide_huawei') }}',
+                samsung:         '{{ __('messages.pwa_guide_samsung') }}',
+                android_chrome:  '{{ __('messages.pwa_guide_android_chrome') }}',
+                firefox_android: '{{ __('messages.pwa_guide_firefox_android') }}',
+                chrome_desktop:  '{{ __('messages.pwa_guide_chrome_desktop') }}',
+                edge_desktop:    '{{ __('messages.pwa_guide_edge_desktop') }}',
+                safari_mac:      '{{ __('messages.pwa_guide_safari_mac') }}',
+                firefox_desktop: '{{ __('messages.pwa_guide_firefox_desktop') }}',
+                already:         '{{ __('messages.pwa_already_installed') }}',
+                success:         '{{ __('messages.pwa_installed_success') }}'
+            };
+
+            function getPlatformKey() {
+                if (isIosSafari)       return 'ios_safari';
+                if (isIosChrome)       return 'ios_chrome';
+                if (isMiui)            return 'miui';
+                if (isHuawei)          return 'huawei';
+                if (isSamsung)         return 'samsung';
+                if (isFirefoxAndroid)  return 'firefox_android';
+                if (isAndroidChrome)   return 'android_chrome';
+                if (isEdge)            return 'edge_desktop';
+                if (isChrome)          return 'chrome_desktop';
+                if (isSafariMac)       return 'safari_mac';
+                if (isFirefox)         return 'firefox_desktop';
+                return null;
+            }
+
+            // ── Snooze / install state ───────────────────────────────────────
+            // Reset legacy permanent dismissed flag
             try {
-                var dismissedAt = localStorage.getItem(KEY_DISMISSED_AT);
+                var dismissedAt    = localStorage.getItem(KEY_DISMISSED_AT);
                 var legacyDismissed = localStorage.getItem(KEY_DISMISSED);
                 if (legacyDismissed === '1' && !dismissedAt) {
                     localStorage.removeItem(KEY_DISMISSED);
                 } else if (dismissedAt) {
-                    var diff = Date.now() - parseInt(dismissedAt, 10);
-                    // Snooze for 3 days; after that, allow prompt again
-                    if (diff >= (3 * 24 * 60 * 60 * 1000)) {
+                    // Snooze 3 days
+                    if (Date.now() - parseInt(dismissedAt, 10) >= 3 * 24 * 60 * 60 * 1000) {
                         localStorage.removeItem(KEY_DISMISSED);
                         localStorage.removeItem(KEY_DISMISSED_AT);
                     }
@@ -1789,7 +1841,7 @@
                 installed = localStorage.getItem(KEY_INSTALLED) === '1';
             } catch (e) {}
 
-            // Register service worker
+            // ── Service Worker registration ──────────────────────────────────
             var isSecure = location.protocol === 'https:'
                 || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
             if ('serviceWorker' in navigator && isSecure) {
@@ -1798,38 +1850,53 @@
                 });
             }
 
+            // ── DOM refs ─────────────────────────────────────────────────────
             var deferredPrompt = null;
-            var banner = document.getElementById('pwa-install-banner');
-            var installBtn = document.getElementById('pwa-install-btn');
-            var notNowBtn = document.getElementById('pwa-install-notnow');
-            var dismissBtn = document.getElementById('pwa-install-dismiss');
-            var iosGuide = document.getElementById('pwa-ios-guide');
+            var banner       = document.getElementById('pwa-install-banner');
+            var installBtn   = document.getElementById('pwa-install-btn');
+            var notNowBtn    = document.getElementById('pwa-install-notnow');
+            var dismissBtn   = document.getElementById('pwa-install-dismiss');
+            var guideBox     = document.getElementById('pwa-platform-guide');
+            var successToast = document.getElementById('pwa-success-toast');
 
-            function showBanner() {
+            // ── Show guide for non-prompt platforms ──────────────────────────
+            function showPlatformGuide(key) {
+                if (!guideBox || !key || !GUIDES[key]) return;
+                guideBox.textContent = GUIDES[key];
+                guideBox.classList.remove('hidden');
+                if (installBtn) installBtn.classList.add('hidden');
+            }
+
+            // ── Show banner ──────────────────────────────────────────────────
+            function showBanner(forceGuide) {
                 if (!banner || dismissed || installed || isStandalone) return;
-                if (isIos) {
-                    if (iosGuide) iosGuide.classList.remove('hidden');
-                    if (installBtn) installBtn.classList.add('hidden');
+                var pk = getPlatformKey();
+
+                // Platforms that never fire beforeinstallprompt → show guide immediately
+                var noNativePrompt = isIos || isMiui || isHuawei || isSamsung || isSafariMac || isFirefox;
+                if (noNativePrompt || forceGuide) {
+                    showPlatformGuide(pk);
                 }
                 banner.classList.remove('hidden');
             }
 
+            // ── beforeinstallprompt (Chrome / Edge / Samsung on Android) ─────
             window.addEventListener('beforeinstallprompt', function (e) {
                 e.preventDefault();
                 deferredPrompt = e;
                 if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-                    try {
-                        navigator.serviceWorker.controller.postMessage({ type: 'PWA_INSTALL_PROMPT' });
-                    } catch (err) {}
+                    try { navigator.serviceWorker.controller.postMessage({ type: 'PWA_INSTALL_PROMPT' }); } catch (err) {}
                 }
-                showBanner();
+                showBanner(false);
             });
 
-            // On iOS (which lacks beforeinstallprompt), show banner if not standalone and not snoozed
-            if (isIos && !isStandalone && !dismissed && !installed) {
-                setTimeout(showBanner, 2000);
+            // Auto-show for platforms without beforeinstallprompt
+            if ((isIos || isMiui || isHuawei || isSamsung || isSafariMac || (isFirefox && !isAndroid))
+                && !isStandalone && !dismissed && !installed) {
+                setTimeout(function () { showBanner(true); }, 2000);
             }
 
+            // ── Install button click ─────────────────────────────────────────
             if (installBtn) {
                 installBtn.addEventListener('click', function () {
                     if (deferredPrompt) {
@@ -1838,19 +1905,25 @@
                             if (choice.outcome === 'accepted') {
                                 try { localStorage.setItem(KEY_INSTALLED, '1'); } catch (e) {}
                                 installed = true;
+                                if (successToast) {
+                                    successToast.classList.remove('hidden');
+                                    setTimeout(function () { if (banner) banner.classList.add('hidden'); }, 2500);
+                                } else {
+                                    if (banner) banner.classList.add('hidden');
+                                }
+                            } else {
+                                if (banner) banner.classList.add('hidden');
                             }
-                            if (banner) banner.classList.add('hidden');
                             deferredPrompt = null;
                         });
-                    } else if (isIos) {
-                        if (iosGuide) iosGuide.classList.remove('hidden');
                     } else {
-                        // In desktop/browser where prompt cannot be triggered directly
-                        alert('Browser address bar ရှိ Install icon (⊕) သို့မဟုတ် Menu (⋮) -> "Install App" ကို နှိပ်၍ ထည့်သွင်းနိုင်ပါသည်');
+                        // No native prompt — fall through to guide
+                        showPlatformGuide(getPlatformKey());
                     }
                 });
             }
 
+            // ── Snooze dismiss ───────────────────────────────────────────────
             function snoozeDismiss() {
                 try {
                     localStorage.setItem(KEY_DISMISSED, '1');
@@ -1859,20 +1932,25 @@
                 dismissed = true;
                 if (banner) banner.classList.add('hidden');
             }
-
             if (notNowBtn) notNowBtn.addEventListener('click', snoozeDismiss);
             if (dismissBtn) dismissBtn.addEventListener('click', snoozeDismiss);
 
+            // ── App installed event ──────────────────────────────────────────
             window.addEventListener('appinstalled', function () {
                 try { localStorage.setItem(KEY_INSTALLED, '1'); } catch (e) {}
                 installed = true;
                 if (banner) banner.classList.add('hidden');
             });
 
-            // Global trigger for manual install buttons
+            // ── Global manual trigger (Drawer button, etc.) ──────────────────
             window.__promptPwaInstall = function () {
-                if (isStandalone) {
-                    alert('App is already installed and running in full screen!');
+                if (isStandalone || installed) {
+                    if (banner) {
+                        var guideEl = document.getElementById('pwa-platform-guide');
+                        if (guideEl) { guideEl.textContent = GUIDES.already; guideEl.classList.remove('hidden'); }
+                        if (installBtn) installBtn.classList.add('hidden');
+                        banner.classList.remove('hidden');
+                    }
                     return;
                 }
                 if (deferredPrompt) {
@@ -1881,24 +1959,22 @@
                         if (choice.outcome === 'accepted') {
                             try { localStorage.setItem(KEY_INSTALLED, '1'); } catch (e) {}
                             installed = true;
+                            if (successToast) successToast.classList.remove('hidden');
+                            setTimeout(function () { if (banner) banner.classList.add('hidden'); }, 2500);
+                        } else {
+                            if (banner) banner.classList.add('hidden');
                         }
-                        if (banner) banner.classList.add('hidden');
                         deferredPrompt = null;
                     });
-                } else if (isIos) {
-                    dismissed = false;
-                    showBanner();
                 } else {
+                    // Show guide for current platform
                     dismissed = false;
-                    if (banner) {
-                        banner.classList.remove('hidden');
-                    } else {
-                        alert('Browser menu (⋮ or ⊕) -> "Install App" ကို ရွေးချယ်ပြီး ထည့်သွင်းနိုင်ပါသည်');
-                    }
+                    showBanner(true);
                 }
             };
         })();
     </script>
+
     @stack('modals')
 </body>
 </html>
