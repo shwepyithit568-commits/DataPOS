@@ -103,7 +103,8 @@ Route::get('/store/{store_slug}/orders/{order}/confirmation', [OrderController::
     ->name('orders.confirmation');
 
 // Customer Glass Finder Routes
-Route::get('/glass-finder', [GlassFinderController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.glass_finder']);
+Route::get('/glass-finder', [GlassFinderController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.glass_finder'])->name('storefront.glass-finder.legacy');
+Route::get('/store/{store_slug}/glass-finder', [GlassFinderController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.glass_finder'])->name('storefront.glass-finder');
 Route::post('/glass-finder/favorite', [GlassFinderController::class, 'toggleFavorite'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.glass_finder', 'throttle:glass_finder_favorite']);
 
 // Customer Service Job Live Tracking Routes (Login-free status tracking via token or lookup)
@@ -116,6 +117,9 @@ Route::get('/store/{store_slug}/track/service', [\App\Http\Controllers\Storefron
 Route::get('/store/{store_slug}/track/service/{token}', [\App\Http\Controllers\Storefront\ServiceTrackingController::class, 'show'])
     ->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:service.repair_jobs'])
     ->name('storefront.service.track.token');
+Route::get('/store/{store_slug}/track/service/{token}/print', [\App\Http\Controllers\Storefront\ServiceTrackingController::class, 'print'])
+    ->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:service.repair_jobs'])
+    ->name('storefront.service.track.print');
 
 // Public Blog Routes
 Route::get('/blog', [BlogController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.blog']);
@@ -131,8 +135,8 @@ Route::get('/store/{store_slug}/page/{slug}', [PageController::class, 'show'])
 Route::prefix('store/{store_slug}')
     ->middleware([ResolveStoreContext::class, SetLocale::class, 'auth', 'store.capability:commerce.wholesale_pricing'])
     ->group(function () {
-        Route::get('/wholesale/apply', [WholesaleController::class, 'create']);
-        Route::post('/wholesale/apply', [WholesaleController::class, 'store'])->middleware('throttle:5,1');
+        Route::get('/wholesale/apply', [WholesaleController::class, 'create'])->name('store.wholesale.apply');
+        Route::post('/wholesale/apply', [WholesaleController::class, 'store'])->middleware('throttle:5,1')->name('store.wholesale.apply.post');
     });
 
 // Authentication Routes (Guest) — store context resolved so registration

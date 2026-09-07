@@ -48,6 +48,13 @@
                 <span>Live Finder ↗</span>
             </a>
 
+            {{-- Manage Glass Finder Banners --}}
+            <a href="{{ route('store.admin.banners.index', ['store_slug' => $store->slug, 'page' => 'glass_finder']) }}"
+               class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800 transition flex items-center gap-1.5 active:scale-95 shadow-2xs">
+                <span>🖼️</span>
+                <span>{{ __('messages.glass_finder_banner_manage_btn') }}</span>
+            </a>
+
             {{-- Import Button --}}
             <button type="button" @click="importModalOpen = true"
                     class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 transition flex items-center gap-1.5 active:scale-95 shadow-2xs">

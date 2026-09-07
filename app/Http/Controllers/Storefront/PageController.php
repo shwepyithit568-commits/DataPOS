@@ -42,6 +42,12 @@ class PageController extends Controller
         $ogImage = $page->featured_image_path ? asset('storage/' . $page->featured_image_path) : null;
         $canonicalUrl = url('/store/' . $store->slug . '/page/' . $page->slug);
 
+        $otherPages = StorefrontPage::where('store_id', $store->id)
+            ->where('is_enabled', true)
+            ->published()
+            ->orderBy('id')
+            ->get();
+
         return view('storefront.pages.show', compact(
             'store',
             'page',
@@ -51,7 +57,8 @@ class PageController extends Controller
             'ogTitle',
             'metaDescription',
             'ogImage',
-            'canonicalUrl'
+            'canonicalUrl',
+            'otherPages'
         ));
     }
 }

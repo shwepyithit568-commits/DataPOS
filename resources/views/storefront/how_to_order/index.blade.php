@@ -1,4 +1,4 @@
-﻿@extends('layouts.storefront.app')
+@extends('layouts.storefront.app')
 
 @section('content')
 @php
@@ -44,27 +44,19 @@
             ],
         ];
 
-    $stepGradients = [
-        'from-sky-500 to-blue-600',
-        'from-violet-500 to-purple-600',
-        'from-orange-500 to-amber-600',
-        'from-pink-500 to-rose-600',
-        'from-emerald-500 to-teal-600',
-    ];
-
     $viberUrl = \App\Support\ContactLinkBuilder::viberChatUrl($setting?->viber_number);
     $viberIosUrl = \App\Support\ContactLinkBuilder::viberIosContactUrl($setting?->viber_number);
     $telegramUrl = \App\Support\ContactLinkBuilder::telegramUrl($setting?->telegram_username);
     $callNumber = $setting?->phone ? \App\Support\ContactLinkBuilder::normalizeMyanmarPhone($setting->phone) : null;
 @endphp
 
-<div class="mx-auto max-w-6xl space-y-8 sm:space-y-12 pb-12">
+<div class="mx-auto max-w-6xl space-y-6 sm:space-y-10 pb-16">
     {{-- ===================== Hero Header ===================== --}}
     <header class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-6">
         <div class="space-y-3">
             <div class="sf-btn-3d active inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase pointer-events-none">
                 <span>📖</span>
-                <span>How to Order Guide · ဝယ်ယူနည်း လမ်းညွှန်</span>
+                <span>{{ __('messages.how_to_order') }} · စျေးဝယ်နည်း လမ်းညွှန်</span>
             </div>
 
             <h1 class="font-sans text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white leading-tight">
@@ -94,7 +86,7 @@
             <div class="flex flex-wrap gap-2.5 pt-1">
                 @if ($viberUrl)
                     <a href="{{ $viberUrl }}" data-ios-href="{{ $viberIosUrl }}"
-                       class="sf-btn-3d inline-flex min-h-[40px] items-center gap-2 rounded-full px-4 py-2 text-xs font-black cursor-pointer select-none">
+                       class="sf-btn-3d-viber inline-flex min-h-[40px] items-center gap-2 rounded-full px-4 py-2 text-xs font-black cursor-pointer select-none">
                         <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20">
                             <x-brand-icon brand="viber" class="h-3.5 w-3.5 fill-white text-white"/>
                         </span>
@@ -105,14 +97,14 @@
                     <a href="tel:{{ $callNumber }}"
                        class="sf-btn-3d-success inline-flex min-h-[40px] items-center gap-2 rounded-full px-4 py-2 text-xs font-black cursor-pointer select-none">
                         <span>📞</span>
-                        <span>ဖုန်းတိုက်ရိုက်ခေါ်မည် ({{ $callNumber }})</span>
+                        <span>ဖုန်းတိုက်ရိုက်ခေါ်မည်</span>
                     </a>
                 @endif
             </div>
         </div>
 
         {{-- Action Shortcut Cards --}}
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
             <a href="{{ $productsUrl }}" class="group rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/60 p-4 transition hover:border-sky-400 hover:shadow-sm">
                 <div class="flex items-center gap-3">
                     <span class="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center text-lg shrink-0">🛍️</span>
@@ -143,7 +135,7 @@
         </div>
     </header>
 
-    {{-- ===================== 5 Steps Visual Guide ===================== --}}
+    {{-- ===================== 5 Steps Visual Infographic Guide ===================== --}}
     <section class="space-y-6">
         <div class="space-y-1">
             <div class="sf-btn-3d active inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-black tracking-wide uppercase pointer-events-none">
@@ -160,18 +152,18 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             @foreach ($steps as $i => $step)
-                <div class="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 flex flex-col justify-between shadow-2xs hover:shadow-md hover:border-sky-400 dark:hover:border-sky-600 transition space-y-4">
+                <div class="relative rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 flex flex-col justify-between shadow-2xs hover:shadow-md hover:border-sky-400 dark:hover:border-sky-600 transition space-y-4 group">
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="sf-btn-3d active w-12 h-12 rounded-2xl text-xl flex items-center justify-center pointer-events-none">
+                            <span class="sf-btn-3d active w-12 h-12 rounded-2xl text-xl flex items-center justify-center pointer-events-none shadow-sm">
                                 {{ $step['icon'] }}
                             </span>
-                            <span class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono font-black text-xs flex items-center justify-center">
+                            <span class="w-8 h-8 rounded-full bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800 font-mono font-black text-xs flex items-center justify-center shadow-2xs">
                                 {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
                             </span>
                         </div>
 
-                        <h3 class="font-black text-sm text-slate-900 dark:text-white leading-snug">
+                        <h3 class="font-black text-sm text-slate-900 dark:text-white leading-snug group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
                             {{ $step['title'] }}
                         </h3>
 
@@ -180,39 +172,226 @@
                         </p>
                     </div>
 
-                    <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                        <span class="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase">
+                    <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                        <span class="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase tracking-wider">
                             အဆင့် ({{ $i + 1 }})
                         </span>
+                        @if ($i < count($steps) - 1)
+                            <span class="hidden lg:block text-slate-300 dark:text-slate-600 text-xs">➔</span>
+                        @else
+                            <span class="text-emerald-600 dark:text-emerald-400 text-xs font-bold">✓ ပြီးပါပြီ</span>
+                        @endif
                     </div>
                 </div>
             @endforeach
         </div>
     </section>
 
-    {{-- ===================== Notes Strip ===================== --}}
-    <section class="rounded-3xl bg-slate-50 dark:bg-slate-800/60 p-6 border border-slate-200/90 dark:border-slate-700/80 space-y-4">
-        <div class="flex items-center gap-2">
-            <span class="text-base">📌</span>
-            <h2 class="text-sm font-black text-slate-900 dark:text-white font-myanmar">
-                မှာယူရာတွင် သတိပြုရန်နှင့် သိမှတ်ဖွယ်ရာများ
-            </h2>
+    {{-- ===================== Payment Transfer Instructions & Bus Gate Guide ===================== --}}
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {{-- Payment Transfer Instructions (ငွေလွှဲပေးချေနည်း လမ်းညွှန်) --}}
+        <div class="rounded-3xl bg-white dark:bg-slate-900 p-6 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-5">
+            <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shrink-0 shadow-2xs">💳</span>
+                <div>
+                    <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white font-sans">
+                        {{ __('messages.how_to_payment_guide_title') }}
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-myanmar">
+                        {{ __('messages.how_to_payment_guide_desc') }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="space-y-3 font-myanmar">
+                {{-- Step 1 --}}
+                <div class="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                    <span class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">1</span>
+                    <div class="space-y-0.5 text-xs">
+                        <p class="font-bold text-slate-900 dark:text-white">ငွေလွှဲ အကောင့်အမည်နှင့် နံပါတ်ကို စစ်ဆေးပါ</p>
+                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">အောက်တွင် ဖော်ပြထားသော KBZPay, WavePay သို့မဟုတ် ဘဏ်အကောင့်နံပါတ်များသို့သာ လွှဲပေးပါရန်။</p>
+                    </div>
+                </div>
+
+                {{-- Step 2 --}}
+                <div class="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                    <span class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">2</span>
+                    <div class="space-y-0.5 text-xs">
+                        <p class="font-bold text-slate-900 dark:text-white">ငွေလွှဲမှတ်တမ်း (Screenshot / Slip) ရိုက်သိမ်းပါ</p>
+                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">ငွေလွှဲအောင်မြင်သည့် စလစ်တွင် <strong>Transaction No. (လုပ်ငန်းစဉ်အမှတ်)</strong> ရှင်းလင်းစွာ ပါဝင်ရပါမည်။</p>
+                    </div>
+                </div>
+
+                {{-- Step 3 --}}
+                <div class="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+                    <span class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">3</span>
+                    <div class="space-y-0.5 text-xs">
+                        <p class="font-bold text-slate-900 dark:text-white">ဆိုင် Viber သို့ စလစ်ဓာတ်ပုံ ပေးပို့ အတည်ပြုပါ</p>
+                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">ငွေလွှဲစလစ်ကို ဆိုင် Viber သို့ ပေးပို့လိုက်သည်နှင့် စာရင်းစစ်ဆေးပြီး အော်ဒါအား ချက်ချင်း အတည်ပြုပေးပါမည်။</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/60 flex items-center gap-2.5 text-xs text-emerald-800 dark:text-emerald-300 font-myanmar">
+                <span class="text-base">🔒</span>
+                <span>၁၀၀% စိတ်ချရသော တရားဝင် ဆိုင်အကောင့်များဖြင့်သာ ငွေလက်ခံပါသည်။</span>
+            </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-            <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
-                <span class="text-base">📸</span>
-                <p class="text-xs font-bold text-slate-800 dark:text-slate-200">မသေချာပါက Screenshot ပို့ပါ</p>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-myanmar leading-relaxed">ဖုန်းမော်ဒယ် သို့မဟုတ် ပစ္စည်းပုံကို screenshot ရိုက်၍ Viber မှတဆင့် လွတ်လပ်စွာ မေးမြန်းနိုင်ပါသည်။</p>
+
+        {{-- Bus Gate Delivery Guide (နယ်ဝေး ကားဂိတ် ပို့ဆောင်ရေး လမ်းညွှန်) --}}
+        <div class="rounded-3xl bg-white dark:bg-slate-900 p-6 sm:p-7 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-5">
+            <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-2xl bg-sky-100 dark:bg-sky-950/80 text-sky-600 dark:text-sky-400 flex items-center justify-center text-lg shrink-0 shadow-2xs">🚌</span>
+                <div>
+                    <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white font-sans">
+                        {{ __('messages.how_to_bus_gate_title') }}
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-myanmar">
+                        {{ __('messages.how_to_bus_gate_desc') }}
+                    </p>
+                </div>
             </div>
-            <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
-                <span class="text-base">₭</span>
-                <p class="text-xs font-bold text-slate-800 dark:text-slate-200">စျေးနှုန်းနှင့် Stock ပြန်စစ်ပေးခြင်း</p>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-myanmar leading-relaxed">အော်ဒါပို့ပြီးပါက ဆိုင်ဘက်မှ လက်ကျန်ပစ္စည်းနှင့် ကာလပေါက်စျေးနှုန်းကို ချက်ချင်း အတည်ပြုပေးပါမည်။</p>
+
+            <div class="space-y-3 font-myanmar">
+                <div class="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-1 text-xs">
+                    <p class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>📍</span> အောင်မင်္ဂလာ / ဒဂုံဧရာ ကားဂိတ်များသို့ ပို့ဆောင်ပေးခြင်း
+                    </p>
+                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                        မြန်မာတစ်နိုင်ငံလုံးရှိ မြို့နယ်အသီးသီးသို့ ပြေးဆွဲနေသော အဝေးပြေး ကားလိုင်းဂိတ်များသို့ နေ့စဉ် စနစ်တကျ ကားဂိတ်တင်ပေးပါသည်။
+                    </p>
+                </div>
+
+                <div class="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-1 text-xs">
+                    <p class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>💰</span> ကားဂိတ်တင်ခ နှင့် တန်ဆာခ
+                    </p>
+                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                        ဆိုင်မှ ကားဂိတ်သို့ ပို့ဆောင်ခ (ဂိတ်တင်ခ) ကို အော်ဒါတွင် ပေါင်းစပ်ပေးချေနိုင်ပြီး၊ အဝေးပြေး ကားခ (တန်ဆာခ) အား မိမိမြို့ ကားဂိတ်ရောက်မှ ပေးချေနိုင်ပါသည်။
+                    </p>
+                </div>
+
+                <div class="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-1 text-xs">
+                    <p class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>🧾</span> ကားဂိတ်တင်ဖြတ်ပိုင်း (Voucher) Viber သို့ ပို့ပေးခြင်း
+                    </p>
+                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                        ကားဂိတ်သို့ ပစ္စည်းတင်ပြီးပါက <strong>ကားဂိတ်အမည်၊ ကားနံပါတ်၊ တန်ဆာဖြတ်ပိုင်း အမှတ်အသား</strong> အပြည့်အစုံကို Viber မှတစ်ဆင့် ချက်ချင်း ဓာတ်ပုံရိုက် ပို့ဆောင်ပေးပါသည်။
+                    </p>
+                </div>
             </div>
-            <div class="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
-                <span class="text-base">🚚</span>
-                <p class="text-xs font-bold text-slate-800 dark:text-slate-200">နယ်ဝေး ကားဂိတ်/အိမ်အရောက် ပို့ဆောင်မှု</p>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-myanmar leading-relaxed">မြန်မာတစ်နိုင်ငံလုံး မြို့နယ်အလိုက် သင့်တော်သော အမြန်ချောပို့ သို့မဟုတ် ကားဂိတ်ဖြင့် ပို့ဆောင်ပေးပါသည်။</p>
+
+            <div class="p-3 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-900/60 flex items-center gap-2.5 text-xs text-sky-800 dark:text-sky-300 font-myanmar">
+                <span class="text-base">📦</span>
+                <span>ဖုန်းမှန်ကပ်နှင့် LCD ပစ္စည်းများကို Bubble Wrap ဖြင့် ထိခိုက်မှုမရှိစေရန် အထူးလုံခြုံစွာ ထုပ်ပိုးပေးပါသည်။</span>
+            </div>
+        </div>
+    </section>
+
+    {{-- ===================== 3D Accordion Expanders (FAQ Section) ===================== --}}
+    <section x-data="{ activeFaq: 1 }" class="rounded-3xl bg-white dark:bg-slate-900 p-6 sm:p-8 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-6">
+        <div class="space-y-1">
+            <div class="sf-btn-3d active inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-black tracking-wide uppercase pointer-events-none">
+                <span aria-hidden="true">❓</span>
+                <span>FAQ · မေးလေ့ရှိသော မေးခွန်းများ</span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-sans">
+                {{ __('messages.how_to_faq_title') }}
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-myanmar">
+                {{ __('messages.how_to_faq_subtitle') }}
+            </p>
+        </div>
+
+        <div class="space-y-3 font-myanmar">
+            {{-- FAQ 1 --}}
+            <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden bg-slate-50/50 dark:bg-slate-800/30 transition-all">
+                <button type="button" @click="activeFaq = (activeFaq === 1 ? null : 1)"
+                        class="w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-left cursor-pointer select-none hover:bg-slate-100/60 dark:hover:bg-slate-800/60 transition">
+                    <span class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2.5">
+                        <span class="text-sky-600 dark:text-sky-400 font-mono text-sm">Q1.</span>
+                        <span>နယ်မြို့များမှ မှာယူလိုပါက ပစ္စည်းကို မည်သို့ ပို့ဆောင်ပေးပါသလဲ?</span>
+                    </span>
+                    <span :class="activeFaq === 1 ? 'rotate-180 text-sky-600' : 'text-slate-400'"
+                          class="transform transition-transform duration-200 text-xs font-black shrink-0 w-6 h-6 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-2xs">
+                        ▼
+                    </span>
+                </button>
+                <div x-show="activeFaq === 1" x-collapse class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
+                    ရန်ကုန် (အောင်မင်္ဂလာ/ဒဂုံဧရာ) နှင့် မန္တလေး အဝေးပြေးကားဂိတ်များမှတစ်ဆင့် မြန်မာတစ်နိုင်ငံလုံးရှိ မြို့နယ်အသီးသီးသို့ လုံခြုံစိတ်ချစွာ စနစ်တကျ ထုပ်ပိုး၍ ကားဂိတ်တင်ပေးပါသည်။ ထို့အပြင် မြို့တွင်းနှင့် အချို့မြို့နယ်များအတွက် အိမ်အရောက် Express Delivery ဖြင့်လည်း ပို့ဆောင်ပေးပါသည်။
+                </div>
+            </div>
+
+            {{-- FAQ 2 --}}
+            <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden bg-slate-50/50 dark:bg-slate-800/30 transition-all">
+                <button type="button" @click="activeFaq = (activeFaq === 2 ? null : 2)"
+                        class="w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-left cursor-pointer select-none hover:bg-slate-100/60 dark:hover:bg-slate-800/60 transition">
+                    <span class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2.5">
+                        <span class="text-sky-600 dark:text-sky-400 font-mono text-sm">Q2.</span>
+                        <span>ကားဂိတ်တင်ခနှင့် တန်ဆာခကို မည်သို့ ပေးချေရမည်နည်း?</span>
+                    </span>
+                    <span :class="activeFaq === 2 ? 'rotate-180 text-sky-600' : 'text-slate-400'"
+                          class="transform transition-transform duration-200 text-xs font-black shrink-0 w-6 h-6 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-2xs">
+                        ▼
+                    </span>
+                </button>
+                <div x-show="activeFaq === 2" x-collapse class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
+                    ဆိုင်မှ ကားဂိတ်သို့ ပို့ဆောင်ပေးသည့် "ဂိတ်တင်ခ" အား အော်ဒါကျသင့်ငွေထဲတွင် တခါတည်း ပေါင်းစပ်ပေးချေနိုင်ပြီး၊ အဝေးပြေးကားလိုင်း "တန်ဆာခ" အား မိမိမြို့ ကားဂိတ်တွင် ပစ္စည်းထုတ်ယူချိန်၌ ပေးချေနိုင်ပါသည် (ဂိတ်ချေ / ကြိုချေ အဆင်ပြေသလို ညှိနှိုင်းနိုင်ပါသည်)။
+                </div>
+            </div>
+
+            {{-- FAQ 3 --}}
+            <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden bg-slate-50/50 dark:bg-slate-800/30 transition-all">
+                <button type="button" @click="activeFaq = (activeFaq === 3 ? null : 3)"
+                        class="w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-left cursor-pointer select-none hover:bg-slate-100/60 dark:hover:bg-slate-800/60 transition">
+                    <span class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2.5">
+                        <span class="text-sky-600 dark:text-sky-400 font-mono text-sm">Q3.</span>
+                        <span>ငွေကြိုတင်လွှဲရခြင်းသည် စိတ်ချရပါသလား?</span>
+                    </span>
+                    <span :class="activeFaq === 3 ? 'rotate-180 text-sky-600' : 'text-slate-400'"
+                          class="transform transition-transform duration-200 text-xs font-black shrink-0 w-6 h-6 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-2xs">
+                        ▼
+                    </span>
+                </button>
+                <div x-show="activeFaq === 3" x-collapse class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
+                    DataPOS သည် ဆိုင်လိပ်စာနှင့် တရားဝင် လုပ်ငန်းလိုင်စင် အခိုင်အမာရှိသော နည်းပညာဆိုင်ဖြစ်ပြီး KBZPay, WavePay, AYA, CB, KBZ စသည့် တရားဝင် အကောင့်များဖြင့်သာ ငွေလက်ခံပါသည်။ ငွေလွှဲလက်ခံရရှိသည်နှင့် အော်ဒါဘောက်ချာနှင့် ကားဂိတ်တင်ဖြတ်ပိုင်းတို့ကို Viber မှတစ်ဆင့် ချက်ချင်း ဓာတ်ပုံရိုက် ပို့ဆောင်အတည်ပြုပေးသဖြင့် ၁၀၀% စိတ်ချယုံကြည်နိုင်ပါသည်။
+                </div>
+            </div>
+
+            {{-- FAQ 4 --}}
+            <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden bg-slate-50/50 dark:bg-slate-800/30 transition-all">
+                <button type="button" @click="activeFaq = (activeFaq === 4 ? null : 4)"
+                        class="w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-left cursor-pointer select-none hover:bg-slate-100/60 dark:hover:bg-slate-800/60 transition">
+                    <span class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2.5">
+                        <span class="text-sky-600 dark:text-sky-400 font-mono text-sm">Q4.</span>
+                        <span>မိမိဖုန်းနှင့် ကိုက်ညီမည့် မှန်ကပ် သို့မဟုတ် ပစ္စည်းအမျိုးအစားကို မသေချာပါက ဘယ်လိုလုပ်ရမလဲ?</span>
+                    </span>
+                    <span :class="activeFaq === 4 ? 'rotate-180 text-sky-600' : 'text-slate-400'"
+                          class="transform transition-transform duration-200 text-xs font-black shrink-0 w-6 h-6 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-2xs">
+                        ▼
+                    </span>
+                </button>
+                <div x-show="activeFaq === 4" x-collapse class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
+                    ဝက်ဘ်ဆိုက်ရှိ <strong>Glass Finder (မှန်မကွဲ အလွယ်ရှာစနစ်)</strong> တွင် မိမိဖုန်း Brand နှင့် Model ရွေးချယ်၍ လွယ်ကူစွာ ရှာဖွေနိုင်သလို၊ လိုချင်သော ပစ္စည်းပုံ သို့မဟုတ် ဖုန်း Settings > About Phone ကို Screenshot ရိုက်၍ ဆိုင် Viber သို့မဟုတ် ဖုန်းသို့ အချိန်မရွေး တိုက်ရိုက်ဆက်သွယ် မေးမြန်းနိုင်ပါသည်။
+                </div>
+            </div>
+
+            {{-- FAQ 5 --}}
+            <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden bg-slate-50/50 dark:bg-slate-800/30 transition-all">
+                <button type="button" @click="activeFaq = (activeFaq === 5 ? null : 5)"
+                        class="w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-left cursor-pointer select-none hover:bg-slate-100/60 dark:hover:bg-slate-800/60 transition">
+                    <span class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2.5">
+                        <span class="text-sky-600 dark:text-sky-400 font-mono text-sm">Q5.</span>
+                        <span>ပစ္စည်းရောက်ရှိချိန်တွင် ချို့ယွင်းချက် သို့မဟုတ် မှားယွင်းမှုရှိပါက မည်သို့ ဆောင်ရွက်ပေးသလဲ?</span>
+                    </span>
+                    <span :class="activeFaq === 5 ? 'rotate-180 text-sky-600' : 'text-slate-400'"
+                          class="transform transition-transform duration-200 text-xs font-black shrink-0 w-6 h-6 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-2xs">
+                        ▼
+                    </span>
+                </button>
+                <div x-show="activeFaq === 5" x-collapse class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
+                    ပစ္စည်းလက်ခံရရှိပါက အထုပ်ဖွင့်သည့် ဗီဒီယို (Unboxing Video) သို့မဟုတ် ဓာတ်ပုံ ရိုက်ထားပေးပါရန် မေတ္တာရပ်ခံအပ်ပါသည်။ ဆိုင်ဘက်မှ မှားယွင်းမှု သို့မဟုတ် မူလချို့ယွင်းချက်ပါလာပါက အမြန်ဆုံး အခမဲ့ လဲလှယ်ပေးခြင်း သို့မဟုတ် ငွေပြန်လည်လွှဲပေးခြင်းကို တာဝန်ယူ ဆောင်ရွက်ပေးပါသည်။
+                </div>
             </div>
         </div>
     </section>
@@ -233,12 +412,12 @@
                     <a href="tel:{{ $callNumber }}"
                        class="sf-btn-3d-success w-full min-h-[42px] inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black cursor-pointer select-none">
                         <span>📞</span>
-                        <span>ဖုန်းခေါ်မည် ({{ $callNumber }})</span>
+                        <span>ဖုန်းတိုက်ရိုက်ခေါ်မည်</span>
                     </a>
                 @endif
                 @if ($viberUrl)
                     <a href="{{ $viberUrl }}" data-ios-href="{{ $viberIosUrl }}"
-                       class="sf-btn-3d w-full min-h-[42px] inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black cursor-pointer select-none">
+                       class="sf-btn-3d-viber w-full min-h-[42px] inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black cursor-pointer select-none">
                         <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20">
                             <x-brand-icon brand="viber" class="h-3.5 w-3.5 fill-white text-white"/>
                         </span>
@@ -247,7 +426,7 @@
                 @endif
                 @if ($telegramUrl)
                     <a href="{{ $telegramUrl }}" target="_blank" rel="noopener noreferrer"
-                       class="sf-btn-3d w-full min-h-[42px] inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black cursor-pointer select-none">
+                       class="sf-btn-3d-telegram w-full min-h-[42px] inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black cursor-pointer select-none">
                         <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20">
                             <x-brand-icon brand="telegram" class="h-3.5 w-3.5 fill-white text-white"/>
                         </span>
@@ -454,3 +633,4 @@
     @endif
 </div>
 @endsection
+

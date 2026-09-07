@@ -202,6 +202,7 @@ class UatSeeder extends Seeder
                 'title'      => 'Premium Glass Finder & Screen Protection',
                 'image_path' => 'banners/alinnthit-glass-finder-premium-2026.webp',
                 'link_url'   => '/store/datapos-mobile/glass-finder',
+                'page'       => 'glass_finder',
                 'sort_order' => 2,
                 'is_active'  => true,
             ],

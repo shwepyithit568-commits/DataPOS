@@ -16,11 +16,15 @@ class GlassFinderController extends Controller
     {
         $store = $context->getStore();
 
-        abort_unless($store, 404, 'Store not found.');
+        abort_unless((bool) $store, 404, 'Store not found.');
 
         $banners = $store->homeBanners()
-            ->where('page', 'glass_finder')
+            ->where(function ($q) {
+                $q->where('page', 'glass_finder')
+                    ->orWhere('link_url', 'like', '%glass-finder%');
+            })
             ->where('is_active', true)
+            ->orderBy('sort_order')
             ->get();
 
         $brands = GlassFinderItem::where('store_id', $store->id)
@@ -139,8 +143,30 @@ class GlassFinderController extends Controller
             }
         }
 
+        $isInitialState = ! $request->filled('phone_model') && ! $request->filled('glass_code') && ! $request->filled('search') && ! $request->filled('brand');
+
+        if ($isInitialState) {
+            $compatibles = GlassFinderItem::where('store_id', $store->id)
+                ->orderBy('normalized_glass_code')
+                ->orderBy('phone_model')
+                ->get();
+        }
+
         $groupedCompatibles = $compatibles->groupBy('normalized_glass_code');
         $items = $query->paginate(20);
+
+        // Map models per brand for dynamic cascading dropdown
+        $brandModelsMap = GlassFinderItem::where('store_id', $store->id)
+            ->whereNotNull('brand')
+            ->whereNotNull('phone_model')
+            ->select('brand', 'phone_model')
+            ->distinct()
+            ->orderBy('phone_model')
+            ->get()
+            ->groupBy('brand')
+            ->map(fn ($group) => $group->pluck('phone_model')->unique()->values());
+
+        $isInitialState = ! $request->filled('phone_model') && ! $request->filled('glass_code') && ! $request->filled('search') && ! $request->filled('brand');
 
         // Fetch favorite IDs if logged in
         $favoriteIds = auth()->check()
@@ -156,6 +182,8 @@ class GlassFinderController extends Controller
             'groupedCompatibles',
             'brands', 
             'models', 
+            'brandModelsMap',
+            'isInitialState',
             'glassCodes', 
             'favoriteIds'
         ));

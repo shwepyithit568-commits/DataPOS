@@ -122,4 +122,56 @@ class ServiceTrackingController extends Controller
             'telegramUrl' => $telegramUrl,
         ]);
     }
+
+    /**
+     * Show clean printable / PDF downloadable service job slip.
+     * Accessible to customer via tracking token with paper size options (A5, 80mm, 58mm, A4).
+     */
+    public function print(string $store_slug, string $token, StoreContext $context, Request $request): View
+    {
+        $store = $context->getStore();
+
+        if (! $store || $store->slug !== $store_slug) {
+            abort(404, 'Store not found.');
+        }
+
+        $repair = ServiceJob::where('store_id', $store->id)
+            ->where('tracking_token', $token)
+            ->with(['customer', 'technician', 'statusHistory.changer', 'payments.creator', 'items.product', 'store.setting'])
+            ->firstOrFail();
+
+        $templates = \App\Models\VoucherTemplate::where('store_id', $store->id)
+            ->where('is_active', true)
+            ->get();
+
+        if ($templates->isEmpty()) {
+            app(\App\POS\Services\VoucherTemplateService::class)->ensureDefaultTemplates($store);
+            $templates = \App\Models\VoucherTemplate::where('store_id', $store->id)
+                ->where('is_active', true)
+                ->get();
+        }
+
+        $requestedPaperSize = $request->query('paper_size', 'a5');
+        $template = $templates->firstWhere('paper_size', $requestedPaperSize) ?? $templates->first();
+        $paperSize = in_array($requestedPaperSize, ['58mm', '80mm', 'a5', 'a4'], true) ? $requestedPaperSize : 'a5';
+
+        $trackingUrl = route('storefront.service.track.token', ['store_slug' => $store->slug, 'token' => $repair->tracking_token]);
+        $trackingQrSvg = null;
+        try {
+            $trackingQrSvg = \App\Services\QrCodeEncoder::generateSvg($trackingUrl, 96);
+        } catch (\Throwable $e) {
+            $trackingQrSvg = null;
+        }
+
+        return view('storefront.service_tracking.print', [
+            'store' => $store,
+            'repair' => $repair,
+            'template' => $template,
+            'templates' => $templates,
+            'paperSize' => $paperSize,
+            'trackingUrl' => $trackingUrl,
+            'trackingQrSvg' => $trackingQrSvg,
+        ]);
+    }
 }
+

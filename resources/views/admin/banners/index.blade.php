@@ -142,6 +142,49 @@
     </div>
 
     {{-- ============================================================
+         2.5 PAGE FILTER TABS (Home / Glass Finder / All)
+         ============================================================ --}}
+    <div class="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 bg-white dark:bg-slate-900 rounded-lg p-1.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+        <div class="flex items-center gap-1 overflow-x-auto scrollbar-none">
+            {{-- All Banners --}}
+            <a href="{{ route('store.admin.banners.index', array_merge($storeRouteParams, ['page' => 'all'])) }}"
+               class="px-2.5 py-1 rounded-md text-xs font-bold transition flex items-center gap-1.5 {{ $currentPage === 'all' ? 'bg-violet-600 text-white shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' }}">
+                <span>🌐</span>
+                <span>{{ __('messages.banners_tab_all') }}</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black {{ $currentPage === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' }}">
+                    {{ $stats['total'] }}
+                </span>
+            </a>
+
+            {{-- Home Banners --}}
+            <a href="{{ route('store.admin.banners.index', array_merge($storeRouteParams, ['page' => 'home'])) }}"
+               class="px-2.5 py-1 rounded-md text-xs font-bold transition flex items-center gap-1.5 {{ $currentPage === 'home' ? 'bg-violet-600 text-white shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' }}">
+                <span>🏠</span>
+                <span>{{ __('messages.banners_tab_home') }}</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black {{ $currentPage === 'home' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' }}">
+                    {{ $stats['home'] }}
+                </span>
+            </a>
+
+            {{-- Glass Finder Banners --}}
+            <a href="{{ route('store.admin.banners.index', array_merge($storeRouteParams, ['page' => 'glass_finder'])) }}"
+               class="px-2.5 py-1 rounded-md text-xs font-bold transition flex items-center gap-1.5 {{ $currentPage === 'glass_finder' ? 'bg-violet-600 text-white shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' }}">
+                <span>📱</span>
+                <span>{{ __('messages.banners_tab_glass_finder') }}</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black {{ $currentPage === 'glass_finder' ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' }}">
+                    {{ $stats['glass_finder'] }}
+                </span>
+            </a>
+        </div>
+
+        {{-- Direct Shortcut to Glass Finder Admin --}}
+        <a href="{{ route('store.admin.glass-finder.index', $storeRouteParams) }}"
+           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/60 border border-sky-200 dark:border-sky-800 transition shadow-2xs self-start sm:self-auto">
+            <span>🔍 {{ __('messages.glass_finder_admin_title') }} ↗</span>
+        </a>
+    </div>
+
+    {{-- ============================================================
          3. REUSABLE ADMIN TOOLBAR (Search, Filters, Excel, View Mode)
          ============================================================ --}}
     <x-admin.toolbar
@@ -193,6 +236,11 @@
                                 {{-- Sort Order badge --}}
                                 <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-slate-950/70 text-white text-[10px] font-black font-mono backdrop-blur-xs shadow-2xs">
                                     #{{ (int) $banner->sort_order }}
+                                </span>
+
+                                {{-- Page Location badge --}}
+                                <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider backdrop-blur-xs shadow-2xs {{ $banner->page === 'glass_finder' ? 'bg-amber-600/90 text-white' : 'bg-sky-600/90 text-white' }}">
+                                    {{ $banner->page === 'glass_finder' ? '📱 Glass Finder' : '🏠 Home' }}
                                 </span>
                             </div>
 
@@ -267,10 +315,11 @@
             <table class="w-full text-left text-xs border-collapse font-sans text-slate-700 dark:text-slate-200">
                 <thead class="sticky top-0 z-20 bg-slate-100 dark:bg-slate-800/95 backdrop-blur-xs border-b border-slate-200 dark:border-slate-700 shadow-2xs select-none">
                     <tr class="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider divide-x divide-slate-200 dark:divide-slate-700/60">
-                        <th class="py-2 px-2.5 min-w-[240px]">{{ __('messages.banners_title_label') }}</th>
-                        <th class="py-2 px-2.5 min-w-[180px]">{{ __('messages.banners_link_label') }}</th>
-                        <th class="py-2 px-2.5 text-center min-w-[90px]">{{ __('messages.banners_sort_label') }}</th>
-                        <th class="py-2 px-2.5 text-center min-w-[100px]">{{ __('messages.status') }}</th>
+                        <th class="py-2 px-2.5 min-w-[220px]">{{ __('messages.banners_title_label') }}</th>
+                        <th class="py-2 px-2.5 min-w-[120px] text-center">{{ __('messages.banners_page_label') }}</th>
+                        <th class="py-2 px-2.5 min-w-[160px]">{{ __('messages.banners_link_label') }}</th>
+                        <th class="py-2 px-2.5 text-center min-w-[80px]">{{ __('messages.banners_sort_label') }}</th>
+                        <th class="py-2 px-2.5 text-center min-w-[90px]">{{ __('messages.status') }}</th>
                         <th class="py-2 px-2.5 text-right w-20">{{ __('messages.actions') }}</th>
                     </tr>
                 </thead>
@@ -294,6 +343,13 @@
                                         @endif
                                     </div>
                                 </div>
+                            </td>
+
+                            {{-- Page Location --}}
+                            <td class="py-1.5 px-2.5 text-center">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black {{ $banner->page === 'glass_finder' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300' : 'bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300' }}">
+                                    {{ $banner->page === 'glass_finder' ? '📱 Glass Finder' : '🏠 Home' }}
+                                </span>
                             </td>
 
                             {{-- Link URL --}}
@@ -386,7 +442,20 @@
 
             <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/banners') }}" enctype="multipart/form-data" class="space-y-2.5 text-xs">
                 @csrf
-                <input type="hidden" name="page" value="home" />
+                <div>
+                    <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        🏷️ {{ __('messages.banners_page_label') }} *
+                    </label>
+                    <select name="page" required
+                            class="w-full h-8 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-violet-500 focus:bg-white dark:focus:bg-slate-900 transition cursor-pointer">
+                        <option value="home" {{ (old('page', $currentPage === 'glass_finder' ? 'glass_finder' : 'home') === 'home') ? 'selected' : '' }}>
+                            🏠 {{ __('messages.banners_page_home') }}
+                        </option>
+                        <option value="glass_finder" {{ (old('page', $currentPage === 'glass_finder' ? 'glass_finder' : 'home') === 'glass_finder') ? 'selected' : '' }}>
+                            📱 {{ __('messages.banners_page_glass_finder') }}
+                        </option>
+                    </select>
+                </div>
 
                 <div>
                     <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.banners_title_label') }} *</label>

@@ -1,257 +1,388 @@
 @extends('layouts.storefront.app')
 
+@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')
+
 @section('content')
 @php
     $storeSlug = $store?->slug ?? request('store_slug');
+    $storeSetting = $store?->setting;
+    $storeLogo = $storeSetting?->adminLogo();
+    $storeLogoUrl = $storeLogo ? asset('storage/' . $storeLogo) : null;
     $accountUrl = $storeSlug ? url('/account?store_slug=' . $storeSlug) : url('/account');
     $productsUrl = $storeSlug ? url('/products?store_slug=' . $storeSlug) : url('/products');
     $glassFinderUrl = $storeSlug ? url('/glass-finder?store_slug=' . $storeSlug) : url('/glass-finder');
     $orderBuilderUrl = $storeSlug ? url('/order-builder?store_slug=' . $storeSlug) : url('/order-builder');
+
+    $hasCloudFavorites = isset($favorites) && $favorites->count() > 0;
 @endphp
 
-<div class="max-w-6xl mx-auto space-y-6 pb-12">
-    {{-- Header & Top Navigation --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs">
-        <div class="space-y-1">
-            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-black tracking-wide text-white uppercase shadow-2xs border-0"
-                 style="background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%) !important;">
-                <span>❤️</span>
-                <span>My Saved Favorites</span>
+<div class="max-w-6xl mx-auto space-y-1.5 sm:space-y-3 select-none font-sans pb-16"
+     x-data="{
+         brandHue(str) {
+             if (!str) return 0;
+             let hue = 0;
+             for (let i = 0; i < str.length; i++) {
+                 hue += (str.charCodeAt(i) * (i + 3)) % 360;
+             }
+             return hue % 360;
+         }
+     }">
+
+    {{-- 1. Top Breadcrumb & Store Header Bar --}}
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg sm:rounded-xl shadow-2xs">
+        <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            @if ($storeLogoUrl)
+                <img src="{{ $storeLogoUrl }}" alt="{{ $store->name }}" class="h-8 w-8 sm:h-9 sm:w-9 rounded-md object-contain bg-white dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-slate-700 shadow-2xs shrink-0" />
+            @else
+                <div class="sf-btn-3d active flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-md text-white font-black text-xs sm:text-sm shrink-0 pointer-events-none">
+                    {{ mb_substr($store?->name ?? 'D', 0, 1) }}
+                </div>
+            @endif
+            <div class="min-w-0">
+                <h1 class="text-sm sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-1.5 sm:gap-2 flex-wrap font-sans">
+                    <span class="truncate">{{ __('messages.favorites_title') }}</span>
+                    <span class="sf-btn-3d active inline-flex items-center px-1.5 py-0.2 rounded text-[10px] sm:text-[11px] font-black pointer-events-none whitespace-nowrap"
+                          x-text="($store.favoritesStore ? $store.favoritesStore.count : {{ $favorites->count() ?? 0 }}) + ' ' + '{{ __('messages.order_items_unit') }}'">
+                    </span>
+                </h1>
+                <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+                    {{ __('messages.favorites_subtitle') }}
+                </p>
             </div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-sans">
-                သိမ်းဆည်းထားသော ပစ္စည်းများ (Favorites)
-            </h1>
-            <p class="text-xs text-slate-600 dark:text-slate-400 font-myanmar">
-                သင် နှစ်သက်၍ သိမ်းဆည်းထားသော ဖုန်းမှန်များနှင့် ပစ္စည်းများကို အလွယ်တကူ ပြန်လည်ကြည့်ရှု၍ အော်ဒါတင်နိုင်ပါသည်
-            </p>
         </div>
-        <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+
+        {{-- Action Buttons --}}
+        <div class="flex items-center gap-1.5 shrink-0 self-start sm:self-auto flex-wrap">
             <a href="{{ $orderBuilderUrl }}"
-               style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;"
-               class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-white shadow-md shadow-orange-500/20 hover:brightness-110 active:scale-95 transition cursor-pointer select-none border-0">
-                <span>🛒</span>
-                <span>အော်ဒါစာရင်း ကြည့်မည်</span>
-                <span x-show="$store.orderBuilder && $store.orderBuilder.items.length > 0"
+               class="sf-btn-3d-gold !inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-black shadow-2xs cursor-pointer"
+               title="{{ __('messages.nav_cart') }}">
+                <span aria-hidden="true">🛒</span>
+                <span>{{ __('messages.nav_cart') }}</span>
+                <span x-show="$store.orderBuilder && $store.orderBuilder.totalCount > 0"
                       class="px-1.5 py-0.2 rounded-full bg-white text-orange-600 font-black text-[10px]"
-                      x-text="$store.orderBuilder ? $store.orderBuilder.items.length : 0"></span>
+                      x-text="$store.orderBuilder ? $store.orderBuilder.totalCount : 0"></span>
             </a>
+
             <a href="{{ auth()->check() ? $accountUrl : url('/') }}"
-               class="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                <span>&larr;</span>
-                <span>{{ auth()->check() ? 'Dashboard' : 'ပင်မစာမျက်နှာ' }}</span>
+               class="sf-btn-3d !inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-bold"
+               title="{{ __('messages.account') }}">
+                <span aria-hidden="true">←</span>
+                <span>{{ auth()->check() ? __('messages.account') : __('messages.home') }}</span>
             </a>
         </div>
     </div>
 
-    {{-- Main Container --}}
-    <div class="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-6 border border-slate-200/90 dark:border-slate-800/80 shadow-sm space-y-5">
-        {{-- Section Header Bar --}}
-        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 flex-wrap gap-2">
+    {{-- 2. Main Wishlist Container --}}
+    <div class="bg-white dark:bg-slate-900 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3 sm:space-y-4">
+        
+        {{-- Section Subheader Bar --}}
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 flex-wrap gap-2">
             <div class="flex items-center gap-2">
-                <span class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center text-sm shadow-2xs">
+                <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center text-sm shadow-2xs">
                     ❤️
                 </span>
                 <div>
-                    <h2 class="font-black text-sm sm:text-base text-slate-900 dark:text-white">
-                        သိမ်းဆည်းထားသော စာရင်း
+                    <h2 class="font-black text-xs sm:text-sm text-slate-900 dark:text-white">
+                        {{ __('messages.favorites') }}
                     </h2>
-                    <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400"
-                          x-text="($store.favoritesStore ? $store.favoritesStore.count : 0) + ' items saved'"></span>
+                    <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                        {{ __('messages.favorites_cloud_subtitle') }}
+                    </p>
                 </div>
             </div>
-            <div class="flex items-center gap-2">
+
+            <div class="flex items-center gap-1.5">
                 <a href="{{ $productsUrl }}"
-                   class="inline-flex items-center gap-1 text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline">
-                    <span>+ ပစ္စည်းများ ထပ်ရှာရန်</span>
+                   class="sf-btn-3d !inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-bold">
+                    <span>🛍️</span>
+                    <span>{{ __('messages.favorites_browse_more') }}</span>
                 </a>
             </div>
         </div>
 
-        {{-- DB Favorites (For Logged in User) --}}
+        {{-- 3. Authenticated Cloud Favorites Section --}}
         @auth
-            @if ($favorites && $favorites->count() > 0)
-                <div class="mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            @if ($hasCloudFavorites)
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1">
                             <span>☁️</span>
-                            <span>Account Cloud Favorites</span>
+                            <span>{{ __('messages.favorites_cloud_title') }}</span>
                         </span>
-                        <span class="text-[11px] text-slate-400">Account တွင် သိမ်းဆည်းထားသော စာရင်း</span>
+                        <span class="text-[10px] font-mono text-slate-400">
+                            {{ $favorites->total() }} {{ __('messages.order_items_unit') }}
+                        </span>
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+
+                    {{-- Compact Product Grid (2 cols on mobile, 3 on sm, 4 on lg) --}}
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2.5">
                         @foreach ($favorites as $favorite)
                             @if ($favorite->glassItem)
                                 @php
-                                    $_brandStr = (string) ($favorite->glassItem->brand ?? 'G');
+                                    $glass = $favorite->glassItem;
+                                    $isInStock = $glass->isInStock();
+                                    $_brandStr = (string) ($glass->brand ?? 'G');
                                     $_hue = 0;
-                                    for ($_i = 0; $_i < strlen($_brandStr); $_i++) { $_hue += (ord($_brandStr[$_i]) * ($_i + 3)) % 360; }
+                                    for ($_i = 0; $_i < strlen($_brandStr); $_i++) {
+                                        $_hue += (ord($_brandStr[$_i]) * ($_i + 3)) % 360;
+                                    }
                                     $cloudHue = $_hue % 360;
                                 @endphp
-                                <div class="cloud-fav-row bg-slate-50/60 dark:bg-slate-800/50 rounded-2xl border border-slate-200/90 dark:border-slate-700/80 p-3 sm:p-3.5 flex flex-col gap-2.5 overflow-hidden shadow-2xs hover:shadow-md transition">
-                                    {{-- Brand placeholder tile --}}
-                                    <div class="relative -mx-3 -mt-3 sm:-mx-3.5 sm:-mt-3.5 mb-1 aspect-square overflow-hidden cloud-hue-bg rounded-t-2xl"
-                                         style="--cloud-hue: {{ $cloudHue }}">
-                                        <div class="absolute inset-0 flex items-center justify-center">
-                                            <div class="p-3.5 rounded-full bg-white/70 dark:bg-slate-900/50 backdrop-blur-md shadow-sm ring-1 ring-white/50">
-                                                <span class="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white">{{ strtoupper(mb_substr($favorite->glassItem->brand ?? 'G', 0, 1)) }}</span>
+                                <div class="cloud-fav-row bg-slate-50/70 dark:bg-slate-800/60 rounded-lg sm:rounded-xl border border-slate-200/90 dark:border-slate-700/80 p-2 sm:p-2.5 flex flex-col gap-1.5 overflow-hidden shadow-2xs hover:shadow-xs transition relative">
+                                    
+                                    {{-- Full-bleed Image / Brand Fallback Tile --}}
+                                    <div class="relative -mx-2 -mt-2 sm:-mx-2.5 sm:-mt-2.5 aspect-square overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-t-lg sm:rounded-t-xl flex items-center justify-center">
+                                        <div class="absolute inset-0 flex items-center justify-center cloud-hue-bg"
+                                             style="--cloud-hue: {{ $cloudHue }}; background: hsl({{ $cloudHue }}, 65%, 94%);">
+                                            <div class="p-2 sm:p-2.5 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-xs shadow-2xs">
+                                                <span class="text-xl sm:text-2xl font-black text-slate-800 dark:text-white">{{ strtoupper(mb_substr($glass->brand ?? 'G', 0, 1)) }}</span>
                                             </div>
                                         </div>
-                                        <span class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-slate-900/60 text-white text-[10px] font-mono font-bold backdrop-blur-sm shadow-xs">
-                                            GLASS
+
+                                        {{-- Stock Availability Badge (Top-Left) --}}
+                                        <div class="absolute top-1.5 left-1.5">
+                                            @if ($isInStock)
+                                                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black bg-emerald-600/90 text-white backdrop-blur-xs shadow-2xs">
+                                                    <span>●</span>
+                                                    <span>{{ __('messages.in_stock') }}</span>
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black bg-rose-600/90 text-white backdrop-blur-xs shadow-2xs">
+                                                    <span>●</span>
+                                                    <span>{{ __('messages.out_of_stock') }}</span>
+                                                </span>
+                                            @endif
+                                        </div>
+
+                                        {{-- Remove 3D Button (Top-Right) --}}
+                                        <div class="absolute top-1.5 right-1.5">
+                                            <button type="button"
+                                                    @click.prevent="$store.favoritesStore.removeServerItem({{ $glass->id }}, $el)"
+                                                    class="sf-btn-3d-danger !p-1 sm:!p-1.5 rounded-md text-xs shadow-2xs cursor-pointer select-none"
+                                                    title="{{ __('messages.remove') }}">
+                                                <span>🗑️</span>
+                                            </button>
+                                        </div>
+
+                                        {{-- Glass Code Pill (Bottom-Right) --}}
+                                        <span class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-slate-950/70 text-white text-[9px] font-mono font-bold backdrop-blur-xs shadow-2xs">
+                                            {{ $glass->glass_code }}
                                         </span>
                                     </div>
 
-                                    <div class="flex items-start justify-between gap-1.5">
-                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800 uppercase">
-                                            {{ $favorite->glassItem->brand }}
+                                    {{-- Brand & Model Info --}}
+                                    <div class="min-w-0 space-y-0.5">
+                                        <span class="inline-block px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 uppercase">
+                                            {{ $glass->brand }}
                                         </span>
-                                        <button
-                                            type="button"
-                                            @click.prevent="$store.favoritesStore.removeServerItem({{ $favorite->glassItem->id }}, $el)"
-                                            class="w-7 h-7 flex items-center justify-center text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/60 rounded-lg transition font-bold cursor-pointer"
-                                            title="Remove Favorite"
-                                            aria-label="Remove Favorite"
-                                        >
-                                            🗑️
-                                        </button>
+                                        <h4 class="font-black text-xs sm:text-sm text-slate-900 dark:text-white truncate"
+                                            title="{{ $glass->phone_model }}">
+                                            {{ $glass->phone_model }}
+                                        </h4>
+                                        <div class="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                                            Code: <span class="font-bold text-slate-800 dark:text-slate-200">{{ $glass->glass_code }}</span>
+                                        </div>
                                     </div>
 
-                                    <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white break-words leading-tight line-clamp-2">
-                                        {{ $favorite->glassItem->phone_model }}
-                                    </h4>
-
-                                    <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                                        Code: <span class="font-bold text-slate-800 dark:text-slate-200">{{ $favorite->glassItem->glass_code }}</span>
-                                    </div>
-
-                                    <div class="flex items-center gap-1.5 mt-auto pt-2 border-t border-slate-200/80 dark:border-slate-700/80">
-                                        <button 
-                                            @click.stop.prevent="$store.orderBuilder.addItem({ glass_finder_item_id: {{ $favorite->glassItem->id }}, name: 'Glass: {{ addslashes($favorite->glassItem->phone_model) }} ({{ $favorite->glassItem->glass_code }})', price: 0, sku: {{ json_encode($favorite->glassItem->glass_code) }} })"
-                                            type="button"
-                                            style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;"
-                                            class="flex-1 min-h-[34px] px-2.5 py-1.5 text-white rounded-xl text-xs font-black shadow-xs hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-1 cursor-pointer select-none border-0"
-                                            title="အော်ဒါ စာရင်းသို့ ထည့်မည်"
-                                        >
+                                    {{-- Bottom Actions Row --}}
+                                    <div class="flex items-center gap-1 mt-auto pt-1.5 border-t border-slate-200/80 dark:border-slate-700/80">
+                                        {{-- Move to Cart 3D Button --}}
+                                        <button type="button"
+                                                @click.stop.prevent="$store.orderBuilder.addItem({ glass_finder_item_id: {{ $glass->id }}, name: 'Glass: {{ addslashes($glass->phone_model) }} ({{ $glass->glass_code }})', price: 0, sku: {{ json_encode($glass->glass_code) }} })"
+                                                class="sf-btn-3d-primary flex-1 py-1 sm:py-1.5 rounded-md text-xs font-black flex items-center justify-center gap-1 cursor-pointer select-none shadow-2xs"
+                                                title="{{ __('messages.favorites_move_to_cart') }}">
                                             <span class="text-xs">🛒</span>
                                             <span>+ Cart</span>
-                                            <span x-show="$store.orderBuilder && $store.orderBuilder.getGlassItemQty({{ $favorite->glassItem->id }}) > 0" class="px-1.5 py-0.2 rounded-full bg-white text-orange-600 font-black text-[10px]" x-text="$store.orderBuilder.getGlassItemQty({{ $favorite->glassItem->id }})"></span>
+                                            <span x-show="$store.orderBuilder && $store.orderBuilder.getGlassItemQty({{ $glass->id }}) > 0"
+                                                  class="px-1.5 py-0.2 rounded-full bg-white text-orange-600 font-black text-[10px]"
+                                                  x-text="$store.orderBuilder.getGlassItemQty({{ $glass->id }})"></span>
                                         </button>
-                                        <a href="{{ url('/glass-finder?phone_model=' . urlencode($favorite->glassItem->phone_model)) }}" class="px-2.5 py-1.5 bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-xl text-xs font-bold transition">
-                                            Finder &rarr;
+
+                                        {{-- Finder Link 3D Button --}}
+                                        <a href="{{ url('/glass-finder?phone_model=' . urlencode($glass->phone_model)) }}"
+                                           class="sf-btn-3d px-2 py-1 sm:py-1.5 rounded-md text-xs font-bold"
+                                           title="{{ __('messages.favorites_finder_link') }}">
+                                            🔍
                                         </a>
                                     </div>
                                 </div>
                             @endif
                         @endforeach
                     </div>
+
+                    {{-- Pagination --}}
+                    @if ($favorites->hasPages())
+                        <div class="pt-2">
+                            {{ $favorites->links() }}
+                        </div>
+                    @endif
                 </div>
             @endif
         @endauth
 
-        {{-- Empty State --}}
-        <div x-show="!$store.favoritesStore || $store.favoritesStore.items.length === 0" class="text-center py-12 px-4 space-y-3">
-            <div class="w-16 h-16 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center text-2xl mx-auto shadow-inner">
-                💔
-            </div>
-            <h3 class="font-black text-base text-slate-800 dark:text-slate-200">မည်သည့် ပစ္စည်းမျှ သိမ်းဆည်းထားခြင်း မရှိသေးပါ</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 font-myanmar max-w-md mx-auto leading-relaxed">
-                ဆိုင်သုံး ပစ္စည်းများ သို့မဟုတ် Glass Finder မှ အသည်းပုံ (❤️) ကို နှိပ်၍ မိမိနှစ်သက်သော ပစ္စည်းများကို အလွယ်တကူ သိမ်းဆည်းထားနိုင်ပါသည်
-            </p>
-            <div class="flex items-center justify-center gap-2 pt-2 flex-wrap">
-                <a href="{{ $productsUrl }}"
-                   style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;"
-                   class="px-5 py-2.5 rounded-xl text-white font-black text-xs shadow-md shadow-orange-500/20 hover:brightness-110 active:scale-95 transition cursor-pointer border-0">
-                    🛍️ ပစ္စည်းများ ကြည့်ရှုမည် &rarr;
-                </a>
-                <a href="{{ $glassFinderUrl }}"
-                   class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                    🔍 Glass Finder ရှာဖွေမည်
-                </a>
-            </div>
-        </div>
+        {{-- 4. LocalStorage / Client Favorites Section --}}
+        <div x-show="$store.favoritesStore && $store.favoritesStore.items.length > 0" class="space-y-2 pt-2">
+            @auth
+                @if ($hasCloudFavorites)
+                    <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3">
+                        <span class="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                            <span>📱</span>
+                            <span>Browser Local Favorites</span>
+                        </span>
+                        <span class="text-[10px] font-mono text-slate-400"
+                              x-text="$store.favoritesStore.items.length + ' items'"></span>
+                    </div>
+                @endif
+            @endauth
 
-        {{-- Favorites Item Cards (Client / LocalStorage & Merged) --}}
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-            <template x-for="item in ($store.favoritesStore ? $store.favoritesStore.items : [])" :key="item.id">
-                <div class="bg-slate-50/60 dark:bg-slate-800/50 rounded-2xl border border-slate-200/90 dark:border-slate-700/80 p-3 sm:p-3.5 flex flex-col gap-2.5 overflow-hidden shadow-2xs hover:shadow-md transition" x-data="{ h: brandHue(item.brand) }">
-                    {{-- Full-bleed image tile --}}
-                    <div class="relative -mx-3 -mt-3 sm:-mx-3.5 sm:-mt-3.5 mb-1 aspect-square overflow-hidden bg-white dark:bg-slate-800/80 rounded-t-2xl flex items-center justify-center">
-                        <img x-show="item.image_path"
-                             :src="item.image_path ? '{{ asset('storage') }}/' + item.image_path : null"
-                             :alt="item.name"
-                             loading="lazy"
-                             decoding="async"
-                             class="w-full h-full object-contain p-2"
-                             data-img-fallback="fav">
-                        <div x-show="!item.image_path" data-fav-ph
-                             class="absolute inset-0 flex items-center justify-center cloud-hue-bg"
-                             :style="'--cloud-hue: ' + h">
-                            <div class="p-3.5 rounded-full bg-white/70 dark:bg-slate-900/50 backdrop-blur-md shadow-sm ring-1 ring-white/50">
-                                <span class="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white" x-text="(item.brand || 'G').charAt(0).toUpperCase()"></span>
+            {{-- Compact Client Favorites Grid --}}
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2.5">
+                <template x-for="item in ($store.favoritesStore ? $store.favoritesStore.items : [])" :key="item.id">
+                    <div class="bg-slate-50/70 dark:bg-slate-800/60 rounded-lg sm:rounded-xl border border-slate-200/90 dark:border-slate-700/80 p-2 sm:p-2.5 flex flex-col gap-1.5 overflow-hidden shadow-2xs hover:shadow-xs transition relative"
+                         x-data="{ h: brandHue(item.brand) }">
+                        
+                        {{-- Image / Fallback Container --}}
+                        <div class="relative -mx-2 -mt-2 sm:-mx-2.5 sm:-mt-2.5 aspect-square overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-t-lg sm:rounded-t-xl flex items-center justify-center">
+                            {{-- Product Image if available --}}
+                            <template x-if="item.image_path">
+                                <img :src="'/storage/' + item.image_path"
+                                     :alt="item.name"
+                                     loading="lazy"
+                                     decoding="async"
+                                     class="w-full h-full object-cover pointer-events-none" />
+                            </template>
+
+                            {{-- Brand Fallback Tile if no image --}}
+                            <template x-if="!item.image_path">
+                                <div class="absolute inset-0 flex items-center justify-center cloud-hue-bg"
+                                     :style="'--cloud-hue: ' + h + '; background: hsl(' + h + ', 65%, 94%);'">
+                                    <div class="p-2 sm:p-2.5 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-xs shadow-2xs">
+                                        <span class="text-xl sm:text-2xl font-black text-slate-800 dark:text-white"
+                                              x-text="(item.brand || 'G').charAt(0).toUpperCase()"></span>
+                                    </div>
+                                </div>
+                            </template>
+
+                            {{-- Stock Availability Badge (Top-Left) --}}
+                            <div class="absolute top-1.5 left-1.5">
+                                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black bg-emerald-600/90 text-white backdrop-blur-xs shadow-2xs">
+                                    <span>●</span>
+                                    <span>{{ __('messages.in_stock') }}</span>
+                                </span>
                             </div>
+
+                            {{-- Remove 3D Button (Top-Right) --}}
+                            <div class="absolute top-1.5 right-1.5">
+                                <button type="button"
+                                        @click="$store.favoritesStore.removeItem(item.id)"
+                                        class="sf-btn-3d-danger !p-1 sm:!p-1.5 rounded-md text-xs shadow-2xs cursor-pointer select-none"
+                                        title="{{ __('messages.remove') }}">
+                                    <span>🗑️</span>
+                                </button>
+                            </div>
+
+                            {{-- Glass Code if available --}}
+                            <template x-if="item.glass_code">
+                                <span class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-slate-950/70 text-white text-[9px] font-mono font-bold backdrop-blur-xs shadow-2xs"
+                                      x-text="item.glass_code"></span>
+                            </template>
                         </div>
-                        <span x-show="item.glass_code" class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-slate-900/60 text-white text-[10px] font-mono font-bold backdrop-blur-sm shadow-xs" x-text="item.glass_code"></span>
-                    </div>
 
-                    <div class="flex items-start justify-between gap-1.5">
-                        <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800 uppercase truncate" x-text="item.brand || 'General'"></span>
-                        <button @click="$store.favoritesStore.removeItem(item.id)" type="button" class="w-7 h-7 flex items-center justify-center text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/60 rounded-lg font-bold transition cursor-pointer" title="Remove Favorite" aria-label="Remove Favorite">
-                            🗑️
-                        </button>
-                    </div>
+                        {{-- Item Info --}}
+                        <div class="min-w-0 space-y-0.5">
+                            <span class="inline-block px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 uppercase truncate max-w-full"
+                                  x-text="item.brand || 'General'"></span>
+                            <h4 class="font-black text-xs sm:text-sm text-slate-900 dark:text-white truncate"
+                                :title="item.name"
+                                x-text="item.name"></h4>
 
-                    <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white break-words leading-tight line-clamp-2" x-text="item.name"></h4>
+                            <template x-if="item.glass_code">
+                                <div class="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                                    Code: <span class="font-bold text-slate-800 dark:text-slate-200" x-text="item.glass_code"></span>
+                                </div>
+                            </template>
 
-                    <template x-if="item.glass_code">
-                        <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                            Code: <span class="font-bold text-slate-800 dark:text-slate-200" x-text="item.glass_code"></span>
+                            <template x-if="item.price && item.price > 0">
+                                <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-mono"
+                                     x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(item.price) : Number(item.price).toLocaleString()"></div>
+                            </template>
                         </div>
-                    </template>
 
-                    <template x-if="item.price && item.price > 0">
-                        <div class="text-xs sm:text-sm font-black text-[#f85606] dark:text-orange-400 font-sans" x-text="'Ks ' + item.price.toLocaleString()"></div>
-                    </template>
+                        {{-- Action Buttons Row --}}
+                        <div class="flex items-center gap-1 mt-auto pt-1.5 border-t border-slate-200/80 dark:border-slate-700/80">
+                            {{-- Move to Cart 3D Button --}}
+                            <button type="button"
+                                    @click.stop.prevent="item.glass_code ? $store.orderBuilder.addGlassCodeItem(item.glass_code, item.name, item.glass_finder_item_id) : $store.orderBuilder.addItem(item)"
+                                    class="sf-btn-3d-primary flex-1 py-1 sm:py-1.5 rounded-md text-xs font-black flex items-center justify-center gap-1 cursor-pointer select-none shadow-2xs"
+                                    title="{{ __('messages.favorites_move_to_cart') }}">
+                                <span class="text-xs">🛒</span>
+                                <span>+ Cart</span>
+                                <span x-show="$store.orderBuilder && ($store.orderBuilder.getItemQty(item.product_id || item.id) > 0 || $store.orderBuilder.getGlassItemQty(item.glass_finder_item_id) > 0)"
+                                      class="px-1.5 py-0.2 rounded-full bg-white text-orange-600 font-black text-[10px]"
+                                      x-text="$store.orderBuilder.getItemQty(item.product_id || item.id) || $store.orderBuilder.getGlassItemQty(item.glass_finder_item_id)"></span>
+                            </button>
 
-                    <div class="flex items-center gap-1.5 mt-auto pt-2 border-t border-slate-200/80 dark:border-slate-700/80">
-                        {{-- 🛒 + Cart Button --}}
-                        <button 
-                            @click.stop.prevent="item.glass_code ? $store.orderBuilder.addGlassCodeItem(item.glass_code, item.name, item.glass_finder_item_id) : $store.orderBuilder.addItem(item)"
-                            type="button"
-                            style="background: linear-gradient(135deg, #f85606 0%, #ea580c 100%) !important; color: #ffffff !important;"
-                            class="flex-1 min-h-[34px] px-2.5 py-1.5 text-white rounded-xl text-xs font-black shadow-xs hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-1 cursor-pointer select-none border-0"
-                            title="အော်ဒါ စာရင်းသို့ ထည့်မည်"
-                        >
-                            <span class="text-xs">🛒</span>
-                            <span>+ Cart</span>
-                            <span x-show="$store.orderBuilder && ($store.orderBuilder.getItemQty(item.product_id || item.id) > 0 || $store.orderBuilder.getGlassItemQty(item.glass_finder_item_id) > 0)" class="px-1.5 py-0.2 rounded-full bg-white text-orange-600 font-black text-[10px]" x-text="$store.orderBuilder.getItemQty(item.product_id || item.id) || $store.orderBuilder.getGlassItemQty(item.glass_finder_item_id)"></span>
-                        </button>
-
-                        <a :href="item.url || '{{ url('/products') }}'" class="px-2.5 py-1.5 bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-xl text-xs font-bold transition">
-                            ကြည့်ရှု &rarr;
-                        </a>
+                            {{-- Details Link --}}
+                            <a :href="item.url || '{{ url('/products') }}'"
+                               class="sf-btn-3d px-2 py-1 sm:py-1.5 rounded-md text-xs font-bold"
+                               title="{{ __('messages.order_view_detail') }}">
+                                →
+                            </a>
+                        </div>
                     </div>
-                </div>
-            </template>
+                </template>
+            </div>
         </div>
+
+        {{-- 5. Empty State (When both Server & Client items are empty) --}}
+        @if (!$hasCloudFavorites)
+            <div x-show="!$store.favoritesStore || $store.favoritesStore.items.length === 0"
+                 class="text-center py-10 sm:py-12 px-3 space-y-3">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center text-3xl sm:text-4xl shadow-2xs border border-rose-200/80 dark:border-rose-900/60">
+                    💔
+                </div>
+                <div class="space-y-1">
+                    <h3 class="font-black text-sm sm:text-base text-slate-900 dark:text-white">
+                        {{ __('messages.favorites_empty_title') }}
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium max-w-sm mx-auto leading-relaxed">
+                        {{ __('messages.favorites_empty_subtitle') }}
+                    </p>
+                </div>
+                <div class="flex items-center justify-center gap-2 pt-2 flex-wrap">
+                    <a href="{{ $productsUrl }}"
+                       class="sf-btn-3d-primary !inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-black shadow-xs">
+                        <span>🛍️</span>
+                        <span>{{ __('messages.favorites_browse_more') }}</span>
+                        <span aria-hidden="true">→</span>
+                    </a>
+                    <a href="{{ $glassFinderUrl }}"
+                       class="sf-btn-3d !inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-bold">
+                        <span>🔍</span>
+                        <span>{{ __('messages.glass_finder') }}</span>
+                    </a>
+                </div>
+            </div>
+        @endif
     </div>
 
-    {{-- Trust Badges Row --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-        <div class="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-0.5">
-            <span class="text-base">🛡️</span>
-            <p class="font-bold text-slate-700 dark:text-slate-300 text-[11px]">100% Authentic</p>
+    {{-- 6. Storefront Trust Highlights Row --}}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 text-center text-xs pt-1">
+        <div class="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-0.5">
+            <span class="text-sm sm:text-base">🛡️</span>
+            <p class="font-bold text-slate-800 dark:text-slate-200 text-[11px]">100% Authentic</p>
         </div>
-        <div class="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-0.5">
-            <span class="text-base">💵</span>
-            <p class="font-bold text-slate-700 dark:text-slate-300 text-[11px]">Cash On Delivery</p>
+        <div class="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-0.5">
+            <span class="text-sm sm:text-base">💵</span>
+            <p class="font-bold text-slate-800 dark:text-slate-200 text-[11px]">Cash On Delivery</p>
         </div>
-        <div class="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-0.5">
-            <span class="text-base">🚚</span>
-            <p class="font-bold text-slate-700 dark:text-slate-300 text-[11px]">Fast Delivery</p>
+        <div class="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-0.5">
+            <span class="text-sm sm:text-base">🚚</span>
+            <p class="font-bold text-slate-800 dark:text-slate-200 text-[11px]">Fast Delivery</p>
         </div>
-        <div class="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-0.5">
-            <span class="text-base">⭐</span>
-            <p class="font-bold text-slate-700 dark:text-slate-300 text-[11px]">Service Guaranteed</p>
+        <div class="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-0.5">
+            <span class="text-sm sm:text-base">⭐</span>
+            <p class="font-bold text-slate-800 dark:text-slate-200 text-[11px]">Service Guaranteed</p>
         </div>
     </div>
 </div>

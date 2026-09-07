@@ -178,12 +178,18 @@
         var permission = await Notification.requestPermission();
         if (permission !== 'granted') {
             try { localStorage.setItem(LS_DENIED, '1'); } catch (e) {}
+            try { localStorage.removeItem(LS_ENABLED); } catch (e) {}
+            updateAccountToggle(false);
+            hideBell();
             alert('Notification permission ကို Allow မပေးထားပါသဖြင့် အသိပေးချက် ဖွင့်မရပါ။ Browser settings မှ Notification ဖွင့်ပေးပါ။');
             return false;
         }
 
         var subscription = await subscribeToPush();
-        if (!subscription) return false;
+        if (!subscription) {
+            updateAccountToggle(false);
+            return false;
+        }
 
         storeSubscription(subscription);
         try { localStorage.setItem(LS_ENABLED, '1'); } catch (e) {}
@@ -192,6 +198,7 @@
         await sendSubscriptionToServer(subscription, 'subscribe').catch(function () {});
 
         updateAccountToggle(true);
+        showBell();
         hideModal();
         showToast('အသိပေးချက်များကို အောင်မြင်စွာ ဖွင့်ပြီးပါပြီ!');
         return true;
@@ -203,8 +210,10 @@
         try { registration = await navigator.serviceWorker.ready; } catch (e) {}
 
         var subscription = null;
-        if (registration) {
-            subscription = await registration.pushManager.getSubscription();
+        if (registration && registration.pushManager) {
+            try {
+                subscription = await registration.pushManager.getSubscription();
+            } catch (e) {}
         }
 
         if (subscription) {
@@ -213,12 +222,14 @@
 
         clearStoredSubscription();
         try { localStorage.removeItem(LS_ENABLED); } catch (e) {}
+        try { localStorage.setItem(LS_DENIED, '1'); } catch (e) {}
 
         if (stored && stored.endpoint) {
             await sendSubscriptionToServer({ endpoint: stored.endpoint }, 'unsubscribe').catch(function () {});
         }
 
         updateAccountToggle(false);
+        hideBell();
         hideModal();
         showToast('အသိပေးချက်များကို ပိတ်လိုက်ပါပြီ။');
         return true;
@@ -228,12 +239,11 @@
 
     function showModal() {
         if (!modal) {
-            // Fallback direct prompt if modal element is not in DOM
             enableNotifications();
             return;
         }
 
-        var isAlreadyGranted = Notification.permission === 'granted';
+        var isAlreadyGranted = Notification.permission === 'granted' && !isDenied();
 
         if (modalStatusText) {
             modalStatusText.textContent = isAlreadyGranted
@@ -264,11 +274,15 @@
 
     function showBell() {
         if (!bell || isDenied()) return;
-        bell.classList.remove('hidden');
+        bell.classList.remove('!hidden', 'hidden');
+        bell.style.display = 'inline-flex';
     }
 
     function hideBell() {
-        if (bell) bell.classList.add('hidden');
+        if (bell) {
+            bell.classList.add('!hidden');
+            bell.style.display = 'none';
+        }
     }
 
     function setBadge(count) {
@@ -288,7 +302,7 @@
 
         var on = enabled !== undefined
             ? enabled
-            : (Notification.permission === 'granted' && !!getStoredSubscription()) || isEnabled();
+            : (!isDenied() && ((Notification.permission === 'granted' && !!getStoredSubscription()) || isEnabled()));
 
         toggle.checked = on;
         toggle.setAttribute('aria-checked', on ? 'true' : 'false');
@@ -296,19 +310,47 @@
         if (status) {
             var labels = window.__pushLabels || {};
             status.textContent = on
-                ? (labels.enabled || 'Notifications enabled')
-                : (labels.disabled || 'Notifications disabled');
+                ? (labels.enabled || 'အသိပေးချက်များ ဖွင့်ထားပါသည်')
+                : (labels.disabled || 'အသိပေးချက်များ ပိတ်ထားပါသည်');
+        }
+
+        // When notifications are off/disabled, hide the floating bell icon
+        if (!on) {
+            hideBell();
         }
     }
 
     function init() {
-        if (!isSupported()) {
+        if (!isSupported() || isDenied()) {
             hideBell();
-            return;
+        } else {
+            showBell();
         }
 
-        showBell();
         updateAccountToggle();
+
+        var toggle = document.getElementById('push-prefs-toggle');
+        if (toggle) {
+            toggle.addEventListener('change', async function () {
+                toggle.disabled = true;
+                try {
+                    if (toggle.checked) {
+                        var success = await enableNotifications();
+                        if (!success) {
+                            toggle.checked = false;
+                            updateAccountToggle(false);
+                        }
+                    } else {
+                        await disableNotifications();
+                    }
+                } catch (err) {
+                    console.error('Push notification toggle error:', err);
+                    updateAccountToggle(false);
+                } finally {
+                    toggle.disabled = false;
+                }
+            });
+        }
 
         if (bell) {
             bell.addEventListener('click', function (e) {
@@ -326,7 +368,7 @@
         }
 
         // Re-sync on reload if granted
-        if (getStoredSubscription() && Notification.permission === 'granted') {
+        if (getStoredSubscription() && Notification.permission === 'granted' && !isDenied()) {
             sendSubscriptionToServer(getStoredSubscription(), 'subscribe').catch(function () {});
         }
     }

@@ -155,10 +155,12 @@ class HomeBannerController extends Controller
         }
 
         $validated = $request->validate([
-            'title'    => ['required', 'string', 'max:255'],
+            'title'       => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:500'],
+            'page'        => ['nullable', 'string', 'in:home,glass_finder'],
+            'sort_order'  => ['nullable', 'integer', 'min:0'],
             // Accept both full URLs (https://...) and in-store relative links (/products?...).
-            'link_url' => ['nullable', 'string', 'max:255', function ($attribute, $value, $fail) {
+            'link_url'    => ['nullable', 'string', 'max:255', function ($attribute, $value, $fail) {
                 if ($value === null || $value === '') {
                     return;
                 }
@@ -170,13 +172,16 @@ class HomeBannerController extends Controller
                     $fail('The link URL must be a valid full URL or a path starting with "/".');
                 }
             }],
-            'image'    => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
+            'image'       => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
         ]);
 
         $data = [
-            'title'    => $validated['title'],
+            'title'       => $validated['title'],
             'description' => $validated['description'] ?? null,
-            'link_url' => $validated['link_url'] ?? null,
+            'link_url'    => $validated['link_url'] ?? null,
+            'page'        => $validated['page'] ?? $banner->page,
+            'sort_order'  => $request->filled('sort_order') ? (int) $request->input('sort_order') : $banner->sort_order,
+            'is_active'   => $request->boolean('is_active', true),
         ];
 
         // Uploading a new image replaces the current one.

@@ -23,6 +23,17 @@ class BlogController extends Controller
             $query->where('category', $request->category);
         }
 
+        // Search query filter (?search=keyword)
+        $search = null;
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('excerpt', 'like', "%{$search}%")
+                    ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+
         $posts = $query->latest('published_at')->paginate(9)->withQueryString();
 
         // All categories used by this store — for the filter chips.
@@ -33,7 +44,7 @@ class BlogController extends Controller
             ->orderBy('category')
             ->pluck('category');
 
-        return view('storefront.blog.index', compact('posts', 'store', 'categories'));
+        return view('storefront.blog.index', compact('posts', 'store', 'categories', 'search'));
     }
 
     public function show(Request $request, StoreContext $context, string $slug)

@@ -3,10 +3,15 @@
 @section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')
 
 @section('content')
+<script src="{{ asset('vendor/html2pdf/html2pdf.bundle.min.js') }}"></script>
 <style>
     @media print {
         header, footer, .no-print, nav, .sf-sticky-controls, #offline-banner {
             display: none !important;
+        }
+        @page {
+            size: A5 portrait;
+            margin: 8mm;
         }
         body {
             background: #fff !important;
@@ -52,6 +57,7 @@
 <div class="print-container max-w-5xl mx-auto space-y-2 sm:space-y-3 pb-16 select-none font-sans"
      x-data="{
         copied: false,
+        showSlipModal: false,
         copyLink() {
             navigator.clipboard.writeText(window.location.href);
             this.copied = true;
@@ -68,8 +74,8 @@
         </a>
 
         <div class="flex items-center gap-1.5">
-            <button type="button" onclick="window.print()"
-                    class="sf-btn-3d active !flex-row px-2.5 py-1 text-xs font-bold leading-none inline-flex items-center gap-1">
+            <button type="button" @click="$dispatch('open-service-slip-modal')"
+                    class="sf-btn-3d active !flex-row px-2.5 py-1 text-xs font-bold leading-none inline-flex items-center gap-1 cursor-pointer">
                 <span>🖨️</span>
                 <span class="hidden sm:inline">{{ __('messages.track_service_print_slip') }}</span>
             </button>
@@ -487,7 +493,7 @@
                         <a href="tel:{{ $setting?->phone ?? $store->phone }}"
                            class="sf-btn-3d-success w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-black rounded-md">
                             <span>📞</span>
-                            <span>{{ __('messages.track_service_call_now') }} ({{ $setting?->phone ?? $store->phone }})</span>
+                            <span>{{ __('messages.track_service_call_now') }}</span>
                         </a>
                     @endif
                 </div>
@@ -509,4 +515,231 @@
     </div>
 
 </div>
+
+{{-- Service Job Slip Preview Modal (Mounted via @push('modals') at root <body> level above all headers/navbars) --}}
+@push('modals')
+<div x-data="{
+        openModal: false,
+        copiedModal: false,
+        downloadingPdf: false,
+        copyModalLink() {
+            navigator.clipboard.writeText(window.location.href);
+            this.copiedModal = true;
+            setTimeout(() => this.copiedModal = false, 2500);
+        },
+        downloadPdf() {
+            this.downloadingPdf = true;
+            const pdfUrl = @js(route('storefront.service.track.print', ['store_slug' => $activeStoreSlug, 'token' => $job->tracking_token, 'paper_size' => 'a5', 'download' => 1]));
+            window.open(pdfUrl, '_blank');
+            setTimeout(() => {
+                this.downloadingPdf = false;
+            }, 1800);
+        },
+        openPrintPage() {
+            const printUrl = @js(route('storefront.service.track.print', ['store_slug' => $activeStoreSlug, 'token' => $job->tracking_token, 'paper_size' => 'a5', 'action' => 'print']));
+            window.open(printUrl, '_blank');
+        }
+     }"
+     @open-service-slip-modal.window="openModal = true"
+     @keydown.escape.window="openModal = false"
+     x-cloak>
+
+    <div x-show="openModal"
+         class="no-print fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto bg-slate-950/80 backdrop-blur-xs"
+         style="display: none;"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+
+        {{-- A5 Aspect Ratio Paper Container (148mm x 210mm ~ 1:1.414, max-w-[480px] ~ A5 sheet size) --}}
+        <div class="relative w-full max-w-[480px] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-lg sm:rounded-xl shadow-2xl overflow-hidden my-auto flex flex-col max-h-[88vh]"
+             style="width: 100%; max-width: 480px;"
+             @click.outside="openModal = false">
+
+            {{-- Modal Header --}}
+            <div class="flex items-center justify-between px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm">📄</span>
+                    <h3 class="font-black text-xs sm:text-sm text-slate-900 dark:text-white font-myanmar flex items-center gap-1.5">
+                        <span>{{ __('messages.track_service_slip_title') }}</span>
+                        <span class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">A5 Sheet</span>
+                    </h3>
+                </div>
+                <button type="button" @click="openModal = false"
+                        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-md text-base leading-none cursor-pointer">
+                    ✕
+                </button>
+            </div>
+
+            {{-- Printable Slip Paper Container (A5 Sheet proportion & white paper background) --}}
+            <div id="printableSlipPaper" class="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3 font-sans bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+                
+                {{-- Store Info Header --}}
+                <div class="text-center pb-2.5 border-b border-dashed border-slate-300 dark:border-slate-700 space-y-0.5">
+                    <h2 class="font-black text-sm sm:text-base text-slate-900 dark:text-white font-outfit uppercase tracking-wider">
+                        {{ $store->name }}
+                    </h2>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 font-myanmar">
+                        {{ $setting?->address ?? $store->address ?? 'နည်းပညာနှင့် ဖုန်းဝန်ဆောင်မှုစင်တာ' }}
+                    </p>
+                    @if ($setting?->phone ?? $store->phone)
+                        <p class="text-[11px] text-slate-600 dark:text-slate-300 font-mono font-bold">
+                            📞 {{ $setting?->phone ?? $store->phone }}
+                        </p>
+                    @endif
+                    <div class="pt-1 flex items-center justify-center gap-1.5 flex-wrap">
+                        <span class="inline-block px-2 py-0.5 text-xs font-mono font-black bg-teal-50 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 rounded border border-teal-200 dark:border-teal-800">
+                            {{ $job->voucher_no ?? $job->job_number }}
+                        </span>
+                        @if ($job->voucher_no)
+                            <span class="text-[10px] text-slate-400 font-mono">({{ $job->job_number }})</span>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Customer & Date Info --}}
+                <div class="grid grid-cols-2 gap-2 text-xs py-1 border-b border-dashed border-slate-200 dark:border-slate-700/80">
+                    <div>
+                        <span class="text-[10px] text-slate-400 block font-myanmar">{{ __('messages.customer_name') }}:</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">{{ $job->contact_name ?: ($job->customer?->name ?? '—') }}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] text-slate-400 block font-myanmar">{{ __('messages.phone_number') }}:</span>
+                        <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $job->contact_phone ?: '—' }}</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 block font-myanmar">ရက်စွဲ (Date):</span>
+                        <span class="font-mono text-slate-700 dark:text-slate-300">{{ $job->created_at->format('d/m/Y h:i A') }}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] text-slate-400 block font-myanmar">လက်ရှိအခြေအနေ:</span>
+                        <span class="font-bold text-teal-700 dark:text-teal-300 font-myanmar">{{ __('messages.repair_status_' . $job->status) }}</span>
+                    </div>
+                </div>
+
+                {{-- Device Specs --}}
+                <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-md border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">စက်အမျိုးအစား (Device):</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200 text-right">{{ $deviceLabel }}</span>
+                    </div>
+                    @if ($job->imei_serial)
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-400">IMEI / Serial:</span>
+                            <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $job->imei_serial }}</span>
+                        </div>
+                    @endif
+                    <div class="flex justify-between items-start pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
+                        <span class="text-slate-400 font-myanmar shrink-0">{{ __('messages.track_service_problem_label') }}:</span>
+                        <span class="font-bold text-rose-600 dark:text-rose-400 text-right pl-2">{{ $job->reported_problem ?: '—' }}</span>
+                    </div>
+                    @if ($job->intake_condition)
+                        <div class="flex justify-between items-start text-[11px]">
+                            <span class="text-slate-400 shrink-0">စက်အခြေအနေ:</span>
+                            <span class="text-slate-600 dark:text-slate-300 text-right pl-2">{{ $job->intake_condition }}</span>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Parts & Services Table (If any) --}}
+                @if ($job->items->isNotEmpty())
+                    <div class="space-y-1">
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block font-myanmar">
+                            {{ __('messages.track_service_parts_list') }}
+                        </span>
+                        <table class="w-full text-xs">
+                            <thead class="text-slate-400 text-[10px] border-b border-slate-200 dark:border-slate-700">
+                                <tr>
+                                    <th class="text-left pb-1">ပစ္စည်း / ဝန်ဆောင်မှု</th>
+                                    <th class="text-center pb-1">အရေအတွက်</th>
+                                    <th class="text-right pb-1">ကျသင့်ငွေ</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-[11px]">
+                                @foreach ($job->items as $item)
+                                    <tr>
+                                        <td class="py-1 font-medium text-slate-800 dark:text-slate-200">{{ $item->name }}</td>
+                                        <td class="py-1 text-center font-mono">{{ format_quantity($item->quantity, $store) }}</td>
+                                        <td class="py-1 text-right font-mono font-bold">{{ format_currency($item->subtotal, $store) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+
+                {{-- Financial Summary Box --}}
+                <div class="pt-2 border-t border-dashed border-slate-300 dark:border-slate-700 space-y-1 text-xs">
+                    @if ($job->final_charge !== null)
+                        <div class="flex justify-between text-slate-600 dark:text-slate-300">
+                            <span>{{ __('messages.track_service_final_charge') }}:</span>
+                            <span class="font-mono font-bold">{{ format_currency($job->final_charge, $store) }}</span>
+                        </div>
+                    @elseif ($job->estimated_charge > 0)
+                        <div class="flex justify-between text-slate-600 dark:text-slate-300">
+                            <span>{{ __('messages.track_service_est_charge') }}:</span>
+                            <span class="font-mono font-bold">{{ format_currency($job->estimated_charge, $store) }}</span>
+                        </div>
+                    @endif
+
+                    <div class="flex justify-between text-slate-600 dark:text-slate-300">
+                        <span>{{ __('messages.track_service_paid') }}:</span>
+                        <span class="font-mono font-bold text-emerald-600">{{ format_currency($job->paidAmount(), $store) }}</span>
+                    </div>
+
+                    <div class="flex justify-between text-sm font-black pt-1 border-t border-slate-200 dark:border-slate-700 text-teal-800 dark:text-teal-300">
+                        <span>{{ __('messages.track_service_balance') }}:</span>
+                        <span class="font-mono">{{ format_currency($job->outstanding(), $store) }}</span>
+                    </div>
+                </div>
+
+                {{-- Slip Footnote --}}
+                <div class="pt-2 text-center text-[10px] text-slate-400 space-y-0.5 border-t border-dashed border-slate-200 dark:border-slate-700">
+                    <p class="font-myanmar">စက်ပြန်လည်ထုတ်ယူသည့်အခါ ဤပြေစာ သို့မဟုတ် Job နံပါတ်ကို ပြသပေးပါရန်။</p>
+                    <p class="font-mono">Thank you for choosing {{ $store->name }}!</p>
+                </div>
+
+            </div>
+
+            {{-- Modal Actions Footer --}}
+            <div class="px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2 shrink-0">
+                <button type="button" @click="openModal = false"
+                        class="sf-btn-3d active !flex-row px-3 py-1.5 text-xs font-bold leading-none cursor-pointer">
+                    <span>{{ __('messages.close') }}</span>
+                </button>
+
+                <div class="flex items-center gap-1.5">
+                    <button type="button" @click="copyModalLink()"
+                            class="sf-btn-3d active !flex-row px-2.5 sm:px-3 py-1.5 text-xs font-bold leading-none inline-flex items-center gap-1 cursor-pointer">
+                        <span x-show="!copiedModal">🔗 {{ __('messages.track_service_copy_link') }}</span>
+                        <span x-show="copiedModal" x-cloak class="text-emerald-600 dark:text-emerald-400 font-black">✓ {{ __('messages.track_service_link_copied') }}</span>
+                    </button>
+
+                    {{-- Download PDF Button (Directly saves PDF to Computer / Phone) --}}
+                    <button type="button" @click="downloadPdf()" :disabled="downloadingPdf"
+                            class="sf-btn-3d-success !flex-row px-3 sm:px-3.5 py-1.5 text-xs font-black leading-none inline-flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-60">
+                        <span x-show="!downloadingPdf">📄</span>
+                        <span x-show="downloadingPdf" x-cloak class="inline-block animate-spin">⏳</span>
+                        <span x-show="!downloadingPdf">{{ __('messages.track_service_save_pdf') }}</span>
+                        <span x-show="downloadingPdf" x-cloak>{{ __('messages.track_service_generating_pdf') }}</span>
+                    </button>
+
+                    {{-- Secondary Direct Print Button --}}
+                    <button type="button" @click="openPrintPage()" title="{{ __('messages.print') }}"
+                            class="sf-btn-3d active !flex-row p-1.5 text-xs font-bold leading-none inline-flex items-center cursor-pointer text-slate-600 dark:text-slate-300">
+                        <span>🖨️</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+@endpush
 @endsection
+

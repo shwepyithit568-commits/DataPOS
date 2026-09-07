@@ -1400,7 +1400,13 @@
 
     {{-- Web Push frontend — loads after parsing (defer) so it never blocks
          first paint; reads the VAPID key + CSRF token from meta tags. --}}
-    <script src="/js/push-notification.js" defer></script>
+    <script>
+        window.__pushLabels = {
+            enabled: @json(__('messages.push_prefs_enabled')),
+            disabled: @json(__('messages.push_prefs_disabled'))
+        };
+    </script>
+    <script src="/js/push-notification.js?v={{ filemtime(public_path('js/push-notification.js')) }}" defer></script>
 
     {{-- Viber deep-link fallback — shows the number + copy button when the
          viber:// scheme cannot open (embedded browsers, Viber not installed). --}}
@@ -1446,7 +1452,8 @@
     <button
         type="button"
         id="push-notification-bell"
-        class="hidden fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] md:bottom-24 left-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-2xl shadow-violet-500/40 ring-1 ring-white/20 transition hover:scale-110 active:scale-95 push-bell-bounce"
+        style="display: none;"
+        class="!hidden fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] md:bottom-24 left-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-2xl shadow-violet-500/40 ring-1 ring-white/20 transition hover:scale-110 active:scale-95 push-bell-bounce"
         aria-label="{{ __('messages.push_enable_title') }}"
         title="{{ __('messages.push_enable_title') }}"
     >
@@ -1601,5 +1608,6 @@
             });
         })();
     </script>
+    @stack('modals')
 </body>
 </html>

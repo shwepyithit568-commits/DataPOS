@@ -363,7 +363,7 @@
                                        style="background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; color: #ffffff !important; border-bottom: 3px solid #047857 !important;"
                                        class="sf-btn-3d w-full min-h-[46px] !flex-row items-center justify-center gap-2.5 px-4 py-3 rounded-md text-xs sm:text-sm font-black text-white shadow-md shadow-emerald-500/25 cursor-pointer select-none">
                                         <span class="text-base">📞</span>
-                                        <span>ဖုန်းတိုက်ရိုက်ခေါ်မည် ({{ $phone }})</span>
+                                        <span>ဖုန်းတိုက်ရိုက်ခေါ်မည်</span>
                                     </a>
                                 @endif
                             </div>

@@ -55,6 +55,22 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            {{-- Page Location --}}
+            <div class="sm:col-span-2">
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    🏷️ {{ __('messages.banners_page_label') }} *
+                </label>
+                <select name="page" required
+                        class="w-full h-8 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-violet-500 focus:bg-white dark:focus:bg-slate-900 transition cursor-pointer">
+                    <option value="home" {{ old('page', $banner->page) === 'home' ? 'selected' : '' }}>
+                        🏠 {{ __('messages.banners_page_home') }}
+                    </option>
+                    <option value="glass_finder" {{ old('page', $banner->page) === 'glass_finder' ? 'selected' : '' }}>
+                        📱 {{ __('messages.banners_page_glass_finder') }}
+                    </option>
+                </select>
+            </div>
+
             {{-- Title --}}
             <div class="sm:col-span-2">
                 <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.banners_title_label') }} *</label>
@@ -70,11 +86,16 @@
                 <p class="mt-0.5 text-[10px] text-slate-400">{{ __('messages.banners_max_chars') }}</p>
             </div>
 
-            {{-- Link URL --}}
-            <div class="sm:col-span-2">
+            {{-- Link URL & Sort Order --}}
+            <div>
                 <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.banners_link_label') }}</label>
                 <input type="text" name="link_url" value="{{ old('link_url', $banner->link_url) }}" placeholder="https://example.com သို့မဟုတ် /products?..."
                        class="w-full h-8 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 text-xs font-mono bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-violet-500 focus:bg-white dark:focus:bg-slate-900 transition">
+            </div>
+            <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.banners_sort_label') }}</label>
+                <input type="number" name="sort_order" value="{{ old('sort_order', $banner->sort_order) }}" min="0"
+                       class="w-full h-8 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 text-xs font-mono font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-violet-500 focus:bg-white dark:focus:bg-slate-900 transition">
             </div>
 
             {{-- Replace Image --}}
@@ -83,6 +104,15 @@
                 <input type="file" name="image" accept="image/png,image/jpeg,image/jpg,image/webp"
                        class="block w-full text-xs text-slate-500 dark:text-slate-400 file:mr-2.5 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-violet-50 dark:file:bg-slate-800 file:text-violet-700 dark:file:text-violet-300 hover:file:bg-violet-100 cursor-pointer">
                 <p class="mt-0.5 text-[10px] text-slate-400">{{ __('messages.banners_recommended_size') }} (Max: {{ $imageMaxMb }}MB)</p>
+            </div>
+
+            {{-- Active Checkbox --}}
+            <div class="sm:col-span-2 pt-1">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="hidden" name="is_active" value="0" />
+                    <input type="checkbox" name="is_active" value="1" {{ old('is_active', $banner->is_active ? '1' : '0') == '1' ? 'checked' : '' }} class="w-4 h-4 rounded text-violet-600 focus:ring-violet-500">
+                    <span class="font-bold text-slate-700 dark:text-slate-300 text-xs">{{ __('messages.banners_status_active') }}</span>
+                </label>
             </div>
         </div>
 

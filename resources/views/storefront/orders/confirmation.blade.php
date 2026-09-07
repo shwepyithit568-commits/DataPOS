@@ -268,7 +268,7 @@
             <a href="tel:{{ $store->phone }}"
                class="sf-btn-3d-success flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-black rounded-md w-full {{ (!$viberUrl && !$telegramUrl) ? 'sm:col-span-2' : '' }}">
                 <span>📞</span>
-                <span>{{ __('messages.order_call_shop') }} ({{ $store->phone }})</span>
+                <span>{{ __('messages.order_call_shop') }}</span>
             </a>
             @endif
 

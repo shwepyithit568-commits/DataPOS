@@ -461,55 +461,129 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Pure CSS 3D Tactile Search Button:** အစိမ်းရောင် `.sf-btn-3d-success` Tactile Button ဖြင့် ရှာဖွေမှုအား ထင်ရှားစွာ ခလုတ်နှိပ်ခံစားမှု ပေးစွမ်းခြင်း။
     - **3-Feature Trust Grid Cards:** Live Status Updates၊ Genuine Parts Assurance နှင့် Technician Support စသည့် အားသာချက်ကတ်များအား 3D Bevel Card စတိုင်လ်ဖြင့် ပြသခြင်း။
     - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) သုံးဘာသာစလုံးအတွက် Translation Keys များ ပြည့်စုံစွာ ဖြည့်သွင်းပြီးစီး။
-- [x] **Service Tracking Status Stepper (ပြင်ဆင်မှု အခြေအနေ အသေးစိတ်):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/service_tracking/show.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/service_tracking/show.blade.php)
-  - **လုပ်ဆောင်ချက်များ:** Production-ready အဆင့်မီ 5-Stage Animated Progress Stepper နှင့် Service Job Dashboard ပြီးစီး။
-    - **Top Actions Toolbar:** ရှာဖွေမှု စာမျက်နှာသို့ ပြန်သွားရန် ခလုတ်၊ စာရွက်ဖြင့် ပြေစာထုတ်ယူရန် Print Slip (`window.print`) ခလုတ်၊ နှင့် ခြေရာခံ Tracking Link အား Clipboard သို့ 1-Tap ကူးယူနိုင်သော `.sf-btn-3d active` Copy Link Button များ တပ်ဆင်ခြင်း။
-    - **5-Stage Localized Visual Progress Stepper:** `လက်ခံရရှိ` (Received) ➔ `စစ်ဆေးဆဲ` (Diagnosing) ➔ `ပြင်ဆင်နေဆဲ` (In Repair - with Active Stage Pulse Animation) ➔ `ပြင်ဆင်ပြီးစီး` (Ready) ➔ `ပေးအပ်ပြီး` (Delivered) စသည့် စက်ပြင်လုပ်ငန်းစဉ် ၅ ဆင့်အား အစိမ်းရောင်၊ မိုးပြာရောင်နှင့် မီးခိုးရောင် စနစ်ကျသော အဆင့်ဆင့် Stepper ဖြင့် ဖော်ပြခြင်း။
+- [x] **Service Tracking Status Stepper & A5 Slip Download (ပြင်ဆင်မှု အခြေအနေ အသေးစိတ်နှင့် ပြေစာ PDF ဖိုင်သိမ်းဆည်းမှု):**
+  - **ဖိုင်လမ်းကြောင်းများ:**
+    - [`resources/views/storefront/service_tracking/show.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/service_tracking/show.blade.php)
+    - [`resources/views/storefront/service_tracking/print.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/service_tracking/print.blade.php)
+  - **လုပ်ဆောင်ချက်များ:** Production-ready အဆင့်မီ 5-Stage Animated Progress Stepper၊ A5 Preview Modal နှင့် Computer/Phone ထဲသို့ တိုက်ရိုက် PDF ဖိုင်သိမ်းဆည်းနိုင်သော စနစ် ပြီးစီး။
+    - **Top Actions Toolbar:** ရှာဖွေမှု စာမျက်နှာသို့ ပြန်သွားရန် ခလုတ်၊ စာရွက်ဖြင့် ပြေစာထုတ်ယူရန် Print Slip (`window.print`) ခလုတ်၊ ခြေရာခံ Tracking Link အား Clipboard သို့ 1-Tap ကူးယူနိုင်သော `.sf-btn-3d active` Copy Link Button နှင့် A5 Slip Preview Modal ဖွင့်ရန် `📄 ပြေစာ အစမ်းကြည့်/ထုတ်မည်` ခလုတ်များ တပ်ဆင်ခြင်း။
+    - **A5 Sheet Proportional Service Slip Preview Modal:** ဖောက်သည်များ ပြေစာကို အွန်လိုင်းမှ ကြည့်ရှုစစ်ဆေးနိုင်ရန် Root `@stack('modals')` တွင် `z-[100]` ဖြင့် Sticky Header များ၏ အပေါ်၌ အစစ်အမှန် A5 စာရွက်အချိုးအစား (`max-w-[480px]`, `1:1.414` ratio) ဖြင့် ပေါ်ထွက်လာသော သပ်ရပ်ကြည်လင်သည့် Dialog Box တပ်ဆင်ခြင်း။
+    - **Direct PDF File Download Button (`📄 PDF ဖိုင်သိမ်းမည်`):** မူလ ရိုးရိုးပုံနှိပ်ရန် (Print) ခလုတ်နေရာတွင် ကွန်ပြူတာ သို့မဟုတ် မိုဘိုင်းဖုန်းထဲသို့ PDF ပြေစာဖိုင်ကို ချက်ချင်း တိုက်ရိုက်ဒေါင်းလုဒ်ဆွဲ သိမ်းဆည်းနိုင်သော အစိမ်းရောင် 3D ခလုတ် (`.sf-btn-3d-success`) အဖြစ် အဆင့်မြှင့်တင်ခြင်း။
+    - **Dedicated Printable & Downloadable Service Slip Route (`/track/service/{token}/print`):** Tailwind CSS v4 ၏ `oklch` color function parser limit များကြောင့် ပျက်စီးခြင်းမရှိစေဘဲ သီးသန့် Scoped CSS နှင့် `html2pdf.bundle.min.js` ပါဝင်သော Public Slip View Route အသစ် တည်ဆောက်ထားရှိခြင်း (58mm, 80mm, A5, A4 Paper Size Switcher, Instant PDF Generation, Direct Printer Hook, QR Code Scanner, Customer/Technician Signatures အပြည့်အစုံ ပါဝင်)။
+    - **5-Stage Localized Visual Progress Stepper:** `လက်ခံရရှိ` (Received) ➔ `စစ်ဆေးဆဲ` (Diagnosing) ➔ `ပြင်ဆင်နေဆဲ` (In Repair - with Active Stage Pulse Animation) ➔ `ပြင်ဆင်ပြီးစီး` (Ready) ➔ `ပေးအပ်ပြီး` (Delivered) စသည့် စက်ပြင်လုပ်ငန်းစဉ် ၅ ဆင့်အား အဆင့်ဆင့် Visual Stepper ဖြင့် ဖော်ပြခြင်း။
     - **Device & Diagnosis Information Card:** ပစ္စည်းအမျိုးအစား (Brand/Model/Serial/IMEI)၊ ဖောက်သည်ပြဿနာနှင့် ကျွမ်းကျင်ပညာရှင်၏ စစ်ဆေးချက်မှတ်စု (Technician Diagnosis) တို့အား စနစ်တကျ ရှင်းလင်းစွာ ခွဲခြမ်းဖော်ပြခြင်း။
     - **Parts & Services Line Items Table:** လဲလှယ်သော ပစ္စည်းများနှင့် ဝန်ဆောင်မှုစရိတ်များအား သန့်ရှင်းသော အရေအတွက် (`format_quantity()`) နှင့် Dynamic Currency (`format_currency()`, Zero "Ks") ဖြင့် ဇယားဖွဲ့ပြသခြင်း။
     - **Timeline History with Badges:** ပြင်ဆင်မှု အဆင့်ဆင့် ပြောင်းလဲခဲ့သော ရက်စွဲ၊ အချိန်နှင့် တာဝန်ခံမှတ်စုများအား အချိန်နှင့်တပြေးညီ Timeline စနစ်ဖြင့် ဖော်ပြခြင်း။
     - **Financial Summary & Soft Highlight:** စုစုပေါင်းကုန်ကျစရိတ်၊ ကြိုတင်ပေးသွင်းငွေ (Deposit) နှင့် ကျန်ငွေ (Outstanding Balance) တို့အား ပေါ်လွင်သော Soft Highlight ဖြင့် ရှင်းလင်းစွာ တွက်ချက်ပြသခြင်း။
     - **Official Brand Direct Contact Channels:** ကျွမ်းကျင်ပညာရှင် သို့မဟုတ် ဆိုင်သို့ အလွယ်တကူ ဆက်သွယ်နိုင်ရန် တရားဝင် Brand Colors များဖြစ်သော `.sf-btn-3d-viber`၊ `.sf-btn-3d-telegram` နှင့် `.sf-btn-3d-success` (ဖုန်းခေါ်ဆိုရန်) ခလုတ်များ စုံလင်စွာ တပ်ဆင်ခြင်း။
-    - **Print Slip Media Isolation (`@media print`):** ပုံနှိပ်ချိန်တွင် မလိုအပ်သော Action Buttons၊ Footer၊ Back links များကို အလိုအလျောက် ဖုံးကွယ်ပြီး တရားဝင် Service Invoice စာရွက် သက်သက်သာ ထွက်ရှိလာစေရန် စီမံထားခြင်း။
-    - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) သုံးဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
-- [ ] **Glass / Screen Protector Finder (မှန်မကွဲ အလွယ်ရှာစနစ်):**
+    - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) သုံးဘာသာစလုံးအတွက် Translation Keys များ (`track_service_save_pdf`, `track_service_generating_pdf` စသည်) အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
+- [x] **Glass / Screen Protector Finder (မှန်မကွဲ အလွယ်ရှာစနစ်):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/glass_finder/index.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/glass_finder/index.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Brand/Model Cascading Dropdown, Real-time Compatible Models Matching, Quick Buy 3D Button။
-- [ ] **How To Order Guide (စျေးဝယ်နည်း လမ်းညွှန်):**
+  - **လုပ်ဆောင်ချက်များ:** Production-ready အဆင့်မီ Brand/Model Cascading Dropdown, Real-time Compatible Models Matrix နှင့် Quick Buy 3D Button တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
+    - **Brand/Model Cascading Dropdown Toolbar:** ဖုန်း Brand ရွေးချယ်လိုက်သည်နှင့် သက်ဆိုင်ရာ Model များ ချက်ချင်း အလိုအလျောက် ရွေးချယ်နိုင်သော Dynamic Cascading Dropdown နှင့် အလွယ်တကူ စာရိုက်ရှာဖွေနိုင်သည့် Smart Search Input တပ်ဆင်ခြင်း။
+    - **Fast-Tap Horizontal Brand Chips:** လက်မတစ်ချက်နှိပ်ရုံဖြင့် Brand အလိုက် ကူးပြောင်းကြည့်ရှုနိုင်သော `.sf-btn-3d` Horizontal Touch Chips များ တပ်ဆင်ခြင်း။
+    - **3-Step Visual Infographic Guide:** အဆင့် ၁ (Brand ရွေးပါ) ➔ အဆင့် ၂ (Model ရွေးပါ) ➔ အဆင့် ၃ (မှန်ကုဒ်တွေ့ရှိမည်) အဆင့် ၃ ဆင့် လမ်းညွှန်ချက်ကတ်များ ထည့်သွင်းခြင်း။
+    - **Cross-Compatible Models Matrix:** Glass Code တစ်ခုချင်းစီအောက်တွင် တွဲဖက်အသုံးပြုနိုင်သည့် ဖုန်းမော်ဒယ်များအားಲ್ಲုံးကို Brand Tag နှင့် In-Stock Badge အပြည့်အစုံပါဝင်သော Chips များဖြင့် ပေါ်လွင်စွာ ခွဲခြမ်းဖော်ပြခြင်း။
+    - **Quick Buy 3D CTA (`sf-btn-3d-gold`):** "🛒 ခြင်းတောင်းထဲထည့်မည်" ခလုတ်အား ရွှေရောင် 3D Button ဖြင့် တပ်ဆင်ထားပြီး နှိပ်လိုက်သည်နှင့် Cart Qty Badge အား အချိန်နှင့်တပြေးညီ Counter တိုးမြှင့်ဖော်ပြပေးခြင်း။
+    - **Dual View Modes (List / Table Switcher):** မိုဘိုင်းနှင့် ကွန်ပျူတာ အသုံးပြုသူများ အကြိုက်တွေ့စေမည့် ကတ်စတိုင်လ် List View (`☰`) နှင့် အချက်အလက်များပြားစွာ ယှဉ်ကြည့်နိုင်သည့် Table View (`▦`) တပ်ဆင်ခြင်း။
+    - **Direct Shop Inquiries:** Viber (`.sf-btn-3d-viber`) နှင့် Telegram (`.sf-btn-3d-telegram`) တို့ဖြင့် သက်ဆိုင်ရာ Glass Code ကို pre-filled စာသားဖြင့် တိုက်ရိုက်မေးမြန်းနိုင်စေခြင်း။
+    - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) သုံးဘာသာစလုံးအတွက် Translation Keys များ ပြည့်စုံစွာ ဖြည့်သွင်းပြီးစီး။
+- [x] **How To Order Guide (စျေးဝယ်နည်း လမ်းညွှန်):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/how_to_order/index.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/how_to_order/index.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Visual Infographic Steps, Payment Transfer Instructions, Bus Gate Delivery FAQ, 3D Accordion Expanders။
-- [ ] **Wholesale Registration (လက်ကားဖောက်သည် လျှောက်ထားလွှာ):**
+  - **လုပ်ဆောင်ချက်များ:** Visual Infographic Steps, Payment Transfer Instructions, Bus Gate Delivery FAQ, 3D Accordion Expanders တို့ဖြင့် ပြည့်စုံစွာ အဆင့်မြှင့်တင်ပြီးစီး။
+    - **Visual Infographic Steps:** အဆင့် ၁ မှ ၅ အထိ လှပသော နံပါတ်စဉ် 3D Badge (`.sf-btn-3d active`) နှင့် အဆင့်လိုက် ညွှန်ပြချက်များဖြင့် ရှင်းလင်းစွာ ဖော်ပြခြင်း။
+    - **Payment Transfer Instructions Box:** KPay, WavePay, Mobile Banking ငွေလွှဲနည်း၊ Screenshot ရိုက်သိမ်းနည်း၊ Viber သို့ ပို့ဆောင်အတည်ပြုနည်း အဆင့် (၃) ဆင့် လမ်းညွှန်ချက်။
+    - **Bus Gate & Delivery Guide Box:** အောင်မင်္ဂလာ/ဒဂုံဧရာ/မန္တလေး အဝေးပြေး ကားဂိတ်ပို့ခ၊ တန်ဆာခ၊ ကားဂိတ်တင်ဖြတ်ပိုင်း (Voucher) Viber သို့ ပေးပို့မှု အချက်အလက်များ။
+    - **3D Accordion FAQ Expanders:** Alpine.js ဖြင့် ချောမွေ့စွာ ဖွင့်/ပိတ်နိုင်သော အမေး/အဖြေ (၅) ခု ပါဝင်သည့် 3D Animated Accordion စနစ် တပ်ဆင်ခြင်း။
+    - **Direct Shop Inquiries & Official Brand 3D Buttons:** Viber (`.sf-btn-3d-viber` ခရမ်းရောင်)၊ Telegram (`.sf-btn-3d-telegram` အပြာရောင်) နှင့် ဖုန်းခေါ်ဆိုရန် (`.sf-btn-3d-success` အစိမ်းရောင်) တရားဝင် Brand Colors များဖြင့် တပ်ဆင်ထားပြီး၊ ခလုတ်ပေါ်တွင် ဖုန်းနံပါတ်စာသား ရှည်လျားစွာ မပေါ်စေဘဲ ကလစ်နှိပ်မှ ဖုန်းခေါ် App ထဲသို့ နံပါတ် အလိုအလျောက် ရောက်ရှိစေမည့် စံနှုန်း တပ်ဆင်ခြင်း။
+    - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
+- [x] **Wholesale Registration (လက်ကားဖောက်သည် လျှောက်ထားလွှာ):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/wholesale/apply.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/wholesale/apply.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Clean Shop Verification Form, Business Card/License Upload, Submit 3D Button (`sf-btn-3d-primary`), Status Modal။
+  - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Clean Shop Verification Form, Wholesale Benefits Highlights, Live Application Status Box, 3D Submit Button တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
+    - **Wholesale Partner Program Hero Header:** 3D Eyebrow Badge (`💼 Wholesale Partner Program`) နှင့် ခေါင်းစဉ်/စာသား ရှင်းလင်းချက်များ။
+    - **Wholesale Benefits Highlights:** သီးသန့် လက်ကားစျေးနှုန်းများ၊ ဦးစားပေး ကားဂိတ်တင်ပို့မှု၊ သီးသန့် မန်နေဂျာနှင့် တိုက်ရိုက်ဆွေးနွေးမှု အကျိုးကျေးဇူး ၃ ရပ် ကတ်များ တပ်ဆင်ခြင်း။
+    - **Live Application Status Indicator:** Pending (ပယင်းရောင် Pulse Badge)၊ Approved (စိမ်းရောင် VIP Badge)၊ Rejected (အနီရောင် Badge နှင့် Admin Note) စသည်ဖြင့် Live Status ဖော်ပြချက်။
+    - **Clean Shop Verification Form & 3D Submit CTA:** ဆိုင်အမည်၊ ဖုန်းနံပါတ်၊ တည်နေရာလိပ်စာနှင့် ပစ္စည်းအမျိုးအစား မှတ်စု Form နှင့် `.sf-btn-3d-primary` 3D Submit Button။
+    - **Guest Safety & Direct Partner Hotline:** အကောင့်မဝင်ရသေးသူများအတွက် Customer Login အသိပေးကတ်နှင့် Viber, Telegram, Direct Call တရားဝင် Brand Colors ခလုတ်များ တပ်ဆင်ခြင်း။
+    - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
 - [ ] **POS-Only Storefront Notice (စတိုးဆိုင်ပိတ် သို့မဟုတ် POS သီးသန့် အသိပေးချက်):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/pos_only.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/pos_only.blade.php)
   - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Friendly Store Maintenance Illustration, Direct Store Contact Hotline, Store Working Hours, Map Direction Button။
 
-### ၉.၃။ Customer အကောင့်နှင့် Portal စာမျက်နှာများ (Customer Account Portal)
-- [ ] **Customer Profile Dashboard (အကောင့် ပင်မမျက်နှာပြင်):**
+- [x] **Customer Profile Dashboard (အကောင့် ပင်မမျက်နှာပြင်):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/customer/account/index.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/customer/account/index.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Centered Profile Stat Cards, Tier/Wholesale Status Badge, Quick Actions 3D Grid, Mobile Responsive Tab Switcher။
-- [ ] **Customer Order History (မှာယူမှု မှတ်တမ်းများ):**
+  - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Retail Customer Wholesale CTA, Conditional Visibility, Live Status Indicator တို့ဖြင့် အဆင့်မြှင့်တင်ပြီးစီး။
+    - **Wholesale Partner Invitation Banner:** လက်လီဖောက်သည် (Retail Customer) များအတွက် လက်ကားဝယ်ယူခွင့် အကျိုးကျေးဇူးဖော်ပြချက်နှင့် `.sf-btn-3d-primary` "လက်ကား လျှောက်ထားရန်" ခလုတ် တပ်ဆင်ခြင်း။
+    - **Quick Actions Compact 3D Tactile Buttons (2-Columns on Mobile):** Mobile View တွင် အံဝင်ခွင်ကျဖြစ်စေသော ၂ ကော်လံ စနစ်ဖြင့် အော်ဒါမှတ်တမ်း (Orders)၊ သိမ်းဆည်းထားသည်များ (Favorites)၊ ရွှေဝါရောင် 3D Button (`.sf-btn-3d-gold`) ပါဝင်သည့် လက်ကားလျှောက်ထားရန် (Wholesale) နှင့် အနီရောင် 3D Button (`.sf-btn-3d-danger`) ပါဝင်သည့် အကောင့်မှထွက်ရန် (Log Out) ခလုတ်များကို tactile depth အပြည့်ဖြင့် တပ်ဆင်ခြင်း။
+    - **Conditional Wholesale Visibility:** လက်ကားဖောက်သည် (Approved Wholesale Customer) များအတွက် အဆိုပါ လျှောက်ထားရန် ခလုတ်နှင့် Banner အား အလိုအလျောက် ဖုံးကွယ်ထားခြင်း။
+    - **Web Push Preference & Floating Bell Sync:** Notification Toggle switch အား Event Listener ချိတ်ဆက်ပြီး၊ Toggle ပိတ်ထားချိန်တွင် Floating 🔔 Bell icon အား မျက်နှာပြင်မှ လုံးဝ ဖုံးကွယ်ထားစေခြင်း (`style="display: none;"` / `!hidden`)၊ Toggle အခြေအနေအား မြန်မာစာသား "အသိပေးချက်များ ပိတ်ထားပါသည်" ဖြင့် ချက်ချင်း ပြောင်းလဲဖော်ပြစေခြင်း။
+    - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
+- [x] **Customer Order History (မှာယူမှု မှတ်တမ်းများ):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/customer/account/orders.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/customer/account/orders.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Filter by Status (Pending/Delivered/Cancelled), Clean Date/Amount Formatting, 1-Tap Reorder 3D Button။
-- [ ] **Customer Order Detail & Invoice (အော်ဒါအသေးစိတ်နှင့် ပြေစာ):**
+  - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Status Filter Tabs, Search Bar, 1-Tap Reorder, Dynamic Currency, Card/Table Switcher တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
+    - **Ultra-Dense Mobile Layout:** `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် Mobile View တွင် Full-bleed အံဝင်ခွင်ကျ ပြသခြင်း။
+    - **Live Status Filter Pills:** အားလုံး (All), ဆက်သွယ်ရန် စောင့်ဆိုင်းဆဲ (Pending Contact), အတည်ပြုပြီး (Confirmed), ပို့ဆောင်ပြီး (Delivered), ပယ်ဖျက်ပြီး (Cancelled) အဆင့်များအလိုက် Badge Count များဖြင့် စစ်ထုတ်နိုင်ခြင်း။
+    - **Search Toolbar & View Switcher:** အော်ဒါအမှတ်၊ ဖုန်းနံပါတ် သို့မဟုတ် ပစ္စည်းအမည်ဖြင့် ရှာဖွေနိုင်ပြီး Cards View နှင့် Table View အကြား စိတ်ကြိုက် ပြောင်းလဲကြည့်ရှုနိုင်ခြင်း (localStorage မှတ်သားမှု ပါဝင်)။
+    - **1-Tap Reorder (၁ ချက်နှိပ် ပြန်လည်မှာယူမည်):** ယခင်မှာယူခဲ့သည့် ပစ္စည်းများကို Client-side Alpine Store (`orderBuilder`) ထဲသို့ တိုက်ရိုက်ထည့်သွင်းပေးပြီး Order Builder သို့ ချက်ချင်း လမ်းညွှန်ပေးသည့် `.sf-btn-3d-primary` ခလုတ်။
+    - **Dynamic Currency & Agreed Price Highlighting:** Hardcoded `Ks` လုံးဝမပါဝင်ဘဲ `format_currency()` Helper ဖြင့် စနစ်တကျ ပြသခြင်း၊ ဆိုင်မှ ညှိနှိုင်းလျှော့ပေါ့ပေးထားသော Agreed Price ရှိပါက မူလစျေးနှုန်းအား Strikethrough ဖြင့် နှိုင်းယှဉ်ပြသခြင်း။
+    - **Empty State & Pagination:** အော်ဒါမှတ်တမ်း မရှိသေးချိန် သို့မဟုတ် စစ်ထုတ်မှု ရလဒ်မရှိချိန်တွင် ကုန်ပစ္စည်းများ ကြည့်ရှုမည့် 3D CTA နှင့် Laravel Query String-preserved Pagination စနစ်။
+    - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
+- [x] **Customer Order Detail & Invoice (အော်ဒါအသေးစိတ်နှင့် ပြေစာ):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/customer/account/order_show.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/customer/account/order_show.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Invoice Printable View, Live Delivery Status, Payment Slip Preview, Download PDF/Image Button။
-- [ ] **Customer Wishlist (နှစ်သက်သော ပစ္စည်းများ စာရင်း):**
+  - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ 4-Stage Live Delivery Status Tracking, Simulated 80mm/58mm Thermal Receipt Modal, Pure ESC/POS Print View, 1-Tap Reorder, Direct Store Hotline 3D Buttons တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
+    - **Ultra-Dense Layout & Header:** `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် Mobile View တွင် အံဝင်ခွင်ကျ ပြသခြင်း၊ အော်ဒါအမှတ် `#ORD-XXXX` အား ကလစ်တစ်ချက်ဖြင့် Copy ကူးယူနိုင်သော 3D Action ခလုတ် ပါဝင်ခြင်း။
+    - **Live Order Delivery Stepper:** အော်ဒါတင်ပြီး (Order Placed) -> ဆိုင်မှ အတည်ပြုဆဲ (Under Review) -> ငွေပေးချေမှု/ထုပ်ပိုးခြင်း (Confirmed/Payment) -> ပို့ဆောင်ခြင်း (Delivery) အဆင့် (၄) ဆင့်အား Live Status အရောင်များနှင့် လှပစွာ ခြေရာခံပြသခြင်း (ပယ်ဖျက်ထားပါက အနီရောင် Notice ဖြင့် အသိပေးခြင်း)။
+    - **Simulated Thermal Receipt Modal & Size Switcher:** 80mm နှင့် 58mm Thermal Receipt စက္ကူဆိုဒ်များ အလိုက် ကြည့်ရှုနိုင်သည့် Dialog Modal ပါဝင်ပြီး အမှန်တကယ် POS Printer မှ ထွက်လာသကဲ့သို့ Dashed Separators, Monospace Typography, Subtotal, Agreed Total, Payment Status, Footer Greeting တို့ဖြင့် ပြသပေးခြင်း။
+    - **Direct ESC/POS `@media print` View:** Browser Print နှိပ်လိုက်ချိန်တွင် Navbar၊ Header၊ Footer များကို ဖုံးကွယ်၍ Thermal Printer အတိုင်း Monochrome သန့်ရှင်းစွာ ပရင့်ထုတ်ပေးနိုင်ခြင်း။
+    - **1-Tap Reorder (၁ ချက်နှိပ် ပြန်လည်မှာယူမည်):** ယခုအော်ဒါထဲမှ ပစ္စည်းများအားလုံးကို `$store.orderBuilder` ထဲသို့ ချက်ချင်း ထည့်သွင်းပေးပြီး Order Builder သို့ ဦးတည်ပေးသည့် `.sf-btn-3d-gold` ခလုတ်။
+    - **Direct Hotline Official Brand Buttons:** ဆိုင်သို့ တိုက်ရိုက်မေးမြန်းနိုင်သည့် Viber (`.sf-btn-3d-viber`)၊ Telegram (`.sf-btn-3d-telegram`) နှင့် ဖုန်းခေါ်ဆိုရန် (`.sf-btn-3d-success`) 3D ခလုတ်များ။
+    - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
+- [x] **Customer Wishlist (နှစ်သက်သော ပစ္စည်းများ စာရင်း):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/customer/account/favorites.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/customer/account/favorites.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Compact Product Cards, Move to Cart 3D Button, Remove 3D Button (`sf-btn-3d-danger`), Stock Availability Badge။
+  - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Compact Product Cards, Move to Cart 3D Button, Remove 3D Danger Button, Stock Availability Badges, Client/Cloud Dual-Sync တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
+    - **Ultra-Dense Mobile Layout:** `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် Mobile View တွင် Full-bleed အံဝင်ခွင်ကျ ပြသခြင်း။
+    - **Compact Product Grid:** ဖုန်းမျက်နှာပြင်တွင် ၂ ကော်လံ (`grid-cols-2`)၊ Tablet တွင် ၃ ကော်လံ (`sm:grid-cols-3`) နှင့် Desktop တွင် ၄ ကော်လံ (`lg:grid-cols-4`) စနစ်ကျသော Aspect-square image container နှင့် Brand Letter Fallback Avatar ဖြင့် ပြသပေးခြင်း။
+    - **Stock Availability Badges:** Server စတော့လက်ကျန် စစ်ဆေးမှုနှင့်အညီ စတော့ရှိပါက `● ပစ္စည်းရှိ (In Stock)` (Emerald Badge) နှင့် စတော့ကုန်သွားပါက `● ပစ္စည်းပြတ် (Out of Stock)` (Rose Badge) ဖြင့် ထင်ရှားစွာ ခွဲခြားဖော်ပြခြင်း။
+    - **Remove 3D Button (`.sf-btn-3d-danger`):** ကတ်တစ်ခုချင်းစီ၏ ထိပ်ညာဘက်တွင် အနီရောင် 3D Tactile အမှိုက်ပုံး ခလုတ်ဖြင့် Server Favorite မှရော Local Storage Favorite မှပါ AJAX/DOM အလိုအလျောက် ပယ်ဖျက်နိုင်ခြင်း။
+    - **Move to Cart 3D Button (`.sf-btn-3d-primary`):** ကတ်အောက်ခြေတွင် စျေးဝယ်ခြင်းတောင်းထဲသို့ ချက်ချင်းထည့်သွင်းနိုင်ပြီး Cart ထဲရှိ အရေအတွက် badge အား real-time live တိုးစေမည့် 3D ခလုတ် တပ်ဆင်ခြင်း။
+    - **Dual Cloud & Local Storage Sync:** အကောင့်ဝင်ထားသူများအတွက် Cloud Database နှင့် Browser Local Storage နှစ်မျိုးလုံးတွင် သိမ်းဆည်းထားသော အကြိုက်ဆုံး ပစ္စည်းများကို အဆင်ပြေစွာ ပေါင်းစပ်ဖော်ပြပေးခြင်း။
+    - **Empty State & Trust Badges:** အကြိုက်ဆုံးပစ္စည်း မရှိသေးချိန်တွင် ပစ္စည်းများ ရှာဖွေနိုင်သည့် 3D Browse ခလုတ်များနှင့် 100% Authentic, COD, Fast Delivery အစရှိသော စတိုးဆိုင် ယုံကြည်စိတ်ချရမှု အာမခံ Badge ၄ ခု တပ်ဆင်ခြင်း။
+    - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
 
 ### ၉.၄။ သတင်း၊ အကြောင်းအရာနှင့် CMS စာမျက်နှာများ (Content & CMS)
-- [ ] **Tech Blog / News List (သတင်းဆောင်းပါးများ စာရင်း):**
+- [x] **Tech Blog / News List (သတင်းဆောင်းပါးများ စာရင်း):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/blog/index.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/blog/index.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Modern Card Grid, Read Time Badge, Featured Post Hero Card, Category Filter Pills။
-- [ ] **Blog Post Detail (ဆောင်းပါး အသေးစိတ်):**
+  - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Modern Card Grid, Read Time Badge, Featured Post Hero Card, Category Filter Pills, Live Search Bar တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
+    - **Ultra-Dense Mobile Layout:** `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် မိုဘိုင်းမျက်နှာပြင်တွင် ဘေးဘောင်ကျဉ်းကျဉ်းဖြင့် နေရာလွတ်မဖြုန်းဘဲ အံဝင်ခွင်ကျ ပြသခြင်း။
+    - **Top Header & Search Toolbar:** စတိုးဆိုင် Logo, ဆောင်းပါးအရေအတွက် 3D Badge, Keyword Search Input Form, Live Count ပါဝင်သည့် Cart 3D Button (`.sf-btn-3d-gold`) နှင့် Products Link တို့ဖြင့် စနစ်တကျ ဖွဲ့စည်းထားခြင်း။
+    - **3D Category Filter Pills:** ကဏ္ဍအားလုံး (📚 All) အပြင် Mobile Guide, Accessories Guide, CCTV Guide, Computer Guide, Network Guide, Fashion Guide, Tips & Tricks စသည့် ကဏ္ဍခွဲများအလိုက် Emoji များဖြင့် တပ်ဆင်ထားပြီး ရွေးချယ်ထားသော ကဏ္ဍအား Primary 3D Highlight ဖြင့် ပြသခြင်း၊ စစ်ထုတ်မှုရှိပါက "✕ Clear All Filters" ခလုတ် ပေါ်ထွက်လာခြင်း။
+    - **Featured Post Hero Card:** Page 1 တွင် အသစ်ဆုံး အထူးဆောင်းပါးအား အထူးပြုပြသသည့် ကြီးမားလှပသော Hero Card (⭐ Featured Story Badge, Category Badge, Published Date, Read Time Badge `⏱️ X min read`, Title, Excerpt နှင့် `.sf-btn-3d-primary` Read More CTA)။
+    - **Modern Responsive Articles Card Grid:** 16:10 အချိုး အကြည်ဓာတ်ပုံ / fallback gradient container, Date badge, Category badge, Read time badge, Title (2 lines clamp), Excerpt (2 lines clamp) နှင့် 3D Read More Button တို့ဖြင့် Responsive ပြသခြင်း (Mobile တွင် 1 column, Tablet တွင် 2 columns, Desktop တွင် 3 columns)။
+    - **Empty State & Trust Badges:** ဆောင်းပါးရှာမတွေ့ပါက သန့်ရှင်းသော မက်ဆေ့ခ်ျနှင့် Clear Filter / Browse Products ခလုတ်များ၊ အောက်ခြေတွင် Authentic, Expert Guidance, Fast Delivery, Tech Support စတိုးဆိုင် အာမခံ Badge ၄ ခု တပ်ဆင်ခြင်း။
+    - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
+- [x] **Blog Post Detail (ဆောင်းပါး အသေးစိတ်):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/blog/show.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/blog/show.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Typography Readability (`font-myanmar leading-relaxed`), Social Share Buttons, Related Products 3D Carousel။
-- [ ] **Custom CMS Pages (Terms, Privacy, About Us):**
+  - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Typography Readability (`font-myanmar leading-relaxed`), Social Share 3D Toolbar, Shop Consultation Hotline Banner, Prev/Next 3D Navigation, Related Articles Grid တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
+    - **Ultra-Dense Mobile Layout:** `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် မိုဘိုင်းမျက်နှာပြင်တွင် ဘေးဘောင်ကျဉ်းကျဉ်းဖြင့် အံဝင်ခွင်ကျ ပြသခြင်း။
+    - **Top Navigation Bar:** `← Back to blog` 3D ခလုတ်၊ Category Badge (`.sf-btn-3d active`)၊ Live Cart Count ပါဝင်သည့် Cart 3D Gold Button (`.sf-btn-3d-gold`) နှင့် Products Button များ တပ်ဆင်ခြင်း။
+    - **Typography Readability & Excerpt Callout:** မြန်မာစာဖတ်ရှုရ လွယ်ကူစေသော `font-myanmar leading-relaxed sm:leading-loose` စာလုံးစတိုင်၊ ခေါင်းစဉ် (H1)၊ အကျဉ်းချုပ် Excerpt Callout Box (Sky border-l-4)၊ စာပိုဒ်ခွဲများ၊ Tags (#tag) စနစ်တကျ ပြသခြင်း။
+    - **Social Share 3D Toolbar:** 1-Tap Copy Link 3D Button (နှိပ်လိုက်ပါက instant `✓ Copied!` တုံ့ပြန်မှု ပါဝင်)၊ Facebook (`.sf-btn-3d-facebook`)၊ Viber (`.sf-btn-3d-viber`)၊ Telegram (`.sf-btn-3d-telegram`) တရားဝင် Brand Colors များဖြင့် ဖွဲ့စည်းထားသော 3D Share ခလုတ်များ။
+    - **Shop Consultation Hotline Banner:** ဆောင်းပါးဖတ်ရှုပြီးနောက် ဆိုင်နှင့် တိုက်ရိုက် ဆွေးနွေးမေးမြန်းနိုင်သော Viber (`.sf-btn-3d-viber`)၊ Telegram (`.sf-btn-3d-telegram`)၊ ဖုန်းခေါ်ဆိုရန် (`.sf-btn-3d-success`) နှင့် ကုန်ပစ္စည်းများ ကြည့်ရှုဝယ်ယူရန် (`.sf-btn-3d-primary`) 3D ခလုတ်များ။
+    - **Prev / Next Article 3D Navigation Cards:** ယခင်ဆောင်းပါးနှင့် နောက်ဆောင်းပါးများသို့ အလွယ်တကူ ကူးပြောင်းဖတ်ရှုနိုင်သော 3D Navigation Card များ။
+    - **Related Articles 3D Grid:** ကဏ္ဍတူ သို့မဟုတ် ဆက်စပ်ဆောင်းပါးများကို Responsive Card Grid စနစ်ဖြင့် ဖော်ပြခြင်း။
+    - **Google Rich Results Schema.org:** Article structured data JSON-LD အပြည့်အစုံ ပါဝင်ခြင်း။
+    - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
+- [x] **Custom CMS Pages (Terms, Privacy, About Us):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/pages/show.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/pages/show.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Clean Markdown/HTML Rendering, Table of Contents Quick Nav, Mobile Ergonomics။
+  - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Clean Markdown/HTML Rendering, Table of Contents Quick Nav, Policy Switcher Pills, Social Share 3D Toolbar, Shop Hotline Banner တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
+    - **Ultra-Dense Mobile Layout:** `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် မိုဘိုင်းမျက်နှာပြင်တွင် ဘေးဘောင်ကျဉ်းကျဉ်းဖြင့် နေရာလွတ်မဖြုန်းဘဲ အံဝင်ခွင်ကျ ပြသခြင်း။
+    - **Top Header Bar:** Home ခလုတ်၊ လက်ရှိ စာမျက်နှာ အိုင်ကွန်နှင့် အမည် Badge (`.sf-btn-3d active`)၊ Live Cart Count ပါဝင်သည့် Cart 3D Gold Button (`.sf-btn-3d-gold`) နှင့် Products Button များ တပ်ဆင်ခြင်း။
+    - **Store CMS Policy Switcher Pills:** ဆိုင်၏ မူဝါဒစာမျက်နှာများ (ℹ️ About Us, 📜 Terms & Conditions, 🔒 Privacy Policy) အကြား ကလစ်တစ်ချက်ဖြင့် ကူးပြောင်းနိုင်သော 3D Pills Bar ပါဝင်ပြီး လက်ရှိစာမျက်နှာအား Primary 3D Highlight ဖြင့် ပြသခြင်း။
+    - **Dynamic Table of Contents (TOC):** Markdown အတွင်းရှိ H2/H3 ခေါင်းစဉ်များကို Alpine.js ဖြင့် အလိုအလျောက် ရေတွက်ဖော်ထုတ်ပေးပြီး ကလစ်နှိပ်ပါက သက်ဆိုင်ရာအခန်းဆီသို့ Smooth Scroll ဖြင့် အမြန်ရောက်ရှိစေသော Expandable TOC Box ပါဝင်ခြင်း။
+    - **Clean Typography Rendering:** မြန်မာစာသားများအတွက် `font-myanmar leading-relaxed sm:leading-loose` စာလုံးစတိုင်၊ ခေါင်းစဉ်ကြီး/ငယ်များ၊ အကျဉ်းချုပ် Excerpt Box (Sky border-l-4)၊ စာရင်းများ (Lists)၊ ဇယားများ (Tables) နှင့် Blockquotes များ စနစ်တကျ ပြသခြင်း။
+    - **Social Share 3D Toolbar:** 1-Tap Copy Link 3D Button (`✓ Copied!` feedback ပါဝင်)၊ Facebook (`.sf-btn-3d-facebook`)၊ Viber (`.sf-btn-3d-viber`)၊ Telegram (`.sf-btn-3d-telegram`) တရားဝင် Brand Colors များဖြင့် ဖွဲ့စည်းထားသော 3D Share ခလုတ်များ။
+    - **Shop Consultation Hotline Banner:** ဆိုင်ဝန်ထမ်းများနှင့် တိုက်ရိုက်ဆွေးနွေး မေးမြန်းနိုင်သော Viber (`.sf-btn-3d-viber`)၊ Telegram (`.sf-btn-3d-telegram`)၊ ဖုန်းခေါ်ဆိုရန် (`.sf-btn-3d-success`) နှင့် ကုန်ပစ္စည်းများ ကြည့်ရှုဝယ်ယူရန် (`.sf-btn-3d-primary`) 3D ခလုတ်များ။
+    - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
 
 ### ၉.၅။ အများသုံး Component များနှင့် Footer (Universal Components & Layouts)
 - [x] **Storefront Base Layout (ပင်မ Layout နှင့် Header):**
@@ -900,8 +974,10 @@ Storefront Order Confirmation (`resources/views/storefront/orders/confirmation.b
 #### ၃။ 1-Tap Tracking Link Copy & Clipboard Toast
 - Customer များသည် မိမိတို့၏ Tracking Link အား အခြားမိသားစုဝင်များထံ မျှဝေရန် သို့မဟုတ် သိမ်းဆည်းထားရန် ခေါင်းစဉ်ထိပ်ရှိ `Copy Link` ခလုတ်ကို နှိပ်ရုံဖြင့် ချက်ချင်း ကူးယူနိုင်ပြီး `✓ ကူးယူပြီးပါပြီ!` ဟူသော UI Toast တုံ့ပြန်မှုကို ရရှိစေသည်။
 
-#### ၄။ Print Slip Isolation (`@media print`)
-- ဖောက်သည် သို့မဟုတ် ကောင်တာဝန်ထမ်းမှ စာရွက်ဖြင့် Service Slip/Invoice ထုတ်ယူလိုပါက `Print Slip` ခလုတ်ကို နှိပ်နိုင်ပြီး စာရွက်ပေါ်တွင် မလိုအပ်သော Web Elements များ (Header၊ Footer၊ Toolbar၊ မျှဝေရန် ခလုတ်များ) အား ဖုံးကွယ်၍ သန့်ရှင်းသော ပစ္စည်းအပ်ပြေစာအဖြစ် ထွက်ရှိစေသည်။
+#### ၄။ Service Job Slip Preview Modal & Print Isolation
+- ဖောက်သည် သို့မဟုတ် ကောင်တာဝန်ထမ်းမှ `🖨️ ပြေစာ အစမ်းကြည့်/ထုတ်မည်` ခလုတ်ကို နှိပ်လိုက်သည့်အခါ Screen ပေါ်တွင် တရားဝင် **Service Job Slip Preview Modal (ပစ္စည်းလက်ခံပြုပြင်လွှာ / အပ်ပြေစာ)** ကတ်ပြား ချက်ချင်း ပွင့်လာမည် ဖြစ်သည်။
+- ၎င်း Modal ထဲတွင် စတိုးဆိုင်အမည်၊ လိပ်စာ၊ ဖုန်းနံပါတ်၊ ဘောက်ချာနံပါတ်၊ ရက်စွဲ၊ ပိုင်ရှင်အချက်အလက်၊ စက်အမျိုးအစား (Brand/Model/Serial)၊ ပျက်စီးမှု၊ လဲလှယ်ပစ္စည်းများ၊ ကျသင့်ငွေနှင့် ပေးရန်ကျန်ငွေ ရှင်းတမ်းတို့ကို စနစ်တကျ အစမ်းကြည့်ရှုနိုင်ပြီး အောက်ခြေရှိ `🖨️ ပုံနှိပ်ရန်` ခလုတ်ဖြင့်ဖြစ်စေ၊ `🔗 လင့်ခ် ကူးယူမည်` ခလုတ်ဖြင့်ဖြစ်စေ စိတ်ကြိုက် အသုံးပြုနိုင်ပါသည်။
+- `@media print` Isolation ကြောင့် စက္ကူ Print ထုတ်သည့်အခါတွင်လည်း မလိုအပ်သော Web Elements များကို ဖုံးကွယ်ပြီး သန့်ရှင်းသော ပစ္စည်းအပ်ပြေစာအဖြစ် ထွက်ရှိစေပါသည်။
 
 #### ၅။ Direct Official Communication Channels
 - ဖောက်သည်များအနေဖြင့် ပြင်ဆင်နေစဉ်အတွင်း ကျွမ်းကျင်ပညာရှင်ထံသို့ မေးမြန်းစုံစမ်းလိုပါက Brand Colors အပြည့်အစုံပါဝင်သော Pure CSS 3D Buttons များဖြစ်သည့် `.sf-btn-3d-viber`၊ `.sf-btn-3d-telegram` နှင့် `.sf-btn-3d-success` (ဖုန်းခေါ်ဆိုရန်) တို့ဖြင့် တိုက်ရိုက် ဆက်သွယ်စကားပြောဆိုနိုင်သည်။
