@@ -997,8 +997,8 @@ class ProductCatalogTest extends TestCase
         $response->assertOk();
         $response->assertJsonCount(2, 'products');
         $response->assertJsonPath('products.0.name', 'iPhone 14 Tempered Glass');
-        $response->assertJsonPath('products.0.price', 'Ks 5,000');
-        $response->assertJsonPath('products.0.old_price', 'Ks 6,000');
+        $response->assertJsonPath('products.0.price', format_currency(5000, $storeA));
+        $response->assertJsonPath('products.0.old_price', format_currency(6000, $storeA));
         $response->assertJsonPath('products.0.url', url('/store/store-a/product/iphone-14-tg'));
         // Store B's product URL must not leak into Store A's suggestions.
         $response->assertDontSee('iphone-14-tg-b');

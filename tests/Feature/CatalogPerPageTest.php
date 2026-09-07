@@ -113,6 +113,6 @@ class CatalogPerPageTest extends TestCase
         $response->assertStatus(200);
         // Filter chips (search/min/max) still rendered on the page.
         $response->assertSee('PerPage', false);
-        $response->assertSee('Ks 1,000', false);
+        $response->assertSee(format_currency(1000, $store), false);
     }
 }

@@ -503,8 +503,27 @@
                 </div>
 
                 {{-- More actions (mobile only: view store, reload, calculator, language) --}}
-                <div class="relative sm:hidden" x-data="{ moreOpen: false }" @click.outside="moreOpen = false" @keydown.escape.window="moreOpen = false">
-                    <button type="button" @click="moreOpen = !moreOpen"
+                {{-- Fixed positioning breaks out of any overflow/stacking context (e.g. product table overflow-y:auto) --}}
+                <div class="relative sm:hidden"
+                    x-data="{
+                        moreOpen: false,
+                        menuTop: '0px',
+                        menuRight: '0px',
+                        updatePos() {
+                            const btn = this.$refs.moreBtn;
+                            if (!btn) return;
+                            const r = btn.getBoundingClientRect();
+                            this.menuTop  = (r.bottom + 8) + 'px';
+                            this.menuRight = (window.innerWidth - r.right) + 'px';
+                        },
+                        open() { this.updatePos(); this.moreOpen = true; },
+                        close() { this.moreOpen = false; }
+                    }"
+                    @click.outside="close()"
+                    @keydown.escape.window="close()"
+                    @scroll.window="moreOpen && updatePos()"
+                    @resize.window="moreOpen && updatePos()">
+                    <button type="button" x-ref="moreBtn" @click="moreOpen ? close() : open()"
                         class="h-11 w-11 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0"
                         :aria-expanded="moreOpen.toString()" aria-haspopup="menu" aria-label="{{ __('messages.more_actions') }}">
                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -512,7 +531,8 @@
                         </svg>
                     </button>
                     <div x-show="moreOpen" x-transition x-cloak
-                        class="absolute right-0 top-full z-30 mt-2 w-60 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900"
+                        :style="'position:fixed; top:' + menuTop + '; right:' + menuRight + '; z-index:9999;'"
+                        class="w-60 max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900"
                         role="menu" aria-label="{{ __('messages.more_actions') }}">
                         @if ($hasStoreContext)
                             <a href="{{ url('/store/' . $currentSlug) }}" target="_blank" rel="noopener noreferrer" role="menuitem" @click="moreOpen = false"
@@ -555,9 +575,24 @@
                             <span x-text="darkMode ? 'Light Mode (အလင်း)' : 'Dark Mode (အမှောင်)'"></span>
                         </button>
                         <div class="my-1 border-t border-slate-100 dark:border-slate-800"></div>
-                        <div class="flex items-center justify-between px-2.5 py-1">
+                        {{-- Inline language switcher (no nested sub-dropdown) for mobile More menu --}}
+                        <div class="flex items-center justify-between px-2.5 py-1.5">
                             <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ __('messages.language_switcher_label') }}</span>
-                            <x-language-switcher id="admin-header-mobile" align="left" />
+                            @php $supportedLocales = config('localization.supported', []); $activeLocale = app()->getLocale(); @endphp
+                            <form method="POST" action="{{ route('locale.update') }}" class="inline-flex items-center gap-1">
+                                @csrf
+                                @foreach ($supportedLocales as $code => $locale)
+                                    @php $isActive = $activeLocale === $code; @endphp
+                                    <button type="submit" name="locale" value="{{ $code }}"
+                                        @click="moreOpen = false"
+                                        class="h-9 w-9 inline-flex items-center justify-center rounded-lg text-lg transition focus:outline-none focus:ring-2 focus:ring-sky-500 {{ $isActive ? 'bg-sky-100 ring-1 ring-sky-300 dark:bg-sky-950 dark:ring-sky-700' : 'hover:bg-slate-100 dark:hover:bg-slate-800' }}"
+                                        title="{{ $locale['native'] }}"
+                                        aria-current="{{ $isActive ? 'true' : 'false' }}">
+                                        <x-flag :code="$code" />
+                                        <span class="sr-only">{{ $locale['native'] }}</span>
+                                    </button>
+                                @endforeach
+                            </form>
                         </div>
                     </div>
                 </div>

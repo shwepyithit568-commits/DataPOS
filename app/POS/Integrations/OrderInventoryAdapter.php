@@ -3,9 +3,12 @@
 namespace App\POS\Integrations;
 
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\POS\Enums\InventoryMovementType;
 use App\POS\Exceptions\InventoryException;
+use App\POS\Models\InventoryBalance;
 use App\POS\Models\InventoryMovement;
+use App\POS\Models\Warehouse;
 use App\POS\Services\InventoryService;
 use Illuminate\Support\Facades\DB;
 
@@ -78,6 +81,7 @@ class OrderInventoryAdapter
                 foreach ($this->inventoryLines($order) as $index => $line) {
                     $this->inventory->postMovement([
                         'store_id' => $order->store_id,
+                        'warehouse_id' => $line['warehouse_id'],
                         'product_id' => $line['product_id'],
                         'product_variant_id' => $line['product_variant_id'],
                         'movement_type' => InventoryMovementType::OnlineReserve->value,
@@ -105,6 +109,7 @@ class OrderInventoryAdapter
             foreach ($this->inventoryLines($order) as $index => $line) {
                 $this->inventory->postMovement([
                     'store_id' => $order->store_id,
+                    'warehouse_id' => $line['warehouse_id'],
                     'product_id' => $line['product_id'],
                     'product_variant_id' => $line['product_variant_id'],
                     'movement_type' => InventoryMovementType::OnlineConfirm->value,
@@ -133,6 +138,7 @@ class OrderInventoryAdapter
             foreach ($this->inventoryLines($order) as $index => $line) {
                 $this->inventory->postMovement([
                     'store_id' => $order->store_id,
+                    'warehouse_id' => $line['warehouse_id'],
                     'product_id' => $line['product_id'],
                     'product_variant_id' => $line['product_variant_id'],
                     'movement_type' => InventoryMovementType::OnlineCancel->value,
@@ -170,11 +176,11 @@ class OrderInventoryAdapter
     }
 
     /**
-     * Catalog lines as grouped [product_id, product_variant_id, quantity].
+     * Catalog lines as grouped [product_id, product_variant_id, warehouse_id, quantity].
      * Skips items without a product (glass-finder / legacy) and merges
-     * duplicate product+variant lines so the per-source-line unique key holds.
+     * duplicate product+variant+warehouse lines so the per-source-line unique key holds.
      *
-     * @return array<int, array{product_id:int, product_variant_id:?int, quantity:float}>
+     * @return array<int, array{product_id:int, product_variant_id:?int, warehouse_id:int, quantity:float}>
      */
     protected function inventoryLines(Order $order): array
     {
@@ -185,12 +191,15 @@ class OrderInventoryAdapter
                 continue;
             }
 
-            $key = $item->product_id . ':' . ($item->product_variant_id ?? 0);
+            $warehouseId = $this->resolveItemWarehouseId($order, $item);
+
+            $key = $item->product_id . ':' . ($item->product_variant_id ?? 0) . ':' . $warehouseId;
 
             if (! isset($lines[$key])) {
                 $lines[$key] = [
                     'product_id' => (int) $item->product_id,
                     'product_variant_id' => $item->product_variant_id ? (int) $item->product_variant_id : null,
+                    'warehouse_id' => $warehouseId,
                     'quantity' => 0.0,
                 ];
             }
@@ -199,5 +208,84 @@ class OrderInventoryAdapter
         }
 
         return array_values($lines);
+    }
+
+    /**
+     * Resolve the source warehouse for an order item.
+     * Checks previous reservations, product's designated warehouse, available stock in store,
+     * or falls back to the store's default warehouse.
+     */
+    protected function resolveItemWarehouseId(Order $order, OrderItem $item): int
+    {
+        // 1. If an existing order_reserve movement exists for this order & product/variant, reuse its warehouse
+        $existingWarehouseId = InventoryMovement::query()
+            ->where('store_id', $order->store_id)
+            ->where('source_type', 'order_reserve')
+            ->where('source_id', $order->id)
+            ->where('product_id', $item->product_id)
+            ->when($item->product_variant_id, fn ($q) => $q->where('product_variant_id', $item->product_variant_id))
+            ->value('warehouse_id');
+
+        if ($existingWarehouseId) {
+            return (int) $existingWarehouseId;
+        }
+
+        $product = $item->product;
+
+        // 2. If product has an assigned warehouse in this store with available stock, prefer it
+        if ($product && $product->warehouse_id) {
+            $assignedWarehouse = Warehouse::query()
+                ->where('id', $product->warehouse_id)
+                ->where('store_id', $order->store_id)
+                ->first();
+
+            if ($assignedWarehouse) {
+                $hasStock = InventoryBalance::query()
+                    ->where('store_id', $order->store_id)
+                    ->where('warehouse_id', $assignedWarehouse->id)
+                    ->where('product_id', $item->product_id)
+                    ->when($item->product_variant_id, fn ($q) => $q->where('product_variant_id', $item->product_variant_id))
+                    ->where('quantity_on_hand', '>=', (float) $item->quantity)
+                    ->exists();
+
+                if ($hasStock) {
+                    return (int) $assignedWarehouse->id;
+                }
+            }
+        }
+
+        // 3. Find any warehouse in this store that has sufficient stock for this item
+        $warehouseWithStock = InventoryBalance::query()
+            ->where('store_id', $order->store_id)
+            ->where('product_id', $item->product_id)
+            ->when($item->product_variant_id, fn ($q) => $q->where('product_variant_id', $item->product_variant_id))
+            ->where('quantity_on_hand', '>=', (float) $item->quantity)
+            ->orderByDesc('quantity_on_hand')
+            ->value('warehouse_id');
+
+        if ($warehouseWithStock) {
+            return (int) $warehouseWithStock;
+        }
+
+        // 4. If none has sufficient, find any warehouse that has positive stock
+        $warehouseWithAnyStock = InventoryBalance::query()
+            ->where('store_id', $order->store_id)
+            ->where('product_id', $item->product_id)
+            ->when($item->product_variant_id, fn ($q) => $q->where('product_variant_id', $item->product_variant_id))
+            ->where('quantity_on_hand', '>', 0)
+            ->orderByDesc('quantity_on_hand')
+            ->value('warehouse_id');
+
+        if ($warehouseWithAnyStock) {
+            return (int) $warehouseWithAnyStock;
+        }
+
+        // 5. Fallback to product's assigned warehouse if valid in store
+        if (! empty($assignedWarehouse)) {
+            return (int) $assignedWarehouse->id;
+        }
+
+        // 6. Default to store's default warehouse
+        return $this->inventory->defaultWarehouseId($order->store_id);
     }
 }

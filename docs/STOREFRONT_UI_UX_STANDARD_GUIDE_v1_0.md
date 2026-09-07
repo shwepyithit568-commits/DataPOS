@@ -289,51 +289,51 @@ Storefront သည် မျက်နှာပြင် အကျဉ်းဆု�
 ## ၆။ စာမျက်နှာအလိုက် လက်တွေ့ အဆင့်မြှင့်တင်ရမည့် Checklist (Page-by-Page Polish Checklist)
 
 ### ၅.၁။ ပင်မစာမျက်နှာ — Storefront Home (`welcome.blade.php`)
-- [ ] **Sticky 3D Header:** Brand Logo, Real-time Search Input (`h-9`), Dark Mode Switcher, Cart Trigger (`sf-btn-3d`)။
-- [ ] **Desktop Category Sidebar:**
+- [x] **Sticky 3D Header:** Brand Logo, Real-time Search Input (`h-9`), Dark Mode Switcher, Cart Trigger (`sf-btn-3d`)။
+- [x] **Desktop Category Sidebar:**
   - Item Height အား ကျစ်လစ်သော **`40px`** (`py-1.5`) ထားရှိရမည်။
   - Subcategory Flyout Panel အကျယ်အား **`w-56 sm:w-64` (`256px`)** သို့ ချိန်ညှိရမည် (Banner မကွယ်စေရန်)။
   - ကွင်းစကွင်းပိတ်မပါသော **သဘာဝကျသည့် မြန်မာစကား သီးသန့်** (`$category->localized_name`) ပြသရမည်။
-- [ ] **4-Item Value Trust Strip:** Banner အောက်တွင် `⚡ အမြန်ဆုံး ပို့ဆောင်မှု`၊ `🛡️ စစ်မှန်သော အာမခံ`၊ `🔧 ဆာဗစ်စစ်`၊ `💬 တိုက်ရိုက် အကူအညီ` ကတ် ၄ ခုအား 3D Tactile Push Cards များအဖြစ် တပ်ဆင်ရမည်။
-- [ ] **Flash Sale & Promotional Product Grids:** စတော့အရေအတွက် နည်းနေပါက Low Stock Badge (`ကျန်ရှိအရေအတွက် နည်းပါး`) ကို ထင်ရှားသော အရောင်ဖြင့် ပြသရမည်။
+- [x] **4-Item Value Trust Strip:** Banner အောက်တွင် `⚡ အမြန်ဆုံး ပို့ဆောင်မှု`၊ `🛡️ စစ်မှန်သော အာမခံ`၊ `🔧 ဆာဗစ်စစ်`၊ `💬 တိုက်ရိုက် အကူအညီ` ကတ် ၄ ခုအား 3D Tactile Push Cards များအဖြစ် တပ်ဆင်ရမည်။
+- [x] **Flash Sale & Promotional Product Grids:** စတော့အရေအတွက် နည်းနေပါက Low Stock Badge (`ကျန်ရှိအရေအတွက် နည်းပါး`) ကို ထင်ရှားသော အရောင်ဖြင့် ပြသရမည်။
 
 ### ၅.၂။ ကုန်ပစ္စည်းစာရင်း စာမျက်နှာ — Product Catalog (`products/index.blade.php`)
-- [ ] **Sticky Filter Toolbar:** အမျိုးအစား Filter Pills၊ စျေးနှုန်း Range Slider၊ လက်ကျန်ရှိသော ပစ္စည်းများသာကြည့်ရန် Toggle။
-- [ ] **Mobile Filter Drawer:** ဖုန်းမျက်နှာပြင်များတွင် အောက်ခြေမှ အိစက်စွာ တက်လာမည့် Slide-over Filter Sheet (1-Tap Clear All ပါဝင်ရမည်)။
-- [ ] **Clean Product Cards:**
+- [x] **Sticky Filter Toolbar:** အမျိုးအစား Filter Pills၊ စျေးနှုန်း Range Slider၊ လက်ကျန်ရှိသော ပစ္စည်းများသာကြည့်ရန် Toggle။
+- [x] **Mobile Filter Drawer:** ဖုန်းမျက်နှာပြင်များတွင် အောက်ခြေမှ အိစက်စွာ တက်လာမည့် Slide-over Filter Sheet (1-Tap Clear All ပါဝင်ရမည်)။
+- [x] **Clean Product Cards:**
   - ပုံရိပ်ပေါ်တွင် တင်ထားသော 3D Wishlist Heart ခလုတ်။
   - ပစ္စည်းအမည် (`font-bold font-myanmar`)။
   - Dynamic Currency စျေးနှုန်း (`format_currency($p->price, $store)`)။
   - 1-Tap Quick Add to Cart 3D Push Button။
 
 ### ၅.၃။ ပစ္စည်းအသေးစိတ် စာမျက်နှာ — Product Details (`products/show.blade.php`)
-- [ ] **Image Gallery with Pinch-to-Zoom:** လက်ချောင်းဖြင့် ဘယ်/ညာ ပွတ်ဆွဲ၍ ကြည့်ရှုနိုင်သော Image Carousel + Thumbnail Navigation။
-- [ ] **Variant Matrix Picker:** အရောင် (Color)၊ သိုလှောင်မှု (Storage)၊ အမျိုးအစားခွဲ (Specs) များကို 3D Pills များဖြင့် ရွေးချယ်စေပြီး စျေးနှုန်းနှင့် စတော့ကို Realtime အလိုအလျောက် ပြောင်းလဲပြသခြင်း။
-- [ ] **Direct Social Order Action Bar:**
+- [x] **Image Gallery with Pinch-to-Zoom:** လက်ချောင်းဖြင့် ဘယ်/ညာ ပွတ်ဆွဲ၍ ကြည့်ရှုနိုင်သော Image Carousel + Thumbnail Navigation။
+- [x] **Variant Matrix Picker:** အရောင် (Color)၊ သိုလှောင်မှု (Storage)၊ အမျိုးအစားခွဲ (Specs) များကို 3D Pills များဖြင့် ရွေးချယ်စေပြီး စျေးနှုန်းနှင့် စတော့ကို Realtime အလိုအလျောက် ပြောင်းလဲပြသခြင်း။
+- [x] **Direct Social Order Action Bar:**
   - အစိမ်းရောင် `Viber ဖြင့် ချက်ချင်းမှာယူရန်` ခလုတ်။
   - အပြာရောင် `Telegram ဖြင့် မေးမြန်းရန်` ခလုတ်။
   - အဓိက `ခြင်းတောင်းထဲသို့ ထည့်မည်` 3D ခလုတ်ကြီး။
-- [ ] **Wholesale Customer Experience:** လက်ကားခွင့်ပြုချက်ရရှိထားသော Customer ဖြစ်ပါက လက်ကားစျေးနှုန်း Badge နှင့် အနည်းဆုံးမှာယူရမည့် အရေအတွက် (MOQ) ကို ရှင်းလင်းစွာ ဖော်ပြခြင်း။
+- [x] **Wholesale Customer Experience:** လက်ကားခွင့်ပြုချက်ရရှိထားသော Customer ဖြစ်ပါက လက်ကားစျေးနှုန်း Badge နှင့် အနည်းဆုံးမှာယူရမည့် အရေအတွက် (MOQ) ကို ရှင်းလင်းစွာ ဖော်ပြခြင်း။
 
 ### ၅.၄။ ခြင်းတောင်းနှင့် ငွေရှင်း စာမျက်နှာ — Cart & Checkout (`cart/*`, `checkout/*`)
-- [ ] **Zero-Loss Cart Review:** ကုန်ပစ္စည်းတစ်ခုချင်းစီ၏ အရေအတွက် အတိုး/အလျှော့ ခလုတ်များ (`+` / `-`) အား Instant 3D Push ပြုလုပ်နိုင်ခြင်း။
-- [ ] **Delivery & Logistics Selector:**
+- [x] **Zero-Loss Cart Review:** ကုန်ပစ္စည်းတစ်ခုချင်းစီ၏ အရေအတွက် အတိုး/အလျှော့ ခလုတ်များ (`+` / `-`) အား Instant 3D Push ပြုလုပ်နိုင်ခြင်း။
+- [x] **Delivery & Logistics Selector:**
   - ရန်ကုန်/မန္တလေး အိမ်ရောက်ငွေချေ (Doorstep Delivery)။
   - နယ်ဝေး ကားဂိတ်တင်ပေးပို့မှု (Bus Gate Delivery) နှင့် ဂိတ်အမည်/မြို့နယ် ဖြည့်သွင်းသည့် ကွက်လပ်များ။
-- [ ] **Payment & Receipt Slip Attachment:**
+- [x] **Payment & Receipt Slip Attachment:**
   - KPay / WavePay / CB Pay / AYA Pay QR Code ပြသမှု။
   - ငွေလွှဲပြေစာ Screenshot Upload လုပ်နိုင်သော Image Picker (Local Image Compression ပါဝင်ရမည်)။
   - COD (ပစ္စည်းရောက်မှ ငွေချေစနစ်) Toggle Option။
 
 ### ၅.၅။ ဆာဗစ်စစ် စစ်ဆေးခြင်း စာမျက်နှာ — Service Tracking (`service-tracking.blade.php`)
-- [ ] **Instant Ticket Lookup:** ဘောက်ချာနံပါတ် သို့မဟုတ် ဖုန်းနံပါတ် ရိုက်ထည့်ရုံဖြင့် ချက်ချင်း ရှာဖွေနိုင်ခြင်း (Barcode Scanner ပါဝင်ရမည်)။
-- [ ] **5-Stage Visual Stepper:**
+- [x] **Instant Ticket Lookup:** ဘောက်ချာနံပါတ် သို့မဟုတ် ဖုန်းနံပါတ် ရိုက်ထည့်ရုံဖြင့် ချက်ချင်း ရှာဖွေနိုင်ခြင်း (Barcode Scanner ပါဝင်ရမည်)။
+- [x] **5-Stage Visual Stepper:**
   1. ပစ္စည်းလက်ခံရရှိ (`Received`)
   2. ချို့ယွင်းချက်စစ်ဆေးနေဆဲ (`Diagnosing`)
   3. ပြင်ဆင်နေဆဲ (`In Repair`)
   4. စမ်းသပ်စစ်ဆေးပြီးစီး (`Quality Testing`)
   5. ပစ္စည်းလာရောက်ထုတ်ယူနိုင်ပြီ (`Ready for Pickup`)
-- [ ] **Direct Technician Assistance:** တာဝန်ခံပြင်ဆင်သူနှင့် ချက်ချင်း စကားပြောနိုင်သော Direct Chat ခလုတ်။
+- [x] **Direct Technician Assistance:** တာဝန်ခံပြင်ဆင်သူနှင့် ချက်ချင်း စကားပြောနိုင်သော Direct Chat ခလုတ်။
 
 ---
 
@@ -506,9 +506,14 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Clean Shop Verification Form & 3D Submit CTA:** ဆိုင်အမည်၊ ဖုန်းနံပါတ်၊ တည်နေရာလိပ်စာနှင့် ပစ္စည်းအမျိုးအစား မှတ်စု Form နှင့် `.sf-btn-3d-primary` 3D Submit Button။
     - **Guest Safety & Direct Partner Hotline:** အကောင့်မဝင်ရသေးသူများအတွက် Customer Login အသိပေးကတ်နှင့် Viber, Telegram, Direct Call တရားဝင် Brand Colors ခလုတ်များ တပ်ဆင်ခြင်း။
     - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
-- [ ] **POS-Only Storefront Notice (စတိုးဆိုင်ပိတ် သို့မဟုတ် POS သီးသန့် အသိပေးချက်):**
+- [x] **POS-Only Storefront Notice (စတိုးဆိုင်ပိတ် သို့မဟုတ် POS သီးသန့် အသိပေးချက်):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/pos_only.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/pos_only.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Friendly Store Maintenance Illustration, Direct Store Contact Hotline, Store Working Hours, Map Direction Button။
+  - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Friendly In-Store POS Notice Badge, Direct Store Contact Hotline (3D Viber, Telegram, Phone Buttons), Store Working Hours & Address Cards, Google Maps Directions Button, POS Sale Redirect Button (`.sf-btn-3d-primary`) တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
+    - **In-Store / POS Only Badge:** ခေတ်မီ 3D Alert Eyebrow Badge (`🏬 ဆိုင်တွင်သာ လူကိုယ်တိုင် လာရောက်ဝယ်ယူနိုင်ပါသည် (In-Store / POS Only)`) တပ်ဆင်ခြင်း။
+    - **Store Working Hours & Physical Address Cards:** ဆိုင်ဖွင့်ချိန်၊ ပိတ်ရက်နှင့် တည်နေရာလိပ်စာတို့ကို ကတ်သန့်သန့်ဖြင့် ရှင်းလင်းစွာ ဖော်ပြခြင်း။
+    - **3D Hotline Action Suite:** တရားဝင် Brand Colors များဖြင့် ဖုန်းခေါ်ဆိုရန် (`.sf-btn-3d-success`)၊ Viber (`.sf-btn-3d-viber`)၊ Telegram (`.sf-btn-3d-telegram`) နှင့် Google Maps လမ်းညွှန်ချက်ရယူရန် (`.sf-btn-3d`) ခလုတ်များ။
+    - **Staff Direct POS Access:** ဆိုင်ဝန်ထမ်းများအတွက် POS Counter သို့ တိုက်ရိုက်ဝင်ရောက်နိုင်သော `.sf-btn-3d-primary` ခလုတ်။
+    - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
 
 - [x] **Customer Profile Dashboard (အကောင့် ပင်မမျက်နှာပြင်):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/customer/account/index.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/customer/account/index.blade.php)
@@ -589,15 +594,15 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
 - [x] **Storefront Base Layout (ပင်မ Layout နှင့် Header):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/layouts/storefront/app.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/layouts/storefront/app.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Dynamic Theming Tokens, 3D Bottom Nav Bar, Search Bar Integration, Cart Count Badge, Colorful 3D Action Buttons (Favorites, Language, Cart, Dark Mode, Mobile Menu) ပြီးစီး။
-- [ ] **Search Suggestions Dropdown (အမြန် ရှာဖွေမှု အကြံပြုချက်):**
+- [x] **Search Suggestions Dropdown (အမြန် ရှာဖွေမှု အကြံပြုချက်):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/components/search-suggestions-dropdown.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/components/search-suggestions-dropdown.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Highlighting Matched Keywords, Product Thumbnail, Dynamic Price, Arrow Keys Navigation Support။
-- [ ] **Direct Viber Order Modal (Viber မှာယူမှု Dialog):**
+  - **လုပ်ဆောင်ချက်များ:** Matched Keywords Highlighting (`x-html="highlight(...)"` with XSS sanitation), Product Thumbnail, Dynamic Price & Strikethrough (`format_currency`), Live Stock Badges (`in_stock` / `out_of_stock`), Full Keyboard Arrow Navigation (`ArrowUp`, `ArrowDown`, `Enter`, `Escape`), Trending Searches Chips (`.sf-btn-3d`) တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
+- [x] **Direct Viber Order Modal (Viber မှာယူမှု Dialog):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/components/_viber_order_modal.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/components/_viber_order_modal.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Pre-filled Customer Phone, Item List Preview, Send Order 3D Button (`sf-btn-3d-success`), QR Code Backup။
-- [ ] **Storefront Universal Footer (စတိုးဆိုင် အောက်ခြေပိုင်း):**
+  - **လုပ်ဆောင်ချက်များ:** Pre-filled Customer Phone & Delivery Address, 3D Quantity Steppers (`+` / `-`), Dynamic Subtotal & Total calculation, Send Order 3D Button (`.sf-btn-3d-viber`), Direct Phone Call (`.sf-btn-3d-success`), Viber QR Code & Contact Fallback Expandable Accordion တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
+- [x] **Storefront Universal Footer (စတိုးဆိုင် အောက်ခြေပိုင်း):**
   - **ဖိုင်လမ်းကြောင်း:** [`resources/views/components/storefront-footer.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/components/storefront-footer.blade.php)
-  - **ပြင်ဆင်ရန် အဓိကအချက်များ:** Shop Address, Operating Hours, Social Links (Facebook, Viber, Telegram), Payment Partners Badges, Safe Area Inset Padding။
+  - **လုပ်ဆောင်ချက်များ:** Store Physical Address, Working Hours & Off Days, Official Social & Direct Chat 3D Buttons (Viber `.sf-btn-3d-viber`, Telegram `.sf-btn-3d-telegram`), Payment Partners Badges (KPay, WavePay, CBPay, AYAPay, COD), Mobile Safe Area Inset Padding (`pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]`), 3D Back-to-Top Smooth Scroll Button (`.sf-btn-3d`) တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
 
 ---
 
@@ -623,6 +628,12 @@ Admin Panel ရှိ **Theme Creation & Color Customization (အပြင်အ
 | **Product Card Component Dispatcher** | [`resources/views/components/product-card.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/components/product-card.blade.php) | Callers များမှ ကတ်ထောင့်ဝိုက်ခြင်း သတ်မှတ်နိုင်ရန် `:rounded` prop ထည့်သွင်းခြင်း (ဥပမာ- `:rounded="'rounded-none'"` ဖြင့် Sharp 3D Tiles ဖွဲ့စည်းနိုင်ခြင်း)။ |
 | **Product Card (Compact Variant)** | [`resources/views/components/product-card-variants/compact.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/components/product-card-variants/compact.blade.php) | Favorite Button အရွယ်အစားအား `w-7 h-7 sm:w-8 sm:h-8` (`icon: w-3.5 h-3.5 sm:w-4 sm:h-4`) သို့ ကျစ်လျစ်စွာ ပြင်ဆင်ခြင်း၊ `:rounded` prop dynamic binding နှင့် image ပေါ် blocking ဖြစ်မှု ကာကွယ်ခြင်း။ |
 | **Global Storefront CSS** | [`resources/css/app.css`](file:///d:/xmapp/htdocs/DataPOS/resources/css/app.css) | `.sf-btn-3d`, `.hero-cat-nav` နှင့် 3D Push Button Utility Classes များ တည်ဆောက်ခြင်း။ |
+| **POS-Only Storefront Notice** | [`resources/views/storefront/pos_only.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/pos_only.blade.php) | In-Store POS Notice Badge၊ Store Working Hours & Physical Address Cards၊ 3D Hotline Action Suite (`.sf-btn-3d-success`, `.sf-btn-3d-viber`, `.sf-btn-3d-telegram`)၊ Google Maps Direction ခလုတ်နှင့် Staff Direct POS Access CTA တပ်ဆင်ခြင်း။ |
+| **Search Suggestions Dropdown** | [`resources/views/storefront/components/search-suggestions-dropdown.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/components/search-suggestions-dropdown.blade.php) | Matched Keyword Highlighting (XSS-safe)၊ Product Thumbnail၊ Dynamic Currency Price (`format_currency`)၊ Live Stock Badges (`in_stock`/`out_of_stock`)၊ Full Arrow Keyboard Nav နှင့် 3D Trending Chips တပ်ဆင်ခြင်း။ |
+| **Direct Viber Order Modal** | [`resources/views/storefront/components/_viber_order_modal.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/storefront/components/_viber_order_modal.blade.php) | Pre-filled Customer Phone/Address၊ 3D Quantity Steppers (`+`/`-`)၊ Dynamic Pricing၊ Send Order 3D Button (`.sf-btn-3d-viber`)၊ Direct Call (`.sf-btn-3d-success`)၊ Viber QR Code & Backup Contact Accordion တပ်ဆင်ခြင်း။ |
+| **Storefront Universal Footer** | [`resources/views/components/storefront-footer.blade.php`](file:///d:/xmapp/htdocs/DataPOS/resources/views/components/storefront-footer.blade.php) | Physical Address & Hours Cards၊ Official Social 3D Buttons (Viber/Telegram)၊ Payment Partners Badges၊ Mobile Safe Area Inset Padding (`pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]`)၊ 3D Back-to-Top Button တပ်ဆင်ခြင်း။ |
+| **Catalog Controller Suggestions** | [`app/Http/Controllers/Storefront/CatalogController.php`](file:///d:/xmapp/htdocs/DataPOS/app/Http/Controllers/Storefront/CatalogController.php) | Live search suggestions API တွင် hardcoded `Ks` ဖယ်ရှား၍ `format_currency($product->retail_price, $store)` နှင့် `format_currency($product->old_price, $store)` အသုံးပြုခြင်း။ |
+| **Storefront Client JS Engine** | [`resources/js/app.js`](file:///d:/xmapp/htdocs/DataPOS/resources/js/app.js) | Alpine `searchSuggestions` component တွင် XSS-safe `highlight(text)` နှင့် `escapeHtml(str)` utility methods များ ဖြည့်စွက်ပြီး Vite compilation ပြီးစီး။ |
 
 ---
 

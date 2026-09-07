@@ -231,15 +231,15 @@ class CatalogController extends Controller
             // count) shown as chips before the user types anything. Tapping a
             // chip fills the search box with its label.
             $trendingCategories = Category::where('store_id', $store->id)
-                ->whereHas('products')
-                ->withCount('products')
+                ->whereHas('products', fn ($q) => $q->where('is_ecommerce', true))
+                ->withCount(['products' => fn ($q) => $q->where('is_ecommerce', true)])
                 ->orderByDesc('products_count')
                 ->limit(4)
                 ->get(['id', 'name', 'slug']);
 
             $trendingBrands = Brand::where('store_id', $store->id)
-                ->whereHas('products')
-                ->withCount('products')
+                ->whereHas('products', fn ($q) => $q->where('is_ecommerce', true))
+                ->withCount(['products' => fn ($q) => $q->where('is_ecommerce', true)])
                 ->orderByDesc('products_count')
                 ->limit(4)
                 ->get(['id', 'name', 'slug']);
@@ -269,19 +269,19 @@ class CatalogController extends Controller
 
         // whereLike escapes LIKE wildcards (%, _) so a literal "%" in the query
         // doesn't match every product in the store. Only categories/brands that
-        // actually carry products are suggested.
+        // actually carry active online products are suggested.
         $categories = Category::where('store_id', $store->id)
             ->whereLike('name', '%' . $search . '%')
-            ->whereHas('products')
-            ->withCount('products')
+            ->whereHas('products', fn ($q) => $q->where('is_ecommerce', true))
+            ->withCount(['products' => fn ($q) => $q->where('is_ecommerce', true)])
             ->orderByDesc('products_count')
             ->limit(3)
             ->get(['id', 'name', 'slug', 'icon']);
 
         $brands = Brand::where('store_id', $store->id)
             ->whereLike('name', '%' . $search . '%')
-            ->whereHas('products')
-            ->withCount('products')
+            ->whereHas('products', fn ($q) => $q->where('is_ecommerce', true))
+            ->withCount(['products' => fn ($q) => $q->where('is_ecommerce', true)])
             ->orderByDesc('products_count')
             ->limit(3)
             ->get(['id', 'name', 'slug']);
@@ -322,9 +322,9 @@ class CatalogController extends Controller
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'price' => 'Ks ' . number_format((float) $product->retail_price),
+                    'price' => format_currency($product->retail_price, $store),
                     'old_price' => $product->old_price !== null
-                        ? 'Ks ' . number_format((float) $product->old_price)
+                        ? format_currency($product->old_price, $store)
                         : null,
                     'image' => $product->image_path ? asset('storage/' . $product->image_path) : null,
                     'url' => url('/store/' . $store->slug . '/product/' . $product->slug),

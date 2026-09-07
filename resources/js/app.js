@@ -486,6 +486,25 @@ Alpine.data('searchSuggestions', (storeSlug, endpoint, labels) => ({
         return null;
     },
 
+    highlight(text) {
+        if (!text) return '';
+        const q = (this.query || '').trim();
+        if (!q) return this.escapeHtml(text);
+        const escapedQuery = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const safeText = this.escapeHtml(text);
+        const regex = new RegExp(`(${escapedQuery})`, 'gi');
+        return safeText.replace(regex, '<mark class="bg-amber-200 dark:bg-amber-900/80 text-amber-900 dark:text-amber-100 rounded-xs px-0.5 font-black not-italic">$1</mark>');
+    },
+
+    escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    },
+
     hasAny() {
         return this.categories.length > 0 || this.brands.length > 0 || this.products.length > 0;
     },

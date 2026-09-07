@@ -89,7 +89,7 @@ class OrderController extends Controller
                             ->where('id', $productId)
                             ->first();
 
-                        if (!$product || !$product->isInStock()) {
+                        if (!$product || !$product->is_ecommerce || !$product->isInStock()) {
                             return back()->withErrors(['items_json' => 'One or more selected products are unavailable. Please update the order list and try again.'])->withInput();
                         }
 
@@ -155,8 +155,8 @@ class OrderController extends Controller
                     ->where('id', $validated['product_id'])
                     ->firstOrFail();
 
-                if (!$product->isInStock()) {
-                    return back()->withErrors(['product' => 'Sorry, this product is currently out of stock.']);
+                if (!$product->is_ecommerce || !$product->isInStock()) {
+                    return back()->withErrors(['product' => 'Sorry, this product is currently unavailable or out of stock.']);
                 }
 
                 $variant = null;

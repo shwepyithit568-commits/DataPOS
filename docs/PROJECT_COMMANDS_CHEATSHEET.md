@@ -33,11 +33,34 @@ http://127.0.0.1:8501
 http://127.0.0.1:8501/store/datapos-mobile
 http://127.0.0.1:8501/store/datapos-mobile/pos
 http://127.0.0.1:8501/store/datapos-mobile/admin/dashboard
-Phone URL ကိုလည်း IP အသစ်ဖြင့်ဖွင့်ပါ:
+```
+
+### 📱 Real Mobile Device နဲ့ Test လုပ်နည်း
+
+**Step 1** — Server ကို Network-accessible mode ဖြင့် run ပါ (PC နဲ့ ဖုန်း တူညီသော WiFi ထဲ ဝင်ထားရမည်):
+
+```powershell
+$env:PHP_CLI_SERVER_WORKERS=4; php artisan serve --host=0.0.0.0 --port=8501
+```
+
+**Step 2** — PC ရဲ့ Local IP စစ်ပါ:
+
+```powershell
+ipconfig | findstr /i "IPv4"
+```
+
+**Step 3** — ဖုန်းရဲ့ browser မှာ ဝင်ပါ (PC IP + port):
 
 ```text
-http://192.168.1.59:8501/store/datapos-mobile
+# Home WiFi
+http://192.168.1.233:8501/store/datapos-mobile
+http://192.168.1.233:8501/store/datapos-mobile/pos
+http://192.168.1.233:8501/store/datapos-mobile/admin/dashboard
 ```
+
+> ⚠️ **Windows Firewall ပိတ်နေလျှင်** — Control Panel → Windows Defender Firewall → Allow an app through firewall → PHP ကို Private + Public ✅ check လုပ်ပါ။ (သို့မဟုတ် Inbound Rule အသစ်ဖြင့် TCP port 8501 ကို Allow ပါ)
+>
+> 💡 **IP ပြောင်းနိုင်သည်** — WiFi reconnect တိုင်း IP ပြောင်းနိုင်သောကြောင့် `ipconfig` ဖြင့် စစ်ပြီး ဖုန်း URL ကို update လုပ်ပါ။
 
 Vite CSS/JS watcher ဖွင့်ရန်:
 

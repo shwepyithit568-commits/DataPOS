@@ -78,6 +78,7 @@ class BrowseController extends Controller
                     'total' => $total,
                 ];
             })
+            ->filter(fn ($row) => $row->total > 0)
             ->values();
 
         $ecommerceProducts = Product::where('store_id', $store->id)

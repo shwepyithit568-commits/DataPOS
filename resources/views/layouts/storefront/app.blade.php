@@ -344,6 +344,120 @@
         .sf-text-primary   { color: var(--sf-primary) !important; }
         .sf-border-primary { border-color: var(--sf-primary) !important; }
         .sf-bg-primary-tint { background-color: color-mix(in srgb, var(--sf-primary) 15%, transparent) !important; }
+
+        /* ── Mobile Bottom Navigation 3D Tactile Buttons ── */
+        .sf-nav-btn {
+            position: relative;
+            display: inline-flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transform: translateZ(0);
+            transition: transform 120ms ease, border-bottom-width 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+            border-radius: 8px;
+            border: 1px solid rgba(203, 213, 225, 0.9);
+            border-bottom: 3px solid #cbd5e1;
+            background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+            color: #334155;
+            text-decoration: none !important;
+            min-height: 50px;
+            padding: 4px 2px 2px 2px;
+        }
+        .sf-nav-btn:hover {
+            background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+            color: #0f172a;
+        }
+        .sf-nav-btn:active {
+            transform: translateY(1.5px);
+            border-bottom-width: 1.5px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), inset 0 1px 2px rgba(0, 0, 0, 0.06);
+        }
+        .dark .sf-nav-btn,
+        html.dark .sf-nav-btn {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid rgba(51, 65, 85, 0.9);
+            border-bottom: 3px solid #020617;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
+        }
+        .dark .sf-nav-btn:hover,
+        html.dark .sf-nav-btn:hover {
+            background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+            color: #ffffff;
+        }
+        .dark .sf-nav-btn:active,
+        html.dark .sf-nav-btn:active {
+            transform: translateY(1.5px);
+            border-bottom-width: 1.5px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+        }
+
+        /* 1. Home Active (Sky Blue 3D) */
+        .sf-nav-btn-home.active {
+            background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid #38bdf8 !important;
+            border-bottom: 3px solid #075985 !important;
+            box-shadow: 0 2px 8px -1px rgba(2, 132, 199, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        }
+
+        /* 2. Products Active (Indigo Blue 3D) */
+        .sf-nav-btn-products.active {
+            background: linear-gradient(180deg, #4f46e5 0%, #4338ca 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid #818cf8 !important;
+            border-bottom: 3px solid #312e81 !important;
+            box-shadow: 0 2px 8px -1px rgba(79, 70, 229, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        }
+
+        /* 3. Categories Active (Amber Orange 3D) */
+        .sf-nav-btn-categories.active {
+            background: linear-gradient(180deg, #d97706 0%, #b45309 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid #fcd34d !important;
+            border-bottom: 3px solid #78350f !important;
+            box-shadow: 0 2px 8px -1px rgba(217, 119, 6, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        }
+
+        /* 4. Repair / Service Tracking Active (Purple / Violet 3D) */
+        .sf-nav-btn-repair.active {
+            background: linear-gradient(180deg, #7e22ce 0%, #6b21a8 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid #c084fc !important;
+            border-bottom: 3px solid #581c87 !important;
+            box-shadow: 0 2px 8px -1px rgba(126, 34, 206, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        }
+
+        /* 5. Cart / Orders Active (Rose Crimson 3D) */
+        .sf-nav-btn-cart.active {
+            background: linear-gradient(180deg, #e11d48 0%, #be123c 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid #fb7185 !important;
+            border-bottom: 3px solid #881337 !important;
+            box-shadow: 0 2px 8px -1px rgba(225, 29, 72, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        }
+
+        /* 6. Account / Login Active (Emerald Green 3D) */
+        .sf-nav-btn-account.active,
+        .sf-nav-btn-login.active {
+            background: linear-gradient(180deg, #059669 0%, #047857 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid #34d399 !important;
+            border-bottom: 3px solid #064e3b !important;
+            box-shadow: 0 2px 8px -1px rgba(5, 150, 105, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        }
+
+        /* 7. Glass Finder Active (Cyan 3D) */
+        .sf-nav-btn-glass.active {
+            background: linear-gradient(180deg, #0891b2 0%, #0e7490 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid #67e8f9 !important;
+            border-bottom: 3px solid #155e75 !important;
+            box-shadow: 0 2px 8px -1px rgba(8, 145, 178, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        }
     </style>
 </head>
 
@@ -561,7 +675,7 @@
 
                 {{-- Compact Cart Icon with Badge (hidden on mobile — cart is in the bottom nav) --}}
                 @if (store_can('storefront.online_ordering', $activeStoreContext))
-                <a href="{{ $orderBuilderUrl }}" class="group relative hidden md:flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl p-0 transition-all duration-150 transform hover:-translate-y-0.5 active:translate-y-0.5 select-none bg-gradient-to-b from-emerald-50 to-teal-100/90 dark:from-emerald-950/60 dark:to-teal-900/40 border border-emerald-200 dark:border-emerald-800/80 border-b-[3px] border-b-emerald-300 dark:border-b-emerald-700 text-emerald-600 dark:text-emerald-400 shadow-sm shadow-emerald-500/10 hover:from-emerald-100 hover:to-teal-200/90" title="{{ __('messages.order_builder') }}">
+                <a href="{{ $orderBuilderUrl }}" class="group relative hidden md:flex h-11 w-11 items-center justify-center rounded-xl p-0 transition-all duration-150 transform hover:-translate-y-0.5 active:translate-y-0.5 select-none bg-gradient-to-b from-emerald-50 to-teal-100/90 dark:from-emerald-950/60 dark:to-teal-900/40 border border-emerald-200 dark:border-emerald-800/80 border-b-[3px] border-b-emerald-300 dark:border-b-emerald-700 text-emerald-600 dark:text-emerald-400 shadow-sm shadow-emerald-500/10 hover:from-emerald-100 hover:to-teal-200/90" title="{{ __('messages.order_builder') }}">
                     <svg class="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
@@ -986,6 +1100,12 @@
                     </button>
                 </form>
 
+                {{-- PWA Install Quick Action inside Drawer --}}
+                <button type="button" @click="mobileMenuOpen = false; window.__promptPwaInstall && window.__promptPwaInstall()" class="sf-btn-3d !flex-row w-full justify-center gap-2 py-2 px-3 text-xs font-black bg-gradient-to-b from-rose-50 to-red-50/80 dark:from-rose-950/40 dark:to-red-950/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900 border-b-[3px] border-b-rose-400 dark:border-b-rose-950 shadow-xs active:translate-y-0.5 active:border-b cursor-pointer">
+                    <span class="text-sm">📲</span>
+                    <span>{{ __('messages.pwa_install_btn') }} (Full Screen)</span>
+                </button>
+
                 <div class="flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2 min-w-0">
                         @if ($setting?->phone)
@@ -1163,13 +1283,39 @@
             }
         }"
         :class="navHidden ? 'translate-y-[180%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'"
-        class="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch text-xs transition-all duration-300 ease-out will-change-transform bg-white dark:bg-slate-900 border-t-2 border-slate-200 dark:border-slate-800 shadow-[0_-4px_16px_rgba(15,23,42,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.5)] px-1.5 py-1.5 gap-1.5 pb-[calc(env(safe-area-inset-bottom,0px)+0.35rem)]"
+        class="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch text-xs transition-all duration-300 ease-out will-change-transform bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t-2 border-slate-200 dark:border-slate-800 shadow-[0_-4px_16px_rgba(15,23,42,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.5)] px-1.5 py-1.5 gap-1.5 pb-[calc(env(safe-area-inset-bottom,0px)+0.35rem)]"
     >
         @forelse ($mobileBottomNavItems as $navItem)
+            @php
+                $iconKey = $navItem->icon_key ?? $navItem->destination_key ?? 'home';
+                $btnColorClass = match($iconKey) {
+                    'home' => 'sf-nav-btn-home',
+                    'products' => 'sf-nav-btn-products',
+                    'categories' => 'sf-nav-btn-categories',
+                    'glass' => 'sf-nav-btn-glass',
+                    'repair' => 'sf-nav-btn-repair',
+                    'cart' => 'sf-nav-btn-cart',
+                    'account' => 'sf-nav-btn-account',
+                    'login', 'register' => 'sf-nav-btn-login',
+                    default => 'sf-nav-btn-home',
+                };
+                $inactiveColor = match($iconKey) {
+                    'home' => 'text-sky-500 dark:text-sky-400',
+                    'products' => 'text-indigo-500 dark:text-indigo-400',
+                    'categories' => 'text-amber-500 dark:text-amber-400',
+                    'glass' => 'text-cyan-500 dark:text-cyan-400',
+                    'repair' => 'text-purple-600 dark:text-purple-400',
+                    'cart' => 'text-rose-500 dark:text-rose-400',
+                    'account' => 'text-emerald-500 dark:text-emerald-400',
+                    'login', 'register' => 'text-teal-500 dark:text-teal-400',
+                    default => 'text-sky-500 dark:text-sky-400',
+                };
+            @endphp
             <a href="{{ $navItem->url }}"
                @if ($navItem->is_external) target="{{ $navItem->target }}" rel="{{ $navItem->rel }}" @endif
-               class="sf-btn-3d flex-1 py-1 min-h-[48px] {{ $navItem->is_active ? 'active' : '' }}">
-                <span class="inline-flex h-6 w-6 items-center justify-center relative">
+               class="sf-nav-btn flex-1 {{ $btnColorClass }} {{ $navItem->is_active ? 'active' : '' }}"
+               title="{{ $navItem->label }}">
+                <span class="inline-flex h-6 w-6 items-center justify-center relative shrink-0 {{ $navItem->is_active ? 'text-white' : $inactiveColor }}">
                     <x-storefront.navigation-icon :name="$navItem->icon_key" class="h-5 w-5" />
                     @if ($navItem->destination_key === 'cart')
                         <span x-show="$store.orderBuilder && $store.orderBuilder.totalCount > 0" 
@@ -1177,61 +1323,72 @@
                               x-text="$store.orderBuilder.totalCount"></span>
                     @endif
                 </span>
-                <span class="text-[10px] sm:text-[10.5px] tracking-tight truncate max-w-[62px] text-center leading-tight mt-0.5 {{ $navItem->is_active ? 'font-black' : 'font-bold' }}">{{ $navItem->label }}</span>
+                <span class="text-[9.5px] sm:text-[10px] tracking-tight truncate max-w-full text-center leading-none mt-1 {{ $navItem->is_active ? 'font-black text-white' : 'font-bold text-slate-700 dark:text-slate-300' }}">
+                    {{ $navItem->label }}
+                </span>
             </a>
         @empty
-            <a href="{{ $homeUrl }}" class="sf-btn-3d flex-1 py-1 min-h-[48px] {{ $isHome ? 'active' : '' }}">
-                <span class="inline-flex h-6 w-6 items-center justify-center relative">
+            {{-- 1. Home --}}
+            <a href="{{ $homeUrl }}" class="sf-nav-btn flex-1 sf-nav-btn-home {{ $isHome ? 'active' : '' }}" title="{{ __('messages.nav_home') }}">
+                <span class="inline-flex h-6 w-6 items-center justify-center relative shrink-0 {{ $isHome ? 'text-white' : 'text-sky-500 dark:text-sky-400' }}">
                     <x-storefront.navigation-icon name="home" class="h-5 w-5" />
                 </span>
-                <span class="text-[10px] sm:text-[10.5px] tracking-tight truncate max-w-[62px] text-center leading-tight mt-0.5 {{ $isHome ? 'font-black' : 'font-bold' }}">{{ __('messages.nav_home') }}</span>
+                <span class="text-[9.5px] sm:text-[10px] tracking-tight truncate max-w-full text-center leading-none mt-1 {{ $isHome ? 'font-black text-white' : 'font-bold text-slate-700 dark:text-slate-300' }}">{{ __('messages.nav_home') }}</span>
             </a>
-            <a href="{{ $productsUrl }}" class="sf-btn-3d flex-1 py-1 min-h-[48px] {{ $isProducts ? 'active' : '' }}">
-                <span class="inline-flex h-6 w-6 items-center justify-center relative">
+
+            {{-- 2. Products --}}
+            <a href="{{ $productsUrl }}" class="sf-nav-btn flex-1 sf-nav-btn-products {{ $isProducts ? 'active' : '' }}" title="{{ __('messages.nav_products') }}">
+                <span class="inline-flex h-6 w-6 items-center justify-center relative shrink-0 {{ $isProducts ? 'text-white' : 'text-indigo-500 dark:text-indigo-400' }}">
                     <x-storefront.navigation-icon name="products" class="h-5 w-5" />
                 </span>
-                <span class="text-[10px] sm:text-[10.5px] tracking-tight truncate max-w-[62px] text-center leading-tight mt-0.5 {{ $isProducts ? 'font-black' : 'font-bold' }}">{{ __('messages.nav_products') }}</span>
+                <span class="text-[9.5px] sm:text-[10px] tracking-tight truncate max-w-full text-center leading-none mt-1 {{ $isProducts ? 'font-black text-white' : 'font-bold text-slate-700 dark:text-slate-300' }}">{{ __('messages.nav_products') }}</span>
             </a>
+
+            {{-- 3. Service or Categories --}}
             @if (store_can('service.repair_jobs', $activeStoreContext))
-                <a href="{{ $serviceTrackingUrl }}" class="sf-btn-3d flex-1 py-1 min-h-[48px] {{ $isServiceTracking ? 'active' : '' }}">
-                    <span class="inline-flex h-6 w-6 items-center justify-center relative">
+                <a href="{{ $serviceTrackingUrl }}" class="sf-nav-btn flex-1 sf-nav-btn-repair {{ $isServiceTracking ? 'active' : '' }}" title="{{ __('messages.nav_service_track') }}">
+                    <span class="inline-flex h-6 w-6 items-center justify-center relative shrink-0 {{ $isServiceTracking ? 'text-white' : 'text-purple-600 dark:text-purple-400' }}">
                         <x-storefront.navigation-icon name="repair" class="h-5 w-5" />
                     </span>
-                    <span class="text-[10px] sm:text-[10.5px] tracking-tight truncate max-w-[62px] text-center leading-tight mt-0.5 {{ $isServiceTracking ? 'font-black' : 'font-bold' }}">{{ __('messages.nav_service_track') }}</span>
+                    <span class="text-[9.5px] sm:text-[10px] tracking-tight truncate max-w-full text-center leading-none mt-1 {{ $isServiceTracking ? 'font-black text-white' : 'font-bold text-slate-700 dark:text-slate-300' }}">{{ __('messages.nav_service_track') }}</span>
                 </a>
             @else
-                <a href="{{ $browseUrl }}" class="sf-btn-3d flex-1 py-1 min-h-[48px] {{ $isBrowse ? 'active' : '' }}">
-                    <span class="inline-flex h-6 w-6 items-center justify-center relative">
+                <a href="{{ $browseUrl }}" class="sf-nav-btn flex-1 sf-nav-btn-categories {{ $isBrowse ? 'active' : '' }}" title="{{ __('messages.nav_categories') }}">
+                    <span class="inline-flex h-6 w-6 items-center justify-center relative shrink-0 {{ $isBrowse ? 'text-white' : 'text-amber-500 dark:text-amber-400' }}">
                         <x-storefront.navigation-icon name="categories" class="h-5 w-5" />
                     </span>
-                    <span class="text-[10px] sm:text-[10.5px] tracking-tight truncate max-w-[62px] text-center leading-tight mt-0.5 {{ $isBrowse ? 'font-black' : 'font-bold' }}">{{ __('messages.nav_categories') }}</span>
+                    <span class="text-[9.5px] sm:text-[10px] tracking-tight truncate max-w-full text-center leading-none mt-1 {{ $isBrowse ? 'font-black text-white' : 'font-bold text-slate-700 dark:text-slate-300' }}">{{ __('messages.nav_categories') }}</span>
                 </a>
             @endif
+
+            {{-- 4. Cart / Order --}}
             @if (store_can('storefront.online_ordering', $activeStoreContext))
-            <a href="{{ $orderBuilderUrl }}" class="sf-btn-3d flex-1 py-1 min-h-[48px] {{ $isOrderBuilder ? 'active' : '' }}">
-                <span class="inline-flex h-6 w-6 items-center justify-center relative">
+            <a href="{{ $orderBuilderUrl }}" class="sf-nav-btn flex-1 sf-nav-btn-cart {{ $isOrderBuilder ? 'active' : '' }}" title="{{ __('messages.nav_cart') }}">
+                <span class="inline-flex h-6 w-6 items-center justify-center relative shrink-0 {{ $isOrderBuilder ? 'text-white' : 'text-rose-500 dark:text-rose-400' }}">
                     <x-storefront.navigation-icon name="cart" class="h-5 w-5" />
                     <span x-show="$store.orderBuilder && $store.orderBuilder.totalCount > 0" 
                           class="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white font-black text-[10px] flex items-center justify-center border border-rose-300/60 border-b-2 border-b-rose-800 shadow-sm animate-pulse"
                           x-text="$store.orderBuilder.totalCount"></span>
                 </span>
-                <span class="text-[10px] sm:text-[10.5px] tracking-tight truncate max-w-[62px] text-center leading-tight mt-0.5 {{ $isOrderBuilder ? 'font-black' : 'font-bold' }}">{{ __('messages.nav_cart') }}</span>
+                <span class="text-[9.5px] sm:text-[10px] tracking-tight truncate max-w-full text-center leading-none mt-1 {{ $isOrderBuilder ? 'font-black text-white' : 'font-bold text-slate-700 dark:text-slate-300' }}">{{ __('messages.nav_cart') }}</span>
             </a>
             @endif
+
+            {{-- 5. Account or Login --}}
             @if (store_can('storefront.customer_portal', $activeStoreContext))
             @auth
-                <a href="{{ $accountUrl }}" class="sf-btn-3d flex-1 py-1 min-h-[48px] {{ $isAccount ? 'active' : '' }}">
-                    <span class="inline-flex h-6 w-6 items-center justify-center relative">
+                <a href="{{ $accountUrl }}" class="sf-nav-btn flex-1 sf-nav-btn-account {{ $isAccount ? 'active' : '' }}" title="{{ __('messages.nav_account') }}">
+                    <span class="inline-flex h-6 w-6 items-center justify-center relative shrink-0 {{ $isAccount ? 'text-white' : 'text-emerald-500 dark:text-emerald-400' }}">
                         <x-storefront.navigation-icon name="account" class="h-5 w-5" />
                     </span>
-                    <span class="text-[10px] sm:text-[10.5px] tracking-tight truncate max-w-[62px] text-center leading-tight mt-0.5 {{ $isAccount ? 'font-black' : 'font-bold' }}">{{ __('messages.nav_account') }}</span>
+                    <span class="text-[9.5px] sm:text-[10px] tracking-tight truncate max-w-full text-center leading-none mt-1 {{ $isAccount ? 'font-black text-white' : 'font-bold text-slate-700 dark:text-slate-300' }}">{{ __('messages.nav_account') }}</span>
                 </a>
             @else
-                <a href="{{ route('login') }}" class="sf-btn-3d flex-1 py-1 min-h-[48px] {{ $isAccount ? 'active' : '' }}">
-                    <span class="inline-flex h-6 w-6 items-center justify-center relative">
+                <a href="{{ route('login') }}" class="sf-nav-btn flex-1 sf-nav-btn-login {{ $isAccount ? 'active' : '' }}" title="{{ __('messages.login') }}">
+                    <span class="inline-flex h-6 w-6 items-center justify-center relative shrink-0 {{ $isAccount ? 'text-white' : 'text-emerald-500 dark:text-emerald-400' }}">
                         <x-storefront.navigation-icon name="login" class="h-5 w-5" />
                     </span>
-                    <span class="text-[10px] sm:text-[10.5px] tracking-tight truncate max-w-[62px] text-center leading-tight mt-0.5 {{ $isAccount ? 'font-black' : 'font-bold' }}">{{ __('messages.login') }}</span>
+                    <span class="text-[9.5px] sm:text-[10px] tracking-tight truncate max-w-full text-center leading-none mt-1 {{ $isAccount ? 'font-black text-white' : 'font-bold text-slate-700 dark:text-slate-300' }}">{{ __('messages.login') }}</span>
                 </a>
             @endauth
             @endif
@@ -1243,6 +1400,7 @@
     @php
         $floatTelegram = \App\Support\ContactLinkBuilder::telegramUrl($setting?->telegram_username);
         $floatViber = \App\Support\ContactLinkBuilder::viberChatUrl($setting?->viber_number);
+        $floatViberIos = \App\Support\ContactLinkBuilder::viberIosContactUrl($setting?->viber_number);
         $floatLabel = trim((string) ($setting?->chat_button_label ?? '')) ?: __('messages.chat_with_us');
         $floatIcon = trim((string) ($setting?->chat_button_icon ?? ''));
         $floatIconPath = trim((string) ($setting?->chat_button_icon_path ?? ''));
@@ -1307,49 +1465,112 @@
                 x-transition:leave="transition ease-in duration-100"
                 x-transition:leave-start="opacity-100 scale-100"
                 x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-                class="absolute bottom-full right-0 mb-3 w-60 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 dark:border-slate-700/80 dark:bg-slate-800/95 shadow-xl ring-1 ring-black/5 backdrop-blur-md"
+                class="absolute bottom-full right-0 mb-2.5 w-60 overflow-hidden rounded-2xl border-2 border-slate-200/90 bg-white/95 dark:border-slate-700/90 dark:bg-slate-900/95 shadow-2xl backdrop-blur-md"
                 role="menu"
                 :aria-expanded="chatOpen ? 'true' : 'false'"
             >
-                <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-700/60 px-4 py-2.5">
-                    <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-sky-500 text-xs">💬</span>
-                    <p class="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-600 font-outfit">
+                <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 px-3 py-2 bg-slate-50/70 dark:bg-slate-850/70">
+                    <span class="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-b from-sky-400 to-blue-600 text-white text-[10px] shadow-xs border-b border-b-blue-800 font-black">💬</span>
+                    <p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-300 font-outfit">
                         {{ __('messages.chat_with_us') }}
                     </p>
                 </div>
-                <div class="p-1.5">
+                <div class="p-1.5 space-y-1.5">
                     @foreach ($chatChannels as $channel)
                         @php
-                            $isCall = str_starts_with($channel['href'] ?? '', 'tel:');
-                            $iconTint = $isCall ? 'bg-emerald-50 dark:bg-emerald-950/40' : 'bg-slate-100 dark:bg-slate-700/60';
-                            // Viber rows (auto brand or admin viber:// channel) get the
-                            // "Get Viber" not-installed fallback, matching the footer.
-                            $isViber = ($channel['brand'] ?? null) === 'viber' || str_starts_with($channel['href'] ?? '', 'viber://');
+                            $href = $channel['href'] ?? '';
+                            $brand = $channel['brand'] ?? '';
+                            $isCall = str_starts_with($href, 'tel:');
+                            $isViber = $brand === 'viber' || str_starts_with($href, 'viber://');
+                            $isTelegram = $brand === 'telegram' || str_contains($href, 't.me') || str_starts_with($href, 'tg://');
+                            $isFacebook = $brand === 'facebook' || str_contains($href, 'facebook.com');
+                            $isYoutube = $brand === 'youtube' || str_contains($href, 'youtube.com');
+                            $isTiktok = $brand === 'tiktok' || str_contains($href, 'tiktok.com');
+                            $isCustomScheme = $isViber || $isCall || str_starts_with($href, 'sms:');
+                            $viberIosHref = $isViber ? ($floatViberIos ?? $href) : null;
+
+                            // Dedicated 3D tactile button styling per brand
+                            $theme = match(true) {
+                                $isViber => [
+                                    'card' => 'border-purple-300/90 dark:border-purple-700/60 border-b-[3px] border-b-purple-600 dark:border-b-purple-900 bg-gradient-to-b from-purple-50/90 via-white to-purple-100/60 dark:from-purple-950/40 dark:via-slate-900 dark:to-purple-900/30 text-purple-700 dark:text-purple-300 hover:brightness-105 shadow-[0_2px_4px_rgba(147,51,234,0.12),inset_0_1px_0_rgba(255,255,255,0.85)]',
+                                    'icon' => 'bg-gradient-to-b from-violet-500 to-purple-600 text-white border-b-2 border-b-purple-800 shadow-xs',
+                                    'chevron' => 'text-purple-500 dark:text-purple-400',
+                                ],
+                                $isTelegram => [
+                                    'card' => 'border-sky-300/90 dark:border-sky-700/60 border-b-[3px] border-b-blue-600 dark:border-b-blue-900 bg-gradient-to-b from-sky-50/90 via-white to-sky-100/60 dark:from-sky-950/40 dark:via-slate-900 dark:to-sky-900/30 text-sky-700 dark:text-sky-300 hover:brightness-105 shadow-[0_2px_4px_rgba(2,132,199,0.12),inset_0_1px_0_rgba(255,255,255,0.85)]',
+                                    'icon' => 'bg-gradient-to-b from-sky-400 to-blue-600 text-white border-b-2 border-b-blue-800 shadow-xs',
+                                    'chevron' => 'text-sky-500 dark:text-sky-400',
+                                ],
+                                $isCall => [
+                                    'card' => 'border-emerald-300/90 dark:border-emerald-700/60 border-b-[3px] border-b-emerald-600 dark:border-b-emerald-900 bg-gradient-to-b from-emerald-50/90 via-white to-emerald-100/60 dark:from-emerald-950/40 dark:via-slate-900 dark:to-emerald-900/30 text-emerald-700 dark:text-emerald-300 hover:brightness-105 shadow-[0_2px_4px_rgba(16,185,129,0.12),inset_0_1px_0_rgba(255,255,255,0.85)]',
+                                    'icon' => 'bg-gradient-to-b from-emerald-400 to-emerald-600 text-white border-b-2 border-b-emerald-800 shadow-xs',
+                                    'chevron' => 'text-emerald-500 dark:text-emerald-400',
+                                ],
+                                $isFacebook => [
+                                    'card' => 'border-blue-300/90 dark:border-blue-700/60 border-b-[3px] border-b-blue-600 dark:border-b-blue-900 bg-gradient-to-b from-blue-50/90 via-white to-blue-100/60 dark:from-blue-950/40 dark:via-slate-900 dark:to-blue-900/30 text-blue-700 dark:text-blue-300 hover:brightness-105 shadow-[0_2px_4px_rgba(37,99,235,0.12),inset_0_1px_0_rgba(255,255,255,0.85)]',
+                                    'icon' => 'bg-gradient-to-b from-blue-500 to-blue-700 text-white border-b-2 border-b-blue-900 shadow-xs',
+                                    'chevron' => 'text-blue-500 dark:text-blue-400',
+                                ],
+                                $isYoutube => [
+                                    'card' => 'border-rose-300/90 dark:border-rose-700/60 border-b-[3px] border-b-rose-600 dark:border-b-rose-900 bg-gradient-to-b from-rose-50/90 via-white to-rose-100/60 dark:from-rose-950/40 dark:via-slate-900 dark:to-rose-900/30 text-rose-700 dark:text-rose-300 hover:brightness-105 shadow-[0_2px_4px_rgba(225,29,72,0.12),inset_0_1px_0_rgba(255,255,255,0.85)]',
+                                    'icon' => 'bg-gradient-to-b from-rose-500 to-rose-700 text-white border-b-2 border-b-rose-900 shadow-xs',
+                                    'chevron' => 'text-rose-500 dark:text-rose-400',
+                                ],
+                                default => [
+                                    'card' => 'border-slate-300/90 dark:border-slate-700/60 border-b-[3px] border-b-slate-400 dark:border-b-slate-800 bg-gradient-to-b from-slate-50/90 via-white to-slate-100/60 dark:from-slate-850 dark:via-slate-900 dark:to-slate-800/40 text-slate-800 dark:text-slate-200 hover:brightness-105 shadow-[0_2px_4px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.85)]',
+                                    'icon' => 'bg-gradient-to-b from-slate-600 to-slate-800 text-white border-b-2 border-b-slate-900 shadow-xs',
+                                    'chevron' => 'text-slate-400 dark:text-slate-500',
+                                ],
+                            };
                         @endphp
-                        <div @if ($isViber) class="rounded-xl pb-1 transition hover:bg-slate-50 dark:hover:bg-slate-700/40" @endif>
-                            <a href="{{ $channel['href'] }}" target="_blank" rel="noopener noreferrer" @click="chatOpen = false"
-                               class="group w-full flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm font-semibold transition {{ $channel['hoverBg'] ?? 'hover:bg-slate-100 dark:hover:bg-slate-700' }}"
+                        <div>
+                            <a href="{{ $channel['href'] }}"
+                               @if (! $isCustomScheme) target="_blank" rel="noopener noreferrer" @endif
+                               @if ($viberIosHref) data-ios-href="{{ $viberIosHref }}" @endif
+                               @click="chatOpen = false"
+                               class="group w-full flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-xs font-extrabold transition-all duration-150 cursor-pointer select-none border {{ $theme['card'] }} active:translate-y-0.5 active:border-b active:shadow-none"
                                role="menuitem">
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl {{ $iconTint }}">
+                                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg {{ $theme['icon'] }}">
                                     @if (! empty($channel['icon_url']))
-                                        <img src="{{ $channel['icon_url'] }}" alt="" class="h-5 w-5 rounded object-contain" width="20" height="20" loading="lazy" decoding="async">
+                                        <img src="{{ $channel['icon_url'] }}" alt="" class="h-4 w-4 rounded object-contain" width="16" height="16" loading="lazy" decoding="async">
                                     @elseif (! empty($channel['brand']))
-                                        <x-brand-icon :brand="$channel['brand']" class="h-5 w-5 {{ $channel['color'] ?? '' }}"/>
+                                        <x-brand-icon :brand="$channel['brand']" class="h-4 w-4 text-white drop-shadow-xs"/>
                                     @else
-                                        <span class="text-base leading-none">{{ $channel['icon'] ?: '💬' }}</span>
+                                        <span class="text-xs leading-none">{{ $channel['icon'] ?: '💬' }}</span>
                                     @endif
                                 </span>
-                                <span class="flex-1 {{ $channel['color'] ?? 'text-slate-700 dark:text-slate-200' }}">{{ $channel['label'] }}</span>
+                                <span class="flex-1 font-extrabold truncate">{{ $channel['label'] }}</span>
                                 @if ($isCall)
-                                    <svg class="h-4 w-4 text-emerald-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4.5 2.5a1 1 0 0 0-1 1v1c0 6 4.5 10.5 10.5 10.5h1a1 1 0 0 0 1-1v-2.3a1 1 0 0 0-.8-1l-2.4-.5a1 1 0 0 0-1 .3l-.8.8a8 8 0 0 1-3.7-3.7l.8-.8a1 1 0 0 0 .3-1l-.5-2.4a1 1 0 0 0-1-.8z"/></svg>
+                                    <svg class="h-3.5 w-3.5 text-emerald-500 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4.5 2.5a1 1 0 0 0-1 1v1c0 6 4.5 10.5 10.5 10.5h1a1 1 0 0 0 1-1v-2.3a1 1 0 0 0-.8-1l-2.4-.5a1 1 0 0 0-1 .3l-.8.8a8 8 0 0 1-3.7-3.7l.8-.8a1 1 0 0 0 .3-1l-.5-2.4a1 1 0 0 0-1-.8z"/></svg>
+                                @else
+                                    <svg class="h-3 w-3 {{ $theme['chevron'] }} shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd"/></svg>
                                 @endif
                             </a>
                             @if ($isViber)
-                                <p class="px-2.5 pb-1.5 text-[11px] text-slate-400 dark:text-slate-500">
-                                    {{ __('messages.viber_missing') }}
-                                    <a href="https://www.viber.com/download/" target="_blank" rel="noopener noreferrer" @click="chatOpen = false"
-                                       class="font-bold text-sky-600 transition hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300">{{ __('messages.viber_install') }} →</a>
-                                </p>
+                                @php
+                                    $rawViberNum = trim((string) ($setting?->viber_number ?? ''));
+                                @endphp
+                                <div class="mt-1 px-2.5 py-1.5 rounded-xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-900/50 text-[10.5px] text-slate-600 dark:text-slate-300 space-y-1">
+                                    @if ($rawViberNum)
+                                        <div class="flex items-center justify-between gap-1 font-bold">
+                                            <span class="font-mono text-purple-800 dark:text-purple-300 text-xs">📱 {{ $rawViberNum }}</span>
+                                            <button type="button"
+                                                    x-data="{ copied: false }"
+                                                    @click.stop="window.__viberFallbackCopy ? window.__viberFallbackCopy('{{ $rawViberNum }}').then(() => { copied = true; setTimeout(() => copied = false, 2000); }) : (navigator.clipboard.writeText('{{ $rawViberNum }}'), copied = true, setTimeout(() => copied = false, 2000))"
+                                                    class="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-800 text-[10px] font-bold text-purple-700 dark:text-purple-300 shadow-2xs hover:bg-purple-100 transition active:scale-95 cursor-pointer">
+                                                <span x-show="!copied">📋 Copy</span>
+                                                <span x-show="copied" x-cloak class="text-emerald-600">✓ Done</span>
+                                            </button>
+                                        </div>
+                                    @endif
+                                    <div class="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 pt-0.5 {{ $rawViberNum ? 'border-t border-purple-100 dark:border-purple-900/40' : '' }}">
+                                        <span>{{ __('messages.viber_missing') }}</span>
+                                        <a href="https://www.viber.com/download/" target="_blank" rel="noopener noreferrer" @click="chatOpen = false"
+                                           class="font-bold text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition">
+                                            {{ __('messages.viber_install') }} →
+                                        </a>
+                                    </div>
+                                </div>
                             @endif
                         </div>
                     @endforeach
@@ -1357,38 +1578,41 @@
             </div>
 
             <div class="relative">
-                {{-- Glow halo behind the FAB for the "raised" floating look --}}
-                <span aria-hidden="true" class="pointer-events-none absolute -inset-2 rounded-full bg-gradient-to-br {{ $floatTelegram ? 'from-sky-400/30 to-blue-500/30' : 'from-violet-400/30 to-fuchsia-500/30' }} blur-xl"></span>
+                {{-- Glow halo behind the FAB for the "raised" floating look (subtle & compact) --}}
+                <span aria-hidden="true" class="pointer-events-none absolute -inset-1 rounded-full bg-gradient-to-br {{ $floatTelegram ? 'from-sky-400/40 to-blue-500/40' : 'from-violet-400/40 to-fuchsia-500/40' }} blur-md opacity-60"></span>
                 {{-- Attention pulse ring (decorative — must never block button clicks) --}}
-                <span x-show="!chatOpen" x-cloak class="pointer-events-none absolute inset-0 rounded-full {{ $floatTelegram ? 'bg-sky-400/50' : 'bg-violet-400/50' }} animate-ping" aria-hidden="true"></span>
+                <span x-show="!chatOpen" x-cloak class="pointer-events-none absolute inset-0 rounded-full {{ $floatTelegram ? 'bg-sky-400/30' : 'bg-violet-400/30' }} animate-ping" aria-hidden="true"></span>
                 <button
                     type="button"
                     @click.stop.prevent="chatOpen = !chatOpen"
                     aria-haspopup="true"
                     :aria-expanded="chatOpen ? 'true' : 'false'"
                     aria-label="{{ $floatLabel }}"
-                    class="relative flex h-16 w-16 items-center justify-center rounded-full shadow-2xl ring-1 ring-black/10 transition duration-200 hover:-translate-y-1 hover:scale-110 active:scale-95 dark:ring-white/15"
+                    class="relative flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full transition-all duration-150 hover:-translate-y-0.5 hover:scale-105 active:scale-95 active:translate-y-0.5 cursor-pointer select-none {{ $floatTelegram ? 'border border-sky-300/80 border-b-[3px] border-b-blue-700 bg-gradient-to-b from-sky-400 via-sky-500 to-blue-600 shadow-[0_4px_12px_rgba(2,132,199,0.35),inset_0_1px_0_rgba(255,255,255,0.45)]' : 'border border-purple-300/80 border-b-[3px] border-b-purple-800 bg-gradient-to-b from-violet-500 via-purple-600 to-fuchsia-600 shadow-[0_4px_12px_rgba(124,58,237,0.35),inset_0_1px_0_rgba(255,255,255,0.45)]' }}"
                 >
-                    @if ($floatIconUrl)
-                        <span class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white dark:bg-slate-800">
-                            <img src="{{ $floatIconUrl }}" alt="{{ $floatLabel }}"
-                                 class="h-full w-full object-cover"
-                                 loading="eager" decoding="async"
-                                 x-on:error="$el.style.display='none'; $el.parentElement.innerHTML = $el.parentElement.dataset.fallback"
-                                 data-fallback="{!! '<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot; class=&quot;h-8 w-8 ' . ($floatTelegram ? 'text-sky-500' : 'text-violet-600') . '&quot; aria-hidden=&quot;true&quot;><path d=&quot;' . \App\Support\BrandIconPath::get($floatTelegram ? 'telegram' : 'viber') . '&quot;/></svg>' !!}">
-                        </span>
-                    @elseif ($floatIcon)
-                        <span class="flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl leading-none shadow-inner dark:bg-slate-800">{{ $floatIcon }}</span>
-                    @else
-                        <span class="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br {{ $floatTelegram ? 'from-sky-400 via-sky-500 to-blue-600' : 'from-violet-400 via-violet-500 to-fuchsia-600' }} shadow-inner">
-                            <x-brand-icon :brand="$floatTelegram ? 'telegram' : 'viber'" class="h-8 w-8 text-white drop-shadow-lg"/>
-                        </span>
-                    @endif
+                    <span x-show="!chatOpen" class="flex items-center justify-center transition-transform duration-150">
+                        @if ($floatIconUrl)
+                            <span class="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center overflow-hidden rounded-full bg-white dark:bg-slate-800">
+                                <img src="{{ $floatIconUrl }}" alt="{{ $floatLabel }}"
+                                     class="h-full w-full object-cover"
+                                     loading="eager" decoding="async"
+                                     x-on:error="$el.style.display='none'; $el.parentElement.innerHTML = $el.parentElement.dataset.fallback"
+                                     data-fallback="{!! '<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;currentColor&quot; class=&quot;h-5 w-5 sm:h-5.5 sm:w-5.5 ' . ($floatTelegram ? 'text-sky-500' : 'text-violet-600') . '&quot; aria-hidden=&quot;true&quot;><path d=&quot;' . \App\Support\BrandIconPath::get($floatTelegram ? 'telegram' : 'viber') . '&quot;/></svg>' !!}">
+                            </span>
+                        @elseif ($floatIcon)
+                            <span class="text-xl leading-none drop-shadow">{{ $floatIcon }}</span>
+                        @else
+                            <x-brand-icon :brand="$floatTelegram ? 'telegram' : 'viber'" class="h-5 w-5 sm:h-5.5 sm:w-5.5 text-white drop-shadow-md"/>
+                        @endif
+                    </span>
+                    <span x-show="chatOpen" x-cloak class="flex items-center justify-center text-white text-base font-black leading-none">
+                        ✕
+                    </span>
                 </button>
-                {{-- Tiny online dot indicator --}}
-                <span class="absolute right-1 top-1 flex h-3.5 w-3.5">
-                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-800"></span>
+                {{-- Neat online dot indicator --}}
+                <span class="absolute -top-0.5 -right-0.5 flex h-3 w-3 pointer-events-none">
+                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60"></span>
+                    <span class="relative inline-flex h-3 w-3 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900 shadow-xs"></span>
                 </span>
             </div>
         </div>
@@ -1400,7 +1624,7 @@
 
     {{-- Web Push frontend — loads after parsing (defer) so it never blocks
          first paint; reads the VAPID key + CSRF token from meta tags. --}}
-    <script>
+    <script nonce="{{ $cspNonce }}">
         window.__pushLabels = {
             enabled: @json(__('messages.push_prefs_enabled')),
             disabled: @json(__('messages.push_prefs_disabled'))
@@ -1453,14 +1677,14 @@
         type="button"
         id="push-notification-bell"
         style="display: none;"
-        class="!hidden fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] md:bottom-24 left-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow-2xl shadow-violet-500/40 ring-1 ring-white/20 transition hover:scale-110 active:scale-95 push-bell-bounce"
+        class="!hidden fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] md:bottom-24 left-4 z-50 inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-purple-300/80 border-b-[3px] border-b-purple-800 bg-gradient-to-b from-purple-500 via-violet-600 to-fuchsia-600 text-white shadow-[0_4px_12px_rgba(124,58,237,0.35),inset_0_1px_0_rgba(255,255,255,0.45)] transition-all duration-150 hover:-translate-y-0.5 hover:scale-105 active:scale-95 active:translate-y-0.5 cursor-pointer select-none push-bell-bounce"
         aria-label="{{ __('messages.push_enable_title') }}"
         title="{{ __('messages.push_enable_title') }}"
     >
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="h-4.5 w-4.5 sm:h-5 sm:w-5 text-white drop-shadow-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
         </svg>
-        <span id="push-notification-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-rose-500 text-white font-black text-[11px] flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-md">1</span>
+        <span id="push-notification-badge" class="hidden absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-rose-500 text-white font-black text-[9px] flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-xs">1</span>
     </button>
 
     {{-- Web Push Notification Modal / Dialog --}}
@@ -1501,25 +1725,31 @@
         </div>
     </div>
 
-    {{-- PWA install banner — appears after the 3rd visit when the browser
-         offers installation (beforeinstallprompt); "Not now" dismisses
-         permanently via localStorage. Sits above the mobile bottom nav. --}}
-    <div id="pwa-install-banner" class="hidden fixed inset-x-3 bottom-24 z-50 mx-auto max-w-md rounded-2xl border border-slate-200 bg-white/95 shadow-2xl backdrop-blur-xl p-4 md:inset-x-auto md:right-6 md:bottom-6 md:mx-0 dark:border-slate-700 dark:bg-slate-900/95" role="dialog" aria-live="polite" aria-label="{{ __('messages.pwa_install_title') }}">
+    {{-- PWA install banner — appears when the browser offers installation or on iOS
+         Sits cleanly above the mobile bottom nav --}}
+    <div id="pwa-install-banner" class="hidden fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] md:bottom-8 z-50 mx-auto max-w-md rounded-2xl border-2 border-slate-200/95 bg-white/95 shadow-2xl backdrop-blur-xl p-3.5 sm:p-4 md:inset-x-auto md:right-6 md:mx-0 dark:border-slate-700/95 dark:bg-slate-900/95" role="dialog" aria-live="polite" aria-label="{{ __('messages.pwa_install_title') }}">
         <div class="flex items-start gap-3">
-            <img src="/icons/icon-192.png" alt="" class="h-12 w-12 shrink-0 rounded-xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-700" width="48" height="48">
+            <img src="/icons/icon-192.png" alt="" class="h-11 w-11 shrink-0 rounded-xl shadow-xs border border-slate-200 dark:border-slate-700" width="44" height="44">
             <div class="min-w-0 flex-1">
-                <p class="text-sm font-black text-slate-900 dark:text-white">{{ __('messages.pwa_install_title') }}</p>
-                <p class="mt-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400">{{ __('messages.pwa_install_desc') }}</p>
+                <div class="flex items-center gap-1.5">
+                    <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <p class="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-tight">{{ __('messages.pwa_install_title') }}</p>
+                </div>
+                <p class="mt-1 text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-300 leading-snug">{{ __('messages.pwa_install_desc') }}</p>
+                <div id="pwa-ios-guide" class="hidden mt-2 p-2 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800 text-[11px] font-bold text-sky-800 dark:text-sky-300 flex items-center gap-2">
+                    <span class="text-base shrink-0">⬆️</span>
+                    <span>{{ __('messages.pwa_ios_instructions') }}</span>
+                </div>
             </div>
-            <button type="button" id="pwa-install-dismiss" class="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200" aria-label="{{ __('messages.close') }}">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            <button type="button" id="pwa-install-dismiss" class="shrink-0 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer" aria-label="{{ __('messages.close') }}">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
-        <div class="mt-3 flex items-center gap-2">
-            <button type="button" id="pwa-install-btn" class="flex-1 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-md shadow-red-600/25 transition hover:brightness-110 active:scale-95">
+        <div class="mt-3 flex items-center gap-2" id="pwa-install-actions">
+            <button type="button" id="pwa-install-btn" class="sf-btn-3d flex-1 py-2 px-3 text-xs font-black bg-gradient-to-b from-rose-500 to-red-600 text-white border-rose-400/80 border-b-[3px] border-b-red-800 shadow-[0_2px_8px_rgba(225,29,72,0.3),inset_0_1px_0_rgba(255,255,255,0.4)] hover:brightness-110 active:translate-y-0.5 active:border-b cursor-pointer">
                 📲 {{ __('messages.pwa_install_btn') }}
             </button>
-            <button type="button" id="pwa-install-notnow" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
+            <button type="button" id="pwa-install-notnow" class="sf-btn-3d py-2 px-3 text-xs font-bold text-slate-600 dark:text-slate-300 active:translate-y-0.5 active:border-b cursor-pointer">
                 {{ __('messages.pwa_install_notnow') }}
             </button>
         </div>
@@ -1528,15 +1758,29 @@
     {{-- PWA service-worker registration + install-prompt handling --}}
     <script nonce="{{ $cspNonce }}">
         (function () {
-            var KEY_VISITS = 'pwa_visits';
             var KEY_DISMISSED = 'pwa_dismissed';
+            var KEY_DISMISSED_AT = 'pwa_dismissed_at';
             var KEY_INSTALLED = 'pwa_installed';
 
-            // 1. Count this page load as one visit.
-            var visits = 999; // storage blocked → eligible immediately
+            var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+                || window.navigator.standalone === true;
+
+            var isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+            // Reset legacy permanent dismissed flag so users can see the install message again
             try {
-                visits = parseInt(localStorage.getItem(KEY_VISITS) || '0', 10) + 1;
-                localStorage.setItem(KEY_VISITS, String(visits));
+                var dismissedAt = localStorage.getItem(KEY_DISMISSED_AT);
+                var legacyDismissed = localStorage.getItem(KEY_DISMISSED);
+                if (legacyDismissed === '1' && !dismissedAt) {
+                    localStorage.removeItem(KEY_DISMISSED);
+                } else if (dismissedAt) {
+                    var diff = Date.now() - parseInt(dismissedAt, 10);
+                    // Snooze for 3 days; after that, allow prompt again
+                    if (diff >= (3 * 24 * 60 * 60 * 1000)) {
+                        localStorage.removeItem(KEY_DISMISSED);
+                        localStorage.removeItem(KEY_DISMISSED_AT);
+                    }
+                }
             } catch (e) {}
 
             var dismissed = false, installed = false;
@@ -1545,10 +1789,7 @@
                 installed = localStorage.getItem(KEY_INSTALLED) === '1';
             } catch (e) {}
 
-            var isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches
-                || window.navigator.standalone === true;
-
-            // 2. Register the service worker (root scope covers the whole site).
+            // Register service worker
             var isSecure = location.protocol === 'https:'
                 || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
             if ('serviceWorker' in navigator && isSecure) {
@@ -1562,10 +1803,14 @@
             var installBtn = document.getElementById('pwa-install-btn');
             var notNowBtn = document.getElementById('pwa-install-notnow');
             var dismissBtn = document.getElementById('pwa-install-dismiss');
+            var iosGuide = document.getElementById('pwa-ios-guide');
 
             function showBanner() {
                 if (!banner || dismissed || installed || isStandalone) return;
-                if (!deferredPrompt || visits < 3) return; // 3rd visit + installable
+                if (isIos) {
+                    if (iosGuide) iosGuide.classList.remove('hidden');
+                    if (installBtn) installBtn.classList.add('hidden');
+                }
                 banner.classList.remove('hidden');
             }
 
@@ -1580,32 +1825,78 @@
                 showBanner();
             });
 
-            if (installBtn) installBtn.addEventListener('click', function () {
-                if (!deferredPrompt) return;
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then(function (choice) {
-                    if (choice.outcome === 'accepted') {
-                        try { localStorage.setItem(KEY_INSTALLED, '1'); } catch (e) {}
-                        installed = true;
-                    }
-                    if (banner) banner.classList.add('hidden');
-                    deferredPrompt = null;
-                });
-            });
+            // On iOS (which lacks beforeinstallprompt), show banner if not standalone and not snoozed
+            if (isIos && !isStandalone && !dismissed && !installed) {
+                setTimeout(showBanner, 2000);
+            }
 
-            function dismissForever() {
-                try { localStorage.setItem(KEY_DISMISSED, '1'); } catch (e) {}
+            if (installBtn) {
+                installBtn.addEventListener('click', function () {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then(function (choice) {
+                            if (choice.outcome === 'accepted') {
+                                try { localStorage.setItem(KEY_INSTALLED, '1'); } catch (e) {}
+                                installed = true;
+                            }
+                            if (banner) banner.classList.add('hidden');
+                            deferredPrompt = null;
+                        });
+                    } else if (isIos) {
+                        if (iosGuide) iosGuide.classList.remove('hidden');
+                    } else {
+                        // In desktop/browser where prompt cannot be triggered directly
+                        alert('Browser address bar ရှိ Install icon (⊕) သို့မဟုတ် Menu (⋮) -> "Install App" ကို နှိပ်၍ ထည့်သွင်းနိုင်ပါသည်');
+                    }
+                });
+            }
+
+            function snoozeDismiss() {
+                try {
+                    localStorage.setItem(KEY_DISMISSED, '1');
+                    localStorage.setItem(KEY_DISMISSED_AT, String(Date.now()));
+                } catch (e) {}
                 dismissed = true;
                 if (banner) banner.classList.add('hidden');
             }
-            if (notNowBtn) notNowBtn.addEventListener('click', dismissForever);
-            if (dismissBtn) dismissBtn.addEventListener('click', dismissForever);
+
+            if (notNowBtn) notNowBtn.addEventListener('click', snoozeDismiss);
+            if (dismissBtn) dismissBtn.addEventListener('click', snoozeDismiss);
 
             window.addEventListener('appinstalled', function () {
                 try { localStorage.setItem(KEY_INSTALLED, '1'); } catch (e) {}
                 installed = true;
                 if (banner) banner.classList.add('hidden');
             });
+
+            // Global trigger for manual install buttons
+            window.__promptPwaInstall = function () {
+                if (isStandalone) {
+                    alert('App is already installed and running in full screen!');
+                    return;
+                }
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then(function (choice) {
+                        if (choice.outcome === 'accepted') {
+                            try { localStorage.setItem(KEY_INSTALLED, '1'); } catch (e) {}
+                            installed = true;
+                        }
+                        if (banner) banner.classList.add('hidden');
+                        deferredPrompt = null;
+                    });
+                } else if (isIos) {
+                    dismissed = false;
+                    showBanner();
+                } else {
+                    dismissed = false;
+                    if (banner) {
+                        banner.classList.remove('hidden');
+                    } else {
+                        alert('Browser menu (⋮ or ⊕) -> "Install App" ကို ရွေးချယ်ပြီး ထည့်သွင်းနိုင်ပါသည်');
+                    }
+                }
+            };
         })();
     </script>
     @stack('modals')

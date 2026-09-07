@@ -42,14 +42,14 @@
 <div class="print-container w-full max-w-3xl mx-auto space-y-1.5 sm:space-y-2 pb-16 sm:pb-12 select-none font-sans">
 
     {{-- 1. Success Hero Banner --}}
-    <div class="print-card bg-white dark:bg-slate-900 rounded-lg sm:rounded-xl p-3.5 sm:p-5 text-center space-y-2.5 border border-emerald-500/30 bg-gradient-to-b from-emerald-500/5 via-transparent to-transparent shadow-xs relative overflow-hidden">
-        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-500 text-white flex items-center justify-center text-2xl sm:text-3xl mx-auto shadow-md ring-4 ring-emerald-500/20 font-black">
-            ✓
+    <div class="print-card bg-white dark:bg-slate-900 rounded-lg sm:rounded-xl p-3.5 sm:p-5 text-center space-y-2.5 border {{ $order->status === 'cancelled' ? 'border-rose-500/30 bg-gradient-to-b from-rose-500/5 via-transparent to-transparent' : 'border-emerald-500/30 bg-gradient-to-b from-emerald-500/5 via-transparent to-transparent' }} shadow-xs relative overflow-hidden">
+        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full {{ $order->status === 'cancelled' ? 'bg-rose-500 ring-rose-500/20' : 'bg-emerald-500 ring-emerald-500/20' }} text-white flex items-center justify-center text-2xl sm:text-3xl mx-auto shadow-md ring-4 font-black">
+            {{ $order->status === 'cancelled' ? '✕' : '✓' }}
         </div>
         
         <div class="space-y-0.5">
-            <h1 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white font-outfit tracking-tight">
-                {{ __('messages.order_success') }}
+            <h1 class="text-lg sm:text-2xl font-black {{ $order->status === 'cancelled' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white' }} font-outfit tracking-tight">
+                {{ $order->status === 'cancelled' ? __('messages.order_status_cancelled') : __('messages.order_success') }}
             </h1>
             <p class="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 font-myanmar">
                 {{ $store?->name ?? config('app.name') }}
@@ -73,65 +73,127 @@
         </div>
     </div>
 
-    {{-- 2. 4-Stage Visual Status Stepper --}}
-    <div class="print-card bg-white dark:bg-slate-900 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-200/90 dark:border-slate-800 shadow-xs">
-        <div class="grid grid-cols-4 gap-1 sm:gap-2 text-center relative">
-            {{-- Step 1: Order Placed --}}
-            <div class="space-y-1">
-                <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-black mx-auto shadow-2xs">
-                    ✓
-                </div>
-                <p class="text-[10px] sm:text-xs font-black text-emerald-600 dark:text-emerald-400 font-myanmar leading-tight">
-                    {{ __('messages.order_status_stepper_placed') }}
-                </p>
-                <p class="text-[9px] text-slate-400 dark:text-slate-500 font-mono hidden sm:block">
-                    {{ $order->created_at->format('h:i A') }}
-                </p>
+    {{-- 2. 4-Stage Visual Status Stepper / Live Tracking --}}
+    @if ($order->status === 'cancelled')
+        <div class="print-card bg-rose-50 dark:bg-rose-950/40 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-rose-200 dark:border-rose-900/60 shadow-xs flex items-center gap-2.5 sm:gap-3">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-rose-100 dark:bg-rose-900/70 text-rose-600 dark:text-rose-300 flex items-center justify-center text-base sm:text-lg shrink-0 font-black">
+                ✕
             </div>
-
-            {{-- Step 2: Shop Confirmation --}}
-            <div class="space-y-1">
-                <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-black mx-auto shadow-2xs animate-pulse">
-                    ⏱️
-                </div>
-                <p class="text-[10px] sm:text-xs font-black text-amber-600 dark:text-amber-400 font-myanmar leading-tight">
-                    {{ __('messages.order_status_stepper_confirm') }}
-                </p>
-                <p class="text-[9px] text-amber-500/80 font-medium hidden sm:block">
-                    {{ __('messages.order_status_pending_contact') }}
-                </p>
-            </div>
-
-            {{-- Step 3: Payment & Packing --}}
-            <div class="space-y-1 opacity-60">
-                <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center text-xs font-black mx-auto border border-slate-300 dark:border-slate-700">
-                    3
-                </div>
-                <p class="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 font-myanmar leading-tight">
-                    {{ __('messages.order_status_stepper_payment') }}
-                </p>
-            </div>
-
-            {{-- Step 4: Delivery --}}
-            <div class="space-y-1 opacity-60">
-                <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center text-xs font-black mx-auto border border-slate-300 dark:border-slate-700">
-                    🚚
-                </div>
-                <p class="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 font-myanmar leading-tight">
-                    {{ __('messages.order_status_stepper_delivery') }}
+            <div class="min-w-0 space-y-0.5">
+                <h3 class="font-black text-xs sm:text-sm text-rose-700 dark:text-rose-300 font-myanmar">
+                    {{ __('messages.order_status_cancelled_notice') }}
+                </h3>
+                <p class="text-[11px] sm:text-xs text-rose-600/80 dark:text-rose-400/80 font-medium">
+                    {{ $order->customer_note ?: __('messages.order_status_cancelled') }}
                 </p>
             </div>
         </div>
-    </div>
+    @else
+        <div class="print-card bg-white dark:bg-slate-900 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-2">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                <h2 class="font-black text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1.5 font-myanmar">
+                    <span>🚚</span>
+                    <span>{{ __('messages.order_live_tracking') }}</span>
+                </h2>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-black
+                    {{ $order->status === 'delivered' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300/60' : '' }}
+                    {{ $order->status === 'confirmed' ? 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-300/60' : '' }}
+                    {{ $order->status === 'pending_contact' ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300/60' : '' }}">
+                    <span class="h-1.5 w-1.5 rounded-full {{ $order->status === 'pending_contact' ? 'bg-amber-500 animate-pulse' : ($order->status === 'confirmed' ? 'bg-sky-500' : 'bg-emerald-500') }}"></span>
+                    <span>{{ $statusText }}</span>
+                </span>
+            </div>
+
+            {{-- 4-Stage Stepper Grid --}}
+            <div class="grid grid-cols-4 gap-1 sm:gap-2 text-center pt-1 relative">
+                {{-- Step 1: Order Placed --}}
+                <div class="space-y-1">
+                    <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-black mx-auto shadow-2xs">
+                        ✓
+                    </div>
+                    <p class="text-[10px] sm:text-xs font-black text-emerald-600 dark:text-emerald-400 font-myanmar leading-tight">
+                        {{ __('messages.order_status_stepper_placed') }}
+                    </p>
+                    <p class="text-[9px] text-slate-400 dark:text-slate-500 font-mono hidden sm:block">
+                        {{ $order->created_at->format('h:i A') }}
+                    </p>
+                </div>
+
+                {{-- Step 2: Under Review / Pending Contact --}}
+                @php
+                    $isStep2Done = in_array($order->status, ['confirmed', 'delivered'], true);
+                    $isStep2Active = $order->status === 'pending_contact';
+                @endphp
+                <div class="space-y-1 {{ !$isStep2Done && !$isStep2Active ? 'opacity-40' : '' }}">
+                    <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs font-black mx-auto shadow-2xs
+                        {{ $isStep2Done ? 'bg-emerald-500 text-white' : ($isStep2Active ? 'bg-amber-500 text-white animate-pulse' : 'bg-slate-200 dark:bg-slate-800 text-slate-500') }}">
+                        {{ $isStep2Done ? '✓' : '⏱️' }}
+                    </div>
+                    <p class="text-[10px] sm:text-xs font-bold {{ $isStep2Active ? 'text-amber-600 dark:text-amber-400 font-black' : ($isStep2Done ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400') }} font-myanmar leading-tight">
+                        {{ __('messages.order_status_stepper_confirm') }}
+                    </p>
+                    @if ($isStep2Active)
+                        <p class="text-[9px] text-amber-500/80 font-medium hidden sm:block">
+                            {{ __('messages.order_status_pending_contact') }}
+                        </p>
+                    @endif
+                </div>
+
+                {{-- Step 3: Payment & Packing / Confirmed --}}
+                @php
+                    $isStep3Done = $order->status === 'delivered';
+                    $isStep3Active = $order->status === 'confirmed';
+                @endphp
+                <div class="space-y-1 {{ !$isStep3Done && !$isStep3Active ? 'opacity-40' : '' }}">
+                    <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs font-black mx-auto shadow-2xs
+                        {{ $isStep3Done ? 'bg-emerald-500 text-white' : ($isStep3Active ? 'bg-sky-500 text-white animate-pulse' : 'bg-slate-200 dark:bg-slate-800 text-slate-500') }}">
+                        {{ $isStep3Done ? '✓' : ($isStep3Active ? '💳' : '3') }}
+                    </div>
+                    <p class="text-[10px] sm:text-xs font-bold {{ $isStep3Active ? 'text-sky-600 dark:text-sky-400 font-black' : ($isStep3Done ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400') }} font-myanmar leading-tight">
+                        {{ __('messages.order_status_stepper_payment') }}
+                    </p>
+                    @if ($isStep3Active)
+                        <p class="text-[9px] text-sky-500/80 font-medium hidden sm:block">
+                            {{ __('messages.order_status_confirmed') }}
+                        </p>
+                    @endif
+                </div>
+
+                {{-- Step 4: Delivery / Completed --}}
+                @php
+                    $isStep4Done = $order->status === 'delivered';
+                @endphp
+                <div class="space-y-1 {{ !$isStep4Done ? 'opacity-40' : '' }}">
+                    <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs font-black mx-auto shadow-2xs
+                        {{ $isStep4Done ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500' }}">
+                        🚚
+                    </div>
+                    <p class="text-[10px] sm:text-xs font-bold {{ $isStep4Done ? 'text-emerald-600 dark:text-emerald-400 font-black' : 'text-slate-500 dark:text-slate-400' }} font-myanmar leading-tight">
+                        {{ __('messages.order_status_stepper_delivery') }}
+                    </p>
+                    @if ($isStep4Done)
+                        <p class="text-[9px] text-emerald-500/80 font-medium hidden sm:block">
+                            {{ __('messages.order_status_delivered') }}
+                        </p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- 3. Order Details & Customer Summary --}}
-    <div class="print-card bg-white dark:bg-slate-900 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3">
+    <div class="print-card bg-white dark:bg-slate-900 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3" data-order-status="{{ $order->status }}">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
             <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-myanmar flex items-center gap-1.5">
                 <span>📋</span>
                 <span>{{ __('messages.order_summary') }}</span>
             </h2>
-            <span class="px-2 py-0.5 text-[10px] sm:text-xs font-black rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300/60">
+            <span class="px-2 py-0.5 text-[10px] sm:text-xs font-black rounded-md
+                {{ $order->status === 'delivered' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300/60' : '' }}
+                {{ $order->status === 'confirmed' ? 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-300/60' : '' }}
+                {{ $order->status === 'pending_contact' ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300/60' : '' }}
+                {{ $order->status === 'cancelled' ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-300/60' : '' }}"
+                data-status="{{ $order->status }}">
                 {{ $statusText }}
             </span>
         </div>
@@ -372,6 +434,7 @@
         // Clear Alpine Order Builder state and local storage cart for security
         try {
             window.Alpine?.store('orderBuilder')?.clear();
+            localStorage.removeItem('acdc_mobile_order_list');
             const storeSlug = @js($activeStoreSlug);
             if (storeSlug) {
                 localStorage.removeItem('datapos_cart_' + storeSlug);

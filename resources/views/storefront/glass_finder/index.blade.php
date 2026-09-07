@@ -382,7 +382,7 @@
                         $codeTgUrl = \App\Support\ContactLinkBuilder::telegramUrl($store?->setting?->telegram_username, $codeMsg);
                     @endphp
 
-                    <div class="p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 space-y-2.5 shadow-2xs hover:border-sky-300 dark:hover:border-sky-800 transition">
+                    <div data-normalized-code="{{ $normalizedCode }}" class="p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 space-y-2.5 shadow-2xs hover:border-sky-300 dark:hover:border-sky-800 transition">
                         
                         {{-- Glass Code Header with Quick Buy 3D CTA --}}
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800/80 gap-2">

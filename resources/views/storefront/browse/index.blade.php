@@ -136,6 +136,12 @@
              x-ref="rail"
              aria-label="{{ __('messages.browse_categories') }}">
 
+            @if ($browseRows->isEmpty())
+                <div class="p-3 text-center text-slate-400 dark:text-slate-500 text-xs font-bold font-myanmar">
+                    {{ __('messages.no_categories') }}
+                </div>
+            @endif
+
             <template x-for="cat in filteredCategories" :key="cat.id">
                 <button
                     type="button"

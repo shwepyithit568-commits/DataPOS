@@ -40,6 +40,15 @@
     $ftPaymentMethods = $store?->paymentMethods()->active()->orderBy('sort_order')->get() ?? collect();
     $ftDeliveryMethods = $store?->deliveryMethods()->active()->orderBy('sort_order')->get() ?? collect();
 
+    // Admin Dynamic Custom Pages (About Us, Terms, Privacy Policy, etc.)
+    $ftCustomPages = $store
+        ? \App\Models\StorefrontPage::where('store_id', $store->id)
+            ->where('is_enabled', true)
+            ->published()
+            ->orderBy('id')
+            ->get()
+        : collect();
+
     // Map Locations & Fallbacks
     $ftMapUrl = $setting?->mapUrl();
     $ftMapDirectionsUrl = $setting?->mapDirectionsUrl();
@@ -114,7 +123,7 @@
         <div class="grid grid-cols-1 gap-3.5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
 
             {{-- Column 1: Customer Service / အကူအညီနှင့် ဝန်ဆောင်မှု --}}
-            <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 p-4 sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-0 shadow-2xs sm:shadow-none space-y-3">
+            <div class="rounded-xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 p-4 sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-0 shadow-2xs sm:shadow-none space-y-3">
                 <div>
                     <h3 class="{{ $colHeader }}">
                         {{ __('messages.customer_service') }}
@@ -155,14 +164,22 @@
                             <span>{{ __('messages.blog') }}</span>
                         </a>
                     @endif
+                    @if ($ftCustomPages->isNotEmpty())
+                        @foreach ($ftCustomPages as $customPage)
+                            <a href="{{ $store ? route('storefront.page', ['store_slug' => $store->slug, 'slug' => $customPage->slug]) : url('/page/' . $customPage->slug) }}" class="flex items-center gap-1.5 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/50 sm:dark:bg-transparent border border-slate-200/60 sm:border-0 dark:border-slate-700/60 {{ $linkStyle }}">
+                                <span>📄</span>
+                                <span class="truncate">{{ $customPage->localizedTitle(app()->getLocale()) }}</span>
+                            </a>
+                        @endforeach
+                    @endif
                 </div>
             </div>
 
             {{-- Column 2: Shopping & Category Guide / ဆိုင်အချက်အလက် --}}
-            <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 p-4 sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-0 shadow-2xs sm:shadow-none space-y-3">
+            <div class="rounded-xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 p-4 sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-0 shadow-2xs sm:shadow-none space-y-3">
                 <div>
                     <h3 class="{{ $colHeader }}">
-                        ဆိုင်အချက်အလက်
+                        {{ __('messages.store_info') }}
                     </h3>
                 </div>
                 <div class="space-y-2.5 text-xs sm:text-[13px] text-slate-800 dark:text-slate-200 font-myanmar pt-1">
@@ -184,14 +201,14 @@
                     <div class="pt-1">
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300 text-xs font-bold border border-emerald-200 dark:border-emerald-800 w-full justify-center sm:w-auto">
                             <span>✓</span>
-                            <span>တရားဝင် အသိအမှတ်ပြု အရောင်းဆိုင်</span>
+                            <span>{{ __('messages.certified_store') }}</span>
                         </span>
                     </div>
                 </div>
             </div>
 
             {{-- Column 3: Contact Channels / ဆက်သွယ်ရန် --}}
-            <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 p-4 sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-0 shadow-2xs sm:shadow-none space-y-3">
+            <div class="rounded-xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 p-4 sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-0 shadow-2xs sm:shadow-none space-y-3">
                 <div>
                     <h3 class="{{ $colHeader }}">
                         {{ __('messages.contact') }}
@@ -203,28 +220,28 @@
                             <div class="flex items-center gap-2 min-w-0">
                                 <span class="w-7 h-7 rounded-lg bg-orange-500 text-white flex items-center justify-center text-xs shrink-0 shadow-2xs">📞</span>
                                 <div>
-                                    <span class="text-[10px] font-bold text-orange-800 dark:text-orange-300 block">Hotline Phone</span>
+                                    <span class="text-[10px] font-bold text-orange-800 dark:text-orange-300 block">{{ __('messages.hotline_phone') }}</span>
                                     <span class="font-mono font-black text-slate-950 dark:text-white text-xs tracking-wide">{{ $phone }}</span>
                                 </div>
                             </div>
-                            <span class="text-xs text-orange-600 dark:text-orange-400 font-bold group-hover:translate-x-0.5 transition-transform">Call →</span>
+                            <span class="text-xs text-orange-600 dark:text-orange-400 font-bold group-hover:translate-x-0.5 transition-transform">{{ __('messages.call_action') }} →</span>
                         </a>
                     @endif
 
                     @if ($ftViberUrl || $ftTelegramUrl)
                         <div class="pt-0.5">
-                            <span class="text-xs font-bold text-slate-800 dark:text-slate-300 block mb-1.5">တိုက်ရိုက်စကားပြောရန် (Direct Chat):</span>
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-300 block mb-1.5">{{ __('messages.direct_chat_title') }}:</span>
                             <div class="grid grid-cols-2 gap-2">
                                 @if ($ftViberUrl)
                                     <a href="{{ $ftViberUrl }}" data-ios-href="{{ $ftViberIosUrl ?? $ftViberUrl }}" target="_blank" rel="noopener noreferrer"
-                                       class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-violet-300 bg-violet-50/70 p-2 text-xs font-bold text-violet-800 hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-950/40 dark:text-violet-300 shadow-2xs transition active:scale-95">
+                                       class="sf-btn-3d-viber inline-flex items-center justify-center gap-1.5 p-2 text-xs font-bold">
                                         <x-brand-icon brand="viber" class="h-3.5 w-3.5 fill-current"/>
                                         <span>Viber</span>
                                     </a>
                                 @endif
                                 @if ($ftTelegramUrl)
                                     <a href="{{ $ftTelegramUrl }}" target="_blank" rel="noopener noreferrer"
-                                       class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-sky-300 bg-sky-50/70 p-2 text-xs font-bold text-sky-800 hover:bg-sky-100 dark:border-sky-700 dark:bg-sky-950/40 dark:text-sky-300 shadow-2xs transition active:scale-95">
+                                       class="sf-btn-3d-telegram inline-flex items-center justify-center gap-1.5 p-2 text-xs font-bold">
                                         <x-brand-icon brand="telegram" class="h-3.5 w-3.5 fill-current"/>
                                         <span>Telegram</span>
                                     </a>
@@ -235,7 +252,7 @@
 
                     @if ($address)
                         <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block uppercase">ဆိုင်လိပ်စာ</span>
+                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block uppercase">{{ __('messages.vouchers_address') }}</span>
                             <p class="text-slate-850 dark:text-slate-200 leading-relaxed text-xs font-medium pt-0.5">
                                 📍 {{ $address }}
                             </p>
@@ -245,7 +262,7 @@
             </div>
 
             {{-- Column 4: Store Branding, Location & Socials --}}
-            <div class="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 p-4 sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-0 shadow-2xs sm:shadow-none space-y-3">
+            <div class="rounded-xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-slate-900 p-4 sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-0 shadow-2xs sm:shadow-none space-y-3">
                 {{-- Store Name / Logo (on top) --}}
                 <div>
                     <a href="{{ $homeUrl }}" class="inline-flex items-center gap-2">
@@ -337,7 +354,7 @@
                                 <div class="flex items-center gap-2 min-w-0">
                                     <span class="w-7 h-7 rounded-lg bg-rose-500 text-white flex items-center justify-center text-xs shrink-0 shadow-2xs group-hover:scale-105 transition-transform">🗺️</span>
                                     <div class="min-w-0">
-                                        <span class="text-[11px] font-bold text-rose-900 dark:text-rose-200 block truncate">Google Map တည်နေရာ</span>
+                                        <span class="text-[11px] font-bold text-rose-900 dark:text-rose-200 block truncate">{{ __('messages.google_map_location') }}</span>
                                         <span class="text-[10px] text-rose-700 dark:text-rose-400 block truncate">{{ __('messages.view_on_map') }}</span>
                                     </div>
                                 </div>
@@ -376,7 +393,7 @@
                                 <x-payment-method-icon :method="$pm" class="h-3.5 w-3.5" text-class="text-[7px]" />
                                 <span>{{ $pm->name }}</span>
                                 @if ($pm->hasQr())
-                                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400" title="QR Code ပါရှိသည်">📱</span>
+                                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400" title="{{ __('messages.qr_code_available') }}">📱</span>
                                 @endif
                             </button>
                         @endforeach
@@ -413,8 +430,8 @@
                             </span>
                         @endforeach
                     @else
-                        <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 shadow-2xs">🛵 အိမ်အရောက် Express</span>
-                        <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 shadow-2xs">📦 ကားဂိတ် အမြန်ချော</span>
+                        <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 shadow-2xs">{{ __('messages.delivery_doorstep_express') }}</span>
+                        <span class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 shadow-2xs">{{ __('messages.delivery_bus_gate_express') }}</span>
                     @endif
 
                     @if ($setting?->delivery_info)
@@ -429,10 +446,10 @@
     </div>
 
     {{-- ================= 4. BOTTOM COPYRIGHT & BACK-TO-TOP (CENTERED ROW) ================= --}}
-    <div class="border-t border-slate-300 bg-slate-900 text-slate-100 dark:border-slate-800 dark:bg-black py-4">
+    <div class="border-t border-slate-300 bg-slate-900 text-slate-100 dark:border-slate-800 dark:bg-black py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-4">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-xs font-myanmar text-center">
             
-            {{-- Copyright and footer ad --}}
+            {{-- Copyright, footer ad, and quick policy links --}}
             <div class="flex flex-wrap items-center justify-center gap-2 text-center">
                 <span class="font-black text-white text-[13px]">{{ $storeDisplayName }}</span>
                 <span class="text-slate-400">·</span>
@@ -443,16 +460,26 @@
                         © {{ date('Y') }} DataPOS. All rights reserved.
                     @endif
                 </span>
+                @if ($ftCustomPages->isNotEmpty())
+                    @foreach ($ftCustomPages as $customPage)
+                        <span class="text-slate-500">·</span>
+                        <a href="{{ $store ? route('storefront.page', ['store_slug' => $store->slug, 'slug' => $customPage->slug]) : url('/page/' . $customPage->slug) }}"
+                           class="text-slate-300 hover:text-orange-400 underline-offset-2 hover:underline transition-colors">
+                            {{ $customPage->localizedTitle(app()->getLocale()) }}
+                        </a>
+                    @endforeach
+                @endif
             </div>
 
-            {{-- High contrast Back-to-top button --}}
+            {{-- High contrast 3D Back-to-top button --}}
             <button
                 type="button"
                 @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
-                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 text-white border border-slate-600 hover:bg-orange-600 hover:border-orange-500 transition-colors text-xs font-black cursor-pointer shadow-xs shrink-0"
+                class="sf-btn-3d inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-black cursor-pointer shadow-xs shrink-0"
                 title="{{ __('messages.back_to_top') }}"
             >
-                <span>↑ {{ __('messages.back_to_top') }}</span>
+                <span>↑</span>
+                <span>{{ __('messages.back_to_top') }}</span>
             </button>
         </div>
     </div>

@@ -39,15 +39,17 @@
     $viberShareUrl = 'viber://forward?text=' . urlencode($shareTitle . ' ' . $canonicalUrl);
 
     // Page Icon Mapper
-    function getPageIcon($slug) {
-        return match (strtolower(trim($slug))) {
-            'about-us' => 'ℹ️',
-            'terms-and-conditions' => '📜',
-            'privacy-policy' => '🔒',
-            'refund-policy' => '💵',
-            'shipping-policy' => '🚚',
-            default => '📄',
-        };
+    if (!function_exists('getPageIcon')) {
+        function getPageIcon($slug) {
+            return match (strtolower(trim($slug))) {
+                'about-us' => 'ℹ️',
+                'terms-and-conditions' => '📜',
+                'privacy-policy' => '🔒',
+                'refund-policy' => '💵',
+                'shipping-policy' => '🚚',
+                default => '📄',
+            };
+        }
     }
 @endphp
 

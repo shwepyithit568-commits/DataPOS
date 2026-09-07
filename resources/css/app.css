@@ -746,5 +746,120 @@ h1, h2, h3, h4 {
     }
 }
 
+/* ============================================================
+   MOBILE BOTTOM NAVIGATION 3D EMBOSSED BUTTONS
+   Ergonomic, tactile push buttons with semantic brand colors
+   ============================================================ */
+.sf-nav-btn {
+    position: relative;
+    display: inline-flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transform: translateZ(0);
+    transition: transform 120ms ease, border-bottom-width 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+    border-radius: 6px;
+    border: 1px solid rgba(203, 213, 225, 0.9);
+    border-bottom: 3px solid #cbd5e1;
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    color: #334155;
+    text-decoration: none !important;
+    min-height: 50px;
+    padding: 3px 2px 2px 2px;
+}
+.sf-nav-btn:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+    color: #0f172a;
+}
+.sf-nav-btn:active {
+    transform: translateY(1.5px);
+    border-bottom-width: 1.5px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.dark .sf-nav-btn {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(51, 65, 85, 0.9);
+    border-bottom: 3px solid #020617;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+}
+.dark .sf-nav-btn:hover {
+    background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+    color: #ffffff;
+}
+.dark .sf-nav-btn:active {
+    transform: translateY(1.5px);
+    border-bottom-width: 1.5px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* 1. Home Active (Sky Blue 3D) */
+.sf-nav-btn-home.active {
+    background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid #38bdf8 !important;
+    border-bottom: 3px solid #075985 !important;
+    box-shadow: 0 2px 8px -1px rgba(2, 132, 199, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 2. Products Active (Indigo Blue 3D) */
+.sf-nav-btn-products.active {
+    background: linear-gradient(180deg, #4f46e5 0%, #4338ca 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid #818cf8 !important;
+    border-bottom: 3px solid #312e81 !important;
+    box-shadow: 0 2px 8px -1px rgba(79, 70, 229, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 3. Categories Active (Amber Orange 3D) */
+.sf-nav-btn-categories.active {
+    background: linear-gradient(180deg, #d97706 0%, #b45309 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid #fcd34d !important;
+    border-bottom: 3px solid #78350f !important;
+    box-shadow: 0 2px 8px -1px rgba(217, 119, 6, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 4. Repair / Service Tracking Active (Purple / Violet 3D) */
+.sf-nav-btn-repair.active {
+    background: linear-gradient(180deg, #7e22ce 0%, #6b21a8 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid #c084fc !important;
+    border-bottom: 3px solid #581c87 !important;
+    box-shadow: 0 2px 8px -1px rgba(126, 34, 206, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 5. Cart / Orders Active (Rose Crimson 3D) */
+.sf-nav-btn-cart.active {
+    background: linear-gradient(180deg, #e11d48 0%, #be123c 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid #fb7185 !important;
+    border-bottom: 3px solid #881337 !important;
+    box-shadow: 0 2px 8px -1px rgba(225, 29, 72, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 6. Account / Login Active (Emerald Green 3D) */
+.sf-nav-btn-account.active,
+.sf-nav-btn-login.active {
+    background: linear-gradient(180deg, #059669 0%, #047857 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid #34d399 !important;
+    border-bottom: 3px solid #064e3b !important;
+    box-shadow: 0 2px 8px -1px rgba(5, 150, 105, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 7. Glass Finder Active (Cyan 3D) */
+.sf-nav-btn-glass.active {
+    background: linear-gradient(180deg, #0891b2 0%, #0e7490 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid #67e8f9 !important;
+    border-bottom: 3px solid #155e75 !important;
+    box-shadow: 0 2px 8px -1px rgba(8, 145, 178, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+
 
 
