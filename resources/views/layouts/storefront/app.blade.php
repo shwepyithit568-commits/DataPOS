@@ -1,4 +1,4 @@
-﻿@php
+@php
     $cspNonce = $cspNonce ?? \Illuminate\Support\Facades\View::getShared()['cspNonce'] ?? '';
     $activeStoreContext = app(\App\Services\StoreContext::class)->getStore();
     $activeStoreSlug    = request('store_slug') ?? $activeStoreContext?->slug;
@@ -720,25 +720,6 @@
              x-data="searchSuggestions('{{ $activeStoreSlug }}', '{{ url('/products/suggestions') }}', { categories: '{{ __('messages.categories') }}', brands: '{{ __('messages.brands') }}', products: '{{ __('messages.products') }}', trending: '{{ __('messages.trending_searches') }}' })"
              @click.outside="open = false">
             <div class="flex items-center gap-1.5 sm:gap-2">
-                @if ($navCategories->count() > 0)
-                    <a
-                        href="{{ $browseUrl }}"
-                        class="sf-btn-3d !flex-row shrink-0 h-10 px-2.5 sm:px-3 text-xs gap-1.5 {{ $isBrowse ? 'active font-black' : 'font-black' }}"
-                        title="{{ __('messages.categories') }}"
-                        aria-label="{{ __('messages.categories') }}"
-                    >
-                        <svg class="w-4 h-4 shrink-0 {{ $isBrowse ? 'text-white' : 'text-slate-600 dark:text-slate-300' }}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                            <rect x="3" y="3.6" width="4" height="5.4" rx="2.7"/>
-                            <rect x="9" y="3.6" width="12" height="5.4" rx="2.7"/>
-                            <rect x="3" y="9.3" width="4" height="5.4" rx="2.7"/>
-                            <rect x="9" y="9.3" width="12" height="5.4" rx="2.7"/>
-                            <rect x="3" y="15" width="4" height="5.4" rx="2.7"/>
-                            <rect x="9" y="15" width="12" height="5.4" rx="2.7"/>
-                        </svg>
-                        <span class="text-xs font-black whitespace-nowrap">{{ __('messages.categories') }}</span>
-                    </a>
-                @endif
-
                 <form action="{{ url('/products') }}" method="GET" class="relative flex min-w-0 flex-1 items-center gap-1.5 rounded-xl border border-slate-200/90 bg-white px-2.5 h-10 text-xs shadow-2xs transition focus-within:border-sky-500 focus-within:ring-2 focus-within:ring-sky-500/20 dark:border-slate-700/80 dark:bg-slate-800 sm:text-sm">
                     <input type="hidden" name="store_slug" value="{{ $activeStoreSlug }}">
                     <svg class="h-4 w-4 shrink-0 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -773,9 +754,9 @@
                                 <div class="flex flex-wrap gap-2 px-3 py-2.5" role="group" :aria-label="labels.trending">
                                     <template x-for="t in trending" :key="t.type + '-' + t.label">
                                         <button
-                                            type="button"
-                                            @click="pickTrending(t)"
-                                            class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-600 active:scale-95 dark:border-slate-600 dark:bg-slate-700/60 dark:text-slate-200 dark:hover:border-sky-500/60 dark:hover:bg-slate-600 dark:hover:text-sky-300"
+                                             type="button"
+                                             @click="pickTrending(t)"
+                                             class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-600 active:scale-95 dark:border-slate-600 dark:bg-slate-700/60 dark:text-slate-200 dark:hover:border-sky-500/60 dark:hover:bg-slate-600 dark:hover:text-sky-300"
                                         >
                                             <span aria-hidden="true" x-text="t.type === 'category' ? '🗂️' : '🏷️'"></span>
                                             <span class="max-w-[10rem] truncate" x-text="t.label"></span>
@@ -888,6 +869,25 @@
                         </div>
                     </div>
                 </form>
+
+                @if ($navCategories->count() > 0)
+                    <a
+                        href="{{ $browseUrl }}"
+                        class="sf-btn-3d !flex-row shrink-0 h-10 px-2.5 sm:px-3 text-xs gap-1.5 {{ $isBrowse ? 'active font-black' : 'font-black' }}"
+                        title="{{ __('messages.categories') }}"
+                        aria-label="{{ __('messages.categories') }}"
+                    >
+                        <svg class="w-4 h-4 shrink-0 {{ $isBrowse ? 'text-white' : 'text-slate-600 dark:text-slate-300' }}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <rect x="3" y="3.6" width="4" height="5.4" rx="2.7"/>
+                            <rect x="9" y="3.6" width="12" height="5.4" rx="2.7"/>
+                            <rect x="3" y="9.3" width="4" height="5.4" rx="2.7"/>
+                            <rect x="9" y="9.3" width="12" height="5.4" rx="2.7"/>
+                            <rect x="3" y="15" width="4" height="5.4" rx="2.7"/>
+                            <rect x="9" y="15" width="12" height="5.4" rx="2.7"/>
+                        </svg>
+                        <span class="text-xs font-black whitespace-nowrap">{{ __('messages.categories') }}</span>
+                    </a>
+                @endif
             </div>
         </div>
 
