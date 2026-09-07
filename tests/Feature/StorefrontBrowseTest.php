@@ -120,4 +120,42 @@ class StorefrontBrowseTest extends TestCase
         $response->assertSee(__('messages.view_grid'));
         $response->assertSee(__('messages.view_list'));
     }
+
+    public function test_catalog_filters_by_brand_id(): void
+    {
+        $store = Store::create(['name' => 'Store Main', 'slug' => 'store-main']);
+        $brandApple = Brand::create(['store_id' => $store->id, 'name' => 'Apple', 'slug' => 'apple']);
+        $brandSamsung = Brand::create(['store_id' => $store->id, 'name' => 'Samsung', 'slug' => 'samsung']);
+
+        Product::create([
+            'store_id' => $store->id,
+            'brand_id' => $brandApple->id,
+            'name' => 'iPhone 15 Pro',
+            'slug' => 'iphone-15-pro',
+            'sku' => 'IP15P',
+            'retail_price' => 1500000,
+            'wholesale_price' => 1400000,
+            'stock_status' => 'in_stock',
+        ]);
+
+        Product::create([
+            'store_id' => $store->id,
+            'brand_id' => $brandSamsung->id,
+            'name' => 'Galaxy S24 Ultra',
+            'slug' => 'galaxy-s24-ultra',
+            'sku' => 'S24U',
+            'retail_price' => 1400000,
+            'wholesale_price' => 1300000,
+            'stock_status' => 'in_stock',
+        ]);
+
+        $response = $this->get('/products?store_slug=store-main&brand_id=' . $brandApple->id);
+
+        $response->assertStatus(200);
+        $response->assertSee('iPhone 15 Pro');
+        $response->assertDontSee('Galaxy S24 Ultra');
+        // Mobile form contains the active brand_id in hidden input
+        $response->assertSee('id="mobileBrandInput" value="' . $brandApple->id . '"', false);
+        $response->assertSee('id="mobileCatInput"', false);
+    }
 }

@@ -165,8 +165,10 @@
         @if ($storeSlug)
             <input type="hidden" name="store_slug" value="{{ $storeSlug }}" />
         @endif
+        <input type="hidden" name="category_id" id="mobileCatInput" value="{{ request('category_id') }}" />
+        <input type="hidden" name="brand_id" id="mobileBrandInput" value="{{ request('brand_id') }}" />
         {{-- Preserve other active params (category/brand name fallbacks, prices, etc.) across auto-submits --}}
-        @foreach (request()->except(['store_slug', 'search', 'sort', 'category_id', 'brand_id', 'stock_status', 'min_price', 'max_price', 'page', 'per_page']) as $key => $value)
+        @foreach (request()->except(['store_slug', 'search', 'sort', 'category_id', 'category', 'brand_id', 'brand', 'stock_status', 'min_price', 'max_price', 'page', 'per_page']) as $key => $value)
             @if (is_array($value))
                 @foreach ($value as $v)
                     <input type="hidden" name="{{ $key }}[]" value="{{ $v }}" />
@@ -273,9 +275,15 @@
         catMainId: {{ $activeCatMainId ?? 'null' }},
         catSheetSearch: '',
         pickCat(id) {
-            this.$refs.catInput.value = id ?? '';
+            const form = document.getElementById('mobileCatForm');
+            const input = document.getElementById('mobileCatInput');
+            if (input) {
+                input.value = id ?? '';
+            }
             this.catOpen = false;
-            this.$refs.catInput.form.submit();
+            if (form) {
+                form.submit();
+            }
         }
     }" @cat-picker-open.window="catOpen = true; catLevel = {{ $activeCatMainId ? 2 : 1 }}; catMainId = {{ $activeCatMainId ?? 'null' }}; catSheetSearch = ''" @keydown.escape.window="catOpen = false">
     <div x-show="catOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[60]"
@@ -314,8 +322,6 @@
                 </div>
 
                 <div class="overflow-y-auto p-2 grow" style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom))">
-                    {{-- Form-associated hidden input: submits with the mobile filter form via its id --}}
-                    <input type="hidden" name="category_id" form="mobileCatForm" x-ref="catInput" value="{{ request('category_id') }}" />
                     {{-- Level 1: All + Main list --}}
                     <template x-if="catLevel === 1">
                         <div class="space-y-1">
@@ -417,9 +423,6 @@
         brandOpen: false,
         brandSheetSearch: '',
         brandLoaded: {{ $brandsSorted->count() }},
-        get brandVisible() {
-            return this.brandSheetSearch !== '' ? 999 : this.brandLoaded;
-        },
         loadMoreBrands() {
             if (this.brandSheetSearch !== '') return;
             const c = this.$refs.brandScroll;
@@ -428,12 +431,15 @@
             }
         },
         pickBrand(id) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'brand_id';
-            input.value = id ?? '';
-            document.getElementById('mobileCatForm').appendChild(input);
-            document.getElementById('mobileCatForm').submit();
+            const form = document.getElementById('mobileCatForm');
+            const input = document.getElementById('mobileBrandInput');
+            if (input) {
+                input.value = id ?? '';
+            }
+            this.brandOpen = false;
+            if (form) {
+                form.submit();
+            }
         }
     }" @brand-picker-open.window="brandOpen = true; brandSheetSearch = ''" @keydown.escape.window="brandOpen = false">
     <div x-show="brandOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[60]"
@@ -470,7 +476,6 @@
                     </div>
                 </div>
                 <div class="flex-1 min-h-0 overflow-y-auto p-2 scrollbar-thin" x-ref="brandScroll" @scroll="loadMoreBrands()" style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom));">
-                    <input type="hidden" name="brand_id" form="mobileCatForm" value="{{ request('brand_id') }}" x-ref="brandInput" />
                     {{-- All brands --}}
                     <button type="button" @click="pickBrand(null)"
                         x-show="brandSheetSearch === ''"
@@ -485,7 +490,7 @@
                     @foreach ($brandsSorted as $b)
                         @php $isBrandActive = request('brand_id') == $b->id; @endphp
                         <button type="button" @click="pickBrand({{ $b->id }})"
-                            x-show="{{ $loop->index }} < brandVisible || brandSheetSearch !== '' && '{{ strtolower(addslashes($b->name)) }}'.includes(brandSheetSearch.toLowerCase())"
+                            x-show="(brandSheetSearch === '' && {{ $loop->index }} < brandLoaded) || (brandSheetSearch !== '' && '{{ strtolower(addslashes($b->name)) }}'.includes(brandSheetSearch.toLowerCase()))"
                             class="w-full !flex-row items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-sm font-bold transition sf-btn-3d {{ $isBrandActive ? 'active' : '' }}">
                             <span class="flex items-center gap-2.5 min-w-0 flex-1 text-left">
                                 <span class="w-7 h-7 shrink-0 rounded-lg bg-white/80 dark:bg-slate-800 flex items-center justify-center text-xs font-black text-slate-700 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700/60 shadow-xs">{{ strtoupper(substr($b->name, 0, 2)) }}</span>
