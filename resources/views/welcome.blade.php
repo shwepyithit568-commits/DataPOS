@@ -42,10 +42,10 @@
             Desktop: Left Category Sidebar (25% / lg:col-span-1) | Right Wide Hero Slider (75% / lg:col-span-3)
             Mobile / Tablet: Full-Width Auto-Play Banner Slider
          ========================================================================= --}}
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 items-stretch">
+    <div class="flex flex-col lg:flex-row gap-3 sm:gap-4 items-stretch">
 
-        {{-- [Desktop Left Column] 1 col = 25% Category Sidebar with Hover Subcategories Flyout --}}
-        <div class="hidden lg:flex lg:col-span-1 min-w-0 flex-col rounded-md sm:rounded-lg border border-slate-200/90 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900 relative z-30"
+        {{-- [Desktop Left Column] Category Sidebar with Hover Subcategories Flyout --}}
+        <div class="hidden lg:flex lg:w-72 xl:w-80 shrink-0 min-w-0 flex-col rounded-md sm:rounded-lg border border-slate-200/90 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900 relative z-30"
              x-data="{ activeHover: null, closeTimeout: null }"
              @mouseleave="closeTimeout = setTimeout(() => { activeHover = null }, 200)"
              @mouseenter="if (closeTimeout) clearTimeout(closeTimeout)"
@@ -144,8 +144,8 @@
             @endforeach
         </div>
 
-        {{-- [Desktop Right Column] 3 cols = 75% Wide Hero Banner Slider --}}
-        <div class="col-span-1 lg:col-span-3 min-w-0 flex flex-col">
+        {{-- [Desktop Right Column] Wide Hero Banner Slider & Trust Cards --}}
+        <div class="w-full flex-1 min-w-0 flex flex-col">
             @if (count($banners) > 0)
                 <div 
                     x-data="{

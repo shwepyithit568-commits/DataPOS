@@ -49,7 +49,7 @@
     >
         <div
             @click.outside="close()"
-            class="relative w-full max-w-sm sm:max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xl overflow-hidden p-5 sm:p-6 space-y-4"
+            class="relative w-full max-w-sm sm:max-w-md rounded-lg sm:rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xl overflow-hidden p-4 sm:p-5 space-y-3.5"
             x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 scale-95 translate-y-2"
             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
