@@ -35,12 +35,20 @@ return [
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'database' => env('DB_DATABASE')
+                ? (in_array(env('DB_DATABASE'), [':memory:', 'sqlite::memory:']) || preg_match('/^([A-Za-z]:[\\\\\/]|\/)/', env('DB_DATABASE'))
+                    ? env('DB_DATABASE')
+                    : base_path(env('DB_DATABASE')))
+                : (file_exists(storage_path('database/datapos.sqlite'))
+                    ? storage_path('database/datapos.sqlite')
+                    : (file_exists(database_path('database.sqlite'))
+                        ? database_path('database.sqlite')
+                        : storage_path('database/datapos.sqlite'))),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
+            'busy_timeout' => env('DB_BUSY_TIMEOUT', 5000),
+            'journal_mode' => env('DB_JOURNAL_MODE', 'WAL'),
+            'synchronous' => env('DB_SYNCHRONOUS', 'NORMAL'),
             'transaction_mode' => 'DEFERRED',
         ],
 
