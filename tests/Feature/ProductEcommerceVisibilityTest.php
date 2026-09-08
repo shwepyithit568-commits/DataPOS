@@ -111,8 +111,9 @@ class ProductEcommerceVisibilityTest extends TestCase
         $response = $this->get('/browse?store_slug=' . $this->store->slug);
 
         $response->assertOk();
-        $response->assertSeeText('Online Cat X');
-        $response->assertDontSeeText('Counter Cat Y');
+        // Category labels are Alpine-rendered from the serialized x-data payload.
+        $response->assertSee('Online Cat X');
+        $response->assertDontSee('Counter Cat Y');
     }
 
     public function test_admin_products_list_still_shows_all_and_filters_by_visibility(): void

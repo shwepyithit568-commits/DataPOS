@@ -459,10 +459,10 @@ class ProductDetailTabsAndSpecsTest extends TestCase
         $this->assertStringStartsWith("\xEF\xBB\xBF", $response->streamedContent());
         $content = substr($response->streamedContent(), 3);
         $rows = array_map('str_getcsv', explode("\n", trim($content)));
-        // Round-trip import columns (unchanged names) + the specs columns merged in.
+        // Round-trip import columns use currency-neutral labels + merged specs columns.
         $this->assertSame([
             'SKU', 'Name', 'Category', 'Parent Category', 'Brand',
-            'Retail Price (Ks)', 'Wholesale Price (Ks)', 'Discount Price (Ks)',
+            'Retail Price', 'Wholesale Price', 'Discount Price',
             'Sale Starts At', 'Sale Ends At', 'Stock Status', 'Stock Status (Burmese)',
             'Warranty', 'Return Policy', 'Meta Description', 'Featured',
             'Description', 'Sanitized Description', 'Images', 'Variants',

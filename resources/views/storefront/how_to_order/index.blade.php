@@ -317,7 +317,7 @@
                         ▼
                     </span>
                 </button>
-                <div x-show="activeFaq === 1" x-collapse class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
+                <div x-show="activeFaq === 1" class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
                     ရန်ကုန် (အောင်မင်္ဂလာ/ဒဂုံဧရာ) နှင့် မန္တလေး အဝေးပြေးကားဂိတ်များမှတစ်ဆင့် မြန်မာတစ်နိုင်ငံလုံးရှိ မြို့နယ်အသီးသီးသို့ လုံခြုံစိတ်ချစွာ စနစ်တကျ ထုပ်ပိုး၍ ကားဂိတ်တင်ပေးပါသည်။ ထို့အပြင် မြို့တွင်းနှင့် အချို့မြို့နယ်များအတွက် အိမ်အရောက် Express Delivery ဖြင့်လည်း ပို့ဆောင်ပေးပါသည်။
                 </div>
             </div>
@@ -335,7 +335,7 @@
                         ▼
                     </span>
                 </button>
-                <div x-show="activeFaq === 2" x-collapse class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
+                <div x-show="activeFaq === 2" class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
                     ဆိုင်မှ ကားဂိတ်သို့ ပို့ဆောင်ပေးသည့် "ဂိတ်တင်ခ" အား အော်ဒါကျသင့်ငွေထဲတွင် တခါတည်း ပေါင်းစပ်ပေးချေနိုင်ပြီး၊ အဝေးပြေးကားလိုင်း "တန်ဆာခ" အား မိမိမြို့ ကားဂိတ်တွင် ပစ္စည်းထုတ်ယူချိန်၌ ပေးချေနိုင်ပါသည် (ဂိတ်ချေ / ကြိုချေ အဆင်ပြေသလို ညှိနှိုင်းနိုင်ပါသည်)။
                 </div>
             </div>
@@ -353,7 +353,7 @@
                         ▼
                     </span>
                 </button>
-                <div x-show="activeFaq === 3" x-collapse class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
+                <div x-show="activeFaq === 3" class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
                     DataPOS သည် ဆိုင်လိပ်စာနှင့် တရားဝင် လုပ်ငန်းလိုင်စင် အခိုင်အမာရှိသော နည်းပညာဆိုင်ဖြစ်ပြီး KBZPay, WavePay, AYA, CB, KBZ စသည့် တရားဝင် အကောင့်များဖြင့်သာ ငွေလက်ခံပါသည်။ ငွေလွှဲလက်ခံရရှိသည်နှင့် အော်ဒါဘောက်ချာနှင့် ကားဂိတ်တင်ဖြတ်ပိုင်းတို့ကို Viber မှတစ်ဆင့် ချက်ချင်း ဓာတ်ပုံရိုက် ပို့ဆောင်အတည်ပြုပေးသဖြင့် ၁၀၀% စိတ်ချယုံကြည်နိုင်ပါသည်။
                 </div>
             </div>
@@ -371,7 +371,7 @@
                         ▼
                     </span>
                 </button>
-                <div x-show="activeFaq === 4" x-collapse class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
+                <div x-show="activeFaq === 4" class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
                     ဝက်ဘ်ဆိုက်ရှိ <strong>Glass Finder (မှန်မကွဲ အလွယ်ရှာစနစ်)</strong> တွင် မိမိဖုန်း Brand နှင့် Model ရွေးချယ်၍ လွယ်ကူစွာ ရှာဖွေနိုင်သလို၊ လိုချင်သော ပစ္စည်းပုံ သို့မဟုတ် ဖုန်း Settings > About Phone ကို Screenshot ရိုက်၍ ဆိုင် Viber သို့မဟုတ် ဖုန်းသို့ အချိန်မရွေး တိုက်ရိုက်ဆက်သွယ် မေးမြန်းနိုင်ပါသည်။
                 </div>
             </div>
@@ -389,7 +389,7 @@
                         ▼
                     </span>
                 </button>
-                <div x-show="activeFaq === 5" x-collapse class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
+                <div x-show="activeFaq === 5" class="px-4 sm:px-4.5 pb-4 pt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-slate-800/80">
                     ပစ္စည်းလက်ခံရရှိပါက အထုပ်ဖွင့်သည့် ဗီဒီယို (Unboxing Video) သို့မဟုတ် ဓာတ်ပုံ ရိုက်ထားပေးပါရန် မေတ္တာရပ်ခံအပ်ပါသည်။ ဆိုင်ဘက်မှ မှားယွင်းမှု သို့မဟုတ် မူလချို့ယွင်းချက်ပါလာပါက အမြန်ဆုံး အခမဲ့ လဲလှယ်ပေးခြင်း သို့မဟုတ် ငွေပြန်လည်လွှဲပေးခြင်းကို တာဝန်ယူ ဆောင်ရွက်ပေးပါသည်။
                 </div>
             </div>
@@ -633,4 +633,3 @@
     @endif
 </div>
 @endsection
-

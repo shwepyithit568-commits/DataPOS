@@ -205,7 +205,7 @@
                 </button>
             </div>
 
-            <div x-show="tocOpen" x-collapse class="pt-1">
+            <div x-show="tocOpen" class="pt-1">
                 <nav class="grid grid-cols-1 sm:grid-cols-2 gap-1">
                     <template x-for="(item, index) in toc" :key="item.id">
                         <button type="button"

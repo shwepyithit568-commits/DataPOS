@@ -543,7 +543,7 @@ class ProductImportTest extends TestCase
         $export->assertOk();
         $csv = $export->streamedContent();
         $this->assertStringContainsString('Parent Category', $csv);
-        $this->assertStringContainsString('Discount Price (Ks)', $csv);
+        $this->assertStringContainsString('Discount Price', $csv);
         $this->assertStringContainsString('Sale Starts At', $csv);
         $this->assertStringContainsString('Meta Description', $csv);
         $this->assertStringContainsString('Spare Part', $csv);
@@ -601,4 +601,3 @@ class ProductImportTest extends TestCase
         $this->assertNotEmpty($response->streamedContent());
     }
 }
-

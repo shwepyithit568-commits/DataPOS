@@ -207,7 +207,7 @@ class StoreSettingsAndBrandingTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('name="footer_ad_text"', false);
-        $response->assertSee('Footer Ad Text');
+        $response->assertSee(__('messages.settings_delivery_footer_ad'));
     }
 
     public function test_footer_settings_page_renders_combined_live_preview(): void
