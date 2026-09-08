@@ -903,7 +903,7 @@ class PurchaseOrderController extends Controller
         $msg = __('messages.po_general_payment_recorded', ['count' => $count]);
 
         if (bccomp($result['remaining'], '0', 2) > 0) {
-            $msg .= ' ' . __('messages.po_payment_remainder', ['amount' => number_format((float) $result['remaining'], 2)]);
+            $msg .= ' ' . __('messages.po_payment_remainder', ['amount' => format_currency((float) $result['remaining'], $store)]);
         }
 
         return redirect()

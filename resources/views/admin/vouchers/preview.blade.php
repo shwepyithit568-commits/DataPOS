@@ -214,22 +214,22 @@
     {{-- Metadata Row --}}
     <div style="font-size: 11px; space-y: 2px;">
         <div style="display: flex; justify-content: space-between; font-weight: bold;">
-            <span>Receipt #:</span>
+            <span>{{ __('messages.receipt_no') }}:</span>
             <span>#SMP-2026-0001</span>
         </div>
         <div style="display: flex; justify-content: space-between; color: #64748b;">
-            <span>Date:</span>
+            <span>{{ __('messages.date') }}:</span>
             <span>{{ now()->format('Y-m-d H:i') }}</span>
         </div>
         @if($template->show_cashier_name)
             <div style="display: flex; justify-content: space-between; color: #64748b;">
-                <span>Cashier:</span>
+                <span>{{ __('messages.cashier') }}:</span>
                 <span>Mg Min (Counter 01)</span>
             </div>
         @endif
         @if($template->show_customer_info)
             <div style="display: flex; justify-content: space-between; color: #64748b;">
-                <span>Customer:</span>
+                <span>{{ __('messages.customer') }}:</span>
                 <span>Daw Mya (09-789123456)</span>
             </div>
         @endif
@@ -241,9 +241,9 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th>Description</th>
-                <th style="text-align: center;">Qty</th>
-                <th class="text-right">Total</th>
+                <th>{{ __('messages.description') }}</th>
+                <th style="text-align: center;">{{ __('messages.qty') }}</th>
+                <th class="text-right">{{ __('messages.total') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -271,23 +271,23 @@
     {{-- Totals Calculation --}}
     <div>
         <div class="totals-row">
-            <span style="color: #64748b;">Subtotal:</span>
+            <span style="color: #64748b;">{{ __('messages.subtotal') }}:</span>
             <span class="font-mono">93,000 MMK</span>
         </div>
         @if($template->show_discount_line)
             <div class="totals-row" style="color: #e11d48;">
-                <span>Store Discount (5%):</span>
+                <span>{{ __('messages.store_discount_pct') }}:</span>
                 <span class="font-mono">-4,650 MMK</span>
             </div>
         @endif
         @if($template->show_tax_breakdown)
             <div class="totals-row" style="color: #64748b;">
-                <span>Commercial Tax (5%):</span>
+                <span>{{ __('messages.commercial_tax_pct') }}:</span>
                 <span class="font-mono">4,418 MMK</span>
             </div>
         @endif
         <div class="totals-row grand">
-            <span>Net Total:</span>
+            <span>{{ __('messages.net_total') }}:</span>
             <span class="font-mono">92,768 MMK</span>
         </div>
     </div>

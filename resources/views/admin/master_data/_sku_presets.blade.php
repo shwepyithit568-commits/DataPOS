@@ -105,8 +105,8 @@
                 <thead class="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold uppercase text-[10px] tracking-wider">
                     <tr>
                         <th class="p-3.5">Type</th>
-                        <th class="p-3.5">Short Code</th>
-                        <th class="p-3.5">Name / Description</th>
+                        <th class="p-3.5">{{ __('messages.short_code') }}</th>
+                        <th class="p-3.5">{{ __('messages.name_description') }}</th>
                         <th class="p-3.5 text-center">Status</th>
                         <th class="p-3.5 text-right">Actions</th>
                     </tr>
@@ -157,7 +157,7 @@
                         <tr>
                             <td colspan="5" class="p-8 text-center text-slate-400">
                                 <div class="text-3xl mb-2 opacity-50">🏷️</div>
-                                <p class="text-sm font-bold text-slate-600 dark:text-slate-300">No SKU code presets found.</p>
+                                <p class="text-sm font-bold text-slate-600 dark:text-slate-300">{{ __('messages.no_sku_presets') }}</p>
                                 <p class="text-xs mt-1">Click "Add Code Preset" above to create one.</p>
                             </td>
                         </tr>
@@ -244,7 +244,7 @@
             <div class="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl p-5 space-y-4" @click.stop>
                 <div class="text-center space-y-2">
                     <div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 grid place-items-center text-xl mx-auto">🗑️</div>
-                    <h4 class="text-sm font-black text-slate-900 dark:text-white">Delete SKU Preset?</h4>
+                    <h4 class="text-sm font-black text-slate-900 dark:text-white">{{ __('messages.delete_sku_preset') }}</h4>
                     <p class="text-xs text-slate-500 dark:text-slate-400">
                         Are you sure you want to delete <span class="font-bold text-slate-900 dark:text-white" x-text="deleteTarget?.code"></span> (<span x-text="deleteTarget?.name"></span>)?
                     </p>

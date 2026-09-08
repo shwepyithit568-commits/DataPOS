@@ -215,11 +215,11 @@
                     <thead class="bg-slate-100 dark:bg-slate-800/95 uppercase font-black text-slate-700 dark:text-slate-300 divide-x divide-slate-300 dark:divide-slate-700">
                         <tr>
                             <th class="px-3 py-2">Ticket #</th>
-                            <th class="px-3 py-2">Date</th>
-                            <th class="px-3 py-2">Device Problem / Issue</th>
-                            <th class="px-3 py-2">Technician</th>
-                            <th class="px-3 py-2">Status</th>
-                            <th class="px-3 py-2 text-right">Action</th>
+                            <th class="px-3 py-2">{{ __('messages.date') }}</th>
+                            <th class="px-3 py-2">{{ __('messages.device_problem_issue') }}</th>
+                            <th class="px-3 py-2">{{ __('messages.technician') }}</th>
+                            <th class="px-3 py-2">{{ __('messages.status') }}</th>
+                            <th class="px-3 py-2 text-right">{{ __('messages.action') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200/90 dark:divide-slate-800 bg-white dark:bg-slate-900">
@@ -282,14 +282,14 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Action / Resolution Taken</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.action_resolution_taken') }}</label>
                     <input type="text" name="resolution" placeholder="e.g. Replaced speaker under warranty / Sent to service center" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-violet-500">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Update Status</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.update_status') }}</label>
                     <select name="status" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 font-semibold focus:ring-2 focus:ring-violet-500">
-                        <option value="active">Active (Keep Active)</option>
+                        <option value="active">{{ __('messages.active_keep_active') }}</option>
                         <option value="claimed" selected>Claimed (အာမခံ လဲလှယ်/ပြင်ဆင်ပြီး)</option>
                         <option value="void">Void (အာမခံ ပျက်ပြယ်အဖြစ် သတ်မှတ်မည်)</option>
                     </select>

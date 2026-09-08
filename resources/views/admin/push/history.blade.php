@@ -52,7 +52,7 @@
             <div class="text-lg sm:text-2xl font-black text-slate-900 dark:text-slate-100 mt-1 font-mono tracking-tight">
                 {{ number_format($counts['all']) }}
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">All dispatches logged</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.all_dispatches_logged') }}</div>
         </div>
 
         {{-- Orders --}}
@@ -64,7 +64,7 @@
             <div class="text-lg sm:text-2xl font-black text-violet-600 dark:text-violet-400 mt-1 font-mono tracking-tight">
                 {{ number_format($counts['order']) }}
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">New order alerts</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.new_order_alerts') }}</div>
         </div>
 
         {{-- Payments --}}
@@ -76,7 +76,7 @@
             <div class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono tracking-tight">
                 {{ number_format($counts['payment']) }}
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Payment receipts</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.payment_receipts') }}</div>
         </div>
 
         {{-- Broadcast Studio --}}
@@ -88,7 +88,7 @@
             <div class="text-lg sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1 font-mono tracking-tight">
                 {{ number_format($counts['system']) }}
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Broadcasts dispatched</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.broadcasts_dispatched') }}</div>
         </div>
     </div>
 
@@ -129,8 +129,8 @@
     <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs overflow-hidden transition">
         @if ($logs->isEmpty())
             <div class="p-8 text-center text-xs text-slate-400 font-bold space-y-1">
-                <p>No notifications logged yet.</p>
-                <p class="text-[11px] font-normal">Push notification dispatches appear here automatically when orders, payments or broadcasts occur.</p>
+                <p>{{ __('messages.no_notifications_yet') }}</p>
+                <p class="text-[11px] font-normal">{{ __('messages.push_dispatches_hint') }}</p>
             </div>
         @else
             <div class="overflow-x-auto">
@@ -140,7 +140,7 @@
                             <th class="p-2.5">Date & Time</th>
                             <th class="p-2.5">Type</th>
                             <th class="p-2.5">Title</th>
-                            <th class="p-2.5">Message Body</th>
+                            <th class="p-2.5">{{ __('messages.message_body') }}</th>
                             <th class="p-2.5 text-right">Recipients</th>
                         </tr>
                     </thead>

@@ -8,34 +8,34 @@
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-            <label class="{{ $labelClass }}">Main Phone</label>
+            <label class="{{ $labelClass }}">{{ __('messages.settings_main_phone') }}</label>
             <input type="text" name="phone" value="{{ old('phone', $setting->phone) }}" placeholder="09xxxxxxxxx" class="{{ $inputClass }}" />
             @error('phone')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
         <div>
-            <label class="{{ $labelClass }}">Viber Number</label>
+            <label class="{{ $labelClass }}">{{ __('messages.settings_viber_number') }}</label>
             <input type="text" name="viber_number" value="{{ old('viber_number', $setting->viber_number) }}" placeholder="09xxxxxxxxx" class="{{ $inputClass }}" />
             @error('viber_number')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
         <div>
-            <label class="{{ $labelClass }}">Telegram Username</label>
+            <label class="{{ $labelClass }}">{{ __('messages.settings_telegram_username') }}</label>
             <input type="text" name="telegram_username" value="{{ old('telegram_username', $setting->telegram_username) }}" placeholder="@username" class="{{ $inputClass }}" />
             @error('telegram_username')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
         <div class="md:col-span-2">
-            <label class="{{ $labelClass }}">Shop Address</label>
-            <textarea name="address" rows="4" class="{{ $inputClass }}" placeholder="Shop address shown on storefront">{{ old('address', $setting->address) }}</textarea>
+            <label class="{{ $labelClass }}">{{ __('messages.settings_shop_address') }}</label>
+            <textarea name="address" rows="4" class="{{ $inputClass }}" placeholder="{{ __('messages.settings_shop_address_placeholder') }}">{{ old('address', $setting->address) }}</textarea>
             @error('address')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
 
         <div class="md:col-span-2">
             <div class="border-t border-gray-200 pt-4 dark:border-slate-700">
-                <h3 class="text-sm font-black text-gray-900 dark:text-slate-100">📱 Floating Chat Button (mobile)</h3>
+                <h3 class="text-sm font-black text-gray-900 dark:text-slate-100">{{ __('messages.settings_floating_chat_button') }}</h3>
                 <p class="{{ $helpClass }}">ဖုန်းပေါ်မှာ ပေါ်တဲ့ floating chat button ရဲ့ label နှင့် icon ကို ချိန်ညှိရန်။ Button နှိပ်ရင် popup ဖွင့်ပြီး channel များကို အောက်က "Chat Channels" မှာ ထည့်ပါ။</p>
             </div>
         </div>
         <div>
-            <label class="{{ $labelClass }}">Floating Button Label</label>
+            <label class="{{ $labelClass }}">{{ __('messages.settings_floating_button_label') }}</label>
             <input type="text" name="chat_button_label" maxlength="50" value="{{ old('chat_button_label', $setting->chat_button_label) }}" placeholder="Chat with us" class="{{ $inputClass }}" />
             <p class="{{ $helpClass }}">Button ပေါ်မှာပြမည့်စာသား (အများဆုံး 50 characters)။ မထည့်ပါက "Chat with us / ဆက်သွယ်ရန်" ပြမည်။</p>
             @error('chat_button_label')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
@@ -44,9 +44,9 @@
             $floatIconPreview = \App\Support\StorefrontAsset::imageUrl($setting->chat_button_icon_path);
         @endphp
         <div x-data="{ iconPreview: {{ json_encode($floatIconPreview) }} }">
-            <label class="{{ $labelClass }}">Floating Button Icon</label>
+            <label class="{{ $labelClass }}">{{ __('messages.settings_floating_button_icon') }}</label>
             <select name="chat_button_icon" class="{{ $inputClass }}">
-                <option value="">Auto (brand icon)</option>
+                <option value="">{{ __('messages.settings_icon_auto') }}</option>
                 <option value="✈️" {{ old('chat_button_icon', $setting->chat_button_icon) === '✈️' ? 'selected' : '' }}>✈️ Telegram</option>
                 <option value="💬" {{ old('chat_button_icon', $setting->chat_button_icon) === '💬' ? 'selected' : '' }}>💬 Chat</option>
                 <option value="📞" {{ old('chat_button_icon', $setting->chat_button_icon) === '📞' ? 'selected' : '' }}>📞 Call</option>
@@ -75,31 +75,31 @@
         @endphp
         <div class="md:col-span-2">
             <div class="border-t border-gray-200 pt-4 dark:border-slate-700">
-                <h3 class="text-sm font-black text-gray-900 dark:text-slate-100">📱 Chat Channels (floating chat popup)</h3>
+                <h3 class="text-sm font-black text-gray-900 dark:text-slate-100">📱 {{ __('messages.settings_channel') }}s (floating chat popup)</h3>
                 <p class="{{ $helpClass }}">Popup ထဲမှာ ပြမည့် channel များ — icon (emoji သို့မဟုတ် ပုံ upload) + label + link ကို စိတ်ကြိုက် ထည့်/ဖျက် လုပ်နိုင်သည်။ မထည့်ထားပါက Viber / Telegram / Facebook … auto ပြမည်။</p>
             </div>
         </div>
         <div class="md:col-span-2 space-y-3" x-data="{ channels: {{ json_encode($chatChannels, JSON_UNESCAPED_UNICODE) }} }">
             <button type="button" @click="channels.push({ icon: '', icon_path: '', label: '', href: '' })"
                 class="shrink-0 rounded-xl border border-fuchsia-300 bg-fuchsia-50 px-3 py-2 text-xs font-bold text-fuchsia-700 hover:bg-fuchsia-100 dark:border-fuchsia-700 dark:bg-fuchsia-950/40 dark:text-fuchsia-300">
-                + Add Channel
+                {{ __('messages.settings_add_channel') }}
             </button>
             <template x-for="(ch, i) in channels" :key="i">
                 <div class="rounded-xl bg-gray-50/70 p-4 space-y-3 dark:border-slate-700 dark:bg-slate-900/50">
                     <div class="flex items-center justify-between">
-                        <span class="rounded-full bg-fuchsia-600 px-3 py-1 text-xs font-black text-white" x-text="'Channel ' + (i + 1)"></span>
+                        <span class="rounded-full bg-fuchsia-600 px-3 py-1 text-xs font-black text-white" x-text="@js(__('messages.settings_channel')) + ' ' + (i + 1)"></span>
                         <button type="button" @click="channels.splice(i, 1)"
                             class="rounded-lg px-2 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40">
-                            ✕ Remove
+                            ✕ {{ __('messages.settings_remove') }}
                         </button>
                     </div>
                     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                         <div>
-                            <label class="{{ $labelClass }}">Icon (emoji)</label>
+                            <label class="{{ $labelClass }}">{{ __('messages.settings_icon_emoji') }}</label>
                             <input type="text" x-model="ch.icon" :name="'chat_channels[' + i + '][icon]'" maxlength="10" placeholder="💬 / ✈️ / 📘 …" class="{{ $inputClass }}" />
                         </div>
                         <div>
-                            <label class="{{ $labelClass }}">Icon Image (optional — image wins)</label>
+                            <label class="{{ $labelClass }}">{{ __('messages.settings_icon_image') }}</label>
                             <div class="flex items-center gap-2">
                                 <img x-show="ch.icon_path || ch._preview"
                                      :src="ch._preview || (ch.icon_path ? (ch.icon_path.startsWith('assets/') ? '/' + ch.icon_path : '/storage/' + ch.icon_path) : '')"
@@ -114,11 +114,11 @@
                     </div>
                     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                         <div>
-                            <label class="{{ $labelClass }}">Label</label>
+                            <label class="{{ $labelClass }}">{{ __('messages.settings_label') }}</label>
                             <input type="text" x-model="ch.label" :name="'chat_channels[' + i + '][label]'" maxlength="50" placeholder="Viber / Telegram / Facebook …" class="{{ $inputClass }}" />
                         </div>
                         <div>
-                            <label class="{{ $labelClass }}">Link</label>
+                            <label class="{{ $labelClass }}">{{ __('messages.settings_link') }}</label>
                             <input type="text" x-model="ch.href" :name="'chat_channels[' + i + '][href]'" placeholder="https:// , viber:// , tel: , tg://" class="{{ $inputClass }}" />
                         </div>
                     </div>
@@ -159,33 +159,33 @@
         <div class="md:col-span-2">
             <label for="map_enabled" class="inline-flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" id="map_enabled" name="map_enabled" value="1" class="h-5 w-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500" {{ old('map_enabled', $setting->map_enabled) ? 'checked' : '' }} />
-                <span class="{{ $labelClass }}">Show store location on the storefront</span>
+                <span class="{{ $labelClass }}">{{ __('messages.settings_show_store_location') }}</span>
             </label>
             <p class="{{ $helpClass }}">ဖွင့်ထားရင် footer နဲ့ "မှာယူနည်း" မှာ location card ပေါ်မည်။</p>
             @error('map_enabled')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
 
         <div class="md:col-span-2">
-            <label for="google_maps_url" class="{{ $labelClass }}">Google Maps Share URL</label>
+            <label for="google_maps_url" class="{{ $labelClass }}">{{ __('messages.settings_google_maps_url') }}</label>
             <input id="google_maps_url" type="text" name="google_maps_url" value="{{ old('google_maps_url', $setting->google_maps_url) }}" placeholder="https://maps.app.goo.gl/…" class="{{ $inputClass }}" />
             <p class="{{ $helpClass }}">ဆိုင်ရဲ့ တိကျတဲ့ pin URL — "Open in Google Maps" နဲ့ footer link အတွက် သုံးမည်။ https:// ပဲ လက်ခံမည်။</p>
             @error('google_maps_url')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
 
         <div>
-            <label for="map_latitude" class="{{ $labelClass }}">Map Latitude (optional)</label>
+            <label for="map_latitude" class="{{ $labelClass }}">{{ __('messages.settings_map_latitude') }}</label>
             <input id="map_latitude" type="text" inputmode="decimal" name="map_latitude" value="{{ old('map_latitude', $setting->map_latitude) }}" placeholder="e.g. 17.3515" class="{{ $inputClass }}" />
             <p class="{{ $helpClass }}">Embed map (မြေပုံပုံ) အတွက် လိုအပ်သည် — မထည့်ရသေးရင် embed မပြဘဲ link ပဲ ပြမည်။</p>
             @error('map_latitude')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
         <div>
-            <label for="map_longitude" class="{{ $labelClass }}">Map Longitude (optional)</label>
+            <label for="map_longitude" class="{{ $labelClass }}">{{ __('messages.settings_map_longitude') }}</label>
             <input id="map_longitude" type="text" inputmode="decimal" name="map_longitude" value="{{ old('map_longitude', $setting->map_longitude) }}" placeholder="e.g. 95.4877" class="{{ $inputClass }}" />
             @error('map_longitude')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
 
         <div class="md:col-span-2">
-            <label for="map_title" class="{{ $labelClass }}">Map Title (optional)</label>
+            <label for="map_title" class="{{ $labelClass }}">{{ __('messages.settings_map_title') }}</label>
             <input id="map_title" type="text" name="map_title" value="{{ old('map_title', $setting->map_title) }}" placeholder="DataPOS & CCTV" class="{{ $inputClass }}" />
             <p class="{{ $helpClass }}">Accessible map title + location card heading အတွက်။</p>
             @error('map_title')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
@@ -194,7 +194,7 @@
         <div class="md:col-span-2">
             <label for="map_embed_enabled" class="inline-flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" id="map_embed_enabled" name="map_embed_enabled" value="1" class="h-5 w-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500" {{ old('map_embed_enabled', $setting->map_embed_enabled) ? 'checked' : '' }} />
-                <span class="{{ $labelClass }}">Embed the map on the storefront (lazy-loaded)</span>
+                <span class="{{ $labelClass }}">{{ __('messages.settings_embed_map') }}</span>
             </label>
             <p class="{{ $helpClass }}">Latitude + Longitude နှစ်ခုလုံး ရှိမှသာ iframe ပြမည် — မရှိရင် link ပဲ ပြမည်။</p>
             @error('map_embed_enabled')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
@@ -206,17 +206,17 @@
         @endphp
         <div class="md:col-span-2">
             <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
-                <p class="text-xs font-black text-gray-800 dark:text-slate-200">Map Preview</p>
+                <p class="text-xs font-black text-gray-800 dark:text-slate-200">{{ __('messages.settings_map_preview') }}</p>
                 <div class="mt-2 flex flex-wrap items-center gap-2">
                     @if ($mapPreviewUrl)
-                        <a href="{{ $mapPreviewUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center rounded-lg bg-slate-800 px-3 py-2 text-xs font-black text-white hover:bg-slate-700">Open in Google Maps</a>
+                        <a href="{{ $mapPreviewUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center rounded-lg bg-slate-800 px-3 py-2 text-xs font-black text-white hover:bg-slate-700">{{ __('messages.settings_open_in_google_maps') }}</a>
                     @else
-                        <span class="text-xs text-slate-500 dark:text-slate-400">No map link configured yet — set the Share URL or save an address.</span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.settings_no_map_configured') }}</span>
                     @endif
                     @if ($mapEmbedSrc)
-                        <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300">✓ Embed ready (lazy, no API key)</span>
+                        <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300">{{ __('messages.settings_embed_ready') }}</span>
                     @else
-                        <span class="text-xs text-slate-500 dark:text-slate-400">Embed needs latitude + longitude.</span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.settings_embed_needs_coords') }}</span>
                     @endif
                 </div>
                 @if ($mapEmbedSrc)

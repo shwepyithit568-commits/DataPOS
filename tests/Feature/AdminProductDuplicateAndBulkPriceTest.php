@@ -91,7 +91,8 @@ class AdminProductDuplicateAndBulkPriceTest extends TestCase
         $content = $response->streamedContent();
 
         $this->assertStringContainsString('SKU', $content);
-        $this->assertStringContainsString('Retail Price (Ks)', $content);
+        // Header is clean (no hardcoded "(Ks)") per the currency-formatting standard
+        $this->assertStringContainsString('Retail Price', $content);
         $this->assertStringContainsString('A88', $content);
         $this->assertStringContainsString('A88 Micro', $content);
         $this->assertStringContainsString('Chargers', $content);

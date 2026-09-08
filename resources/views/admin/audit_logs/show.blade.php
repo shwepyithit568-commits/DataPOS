@@ -25,7 +25,7 @@
                         System Audit Logs
                     </a>
                     <span>/</span>
-                    <span class="text-rose-600 dark:text-rose-400">Log Detail</span>
+                    <span class="text-rose-600 dark:text-rose-400">{{ __('messages.log_detail') }}</span>
                 </div>
                 <h1 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
                     <span>#LOG-{{ str_pad($log->id, 5, '0', STR_PAD_LEFT) }}</span>
@@ -98,7 +98,7 @@
 
                         {{-- Raw JSON --}}
                         <div class="pt-2">
-                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Raw JSON Payload</div>
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">{{ __('messages.raw_json_payload') }}</div>
                             <pre class="bg-slate-950 text-slate-200 rounded-2xl p-4 text-[11px] font-mono overflow-x-auto">{{ json_encode($metaArray, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                         </div>
                     </div>
@@ -129,11 +129,11 @@
                         @endif
                     </div>
                     <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                        <span class="text-slate-400 font-semibold">User ID</span>
+                        <span class="text-slate-400 font-semibold">{{ __('messages.user_id') }}</span>
                         <span class="font-mono font-bold text-slate-900 dark:text-slate-100">#{{ $log->actor_id ?? 'N/A' }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-slate-400 font-semibold">IP Address</span>
+                        <span class="text-slate-400 font-semibold">{{ __('messages.ip_address') }}</span>
                         <span class="font-mono font-bold text-slate-900 dark:text-slate-100">{{ $log->ip_address ?? '—' }}</span>
                     </div>
                 </div>
@@ -148,19 +148,19 @@
 
                 <div class="space-y-2 text-xs">
                     <div class="flex items-center justify-between">
-                        <span class="text-slate-400 font-semibold">Log ID</span>
+                        <span class="text-slate-400 font-semibold">{{ __('messages.log_id') }}</span>
                         <span class="font-mono font-bold text-slate-900 dark:text-slate-100">#{{ $log->id }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-slate-400 font-semibold">Store ID</span>
+                        <span class="text-slate-400 font-semibold">{{ __('messages.store_id') }}</span>
                         <span class="font-mono font-bold text-slate-900 dark:text-slate-100">#{{ $log->store_id }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-slate-400 font-semibold">Logged At</span>
+                        <span class="text-slate-400 font-semibold">{{ __('messages.logged_at') }}</span>
                         <span class="text-slate-700 dark:text-slate-300">{{ $log->created_at?->format('d M Y, h:i:s A') }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-slate-400 font-semibold">Time Elapsed</span>
+                        <span class="text-slate-400 font-semibold">{{ __('messages.time_elapsed') }}</span>
                         <span class="text-slate-700 dark:text-slate-300">{{ $log->created_at?->diffForHumans() }}</span>
                     </div>
                 </div>

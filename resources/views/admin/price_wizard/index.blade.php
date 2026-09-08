@@ -296,7 +296,7 @@ window.priceWizardData = function (initialProducts) {
 
     @if ($errors->any())
         <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg text-xs text-rose-800 dark:text-rose-200 shadow-2xs">
-            <div class="font-bold mb-1">Please fix the following issues:</div>
+            <div class="font-bold mb-1">{{ __('messages.fix_issues') }}:</div>
             <ul class="list-disc list-inside space-y-0.5">
                 @foreach ($errors->all() as $err)
                     <li>{{ $err }}</li>
@@ -387,7 +387,7 @@ window.priceWizardData = function (initialProducts) {
 
             {{-- Quick Preset Buttons --}}
             <div class="flex flex-wrap items-center gap-1">
-                <span class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-0.5">Quick Markup:</span>
+                <span class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mr-0.5">{{ __('messages.quick_markup') }}:</span>
                 <template x-for="pct in [10, 15, 20, 25, 30, 40, 50]" :key="pct">
                     <button type="button"
                             @click="setQuickMarkup(pct)"
@@ -443,7 +443,7 @@ window.priceWizardData = function (initialProducts) {
                            @input="recalculateAll()"
                            class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 pr-10 text-xs bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-mono font-bold focus:ring-2 focus:ring-violet-500 shadow-2xs">
                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 dark:text-slate-500"
-                          x-text="isPercentageMode() ? '%' : 'Ks'"></span>
+                          x-text="isPercentageMode() ? '%' : (window.__currencyConfig ? (window.__currencyConfig.currency_symbol || 'Ks') : 'Ks')"></span>
                 </div>
             </div>
 
@@ -638,7 +638,7 @@ window.priceWizardData = function (initialProducts) {
                             <td class="py-2 px-3">
                                 <div class="font-bold text-slate-900 dark:text-slate-100 leading-tight" x-text="item.name"></div>
                                 <div class="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-mono">
-                                    <span>SKU: <span x-text="item.sku"></span></span>
+                                    <span>{{ __('messages.sku_label') }}: <span x-text="item.sku"></span></span>
                                     <span>•</span>
                                     <span x-text="item.category_name"></span>
                                 </div>
@@ -646,17 +646,17 @@ window.priceWizardData = function (initialProducts) {
 
                             {{-- Purchase Cost --}}
                             <td class="py-2 px-3 text-right font-mono font-semibold text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                <span x-text="formatCurrency(item.cost)"></span> <span class="text-[10px] text-slate-400 dark:text-slate-500">Ks</span>
+                                <span x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(item.cost) : formatCurrency(item.cost)"></span>
                             </td>
 
                             {{-- Current Retail --}}
                             <td class="py-2 px-3 text-right font-mono text-xs text-slate-800 dark:text-slate-200 font-bold whitespace-nowrap">
-                                <span x-text="formatCurrency(item.current_retail)"></span> <span class="text-[10px] text-slate-400 dark:text-slate-500">Ks</span>
+                                <span x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(item.current_retail) : formatCurrency(item.current_retail)"></span>
                             </td>
 
                             {{-- Current Wholesale --}}
                             <td class="py-2 px-3 text-right font-mono text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                                <span x-text="formatCurrency(item.current_wholesale)"></span> <span class="text-[10px] text-slate-400 dark:text-slate-500">Ks</span>
+                                <span x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(item.current_wholesale) : formatCurrency(item.current_wholesale)"></span>
                             </td>
 
                             {{-- Current Margin --}}
@@ -753,7 +753,7 @@ window.priceWizardData = function (initialProducts) {
                         <h3 class="text-sm font-black text-slate-900 dark:text-slate-100">
                             {{ __('messages.price_wizard_confirm_title') }}
                         </h3>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Review the summary before applying batch price adjustments.</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ __('messages.review_summary') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="showModal = false" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-base font-bold">&times;</button>
@@ -762,19 +762,19 @@ window.priceWizardData = function (initialProducts) {
             {{-- Summary Stats in Modal --}}
             <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700 space-y-1.5 text-xs">
                 <div class="flex justify-between">
-                    <span class="text-slate-500 dark:text-slate-400">Products to update:</span>
+                    <span class="text-slate-500 dark:text-slate-400">{{ __('messages.products_to_update') }}:</span>
                     <span class="font-bold font-mono text-slate-900 dark:text-slate-100" x-text="modifiedCount"></span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-slate-500 dark:text-slate-400">Target Field:</span>
+                    <span class="text-slate-500 dark:text-slate-400">{{ __('messages.target_field') }}:</span>
                     <span class="font-bold text-violet-600 dark:text-violet-400" x-text="targetField.replace('_', ' ').toUpperCase()"></span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-slate-500 dark:text-slate-400">Price Increases:</span>
+                    <span class="text-slate-500 dark:text-slate-400">{{ __('messages.price_increases') }}:</span>
                     <span class="font-bold font-mono text-emerald-600 dark:text-emerald-400" x-text="priceIncreases"></span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-slate-500 dark:text-slate-400">Price Decreases:</span>
+                    <span class="text-slate-500 dark:text-slate-400">{{ __('messages.price_decreases') }}:</span>
                     <span class="font-bold font-mono text-rose-600 dark:text-rose-400" x-text="priceDecreases"></span>
                 </div>
                 <template x-if="belowCostWarnings > 0">

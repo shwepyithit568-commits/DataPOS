@@ -195,7 +195,7 @@
                             </a>
 
                             @if(!$b->is_default)
-                                <form method="POST" action="{{ route('store.admin.branches.destroy', ['store_slug' => $store->slug, 'branch' => $b->id]) }}" onsubmit="return confirm('{{ __('messages.branches_confirm_delete') }}')" class="inline">
+                                <form method="POST" action="{{ route('store.admin.branches.destroy', ['store_slug' => $store->slug, 'branch' => $b->id]) }}" data-confirm="{{ __('messages.branches_confirm_delete') }}" class="inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"

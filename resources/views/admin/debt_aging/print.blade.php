@@ -108,19 +108,19 @@
     <div class="meta-grid">
         <div class="kpi-card">
             <span>{{ __('messages.debt_aging_total_receivables') }}</span>
-            <h3 class="font-mono" style="color: #dc2626;">Ks {{ number_format($metrics['total_outstanding']) }}</h3>
+            <h3 class="font-mono" style="color: #dc2626;">{{ format_currency($metrics['total_outstanding'], $store) }}</h3>
         </div>
         <div class="kpi-card">
             <span>0 - 30 Days (Current)</span>
-            <h3 class="font-mono" style="color: #16a34a;">Ks {{ number_format($metrics['bucket_0_30']) }}</h3>
+            <h3 class="font-mono" style="color: #16a34a;">{{ format_currency($metrics['bucket_0_30'], $store) }}</h3>
         </div>
         <div class="kpi-card">
             <span>31 - 60 Days (Follow-up)</span>
-            <h3 class="font-mono" style="color: #d97706;">Ks {{ number_format($metrics['bucket_31_60']) }}</h3>
+            <h3 class="font-mono" style="color: #d97706;">{{ format_currency($metrics['bucket_31_60'], $store) }}</h3>
         </div>
         <div class="kpi-card">
             <span>90+ Days (Overdue)</span>
-            <h3 class="font-mono" style="color: #991b1b;">Ks {{ number_format($metrics['bucket_90_plus']) }}</h3>
+            <h3 class="font-mono" style="color: #991b1b;">{{ format_currency($metrics['bucket_90_plus'], $store) }}</h3>
         </div>
     </div>
 
@@ -128,15 +128,15 @@
         <thead>
             <tr>
                 <th style="width: 30px;">#</th>
-                <th>Customer Name</th>
-                <th>Phone</th>
-                <th class="text-right">Total Due (Ks)</th>
+                <th>{{ __('messages.customer_name') }}</th>
+                <th>{{ __('messages.phone') }}</th>
+                <th class="text-right">{{ __('messages.total_due') }}</th>
                 <th class="text-right">0 - 30d</th>
                 <th class="text-right">31 - 60d</th>
                 <th class="text-right">61 - 90d</th>
                 <th class="text-right">90d+</th>
-                <th class="text-center">Overdue Days</th>
-                <th class="text-center">Risk</th>
+                <th class="text-center">{{ __('messages.overdue_days') }}</th>
+                <th class="text-center">{{ __('messages.risk') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -146,11 +146,11 @@
                     <td class="text-center">{{ $idx++ }}</td>
                     <td><strong>{{ $c['customer_name'] }}</strong></td>
                     <td class="font-mono">{{ $c['customer_phone'] }}</td>
-                    <td class="text-right font-mono" style="font-weight: bold; color: #dc2626;">{{ number_format($c['total_due']) }}</td>
-                    <td class="text-right font-mono">{{ $c['bucket_0_30'] > 0 ? number_format($c['bucket_0_30']) : '-' }}</td>
-                    <td class="text-right font-mono">{{ $c['bucket_31_60'] > 0 ? number_format($c['bucket_31_60']) : '-' }}</td>
-                    <td class="text-right font-mono">{{ $c['bucket_61_90'] > 0 ? number_format($c['bucket_61_90']) : '-' }}</td>
-                    <td class="text-right font-mono" style="font-weight: bold; color: #991b1b;">{{ $c['bucket_90_plus'] > 0 ? number_format($c['bucket_90_plus']) : '-' }}</td>
+                    <td class="text-right font-mono" style="font-weight: bold; color: #dc2626;">{{ format_currency($c['total_due'], $store) }}</td>
+                    <td class="text-right font-mono">{{ $c['bucket_0_30'] > 0 ? format_currency($c['bucket_0_30'], $store) : '-' }}</td>
+                    <td class="text-right font-mono">{{ $c['bucket_31_60'] > 0 ? format_currency($c['bucket_31_60'], $store) : '-' }}</td>
+                    <td class="text-right font-mono">{{ $c['bucket_61_90'] > 0 ? format_currency($c['bucket_61_90'], $store) : '-' }}</td>
+                    <td class="text-right font-mono" style="font-weight: bold; color: #991b1b;">{{ $c['bucket_90_plus'] > 0 ? format_currency($c['bucket_90_plus'], $store) : '-' }}</td>
                     <td class="text-center font-mono">{{ $c['max_overdue_days'] }} d</td>
                     <td class="text-center uppercase" style="font-size: 9px; font-weight: bold;">{{ $c['risk_level'] }}</td>
                 </tr>
@@ -158,20 +158,20 @@
         </tbody>
         <tfoot>
             <tr style="background: #f8fafc; font-weight: bold;">
-                <td colspan="3" class="text-right">Grand Total:</td>
-                <td class="text-right font-mono" style="color: #dc2626;">{{ number_format($metrics['total_outstanding']) }}</td>
-                <td class="text-right font-mono">{{ number_format($metrics['bucket_0_30']) }}</td>
-                <td class="text-right font-mono">{{ number_format($metrics['bucket_31_60']) }}</td>
-                <td class="text-right font-mono">{{ number_format($metrics['bucket_61_90']) }}</td>
-                <td class="text-right font-mono">{{ number_format($metrics['bucket_90_plus']) }}</td>
+                <td colspan="3" class="text-right">{{ __('messages.grand_total') }}:</td>
+                <td class="text-right font-mono" style="color: #dc2626;">{{ format_currency($metrics['total_outstanding'], $store) }}</td>
+                <td class="text-right font-mono">{{ format_currency($metrics['bucket_0_30'], $store) }}</td>
+                <td class="text-right font-mono">{{ format_currency($metrics['bucket_31_60'], $store) }}</td>
+                <td class="text-right font-mono">{{ format_currency($metrics['bucket_61_90'], $store) }}</td>
+                <td class="text-right font-mono">{{ format_currency($metrics['bucket_90_plus'], $store) }}</td>
                 <td colspan="2"></td>
             </tr>
         </tfoot>
     </table>
 
     <div class="footer">
-        <span>DataPOS Debt Aging Analysis System</span>
-        <span>Page 1 of 1</span>
+        <span>DataPOS {{ __('messages.debt_aging_analysis') }}</span>
+        <span>{{ __('messages.page_label') }} 1 / 1</span>
     </div>
 
 </body>

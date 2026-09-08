@@ -200,10 +200,10 @@
                             @csrf
                             @method('PATCH')
                             <select name="status" class="text-[10px] font-bold border rounded-md px-1.5 py-1 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
-                                <option value="pending"   {{ $application->status === 'pending'   ? 'selected' : '' }}>Pending</option>
-                                <option value="approved"  {{ $application->status === 'approved'  ? 'selected' : '' }}>Approve</option>
-                                <option value="rejected"  {{ $application->status === 'rejected'  ? 'selected' : '' }}>Reject</option>
-                                <option value="suspended" {{ $application->status === 'suspended' ? 'selected' : '' }}>Suspend</option>
+                                <option value="pending"   {{ $application->status === 'pending'   ? 'selected' : '' }}>{{ __('messages.pending') }}</option>
+                                <option value="approved"  {{ $application->status === 'approved'  ? 'selected' : '' }}>{{ __('messages.approve') }}</option>
+                                <option value="rejected"  {{ $application->status === 'rejected'  ? 'selected' : '' }}>{{ __('messages.reject') }}</option>
+                                <option value="suspended" {{ $application->status === 'suspended' ? 'selected' : '' }}>{{ __('messages.suspend') }}</option>
                             </select>
                             <button type="submit" class="px-2 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shadow-2xs active:scale-95">
                                 ✓
@@ -221,7 +221,7 @@
                             </a>
                             @if (auth()->user()->isPlatformOwner() || auth()->user()->hasStoreRole($store->id, ['store_manager']))
                                 <form method="POST" action="{{ route('store.admin.wholesale.applications.destroy', array_merge($storeRouteParams, ['application' => $application->id])) }}"
-                                      onsubmit="return confirm('{{ __('messages.wholesale_delete_confirm') }}');">
+                                      data-confirm="{{ __('messages.wholesale_delete_confirm') }}">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="px-1.5 py-1 rounded-md text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition cursor-pointer" title="Delete">
@@ -250,8 +250,8 @@
                             <th class="p-2.5">{{ __('messages.wholesale_phone') }}</th>
                             <th class="p-2.5">{{ __('messages.wholesale_address') }}</th>
                             <th class="p-2.5">{{ __('messages.wholesale_applied_date') }}</th>
-                            <th class="p-2.5 text-center">Status</th>
-                            <th class="p-2.5 text-right">Actions</th>
+                            <th class="p-2.5 text-center">{{ __('messages.status') }}</th>
+                            <th class="p-2.5 text-right">{{ __('messages.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -305,13 +305,13 @@
                                             @csrf
                                             @method('PATCH')
                                             <select name="status" class="text-[10px] font-bold border rounded-md px-1.5 py-1 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
-                                                <option value="pending"   {{ $application->status === 'pending'   ? 'selected' : '' }}>Pending</option>
-                                                <option value="approved"  {{ $application->status === 'approved'  ? 'selected' : '' }}>Approve</option>
-                                                <option value="rejected"  {{ $application->status === 'rejected'  ? 'selected' : '' }}>Reject</option>
-                                                <option value="suspended" {{ $application->status === 'suspended' ? 'selected' : '' }}>Suspend</option>
+                                                <option value="pending"   {{ $application->status === 'pending'   ? 'selected' : '' }}>{{ __('messages.pending') }}</option>
+                                                <option value="approved"  {{ $application->status === 'approved'  ? 'selected' : '' }}>{{ __('messages.approve') }}</option>
+                                                <option value="rejected"  {{ $application->status === 'rejected'  ? 'selected' : '' }}>{{ __('messages.reject') }}</option>
+                                                <option value="suspended" {{ $application->status === 'suspended' ? 'selected' : '' }}>{{ __('messages.suspend') }}</option>
                                             </select>
                                             <button type="submit" class="px-2 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shadow-2xs active:scale-95">
-                                                Update
+                                                {{ __('messages.update') }}
                                             </button>
                                         </form>
 
@@ -327,7 +327,7 @@
 
                                         @if (auth()->user()->isPlatformOwner() || auth()->user()->hasStoreRole($store->id, ['store_manager']))
                                             <form method="POST" action="{{ route('store.admin.wholesale.applications.destroy', array_merge($storeRouteParams, ['application' => $application->id])) }}"
-                                                  onsubmit="return confirm('{{ __('messages.wholesale_delete_confirm') }}');">
+                                                  data-confirm="{{ __('messages.wholesale_delete_confirm') }}">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="px-1.5 py-1 rounded-md text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition cursor-pointer" title="Delete">

@@ -30,12 +30,12 @@
                         {{ __('messages.users_staff_title') }}
                     </a>
                     <span>/</span>
-                    <span class="text-violet-600 dark:text-violet-400">Edit Staff Member</span>
+                    <span class="text-violet-600 dark:text-violet-400">{{ __('messages.edit_staff_member') }}</span>
                 </div>
                 <h1 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
                     <span>{{ $managedUser->name }}</span>
                     @if ($managedUser->id === auth()->id())
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">YOU</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">{{ __('messages.you') }}</span>
                     @endif
                 </h1>
                 <p class="text-xs text-slate-500 dark:text-slate-400">📞 {{ $managedUser->phone }} · {{ $store->name }}</p>
@@ -211,7 +211,7 @@
                 </p>
             </div>
             <form method="POST" action="{{ route('store.admin.users.destroy', array_merge($storeRouteParams, ['user' => $managedUser->id])) }}"
-                  onsubmit="return confirm('ဝန်ထမ်း {{ $managedUser->name }} ({{ $managedUser->phone }}) အား ဤဆိုင်စာရင်းမှ ဖယ်ရှားမှာ သေချာပါသလား?');">
+                  data-confirm="ဝန်ထမ်း {{ $managedUser->name }} ({{ $managedUser->phone }}) အား ဤဆိုင်စာရင်းမှ ဖယ်ရှားမှာ သေချာပါသလား?">
                 @csrf
                 @method('DELETE')
                 <button type="submit"

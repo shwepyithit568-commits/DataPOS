@@ -215,7 +215,7 @@
                                 {{ $p['reorder_level'] }}
                             </td>
                             <td class="py-2.5 px-3.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
-                                {{ number_format((float) $p['retail_price']) }} Ks
+                                {{ format_currency((float) $p['retail_price'], $store) }}
                             </td>
                             <td class="py-2.5 px-3.5 text-right">
                                 <div class="inline-flex items-center gap-1.5">
@@ -286,7 +286,7 @@
                                     </span>
                                 </td>
                                 <td class="py-2.5 px-3.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
-                                    {{ number_format((float) ($ord->agreed_amount ?? $ord->total_amount)) }} Ks
+                                    {{ format_currency((float) ($ord->agreed_amount ?? $ord->total_amount), $store) }}
                                 </td>
                                 <td class="py-2.5 px-3.5 text-slate-400 font-mono">{{ $ord->created_at?->diffForHumans() }}</td>
                                 <td class="py-2.5 px-3.5 text-right">
@@ -395,7 +395,7 @@
                                 </span>
                             </td>
                             <td class="py-2.5 px-3.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
-                                {{ number_format($deb['amount']) }} Ks
+                                {{ format_currency($deb['amount'], $store) }}
                             </td>
                             <td class="py-2.5 px-3.5 text-right">
                                 <a href="{{ $deb['action_url'] }}"
@@ -527,7 +527,7 @@
                         <div class="text-slate-600 dark:text-slate-300">🏪 <b>{{ __('messages.alerts_tg_store') }}</b> {{ $store->name }}</div>
                         <div class="text-slate-500 dark:text-slate-400 text-[11px]">📅 <b>{{ __('messages.alerts_tg_date') }}</b> {{ now()->format('d M Y, h:i A') }}</div>
                         <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800/80 space-y-1 text-[12px]">
-                            <div>💰 <b>{{ __('messages.alerts_tg_confirmed_sales') }}</b> <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ number_format($stats['today_sales']) }} Ks</span></div>
+                            <div>💰 <b>{{ __('messages.alerts_tg_confirmed_sales') }}</b> <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ format_currency($stats['today_sales'], $store) }}</span></div>
                             <div>🛒 <b>{{ __('messages.alerts_tg_total_orders') }}</b> <span class="font-bold text-slate-900 dark:text-slate-100">{{ $stats['today_orders_count'] }}</span> orders</div>
                             <div>⏳ <b>{{ __('messages.alerts_tg_pending_contact') }}</b> <span class="font-bold text-amber-600 dark:text-amber-400">{{ $stats['pending_orders'] }}</span> orders</div>
                             <div>⚠️ <b>{{ __('messages.alerts_tg_low_stock_items') }}</b> <span class="font-bold text-rose-600 dark:text-rose-400">{{ $stats['low_stock_count'] }}</span> items</div>

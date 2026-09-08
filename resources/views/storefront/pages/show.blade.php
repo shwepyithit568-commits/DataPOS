@@ -38,7 +38,7 @@
     $telegramShareUrl = 'https://t.me/share/url?url=' . urlencode($canonicalUrl) . '&text=' . urlencode($shareTitle);
     $viberShareUrl = 'viber://forward?text=' . urlencode($shareTitle . ' ' . $canonicalUrl);
 
-    // Page Icon Mapper
+    // Page Icon Mapper (guarded: blade views may render more than once per process)
     if (!function_exists('getPageIcon')) {
         function getPageIcon($slug) {
             return match (strtolower(trim($slug))) {

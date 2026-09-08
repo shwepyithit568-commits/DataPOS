@@ -33,7 +33,7 @@
                 <span>{{ __('messages.import_history_btn_back') }}</span>
             </a>
             <form method="POST" action="{{ route('store.admin.import-history.destroy', array_merge($storeRouteParams, ['history' => $history->id])) }}"
-                  onsubmit="return confirm('{{ __('messages.import_history_delete_confirm') }}')">
+                  data-confirm="{{ __('messages.import_history_delete_confirm') }}">
                 @csrf
                 @method('DELETE')
                 <button type="submit"

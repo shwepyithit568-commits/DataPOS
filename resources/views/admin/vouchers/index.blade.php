@@ -463,9 +463,9 @@ window.voucherStudioData = function () {
                     <table class="w-full text-left text-[11px]">
                         <thead>
                             <tr class="border-b border-slate-200 text-[10px] text-slate-500 uppercase">
-                                <th class="pb-1">Item</th>
-                                <th class="pb-1 text-center">Qty</th>
-                                <th class="pb-1 text-right">Amount</th>
+                                <th class="pb-1">{{ __('messages.item') }}</th>
+                                <th class="pb-1 text-center">{{ __('messages.qty') }}</th>
+                                <th class="pb-1 text-right">{{ __('messages.amount') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -493,23 +493,23 @@ window.voucherStudioData = function () {
                     {{-- Totals Calculation --}}
                     <div class="space-y-1 text-[11px]">
                         <div class="flex justify-between text-slate-600">
-                            <span>Subtotal:</span>
+                            <span>{{ __('messages.subtotal') }}:</span>
                             <span class="font-mono">41,000 MMK</span>
                         </div>
                         <div x-show="showDiscount" class="flex justify-between text-rose-600">
-                            <span>Promotion Discount (5%):</span>
+                            <span>{{ __('messages.promotion_discount_pct') }}:</span>
                             <span class="font-mono">-2,000 MMK</span>
                         </div>
                         <div x-show="showTax" class="flex justify-between text-slate-600">
-                            <span>Commercial Tax (5%):</span>
+                            <span>{{ __('messages.commercial_tax_pct') }}:</span>
                             <span class="font-mono">1,950 MMK</span>
                         </div>
                         <div class="flex justify-between font-black text-sm border-t border-slate-900 pt-1.5 mt-1">
-                            <span>Net Total:</span>
+                            <span>{{ __('messages.net_total') }}:</span>
                             <span class="font-mono">40,950 MMK</span>
                         </div>
                         <div class="flex justify-between text-[10px] text-slate-500 pt-0.5">
-                            <span>Paid with KBZPay:</span>
+                            <span>{{ __('messages.paid_with') }} KBZPay:</span>
                             <span class="font-mono">40,950 MMK</span>
                         </div>
                     </div>

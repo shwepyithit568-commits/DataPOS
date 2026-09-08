@@ -67,7 +67,7 @@
             <div class="admin-stat-value text-blue-600 dark:text-blue-400 font-mono">
                 {{ $stats['network_printers'] }}
             </div>
-            <div class="admin-stat-sub text-slate-400">Ethernet / Wi-Fi TCP/IP</div>
+            <div class="admin-stat-sub text-slate-400">{{ __('messages.ethernet_wifi_tcpip') }}</div>
         </div>
 
         {{-- 4. Bluetooth / Mobile Printers --}}
@@ -76,7 +76,7 @@
             <div class="admin-stat-value text-indigo-600 dark:text-indigo-400 font-mono">
                 {{ $stats['bluetooth_printers'] }}
             </div>
-            <div class="admin-stat-sub text-slate-400">Portable Handheld Units</div>
+            <div class="admin-stat-sub text-slate-400">{{ __('messages.portable_handheld') }}</div>
         </div>
     </div>
 
@@ -201,7 +201,7 @@
                             </a>
 
                             @if(!$p->is_default)
-                                <form method="POST" action="{{ route('store.admin.printers.destroy', ['store_slug' => $store->slug, 'printer' => $p->id]) }}" onsubmit="return confirm('{{ __('messages.printers_confirm_delete') }}')" class="inline">
+                                <form method="POST" action="{{ route('store.admin.printers.destroy', ['store_slug' => $store->slug, 'printer' => $p->id]) }}" data-confirm="{{ __('messages.printers_confirm_delete') }}" class="inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"

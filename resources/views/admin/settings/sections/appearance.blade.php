@@ -943,9 +943,9 @@ if (window.Alpine) {
 
                 <span class="flex-1"></span>
                 <span class="inline-flex h-5 items-center rounded-full px-2 text-[10px] font-bold text-white shadow-xs"
-                      :style="'background:' + colors.primary">Primary</span>
+                      :style="'background:' + colors.primary">{{ __('messages.theme_color_primary') }}</span>
                 <span class="inline-flex h-5 items-center rounded-full px-2 text-[10px] font-bold text-white shadow-xs"
-                      :style="'background:' + colors.accent">Accent</span>
+                      :style="'background:' + colors.accent">{{ __('messages.theme_color_accent') }}</span>
                 <span class="inline-flex h-5 items-center rounded-full border px-2 text-[10px] font-bold shadow-xs"
                       :class="preview_dark ? 'text-slate-200 border-slate-600' : 'text-slate-700 border-slate-300'"
                       :style="'background:' + (preview_dark && colors.header_bg === '#ffffff' ? '#1e293b' : colors.header_bg)">
@@ -965,7 +965,7 @@ if (window.Alpine) {
             {{-- 1. Primary Color --}}
             <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:border-slate-700/80 dark:bg-slate-800/60 shadow-xs">
                 <div class="h-8 w-full transition-colors flex items-center justify-end px-2" :style="'background:' + colors.primary">
-                    <span class="text-[9px] font-black uppercase text-white/90 bg-black/20 px-1.5 py-0.5 rounded">Primary</span>
+                    <span class="text-[9px] font-black uppercase text-white/90 bg-black/20 px-1.5 py-0.5 rounded">{{ __('messages.theme_color_primary') }}</span>
                 </div>
                 <div class="p-3.5 space-y-2">
                     <label class="block text-xs font-black text-slate-800 dark:text-slate-100">
@@ -995,7 +995,7 @@ if (window.Alpine) {
             {{-- 2. Accent Color --}}
             <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:border-slate-700/80 dark:bg-slate-800/60 shadow-xs">
                 <div class="h-8 w-full transition-colors flex items-center justify-end px-2" :style="'background:' + colors.accent">
-                    <span class="text-[9px] font-black uppercase text-white/90 bg-black/20 px-1.5 py-0.5 rounded">Accent CTA</span>
+                    <span class="text-[9px] font-black uppercase text-white/90 bg-black/20 px-1.5 py-0.5 rounded">{{ __('messages.theme_color_accent') }}</span>
                 </div>
                 <div class="p-3.5 space-y-2">
                     <label class="block text-xs font-black text-slate-800 dark:text-slate-100">
@@ -1026,7 +1026,7 @@ if (window.Alpine) {
             <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:border-slate-700/80 dark:bg-slate-800/60 shadow-xs">
                 <div class="h-8 w-full border-b border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-end px-2"
                      :style="'background:' + colors.header_bg">
-                    <span class="text-[9px] font-black uppercase text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-black/40 px-1.5 py-0.5 rounded">Header</span>
+                    <span class="text-[9px] font-black uppercase text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-black/40 px-1.5 py-0.5 rounded">{{ __('messages.theme_color_header') }}</span>
                 </div>
                 <div class="p-3.5 space-y-2">
                     <label class="block text-xs font-black text-slate-800 dark:text-slate-100">
@@ -1057,7 +1057,7 @@ if (window.Alpine) {
             <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:border-slate-700/80 dark:bg-slate-800/60 shadow-xs">
                 <div class="h-8 w-full border-b border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-end px-2"
                      :style="'background:' + colors.body_bg">
-                    <span class="text-[9px] font-black uppercase text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-black/40 px-1.5 py-0.5 rounded">Body BG</span>
+                    <span class="text-[9px] font-black uppercase text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-black/40 px-1.5 py-0.5 rounded">{{ __('messages.theme_color_body_bg') }}</span>
                 </div>
                 <div class="p-3.5 space-y-2">
                     <label class="block text-xs font-black text-slate-800 dark:text-slate-100">

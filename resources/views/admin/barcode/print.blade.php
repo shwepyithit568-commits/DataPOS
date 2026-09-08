@@ -268,7 +268,7 @@
 
                 {{-- Price --}}
                 @if($showPrice && $label['price'] > 0)
-                    <div class="price-tag">{{ number_format($label['price'], 0) }} Ks</div>
+                    <div class="price-tag">{{ format_currency($label['price'], $store) }}</div>
                 @endif
             </div>
         @endforeach

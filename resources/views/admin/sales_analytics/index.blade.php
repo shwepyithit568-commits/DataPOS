@@ -111,7 +111,7 @@
             </div>
             <div>
                 <div class="text-lg font-black text-slate-900 dark:text-slate-100 font-outfit tabular-nums">
-                    Ks {{ number_format($report['kpi']['net_sales']) }}
+                    {{ format_currency($report['kpi']['net_sales'], $store) }}
                 </div>
                 <div class="flex items-center gap-1.5 mt-1 text-[11px]">
                     @if ($comparison['revenue_growth'] >= 0)
@@ -175,7 +175,7 @@
             </div>
             <div>
                 <div class="text-lg font-black text-slate-900 dark:text-slate-100 font-outfit tabular-nums">
-                    Ks {{ number_format($report['kpi']['aov']) }}
+                    {{ format_currency($report['kpi']['aov'], $store) }}
                 </div>
                 <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
                     {{ __('messages.avg_per_ticket') }}
@@ -193,7 +193,7 @@
             </div>
             <div>
                 <div class="text-lg font-black text-emerald-600 dark:text-emerald-400 font-outfit tabular-nums">
-                    Ks {{ number_format($report['kpi']['gross_profit']) }}
+                    {{ format_currency($report['kpi']['gross_profit'], $store) }}
                 </div>
                 <div class="flex items-center gap-1.5 mt-1 text-[11px]">
                     @if ($comparison['profit_growth'] >= 0)
@@ -216,7 +216,7 @@
             </div>
             <div>
                 <div class="text-lg font-black text-rose-600 dark:text-rose-400 font-outfit tabular-nums">
-                    Ks {{ number_format($report['kpi']['discounts']) }}
+                    {{ format_currency($report['kpi']['discounts'], $store) }}
                 </div>
                 <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
                     {{ __('messages.promos_price_cuts') }}
@@ -269,7 +269,7 @@
                                 <div class="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center z-20 pointer-events-none whitespace-nowrap">
                                     <div class="px-2.5 py-1.5 rounded-lg bg-slate-900 text-white text-[11px] font-medium shadow-xl border border-slate-700">
                                         <div class="font-bold text-slate-200">{{ $point['date'] }} ({{ $point['short_day'] }})</div>
-                                        <div class="text-emerald-400 font-bold">Ks {{ number_format($point['revenue']) }}</div>
+                                        <div class="text-emerald-400 font-bold">{{ format_currency($point['revenue'], $store) }}</div>
                                         <div class="text-sky-300">{{ $point['orders'] }} {{ __('messages.receipts') }}</div>
                                     </div>
                                     <div class="w-2 h-2 bg-slate-900 rotate-45 -mt-1"></div>
@@ -310,7 +310,7 @@
                     </div>
                     <div class="flex items-baseline justify-between text-xs">
                         <span class="text-slate-500 dark:text-slate-400">{{ $report['channels']['pos']['orders'] }} {{ __('messages.receipts') }}</span>
-                        <span class="font-black text-slate-900 dark:text-slate-100 tabular-nums">Ks {{ number_format($report['channels']['pos']['revenue']) }}</span>
+                        <span class="font-black text-slate-900 dark:text-slate-100 tabular-nums">{{ format_currency($report['channels']['pos']['revenue'], $store) }}</span>
                     </div>
                     <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                         <div class="h-full bg-indigo-600 rounded-full" style="width: {{ $report['channels']['pos']['percent'] }}%;"></div>
@@ -328,7 +328,7 @@
                     </div>
                     <div class="flex items-baseline justify-between text-xs">
                         <span class="text-slate-500 dark:text-slate-400">{{ $report['channels']['online']['orders'] }} {{ __('messages.receipts') }}</span>
-                        <span class="font-black text-slate-900 dark:text-slate-100 tabular-nums">Ks {{ number_format($report['channels']['online']['revenue']) }}</span>
+                        <span class="font-black text-slate-900 dark:text-slate-100 tabular-nums">{{ format_currency($report['channels']['online']['revenue'], $store) }}</span>
                     </div>
                     <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                         <div class="h-full bg-sky-500 rounded-full" style="width: {{ $report['channels']['online']['percent'] }}%;"></div>
@@ -354,7 +354,7 @@
                 </div>
                 @if ($report['hourly']['peak_hour'] && $report['hourly']['peak_hour']['revenue'] > 0)
                     <div class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-xs font-bold text-amber-700 dark:text-amber-300">
-                        ⚡ {{ __('messages.peak_hour') }}: {{ $report['hourly']['peak_hour']['display'] }} (Ks {{ number_format($report['hourly']['peak_hour']['revenue']) }})
+                        ⚡ {{ __('messages.peak_hour') }}: {{ $report['hourly']['peak_hour']['display'] }} ({{ format_currency($report['hourly']['peak_hour']['revenue'], $store) }})
                     </div>
                 @endif
             </div>
@@ -376,7 +376,7 @@
                             <div class="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center z-20 pointer-events-none whitespace-nowrap">
                                 <div class="px-2.5 py-1.5 rounded-lg bg-slate-900 text-white text-[11px] font-medium shadow-xl border border-slate-700">
                                     <div class="font-bold text-slate-200">{{ $hPoint['display'] }} ({{ $hPoint['label'] }})</div>
-                                    <div class="text-emerald-400 font-bold">Ks {{ number_format($hPoint['revenue']) }}</div>
+                                    <div class="text-emerald-400 font-bold">{{ format_currency($hPoint['revenue'], $store) }}</div>
                                     <div class="text-sky-300">{{ $hPoint['orders'] }} {{ __('messages.receipts') }}</div>
                                 </div>
                                 <div class="w-2 h-2 bg-slate-900 rotate-45 -mt-1"></div>
@@ -420,7 +420,7 @@
                         <div class="flex items-center justify-between text-xs">
                             <span class="font-bold text-slate-700 dark:text-slate-300">{{ $day['name'] }}</span>
                             <span class="font-black text-slate-900 dark:text-slate-100 tabular-nums">
-                                Ks {{ number_format($day['revenue']) }}
+                                {{ format_currency($day['revenue'], $store) }}
                             </span>
                         </div>
                         <div class="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -489,13 +489,13 @@
                                 {{ number_format($prod['quantity']) }}
                             </td>
                             <td class="py-3 px-3 text-right font-black text-slate-900 dark:text-slate-100 tabular-nums">
-                                Ks {{ number_format($prod['revenue']) }}
+                                {{ format_currency($prod['revenue'], $store) }}
                             </td>
                             <td class="py-3 px-3 text-right text-slate-500 dark:text-slate-400 tabular-nums">
-                                Ks {{ number_format($prod['cost']) }}
+                                {{ format_currency($prod['cost'], $store) }}
                             </td>
                             <td class="py-3 px-3 text-right font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
-                                Ks {{ number_format($prod['profit']) }}
+                                {{ format_currency($prod['profit'], $store) }}
                             </td>
                             <td class="py-3 px-3 text-center">
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $prod['margin'] >= 25 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : ($prod['margin'] >= 10 ? 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300') }}">
@@ -527,7 +527,7 @@
                         <div class="flex items-center justify-between text-xs">
                             <span class="font-bold text-slate-700 dark:text-slate-300">{{ $c['name'] }}</span>
                             <span class="font-bold text-slate-900 dark:text-slate-100 tabular-nums">
-                                Ks {{ number_format($c['revenue']) }} <span class="text-slate-400 font-normal">({{ $c['percent'] }}%)</span>
+                                {{ format_currency($c['revenue'], $store) }} <span class="text-slate-400 font-normal">({{ $c['percent'] }}%)</span>
                             </span>
                         </div>
                         <div class="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -551,7 +551,7 @@
                         <div class="flex items-center justify-between text-xs">
                             <span class="font-bold text-slate-700 dark:text-slate-300">{{ $b['name'] }}</span>
                             <span class="font-bold text-slate-900 dark:text-slate-100 tabular-nums">
-                                Ks {{ number_format($b['revenue']) }} <span class="text-slate-400 font-normal">({{ $b['percent'] }}%)</span>
+                                {{ format_currency($b['revenue'], $store) }} <span class="text-slate-400 font-normal">({{ $b['percent'] }}%)</span>
                             </span>
                         </div>
                         <div class="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -599,13 +599,13 @@
                                     {{ $cashier['orders_count'] }}
                                 </td>
                                 <td class="py-3 px-3 text-right font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
-                                    Ks {{ number_format($cashier['total_sales']) }}
+                                    {{ format_currency($cashier['total_sales'], $store) }}
                                 </td>
                                 <td class="py-3 px-3 text-right text-rose-600 dark:text-rose-400 tabular-nums">
-                                    Ks {{ number_format($cashier['total_discounts']) }}
+                                    {{ format_currency($cashier['total_discounts'], $store) }}
                                 </td>
                                 <td class="py-3 px-3 text-right font-bold text-slate-800 dark:text-slate-200 tabular-nums">
-                                    Ks {{ number_format($cashier['aov']) }}
+                                    {{ format_currency($cashier['aov'], $store) }}
                                 </td>
                             </tr>
                         @empty
@@ -636,7 +636,7 @@
                         </div>
                         <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
                             <span>{{ $pm['count'] }} {{ __('messages.transactions') }}</span>
-                            <span class="font-bold text-slate-900 dark:text-slate-100">Ks {{ number_format($pm['amount']) }}</span>
+                            <span class="font-bold text-slate-900 dark:text-slate-100">{{ format_currency($pm['amount'], $store) }}</span>
                         </div>
                         <div class="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                             <div class="h-full bg-indigo-600 rounded-full" style="width: {{ $pm['percent'] }}%;"></div>

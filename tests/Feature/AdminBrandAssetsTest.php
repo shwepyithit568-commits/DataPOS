@@ -545,8 +545,8 @@ class AdminBrandAssetsTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        foreach (['Storefront Logo', 'Admin Logo', 'Favicon / App Icon'] as $label) {
-            $this->assertStringContainsString($label, $html);
+        foreach (['settings_logo_storefront', 'settings_logo_admin', 'settings_logo_favicon'] as $key) {
+            $this->assertStringContainsString(__('messages.' . $key), $html);
         }
         foreach (['brand-asset-storefront-logo', 'brand-asset-admin-logo', 'brand-asset-favicon'] as $id) {
             $this->assertStringContainsString('for="' . $id . '"', $html);

@@ -79,7 +79,7 @@
                 {{-- Cancel Session --}}
                 <form action="{{ route('store.admin.stock_count.cancel', ['store_slug' => $store->slug, 'stock_count' => $session->id]) }}"
                       method="POST"
-                      onsubmit="return confirm('{{ __('messages.stock_count_cancel_confirm') }}');"
+                      data-confirm="{{ __('messages.stock_count_cancel_confirm') }}"
                       class="inline">
                     @csrf
                     <button type="submit"
@@ -92,7 +92,7 @@
                 {{-- Reconcile & Approve Button --}}
                 <form action="{{ route('store.admin.stock_count.approve', ['store_slug' => $store->slug, 'stock_count' => $session->id]) }}"
                       method="POST"
-                      onsubmit="return confirm('{{ __('messages.stock_count_approve_confirm') }}');"
+                      data-confirm="{{ __('messages.stock_count_approve_confirm') }}"
                       class="inline">
                     @csrf
                     <button type="submit"
@@ -183,8 +183,7 @@
             <div class="min-w-0">
                 <div class="text-sm sm:text-base font-black leading-none tabular-nums font-mono"
                      :class="stats.total_variance_cost < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'">
-                    <span x-text="formatMoney(stats.total_variance_cost)">{{ number_format($session->total_variance_cost) }}</span>
-                    <span class="text-[10px] text-slate-400 font-normal">Ks</span>
+                    <span x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(stats.total_variance_cost) : formatMoney(stats.total_variance_cost)">{{ format_currency($session->total_variance_cost, $store) }}</span>
                 </div>
                 <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.stock_count_variance_cost') ?? 'Net Variance' }}
@@ -415,7 +414,7 @@
 
                                 {{-- Variance Cost Impact (MMK) --}}
                                 <td class="py-1.5 px-2.5 text-right font-mono font-bold text-[11px] tabular-nums whitespace-nowrap {{ $line->variance_cost < 0 ? 'text-rose-600 dark:text-rose-400' : ($line->variance_cost > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400') }}">
-                                    {{ $line->is_counted && $line->variance_cost != 0 ? ($line->variance_cost > 0 ? '+' : '') . number_format($line->variance_cost) . ' Ks' : '-' }}
+                                    {{ $line->is_counted && $line->variance_cost != 0 ? ($line->variance_cost > 0 ? '+' : '') . format_currency($line->variance_cost, $store) : '-' }}
                                 </td>
 
                                 {{-- Notes Input --}}

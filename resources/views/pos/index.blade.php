@@ -225,7 +225,7 @@
                                             <span class="font-bold">{{ $busy->register_name }}</span> —
                                             {{ __('messages.register_occupied_by', ['cashier' => $busy->cashier?->name ?? '—', 'time' => $busy->opened_at?->format('H:i') ?? '—']) }}
                                             <span class="block opacity-80">
-                                                {{ __('messages.register_drawer_state', ['opening' => number_format((float) $busy->opening_cash), 'sales' => number_format((float) $busy->cash_sales)]) }}
+                                                {{ __('messages.register_drawer_state', ['opening' => format_currency((float) $busy->opening_cash, $store), 'sales' => format_currency((float) $busy->cash_sales, $store)]) }}
                                             </span>
                                         </li>
                                     @endforeach

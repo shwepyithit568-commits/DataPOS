@@ -135,49 +135,49 @@
     </div>
 
     <div class="meta-row">
-        <span class="meta-label">Voucher No:</span>
+        <span class="meta-label">{{ __('messages.voucher_no') }}:</span>
         <span class="meta-value">{{ $transaction->transaction_number }}</span>
     </div>
     <div class="meta-row">
-        <span class="meta-label">Date & Time:</span>
+        <span class="meta-label">{{ __('messages.date_time') }}:</span>
         <span class="meta-value">{{ $transaction->transaction_date->format('Y-m-d h:i A') }}</span>
     </div>
     <div class="meta-row">
-        <span class="meta-label">Transaction Type:</span>
+        <span class="meta-label">{{ __('messages.transaction_type') }}:</span>
         <span class="meta-value">{{ strtoupper($transaction->type) }}</span>
     </div>
 
     @if($transaction->fromAccount)
         <div class="meta-row">
-            <span class="meta-label">From Account:</span>
+            <span class="meta-label">{{ __('messages.from_account') }}:</span>
             <span class="meta-value">{{ $transaction->fromAccount->name }}</span>
         </div>
     @endif
 
     @if($transaction->toAccount)
         <div class="meta-row">
-            <span class="meta-label">To Account:</span>
+            <span class="meta-label">{{ __('messages.to_account') }}:</span>
             <span class="meta-value">{{ $transaction->toAccount->name }}</span>
         </div>
     @endif
 
     @if($transaction->category)
         <div class="meta-row">
-            <span class="meta-label">Category / Purpose:</span>
+            <span class="meta-label">{{ __('messages.category') }} / {{ __('messages.purpose') }}:</span>
             <span class="meta-value">{{ ucwords(str_replace('_', ' ', $transaction->category)) }}</span>
         </div>
     @endif
 
     @if($transaction->payer_or_payee)
         <div class="meta-row">
-            <span class="meta-label">Payer / Payee:</span>
+            <span class="meta-label">{{ __('messages.payer_payee') }}:</span>
             <span class="meta-value">{{ $transaction->payer_or_payee }}</span>
         </div>
     @endif
 
     @if($transaction->reference_no)
         <div class="meta-row">
-            <span class="meta-label">Reference / Slip #:</span>
+            <span class="meta-label">{{ __('messages.reference_slip') }}:</span>
             <span class="meta-value">{{ $transaction->reference_no }}</span>
         </div>
     @endif
@@ -194,7 +194,7 @@
 
     @if($transaction->notes)
         <div style="margin-bottom: 20px;">
-            <span class="meta-label">Notes:</span>
+            <span class="meta-label">{{ __('messages.notes') }}:</span>
             <p style="margin: 4px 0 0 0; color: #334155; font-size: 12px;">{{ $transaction->notes }}</p>
         </div>
     @endif

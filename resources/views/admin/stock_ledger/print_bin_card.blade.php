@@ -168,9 +168,9 @@
                 <th style="width: 80px;">{{ __('messages.stock_ledger_date') }}</th>
                 <th>{{ __('messages.stock_ledger_movement_type') }}</th>
                 <th>{{ __('messages.stock_ledger_reference') }}</th>
-                <th class="text-right" style="width: 55px; color: #059669;">In (+)</th>
-                <th class="text-right" style="width: 55px; color: #e11d48;">Out (-)</th>
-                <th class="text-right" style="width: 65px;">Balance</th>
+                <th class="text-right" style="width: 55px; color: #059669;">{{ __('messages.qty_in') }}</th>
+                <th class="text-right" style="width: 55px; color: #e11d48;">{{ __('messages.qty_out') }}</th>
+                <th class="text-right" style="width: 65px;">{{ __('messages.balance') }}</th>
                 <th style="width: 60px;">{{ __('messages.stock_ledger_posted_by') }}</th>
             </tr>
         </thead>

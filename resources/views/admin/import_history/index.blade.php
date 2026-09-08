@@ -226,7 +226,7 @@
                                     @endif
 
                                     <form method="POST" action="{{ route('store.admin.import-history.destroy', array_merge($storeRouteParams, ['history' => $history->id])) }}"
-                                          onsubmit="return confirm('{{ __('messages.import_history_delete_confirm') }}')" class="inline">
+                                          data-confirm="{{ __('messages.import_history_delete_confirm') }}" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"

@@ -73,7 +73,7 @@
             <div class="text-lg sm:text-2xl font-black text-slate-900 dark:text-slate-100 mt-1 font-mono tracking-tight" x-text="subscriberCount">
                 {{ number_format($subscriberCount) }}
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Active browser push endpoints</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.active_browser_endpoints') }}</div>
         </div>
 
         {{-- VAPID Keys Status --}}
@@ -85,7 +85,7 @@
             <div class="text-sm sm:text-base font-black {{ $isVapidConfigured ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }} mt-1 flex items-center gap-1.5">
                 <span>{{ $isVapidConfigured ? '● VAPID Configured' : '○ Key Missing' }}</span>
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">RFC 8292 Encryption standard</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.rfc_encryption') }}</div>
         </div>
 
         {{-- Dispatch Channel --}}
@@ -97,7 +97,7 @@
             <div class="text-sm sm:text-base font-black text-indigo-600 dark:text-indigo-400 mt-1 font-mono">
                 WebPush ServiceWorker
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Endpoint: POST /api/push/test</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.endpoint_post') }}</div>
         </div>
     </div>
 
@@ -126,7 +126,7 @@
             <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                 <div class="flex items-center gap-2">
                     <span class="text-xs">📣</span>
-                    <h2 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Compose Push Broadcast</h2>
+                    <h2 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">{{ __('messages.compose_push_broadcast') }}</h2>
                 </div>
                 <span id="push-send-status" class="text-xs font-bold"></span>
             </div>
@@ -209,10 +209,10 @@
         <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 shadow-2xs space-y-3 lg:sticky lg:top-2">
             <div class="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                 <span class="text-xs">📱</span>
-                <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Device Screen Preview</h3>
+                <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">{{ __('messages.device_screen_preview') }}</h3>
             </div>
 
-            <p class="text-[11px] text-slate-400">This simulates how the push notification banner appears on the customer's phone or desktop.</p>
+            <p class="text-[11px] text-slate-400">{{ __('messages.push_preview_desc') }}</p>
 
             {{-- Android / Desktop Notification Card Simulator --}}
             <div class="p-3.5 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-2.5 font-sans select-none transition">
@@ -223,7 +223,7 @@
                         <span class="text-slate-800 dark:text-slate-200 font-black">{{ $store->name }}</span>
                         <span>· Web Push</span>
                     </div>
-                    <span class="text-[10px] text-slate-400">Just now</span>
+                    <span class="text-[10px] text-slate-400">{{ __('messages.just_now') }}</span>
                 </div>
 
                 {{-- Mock Body --}}
@@ -264,7 +264,7 @@
                     <thead class="bg-slate-50 dark:bg-slate-800/80 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
                         <tr>
                             <th class="p-2.5">Title</th>
-                            <th class="p-2.5">Message Body</th>
+                            <th class="p-2.5">{{ __('messages.message_body') }}</th>
                             <th class="p-2.5 text-center">Recipients</th>
                             <th class="p-2.5 text-right">Sent Time</th>
                         </tr>

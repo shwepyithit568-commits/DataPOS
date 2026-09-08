@@ -243,7 +243,7 @@
                                 <option value="smartphone">Smartphone</option>
                                 <option value="laptop">Laptop</option>
                                 <option value="tablet">Tablet</option>
-                                <option value="desktop">Desktop PC</option>
+                                <option value="desktop">{{ __('messages.desktop_pc') }}</option>
                                 <option value="cctv">CCTV Camera</option>
                                 <option value="network">Network Device</option>
                             </datalist>

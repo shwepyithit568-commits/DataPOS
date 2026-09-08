@@ -321,7 +321,7 @@
 
                             {{-- Net Variance Cost --}}
                             <td class="py-1.5 px-2.5 text-right font-mono font-bold text-xs tabular-nums whitespace-nowrap {{ $varCost < 0 ? 'text-rose-600 dark:text-rose-400' : ($varCost > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500') }}">
-                                {{ $varCost != 0 ? ($varCost > 0 ? '+' : '') . number_format($varCost) . ' Ks' : '-' }}
+                                {{ $varCost != 0 ? ($varCost > 0 ? '+' : '') . format_currency($varCost, $store) : '-' }}
                             </td>
 
                             {{-- Status Badge --}}
@@ -452,7 +452,7 @@
                         @else
                             <span class="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                                 <span>📦</span>
-                                <span>All Products</span>
+                                <span>{{ __('messages.all_products') }}</span>
                             </span>
                         @endif
                     </div>

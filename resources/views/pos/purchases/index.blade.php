@@ -339,7 +339,7 @@
                                             <span>✏️</span>
                                         </a>
                                         <form method="POST" action="{{ route('pos.purchases.destroy', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id]) }}"
-                                              onsubmit="return confirm('{{ __('messages.po_confirm_delete', ['number' => $po->po_number]) }}');"
+                                              data-confirm="{{ __('messages.po_confirm_delete', ['number' => $po->po_number]) }}"
                                               class="inline">
                                             @csrf
                                             @method('DELETE')
@@ -459,7 +459,7 @@
                             <span>✏️</span>
                         </a>
                         <form method="POST" action="{{ route('pos.purchases.destroy', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id]) }}"
-                              onsubmit="return confirm('{{ __('messages.po_confirm_delete', ['number' => $po->po_number]) }}');"
+                              data-confirm="{{ __('messages.po_confirm_delete', ['number' => $po->po_number]) }}"
                               class="inline">
                             @csrf
                             @method('DELETE')

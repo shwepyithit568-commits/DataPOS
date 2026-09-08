@@ -97,10 +97,10 @@
             </div>
             <div>
                 <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                    <span>Currency & Number Formatting</span>
-                    <span class="text-xs px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-200/60 dark:border-emerald-800">System-wide</span>
+                    <span>{{ __('messages.settings_currency_title') }}</span>
+                    <span class="text-xs px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-200/60 dark:border-emerald-800">{{ __('messages.settings_currency_systemwide') }}</span>
                 </h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400">Manage currency symbols, decimals, accounting formats, and stock inventory quantity presentation.</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.settings_currency_desc') }}</p>
             </div>
         </div>
     </div>
@@ -116,27 +116,27 @@
                 <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                         <span>💵</span>
-                        <span>Primary Currency & Symbol</span>
+                        <span>{{ __('messages.settings_currency_primary_symbol') }}</span>
                     </h3>
-                    <span class="text-[10px] font-bold text-slate-400">Base Currency</span>
+                    <span class="text-[10px] font-bold text-slate-400">{{ __('messages.settings_currency_base') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                     <div>
-                        <label class="{{ $labelClass }}">Currency Code (ကုဒ်)</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_currency_code') }}</label>
                         <input type="text" name="currency_settings[currency_code]" x-model="code"
                                placeholder="MMK" class="{{ $inputClass }} uppercase font-mono font-bold" />
                         <p class="{{ $helpClass }}">e.g. MMK, USD, THB, SGD</p>
                     </div>
 
                     <div>
-                        <label class="{{ $labelClass }}">Currency Name (ငွေကြေးအမည်)</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_currency_name') }}</label>
                         <input type="text" name="currency_settings[currency_name]" x-model="name"
                                placeholder="Myanmar Kyat" class="{{ $inputClass }}" />
                     </div>
 
                     <div>
-                        <label class="{{ $labelClass }}">Currency Symbol (သင်္ကေတ)</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_currency_symbol') }}</label>
                         <input type="text" name="currency_settings[currency_symbol]" x-model="symbol"
                                placeholder="Ks" class="{{ $inputClass }} font-bold" />
                         <p class="{{ $helpClass }}">e.g. Ks, K, $, ฿, ¥, ကျပ်</p>
@@ -148,8 +148,8 @@
                         <input type="checkbox" name="currency_settings[show_symbol]" value="1" x-model="showSymbol"
                                class="rounded text-emerald-600 focus:ring-emerald-500">
                         <div>
-                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Display Currency Symbol across all surfaces</span>
-                            <span class="text-[10px] text-slate-400 block">Shows symbol next to prices in POS cashier, catalog, reports & receipts</span>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block">{{ __('messages.settings_currency_show_symbol') }}</span>
+                            <span class="text-[10px] text-slate-400 block">{{ __('messages.settings_currency_show_symbol_help') }}</span>
                         </div>
                     </label>
                 </div>
@@ -160,9 +160,9 @@
                 <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                         <span>🏷️</span>
-                        <span>Symbol Placement & Spacing (သင်္ကေတ နေရာ)</span>
+                        <span>{{ __('messages.settings_currency_position') }}</span>
                     </h3>
-                    <span class="text-[10px] font-bold text-slate-400">Position Style</span>
+                    <span class="text-[10px] font-bold text-slate-400">{{ __('messages.settings_currency_position_style') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -171,9 +171,9 @@
                         <input type="radio" name="currency_settings[symbol_position]" value="after_space" x-model="position"
                                class="text-emerald-600 focus:ring-emerald-500">
                         <div>
-                            <span class="text-xs font-black text-slate-900 dark:text-white block">After Amount with Space</span>
+                            <span class="text-xs font-black text-slate-900 dark:text-white block">{{ __('messages.settings_currency_after_space') }}</span>
                             <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">100,000 Ks</span>
-                            <span class="text-[10px] text-slate-400 block">(Recommended for Myanmar Kyats)</span>
+                            <span class="text-[10px] text-slate-400 block">{{ __('messages.settings_currency_recommended_mmk') }}</span>
                         </div>
                     </label>
 
@@ -182,7 +182,7 @@
                         <input type="radio" name="currency_settings[symbol_position]" value="before_space" x-model="position"
                                class="text-emerald-600 focus:ring-emerald-500">
                         <div>
-                            <span class="text-xs font-black text-slate-900 dark:text-white block">Before Amount with Space</span>
+                            <span class="text-xs font-black text-slate-900 dark:text-white block">{{ __('messages.settings_currency_before_space') }}</span>
                             <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">Ks 100,000</span>
                         </div>
                     </label>
@@ -192,7 +192,7 @@
                         <input type="radio" name="currency_settings[symbol_position]" value="before_tight" x-model="position"
                                class="text-emerald-600 focus:ring-emerald-500">
                         <div>
-                            <span class="text-xs font-black text-slate-900 dark:text-white block">Before Amount Tight</span>
+                            <span class="text-xs font-black text-slate-900 dark:text-white block">{{ __('messages.settings_currency_before_tight') }}</span>
                             <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">$100,000 / Ks100,000</span>
                         </div>
                     </label>
@@ -202,7 +202,7 @@
                         <input type="radio" name="currency_settings[symbol_position]" value="after_tight" x-model="position"
                                class="text-emerald-600 focus:ring-emerald-500">
                         <div>
-                            <span class="text-xs font-black text-slate-900 dark:text-white block">After Amount Tight</span>
+                            <span class="text-xs font-black text-slate-900 dark:text-white block">{{ __('messages.settings_currency_after_tight') }}</span>
                             <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">100,000Ks</span>
                         </div>
                     </label>
@@ -214,14 +214,14 @@
                 <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                         <span>🔢</span>
-                        <span>Decimals & Thousand Separator (ဒသမနှင့် ထောင်ဂဏန်း)</span>
+                        <span>{{ __('messages.settings_currency_decimals_title') }}</span>
                     </h3>
-                    <span class="text-[10px] font-bold text-slate-400">Format Rules</span>
+                    <span class="text-[10px] font-bold text-slate-400">{{ __('messages.settings_currency_format_rules') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                     <div>
-                        <label class="{{ $labelClass }}">Decimal Places (ဒသမနေရာ)</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_currency_decimal_places') }}</label>
                         <select name="currency_settings[decimal_places]" x-model.number="decimals" class="{{ $inputClass }}">
                             <option value="0">0 (100,000) — MMK Default</option>
                             <option value="2">2 (100,000.00) — Standard</option>
@@ -231,20 +231,20 @@
                     </div>
 
                     <div>
-                        <label class="{{ $labelClass }}">Thousand Separator (ထောင်ဂဏန်း)</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_currency_thousand_sep') }}</label>
                         <select name="currency_settings[thousand_separator]" x-model="thSep" class="{{ $inputClass }}">
-                            <option value=",">Comma (,) 100,000</option>
-                            <option value=".">Dot (.) 100.000</option>
-                            <option value="space">Space ( ) 100 000</option>
-                            <option value="none">None 100000</option>
+                            <option value=",">{{ __('messages.comma') }} (,) 100,000</option>
+                            <option value=".">{{ __('messages.dot') }} (.) 100.000</option>
+                            <option value="space">{{ __('messages.space') }} ( ) 100 000</option>
+                            <option value="none">{{ __('messages.none') }} 100000</option>
                         </select>
                     </div>
 
                     <div>
-                        <label class="{{ $labelClass }}">Decimal Separator (ဒသမ ခွဲခြား)</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_currency_decimal_sep') }}</label>
                         <select name="currency_settings[decimal_separator]" x-model="decSep" class="{{ $inputClass }}">
-                            <option value=".">Dot (.) 100.00</option>
-                            <option value=",">Comma (,) 100,00</option>
+                            <option value=".">{{ __('messages.dot') }} (.) 100.00</option>
+                            <option value=",">{{ __('messages.comma') }} (,) 100,00</option>
                         </select>
                     </div>
                 </div>
@@ -255,9 +255,9 @@
                 <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                         <span>📉</span>
-                        <span>Negative & Accounting Format (အနုတ်ပမာဏ ပြသမှု)</span>
+                        <span>{{ __('messages.settings_currency_negative') }}</span>
                     </h3>
-                    <span class="text-[10px] font-bold text-slate-400">Accounting Style</span>
+                    <span class="text-[10px] font-bold text-slate-400">{{ __('messages.settings_currency_accounting_style') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -266,7 +266,7 @@
                         <input type="radio" name="currency_settings[negative_format]" value="minus" x-model="negFormat"
                                class="text-emerald-600 focus:ring-emerald-500">
                         <div>
-                            <span class="text-xs font-bold text-slate-900 dark:text-white block">Minus Sign</span>
+                            <span class="text-xs font-bold text-slate-900 dark:text-white block">{{ __('messages.settings_currency_minus') }}</span>
                             <span class="text-xs font-mono font-bold text-rose-600 dark:text-rose-400 block mt-0.5" x-text="formatNumber(-50000)"></span>
                         </div>
                     </label>
@@ -276,7 +276,7 @@
                         <input type="radio" name="currency_settings[negative_format]" value="parentheses" x-model="negFormat"
                                class="text-emerald-600 focus:ring-emerald-500">
                         <div>
-                            <span class="text-xs font-bold text-slate-900 dark:text-white block">Parentheses (Accounting)</span>
+                            <span class="text-xs font-bold text-slate-900 dark:text-white block">{{ __('messages.settings_currency_parentheses') }}</span>
                             <span class="text-xs font-mono font-bold text-rose-600 dark:text-rose-400 block mt-0.5" x-text="formatNumber(-50000)"></span>
                         </div>
                     </label>
@@ -286,7 +286,7 @@
                         <input type="radio" name="currency_settings[negative_format]" value="dr_cr" x-model="negFormat"
                                class="text-emerald-600 focus:ring-emerald-500">
                         <div>
-                            <span class="text-xs font-bold text-slate-900 dark:text-white block">Debit / Credit (DR)</span>
+                            <span class="text-xs font-bold text-slate-900 dark:text-white block">{{ __('messages.settings_currency_dr_cr') }}</span>
                             <span class="text-xs font-mono font-bold text-rose-600 dark:text-rose-400 block mt-0.5" x-text="formatNumber(-50000)"></span>
                         </div>
                     </label>
@@ -296,9 +296,9 @@
                 <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                         <span>📦</span>
-                        <span>Stock Quantity & Decimal Precision (စတော့ အရေအတွက် ပုံစံ)</span>
+                        <span>{{ __('messages.settings_currency_stock_qty') }}</span>
                     </h3>
-                    <span class="text-[10px] font-bold text-slate-400">Inventory Standard</span>
+                    <span class="text-[10px] font-bold text-slate-400">{{ __('messages.settings_currency_inventory_standard') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -307,7 +307,7 @@
                         <input type="radio" name="currency_settings[qty_decimal_places]" value="auto" x-model="qtyDecimals"
                                class="text-emerald-600 focus:ring-emerald-500 mt-0.5">
                         <div>
-                            <span class="text-xs font-black text-slate-900 dark:text-white block">Auto Clean / Dynamic (အလိုအလျောက်)</span>
+                            <span class="text-xs font-black text-slate-900 dark:text-white block">{{ __('messages.settings_currency_qty_auto') }}</span>
                             <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">10, 25, 1.5, 2.25</span>
                             <span class="text-[10px] text-slate-400 block">(Recommended — .000 မပါဘဲ သန့်ရှင်းစွာ ပြသခြင်း)</span>
                         </div>
@@ -318,7 +318,7 @@
                         <input type="radio" name="currency_settings[qty_decimal_places]" value="0" x-model="qtyDecimals"
                                class="text-emerald-600 focus:ring-emerald-500 mt-0.5">
                         <div>
-                            <span class="text-xs font-black text-slate-900 dark:text-white block">Whole Integers Only (ကိန်းပြည့်သက်သက်)</span>
+                            <span class="text-xs font-black text-slate-900 dark:text-white block">{{ __('messages.settings_currency_qty_integers') }}</span>
                             <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">10, 25, 100</span>
                             <span class="text-[10px] text-slate-400 block">(Mobile, Computer, Fashion & Electronics)</span>
                         </div>
@@ -329,7 +329,7 @@
                         <input type="radio" name="currency_settings[qty_decimal_places]" value="2" x-model="qtyDecimals"
                                class="text-emerald-600 focus:ring-emerald-500 mt-0.5">
                         <div>
-                            <span class="text-xs font-black text-slate-900 dark:text-white block">2 Decimals Fixed (ဒသမ ၂ နေရာ)</span>
+                            <span class="text-xs font-black text-slate-900 dark:text-white block">{{ __('messages.settings_currency_qty_2dec') }}</span>
                             <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">10.00, 1.50</span>
                             <span class="text-[10px] text-slate-400 block">(Meter, Yards, Standard Weighed Items)</span>
                         </div>
@@ -340,7 +340,7 @@
                         <input type="radio" name="currency_settings[qty_decimal_places]" value="3" x-model="qtyDecimals"
                                class="text-emerald-600 focus:ring-emerald-500 mt-0.5">
                         <div>
-                            <span class="text-xs font-black text-slate-900 dark:text-white block">3 Decimals Precision (ဒသမ ၃ နေရာ)</span>
+                            <span class="text-xs font-black text-slate-900 dark:text-white block">{{ __('messages.settings_currency_qty_3dec') }}</span>
                             <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">10.000, 1.500</span>
                             <span class="text-[10px] text-slate-400 block">(Kilograms, Precision Weighing, Fuel)</span>
                         </div>
@@ -352,7 +352,7 @@
                         <input type="checkbox" name="currency_settings[qty_trim_zeros]" value="1" x-model="qtyTrimZeros"
                                class="rounded text-emerald-600 focus:ring-emerald-500">
                         <div>
-                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Auto-trim Trailing Zeros (မလိုအပ်သော နောက်ပိတ် သုညများ ဖယ်ရှားမည်)</span>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block">{{ __('messages.settings_currency_qty_trim') }}</span>
                             <span class="text-[10px] text-slate-400 block">စတော့အရေအတွက် ကိန်းပြည့်ဖြစ်နေပါက `.000` မပါဘဲ ဥပမာ- `10` အဖြစ် သန့်ရှင်းစွာ ပြသပေးပါမည်။</span>
                         </div>
                     </label>
@@ -367,7 +367,7 @@
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                     <span class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                         <span>📊</span>
-                        <span>Live Preview (ငွေကြေးနှင့် စတော့)</span>
+                        <span>{{ __('messages.settings_currency_live_preview') }}</span>
                     </span>
                     <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 uppercase font-bold" x-text="code"></span>
                 </div>
@@ -376,24 +376,24 @@
                 <div class="space-y-2.5">
                     <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
                         <div>
-                            <p class="text-[11px] text-slate-400 font-bold">Regular Retail Price</p>
-                            <p class="text-[10px] text-slate-500">Single Item Sale</p>
+                            <p class="text-[11px] text-slate-400 font-bold">{{ __('messages.settings_currency_retail_price') }}</p>
+                            <p class="text-[10px] text-slate-500">{{ __('messages.settings_currency_single_item') }}</p>
                         </div>
                         <span class="text-sm font-black font-mono text-emerald-400" x-text="formatNumber(45000)"></span>
                     </div>
 
                     <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
                         <div>
-                            <p class="text-[11px] text-slate-400 font-bold">Monthly Revenue</p>
-                            <p class="text-[10px] text-slate-500">Large Volume Sum</p>
+                            <p class="text-[11px] text-slate-400 font-bold">{{ __('messages.settings_currency_monthly_revenue') }}</p>
+                            <p class="text-[10px] text-slate-500">{{ __('messages.settings_currency_large_volume') }}</p>
                         </div>
                         <span class="text-sm font-black font-mono text-white" x-text="formatNumber(12500000)"></span>
                     </div>
 
                     <div class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
                         <div>
-                            <p class="text-[11px] text-rose-300 font-bold">Customer Refund / Expense</p>
-                            <p class="text-[10px] text-slate-500">Negative ledger entry</p>
+                            <p class="text-[11px] text-rose-300 font-bold">{{ __('messages.settings_currency_refund') }}</p>
+                            <p class="text-[10px] text-slate-500">{{ __('messages.settings_currency_negative_entry') }}</p>
                         </div>
                         <span class="text-sm font-black font-mono text-rose-400" x-text="formatNumber(-250000)"></span>
                     </div>
@@ -404,26 +404,26 @@
                     <div class="flex items-center justify-between border-b border-slate-700/80 pb-1.5">
                         <span class="text-[11px] font-black uppercase text-sky-400 flex items-center gap-1.5">
                             <span>📦</span>
-                            <span>Stock & Inventory Display (စတော့ပြသမှု)</span>
+                            <span>{{ __('messages.settings_currency_stock_display') }}</span>
                         </span>
-                        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-950 text-sky-300 font-bold" x-text="qtyDecimals === 'auto' ? 'Auto Clean' : qtyDecimals + ' Decimals'"></span>
+                        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-950 text-sky-300 font-bold" x-text="qtyDecimals === 'auto' ? @js(__('messages.settings_currency_auto_clean')) : qtyDecimals + ' ' + @js(__('messages.settings_currency_decimals_suffix'))"></span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
-                            <p class="text-[10px] text-slate-400 font-bold">On-Hand Stock</p>
+                            <p class="text-[10px] text-slate-400 font-bold">{{ __('messages.settings_currency_on_hand') }}</p>
                             <span class="text-sm font-black font-mono text-white" x-text="formatQuantity(30)"></span>
                         </div>
                         <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
-                            <p class="text-[10px] text-slate-400 font-bold">Fractional Qty</p>
+                            <p class="text-[10px] text-slate-400 font-bold">{{ __('messages.settings_currency_fractional') }}</p>
                             <span class="text-sm font-black font-mono text-sky-400" x-text="formatQuantity(1.5)"></span>
                         </div>
                         <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
-                            <p class="text-[10px] text-slate-400 font-bold">Inbound (+)</p>
+                            <p class="text-[10px] text-slate-400 font-bold">{{ __('messages.settings_currency_inbound') }}</p>
                             <span class="text-sm font-black font-mono text-emerald-400" x-text="'+' + formatQuantity(5)"></span>
                         </div>
                         <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800">
-                            <p class="text-[10px] text-slate-400 font-bold">Total Warehouse</p>
+                            <p class="text-[10px] text-slate-400 font-bold">{{ __('messages.settings_currency_total_warehouse') }}</p>
                             <span class="text-sm font-black font-mono text-amber-300" x-text="formatQuantity(12500)"></span>
                         </div>
                     </div>
@@ -432,25 +432,25 @@
                 {{-- Mini POS Checkout Card Representation --}}
                 <div class="p-3.5 rounded-xl bg-white text-slate-900 space-y-2 text-xs shadow-inner">
                     <div class="flex items-center justify-between font-bold border-b border-slate-200 pb-1.5">
-                        <span>POS Checkout Voucher</span>
+                        <span>{{ __('messages.settings_currency_pos_voucher') }}</span>
                         <span class="text-[10px] font-mono text-slate-500">INV-8492</span>
                     </div>
                     <div class="flex justify-between text-slate-600 text-[11px]">
-                        <span>Subtotal (Qty: <span class="font-mono font-bold text-slate-900" x-text="formatQuantity(2)"></span>):</span>
+                        <span>{{ __('messages.settings_currency_subtotal') }} <span class="font-mono font-bold text-slate-900" x-text="formatQuantity(2)"></span>):</span>
                         <span class="font-mono font-bold text-slate-900" x-text="formatNumber(120000)"></span>
                     </div>
                     <div class="flex justify-between text-emerald-700 text-[11px]">
-                        <span>Discount (5%):</span>
+                        <span>{{ __('messages.settings_currency_discount') }}</span>
                         <span class="font-mono font-bold" x-text="formatNumber(-6000)"></span>
                     </div>
                     <div class="flex justify-between font-black text-sm pt-2 border-t border-slate-300">
-                        <span>NET PAYABLE:</span>
+                        <span>{{ __('messages.settings_currency_net_payable') }}</span>
                         <span class="font-mono text-emerald-600" x-text="formatNumber(114000)"></span>
                     </div>
                 </div>
 
                 <p class="text-[11px] text-slate-400 text-center">
-                    💡 Real-time format updates immediately as you customize currency symbols, price decimals, and stock quantity precision.
+                    {{ __('messages.settings_currency_realtime_hint') }}
                 </p>
             </div>
         </div>

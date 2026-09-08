@@ -113,7 +113,7 @@
     <table style="font-size: 14px;">
         <tr class="font-bold">
             <td>{{ __('messages.total_amount') }}:</td>
-            <td class="text-right">{{ number_format($transaction->amount, 0) }} Ks</td>
+            <td class="text-right">{{ format_currency($transaction->amount, $store) }}</td>
         </tr>
     </table>
 

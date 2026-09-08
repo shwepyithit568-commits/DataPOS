@@ -340,7 +340,7 @@
                 <div class="flex items-center gap-1">
                     <a :href="previewUrl" target="_blank" download class="h-6 px-2 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-1 transition">
                         <span>⬇️</span>
-                        <span>Open / Download</span>
+                        <span>{{ __('messages.open_download') }}</span>
                     </a>
                     <button type="button" @click="previewModalOpen = false" class="w-6 h-6 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 grid place-items-center text-xs font-bold transition cursor-pointer">✕</button>
                 </div>

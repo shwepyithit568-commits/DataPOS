@@ -188,7 +188,7 @@ class ProductController extends Controller
         // Fixed column labels — the importer round-trip names must not change.
         $fixedColumns = [
             'SKU', 'Name', 'Category', 'Parent Category', 'Brand',
-            'Retail Price (Ks)', 'Wholesale Price (Ks)', 'Discount Price (Ks)',
+            'Retail Price', 'Wholesale Price', 'Discount Price',
             'Sale Starts At', 'Sale Ends At', 'Stock Status', 'Stock Status (Burmese)',
             'Warranty', 'Return Policy', 'Meta Description', 'Featured',
             'Description', 'Sanitized Description', 'Images', 'Variants',

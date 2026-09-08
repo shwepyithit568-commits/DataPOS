@@ -357,7 +357,7 @@
             <div class="min-w-0">
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">{{ __('messages.roles_total_staff') }}</p>
                 <h3 class="text-lg sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 font-mono tracking-tight">{{ $metrics['total_staff'] }}</h3>
-                <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Managers & Staff</p>
+                <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">{{ __('messages.managers_staff') }}</p>
             </div>
             <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 grid place-items-center text-lg sm:text-xl font-bold shadow-inner shrink-0">
                 👥
@@ -517,7 +517,7 @@
 
                         @if (! $role->is_system)
                             <form action="{{ route('store.admin.roles.destroy', array_merge($storeRouteParams, ['role' => $role->id])) }}"
-                                  method="POST" onsubmit="return confirm('{{ __('messages.roles_delete_confirm') }}');">
+                                  method="POST" data-confirm="{{ __('messages.roles_delete_confirm') }}">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition">
@@ -540,7 +540,7 @@
                 <table class="w-full text-left text-xs">
                     <thead>
                         <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                            <th class="py-3 px-4">Role Name & Slug</th>
+                            <th class="py-3 px-4">{{ __('messages.role_name_slug') }}</th>
                             <th class="py-3 px-4">{{ __('messages.roles_description') }}</th>
                             <th class="py-3 px-4 text-center">Type</th>
                             <th class="py-3 px-4 text-center">{{ __('messages.roles_assigned_staff') }}</th>
@@ -584,7 +584,7 @@
                                         </button>
                                         @if (! $role->is_system)
                                             <form action="{{ route('store.admin.roles.destroy', array_merge($storeRouteParams, ['role' => $role->id])) }}"
-                                                  method="POST" onsubmit="return confirm('{{ __('messages.roles_delete_confirm') }}');" class="inline">
+                                                  method="POST" data-confirm="{{ __('messages.roles_delete_confirm') }}" class="inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="px-2.5 py-1 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition">
@@ -656,7 +656,7 @@
             <div class="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div>
                     <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">{{ __('messages.roles_staff_directory_title') }}</h3>
-                    <p class="text-[11px] text-slate-400">Assign Standard Roles (Manager, Cashier, Accountant) or Owner-defined Custom Permissions</p>
+                    <p class="text-[11px] text-slate-400">{{ __('messages.assign_standard_roles') }}</p>
                 </div>
             </div>
             <div class="overflow-x-auto">
@@ -665,9 +665,9 @@
                         <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                             <th class="py-3 px-4">{{ __('messages.roles_staff_member') }}</th>
                             <th class="py-3 px-4">{{ __('messages.roles_staff_contact') }}</th>
-                            <th class="py-3 px-4">System Type</th>
-                            <th class="py-3 px-4">Current Assigned Role</th>
-                            <th class="py-3 px-4">Quick Role Assignment</th>
+                            <th class="py-3 px-4">{{ __('messages.system_type') }}</th>
+                            <th class="py-3 px-4">{{ __('messages.current_assigned_role') }}</th>
+                            <th class="py-3 px-4">{{ __('messages.quick_role_assignment') }}</th>
                             <th class="py-3 px-4 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -764,7 +764,7 @@
                                                 class="px-2 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 transition inline-flex items-center gap-1 shadow-xs"
                                                 title="Create a tailor-made custom role for this staff member">
                                             <span>✨</span>
-                                            <span>Custom Role</span>
+                                            <span>{{ __('messages.custom_role') }}</span>
                                         </button>
                                     </div>
                                 </td>
@@ -793,7 +793,7 @@
                     <span class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 grid place-items-center text-base font-bold">✨</span>
                     <div>
                         <h3 class="text-base font-black text-slate-900 dark:text-white">{{ __('messages.roles_new') }}</h3>
-                        <p class="text-[11px] text-slate-400">Define role details & configure sidebar module permissions (VIEW, EDIT, DELETE)</p>
+                        <p class="text-[11px] text-slate-400">{{ __('messages.define_role_details') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="createModalOpen = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-bold">✕</button>
@@ -869,7 +869,7 @@
                                 <span>🛡️</span>
                                 <span>{{ __('messages.roles_permissions_matrix') }}</span>
                             </h4>
-                            <p class="text-[11px] text-slate-400">Sidebar modules with separate VIEW, EDIT, DELETE permissions</p>
+                            <p class="text-[11px] text-slate-400">{{ __('messages.sidebar_modules_perms') }}</p>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
                             <button type="button" @click="selectAll(newRole)" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 hover:bg-blue-100 transition">{{ __('messages.roles_select_all') }}</button>
@@ -977,7 +977,7 @@
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-sky-600 dark:hover:text-sky-400'"
                                                             class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
                                                         <span :class="hasPerm(newRole, '{{ $pView }}') ? 'opacity-100' : 'opacity-40'">👁️</span>
-                                                        <span>VIEW</span>
+                                                        <span>{{ __('messages.view_perm') }}</span>
                                                     </button>
                                                 @endif
 
@@ -989,7 +989,7 @@
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400'"
                                                             class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
                                                         <span :class="hasPerm(newRole, '{{ $pCreate }}') ? 'opacity-100' : 'opacity-40'">➕</span>
-                                                        <span>CREATE</span>
+                                                        <span>{{ __('messages.create_perm') }}</span>
                                                     </button>
                                                 @endif
 
@@ -1001,7 +1001,7 @@
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400'"
                                                             class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
                                                         <span :class="hasPerm(newRole, '{{ $pUpdate }}') ? 'opacity-100' : 'opacity-40'">✏️</span>
-                                                        <span>UPDATE</span>
+                                                        <span>{{ __('messages.update_perm') }}</span>
                                                     </button>
                                                 @endif
 
@@ -1013,7 +1013,7 @@
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-rose-600 dark:hover:text-rose-400'"
                                                             class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
                                                         <span :class="hasPerm(newRole, '{{ $pDelete }}') ? 'opacity-100' : 'opacity-40'">🗑️</span>
-                                                        <span>DELETE</span>
+                                                        <span>{{ __('messages.delete_perm') }}</span>
                                                     </button>
                                                 @endif
 
@@ -1061,7 +1061,7 @@
                     <span class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 grid place-items-center text-base font-bold">✏️</span>
                     <div>
                         <h3 class="text-base font-black text-slate-900 dark:text-white">{{ __('messages.roles_edit') }}</h3>
-                        <p class="text-[11px] text-slate-400">Modify role name, badge color, and sidebar module permissions (VIEW, EDIT, DELETE)</p>
+                        <p class="text-[11px] text-slate-400">{{ __('messages.modify_role') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="editModalOpen = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-bold">✕</button>
@@ -1129,7 +1129,7 @@
                                 <span>🛡️</span>
                                 <span>{{ __('messages.roles_permissions_matrix') }}</span>
                             </h4>
-                            <p class="text-[11px] text-slate-400">Sidebar modules with separate VIEW, EDIT, DELETE permissions</p>
+                            <p class="text-[11px] text-slate-400">{{ __('messages.sidebar_modules_perms') }}</p>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
                             <button type="button" @click="selectAll(editingRole)" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 hover:bg-blue-100 transition">{{ __('messages.roles_select_all') }}</button>
@@ -1237,7 +1237,7 @@
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-sky-600 dark:hover:text-sky-400'"
                                                             class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
                                                         <span :class="hasPerm(editingRole, '{{ $pView }}') ? 'opacity-100' : 'opacity-40'">👁️</span>
-                                                        <span>VIEW</span>
+                                                        <span>{{ __('messages.view_perm') }}</span>
                                                     </button>
                                                 @endif
 
@@ -1249,7 +1249,7 @@
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400'"
                                                             class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
                                                         <span :class="hasPerm(editingRole, '{{ $pCreate }}') ? 'opacity-100' : 'opacity-40'">➕</span>
-                                                        <span>CREATE</span>
+                                                        <span>{{ __('messages.create_perm') }}</span>
                                                     </button>
                                                 @endif
 
@@ -1261,7 +1261,7 @@
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400'"
                                                             class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
                                                         <span :class="hasPerm(editingRole, '{{ $pUpdate }}') ? 'opacity-100' : 'opacity-40'">✏️</span>
-                                                        <span>UPDATE</span>
+                                                        <span>{{ __('messages.update_perm') }}</span>
                                                     </button>
                                                 @endif
 
@@ -1273,7 +1273,7 @@
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-rose-600 dark:hover:text-rose-400'"
                                                             class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
                                                         <span :class="hasPerm(editingRole, '{{ $pDelete }}') ? 'opacity-100' : 'opacity-40'">🗑️</span>
-                                                        <span>DELETE</span>
+                                                        <span>{{ __('messages.delete_perm') }}</span>
                                                     </button>
                                                 @endif
 
@@ -1320,7 +1320,7 @@
                     <span class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 grid place-items-center text-base font-bold">🎭</span>
                     <div>
                         <h3 class="text-base font-black text-slate-900 dark:text-white">{{ __('messages.roles_assign_modal_title') }}</h3>
-                        <p class="text-[11px] text-slate-400">Assign Standard System Role OR create a customized role tailored for this employee</p>
+                        <p class="text-[11px] text-slate-400">{{ __('messages.assign_standard_or_custom') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="assignModalOpen = false" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
@@ -1344,13 +1344,13 @@
                             :class="assignData.mode === 'select' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 font-semibold'"
                             class="px-2.5 py-1 rounded-lg text-xs transition flex items-center gap-1">
                         <span>⭐</span>
-                        <span>Existing Roles</span>
+                        <span>{{ __('messages.existing_roles') }}</span>
                     </button>
                     <button type="button" @click="assignData.mode = 'create_custom'"
                             :class="assignData.mode === 'create_custom' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 font-semibold'"
                             class="px-2.5 py-1 rounded-lg text-xs transition flex items-center gap-1">
                         <span>✨</span>
-                        <span>Tailor-made Role</span>
+                        <span>{{ __('messages.tailor_made_role') }}</span>
                     </button>
                 </div>
             </div>
@@ -1379,7 +1379,7 @@
                                     <input type="radio" name="staff_role_id" value="" x-model="assignData.staff_role_id" class="text-blue-600">
                                     <div>
                                         <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">-- {{ __('messages.roles_no_specific_role') }} --</span>
-                                        <span class="text-[10px] text-slate-400">Default general staff privileges</span>
+                                        <span class="text-[10px] text-slate-400">{{ __('messages.default_general_staff') }}</span>
                                     </div>
                                 </div>
                             </label>
@@ -1417,7 +1417,7 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Badge Color</label>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.badge_color') }}</label>
                             <div class="flex items-center gap-2">
                                 <div class="flex items-center gap-1">
                                     <template x-for="c in colorPresets" :key="c">
@@ -1434,7 +1434,7 @@
                         </div>
 
                         <div class="sm:col-span-2">
-                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Role Description</label>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.role_description') }}</label>
                             <input type="text" name="role_description" x-model="assignData.custom_role_desc"
                                    placeholder="Duties, assigned counters, and access scope..."
                                    class="w-full px-3 py-2 rounded-xl text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -1473,9 +1473,9 @@
                             <div>
                                 <h4 class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                                     <span>🛡️</span>
-                                    <span>Configure Individual Permissions (VIEW, CREATE, UPDATE, DELETE)</span>
+                                    <span>{{ __('messages.configure_perms') }}</span>
                                 </h4>
-                                <p class="text-[11px] text-slate-400">Toggle permissions granted specifically to this staff member's role</p>
+                                <p class="text-[11px] text-slate-400">{{ __('messages.toggle_perms') }}</p>
                             </div>
                             <div class="flex items-center gap-2 flex-wrap">
                                 <button type="button" @click="selectAll(assignData)" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 hover:bg-blue-100 transition">{{ __('messages.roles_select_all') }}</button>
@@ -1565,7 +1565,7 @@
                                                                     ? 'bg-sky-600 text-white border-sky-600 shadow-xs' 
                                                                     : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-sky-600 dark:hover:text-sky-400'"
                                                                 class="px-2 py-0.5 rounded-md text-[9px] font-black tracking-wider uppercase border transition flex items-center gap-0.5 active:scale-95">
-                                                            <span>👁️</span><span>VIEW</span>
+                                                            <span>👁️</span><span>{{ __('messages.view_perm') }}</span>
                                                         </button>
                                                     @endif
 
@@ -1575,7 +1575,7 @@
                                                                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' 
                                                                     : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400'"
                                                                 class="px-2 py-0.5 rounded-md text-[9px] font-black tracking-wider uppercase border transition flex items-center gap-0.5 active:scale-95">
-                                                            <span>➕</span><span>CREATE</span>
+                                                            <span>➕</span><span>{{ __('messages.create_perm') }}</span>
                                                         </button>
                                                     @endif
 
@@ -1585,7 +1585,7 @@
                                                                     ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                                                                     : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400'"
                                                                 class="px-2 py-0.5 rounded-md text-[9px] font-black tracking-wider uppercase border transition flex items-center gap-0.5 active:scale-95">
-                                                            <span>✏️</span><span>UPDATE</span>
+                                                            <span>✏️</span><span>{{ __('messages.update_perm') }}</span>
                                                         </button>
                                                     @endif
 
@@ -1595,7 +1595,7 @@
                                                                     ? 'bg-rose-600 text-white border-rose-600 shadow-xs' 
                                                                     : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-rose-600 dark:hover:text-rose-400'"
                                                                 class="px-2 py-0.5 rounded-md text-[9px] font-black tracking-wider uppercase border transition flex items-center gap-0.5 active:scale-95">
-                                                            <span>🗑️</span><span>DELETE</span>
+                                                            <span>🗑️</span><span>{{ __('messages.delete_perm') }}</span>
                                                         </button>
                                                     @endif
 

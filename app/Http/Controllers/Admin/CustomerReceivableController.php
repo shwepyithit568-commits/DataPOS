@@ -298,7 +298,7 @@ class CustomerReceivableController extends Controller
         $outstanding = $this->debts->balanceFor($store->id, $customerUser->id);
         if (bccomp((string) $data['amount'], $outstanding, 2) > 0) {
             return back()->withInput()->with('error', __('messages.receivables_collect_exceeds_error', [
-                'max' => number_format((float) $outstanding, 0),
+                'max' => format_currency((float) $outstanding, $store),
             ]));
         }
 

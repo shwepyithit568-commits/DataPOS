@@ -374,7 +374,7 @@
                 </button>
 
                 <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/bulk-delete') }}" class="inline"
-                    onsubmit="return confirm('{{ __('messages.bulk_delete_confirm') }}')">
+                    data-confirm="{{ __('messages.bulk_delete_confirm') }}">
                     @csrf
                     <template x-for="id in selectedIds" :key="id">
                         <input type="hidden" name="ids[]" :value="id" />
@@ -529,7 +529,7 @@
                             {{-- Col 6: Retail Price --}}
                             <td class="py-2 px-3 text-right">
                                 <div class="font-bold font-mono text-slate-900 dark:text-white tabular-nums text-xs sm:text-sm">
-                                    Ks {{ number_format($product->retail_price) }}
+                                    {{ format_currency($product->retail_price, $store) }}
                                 </div>
                             </td>
 
@@ -537,7 +537,7 @@
                             <td class="py-2 px-3 text-right hidden sm:table-cell">
                                 @if ($product->wholesale_price > 0)
                                     <div class="font-mono text-emerald-600 dark:text-emerald-400 tabular-nums font-bold text-xs">
-                                        Ks {{ number_format($product->wholesale_price) }}
+                                        {{ format_currency($product->wholesale_price, $store) }}
                                     </div>
                                 @else
                                     <span class="text-slate-300 dark:text-slate-600">—</span>
@@ -550,7 +550,7 @@
                                     $isServiceOrDigital = in_array($product->product_type, ['service', 'digital'], true);
                                     $onHand = (float) ($product->on_hand_qty ?? $product->stock_on_hand ?? 0);
                                     $reorder = (float) ($product->reorder_level ?? 0);
-                                    $fmtQty = (fmod($onHand, 1) !== 0.0) ? number_format($onHand, 3) : number_format($onHand, 0);
+                                    $fmtQty = format_quantity($onHand, $store);
 
                                     if ($isServiceOrDigital) {
                                         $badgeClass = 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700';
@@ -630,7 +630,7 @@
                                     {{-- Delete --}}
                                     @if (store_can('products.delete', $store))
                                     <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id) }}" class="inline"
-                                        onsubmit="return confirm('{{ __('messages.delete') }} ?')">
+                                        data-confirm="{{ __('messages.delete') }} ?">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" title="{{ __('messages.delete') }}"
@@ -697,7 +697,7 @@
                             $isServiceOrDigital = in_array($product->product_type, ['service', 'digital'], true);
                             $onHand = (float) ($product->on_hand_qty ?? $product->stock_on_hand ?? 0);
                             $reorder = (float) ($product->reorder_level ?? 0);
-                            $fmtQty = (fmod($onHand, 1) !== 0.0) ? number_format($onHand, 3) : number_format($onHand, 0);
+                            $fmtQty = format_quantity($onHand, $store);
 
                             if ($isServiceOrDigital) {
                                 $cardBadgeClass = 'bg-slate-800/90 text-slate-200';
@@ -760,12 +760,12 @@
                     <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-baseline justify-between gap-1">
                         <div>
                             <span class="text-[9px] font-bold uppercase text-slate-400 block leading-none">{{ __('messages.retail') }}</span>
-                            <span class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 tabular-nums font-mono">Ks {{ number_format($product->retail_price) }}</span>
+                            <span class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 tabular-nums font-mono">{{ format_currency($product->retail_price, $store) }}</span>
                         </div>
                         @if ($product->wholesale_price > 0)
                             <div class="text-right">
                                 <span class="text-[9px] font-bold uppercase text-emerald-500 block leading-none">{{ __('messages.wholesale') }}</span>
-                                <span class="text-[11px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums font-mono">Ks {{ number_format($product->wholesale_price) }}</span>
+                                <span class="text-[11px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums font-mono">{{ format_currency($product->wholesale_price, $store) }}</span>
                             </div>
                         @endif
                     </div>
@@ -800,7 +800,7 @@
                     {{-- Delete --}}
                     @if (store_can('products.delete', $store))
                     <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/products/' . $product->id) }}" class="inline flex-1"
-                        onsubmit="return confirm('{{ __('messages.delete') }} ?')">
+                        data-confirm="{{ __('messages.delete') }} ?">
                         @csrf
                         @method('DELETE')
                         <button type="submit" title="{{ __('messages.delete') }}"

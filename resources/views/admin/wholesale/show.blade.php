@@ -54,7 +54,7 @@
             @if (auth()->user()->isPlatformOwner() || auth()->user()->hasStoreRole($store->id, ['store_manager']))
                 <form method="POST"
                       action="{{ route('store.admin.wholesale.applications.destroy', array_merge($storeRouteParams, ['application' => $application->id])) }}"
-                      onsubmit="return confirm('{{ __('messages.wholesale_delete_confirm') }}');">
+                      data-confirm="{{ __('messages.wholesale_delete_confirm') }}">
                     @csrf
                     @method('DELETE')
                     <button type="submit"
@@ -99,7 +99,7 @@
             <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 shadow-2xs space-y-3">
                 <div class="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                     <span class="text-xs">👤</span>
-                    <h2 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Applicant & Business Information</h2>
+                    <h2 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">{{ __('messages.applicant_business_info') }}</h2>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -178,13 +178,13 @@
 
                     {{-- Status Choices --}}
                     <div>
-                        <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Application Status</label>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">{{ __('messages.application_status') }}</label>
                         <div class="grid grid-cols-2 gap-1.5">
                             @foreach ([
-                                'pending'   => ['⏳', 'Pending',   'amber'],
-                                'approved'  => ['✅', 'Approve',   'emerald'],
-                                'rejected'  => ['❌', 'Reject',    'rose'],
-                                'suspended' => ['🚫', 'Suspend',   'slate'],
+                                'pending'   => ['⏳', null, 'amber'],
+                                'approved'  => ['✅', null, 'emerald'],
+                                'rejected'  => ['❌', null, 'rose'],
+                                'suspended' => ['🚫', null, 'slate'],
                             ] as $val => [$icon, $label, $color])
                                 <label class="flex items-center gap-1.5 p-2 rounded-lg border cursor-pointer transition-all text-xs
                                     {{ $application->status === $val
@@ -193,7 +193,7 @@
                                     <input type="radio" name="status" value="{{ $val }}" class="sr-only"
                                         {{ $application->status === $val ? 'checked' : '' }}>
                                     <span class="text-xs">{{ $icon }}</span>
-                                    <span class="font-bold text-slate-800 dark:text-slate-200 text-[11px]">{{ $label }}</span>
+                                    <span class="font-bold text-slate-800 dark:text-slate-200 text-[11px]">{{ __('messages.' . $val) }}</span>
                                 </label>
                             @endforeach
                         </div>
@@ -223,27 +223,27 @@
             <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 shadow-2xs space-y-2">
                 <div class="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                     <span class="text-xs">ℹ️</span>
-                    <h2 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Metadata</h2>
+                    <h2 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">{{ __('messages.metadata') }}</h2>
                 </div>
                 <div class="space-y-1.5 text-xs">
                     <div class="flex items-center justify-between">
-                        <span class="text-slate-400 font-semibold">Application ID</span>
+                        <span class="text-slate-400 font-semibold">{{ __('messages.application_id') }}</span>
                         <span class="font-mono font-bold text-slate-900 dark:text-slate-100">#{{ $application->id }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-slate-400 font-semibold">User ID</span>
+                        <span class="text-slate-400 font-semibold">{{ __('messages.user_id') }}</span>
                         <span class="font-mono font-bold text-slate-900 dark:text-slate-100">#{{ $application->user_id ?? 'N/A' }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-slate-400 font-semibold">Applied At</span>
+                        <span class="text-slate-400 font-semibold">{{ __('messages.applied_at') }}</span>
                         <span class="text-slate-700 dark:text-slate-300 font-mono text-[11px]">{{ $application->created_at->format('d M Y, h:i A') }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-slate-400 font-semibold">Last Updated</span>
+                        <span class="text-slate-400 font-semibold">{{ __('messages.last_updated') }}</span>
                         <span class="text-slate-700 dark:text-slate-300 font-mono text-[11px]">{{ $application->updated_at->format('d M Y, h:i A') }}</span>
                     </div>
                     <div class="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-slate-800">
-                        <span class="text-slate-400 font-semibold">Role Tier</span>
+                        <span class="text-slate-400 font-semibold">{{ __('messages.role_tier') }}</span>
                         <span class="font-bold text-indigo-600 dark:text-indigo-400 font-mono text-[11px]">wholesale_customer</span>
                     </div>
                 </div>

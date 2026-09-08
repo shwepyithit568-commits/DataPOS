@@ -158,7 +158,7 @@
 
                                     @if (auth()->user()?->isPlatformOwner())
                                         <form method="POST" action="{{ route('admin.stores.force-destroy', $store) }}" class="inline"
-                                            onsubmit="return confirm('⚠️ သတိပေးချက်: Store \'{{ $store->name }}\' ({{ $store->slug }}) နှင့် သက်ဆိုင်သော ကုန်ပစ္စည်း၊ စတော့၊ အော်ဒါ၊ အရောင်းဒေတာအားလုံးကို အပြီးတိုင် ဖျက်ပစ်ပါမည်။ သေချာပါသလား?');">
+                                            data-confirm="⚠️ သတိပေးချက်: Store '{{ $store->name }}' ({{ $store->slug }}) နှင့် သက်ဆိုင်သော ကုန်ပစ္စည်း၊ စတော့၊ အော်ဒါ၊ အရောင်းဒေတာအားလုံးကို အပြီးတိုင် ဖျက်ပစ်ပါမည်။ သေချာပါသလား?">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"

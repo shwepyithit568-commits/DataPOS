@@ -59,7 +59,7 @@
             <a href="{{ route('store.admin.products.master-data', array_merge($storeRouteParams, ['tab' => 'seed-data'])) }}"
                class="h-7 px-2.5 rounded-md text-[11px] font-bold bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/80 transition inline-flex items-center gap-1">
                 <span>⚙️</span>
-                <span>Master Data Seed</span>
+                <span>{{ __('messages.master_data_seed') }}</span>
             </a>
             <a href="{{ route('store.admin.products.import', $storeRouteParams) }}"
                class="h-7 px-2.5 rounded-md text-[11px] font-bold bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/50 dark:hover:bg-violet-900/50 text-violet-700 dark:text-violet-300 border border-violet-200/80 dark:border-violet-800/80 transition inline-flex items-center gap-1">
@@ -246,7 +246,7 @@
                         <input type="hidden" name="clean_old" value="1">
                         <input type="hidden" name="apply_store_identity" value="1">
                         <button type="submit"
-                                onclick="return confirm('{{ __('messages.pilot_import_seed_confirm', ['scenario' => $spotlightScenario['label'], 'store' => $store->name]) }}')"
+                                data-confirm="{{ __('messages.pilot_import_seed_confirm', ['scenario' => $spotlightScenario['label'], 'store' => $store->name]) }}"
                                 class="w-full h-9 px-4 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-black text-xs shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
                             <span>✨</span>
                             <span>{{ __('messages.pilot_import_btn_seed') }} (Clean Reset)</span>
@@ -257,7 +257,7 @@
                     <form method="POST" action="{{ route('store.admin.pilot-import.demo-scenarios.store', array_merge($storeRouteParams, ['scenario' => $matchedScenarioKey])) }}">
                         @csrf
                         <button type="submit"
-                                onclick="return confirm('{{ __('messages.pilot_import_demo_store_confirm', ['scenario' => $spotlightScenario['label']]) }}')"
+                                data-confirm="{{ __('messages.pilot_import_demo_store_confirm', ['scenario' => $spotlightScenario['label']]) }}"
                                 class="w-full h-9 px-4 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
                             <span>🏬</span>
                             <span>{{ __('messages.pilot_import_btn_demo_store') }}</span>
@@ -371,7 +371,7 @@
 
                             <div class="flex items-center gap-1.5 pt-0.5">
                                 <button type="submit"
-                                        onclick="return confirm('{{ __('messages.pilot_import_seed_confirm', ['scenario' => $scenario['label'], 'store' => $store->name]) }}')"
+                                        data-confirm="{{ __('messages.pilot_import_seed_confirm', ['scenario' => $scenario['label'], 'store' => $store->name]) }}"
                                         class="flex-1 h-8 px-3 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs shadow-2xs transition flex items-center justify-center gap-1 cursor-pointer active:scale-95">
                                     <span>✨</span>
                                     <span>{{ __('messages.pilot_import_btn_seed') }}</span>
@@ -380,7 +380,7 @@
                                 @if ($demoScenariosEnabled)
                                     <button type="submit"
                                             formaction="{{ route('store.admin.pilot-import.demo-scenarios.store', array_merge($storeRouteParams, ['scenario' => $key])) }}"
-                                            onclick="return confirm('{{ __('messages.pilot_import_demo_store_confirm', ['scenario' => $scenario['label']]) }}')"
+                                            data-confirm="{{ __('messages.pilot_import_demo_store_confirm', ['scenario' => $scenario['label']]) }}"
                                             title="{{ __('messages.pilot_import_btn_demo_store') }}"
                                             class="h-8 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white text-xs font-bold shrink-0 transition cursor-pointer active:scale-95">
                                         <span>🏬 +</span>
@@ -419,7 +419,7 @@
                                 <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate">store/{{ $key }}</div>
                             </div>
                             <button type="submit"
-                                    onclick="return confirm('{{ __('messages.pilot_import_demo_store_confirm', ['scenario' => $sc['label']]) }}')"
+                                    data-confirm="{{ __('messages.pilot_import_demo_store_confirm', ['scenario' => $sc['label']]) }}"
                                     class="h-7 px-2.5 rounded-md bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white text-xs font-bold shrink-0 transition cursor-pointer active:scale-95">
                                 + {{ __('messages.pilot_import_btn_demo_store') }}
                             </button>
@@ -442,7 +442,7 @@
             <form method="POST" action="{{ route('store.admin.pilot-import.clean-store-data', $storeRouteParams) }}">
                 @csrf
                 <button type="submit"
-                        onclick="return confirm('{{ __('messages.pilot_import_wipe_confirm', ['store' => $store->name]) }}')"
+                        data-confirm="{{ __('messages.pilot_import_wipe_confirm', ['store' => $store->name]) }}"
                         class="h-8 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-2xs transition inline-flex items-center gap-1.5 cursor-pointer active:scale-95">
                     <span>🗑️</span>
                     <span>{{ __('messages.pilot_import_btn_wipe') }}</span>
@@ -476,7 +476,7 @@
                     <a href="{{ route('store.admin.pilot-import.template', array_merge($storeRouteParams, ['tab' => $currentTab])) }}"
                        class="h-6 px-2 rounded text-[10px] font-bold bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/60 dark:hover:bg-violet-900/60 text-violet-700 dark:text-violet-300 border border-violet-200/60 dark:border-violet-800/60 transition inline-flex items-center gap-1">
                         <span>📥</span>
-                        <span>Template (.csv)</span>
+                        <span>{{ __('messages.template_csv') }} (.csv)</span>
                     </a>
                 </div>
 
@@ -499,11 +499,11 @@
                             <div class="grid grid-cols-2 gap-2 text-xs">
                                 <label class="flex items-center gap-1.5 p-2 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer">
                                     <input type="radio" name="duplicate_strategy" value="skip" checked class="text-violet-600">
-                                    <span class="font-medium text-slate-700 dark:text-slate-300">Skip</span>
+                                    <span class="font-medium text-slate-700 dark:text-slate-300">{{ __('messages.skip') }}</span>
                                 </label>
                                 <label class="flex items-center gap-1.5 p-2 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer">
                                     <input type="radio" name="duplicate_strategy" value="update" class="text-violet-600">
-                                    <span class="font-medium text-slate-700 dark:text-slate-300">Update</span>
+                                    <span class="font-medium text-slate-700 dark:text-slate-300">{{ __('messages.update') }}</span>
                                 </label>
                             </div>
                         </div>
@@ -547,19 +547,19 @@
                     <div class="grid grid-cols-4 gap-1.5 text-center">
                         <div class="rounded-lg border border-slate-200/80 bg-slate-50 dark:bg-slate-800/40 p-2">
                             <div class="text-sm font-black text-slate-900 dark:text-white font-mono">{{ $preview['total'] ?? 0 }}</div>
-                            <div class="text-[10px] font-bold text-slate-400">Total Rows</div>
+                            <div class="text-[10px] font-bold text-slate-400">{{ __('messages.total_rows') }}</div>
                         </div>
                         <div class="rounded-lg border border-emerald-200 bg-emerald-50/50 dark:bg-emerald-950/30 p-2">
                             <div class="text-sm font-black text-emerald-600 font-mono">{{ $preview['valid'] ?? ($preview['new_count'] ?? 0) }}</div>
-                            <div class="text-[10px] font-bold text-emerald-600">Valid</div>
+                            <div class="text-[10px] font-bold text-emerald-600">{{ __('messages.valid') }}</div>
                         </div>
                         <div class="rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-950/30 p-2">
                             <div class="text-sm font-black text-amber-600 font-mono">{{ $preview['duplicates'] ?? ($preview['duplicate_count'] ?? 0) }}</div>
-                            <div class="text-[10px] font-bold text-amber-600">Duplicates</div>
+                            <div class="text-[10px] font-bold text-amber-600">{{ __('messages.duplicates') }}</div>
                         </div>
                         <div class="rounded-lg border border-rose-200 bg-rose-50/50 dark:bg-rose-950/30 p-2">
                             <div class="text-sm font-black text-rose-600 font-mono">{{ $preview['invalid'] ?? ($preview['invalid_count'] ?? 0) }}</div>
-                            <div class="text-[10px] font-bold text-rose-600">Errors</div>
+                            <div class="text-[10px] font-bold text-rose-600">{{ __('messages.errors') }}</div>
                         </div>
                     </div>
 
@@ -613,12 +613,12 @@
                             <tr>
                                 <th class="p-2.5">Date</th>
                                 <th class="p-2.5">Type</th>
-                                <th class="p-2.5">File Name</th>
+                                <th class="p-2.5">{{ __('messages.file_name') }}</th>
                                 <th class="p-2.5">User</th>
                                 <th class="p-2.5 text-center">Total</th>
                                 <th class="p-2.5 text-center">Success</th>
-                                <th class="p-2.5 text-center">Failed</th>
-                                <th class="p-2.5 text-center">Status</th>
+                                <th class="p-2.5 text-center">{{ __('messages.failed') }}</th>
+                                <th class="p-2.5 text-center">{{ __('messages.status') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-[11px]">

@@ -84,7 +84,7 @@
                 <span>🛠️</span>
                 <span>{{ __('messages.sidebar_service_jobs') }}</span>
                 <span class="text-slate-400 dark:text-slate-500">·</span>
-                <span class="font-normal normal-case text-slate-500 dark:text-slate-400">Computer, CCTV, Network & Mobile Jobs</span>
+                <span class="font-normal normal-case text-slate-500 dark:text-slate-400">{{ __('messages.computer_cctv_network_jobs') }}</span>
             </div>
             <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                 <span>{{ __('messages.sidebar_service_jobs') }}</span>
@@ -146,7 +146,7 @@
                 <span class="text-xs">📋</span>
             </div>
             <div class="text-lg sm:text-2xl font-black text-blue-600 dark:text-blue-400 mt-1 font-mono tracking-tight">{{ number_format($stats['total']) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Total Registered Jobs</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.total_registered_jobs') }}</div>
         </div>
 
         {{-- Active / In Progress --}}
@@ -156,7 +156,7 @@
                 <span class="text-xs">⚡</span>
             </div>
             <div class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono tracking-tight">{{ number_format($stats['active']) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Diagnosing & In Repair</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.diagnosing_in_repair') }}</div>
         </div>
 
         {{-- Ready for Pickup --}}
@@ -166,7 +166,7 @@
                 <span class="text-xs">✅</span>
             </div>
             <div class="text-lg sm:text-2xl font-black text-teal-700 dark:text-teal-300 mt-1 font-mono tracking-tight">{{ number_format($stats['ready']) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Ready for Collection</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.ready_for_collection') }}</div>
         </div>
 
         {{-- Outstanding Balance --}}
@@ -175,8 +175,8 @@
                 <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 truncate">{{ __('messages.repair_stat_debt') }}</span>
                 <span class="text-xs">💰</span>
             </div>
-            <div class="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 mt-1 font-mono tracking-tight">{{ number_format($stats['debt'], 0) }} <span class="text-xs font-normal">Ks</span></div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Unpaid Job Invoices</div>
+            <div class="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 mt-1 font-mono tracking-tight">{{ format_currency($stats['debt'], $store) }}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.unpaid_job_invoices') }}</div>
         </div>
     </div>
 
@@ -276,7 +276,7 @@
                                 <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{{ $job->device_type }} {{ $job->model ? '· ' . $job->model : '' }}</div>
                             </div>
                             @if ($job->outstanding() > 0)
-                                <span class="text-xs font-black text-amber-600 dark:text-amber-400 font-mono whitespace-nowrap">{{ number_format($job->outstanding(), 0) }} Ks</span>
+                                <span class="text-xs font-black text-amber-600 dark:text-amber-400 font-mono whitespace-nowrap">{{ format_currency($job->outstanding(), $store) }}</span>
                             @endif
                         </div>
                     </div>
@@ -361,7 +361,7 @@
                             <td class="p-2.5 text-[11px] text-slate-400 whitespace-nowrap font-mono">{{ $job->created_at->format('M d, Y') }}</td>
                             <td class="p-2.5 text-right whitespace-nowrap">
                                 @if ($job->outstanding() > 0)
-                                    <span class="text-amber-600 dark:text-amber-400 font-mono font-bold">{{ number_format($job->outstanding(), 0) }} Ks</span>
+                                    <span class="text-amber-600 dark:text-amber-400 font-mono font-bold">{{ format_currency($job->outstanding(), $store) }}</span>
                                 @else
                                     <span class="text-slate-300 dark:text-slate-600 font-mono">—</span>
                                 @endif

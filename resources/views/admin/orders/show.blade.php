@@ -218,9 +218,9 @@
                 </form>
 
                 <div class="text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between tabular-nums">
-                    <span>{{ __('messages.order_original_total') }}: <strong class="text-slate-700 dark:text-slate-300 font-mono">Ks {{ number_format($order->total_amount) }}</strong></span>
+                    <span>{{ __('messages.order_original_total') }}: <strong class="text-slate-700 dark:text-slate-300 font-mono">{{ format_currency($order->total_amount, $store) }}</strong></span>
                     @if ($order->agreed_amount !== null)
-                        <span>{{ __('messages.order_agreed_total') }}: <strong class="text-violet-600 dark:text-violet-400 font-mono">Ks {{ number_format($order->agreed_amount) }}</strong></span>
+                        <span>{{ __('messages.order_agreed_total') }}: <strong class="text-violet-600 dark:text-violet-400 font-mono">{{ format_currency($order->agreed_amount, $store) }}</strong></span>
                     @endif
                 </div>
             </div>
@@ -267,13 +267,13 @@
                                 @endif
                             </td>
                             <td class="py-2.5 px-3 text-right font-mono text-slate-700 dark:text-slate-300 tabular-nums">
-                                Ks {{ number_format($item->unit_price, 0) }}
+                                {{ format_currency($item->unit_price, $store) }}
                             </td>
                             <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
                                 {{ $item->quantity }}
                             </td>
                             <td class="py-2.5 px-3 text-right font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">
-                                Ks {{ number_format($item->subtotal, 0) }}
+                                {{ format_currency($item->subtotal, $store) }}
                             </td>
                         </tr>
                     @endforeach
@@ -284,7 +284,7 @@
                             {{ __('messages.total_amount') }}:
                         </td>
                         <td class="py-3 px-4 text-right font-mono font-black text-sm text-violet-600 dark:text-violet-400 tabular-nums">
-                            Ks {{ number_format($amount, 0) }}
+                            {{ format_currency($amount, $store) }}
                         </td>
                     </tr>
                 </tfoot>

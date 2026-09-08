@@ -143,7 +143,7 @@
                 <form method="POST" action="{{ route('store.admin.database.vacuum', $storeRouteParams) }}">
                     @csrf
                     <button type="submit"
-                            onclick="return confirm('{{ __('messages.database_vacuum_confirm') }}')"
+                            data-confirm="{{ __('messages.database_vacuum_confirm') }}"
                             class="w-full py-2 px-3 rounded-lg text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white shadow-sm transition active:scale-95 text-center cursor-pointer">
                         {{ __('messages.database_btn_vacuum') }}
                     </button>

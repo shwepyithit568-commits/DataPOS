@@ -72,7 +72,7 @@
             <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
                 Brand များ၊ Category Tree၊ Preset များ၊ Shelf Location များ၊ Warranty Template များ၊ Return Policy များနှင့် Variant Preset Matrix တို့ကို
                 <strong class="text-violet-700 dark:text-violet-300">တစ်ချက်နှိပ်၍</strong> ထည့်သွင်းနိုင်သည်။
-                Data များသည် <strong>idempotent</strong> — ထပ်ကာ run နိုင်သည် (updateOrCreate safe)။
+                Data များသည် <strong>{{ __('messages.idempotent') }}</strong> — ထပ်ကာ run နိုင်သည် (updateOrCreate safe)။
             </p>
         </div>
     </div>
@@ -184,7 +184,7 @@
                     :disabled="selectedGroups.length === 0"
                     :class="selectedGroups.length === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-emerald-500 active:scale-95 cursor-pointer'"
                     class="h-8 px-4 rounded-md text-xs font-black bg-emerald-600 text-white shadow-sm transition flex items-center gap-1.5">
-                🌱 <span>Seed Data Import</span>
+                🌱 <span>{{ __('messages.seed_data_import') }}</span>
                 <span class="inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded bg-white/20 font-mono text-[11px]" x-text="selectedGroups.length"></span>
             </button>
         </div>
@@ -205,7 +205,7 @@
                     <thead class="bg-slate-50 dark:bg-slate-800/50">
                         <tr>
                             <th class="text-left px-3 py-1.5 font-bold text-slate-500 uppercase text-[10px]">#</th>
-                            <th class="text-left px-3 py-1.5 font-bold text-slate-500 uppercase text-[10px]">Brand Name</th>
+                            <th class="text-left px-3 py-1.5 font-bold text-slate-500 uppercase text-[10px]">{{ __('messages.brand_name') }}</th>
                             <th class="text-left px-3 py-1.5 font-bold text-slate-500 uppercase text-[10px]">Code</th>
                         </tr>
                     </thead>
@@ -272,7 +272,7 @@
                 </div>
                 <div class="flex items-center gap-1.5">
                     <span class="text-sm font-black text-slate-900 dark:text-slate-100 tabular-nums">{{ $seedPreview[$key]['count'] }}</span>
-                    <span class="text-[10px] text-slate-500 dark:text-slate-400">items</span>
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400">{{ __('messages.items') }}</span>
                 </div>
                 <div class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">လက်ရှိ: {{ $seedCurrentCounts[$ck] }} ခု</div>
             </div>

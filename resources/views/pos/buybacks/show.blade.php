@@ -42,7 +42,7 @@
                 <form method="POST" action="{{ route('pos.buybacks.complete', [...$storeRouteParams, 'buyback' => $buyback->id]) }}">
                     @csrf
                     <button type="submit"
-                            onclick="return confirm('{{ __('messages.buyback_confirm_complete') ?? 'Confirm complete this buyback and receive stock?' }}')"
+                            data-confirm="{{ __('messages.buyback_confirm_complete') ?? 'Confirm complete this buyback and receive stock?' }}"
                             class="h-7 px-3 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-2xs hover:shadow-emerald-500/20 transition inline-flex items-center gap-1 cursor-pointer active:scale-95">
                         <span>✓ {{ __('messages.complete') }}</span>
                     </button>
@@ -50,7 +50,7 @@
                 <form method="POST" action="{{ route('pos.buybacks.cancel', [...$storeRouteParams, 'buyback' => $buyback->id]) }}">
                     @csrf
                     <button type="submit"
-                            onclick="return confirm('{{ __('messages.buyback_confirm_cancel') ?? 'Are you sure you want to cancel this buyback?' }}')"
+                            data-confirm="{{ __('messages.buyback_confirm_cancel') ?? 'Are you sure you want to cancel this buyback?' }}"
                             class="h-7 px-2.5 rounded-md bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer active:scale-95">
                         <span>✕ {{ __('messages.cancel') }}</span>
                     </button>

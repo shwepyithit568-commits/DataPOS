@@ -136,7 +136,7 @@ window.membershipHubData = function () {
                 <span class="text-xs">👥</span>
             </div>
             <div class="text-lg sm:text-2xl font-black text-violet-700 dark:text-violet-300 mt-1 font-mono tracking-tight">{{ number_format($stats['total_members']) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Registered Customers</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.registered_customers') }}</div>
         </div>
 
         {{-- Active VIP Tiers --}}
@@ -146,7 +146,7 @@ window.membershipHubData = function () {
                 <span class="text-xs">🏆</span>
             </div>
             <div class="text-lg sm:text-2xl font-black text-blue-600 dark:text-blue-400 mt-1 font-mono tracking-tight">{{ $stats['active_tiers'] }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Progression Levels</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.progression_levels') }}</div>
         </div>
 
         {{-- Points in Circulation --}}
@@ -155,8 +155,8 @@ window.membershipHubData = function () {
                 <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 truncate">{{ __('messages.membership_points_circulation') }}</span>
                 <span class="text-xs">🪙</span>
             </div>
-            <div class="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 mt-1 font-mono tracking-tight">{{ number_format($stats['points_in_circulation']) }} <span class="text-xs font-normal">Pts</span></div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Customer Balance</div>
+            <div class="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 mt-1 font-mono tracking-tight">{{ number_format($stats['points_in_circulation']) }} <span class="text-xs font-normal">{{ __('messages.pts') }}</span></div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.customer_balance') }}</div>
         </div>
 
         {{-- Total Points Redeemed --}}
@@ -165,8 +165,8 @@ window.membershipHubData = function () {
                 <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 truncate">{{ __('messages.membership_points_redeemed') }}</span>
                 <span class="text-xs">🎁</span>
             </div>
-            <div class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono tracking-tight">{{ number_format($stats['total_points_redeemed']) }} <span class="text-xs font-normal">Pts</span></div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Claimed Rewards</div>
+            <div class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono tracking-tight">{{ number_format($stats['total_points_redeemed']) }} <span class="text-xs font-normal">{{ __('messages.pts') }}</span></div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.claimed_rewards') }}</div>
         </div>
     </div>
 
@@ -222,19 +222,19 @@ window.membershipHubData = function () {
                         {{-- Tier Benefits List --}}
                         <div class="mt-2 space-y-1.5 text-xs">
                             <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
-                                <span>Min Spend:</span>
-                                <strong class="font-mono text-slate-900 dark:text-slate-100 text-[11px]">{{ number_format($tier->min_spending) }} Ks</strong>
+                                <span>{{ __('messages.min_spend') }}:</span>
+                                <strong class="font-mono text-slate-900 dark:text-slate-100 text-[11px]">{{ format_currency($tier->min_spending, $store) }}</strong>
                             </div>
                             <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
-                                <span>VIP Discount:</span>
+                                <span>{{ __('messages.vip_discount') }}:</span>
                                 <strong class="font-mono text-emerald-600 dark:text-emerald-400 text-[11px]">{{ $tier->discount_percent }}% Off</strong>
                             </div>
                             <div class="flex justify-between items-center text-slate-500 dark:text-slate-400">
-                                <span>Point Multiplier:</span>
+                                <span>{{ __('messages.point_multiplier') }}:</span>
                                 <strong class="font-mono text-violet-600 dark:text-violet-400 text-[11px]">{{ $tier->point_multiplier }}x Pts</strong>
                             </div>
                             <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-slate-400 text-[11px]">
-                                <span>Members:</span>
+                                <span>{{ __('messages.members') }}:</span>
                                 <span class="font-bold text-slate-700 dark:text-slate-300 font-mono">{{ number_format($tier->members_count ?? 0) }}</span>
                             </div>
                         </div>
@@ -250,7 +250,7 @@ window.membershipHubData = function () {
                         </button>
 
                         @if(!$tier->is_default)
-                            <form method="POST" action="{{ route('store.admin.membership.tiers.destroy', ['store_slug' => $store->slug, 'tier' => $tier->id]) }}" onsubmit="return confirm('Delete this membership tier?')" class="inline">
+                            <form method="POST" action="{{ route('store.admin.membership.tiers.destroy', ['store_slug' => $store->slug, 'tier' => $tier->id]) }}" data-confirm="Delete this membership tier?" class="inline">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"
@@ -290,7 +290,7 @@ window.membershipHubData = function () {
                        class="px-2.5 py-1 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
 
                 <select name="tier_id" class="px-2.5 py-1 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold">
-                    <option value="">All VIP Tiers</option>
+                    <option value="">{{ __('messages.all_vip_tiers') }}</option>
                     @foreach($tiers as $t)
                         <option value="{{ $t->id }}" {{ request('tier_id') == $t->id ? 'selected' : '' }}>
                             {{ $t->name }}
@@ -308,12 +308,12 @@ window.membershipHubData = function () {
             <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300 min-w-[650px]">
                 <thead class="bg-slate-50 dark:bg-slate-800/80 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
                     <tr>
-                        <th class="p-2.5">Customer</th>
-                        <th class="p-2.5">Contact</th>
-                        <th class="p-2.5">VIP Membership Tier</th>
+                        <th class="p-2.5">{{ __('messages.customer') }}</th>
+                        <th class="p-2.5">{{ __('messages.contact') }}</th>
+                        <th class="p-2.5">{{ __('messages.vip_tier') }}</th>
                         <th class="p-2.5 text-right">{{ __('messages.membership_current_points') }}</th>
                         <th class="p-2.5 text-right">{{ __('messages.membership_total_spend') }}</th>
-                        <th class="p-2.5 text-right">Actions</th>
+                        <th class="p-2.5 text-right">{{ __('messages.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -350,7 +350,7 @@ window.membershipHubData = function () {
                                         @endif
                                     </span>
                                 @else
-                                    <span class="text-slate-400 text-[11px]">Standard Member</span>
+                                    <span class="text-slate-400 text-[11px]">{{ __('messages.standard_member') }}</span>
                                 @endif
                             </td>
 
@@ -359,12 +359,12 @@ window.membershipHubData = function () {
                                 <span class="font-mono text-xs font-black text-amber-600 dark:text-amber-400">
                                     {{ number_format($m->loyalty_points) }}
                                 </span>
-                                <span class="text-[10px] text-slate-400 ml-0.5">Pts</span>
+                                <span class="text-[10px] text-slate-400 ml-0.5">{{ __('messages.pts') }}</span>
                             </td>
 
                             {{-- Lifetime Spend --}}
                             <td class="p-2.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
-                                {{ number_format($m->total_spent) }} Ks
+                                {{ format_currency($m->total_spent, $store) }}
                             </td>
 
                             {{-- Quick Actions --}}
@@ -454,18 +454,18 @@ window.membershipHubData = function () {
                 <div>
                     <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_badge_color') }}</label>
                     <select name="badge_color" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
-                        <option value="slate">Slate (Default)</option>
-                        <option value="blue">Blue (Silver Theme)</option>
-                        <option value="amber">Amber (Gold Theme)</option>
-                        <option value="purple">Purple (Platinum Theme)</option>
-                        <option value="emerald">Emerald Green</option>
-                        <option value="rose">Rose Red</option>
+                        <option value="slate">{{ __('messages.slate_default') }}</option>
+                        <option value="blue">{{ __('messages.blue_silver') }}</option>
+                        <option value="amber">{{ __('messages.amber_gold') }}</option>
+                        <option value="purple">{{ __('messages.purple_platinum') }}</option>
+                        <option value="emerald">{{ __('messages.emerald_green') }}</option>
+                        <option value="rose">{{ __('messages.rose_red') }}</option>
                     </select>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" @click="showAddTierModal = false" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">Create Tier</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">{{ __('messages.create_tier') }}</button>
                 </div>
             </form>
         </div>
@@ -483,7 +483,7 @@ window.membershipHubData = function () {
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <h3 class="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                     <span>✏️</span>
-                    <span>Edit Tier: <span x-text="editingTier.name" class="text-violet-600 dark:text-violet-400"></span></span>
+                    <span>{{ __('messages.edit_tier') }}: <span x-text="editingTier.name" class="text-violet-600 dark:text-violet-400"></span></span>
                 </h3>
                 <button type="button" @click="showEditTierModal = false" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
             </div>
@@ -524,23 +524,23 @@ window.membershipHubData = function () {
                 <div>
                     <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.membership_badge_color') }}</label>
                     <select name="badge_color" x-model="editingTier.badge_color" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500">
-                        <option value="slate">Slate (Default)</option>
-                        <option value="blue">Blue (Silver Theme)</option>
-                        <option value="amber">Amber (Gold Theme)</option>
-                        <option value="purple">Purple (Platinum Theme)</option>
-                        <option value="emerald">Emerald Green</option>
-                        <option value="rose">Rose Red</option>
+                        <option value="slate">{{ __('messages.slate_default') }}</option>
+                        <option value="blue">{{ __('messages.blue_silver') }}</option>
+                        <option value="amber">{{ __('messages.amber_gold') }}</option>
+                        <option value="purple">{{ __('messages.purple_platinum') }}</option>
+                        <option value="emerald">{{ __('messages.emerald_green') }}</option>
+                        <option value="rose">{{ __('messages.rose_red') }}</option>
                     </select>
                 </div>
 
                 <div class="flex items-center gap-2 pt-1">
                     <input type="checkbox" name="is_active" value="1" :checked="editingTier.is_active == 1" class="w-4 h-4 rounded text-violet-600 focus:ring-violet-500">
-                    <span class="font-bold text-slate-700 dark:text-slate-300">Active VIP Tier</span>
+                    <span class="font-bold text-slate-700 dark:text-slate-300">{{ __('messages.active_vip_tier') }}</span>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" @click="showEditTierModal = false" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">Update Tier</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">{{ __('messages.update_tier') }}</button>
                 </div>
             </form>
         </div>
@@ -558,7 +558,7 @@ window.membershipHubData = function () {
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <h3 class="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                     <span>🪙</span>
-                    <span>Adjust Points: <span x-text="adjustTarget.customer_name" class="text-amber-600 dark:text-amber-400"></span></span>
+                    <span>{{ __('messages.adjust_points') }}: <span x-text="adjustTarget.customer_name" class="text-amber-600 dark:text-amber-400"></span></span>
                 </h3>
                 <button type="button" @click="showAdjustPointsModal = false" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
             </div>
@@ -568,7 +568,7 @@ window.membershipHubData = function () {
                 <input type="hidden" name="customer_id" :value="adjustTarget.customer_id">
 
                 <div class="p-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 rounded-lg flex justify-between items-center">
-                    <span class="text-slate-600 dark:text-slate-400">Current Points Balance:</span>
+                    <span class="text-slate-600 dark:text-slate-400">{{ __('messages.current_points_balance') }}:</span>
                     <strong class="font-mono text-sm font-black text-amber-600 dark:text-amber-400" x-text="Number(adjustTarget.current_points).toLocaleString() + ' Pts'"></strong>
                 </div>
 
@@ -576,9 +576,9 @@ window.membershipHubData = function () {
                     <div>
                         <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">Adjustment Type *</label>
                         <select name="type" x-model="adjustTarget.type" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
-                            <option value="bonus">Grant Bonus (+)</option>
-                            <option value="adjusted">Correction Adjustment (+/-)</option>
-                            <option value="redeemed">Manual Redeem (-)</option>
+                            <option value="bonus">{{ __('messages.grant_bonus') }}</option>
+                            <option value="adjusted">{{ __('messages.correction_adjustment') }}</option>
+                            <option value="redeemed">{{ __('messages.manual_redeem') }}</option>
                         </select>
                     </div>
                     <div>
@@ -588,13 +588,13 @@ window.membershipHubData = function () {
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">Reason / Notes</label>
+                    <label class="block font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.reason_notes') }}</label>
                     <input type="text" name="notes" x-model="adjustTarget.notes" placeholder="e.g. Birthday reward, store promotion" class="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" @click="showAdjustPointsModal = false" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">Apply Points</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">{{ __('messages.apply_points') }}</button>
                 </div>
             </form>
         </div>
@@ -612,7 +612,7 @@ window.membershipHubData = function () {
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <h3 class="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                     <span>🏆</span>
-                    <span>Change VIP Tier: <span x-text="assignTarget.customer_name" class="text-violet-600 dark:text-violet-400"></span></span>
+                    <span>{{ __('messages.change_vip_tier') }}: <span x-text="assignTarget.customer_name" class="text-violet-600 dark:text-violet-400"></span></span>
                 </h3>
                 <button type="button" @click="showAssignTierModal = false" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
             </div>
@@ -634,7 +634,7 @@ window.membershipHubData = function () {
 
                 <div class="flex justify-end gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" @click="showAssignTierModal = false" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">Assign Tier</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">{{ __('messages.assign_tier') }}</button>
                 </div>
             </form>
         </div>

@@ -276,7 +276,7 @@
                                     {{-- Fast Ship Button --}}
                                     @if($transfer->status === 'pending')
                                         <form method="POST" action="{{ route('pos.transfers.ship', [...$storeRouteParams, 'transfer' => $transfer->id]) }}" class="inline"
-                                              onsubmit="return confirm('{{ addslashes(__('messages.transfer_ship_confirm')) }}')">
+                                              data-confirm="{{ addslashes(__('messages.transfer_ship_confirm')) }}">
                                             @csrf
                                             <button type="submit"
                                                     title="{{ __('messages.ship') }}"
@@ -290,7 +290,7 @@
                                     {{-- Fast Receive Button --}}
                                     @if($transfer->status === 'in_transit')
                                         <form method="POST" action="{{ route('pos.transfers.receive', [...$storeRouteParams, 'transfer' => $transfer->id]) }}" class="inline"
-                                              onsubmit="return confirm('{{ addslashes(__('messages.transfer_receive_confirm')) }}')">
+                                              data-confirm="{{ addslashes(__('messages.transfer_receive_confirm')) }}">
                                             @csrf
                                             <button type="submit"
                                                     title="{{ __('messages.receive') }}"
@@ -427,7 +427,7 @@
                 <div class="p-2.5 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
                     @if($transfer->status === 'pending')
                         <form method="POST" action="{{ route('pos.transfers.ship', [...$storeRouteParams, 'transfer' => $transfer->id]) }}"
-                              onsubmit="return confirm('{{ addslashes(__('messages.transfer_ship_confirm')) }}')">
+                              data-confirm="{{ addslashes(__('messages.transfer_ship_confirm')) }}">
                             @csrf
                             <button type="submit"
                                     class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-2xs transition active:scale-95 cursor-pointer flex items-center gap-1">
@@ -437,7 +437,7 @@
                         </form>
                     @elseif($transfer->status === 'in_transit')
                         <form method="POST" action="{{ route('pos.transfers.receive', [...$storeRouteParams, 'transfer' => $transfer->id]) }}"
-                              onsubmit="return confirm('{{ addslashes(__('messages.transfer_receive_confirm')) }}')">
+                              data-confirm="{{ addslashes(__('messages.transfer_receive_confirm')) }}">
                             @csrf
                             <button type="submit"
                                     class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition active:scale-95 cursor-pointer flex items-center gap-1">

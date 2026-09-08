@@ -627,9 +627,19 @@ html.dark .dark\:text-slate-400 {
     color: #94a3b8 !important;
 }
 
-/* ── 3. Ultra-Dense 2px Section Rhythm across All Admin Pages ────────────── */
+/* ── 3. Ultra-Dense 2px Section Rhythm across All Admin Pages ──────────────
+   Mobile (<=640px): 2px padding / gaps — full-bleed content.
+   sm+ (>=640px):    4px — matches the ADMIN_UI_UX_STANDARD_GUIDE v4.1
+   `p-0.5 sm:p-1` and `gap-0.5 sm:gap-1` rhythm so tablets/desktops get a
+   touch more breathing room while staying ultra-dense. */
 main {
     padding: 2px !important;
+}
+
+@media (min-width: 640px) {
+    main {
+        padding: 4px !important;
+    }
 }
 
 main > div.w-full,
@@ -639,9 +649,25 @@ main > div[class*="space-y-"] {
     row-gap: 2px !important;
 }
 
+@media (min-width: 640px) {
+    main > div.w-full,
+    main > div[class*="space-y-"] {
+        gap: 4px !important;
+        column-gap: 4px !important;
+        row-gap: 4px !important;
+    }
+}
+
 main > div.w-full > :not([hidden]) ~ :not([hidden]),
 main > div[class*="space-y-"] > :not([hidden]) ~ :not([hidden]) {
     margin-top: 2px !important;
+}
+
+@media (min-width: 640px) {
+    main > div.w-full > :not([hidden]) ~ :not([hidden]),
+    main > div[class*="space-y-"] > :not([hidden]) ~ :not([hidden]) {
+        margin-top: 4px !important;
+    }
 }
 
 /* Global 2px Horizontal & Vertical Grid Gaps across Admin & Dashboard */
@@ -651,6 +677,16 @@ main div[class*="grid"],
     gap: 2px !important;
     column-gap: 2px !important;
     row-gap: 2px !important;
+}
+
+@media (min-width: 640px) {
+    main .grid,
+    main div[class*="grid"],
+    .dashboard-quick-actions {
+        gap: 4px !important;
+        column-gap: 4px !important;
+        row-gap: 4px !important;
+    }
 }
 
 /* Remove toolbar margin-bottom so it sits closely with table/cards */

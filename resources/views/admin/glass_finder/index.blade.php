@@ -80,7 +80,7 @@
     @endif
     @if ($errors->any())
         <div class="w-full p-2.5 sm:p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-800 dark:text-rose-300 space-y-1 shadow-2xs">
-            <div class="flex items-center gap-1.5 font-bold"><span>⚠️</span><span>Errors:</span></div>
+            <div class="flex items-center gap-1.5 font-bold"><span>⚠️</span><span>{{ __('messages.errors') }}:</span></div>
             @foreach ($errors->all() as $error)
                 <div class="pl-5 text-xs font-semibold">• {{ $error }}</div>
             @endforeach
@@ -109,7 +109,7 @@
                 <span class="text-xs">🏷️</span>
             </div>
             <div class="text-lg sm:text-2xl font-black text-violet-600 dark:text-violet-400 mt-1 font-mono tracking-tight">{{ number_format($stats['unique_codes'] ?? 0) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Matrix groups</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.glass_matrix_groups') }}</div>
         </div>
 
         {{-- In Stock --}}
@@ -120,7 +120,7 @@
                 <span class="text-xs">✅</span>
             </div>
             <div class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono tracking-tight">{{ number_format($stats['in_stock'] ?? 0) }}</div>
-            <div class="text-[10px] text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">Ready to install</div>
+            <div class="text-[10px] text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">{{ __('messages.glass_ready_install') }}</div>
         </a>
 
         {{-- Out of Stock --}}
@@ -131,7 +131,7 @@
                 <span class="text-xs">⚠️</span>
             </div>
             <div class="text-lg sm:text-2xl font-black text-rose-600 dark:text-rose-400 mt-1 font-mono tracking-tight">{{ number_format($stats['out_of_stock'] ?? 0) }}</div>
-            <div class="text-[10px] text-rose-600/70 dark:text-rose-400/70 mt-0.5">Needs restock</div>
+            <div class="text-[10px] text-rose-600/70 dark:text-rose-400/70 mt-0.5">{{ __('messages.glass_needs_restock') }}</div>
         </a>
     </div>
 
@@ -144,7 +144,7 @@
                     <span class="text-base">👀</span>
                     <div>
                         <h3 class="font-bold text-xs sm:text-sm text-amber-900 dark:text-amber-200">Import Preview: {{ $preview['filename'] }}</h3>
-                        <p class="text-[11px] text-amber-800 dark:text-amber-300">Please review the parsed Glass Finder items before final confirmation.</p>
+                        <p class="text-[11px] text-amber-800 dark:text-amber-300">{{ __('messages.glass_review_parsed') }}</p>
                     </div>
                 </div>
             </div>
@@ -152,19 +152,19 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                 <div class="bg-white dark:bg-slate-800 rounded p-2 border border-amber-100 dark:border-slate-700">
                     <div class="text-base font-black text-slate-900 dark:text-slate-100 font-mono">{{ $preview['total'] }}</div>
-                    <div class="text-[10px] text-slate-500">Total Rows</div>
+                    <div class="text-[10px] text-slate-500">{{ __('messages.total_rows') }}</div>
                 </div>
                 <div class="bg-white dark:bg-slate-800 rounded p-2 border border-amber-100 dark:border-slate-700">
                     <div class="text-base font-black text-emerald-600 dark:text-emerald-400 font-mono">{{ $preview['valid_rows'] }}</div>
-                    <div class="text-[10px] text-slate-500">Valid Rows</div>
+                    <div class="text-[10px] text-slate-500">{{ __('messages.valid_rows') }}</div>
                 </div>
                 <div class="bg-white dark:bg-slate-800 rounded p-2 border border-amber-100 dark:border-slate-700">
                     <div class="text-base font-black text-amber-600 dark:text-amber-400 font-mono">{{ $preview['duplicate_rows'] }}</div>
-                    <div class="text-[10px] text-slate-500">Duplicates</div>
+                    <div class="text-[10px] text-slate-500">{{ __('messages.duplicates') }}</div>
                 </div>
                 <div class="bg-white dark:bg-slate-800 rounded p-2 border border-amber-100 dark:border-slate-700">
                     <div class="text-base font-black text-rose-600 dark:text-rose-400 font-mono">{{ $preview['failed'] }}</div>
-                    <div class="text-[10px] text-slate-500">Failed</div>
+                    <div class="text-[10px] text-slate-500">{{ __('messages.failed') }}</div>
                 </div>
             </div>
 
@@ -173,12 +173,12 @@
                     <table class="w-full text-[11px] text-left">
                         <thead class="bg-slate-50 dark:bg-slate-900/80 sticky top-0 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700">
                             <tr>
-                                <th class="p-2 whitespace-nowrap">Row</th>
-                                <th class="p-2 whitespace-nowrap">Brand</th>
-                                <th class="p-2 whitespace-nowrap">Phone Model</th>
-                                <th class="p-2 whitespace-nowrap">Glass Code</th>
-                                <th class="p-2 whitespace-nowrap">Stock</th>
-                                <th class="p-2 whitespace-nowrap">Action</th>
+                                <th class="p-2 whitespace-nowrap">{{ __('messages.row') }}</th>
+                                <th class="p-2 whitespace-nowrap">{{ __('messages.brand') }}</th>
+                                <th class="p-2 whitespace-nowrap">{{ __('messages.phone_model') }}</th>
+                                <th class="p-2 whitespace-nowrap">{{ __('messages.glass_code') }}</th>
+                                <th class="p-2 whitespace-nowrap">{{ __('messages.stock') }}</th>
+                                <th class="p-2 whitespace-nowrap">{{ __('messages.action') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-700 text-slate-600 dark:text-slate-300">
@@ -205,7 +205,7 @@
                 @csrf
                 <input type="hidden" name="token" value="{{ $preview['token'] }}">
                 <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold text-xs hover:bg-emerald-700 shadow-2xs flex items-center gap-1.5 active:scale-95 transition">
-                    <span>✓ Confirm & Save to Database</span>
+                    <span>✓ {{ __('messages.confirm_save') }}</span>
                 </button>
             </form>
         </div>
@@ -216,24 +216,24 @@
         @php $result = session('import_result'); @endphp
         <div class="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3 sm:p-4 shadow-2xs">
             <h3 class="font-bold text-xs sm:text-sm text-emerald-900 dark:text-emerald-200 mb-2 flex items-center gap-1.5">
-                <span>✅</span><span>Glass Finder Import Completed Successfully</span>
+                <span>✅</span><span>{{ __('messages.glass_import_completed') }}</span>
             </h3>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                 <div class="bg-white dark:bg-slate-800 rounded p-2 border border-emerald-100 dark:border-slate-700">
                     <div class="text-base font-black text-slate-900 dark:text-slate-100 font-mono">{{ $result['total'] }}</div>
-                    <div class="text-[10px] text-slate-500">Total</div>
+                    <div class="text-[10px] text-slate-500">{{ __('messages.total') }}</div>
                 </div>
                 <div class="bg-white dark:bg-slate-800 rounded p-2 border border-emerald-100 dark:border-slate-700">
                     <div class="text-base font-black text-emerald-600 dark:text-emerald-400 font-mono">{{ $result['imported'] }}</div>
-                    <div class="text-[10px] text-slate-500">Imported</div>
+                    <div class="text-[10px] text-slate-500">{{ __('messages.imported') }}</div>
                 </div>
                 <div class="bg-white dark:bg-slate-800 rounded p-2 border border-emerald-100 dark:border-slate-700">
                     <div class="text-base font-black text-amber-600 dark:text-amber-400 font-mono">{{ $result['skipped_duplicate'] }}</div>
-                    <div class="text-[10px] text-slate-500">Skipped</div>
+                    <div class="text-[10px] text-slate-500">{{ __('messages.skipped') }}</div>
                 </div>
                 <div class="bg-white dark:bg-slate-800 rounded p-2 border border-emerald-100 dark:border-slate-700">
                     <div class="text-base font-black text-rose-600 dark:text-rose-400 font-mono">{{ $result['failed'] }}</div>
-                    <div class="text-[10px] text-slate-500">Failed</div>
+                    <div class="text-[10px] text-slate-500">{{ __('messages.failed') }}</div>
                 </div>
             </div>
         </div>
@@ -272,8 +272,8 @@
          ============================================================ --}}
     <div x-show="viewMode === 'card'" x-cloak class="space-y-2">
         <div class="flex items-center justify-between px-1 text-[11px] text-slate-500 font-bold">
-            <span>Glass Code Matrix ({{ $items->count() }} Groups)</span>
-            <span class="text-slate-400">Card Grid View</span>
+            <span>{{ __('messages.glass_code_matrix') }} ({{ $items->count() }} {{ __('messages.groups') }})</span>
+            <span class="text-slate-400">{{ __('messages.card_grid_view') }}</span>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-3 items-start">
@@ -319,7 +319,7 @@
 
                     {{-- Brands Tags --}}
                     <div class="px-3 py-1.5 bg-slate-50/60 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
-                        <span class="truncate font-medium">Brands: <strong class="text-slate-700 dark:text-slate-300">{{ $brandsInGroup->implode(', ') }}</strong></span>
+                        <span class="truncate font-medium">{{ __('messages.brand') }}s: <strong class="text-slate-700 dark:text-slate-300">{{ $brandsInGroup->implode(', ') }}</strong></span>
                         <span class="shrink-0 font-mono font-bold text-violet-600 dark:text-violet-400">{{ $codeItems->count() }} models</span>
                     </div>
 
@@ -347,7 +347,7 @@
                                     </a>
 
                                     {{-- Delete Action --}}
-                                    <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/glass-finder/' . $item->id) }}" onsubmit="return confirm('{{ __('messages.glass_finder_delete_confirm') }}')">
+                                    <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/glass-finder/' . $item->id) }}" data-confirm="{{ __('messages.glass_finder_delete_confirm') }}">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition" title="Delete">
@@ -380,11 +380,11 @@
             <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300 min-w-[640px]">
                 <thead class="bg-slate-50/90 dark:bg-slate-800/90 border-b border-slate-200 dark:border-slate-700/80 sticky top-0 z-10 text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 select-none">
                     <tr>
-                        <th class="py-2.5 px-3">Brand</th>
-                        <th class="py-2.5 px-3">Phone Model</th>
-                        <th class="py-2.5 px-3">Glass Code</th>
-                        <th class="py-2.5 px-3">Normalized</th>
-                        <th class="py-2.5 px-3">Stock Status</th>
+                        <th class="py-2.5 px-3">{{ __('messages.brand') }}</th>
+                        <th class="py-2.5 px-3">{{ __('messages.phone_model') }}</th>
+                        <th class="py-2.5 px-3">{{ __('messages.glass_code') }}</th>
+                        <th class="py-2.5 px-3">{{ __('messages.normalized') }}</th>
+                        <th class="py-2.5 px-3">{{ __('messages.stock_status') }}</th>
                         <th class="py-2.5 px-3 text-right">Actions</th>
                     </tr>
                 </thead>
@@ -406,7 +406,7 @@
                                        class="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-violet-600 transition" title="Edit">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </a>
-                                    <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/glass-finder/' . $item->id) }}" onsubmit="return confirm('{{ __('messages.glass_finder_delete_confirm') }}')">
+                                    <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/glass-finder/' . $item->id) }}" data-confirm="{{ __('messages.glass_finder_delete_confirm') }}">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="p-1.5 rounded hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 transition" title="Delete">
@@ -441,12 +441,12 @@
                     <thead class="bg-slate-50 dark:bg-slate-800/60 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
                         <tr>
                             <th class="p-2.5">Date & Time</th>
-                            <th class="p-2.5">Filename</th>
+                            <th class="p-2.5">{{ __('messages.filename') }}</th>
                             <th class="p-2.5">User</th>
                             <th class="p-2.5 text-center">Total</th>
                             <th class="p-2.5 text-center">Success</th>
                             <th class="p-2.5 text-center">Failed</th>
-                            <th class="p-2.5 text-right">Report</th>
+                            <th class="p-2.5 text-right">{{ __('messages.report') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -510,7 +510,7 @@
                         <input type="text" name="glass_code" required placeholder="e.g. GX-001, IP15PM-TG" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-mono font-bold focus:ring-2 focus:ring-violet-500 outline-none" />
                     </div>
                     <div>
-                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Stock Status</label>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.stock_status') }}</label>
                         <select name="stock_status" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-violet-500 outline-none cursor-pointer">
                             <option value="in_stock">In Stock (လက်ကျန်ရှိ)</option>
                             <option value="out_of_stock">Out of Stock (ပြတ်လပ်)</option>
@@ -557,7 +557,7 @@
                             <span>⬇ Download (.xlsx)</span>
                         </a>
                     </div>
-                    <p class="text-[10px] text-slate-400">Required columns: <code class="font-mono bg-white dark:bg-slate-900 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700">brand, phone_model, glass_code, stock_status</code></p>
+                    <p class="text-[10px] text-slate-400">{{ __('messages.required_columns') }}: <code class="font-mono bg-white dark:bg-slate-900 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700">brand, phone_model, glass_code, stock_status</code></p>
                 </div>
 
                 <div>

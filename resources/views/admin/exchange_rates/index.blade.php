@@ -116,7 +116,7 @@ window.exchangeHubData = function () {
         <div class="admin-hairline-cell bg-emerald-50/30 dark:bg-emerald-950/20">
             <div class="admin-stat-label text-emerald-600 dark:text-emerald-400">{{ __('messages.exchange_base_currency') }}</div>
             <div class="admin-stat-value text-emerald-700 dark:text-emerald-300 font-mono">
-                MMK (Ks)
+                MMK
             </div>
             <div class="admin-stat-sub text-slate-500">{{ __('messages.exchange_fixed_base_rate') }}</div>
         </div>
@@ -125,7 +125,7 @@ window.exchangeHubData = function () {
         <div class="admin-hairline-cell">
             <div class="admin-stat-label text-blue-600 dark:text-blue-400">{{ __('messages.exchange_usd_rate') }}</div>
             <div class="admin-stat-value text-blue-600 dark:text-blue-400 font-mono">
-                {{ number_format($stats['usd_rate'], 0) }} Ks
+                {{ format_currency($stats['usd_rate'], $store) }}
             </div>
             <div class="admin-stat-sub text-slate-400">1 USD ($)</div>
         </div>
@@ -134,7 +134,7 @@ window.exchangeHubData = function () {
         <div class="admin-hairline-cell">
             <div class="admin-stat-label text-violet-600 dark:text-violet-400">{{ __('messages.exchange_thb_rate') }}</div>
             <div class="admin-stat-value text-violet-600 dark:text-violet-400 font-mono">
-                {{ number_format($stats['thb_rate'], 2) }} Ks
+                {{ format_currency($stats['thb_rate'], $store) }}
             </div>
             <div class="admin-stat-sub text-slate-400">1 THB (฿)</div>
         </div>
@@ -143,7 +143,7 @@ window.exchangeHubData = function () {
         <div class="admin-hairline-cell">
             <div class="admin-stat-label text-amber-600 dark:text-amber-400">{{ __('messages.exchange_cny_rate') }}</div>
             <div class="admin-stat-value text-amber-600 dark:text-amber-400 font-mono">
-                {{ number_format($stats['cny_rate'], 2) }} Ks
+                {{ format_currency($stats['cny_rate'], $store) }}
             </div>
             <div class="admin-stat-sub text-slate-400">1 CNY (¥)</div>
         </div>
@@ -212,7 +212,7 @@ window.exchangeHubData = function () {
                                          {{-- Rate Input --}}
                                          <td class="py-3">
                                              @if($curr->is_base)
-                                                 <span class="font-mono font-black text-slate-700 dark:text-slate-300 pl-2">1.0000 Ks</span>
+                                                 <span class="font-mono font-black text-slate-700 dark:text-slate-300 pl-2">1.0000</span>
                                              @else
                                                  <div class="relative">
                                                      <input type="number"
@@ -386,15 +386,15 @@ window.exchangeHubData = function () {
                     <div class="p-3.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-2">
                         <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
                             <span>{{ __('messages.exchange_landed_mmk') }}:</span>
-                            <span class="font-mono font-bold text-slate-900 dark:text-slate-100" x-text="landedCostMmk.toLocaleString() + ' Ks'"></span>
+                            <span class="font-mono font-bold text-slate-900 dark:text-slate-100" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(landedCostMmk) : landedCostMmk.toLocaleString()"></span>
                         </div>
                         <div class="flex justify-between items-center text-slate-600 dark:text-slate-400">
                             <span>{{ __('messages.exchange_profit_margin') }}:</span>
-                            <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400" x-text="'+ ' + profitMarginMmk.toLocaleString() + ' Ks'"></span>
+                            <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400" x-text="'+ ' + (typeof window.formatCurrency === 'function' ? window.formatCurrency(profitMarginMmk) : profitMarginMmk.toLocaleString())"></span>
                         </div>
                         <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
                             <span class="font-bold text-slate-900 dark:text-slate-100">{{ __('messages.exchange_suggested_price') }}:</span>
-                            <span class="font-mono text-base font-black text-emerald-600 dark:text-emerald-400" x-text="suggestedPriceMmk.toLocaleString() + ' Ks'"></span>
+                            <span class="font-mono text-base font-black text-emerald-600 dark:text-emerald-400" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(suggestedPriceMmk) : suggestedPriceMmk.toLocaleString()"></span>
                         </div>
                     </div>
                 </div>
@@ -548,7 +548,7 @@ window.exchangeHubData = function () {
             <form id="delete-curr-form-{{ $c->id }}"
                   method="POST"
                   action="{{ route('store.admin.exchange_rates.destroy', ['store_slug' => $store->slug, 'currency' => $c->id]) }}"
-                  onsubmit="return confirm('{{ __('messages.exchange_confirm_delete') }}')"
+                  data-confirm="{{ __('messages.exchange_confirm_delete') }}"
                   class="hidden">
                 @csrf
                 @method('DELETE')

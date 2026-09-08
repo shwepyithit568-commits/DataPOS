@@ -60,7 +60,7 @@
             @if($transfer->status === 'pending')
                 {{-- Ship Action Button --}}
                 <form method="POST" action="{{ route('pos.transfers.ship', [...$storeRouteParams, 'transfer' => $transfer->id]) }}" class="inline"
-                      onsubmit="return confirm('{{ addslashes(__('messages.transfer_ship_confirm')) }}')">
+                      data-confirm="{{ addslashes(__('messages.transfer_ship_confirm')) }}">
                     @csrf
                     <button type="submit"
                             class="px-3.5 py-1.5 rounded-lg text-xs font-black bg-amber-500 hover:bg-amber-600 text-white shadow-md transition flex items-center gap-1.5 active:scale-95 cursor-pointer">
@@ -71,7 +71,7 @@
 
                 {{-- Cancel Action Button --}}
                 <form method="POST" action="{{ route('pos.transfers.cancel', [...$storeRouteParams, 'transfer' => $transfer->id]) }}" class="inline"
-                      onsubmit="return confirm('{{ addslashes(__('messages.transfer_cancel_confirm')) }}')">
+                      data-confirm="{{ addslashes(__('messages.transfer_cancel_confirm')) }}">
                     @csrf
                     <button type="submit"
                             class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-950/40 text-slate-700 hover:text-rose-600 dark:text-slate-300 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1 active:scale-95 cursor-pointer">
@@ -82,7 +82,7 @@
             @elseif($transfer->status === 'in_transit')
                 {{-- Receive Action Button --}}
                 <form method="POST" action="{{ route('pos.transfers.receive', [...$storeRouteParams, 'transfer' => $transfer->id]) }}" class="inline"
-                      onsubmit="return confirm('{{ addslashes(__('messages.transfer_receive_confirm')) }}')">
+                      data-confirm="{{ addslashes(__('messages.transfer_receive_confirm')) }}">
                     @csrf
                     <button type="submit"
                             class="px-3.5 py-1.5 rounded-lg text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition flex items-center gap-1.5 active:scale-95 cursor-pointer">
@@ -93,7 +93,7 @@
 
                 {{-- Cancel Action Button --}}
                 <form method="POST" action="{{ route('pos.transfers.cancel', [...$storeRouteParams, 'transfer' => $transfer->id]) }}" class="inline"
-                      onsubmit="return confirm('{{ addslashes(__('messages.transfer_cancel_confirm')) }}')">
+                      data-confirm="{{ addslashes(__('messages.transfer_cancel_confirm')) }}">
                     @csrf
                     <button type="submit"
                             class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-950/40 text-slate-700 hover:text-rose-600 dark:text-slate-300 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1 active:scale-95 cursor-pointer">

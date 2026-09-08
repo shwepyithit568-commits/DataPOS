@@ -330,7 +330,7 @@
                 <div class="pt-0.5 flex items-center gap-1">
                     @if (! $item->is_deducted && $item->product_id && ! $job->isTerminal())
                         <form method="POST" action="{{ route('store.admin.spare_parts.deduct', array_merge($storeRouteParams, ['item' => $item->id])) }}"
-                              onsubmit="return confirm('{{ __('messages.repair_deduct_confirm') }}');" class="flex-1">
+                              data-confirm="{{ __('messages.repair_deduct_confirm') }}" class="flex-1">
                             @csrf
                             <button type="submit"
                                     class="w-full h-6 px-2 rounded text-[10px] font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs transition flex items-center justify-center gap-1 cursor-pointer">
@@ -471,7 +471,7 @@
                                 <div class="flex items-center justify-end gap-1">
                                     @if (! $item->is_deducted && $item->product_id && ! $job->isTerminal())
                                         <form method="POST" action="{{ route('store.admin.spare_parts.deduct', array_merge($storeRouteParams, ['item' => $item->id])) }}"
-                                              onsubmit="return confirm('{{ __('messages.repair_deduct_confirm') }}');">
+                                              data-confirm="{{ __('messages.repair_deduct_confirm') }}">
                                             @csrf
                                             <button type="submit"
                                                     class="h-6 px-2 rounded text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs transition flex items-center gap-1 cursor-pointer">

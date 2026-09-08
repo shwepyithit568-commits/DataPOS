@@ -325,7 +325,7 @@
 
                             {{-- Total Value --}}
                             <td class="py-1.5 px-2.5 text-right whitespace-nowrap font-mono font-black text-xs text-slate-900 dark:text-slate-100">
-                                {{ number_format($totalVal) }} <span class="text-[10px] font-normal text-slate-400">Ks</span>
+                                {{ format_currency($totalVal, $store) }}
                             </td>
 
                             {{-- Reference --}}
@@ -434,10 +434,10 @@
 
                         <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-200/50 dark:border-slate-700/50 font-mono">
                             <span class="text-[10px] text-slate-400 font-sans">
-                                {{ __('messages.stock_ledger_total_value') }} (@ {{ number_format($cost) }} Ks)
+                                {{ __('messages.stock_ledger_total_value') }} (@ {{ format_currency($cost, $store) }})
                             </span>
                             <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">
-                                {{ number_format($totalVal) }} Ks
+                                {{ format_currency($totalVal, $store) }}
                             </span>
                         </div>
                     </div>

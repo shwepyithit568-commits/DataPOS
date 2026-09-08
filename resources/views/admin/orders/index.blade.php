@@ -225,16 +225,16 @@
                     <button type="button" @click="setView('table')"
                             :class="viewMode === 'table' ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'"
                             class="h-6 px-2 rounded text-xs font-bold transition flex items-center gap-1 cursor-pointer"
-                            title="Table View">
+                            title="{{ __('messages.view_table') }}">
                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-8 0h16a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                        <span class="hidden sm:inline">Table</span>
+                        <span class="hidden sm:inline">{{ __('messages.view_table') }}</span>
                     </button>
                     <button type="button" @click="setView('cards')"
                             :class="viewMode === 'cards' || viewMode === 'card' ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-xs font-black' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'"
                             class="h-6 px-2 rounded text-xs font-bold transition flex items-center gap-1 cursor-pointer"
-                            title="Card Grid View">
+                            title="{{ __('messages.view_cards') }}">
                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                        <span class="hidden sm:inline">Cards</span>
+                        <span class="hidden sm:inline">{{ __('messages.view_cards') }}</span>
                     </button>
                 </div>
             </div>
@@ -439,7 +439,7 @@
                                         🛒
                                     </div>
                                     <p class="font-black text-slate-800 dark:text-slate-200 text-xs sm:text-sm">{{ __('messages.orders_no_records') }}</p>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">No order requests found.</p>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">{{ __('messages.no_order_requests_found') }}</p>
                                 </div>
                             </td>
                         </tr>

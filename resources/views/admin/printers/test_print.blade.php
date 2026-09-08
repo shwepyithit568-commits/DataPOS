@@ -144,37 +144,37 @@
     {{-- Hardware Info Table --}}
     <table class="info-table">
         <tr>
-            <td>Printer Name:</td>
+            <td>{{ __('messages.printer_name') }}:/td>
             <td>{{ $printer->name }}</td>
         </tr>
         <tr>
-            <td>Connection:</td>
+            <td>{{ __('messages.connection') }}:/td>
             <td>{{ strtoupper($printer->connection_type) }}</td>
         </tr>
         <tr>
-            <td>Paper Width:</td>
+            <td>{{ __('messages.paper_width') }}:/td>
             <td>{{ $printer->paper_width }}</td>
         </tr>
         <tr>
-            <td>Role:</td>
+            <td>{{ __('messages.role') }}:/td>
             <td>{{ ucwords($printer->printer_role) }}</td>
         </tr>
         @if($printer->isNetwork() && $printer->ip_address)
             <tr>
-                <td>IP Address:</td>
+                <td>{{ __('messages.ip_address') }}:/td>
                 <td>{{ $printer->ip_address }}:{{ $printer->port }}</td>
             </tr>
         @endif
         <tr>
-            <td>Auto Cutter:</td>
+            <td>{{ __('messages.auto_cutter') }}:/td>
             <td>{{ $printer->auto_cut ? 'ENABLED' : 'DISABLED' }}</td>
         </tr>
         <tr>
-            <td>Drawer Kick:</td>
+            <td>{{ __('messages.drawer_kick') }}:/td>
             <td>{{ $printer->cash_drawer_kick ? 'ENABLED' : 'DISABLED' }}</td>
         </tr>
         <tr>
-            <td>Print Date:</td>
+            <td>{{ __('messages.print_date') }}:/td>
             <td>{{ now()->format('Y-m-d H:i') }}</td>
         </tr>
     </table>
@@ -182,7 +182,7 @@
     <div class="divider"></div>
 
     {{-- Alignment Test Pattern --}}
-    <div style="font-size: 10px; font-weight: bold; margin-bottom: 2px;">ALIGNMENT & DENSITY TEST</div>
+    <div style="font-size: 10px; font-weight: bold; margin-bottom: 2px;">{{ __('messages.alignment_density_test') }}</div>
     <div style="font-family: monospace; font-size: 10px;">
         123456789012345678901234567890<br>
         ==============================<br>
@@ -193,7 +193,7 @@
 
     {{-- Test Barcode --}}
     <div class="barcode-box">
-        <div style="font-size: 10px;">CODE128 TEST</div>
+        <div style="font-size: 10px;">{{ __('messages.code128_test') }}</div>
         <div class="barcode-bars"></div>
         <div style="font-size: 10px; font-family: monospace;">*DATAPOS-TEST-8899*</div>
     </div>

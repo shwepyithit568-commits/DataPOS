@@ -13,7 +13,7 @@
                 <span>🔍</span>
                 <span>{{ __('messages.sidebar_glass_finder') }}</span>
                 <span class="text-slate-400 dark:text-slate-500">·</span>
-                <span class="font-normal normal-case text-slate-500 dark:text-slate-400">Edit Model</span>
+                <span class="font-normal normal-case text-slate-500 dark:text-slate-400">{{ __('messages.glass_edit_model') }}</span>
             </div>
             <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
                 {{ __('messages.glass_finder_edit_item') }}
@@ -49,13 +49,13 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Brand <span class="text-rose-500">*</span></label>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.brand') }} <span class="text-rose-500">*</span></label>
                     <input type="text" name="brand" value="{{ old('brand', $item->brand) }}" required
                            class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none transition" />
                 </div>
 
                 <div>
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Phone Model <span class="text-rose-500">*</span></label>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.phone_model') }} <span class="text-rose-500">*</span></label>
                     <input type="text" name="phone_model" value="{{ old('phone_model', $item->phone_model) }}" required
                            class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none transition" />
                 </div>
@@ -63,13 +63,13 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Glass Code <span class="text-rose-500">*</span></label>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.glass_code') }} <span class="text-rose-500">*</span></label>
                     <input type="text" name="glass_code" value="{{ old('glass_code', $item->glass_code) }}" required
                            class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-mono font-bold text-violet-600 dark:text-violet-400 focus:ring-2 focus:ring-violet-500 outline-none transition" />
                 </div>
 
                 <div>
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">Stock Status</label>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.stock_status') }}</label>
                     <select name="stock_status"
                             class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none transition cursor-pointer">
                         <option value="in_stock" {{ old('stock_status', $item->stock_status) === 'in_stock' ? 'selected' : '' }}>In Stock (လက်ကျန်ရှိ)</option>

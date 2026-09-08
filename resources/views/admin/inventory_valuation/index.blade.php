@@ -46,7 +46,7 @@
             <div class="min-w-0">
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.inv_val_total_cost') }}</p>
                 <h3 class="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight tabular-nums">
-                    Ks {{ number_format($metrics['total_cost_value']) }}
+                    {{ format_currency($metrics['total_cost_value'], $store) }}
                 </h3>
                 <p class="text-[11px] text-slate-400 font-semibold mt-0.5">{{ number_format($metrics['total_items_count']) }} SKUs · {{ __('messages.stock_valuation_cost') }}</p>
             </div>
@@ -60,9 +60,9 @@
             <div class="min-w-0">
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.inv_val_total_retail') }}</p>
                 <h3 class="text-xl sm:text-2xl font-black text-sky-600 dark:text-sky-400 font-mono tracking-tight tabular-nums">
-                    Ks {{ number_format($metrics['total_retail_value']) }}
+                    {{ format_currency($metrics['total_retail_value'], $store) }}
                 </h3>
-                <p class="text-[11px] text-sky-500 font-semibold mt-0.5">Wholesale: Ks {{ number_format($metrics['total_wholesale_value']) }}</p>
+                <p class="text-[11px] text-sky-500 font-semibold mt-0.5">{{ __('messages.wholesale') }}: {{ format_currency($metrics['total_wholesale_value'], $store) }}</p>
             </div>
             <span class="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
                 🛍️
@@ -74,7 +74,7 @@
             <div class="min-w-0">
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.inv_val_potential_profit') }}</p>
                 <h3 class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight tabular-nums">
-                    Ks {{ number_format($metrics['potential_profit']) }}
+                    {{ format_currency($metrics['potential_profit'], $store) }}
                 </h3>
                 <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">Margin: {{ $metrics['potential_margin'] }}%</p>
             </div>
@@ -110,7 +110,7 @@
                     <div class="p-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
                         <div class="flex items-center justify-between text-xs">
                             <span class="font-bold text-slate-800 dark:text-slate-200 truncate">{{ $cat['name'] }}</span>
-                            <span class="font-black text-rose-600 dark:text-rose-400 font-mono">Ks {{ number_format($cat['cost_value']) }}</span>
+                            <span class="font-black text-rose-600 dark:text-rose-400 font-mono">{{ format_currency($cat['cost_value'], $store) }}</span>
                         </div>
                         <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                             <div class="bg-cyan-500 h-full rounded-full" style="width: {{ min(100, max(5, $cat['percent'])) }}%"></div>
@@ -212,19 +212,19 @@
                         <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                             <span class="text-slate-400 block text-[10px] font-bold uppercase">{{ __('messages.reports_avg_cost') }}</span>
                             <span class="font-mono font-black text-slate-800 dark:text-slate-200 text-sm">
-                                Ks {{ number_format($p->computed_cost) }}
+                                {{ format_currency($p->computed_cost, $store) }}
                             </span>
                         </div>
                         <div class="p-2.5 rounded-xl bg-rose-50/60 dark:bg-rose-950/30 col-span-2 flex items-center justify-between">
                             <span class="text-rose-600 dark:text-rose-400 text-xs font-bold">{{ __('messages.inv_val_total_cost') }}</span>
                             <span class="font-mono font-black text-rose-700 dark:text-rose-300 text-sm">
-                                Ks {{ number_format($p->computed_cost_value) }}
+                                {{ format_currency($p->computed_cost_value, $store) }}
                             </span>
                         </div>
                         <div class="p-2.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 col-span-2 flex items-center justify-between">
                             <span class="text-emerald-600 dark:text-emerald-400 text-xs font-bold">{{ __('messages.inv_val_potential_profit') }} ({{ $p->computed_margin }}%)</span>
                             <span class="font-mono font-black text-emerald-700 dark:text-emerald-300 text-sm">
-                                Ks {{ number_format($p->computed_profit) }}
+                                {{ format_currency($p->computed_profit, $store) }}
                             </span>
                         </div>
                     </div>
@@ -243,7 +243,7 @@
             <table class="w-full text-left text-xs">
                 <thead>
                     <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                        <th class="py-3.5 px-4">SKU / Item</th>
+                        <th class="py-3.5 px-4">{{ __('messages.sku_item') }}</th>
                         <th class="py-3.5 px-4">Category & Brand</th>
                         <th class="py-3.5 px-4 text-center">{{ __('messages.reports_qty') }}</th>
                         <th class="py-3.5 px-4 text-right">{{ __('messages.cost') }}</th>
@@ -275,19 +275,19 @@
                                 </span>
                             </td>
                             <td class="py-3.5 px-4 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 tabular-nums">
-                                Ks {{ number_format($p->computed_cost) }}
+                                {{ format_currency($p->computed_cost, $store) }}
                             </td>
                             <td class="py-3.5 px-4 text-right font-mono font-black text-rose-600 dark:text-rose-400 tabular-nums">
-                                Ks {{ number_format($p->computed_cost_value) }}
+                                {{ format_currency($p->computed_cost_value, $store) }}
                             </td>
                             <td class="py-3.5 px-4 text-right font-mono text-slate-700 dark:text-slate-300 tabular-nums">
-                                Ks {{ number_format((float) $p->retail_price) }}
+                                {{ format_currency((float) $p->retail_price, $store) }}
                             </td>
                             <td class="py-3.5 px-4 text-right font-mono font-bold text-sky-600 dark:text-sky-400 tabular-nums">
-                                Ks {{ number_format($p->computed_retail_value) }}
+                                {{ format_currency($p->computed_retail_value, $store) }}
                             </td>
                             <td class="py-3.5 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                                Ks {{ number_format($p->computed_profit) }}
+                                {{ format_currency($p->computed_profit, $store) }}
                             </td>
                             <td class="py-3.5 px-4 text-center">
                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $p->computed_margin >= 30 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : ($p->computed_margin > 0 ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400') }}">

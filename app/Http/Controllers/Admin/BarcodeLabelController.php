@@ -616,7 +616,7 @@ class BarcodeLabelController extends Controller
             return response()->streamDownload(function () use ($products) {
                 $stream = fopen('php://output', 'w');
                 fwrite($stream, "\xEF\xBB\xBF");
-                fputcsv($stream, ['Product Name', 'Barcode / Code', 'SKU', 'Category', 'Brand', 'Retail Price (MMK)', 'Stock Quantity', 'Stock Status']);
+                fputcsv($stream, ['Product Name', 'Barcode / Code', 'SKU', 'Category', 'Brand', 'Retail Price', 'Stock Quantity', 'Stock Status']);
 
                 foreach ($products as $p) {
                     $code = $p->barcode ?: ($p->sku ?: 'PRD-' . $p->id);
@@ -656,7 +656,7 @@ class BarcodeLabelController extends Controller
             'C' => 'SKU',
             'D' => 'Category',
             'E' => 'Brand',
-            'F' => 'Retail Price (MMK)',
+            'F' => 'Retail Price',
             'G' => 'Stock Quantity',
             'H' => 'Stock Status',
         ];

@@ -39,7 +39,7 @@
                 <a href="{{ route('storefront.service.track.token', ['store_slug' => $store->slug, 'token' => $job->tracking_token]) }}" target="_blank"
                    class="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900/60 border border-teal-200 dark:border-teal-800 rounded-lg transition" title="Open customer live tracking view">
                     <span>🌐</span>
-                    <span>Customer Track Page</span>
+                    <span>{{ __('messages.customer_track_page') }}</span>
                 </a>
             @endif
             <a href="{{ route('store.admin.service_jobs.print', [...$storeRouteParams, 'job' => $job->id]) }}" target="_blank"
@@ -106,7 +106,7 @@
                     <div class="font-medium text-gray-900 dark:text-slate-100">{{ $job->storage ?? 'â€”' }}</div>
                 </div>
                 <div>
-                    <div class="text-xs text-gray-500 dark:text-slate-400">IMEI / Serial</div>
+                    <div class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.imei') }} / {{ __('messages.serial') }}</div>
                     <div class="font-mono font-medium text-gray-900 dark:text-slate-100">{{ $job->imei_serial ?? 'â€”' }}</div>
                 </div>
                 <div>
@@ -267,7 +267,7 @@
                                         @elseif (! $job->isTerminal())
                                             <form method="POST"
                                                   action="{{ route('store.admin.service_jobs.items.deduct', [...$storeRouteParams, 'job' => $job->id, 'item' => $item->id]) }}"
-                                                  onsubmit="return confirm('{{ __('messages.repair_deduct_confirm') }}')">
+                                                  data-confirm="{{ __('messages.repair_deduct_confirm') }}">
                                                 @csrf
                                                 <button type="submit"
                                                         class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 transition">

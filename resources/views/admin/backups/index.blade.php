@@ -254,7 +254,7 @@
 
                                     {{-- Delete --}}
                                     <form method="POST" action="{{ route('store.admin.backups.destroy', array_merge($storeRouteParams, ['file' => $file['filename']])) }}"
-                                          onsubmit="return confirm('{{ __('messages.backup_delete_confirm') }}')">
+                                          data-confirm="{{ __('messages.backup_delete_confirm') }}">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="px-2 py-1 rounded-lg text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 transition cursor-pointer">
@@ -311,7 +311,7 @@
 
         {{-- Upload Form --}}
         <form method="POST" action="{{ route('store.admin.backups.upload_restore', $storeRouteParams) }}" enctype="multipart/form-data"
-              onsubmit="return confirm('{{ __('messages.backup_restore_warning_text') }}')"
+              data-confirm="{{ __('messages.backup_restore_warning_text') }}"
               class="max-w-xl space-y-4 pt-1">
             @csrf
 

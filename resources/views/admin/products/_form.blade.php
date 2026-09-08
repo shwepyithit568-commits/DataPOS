@@ -739,7 +739,7 @@
                 <div>
                     <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
                         <span>{{ __('messages.product_form_variants_section') }}</span>
-                        <span x-show="productType === 'variant'" x-cloak class="rounded bg-violet-600 px-1.5 py-0.5 text-[10px] font-black text-white uppercase shadow-2xs">Active Matrix</span>
+                        <span x-show="productType === 'variant'" x-cloak class="rounded bg-violet-600 px-1.5 py-0.5 text-[10px] font-black text-white uppercase shadow-2xs">{{ __('messages.active_matrix') }}</span>
                         <span x-show="productType !== 'variant'" class="text-[11px] font-semibold text-slate-400">({{ __('messages.product_form_variants_optional') }})</span>
                     </h2>
                     <p class="text-[11px] text-slate-400">{{ __('messages.product_form_variants_hint') }}</p>

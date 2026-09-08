@@ -380,7 +380,7 @@ window.eloadManager = function () {
             </div>
             <div class="min-w-0">
                 <div class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums font-outfit truncate">
-                    Ks {{ number_format((float) $stats['today_volume']) }}
+                    {{ format_currency((float) $stats['today_volume'], $store) }}
                 </div>
                 <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.eload_today_volume') }} ({{ $stats['today_count'] }})
@@ -395,7 +395,7 @@ window.eloadManager = function () {
             </div>
             <div class="min-w-0">
                 <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 leading-none tabular-nums font-outfit truncate">
-                    +Ks {{ number_format((float) $stats['today_profit']) }}
+                    +{{ format_currency((float) $stats['today_profit'], $store) }}
                 </div>
                 <p class="text-[9px] sm:text-[10px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5 truncate font-bold uppercase tracking-wider">
                     ယနေ့ အသားတင် အမြတ်
@@ -410,7 +410,7 @@ window.eloadManager = function () {
             </div>
             <div class="min-w-0">
                 <div class="text-xs sm:text-sm font-black text-amber-800 dark:text-amber-300 leading-none tabular-nums font-mono truncate">
-                    Ks {{ number_format($mptBal) }}
+                    {{ format_currency($mptBal, $store) }}
                 </div>
                 <div class="flex items-center justify-between gap-1 mt-0.5">
                     <span class="text-[9px] text-amber-700/80 dark:text-amber-400/80 font-bold uppercase">MPT {{ $mptAccount?->discount_percent ?? 4.0 }}%</span>
@@ -428,7 +428,7 @@ window.eloadManager = function () {
             </div>
             <div class="min-w-0">
                 <div class="text-xs sm:text-sm font-black text-sky-800 dark:text-sky-300 leading-none tabular-nums font-mono truncate">
-                    Ks {{ number_format($atomBal) }}
+                    {{ format_currency($atomBal, $store) }}
                 </div>
                 <div class="flex items-center justify-between gap-1 mt-0.5">
                     <span class="text-[9px] text-sky-700/80 dark:text-sky-400/80 font-bold uppercase">ATOM {{ $atomAccount?->discount_percent ?? 3.5 }}%</span>
@@ -446,7 +446,7 @@ window.eloadManager = function () {
             </div>
             <div class="min-w-0">
                 <div class="text-xs sm:text-sm font-black text-rose-800 dark:text-rose-300 leading-none tabular-nums font-mono truncate">
-                    Ks {{ number_format($ooredooBal) }}
+                    {{ format_currency($ooredooBal, $store) }}
                 </div>
                 <div class="flex items-center justify-between gap-1 mt-0.5">
                     <span class="text-[9px] text-rose-700/80 dark:text-rose-400/80 font-bold uppercase">OOREDOO {{ $ooredooAccount?->discount_percent ?? 4.0 }}%</span>
@@ -464,7 +464,7 @@ window.eloadManager = function () {
             </div>
             <div class="min-w-0">
                 <div class="text-xs sm:text-sm font-black text-orange-800 dark:text-orange-300 leading-none tabular-nums font-mono truncate">
-                    Ks {{ number_format($mytelBal) }}
+                    {{ format_currency($mytelBal, $store) }}
                 </div>
                 <div class="flex items-center justify-between gap-1 mt-0.5">
                     <span class="text-[9px] text-orange-700/80 dark:text-orange-400/80 font-bold uppercase">MYTEL {{ $mytelAccount?->discount_percent ?? 5.0 }}%</span>
@@ -564,14 +564,14 @@ window.eloadManager = function () {
                         class="px-2 py-0.5 rounded text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
                         :class="viewMode === 'table' ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-300 shadow-2xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'">
                     <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-                    <span>Table</span>
+                    <span>{{ __('messages.view_table') }}</span>
                 </button>
                 <button type="button"
                         @click="setView('card')"
                         class="px-2 py-0.5 rounded text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
                         :class="viewMode === 'card' ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-300 shadow-2xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'">
                     <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                    <span>Cards</span>
+                    <span>{{ __('messages.view_cards') }}</span>
                 </button>
             </div>
         </div>
@@ -649,15 +649,15 @@ window.eloadManager = function () {
                                 </td>
 
                                 <td class="px-3 py-2 align-middle text-right font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">
-                                    Ks {{ number_format((float) $tx->amount) }}
+                                    {{ format_currency((float) $tx->amount, $store) }}
                                 </td>
 
                                 <td class="px-3 py-2 align-middle text-right font-mono text-slate-500 dark:text-slate-400 tabular-nums text-[11px]">
-                                    Ks {{ number_format((float) $tx->cost) }}
+                                    {{ format_currency((float) $tx->cost, $store) }}
                                 </td>
 
                                 <td class="px-3 py-2 align-middle text-right font-mono font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
-                                    +Ks {{ number_format((float) $tx->profit) }}
+                                    +{{ format_currency((float) $tx->profit, $store) }}
                                 </td>
 
                                 <td class="px-3 py-2 align-middle">
@@ -691,7 +691,7 @@ window.eloadManager = function () {
                                             <span>🖨️</span>
                                         </button>
                                         @if($tx->status === 'completed')
-                                            <form method="POST" action="{{ route('store.admin.eload.status', [...$storeRouteParams, 'id' => $tx->id]) }}" onsubmit="return confirm('{{ __('messages.eload_refund_confirm') }}');">
+                                            <form method="POST" action="{{ route('store.admin.eload.status', [...$storeRouteParams, 'id' => $tx->id]) }}" data-confirm="{{ __('messages.eload_refund_confirm') }}">
                                                 @csrf
                                                 @method('PATCH')
                                                 <input type="hidden" name="status" value="refunded">
@@ -735,11 +735,11 @@ window.eloadManager = function () {
                         <div class="mt-2 flex items-center justify-between gap-1.5 text-xs">
                             <div>
                                 <p class="text-[9px] text-slate-400 uppercase font-bold">{{ __('messages.amount') }}</p>
-                                <p class="font-mono text-xs font-black text-slate-900 dark:text-slate-100">Ks {{ number_format((float) $tx->amount) }}</p>
+                                <p class="font-mono text-xs font-black text-slate-900 dark:text-slate-100">{{ format_currency((float) $tx->amount, $store) }}</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-[9px] text-slate-400 uppercase font-bold">{{ __('messages.profit') }}</p>
-                                <p class="font-mono text-xs font-black text-emerald-600 dark:text-emerald-400">+Ks {{ number_format((float) $tx->profit) }}</p>
+                                <p class="font-mono text-xs font-black text-emerald-600 dark:text-emerald-400">+{{ format_currency((float) $tx->profit, $store) }}</p>
                             </div>
                         </div>
                     </div>
@@ -846,7 +846,7 @@ window.eloadManager = function () {
                                 <button type="button" @click="setTopupAmount(amt)"
                                         :class="form.amount == amt ? 'bg-sky-600 text-white font-black shadow-2xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-200'"
                                         class="py-1 px-1 rounded text-[11px] transition text-center cursor-pointer active:scale-95">
-                                    <span x-text="Number(amt).toLocaleString() + ' Ks'"></span>
+                                    <span x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(amt) : Number(amt).toLocaleString()"></span>
                                 </button>
                             </template>
                         </div>
@@ -871,7 +871,7 @@ window.eloadManager = function () {
                                         :class="form.package_name === pack.name ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-900 dark:text-indigo-200 ring-1 ring-indigo-500' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'"
                                         class="p-2 rounded-md border text-left flex flex-col justify-between gap-0.5 transition cursor-pointer">
                                     <span class="text-[11px] font-bold truncate" x-text="pack.name"></span>
-                                    <span class="text-[11px] font-black text-indigo-600 dark:text-indigo-400" x-text="Number(pack.amount).toLocaleString() + ' Ks'"></span>
+                                    <span class="text-[11px] font-black text-indigo-600 dark:text-indigo-400" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(pack.amount) : Number(pack.amount).toLocaleString()"></span>
                                 </button>
                             </template>
                         </div>
@@ -884,20 +884,20 @@ window.eloadManager = function () {
                         <div>
                             <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">ကတ်တန်ဖိုး *</label>
                             <select x-model="form.card_denom" @change="updateCardCalculation()" class="w-full h-8 px-2 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold">
-                                <option value="1000">1,000 Ks ကတ်</option>
-                                <option value="3000">3,000 Ks ကတ်</option>
-                                <option value="5000">5,000 Ks ကတ်</option>
-                                <option value="10000">10,000 Ks ကတ်</option>
-                                <option value="20000">20,000 Ks ကတ်</option>
+                                <option value="1000">{{ format_currency(1000, $store) }} ကတ်</option>
+                                <option value="3000">{{ format_currency(3000, $store) }} ကတ်</option>
+                                <option value="5000">{{ format_currency(5000, $store) }} ကတ်</option>
+                                <option value="10000">{{ format_currency(10000, $store) }} ကတ်</option>
+                                <option value="20000">{{ format_currency(20000, $store) }} ကတ်</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">အရေအတွက် (ကတ်) *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">{{ __('messages.qty') }} *</label>
                             <input type="number" x-model="form.card_qty" @input="updateCardCalculation()" min="1" class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">Card Serial / PIN</label>
+                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">{{ __('messages.eload_card_serial_pin') }}</label>
                         <input type="text" x-model="form.card_serial" @input="updateCardCalculation()" placeholder="SN: 9876543210..." class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono">
                     </div>
                 </div>
@@ -910,13 +910,13 @@ window.eloadManager = function () {
                             <input type="text" x-model="form.phone_number" placeholder="09xxxxxxxxx" class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono font-bold">
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">ရောင်းဈေး (ကျပ်) *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">ရောင်းဈေး *</label>
                             <input type="number" x-model="form.sim_price" @input="updateSimCalculation()" min="0" step="500" class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">မူရင်းအရင်း (ကျပ်)</label>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">မူရင်းအရင်း</label>
                             <input type="number" x-model="form.sim_cost" @input="updateSimCalculation()" min="0" step="500" class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold">
                         </div>
                         <div>
@@ -925,7 +925,7 @@ window.eloadManager = function () {
                         </div>
                     </div>
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">SIM ICCID (Barcode Scan)</label>
+                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">{{ __('messages.eload_sim_iccid_scan') }}</label>
                         <input type="text" x-model="form.sim_iccid" @input="updateSimCalculation()" placeholder="89950000000000000000" class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono">
                     </div>
                 </div>
@@ -944,7 +944,7 @@ window.eloadManager = function () {
                             <option value="wavepay">💛 WavePay</option>
                             <option value="cbpay">🏦 CBPay</option>
                             <option value="ayapay">🔴 AYAPay</option>
-                            <option value="other">Other</option>
+                            <option value="other">{{ __('messages.other') }}</option>
                         </select>
                     </div>
                 </div>
@@ -953,12 +953,12 @@ window.eloadManager = function () {
                 <div class="p-2.5 rounded-md bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
                     <div>
                         <span class="text-slate-500 dark:text-slate-400">ကျသင့်ငွေ: </span>
-                        <span class="font-black text-slate-900 dark:text-slate-100 font-mono" x-text="Number(form.amount || 0).toLocaleString() + ' Ks'"></span>
-                        <span class="text-slate-400 text-[10px] ml-1" x-text="'(အရင်း: ' + Number(form.cost || 0).toLocaleString() + ' Ks)'"></span>
+                        <span class="font-black text-slate-900 dark:text-slate-100 font-mono" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(form.amount || 0) : Number(form.amount || 0).toLocaleString()"></span>
+                        <span class="text-slate-400 text-[10px] ml-1" x-text="'(အရင်း: ' + (typeof window.formatCurrency === 'function' ? window.formatCurrency(form.cost || 0) : Number(form.cost || 0).toLocaleString()) + ')'"></span>
                     </div>
                     <div class="text-right">
                         <span class="text-slate-500 dark:text-slate-400">အမြတ်: </span>
-                        <span class="font-black text-emerald-600 dark:text-emerald-400 font-mono" x-text="'+' + Number(form.profit || 0).toLocaleString() + ' Ks'"></span>
+                        <span class="font-black text-emerald-600 dark:text-emerald-400 font-mono" x-text="'+' + (typeof window.formatCurrency === 'function' ? window.formatCurrency(form.profit || 0) : Number(form.profit || 0).toLocaleString())"></span>
                     </div>
                 </div>
 
@@ -1012,13 +1012,13 @@ window.eloadManager = function () {
                 <input type="hidden" name="eload_account_id" :value="refillData.accountId">
 
                 <div>
-                    <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">ဖြည့်သွင်းမည့် ပမာဏ (ကျပ်) *</label>
+                    <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">ဖြည့်သွင်းမည့် ပမာဏ *</label>
                     <div class="grid grid-cols-4 gap-1 mb-1">
                         <template x-for="amt in [100000, 300000, 500000, 1000000]" :key="amt">
                             <button type="button" @click="setRefillAmount(amt)"
                                     :class="refillData.amount == amt ? 'bg-emerald-600 text-white font-black' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold'"
                                     class="py-1 px-1 rounded text-[10px] transition text-center cursor-pointer"
-                                    x-text="Number(amt).toLocaleString() + ' Ks'">
+                                    x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(amt) : Number(amt).toLocaleString()">
                             </button>
                         </template>
                     </div>
@@ -1093,7 +1093,7 @@ window.eloadManager = function () {
                                     <div class="text-[10px] font-mono text-slate-400">{{ $acc->phone_number }}</div>
                                 </td>
                                 <td class="py-2 px-2.5 text-right font-black font-mono text-xs">
-                                    {{ number_format((float) $acc->balance) }} Ks
+                                    {{ format_currency((float) $acc->balance, $store) }}
                                 </td>
                                 <td class="py-2 px-2.5 text-right font-bold text-emerald-600 text-xs">
                                     {{ $acc->discount_percent }}%
@@ -1133,7 +1133,7 @@ window.eloadManager = function () {
                             <option value="atom">ATOM</option>
                             <option value="ooredoo">OOREDOO</option>
                             <option value="mytel">MYTEL</option>
-                            <option value="other">Other</option>
+                            <option value="other">{{ __('messages.other') }}</option>
                         </select>
                     </div>
 
@@ -1150,7 +1150,7 @@ window.eloadManager = function () {
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5">လက်ကျန်ငွေ (Ks)</label>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5">လက်ကျန်ငွေ</label>
                         <input type="number" name="balance" x-model="accountForm.balance" min="0" step="100" class="w-full h-7 text-xs font-mono font-bold rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2">
                     </div>
 

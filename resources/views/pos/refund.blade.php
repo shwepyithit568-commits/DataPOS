@@ -105,7 +105,7 @@
                     <label class="flex items-center justify-between gap-3">
                         <span class="text-sm font-bold">{{ __('messages.payment_credit') }}
                             <span class="block text-[10px] font-semibold text-slate-400">{{ __('messages.credit_refund_hint') }}
-                                · {{ __('messages.credit_refund_remaining', ['amount' => number_format((float) $creditLeft)]) }}
+                                · {{ __('messages.credit_refund_remaining', ['amount' => format_currency((float) $creditLeft, $store ?? null)]) }}
                             </span>
                         </span>
                         <span class="flex items-center gap-2">

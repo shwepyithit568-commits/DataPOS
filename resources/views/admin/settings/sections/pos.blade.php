@@ -58,9 +58,9 @@
             <div>
                 <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                     <span>{{ __('messages.settings_pos') }}</span>
-                    <span class="text-xs px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold border border-blue-200/60 dark:border-blue-800">Advanced Counter</span>
+                    <span class="text-xs px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold border border-blue-200/60 dark:border-blue-800">{{ __('messages.settings_pos_advanced') }}</span>
                 </h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400">Cashier terminal behavior, thermal receipts, discounts, security PINs, tax & cash drawer controls.</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.settings_pos_advanced_desc') }}</p>
             </div>
         </div>
     </div>
@@ -76,36 +76,36 @@
                 <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                         <span>🧾</span>
-                        <span>Thermal Voucher & Receipt Template</span>
+                        <span>{{ __('messages.settings_pos_thermal_template') }}</span>
                     </h3>
-                    <span class="text-[10px] font-bold text-slate-400">Print Customizer</span>
+                    <span class="text-[10px] font-bold text-slate-400">{{ __('messages.settings_pos_print_customizer') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                        <label class="{{ $labelClass }}">Paper Size (ပရင်တာ စက္ကူဆိုဒ်) *</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_pos_paper_size') }} *</label>
                         <select name="pos_settings[paper_size]" x-model="paperSize" class="{{ $inputClass }}">
                             <option value="80mm">80mm (Standard POS Thermal)</option>
                             <option value="58mm">58mm (Compact Mobile Bluetooth)</option>
-                            <option value="a4">A4 / A5 (Full Page Invoice)</option>
+                            <option value="a4">{{ __('messages.settings_pos_a4') }}</option>
                         </select>
-                        <p class="{{ $helpClass }}">Choose width for thermal printer cut.</p>
+                        <p class="{{ $helpClass }}">{{ __('messages.settings_pos_thermal_width') }}</p>
                     </div>
 
                     <div>
-                        <label class="{{ $labelClass }}">Receipt Header Title (ဘောက်ချာခေါင်းစဉ်)</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_pos_receipt_header') }}</label>
                         <input type="text" name="pos_settings[receipt_header]" x-model="receiptHeader"
                                placeholder="e.g. {{ $store->name }}" class="{{ $inputClass }}">
                     </div>
 
                     <div class="sm:col-span-2">
-                        <label class="{{ $labelClass }}">Receipt Subtitle / Slogan (ဆောင်ပုဒ် / ဆိုင်ခွဲ)</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_pos_receipt_subtitle') }}</label>
                         <input type="text" name="pos_settings[receipt_subtitle]" x-model="receiptSubtitle"
                                placeholder="e.g. Mobile Phones, Accessories & Repair" class="{{ $inputClass }}">
                     </div>
 
                     <div class="sm:col-span-2">
-                        <label class="{{ $labelClass }}">Voucher Footer Note (ကျေးဇူးတင်စကားနှင့် စည်းကမ်းချက်)</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_pos_voucher_footer') }}</label>
                         <textarea name="pos_settings[receipt_footer]" x-model="receiptFooter" rows="2"
                                   class="{{ $inputClass }}"></textarea>
                     </div>
@@ -116,31 +116,31 @@
                     <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                         <input type="checkbox" name="pos_settings[auto_print]" value="1" {{ $autoPrint ? 'checked' : '' }}
                                class="rounded text-blue-600 focus:ring-blue-500">
-                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Auto Print on Checkout</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.settings_pos_auto_print') }}</span>
                     </label>
 
                     <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                         <input type="checkbox" name="pos_settings[show_cashier]" value="1" x-model="showCashier"
                                class="rounded text-blue-600 focus:ring-blue-500">
-                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Show Cashier Name</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.settings_pos_show_cashier') }}</span>
                     </label>
 
                     <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                         <input type="checkbox" name="pos_settings[show_customer_info]" value="1" x-model="showCustomer"
                                class="rounded text-blue-600 focus:ring-blue-500">
-                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Show Customer & Points</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.settings_pos_show_customer') }}</span>
                     </label>
 
                     <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                         <input type="checkbox" name="pos_settings[show_qr]" value="1" x-model="showQr"
                                class="rounded text-blue-600 focus:ring-blue-500">
-                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Print Store QR Code</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.settings_pos_print_qr') }}</span>
                     </label>
 
                     <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                         <input type="checkbox" name="pos_settings[show_tax_id]" value="1" x-model="showTax"
                                class="rounded text-blue-600 focus:ring-blue-500">
-                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Show Commercial Tax / TIN</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.settings_pos_show_tin') }}</span>
                     </label>
                 </div>
 
@@ -156,14 +156,14 @@
                 <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                         <span>💵</span>
-                        <span>Cash Register & Shift Controls</span>
+                        <span>{{ __('messages.settings_pos_cash_register') }}</span>
                     </h3>
-                    <span class="text-[10px] font-bold text-slate-400">Vault & Float</span>
+                    <span class="text-[10px] font-bold text-slate-400">{{ __('messages.settings_pos_vault_float') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                        <label for="pos_hold_expiry_hours" class="{{ $labelClass }}">Held Sale Auto-Expiry (hours)</label>
+                        <label for="pos_hold_expiry_hours" class="{{ $labelClass }}">{{ __('messages.settings_pos_held_sale_expiry') }}</label>
                         <input id="pos_hold_expiry_hours" type="number" name="pos_hold_expiry_hours" min="0" max="720" step="1"
                                value="{{ $holdExpiryHours }}"
                                placeholder="24" class="{{ $inputClass }}" />
@@ -177,21 +177,21 @@
                         <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                             <input type="checkbox" name="pos_settings[auto_open_drawer]" value="1" {{ $autoOpenDrawer ? 'checked' : '' }}
                                    class="rounded text-blue-600 focus:ring-blue-500">
-                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Auto Open Drawer on Cash Sale</span>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.settings_pos_auto_drawer') }}</span>
                         </label>
 
                         <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                             <input type="checkbox" name="pos_settings[require_opening_float]" value="1" {{ $requireOpeningFloat ? 'checked' : '' }}
                                    class="rounded text-blue-600 focus:ring-blue-500">
-                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Require Shift Opening Cash Float</span>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.settings_pos_require_float') }}</span>
                         </label>
 
                         <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                             <input type="checkbox" name="pos_settings[blind_closing]" value="1" {{ $blindClosing ? 'checked' : '' }}
                                    class="rounded text-blue-600 focus:ring-blue-500">
                             <div>
-                                <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Blind Shift Closing</span>
-                                <span class="text-[10px] text-slate-400 block">Hide expected balance from cashier during shift count</span>
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block">{{ __('messages.settings_pos_blind_close') }}</span>
+                                <span class="text-[10px] text-slate-400 block">{{ __('messages.settings_pos_blind_close_help') }}</span>
                             </div>
                         </label>
                     </div>
@@ -203,14 +203,14 @@
                 <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                         <span>🔒</span>
-                        <span>Pricing, Discounts & Security PIN</span>
+                        <span>{{ __('messages.settings_pos_pricing') }}</span>
                     </h3>
-                    <span class="text-[10px] font-bold text-slate-400">Authorization</span>
+                    <span class="text-[10px] font-bold text-slate-400">{{ __('messages.settings_pos_authorization') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                        <label for="pos_override_pin_threshold" class="{{ $labelClass }}">Price Override Manager PIN Threshold (%)</label>
+                        <label for="pos_override_pin_threshold" class="{{ $labelClass }}">{{ __('messages.settings_pos_price_override') }}</label>
                         <input id="pos_override_pin_threshold" type="number" name="pos_override_pin_threshold" min="0" max="100" step="1"
                                value="{{ $pinThreshold }}"
                                placeholder="Disabled (No PIN required)" class="{{ $inputClass }}" />
@@ -221,29 +221,29 @@
                     </div>
 
                     <div>
-                        <label class="{{ $labelClass }}">Max Cashier Item Discount (%)</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_pos_max_discount') }}</label>
                         <input type="number" name="pos_settings[max_item_discount_pct]" min="0" max="100"
                                value="{{ $maxItemDiscount }}" class="{{ $inputClass }}" />
-                        <p class="{{ $helpClass }}">Maximum item discount % allowed without manager PIN.</p>
+                        <p class="{{ $helpClass }}">{{ __('messages.settings_pos_max_discount_help') }}</p>
                     </div>
 
                     <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
                         <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                             <input type="checkbox" name="pos_settings[allow_price_edit]" value="1" {{ $allowPriceEdit ? 'checked' : '' }}
                                    class="rounded text-blue-600 focus:ring-blue-500">
-                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Allow Counter Price Edit</span>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.settings_pos_allow_price_edit') }}</span>
                         </label>
 
                         <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                             <input type="checkbox" name="pos_settings[require_pin_to_void]" value="1" {{ $requirePinVoid ? 'checked' : '' }}
                                    class="rounded text-blue-600 focus:ring-blue-500">
-                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Require PIN to Void Invoice</span>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.settings_pos_pin_void') }}</span>
                         </label>
 
                         <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                             <input type="checkbox" name="pos_settings[require_pin_for_return]" value="1" {{ $requirePinReturn ? 'checked' : '' }}
                                    class="rounded text-blue-600 focus:ring-blue-500">
-                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Require PIN for Returns</span>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.settings_pos_pin_returns') }}</span>
                         </label>
                     </div>
                 </div>
@@ -254,24 +254,24 @@
                 <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                         <span>⚖️</span>
-                        <span>Tax, Cash Rounding & Scanner Speed</span>
+                        <span>{{ __('messages.settings_pos_tax_rounding') }}</span>
                     </h3>
-                    <span class="text-[10px] font-bold text-slate-400">Rules & Hardware</span>
+                    <span class="text-[10px] font-bold text-slate-400">{{ __('messages.settings_pos_rules_hardware') }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                        <label class="{{ $labelClass }}">Cash Rounding (မြန်မာကျပ်ငွေ အကြွေစေ့ ချိန်ညှိမှု)</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_pos_cash_rounding') }}</label>
                         <select name="pos_settings[cash_rounding]" class="{{ $inputClass }}">
-                            <option value="none" {{ $cashRounding === 'none' ? 'selected' : '' }}>No Rounding (Exact)</option>
-                            <option value="round_10" {{ $cashRounding === 'round_10' ? 'selected' : '' }}>Round to nearest 10 Kyats</option>
-                            <option value="round_50" {{ $cashRounding === 'round_50' ? 'selected' : '' }}>Round to nearest 50 Kyats (Recommended)</option>
-                            <option value="round_100" {{ $cashRounding === 'round_100' ? 'selected' : '' }}>Round to nearest 100 Kyats</option>
+                            <option value="none" {{ $cashRounding === 'none' ? 'selected' : '' }}>{{ __('messages.settings_pos_no_rounding') }}</option>
+                            <option value="round_10" {{ $cashRounding === 'round_10' ? 'selected' : '' }}>{{ __('messages.settings_pos_round_10') }}</option>
+                            <option value="round_50" {{ $cashRounding === 'round_50' ? 'selected' : '' }}>{{ __('messages.settings_pos_round_50') }}</option>
+                            <option value="round_100" {{ $cashRounding === 'round_100' ? 'selected' : '' }}>{{ __('messages.settings_pos_round_100') }}</option>
                         </select>
                     </div>
 
                     <div>
-                        <label class="{{ $labelClass }}">Default Commercial Tax Rate (%)</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_pos_tax_rate') }}</label>
                         <input type="number" step="0.1" name="pos_settings[default_tax_rate]" value="{{ $defaultTaxRate }}"
                                placeholder="5.0" class="{{ $inputClass }}" />
                     </div>
@@ -280,19 +280,19 @@
                         <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                             <input type="checkbox" name="pos_settings[enable_tax]" value="1" x-model="enableTax"
                                    class="rounded text-blue-600 focus:ring-blue-500">
-                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Enable Commercial Tax</span>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.settings_pos_enable_tax') }}</span>
                         </label>
 
                         <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                             <input type="checkbox" name="pos_settings[barcode_auto_add]" value="1" {{ $barcodeAutoAdd ? 'checked' : '' }}
                                    class="rounded text-blue-600 focus:ring-blue-500">
-                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Auto +1 on Barcode Scan</span>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.settings_pos_auto_plus1') }}</span>
                         </label>
 
                         <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 cursor-pointer hover:border-blue-300 transition">
                             <input type="checkbox" name="pos_settings[enable_sound_fx]" value="1" {{ $soundFx ? 'checked' : '' }}
                                    class="rounded text-blue-600 focus:ring-blue-500">
-                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Scanner & Success Audio FX</span>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ __('messages.settings_pos_scanner_fx') }}</span>
                         </label>
                     </div>
                 </div>
@@ -306,7 +306,7 @@
                 <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
                     <span class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                         <span>🖨️</span>
-                        <span>Live Thermal Voucher Preview</span>
+                        <span>{{ __('messages.settings_pos_live_preview') }}</span>
                     </span>
                     <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800 uppercase" x-text="paperSize"></span>
                 </div>
@@ -330,22 +330,22 @@
                     {{-- Invoice Metadata --}}
                     <div class="py-2 border-b border-dashed border-slate-300 text-[10px] space-y-0.5">
                         <div class="flex justify-between">
-                            <span>VOUCHER:</span>
+                            <span>{{ __('messages.settings_pos_voucher') }}</span>
                             <span class="font-bold">INV-20260828-0042</span>
                         </div>
                         <div class="flex justify-between">
-                            <span>DATE:</span>
+                            <span>{{ __('messages.settings_pos_date') }}</span>
                             <span>{{ now()->format('d/m/Y h:i A') }}</span>
                         </div>
                         <template x-if="showCashier">
                             <div class="flex justify-between">
-                                <span>CASHIER:</span>
+                                <span>{{ __('messages.settings_pos_cashier') }}</span>
                                 <span>Ma Su Mon</span>
                             </div>
                         </template>
                         <template x-if="showCustomer">
                             <div class="flex justify-between text-blue-700">
-                                <span>CUSTOMER:</span>
+                                <span>{{ __('messages.settings_pos_customer') }}</span>
                                 <span>U Kyaw Kyaw (VIP)</span>
                             </div>
                         </template>
@@ -354,9 +354,9 @@
                     {{-- Sample Items Table --}}
                     <div class="py-2 border-b border-dashed border-slate-300 space-y-1.5">
                         <div class="flex justify-between font-bold text-[10px] border-b border-slate-200 pb-0.5">
-                            <span>ITEM</span>
-                            <span>QTY x PRICE</span>
-                            <span>AMT</span>
+                            <span>{{ __('messages.settings_pos_item') }}</span>
+                            <span>{{ __('messages.settings_pos_qty_price') }}</span>
+                            <span>{{ __('messages.settings_pos_amt') }}</span>
                         </div>
                         <div class="space-y-1 text-[10px]">
                             <div>
@@ -379,30 +379,30 @@
                     {{-- Totals --}}
                     <div class="py-2 border-b border-dashed border-slate-300 text-[10px] space-y-1">
                         <div class="flex justify-between">
-                            <span>SUBTOTAL:</span>
-                            <span>55,000 Ks</span>
+                            <span>{{ __('messages.settings_pos_subtotal') }}</span>
+                            <span>{{ format_currency(55000, $store) }}</span>
                         </div>
                         <div class="flex justify-between text-emerald-700">
-                            <span>DISCOUNT (5%):</span>
-                            <span>-2,750 Ks</span>
+                            <span>{{ __('messages.settings_pos_discount') }}</span>
+                            <span>{{ format_currency(-2750, $store) }}</span>
                         </div>
                         <template x-if="enableTax">
                             <div class="flex justify-between text-slate-600">
-                                <span>TAX (5%):</span>
-                                <span>+2,612 Ks</span>
+                                <span>{{ __('messages.settings_pos_tax') }}</span>
+                                <span>{{ format_currency(2612, $store) }}</span>
                             </div>
                         </template>
                         <div class="flex justify-between font-black text-xs pt-1 border-t border-slate-200">
-                            <span>NET TOTAL:</span>
-                            <span>54,860 Ks</span>
+                            <span>{{ __('messages.settings_pos_net_total') }}</span>
+                            <span>{{ format_currency(54860, $store) }}</span>
                         </div>
                         <div class="flex justify-between text-slate-600 text-[10px] pt-0.5">
-                            <span>PAID (CASH):</span>
-                            <span>60,000 Ks</span>
+                            <span>{{ __('messages.settings_pos_paid') }}</span>
+                            <span>{{ format_currency(60000, $store) }}</span>
                         </div>
                         <div class="flex justify-between text-slate-600 text-[10px]">
-                            <span>CHANGE:</span>
-                            <span>5,140 Ks</span>
+                            <span>{{ __('messages.settings_pos_change') }}</span>
+                            <span>{{ format_currency(5140, $store) }}</span>
                         </div>
                     </div>
 

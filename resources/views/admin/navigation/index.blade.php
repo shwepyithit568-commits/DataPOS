@@ -325,7 +325,7 @@
                                     </svg>
                                 </a>
 
-                                <form method="POST" action="{{ route('store.admin.navigation.destroy', ['store_slug' => $store->slug, 'id' => $item->id]) }}" onsubmit="return confirm('{{ __('messages.confirm_delete_navigation_item') }}');">
+                                <form method="POST" action="{{ route('store.admin.navigation.destroy', ['store_slug' => $store->slug, 'id' => $item->id]) }}" data-confirm="{{ __('messages.confirm_delete_navigation_item') }}">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition" title="{{ __('messages.delete') }}">

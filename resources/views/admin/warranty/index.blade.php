@@ -256,7 +256,7 @@
                 <thead class="sticky top-0 z-20 bg-slate-100 dark:bg-slate-800/95 backdrop-blur-xs border-b border-slate-200 dark:border-slate-700 shadow-2xs select-none">
                     <tr class="text-[10px] sm:text-[11px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider divide-x divide-slate-200 dark:divide-slate-700">
                         <th class="py-1.5 px-2.5 min-w-[200px]">{{ __('messages.product') }}</th>
-                        <th class="py-1.5 px-2.5 min-w-[170px]">Serial / IMEI</th>
+                        <th class="py-1.5 px-2.5 min-w-[170px]">{{ __('messages.serial_imei') }}</th>
                         <th class="py-1.5 px-2.5 min-w-[150px]">{{ __('messages.customer') }}</th>
                         <th class="py-1.5 px-2.5 min-w-[120px]">{{ __('messages.purchase_date') }}</th>
                         <th class="py-1.5 px-2.5 min-w-[130px]">{{ __('messages.warranty_expiry') }}</th>
@@ -448,12 +448,12 @@
                     {{-- Serial & IMEI Pill Container --}}
                     <div class="p-1.5 rounded-md bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs font-mono space-y-0.5">
                         <div class="flex items-center justify-between">
-                            <span class="text-slate-400 text-[10px] uppercase font-bold">Serial No:</span>
+                            <span class="text-slate-400 text-[10px] uppercase font-bold">{{ __('messages.serial_no') }}:</span>
                             <span class="font-bold text-slate-800 dark:text-slate-200 text-[11px] select-all">{{ $w->serial_number }}</span>
                         </div>
                         @if($w->imei_primary)
                             <div class="flex items-center justify-between pt-0.5 border-t border-slate-200/50 dark:border-slate-700/50">
-                                <span class="text-slate-400 text-[10px] uppercase font-bold">IMEI:</span>
+                                <span class="text-slate-400 text-[10px] uppercase font-bold">{{ __('messages.imei') }}:</span>
                                 <span class="font-bold text-slate-600 dark:text-slate-300 text-[10px] select-all">{{ $w->imei_primary }}</span>
                             </div>
                         @endif
@@ -505,7 +505,7 @@
                        title="{{ __('messages.print_certificate') }}"
                        class="h-6 px-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition text-xs font-bold inline-flex items-center gap-1">
                         <span>🖨️</span>
-                        <span>Certificate</span>
+                        <span>{{ __('messages.certificate') }}</span>
                     </a>
 
                     <a href="{{ route('store.admin.warranty.show', ['store_slug' => $store->slug, 'warranty' => $w->id]) }}"

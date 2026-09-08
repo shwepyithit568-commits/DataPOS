@@ -239,15 +239,15 @@
             <div class="summary-grid">
                 <div class="summary-item">
                     <div class="label">{{ __('messages.receivables_total_incurred') }}</div>
-                    <div class="val">{{ number_format($totalDebtIncurred, 0) }} Ks</div>
+                    <div class="val">{{ format_currency($totalDebtIncurred, $store) }}</div>
                 </div>
                 <div class="summary-item">
                     <div class="label">{{ __('messages.receivables_total_paid') }}</div>
-                    <div class="val paid">{{ number_format($totalCollected, 0) }} Ks</div>
+                    <div class="val paid">{{ format_currency($totalCollected, $store) }}</div>
                 </div>
                 <div class="summary-item">
                     <div class="label">{{ __('messages.receivables_current_debt') }}</div>
-                    <div class="val debt">{{ number_format($bal, 0) }} Ks</div>
+                    <div class="val debt">{{ format_currency($bal, $store) }}</div>
                 </div>
             </div>
         </div>
@@ -289,7 +289,7 @@
                             @endif
                         </td>
                         <td class="text-right font-mono" style="font-weight: bold; color: {{ $isPlus ? '#e11d48' : '#059669' }};">
-                            {{ $isPlus ? '+' : '-' }} {{ number_format($amt, 0) }} Ks
+                            {{ $isPlus ? '+' : '-' }} {{ format_currency($amt, $store) }}
                         </td>
                     </tr>
                 @empty
@@ -305,7 +305,7 @@
         {{-- Final Outstanding Box --}}
         <div style="padding: 12px 16px; background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
             <div style="font-weight: 700; color: #9f1239; font-size: 14px;">{{ __('messages.receivables_final_balance_due') }}:</div>
-            <div style="font-weight: 900; font-size: 18px; color: #e11d48;" class="font-mono">{{ number_format($bal, 0) }} Ks</div>
+            <div style="font-weight: 900; font-size: 18px; color: #e11d48;" class="font-mono">{{ format_currency($bal, $store) }}</div>
         </div>
 
         {{-- Signature Section (A4 only) --}}

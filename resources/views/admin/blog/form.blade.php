@@ -34,7 +34,7 @@
                 <span>📝</span>
                 <span>{{ __('messages.sidebar_blog') }}</span>
                 <span class="text-slate-400 dark:text-slate-500">·</span>
-                <span class="font-normal normal-case text-slate-500 dark:text-slate-400">Word-style Document Editor</span>
+                <span class="font-normal normal-case text-slate-500 dark:text-slate-400">{{ __('messages.blog_word_editor') }}</span>
             </div>
             <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                 {{ $isEdit ? __('messages.blog_edit') : __('messages.blog_add_new') }}
@@ -91,7 +91,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {{-- Title --}}
                     <div class="sm:col-span-2">
-                        <label class="{{ $labelClass }}">Article Title <span class="text-rose-500">*</span></label>
+                        <label class="{{ $labelClass }}">{{ __('messages.blog_article_title') }} <span class="text-rose-500">*</span></label>
                         <input type="text" name="title" value="{{ old('title', $post->title) }}" required
                                class="{{ $inputClass }} font-bold text-sm sm:text-base"
                                placeholder="ဆောင်းပါး ခေါင်းစဉ် (e.g. ဖုန်းမျက်နှာပြင် မှန်ကပ် ရွေးချယ်နည်းနှင့် ထိန်းသိမ်းပုံ)" />
@@ -100,9 +100,9 @@
 
                     {{-- Category --}}
                     <div>
-                        <label class="{{ $labelClass }}">Category</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.category') }}</label>
                         <select name="category" class="{{ $inputClass }} cursor-pointer font-bold">
-                            <option value="">None (General)</option>
+                            <option value="">{{ __('messages.blog_none_general') }}</option>
                             @foreach ($categoryOptions as $cat)
                                 <option value="{{ $cat }}" {{ old('category', $post->category) === $cat ? 'selected' : '' }}>{{ $cat }}</option>
                             @endforeach
@@ -114,7 +114,7 @@
                 {{-- Featured Cover Image --}}
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-slate-100 dark:border-slate-800">
                     <div class="sm:col-span-2">
-                        <label class="{{ $labelClass }}">Featured Cover Image</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.blog_featured_cover_image') }}</label>
                         <input type="file" name="image" accept="image/png,image/jpeg,image/jpg,image/webp"
                                class="block w-full text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-violet-50 dark:file:bg-slate-800 file:text-violet-700 dark:file:text-violet-300 hover:file:bg-violet-100 cursor-pointer" />
                         <p class="{{ $helpClass }}">Recommended: 1200×750 px WebP/JPG (under 5MB)</p>
@@ -122,7 +122,7 @@
                     </div>
 
                     <div>
-                        <span class="{{ $labelClass }}">Cover Preview</span>
+                        <span class="{{ $labelClass }}">{{ __('messages.blog_cover_preview') }}</span>
                         @if (!empty($post->image_path))
                             <img src="{{ asset('storage/' . $post->image_path) }}" alt="Cover Preview" class="w-full h-14 rounded object-cover border border-slate-200 dark:border-slate-700" data-img-fallback="hide" />
                         @else
@@ -144,11 +144,11 @@
                     <div class="inline-flex items-center">
                         <select @change="applyHeading($event.target.value); $event.target.value = ''"
                                 class="h-8 px-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs font-bold focus:ring-1 focus:ring-violet-500 cursor-pointer">
-                            <option value="">Normal Text (Paragraph)</option>
+                            <option value="">{{ __('messages.blog_normal_text_paragraph') }}</option>
                             <option value="H2">Heading 2 (ခေါင်းစဉ်ကြီး)</option>
                             <option value="H3">Heading 3 (ခေါင်းစဉ်လတ်)</option>
                             <option value="H4">Heading 4 (ခေါင်းစဉ်ငယ်)</option>
-                            <option value="p">Paragraph</option>
+                            <option value="p">{{ __('messages.blog_paragraph') }}</option>
                         </select>
                     </div>
 
@@ -163,7 +163,7 @@
                             <em>I</em>
                         </button>
                         <button type="button" @click="exec('underline')" class="w-7 h-7 rounded hover:bg-slate-100 dark:hover:bg-slate-800 grid place-items-center underline text-slate-700 dark:text-slate-200" title="Underline (Ctrl+U)">
-                            <u>U</u>
+                            <u>{{ __('messages.underline') }}</u>
                         </button>
                         <button type="button" @click="exec('strikeThrough')" class="w-7 h-7 rounded hover:bg-slate-100 dark:hover:bg-slate-800 grid place-items-center line-through text-slate-700 dark:text-slate-200 text-xs" title="Strikethrough">
                             S
@@ -256,7 +256,7 @@
                         <span>⏱️ ~<strong x-text="readingTime"></strong> min read</span>
                     </div>
                     <div>
-                        <span>Word-style Rich HTML Studio</span>
+                        <span>{{ __('messages.word_style_rich_html') }}</span>
                     </div>
                 </div>
 
@@ -269,18 +269,18 @@
             <section class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 shadow-2xs space-y-3">
                 <div class="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                     <span class="text-xs">🌐</span>
-                    <h2 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">SEO & Search Optimization</h2>
+                    <h2 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">{{ __('messages.blog_seo_optimization') }}</h2>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="{{ $labelClass }}">Custom Slug</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.blog_custom_slug') }}</label>
                         <input type="text" name="slug" value="{{ old('slug', $post->slug) }}" class="{{ $inputClass }} font-mono" placeholder="auto-generated-from-title" />
-                        <p class="{{ $helpClass }}">Leave blank to auto-generate from title.</p>
+                        <p class="{{ $helpClass }}">{{ __('messages.blog_blank_auto_slug') }}</p>
                         @error('slug')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
-                        <label class="{{ $labelClass }}">Meta Keywords</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.meta_keywords') }}</label>
                         <input type="text" name="meta_keywords" value="{{ old('meta_keywords', $post->meta_keywords) }}" class="{{ $inputClass }}" placeholder="phone, tempered glass, cctv" />
                         @error('meta_keywords')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                     </div>
@@ -288,19 +288,19 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
-                        <label class="{{ $labelClass }}">Tags</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.blog_tags') }}</label>
                         <input type="text" name="tags" value="{{ old('tags', $post->tags) }}" class="{{ $inputClass }}" placeholder="charging, screen protector, guide" />
                         @error('tags')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
-                        <label class="{{ $labelClass }}">Excerpt Summary</label>
+                        <label class="{{ $labelClass }}">{{ __('messages.blog_excerpt_summary') }}</label>
                         <textarea name="excerpt" rows="2" maxlength="500" class="{{ $inputClass }}" placeholder="Short summary for card list preview">{{ old('excerpt', $post->excerpt) }}</textarea>
                         @error('excerpt')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                     </div>
                 </div>
 
                 <div class="pt-1">
-                    <label class="{{ $labelClass }}">Meta Description</label>
+                    <label class="{{ $labelClass }}">{{ __('messages.meta_description') }}</label>
                     <textarea name="meta_description" rows="2" maxlength="1000" class="{{ $inputClass }}" placeholder="Google search result snippet description">{{ old('meta_description', $post->meta_description) }}</textarea>
                     @error('meta_description')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                 </div>
@@ -313,7 +313,7 @@
             <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 shadow-2xs space-y-3">
                 <div class="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                     <span class="text-xs">🚀</span>
-                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Publishing Status</h3>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">{{ __('messages.blog_publishing_status') }}</h3>
                 </div>
 
                 {{-- Status Toggle --}}
@@ -327,9 +327,9 @@
 
                 {{-- Schedule / Date --}}
                 <div>
-                    <label class="{{ $labelClass }}">Publish Date & Time</label>
+                    <label class="{{ $labelClass }}">{{ __('messages.blog_publish_datetime') }}</label>
                     <input type="datetime-local" name="published_at" value="{{ old('published_at', $post->published_at?->format('Y-m-d\TH:i')) }}" class="{{ $inputClass }} font-mono" />
-                    <p class="{{ $helpClass }}">Leave blank to use current time upon publishing.</p>
+                    <p class="{{ $helpClass }}">{{ __('messages.blog_blank_use_now') }}</p>
                     @error('published_at')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                 </div>
 
@@ -337,18 +337,18 @@
                 <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <button type="submit" @click="isPublished = false; prepareSubmit()"
                             class="px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition active:scale-95 text-center">
-                        Save Draft
+                        {{ __('messages.save_draft') }}
                     </button>
                     <button type="submit" @click="isPublished = true; prepareSubmit()"
                             class="px-3 py-2 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition active:scale-95 text-center">
-                        {{ $isEdit ? 'Save & Publish' : 'Publish Post' }}
+                        {{ $isEdit ? __('messages.save_publish') : __('messages.publish_post') }}
                     </button>
                 </div>
 
                 @if ($isEdit)
                     <a href="{{ $previewUrl }}" target="_blank" rel="noopener noreferrer"
                        class="w-full py-2 rounded-lg text-xs font-bold bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800 transition flex items-center justify-center gap-1 active:scale-95 text-center">
-                        <span>View Live on Storefront</span>
+                        <span>{{ __('messages.blog_view_live') }}</span>
                         <span>↗</span>
                     </a>
                 @endif
@@ -358,7 +358,7 @@
             <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-3 sm:p-4 shadow-2xs space-y-2">
                 <div class="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                     <span class="text-xs">👁️</span>
-                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Mobile & Web Live Preview</h3>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">{{ __('messages.blog_mobile_web_preview') }}</h3>
                 </div>
                 <div class="max-h-80 overflow-y-auto rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3 text-xs border border-slate-100 dark:border-slate-800">
                     <div class="prose prose-xs max-w-none dark:prose-invert" x-html="htmlContent || '<p class=\'text-slate-400 italic\'>ဆောင်းပါးစာသားများ ဤနေရာတွင် Preview ပေါ်လာပါမည်...</p>'"></div>

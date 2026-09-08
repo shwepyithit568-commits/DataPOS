@@ -103,7 +103,8 @@ class AdminDashboardTest extends TestCase
         $response->assertSee('Today Orders');
         $response->assertSee('This Week Orders');
         $response->assertSee('data-today-orders-stat', false);
-        $response->assertSee('Revenue: Ks 1,000');
+        // Currency renders dynamically via format_currency() (default position: after amount)
+        $response->assertSee(__('messages.revenue') . ': 1,000 ' . $store->currency_symbol ?? 'Ks');
         // Stale pending_contact order (older than 2 hours) gets highlighted
         $response->assertSee('2h+ uncontacted');
     }

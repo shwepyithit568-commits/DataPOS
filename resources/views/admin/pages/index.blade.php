@@ -287,7 +287,7 @@
                                     </svg>
                                 </a>
 
-                                <form method="POST" action="{{ route('store.admin.pages.destroy', ['store_slug' => $store->slug, 'id' => $page->id]) }}" onsubmit="return confirm('{{ __('messages.confirm_delete_page') }}');">
+                                <form method="POST" action="{{ route('store.admin.pages.destroy', ['store_slug' => $store->slug, 'id' => $page->id]) }}" data-confirm="{{ __('messages.confirm_delete_page') }}">
                                     @csrf
                                     @method('DELETE')
                                     <button

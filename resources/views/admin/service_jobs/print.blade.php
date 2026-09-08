@@ -138,7 +138,7 @@
                 <span class="value">{{ $job->model }}</span></div>
         @endif
         @if ($job->imei_serial)
-            <div class="kv"><span class="label">IMEI / Serial</span>
+            <div class="kv"><span class="label">{{ __('messages.imei') }} / {{ __('messages.serial') }}</span>
                 <span class="value">{{ $job->imei_serial }}</span></div>
         @endif
         <div class="kv" style="margin-top:5px;"><span class="label">{{ __('messages.repair_ticket_problem') }}</span>
@@ -161,8 +161,8 @@
                         <tr>
                             <td>{{ $item->name }} @if ($item->isPart())<br><span style="color:#94a3b8;font-size:10px;">{{ $item->is_deducted ? __('messages.repair_deducted') : __('messages.repair_item_part') }}</span>@endif</td>
                             <td class="num">{{ $item->quantity }}</td>
-                            <td class="num">{{ number_format((float) $item->unit_price, 0) }}</td>
-                            <td class="num">{{ number_format((float) $item->subtotal, 0) }}</td>
+                            <td class="num">{{ format_currency((float) $item->unit_price, $store) }}</td>
+                            <td class="num">{{ format_currency((float) $item->subtotal, $store) }}</td>
                         </tr>
                     @endforeach
                 </tbody>

@@ -209,11 +209,11 @@
             <table class="min-w-full text-left text-xs">
                 <thead class="bg-slate-50 dark:bg-slate-800/80 sticky top-0 z-10 text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
                     <tr>
-                        <th class="px-4 py-3 min-w-[200px]">Theme</th>
+                        <th class="px-4 py-3 min-w-[200px]">{{ __('messages.theme') }}</th>
                         <th class="px-4 py-3 min-w-[130px]">ID & Version</th>
                         <th class="px-4 py-3 min-w-[120px]">{{ __('messages.theme_status') }}</th>
                         <th class="px-4 py-3 min-w-[160px]">{{ __('messages.theme_replacement') }}</th>
-                        <th class="px-4 py-3 min-w-[320px] text-right">Lifecycle Actions</th>
+                        <th class="px-4 py-3 min-w-[320px] text-right">{{ __('messages.lifecycle_actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">

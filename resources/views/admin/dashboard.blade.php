@@ -69,7 +69,7 @@
             <a href="{{ url('/store/' . $store->slug . '/admin/stock-balance') }}"
                class="btn-3d-action group">
                 <span class="btn-3d-icon bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">📊</span>
-                <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">Stock</span>
+                <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.stock') }}</span>
             </a>
         @endif
 
@@ -146,7 +146,7 @@
                         {{ __('messages.dashboard_today_orders') }}
                     </p>
                     <p class="text-[8.5px] sm:text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                        {{ __('messages.revenue') }}: Ks {{ number_format($todayRevenue) }}
+                        {{ __('messages.revenue') }}: {{ format_currency($todayRevenue, $store) }}
                     </p>
                 </div>
             </div>
@@ -158,7 +158,7 @@
                 </div>
                 <div class="min-w-0">
                     <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono leading-none tabular-nums">
-                        Ks {{ number_format($todayRevenue) }}
+                        {{ format_currency($todayRevenue, $store) }}
                     </div>
                     <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                         {{ __('messages.dashboard_today_revenue') }}
@@ -176,7 +176,7 @@
                 </div>
                 <div class="min-w-0">
                     <div class="text-sm sm:text-base font-black text-fuchsia-600 dark:text-fuchsia-400 font-mono leading-none tabular-nums">
-                        Ks {{ number_format($todayExpense) }}
+                        {{ format_currency($todayExpense, $store) }}
                     </div>
                     <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                         {{ __('messages.dashboard_today_expense') }}
@@ -230,7 +230,7 @@
                 </div>
                 <div class="min-w-0">
                     <div class="text-sm sm:text-base font-black text-slate-800 dark:text-slate-200 font-mono leading-none tabular-nums">
-                        Ks {{ number_format($monthRevenue) }}
+                        {{ format_currency($monthRevenue, $store) }}
                     </div>
                     <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                         {{ __('messages.dashboard_month_revenue') }}
@@ -256,13 +256,13 @@
                 </div>
                 <div class="min-w-0">
                     <div class="text-sm sm:text-base font-black text-fuchsia-700 dark:text-fuchsia-300 font-mono leading-none tabular-nums">
-                        Ks {{ number_format($monthExpense) }}
+                        {{ format_currency($monthExpense, $store) }}
                     </div>
                     <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                         {{ __('messages.dashboard_expense_overview') }}
                     </p>
                     <p class="text-[8.5px] sm:text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                        {{ __('messages.today') }}: Ks {{ number_format($todayExpense) }}
+                        {{ __('messages.today') }}: {{ format_currency($todayExpense, $store) }}
                     </p>
                 </div>
             </a>
@@ -334,7 +334,7 @@
                 </div>
                 <div class="min-w-0">
                     <div class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400 font-mono leading-none tabular-nums">
-                        Ks {{ number_format($totalCustomerDebt) }}
+                        {{ format_currency($totalCustomerDebt, $store) }}
                     </div>
                     <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                         {{ __('messages.dashboard_customer_ar') }}
@@ -364,7 +364,7 @@
             </div>
             <div class="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-rose-200/90 dark:border-rose-900/40 shadow-sm">
                 <div class="px-4 py-3 bg-rose-50/50 dark:bg-rose-950/30 border-b border-rose-200/80 dark:border-rose-900/40 flex items-center justify-between">
-                    <span class="text-xs font-bold text-rose-800 dark:text-rose-300">{{ __('messages.overdue_total') }}: Ks {{ number_format($overdueData['total_overdue'], 0) }}</span>
+                    <span class="text-xs font-bold text-rose-800 dark:text-rose-300">{{ __('messages.overdue_total') }}: {{ format_currency($overdueData['total_overdue'], $store) }}</span>
                     <span class="text-[11px] font-semibold text-rose-600 dark:text-rose-400">{{ __('messages.overdue_30_days') }}</span>
                 </div>
                 <div class="overflow-x-auto">
@@ -385,7 +385,7 @@
                                         <div class="text-[10px] text-slate-400">{{ $row['po_count'] }} {{ __('messages.aging_pos') }}</div>
                                     </td>
                                     <td class="px-4 py-3 text-right">
-                                        <span class="inline-block px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-mono font-bold">Ks {{ number_format($row['amount'], 0) }}</span>
+                                        <span class="inline-block px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-mono font-bold">{{ format_currency($row['amount'], $store) }}</span>
                                     </td>
                                     <td class="px-4 py-3 text-right">
                                         <span class="font-mono font-bold text-rose-600 dark:text-rose-400">{{ $row['age_days'] }} {{ __('messages.aging_days') }}</span>
@@ -430,7 +430,7 @@
                             <span>📊</span>
                             <span>{{ __('messages.dashboard_chart_7days_title') }}</span>
                         </span>
-                        <span class="text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400">Ks {{ number_format($sevenDaysTotal) }}</span>
+                        <span class="text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400">{{ format_currency($sevenDaysTotal, $store) }}</span>
                     </div>
                     <div class="h-28 flex items-end gap-1.5 pt-2 pb-1 border-b border-slate-100 dark:border-slate-800">
                         @foreach ($last7DaysSeries as $d)
@@ -438,7 +438,7 @@
                                 $barHeight = $sevenDaysMax > 0 ? max(6, round(($d['revenue'] / $sevenDaysMax) * 100)) : 6;
                             @endphp
                             <div class="flex-1 flex flex-col items-center h-full justify-end group cursor-pointer"
-                                 title="{{ $d['date'] }} ({{ $d['day'] }}): Ks {{ number_format($d['revenue']) }} ({{ $d['orders'] }} orders)">
+                                 title="{{ $d['date'] }} ({{ $d['day'] }}): {{ format_currency($d['revenue'], $store) }} ({{ $d['orders'] }} orders)">
                                 <div class="w-full rounded-t-md bg-gradient-to-t from-indigo-600 to-sky-400 transition-all duration-300 group-hover:from-indigo-500 group-hover:to-fuchsia-400 shadow-xs"
                                      style="height: {{ $barHeight }}%"></div>
                                 <span class="text-[9px] font-mono font-bold text-slate-400 mt-1 leading-tight">{{ $d['day'] }}</span>
@@ -467,7 +467,7 @@
                         @foreach ($paymentBreakdown as $pay)
                             @if ($pay['percent'] > 0)
                                 <div style="width: {{ $pay['percent'] }}%; background-color: {{ $pay['color'] }};"
-                                     title="{{ $pay['name'] }}: {{ $pay['percent'] }}% (Ks {{ number_format($pay['amount']) }})"
+                                     title="{{ $pay['name'] }}: {{ $pay['percent'] }}% ({{ format_currency($pay['amount'], $store) }})"
                                      class="h-full transition-all duration-300 first:rounded-l-full last:rounded-r-full"></div>
                             @endif
                         @endforeach
@@ -486,8 +486,8 @@
                     </div>
                 </div>
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
-                    <span>Active Channels</span>
-                    <span class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">{{ count(array_filter($paymentBreakdown, fn($p) => $p['amount'] > 0)) }} Active</span>
+                    <span>{{ __('messages.active_channels') }}</span>
+                    <span class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">{{ count(array_filter($paymentBreakdown, fn($p) => $p['amount'] > 0)) }} {{ __('messages.active') }}</span>
                 </div>
             </div>
 
@@ -502,7 +502,7 @@
                             <span>💸</span>
                             <span>{{ __('messages.dashboard_chart_expense_title') }}</span>
                         </span>
-                        <span class="text-[11px] font-mono font-bold text-fuchsia-600 dark:text-fuchsia-400">Ks {{ number_format($totalExpenseLogged) }}</span>
+                        <span class="text-[11px] font-mono font-bold text-fuchsia-600 dark:text-fuchsia-400">{{ format_currency($totalExpenseLogged, $store) }}</span>
                     </div>
                     {{-- Category Progress Bars --}}
                     <div class="space-y-2">
@@ -521,7 +521,7 @@
                     </div>
                 </div>
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
-                    <span>This Month Outflow</span>
+                    <span>{{ __('messages.this_month_outflow') }}</span>
                     <a href="{{ url('/store/' . $store->slug . '/admin/expenses') }}" class="text-fuchsia-600 dark:text-fuchsia-400 font-semibold hover:underline">Detail →</a>
                 </div>
             </div>
@@ -534,7 +534,7 @@
                             <span>🛠️</span>
                             <span>{{ __('messages.dashboard_chart_service_title') }}</span>
                         </span>
-                        <span class="text-[10px] text-slate-400">Workshop</span>
+                        <span class="text-[10px] text-slate-400">{{ __('messages.workshop') }}</span>
                     </div>
                     {{-- 4 Stage Pipeline Cards --}}
                     <div class="grid grid-cols-2 gap-1.5">
@@ -580,11 +580,11 @@
             <div class="stat-card-3d">
                 <div class="admin-stat-label truncate">{{ __('messages.dashboard_week_orders') }}</div>
                 <div class="admin-stat-value font-mono my-0.5">{{ number_format($weekOrders) }}</div>
-                <div class="admin-stat-sub truncate">{{ __('messages.revenue') }}: Ks {{ number_format($weekRevenue) }}</div>
+                <div class="admin-stat-sub truncate">{{ __('messages.revenue') }}: {{ format_currency($weekRevenue, $store) }}</div>
             </div>
             <div class="stat-card-3d">
                 <div class="admin-stat-label truncate">{{ __('messages.dashboard_week_revenue') }}</div>
-                <div class="admin-stat-value font-mono my-0.5">Ks {{ number_format($weekRevenue) }}</div>
+                <div class="admin-stat-value font-mono my-0.5">{{ format_currency($weekRevenue, $store) }}</div>
                 <div class="admin-stat-sub truncate">{{ __('messages.dashboard_since_monday') }}</div>
             </div>
             <div class="stat-card-3d">
@@ -660,7 +660,7 @@
                 @endif
                 <div class="stat-card-3d">
                     <div class="admin-stat-label truncate">{{ __('messages.dashboard_year_revenue') }}</div>
-                    <div class="admin-stat-value text-violet-700 dark:text-violet-300 font-mono my-0.5">Ks {{ number_format($yearRevenue) }}</div>
+                    <div class="admin-stat-value text-violet-700 dark:text-violet-300 font-mono my-0.5">{{ format_currency($yearRevenue, $store) }}</div>
                     <div class="admin-stat-sub truncate">{{ __('messages.dashboard_this_calendar_year') }}</div>
                 </div>
             </div>
@@ -693,7 +693,7 @@
                 <div class="h-44 sm:h-48 pt-4">
                     <div class="flex gap-1.5 sm:gap-2 h-full items-end">
                         @foreach ($monthlySeries as $i => $m)
-                            <div class="flex-1 flex flex-col min-w-0 h-full justify-end group cursor-pointer" title="{{ $m['label'] }}: Ks {{ number_format($m['revenue']) }}">
+                            <div class="flex-1 flex flex-col min-w-0 h-full justify-end group cursor-pointer" title="{{ $m['label'] }}: {{ format_currency($m['revenue'], $store) }}">
                                 <div class="w-full rounded-t-lg bg-gradient-to-t from-violet-600 to-indigo-500 transition-all duration-300 group-hover:from-violet-500 group-hover:to-fuchsia-400 shadow-sm"
                                      style="height: {{ max(4, round(($m['revenue'] / $chartMax) * 100)) }}%"></div>
                                 <span class="text-[10px] font-mono font-bold text-slate-400 leading-tight w-full text-center truncate mt-2">{{ $m['label'] }}</span>
@@ -702,7 +702,7 @@
                     </div>
                 </div>
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
-                    <span class="font-mono text-slate-500">{{ __('messages.dashboard_total_12_mo', ['amount' => number_format($chartTotal)]) }}</span>
+                    <span class="font-mono text-slate-500">{{ __('messages.dashboard_total_12_mo', ['amount' => format_currency($chartTotal, $store)]) }}</span>
                 </div>
             @endif
         </div>
@@ -725,8 +725,8 @@
                             <span class="font-bold text-slate-800 dark:text-slate-200 truncate" title="{{ $tp->name }}">{{ $tp->name }}</span>
                         </div>
                         <div class="shrink-0 text-right font-mono">
-                            <span class="font-bold text-violet-600 dark:text-violet-400">{{ number_format($tp->qty) }} pcs</span>
-                            <span class="block text-[10px] text-slate-400">Ks {{ number_format($tp->sales) }}</span>
+                            <span class="font-bold text-violet-600 dark:text-violet-400">{{ format_quantity($tp->qty, $store) }} {{ __('messages.pcs') }}</span>
+                            <span class="block text-[10px] text-slate-400">{{ format_currency($tp->sales, $store) }}</span>
                         </div>
                     </div>
                 @empty
@@ -770,8 +770,8 @@
                                 </div>
                             @endif
                         </div>
-                        <span class="shrink-0 font-mono font-bold text-slate-800 dark:text-slate-200" title="Ks {{ number_format($order->total_amount) }}">
-                            Ks {{ number_format($order->total_amount) }}
+                        <span class="shrink-0 font-mono font-bold text-slate-800 dark:text-slate-200" title="{{ format_currency($order->total_amount, $store) }}">
+                            {{ format_currency($order->total_amount, $store) }}
                         </span>
                     </div>
                 @empty
@@ -832,8 +832,8 @@
                             <div class="truncate font-bold text-slate-900 dark:text-slate-100" title="{{ $prod->name }}">{{ $prod->name }}</div>
                             <div class="truncate text-slate-400 font-mono text-[10px] mt-0.5">SKU: {{ $prod->sku }}</div>
                         </div>
-                        <span class="shrink-0 font-mono font-bold text-violet-600 dark:text-violet-400" title="Ks {{ number_format($prod->retail_price) }}">
-                            Ks {{ number_format($prod->retail_price) }}
+                        <span class="shrink-0 font-mono font-bold text-violet-600 dark:text-violet-400" title="{{ format_currency($prod->retail_price, $store) }}">
+                            {{ format_currency($prod->retail_price, $store) }}
                         </span>
                     </div>
                 @empty

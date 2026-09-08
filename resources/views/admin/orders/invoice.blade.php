@@ -257,8 +257,8 @@
                             @endif
                         </td>
                         <td class="center">{{ $item->quantity }}</td>
-                        <td class="num">Ks {{ number_format((float) $item->unit_price) }}</td>
-                        <td class="num">Ks {{ number_format((float) $item->subtotal) }}</td>
+                        <td class="num">{{ format_currency((float) $item->unit_price, $store) }}</td>
+                        <td class="num">{{ format_currency((float) $item->subtotal, $store) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -266,11 +266,11 @@
 
         <div class="totals">
             @if ($order->agreed_amount !== null)
-                <div class="row"><span class="k">{{ __('messages.invoice_original_total') }}</span><span class="v">Ks {{ number_format((float) $order->total_amount) }}</span></div>
-                <div class="row"><span class="k">{{ __('messages.invoice_agreed_amount') }}</span><span class="v">Ks {{ number_format((float) $order->agreed_amount) }}</span></div>
-                <div class="grand"><span>{{ __('messages.invoice_total_due') }}</span><span class="v">Ks {{ number_format((float) $order->agreed_amount) }}</span></div>
+                <div class="row"><span class="k">{{ __('messages.invoice_original_total') }}</span><span class="v">{{ format_currency((float) $order->total_amount, $store) }}</span></div>
+                <div class="row"><span class="k">{{ __('messages.invoice_agreed_amount') }}</span><span class="v">{{ format_currency((float) $order->agreed_amount, $store) }}</span></div>
+                <div class="grand"><span>{{ __('messages.invoice_total_due') }}</span><span class="v">{{ format_currency((float) $order->agreed_amount, $store) }}</span></div>
             @else
-                <div class="grand"><span>{{ __('messages.invoice_total_due') }}</span><span class="v">Ks {{ number_format((float) $order->total_amount) }}</span></div>
+                <div class="grand"><span>{{ __('messages.invoice_total_due') }}</span><span class="v">{{ format_currency((float) $order->total_amount, $store) }}</span></div>
             @endif
         </div>
 

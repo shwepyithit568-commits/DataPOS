@@ -73,7 +73,7 @@
             <div class="min-w-0">
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.users_total_staff') }}</p>
                 <h3 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{{ $metrics['total_staff'] }}</h3>
-                <p class="text-[11px] text-slate-400 font-semibold mt-0.5">All Store Employees</p>
+                <p class="text-[11px] text-slate-400 font-semibold mt-0.5">{{ __('messages.all_store_employees') }}</p>
             </div>
             <span class="w-12 h-12 rounded-2xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
                 👨‍💼
@@ -85,7 +85,7 @@
             <div class="min-w-0">
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.users_active_staff') }}</p>
                 <h3 class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">{{ $metrics['active_staff'] }}</h3>
-                <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Active & Operating</p>
+                <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">{{ __('messages.active_operating') }}</p>
             </div>
             <span class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
                 🟢
@@ -97,7 +97,7 @@
             <div class="min-w-0">
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.users_leadership') }}</p>
                 <h3 class="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight">{{ $metrics['leadership_count'] }}</h3>
-                <p class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5">Owners & Managers</p>
+                <p class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5">{{ __('messages.owners_managers') }}</p>
             </div>
             <span class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
                 🛡️
@@ -109,7 +109,7 @@
             <div class="min-w-0">
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.users_suspended_staff') }}</p>
                 <h3 class="text-xl sm:text-2xl font-black {{ $metrics['suspended_staff'] > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white' }} font-mono tracking-tight">{{ $metrics['suspended_staff'] }}</h3>
-                <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Access disabled</p>
+                <p class="text-[11px] text-slate-400 font-semibold mt-0.5">{{ __('messages.access_disabled') }}</p>
             </div>
             <span class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
                 🚫
@@ -321,7 +321,7 @@
                                         <div class="font-bold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2 truncate">
                                             <span>{{ $user->name }}</span>
                                             @if ($user->id === auth()->id())
-                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">YOU</span>
+                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">{{ __('messages.you') }}</span>
                                             @endif
                                         </div>
                                         <div class="font-mono text-[11px] text-slate-400 flex items-center gap-2">
@@ -380,7 +380,7 @@
 
                                     @if (! $user->isPlatformOwner() && auth()->id() !== $user->id)
                                         <form method="POST" action="{{ route('store.admin.users.suspend', array_merge($storeRouteParams, ['user' => $user->id])) }}"
-                                              onsubmit="return confirm('{{ $status === 'suspended' ? 'အကောင့်အား ပြန်လည် အသုံးပြုခွင့် ပေးမှာ သေချာပါသလား?' : 'အသုံးပြုသူ အကောင့်အား ယာယီ ပိတ်ပင်မှာ သေချာပါသလား?' }}');">
+                                              data-confirm="{{ $status === 'suspended' ? 'အကောင့်အား ပြန်လည် အသုံးပြုခွင့် ပေးမှာ သေချာပါသလား?' : 'အသုံးပြုသူ အကောင့်အား ယာယီ ပိတ်ပင်မှာ သေချာပါသလား?' }}">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit"
@@ -391,7 +391,7 @@
                                         </form>
 
                                         <form method="POST" action="{{ route('store.admin.users.destroy', array_merge($storeRouteParams, ['user' => $user->id])) }}"
-                                              onsubmit="return confirm('အသုံးပြုသူ {{ $user->name }} ({{ $user->phone }}) အား ဤဆိုင်စာရင်းမှ ဖျက်/ဖယ်ရှားမှာ သေချာပါသလား?');">
+                                              data-confirm="အသုံးပြုသူ {{ $user->name }} ({{ $user->phone }}) အား ဤဆိုင်စာရင်းမှ ဖျက်/ဖယ်ရှားမှာ သေချာပါသလား?">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"

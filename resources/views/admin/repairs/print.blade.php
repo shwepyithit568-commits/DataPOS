@@ -601,13 +601,13 @@
                 @endif
                 @if ($repair->imei_serial)
                     <tr>
-                        <td class="lbl">IMEI / Serial:</td>
+                        <td class="lbl">{{ __('messages.imei') }} / {{ __('messages.serial') }}:</td>
                         <td class="val font-mono">{{ $repair->imei_serial }}</td>
                     </tr>
                 @endif
                 @if ($repair->pattern_lock)
                     <tr>
-                        <td class="lbl">Pattern Lock:</td>
+                        <td class="lbl">{{ __('messages.pattern_lock') }}:</td>
                         <td class="val font-mono">{{ str_replace('-', ' → ', $repair->pattern_lock) }}</td>
                     </tr>
                 @endif

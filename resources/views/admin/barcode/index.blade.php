@@ -1039,7 +1039,7 @@ window.barcodeDesignerFactory = function () {
                                         </div>
                                     </div>
                                     <div class="text-right shrink-0">
-                                        <div class="text-xs font-bold font-mono text-violet-600 dark:text-violet-400" x-text="formatNumber(item.price) + ' Ks'"></div>
+                                        <div class="text-xs font-bold font-mono text-violet-600 dark:text-violet-400" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(item.price) : formatNumber(item.price)"></div>
                                         <div class="text-[10px] text-slate-400" x-text="'Stock: ' + item.stock"></div>
                                     </div>
                                 </div>
@@ -1079,7 +1079,7 @@ window.barcodeDesignerFactory = function () {
                             <tr class="text-[10px] sm:text-[11px] font-black uppercase tracking-wider divide-x divide-slate-200 dark:divide-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">
                                 <th class="py-1.5 px-2.5 min-w-[180px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ __('messages.product') }}</th>
                                 <th class="py-1.5 px-2.5 min-w-[110px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ __('messages.barcode') }}</th>
-                                <th class="py-1.5 px-2.5 min-w-[110px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ __('messages.price') }} (Ks)</th>
+                                <th class="py-1.5 px-2.5 min-w-[110px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ __('messages.price') }}</th>
                                 <th class="py-1.5 px-2.5 text-center min-w-[120px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100">{{ __('messages.sticker_quantity') }}</th>
                                 <th class="py-1.5 px-2 text-center w-10 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100"></th>
                             </tr>
@@ -1229,14 +1229,14 @@ window.barcodeDesignerFactory = function () {
                         <div x-show="showPrice"
                              class="font-black text-slate-950 font-mono"
                              :style="`font-size: ${currentPresetObj.price_font || '11px'};`"
-                             x-text="previewItem ? formatNumber(previewItem.price) + ' Ks' : '15,000 Ks'"></div>
+                             x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(previewItem ? previewItem.price : 15000) : formatNumber(previewItem ? previewItem.price : 15000)"></div>
                     </div>
                 </div>
 
                 {{-- Summary Specs & Dimensions Details --}}
                 <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700 space-y-1 text-xs">
                     <div class="flex justify-between">
-                        <span class="text-slate-500 dark:text-slate-400">Selected Label:</span>
+                        <span class="text-slate-500 dark:text-slate-400">{{ __('messages.selected_label') }}:</span>
                         <span class="font-bold text-slate-900 dark:text-slate-100" x-text="currentPresetObj.name || selectedPreset"></span>
                     </div>
                     <div class="flex justify-between">
@@ -1245,7 +1245,7 @@ window.barcodeDesignerFactory = function () {
                               x-text="(currentPresetObj.width_mm || 50) + 'mm × ' + (currentPresetObj.height_mm || 30) + 'mm'"></span>
                     </div>
                     <div class="flex justify-between" x-show="currentPresetObj.gap_x_mm > 0 || currentPresetObj.gap_y_mm > 0">
-                        <span class="text-slate-500 dark:text-slate-400">Gap Spacing:</span>
+                        <span class="text-slate-500 dark:text-slate-400">{{ __('messages.gap_spacing') }}:</span>
                         <span class="font-mono font-bold text-amber-600 dark:text-amber-400"
                               x-text="(currentPresetObj.gap_x_mm || 0) + 'mm (X) / ' + (currentPresetObj.gap_y_mm || 0) + 'mm (Y)'"></span>
                     </div>
@@ -1303,7 +1303,7 @@ window.barcodeDesignerFactory = function () {
                         <span class="font-mono font-bold text-slate-800 dark:text-slate-200" x-text="customParams.width_mm + 'mm × ' + customParams.height_mm + 'mm'"></span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-slate-500 dark:text-slate-400">Spacing Gaps:</span>
+                        <span class="text-slate-500 dark:text-slate-400">{{ __('messages.spacing_gaps') }}:</span>
                         <span class="font-mono font-bold text-slate-800 dark:text-slate-200" x-text="(customParams.gap_x_mm || 0) + 'mm (X) / ' + (customParams.gap_y_mm || 0) + 'mm (Y)'"></span>
                     </div>
                     <div class="flex justify-between">

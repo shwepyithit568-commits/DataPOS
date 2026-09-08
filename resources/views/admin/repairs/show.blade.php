@@ -217,7 +217,7 @@
                     </div>
 
                     <div class="p-1.5 rounded bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
-                        <span class="text-[10px] text-slate-400 block font-semibold">IMEI / Serial</span>
+                        <span class="text-[10px] text-slate-400 block font-semibold">{{ __('messages.imei') }} / {{ __('messages.serial') }}</span>
                         <span class="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{{ $repair->imei_serial ?? '—' }}</span>
                     </div>
 
@@ -438,7 +438,7 @@
                                                 @elseif (! $repair->isTerminal())
                                                     <form method="POST"
                                                           action="{{ route('store.admin.repairs.items.deduct', [...$storeRouteParams, 'repair' => $repair->id, 'item' => $item->id]) }}"
-                                                          onsubmit="return confirm('{{ __('messages.repair_deduct_confirm') ?? 'Deduct stock for this part?' }}')">
+                                                          data-confirm="{{ __('messages.repair_deduct_confirm') ?? 'Deduct stock for this part?' }}">
                                                         @csrf
                                                         <button type="submit"
                                                                 class="h-6 px-2 rounded text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition cursor-pointer">

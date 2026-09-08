@@ -80,7 +80,7 @@
                         <span>{{ __('messages.po_edit') }}</span>
                     </a>
                     <form method="POST" action="{{ route('pos.purchases.destroy', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id]) }}"
-                          onsubmit="return confirm('{{ __('messages.po_confirm_delete', ['number' => $po->po_number]) }}');"
+                          data-confirm="{{ __('messages.po_confirm_delete', ['number' => $po->po_number]) }}"
                           class="contents">
                         @csrf
                         @method('DELETE')
@@ -502,7 +502,7 @@
 
                             {{-- Delete Voucher Image Form --}}
                             <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id . '/vouchers/' . $vIdx) }}"
-                                  onsubmit="return confirm('Delete this voucher image?')"
+                                  data-confirm="Delete this voucher image?"
                                   class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition">
                                 @csrf
                                 @method('DELETE')

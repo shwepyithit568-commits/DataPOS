@@ -393,7 +393,7 @@
                                 </form>
                                 <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/adjustments/' . $req->id . '/reject') }}">
                                     @csrf
-                                    <button type="submit" onclick="return confirm('{{ __('messages.adjustment_reject_confirm') }}')"
+                                    <button type="submit" data-confirm="{{ __('messages.adjustment_reject_confirm') }}"
                                             class="h-7 px-2.5 rounded-md text-xs font-bold bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition cursor-pointer active:scale-95" title="Reject">
                                         <span>✕ {{ __('messages.adjustment_reject') }}</span>
                                     </button>
@@ -503,7 +503,7 @@
                                             </form>
                                             <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/adjustments/' . $req->id . '/reject') }}">
                                                 @csrf
-                                                <button type="submit" onclick="return confirm('{{ __('messages.adjustment_reject_confirm') }}')"
+                                                <button type="submit" data-confirm="{{ __('messages.adjustment_reject_confirm') }}"
                                                         class="h-6 px-2 rounded text-[11px] font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition cursor-pointer">
                                                     {{ __('messages.adjustment_reject') }}
                                                 </button>

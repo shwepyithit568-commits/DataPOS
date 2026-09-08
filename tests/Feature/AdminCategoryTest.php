@@ -700,7 +700,7 @@ class AdminCategoryTest extends TestCase
 
         $page = $this->actingAs($manager)->get($res->headers->get('Location') ?? $this->url($store));
         $page->assertStatus(200);
-        $page->assertSee('Errors:', false);
+        $page->assertSee(__('messages.errors') . ':', false);
     }
 
     public function test_create_category_button_renders_when_store_is_empty(): void

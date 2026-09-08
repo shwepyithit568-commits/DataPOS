@@ -222,7 +222,7 @@
                         <th class="py-2.5 px-3 min-w-[170px]">{{ __('messages.reviews_reviewer_details') }}</th>
                         <th class="py-2.5 px-3 text-center min-w-[110px]">{{ __('messages.reviews_avg_rating') }}</th>
                         <th class="py-2.5 px-3 min-w-[190px]">{{ __('messages.reviews_product_details') }}</th>
-                        <th class="py-2.5 px-3 min-w-[240px]">Feedback / Comment</th>
+                        <th class="py-2.5 px-3 min-w-[240px]">{{ __('messages.feedback_comment') }}</th>
                         <th class="py-2.5 px-3 min-w-[120px]">{{ __('messages.date') }}</th>
                         <th class="py-2.5 px-3 text-center min-w-[110px]">{{ __('messages.status') }}</th>
                         <th class="py-2.5 pl-3 pr-4 text-right w-24">{{ __('messages.actions') }}</th>
@@ -305,7 +305,7 @@
                                         "{{ $r->comment }}"
                                     </div>
                                 @else
-                                    <span class="text-slate-400 text-xs italic">No written comment</span>
+                                    <span class="text-slate-400 text-xs italic">{{ __('messages.no_comment') }}</span>
                                 @endif
                             </td>
 
@@ -344,7 +344,7 @@
 
                                     {{-- Delete --}}
                                     <form method="POST" action="{{ route('store.admin.reviews.destroy', ['store_slug' => $store->slug, 'review' => $r->id]) }}"
-                                          onsubmit="return confirm('{{ __('messages.reviews_delete_confirm') }}')" class="inline">
+                                          data-confirm="{{ __('messages.reviews_delete_confirm') }}" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
@@ -450,7 +450,7 @@
                             </form>
 
                             <form method="POST" action="{{ route('store.admin.reviews.destroy', ['store_slug' => $store->slug, 'review' => $r->id]) }}"
-                                  onsubmit="return confirm('{{ __('messages.reviews_delete_confirm') }}')">
+                                  data-confirm="{{ __('messages.reviews_delete_confirm') }}">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="p-1 text-slate-400 hover:text-rose-600 transition" title="{{ __('messages.delete') }}">
@@ -538,7 +538,7 @@
 
                     {{-- Feedback Comment --}}
                     <div>
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Feedback / Comment</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">{{ __('messages.feedback_comment') }}</span>
                         <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 text-slate-800 dark:text-slate-200 whitespace-pre-line leading-relaxed"
                              x-text="selectedReview.comment || 'No written comment.'">
                         </div>

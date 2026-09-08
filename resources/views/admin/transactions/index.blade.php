@@ -518,9 +518,9 @@
         <div class="sm:hidden px-2.5 py-1 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200/60 dark:border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
             <span class="flex items-center gap-1">
                 <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-                <span>Swipe horizontally to view all columns</span>
+                <span>{{ __('messages.swipe_hint') }}</span>
             </span>
-            <span class="font-mono text-[9px] uppercase tracking-wider text-slate-400">Scrollable</span>
+            <span class="font-mono text-[9px] uppercase tracking-wider text-slate-400">{{ __('messages.scrollable') }}</span>
         </div>
 
         <div class="overflow-x-auto">

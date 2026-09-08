@@ -50,7 +50,7 @@
                     <span>🛠️</span>
                     <span>{{ __('messages.sidebar_service_jobs') }}</span>
                     <span class="text-slate-400 dark:text-slate-500">·</span>
-                    <span class="font-normal normal-case text-slate-500 dark:text-slate-400">New Service Job Intake</span>
+                    <span class="font-normal normal-case text-slate-500 dark:text-slate-400">{{ __('messages.new_service_job_intake') }}</span>
                 </div>
                 <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                     <span>{{ __('messages.repair_new_job') }}</span>

@@ -192,7 +192,7 @@
                     <tr class="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider divide-x divide-slate-300 dark:divide-slate-700">
                         <th class="py-2.5 px-3 min-w-[260px]">Article / Post Title</th>
                         <th class="py-2.5 px-3 text-center min-w-[120px]">{{ __('messages.categories') }}</th>
-                        <th class="py-2.5 px-3 min-w-[180px]">Storefront Slug / Link</th>
+                        <th class="py-2.5 px-3 min-w-[180px]">{{ __('messages.blog_storefront_slug_link') }}</th>
                         <th class="py-2.5 px-3 min-w-[120px]">{{ __('messages.date') }}</th>
                         <th class="py-2.5 px-3 text-center min-w-[110px]">{{ __('messages.status') }}</th>
                         <th class="py-2.5 pl-3 pr-4 text-right w-28">{{ __('messages.actions') }}</th>
@@ -271,7 +271,7 @@
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                     </a>
                                     <form method="POST" action="{{ route('store.admin.blog.destroy', ['store_slug' => $store->slug, 'post' => $post->id]) }}"
-                                          onsubmit="return confirm('{{ __('messages.blog_delete_confirm') }}')" class="inline">
+                                          data-confirm="{{ __('messages.blog_delete_confirm') }}" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="p-1.5 rounded-lg text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition" title="{{ __('messages.delete') }}">
@@ -358,7 +358,7 @@
                         <div class="px-3 py-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
                             <a href="{{ url('/blog/' . $post->slug . '?store_slug=' . $store->slug) }}" target="_blank"
                                class="text-xs text-sky-600 dark:text-sky-400 hover:underline font-bold flex items-center gap-1">
-                                <span>Preview</span>
+                                <span>{{ __('messages.preview') }}</span>
                                 <span>↗</span>
                             </a>
                             <div class="flex items-center gap-1">
@@ -367,7 +367,7 @@
                                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                 </a>
                                 <form method="POST" action="{{ route('store.admin.blog.destroy', ['store_slug' => $store->slug, 'post' => $post->id]) }}"
-                                      onsubmit="return confirm('{{ __('messages.blog_delete_confirm') }}')" class="inline">
+                                      data-confirm="{{ __('messages.blog_delete_confirm') }}" class="inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 transition" title="{{ __('messages.delete') }}">

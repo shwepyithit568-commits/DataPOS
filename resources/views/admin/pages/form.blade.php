@@ -183,14 +183,14 @@
                         </label>
                         {{-- Markdown Quick Toolbar --}}
                         <div class="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                            <button type="button" @click="insertMd('**', '**', 'my')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Bold">B</button>
-                            <button type="button" @click="insertMd('*', '*', 'my')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs italic font-serif" title="Italic">I</button>
+                            <button type="button" @click="insertMd('**', '**', 'my')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Bold">{{ __('messages.bold') }}</button>
+                            <button type="button" @click="insertMd('*', '*', 'my')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs italic font-serif" title="Italic">{{ __('messages.italic') }}</button>
                             <button type="button" @click="insertMd('# ', '', 'my')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Heading 1">H1</button>
                             <button type="button" @click="insertMd('## ', '', 'my')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Heading 2">H2</button>
                             <button type="button" @click="insertMd('### ', '', 'my')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Heading 3">H3</button>
                             <button type="button" @click="insertMd('- ', '', 'my')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs" title="Bullet List">• List</button>
                             <button type="button" @click="insertMd('> ', '', 'my')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-serif" title="Quote">“ Quote</button>
-                            <button type="button" @click="insertMd('`', '`', 'my')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-mono" title="Code">Code</button>
+                            <button type="button" @click="insertMd('`', '`', 'my')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-mono" title="Code">{{ __('messages.code') }}</button>
                             <button type="button" @click="insertMd('[Link Text](', ')', 'my')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs" title="Link">🔗</button>
                             <button type="button" @click="insertMd('\n| Col 1 | Col 2 |\n|---|---|\n| Val 1 | Val 2 |\n', '', 'my')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs" title="Table">📊</button>
                         </div>
@@ -242,14 +242,14 @@
                             {{ __('messages.page_content_markdown') }} ({{ __('messages.language_english') }})
                         </label>
                         <div class="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                            <button type="button" @click="insertMd('**', '**', 'en')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Bold">B</button>
-                            <button type="button" @click="insertMd('*', '*', 'en')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs italic font-serif" title="Italic">I</button>
+                            <button type="button" @click="insertMd('**', '**', 'en')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Bold">{{ __('messages.bold') }}</button>
+                            <button type="button" @click="insertMd('*', '*', 'en')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs italic font-serif" title="Italic">{{ __('messages.italic') }}</button>
                             <button type="button" @click="insertMd('# ', '', 'en')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Heading 1">H1</button>
                             <button type="button" @click="insertMd('## ', '', 'en')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Heading 2">H2</button>
                             <button type="button" @click="insertMd('### ', '', 'en')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Heading 3">H3</button>
                             <button type="button" @click="insertMd('- ', '', 'en')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs" title="Bullet List">• List</button>
                             <button type="button" @click="insertMd('> ', '', 'en')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-serif" title="Quote">“ Quote</button>
-                            <button type="button" @click="insertMd('`', '`', 'en')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-mono" title="Code">Code</button>
+                            <button type="button" @click="insertMd('`', '`', 'en')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-mono" title="Code">{{ __('messages.code') }}</button>
                             <button type="button" @click="insertMd('[Link Text](', ')', 'en')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs" title="Link">🔗</button>
                             <button type="button" @click="insertMd('\n| Col 1 | Col 2 |\n|---|---|\n| Val 1 | Val 2 |\n', '', 'en')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs" title="Table">📊</button>
                         </div>
@@ -297,14 +297,14 @@
                             {{ __('messages.page_content_markdown') }} ({{ __('messages.language_chinese') }})
                         </label>
                         <div class="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                            <button type="button" @click="insertMd('**', '**', 'zh')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Bold">B</button>
-                            <button type="button" @click="insertMd('*', '*', 'zh')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs italic font-serif" title="Italic">I</button>
+                            <button type="button" @click="insertMd('**', '**', 'zh')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Bold">{{ __('messages.bold') }}</button>
+                            <button type="button" @click="insertMd('*', '*', 'zh')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs italic font-serif" title="Italic">{{ __('messages.italic') }}</button>
                             <button type="button" @click="insertMd('# ', '', 'zh')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Heading 1">H1</button>
                             <button type="button" @click="insertMd('## ', '', 'zh')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Heading 2">H2</button>
                             <button type="button" @click="insertMd('### ', '', 'zh')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold" title="Heading 3">H3</button>
                             <button type="button" @click="insertMd('- ', '', 'zh')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs" title="Bullet List">• List</button>
                             <button type="button" @click="insertMd('> ', '', 'zh')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-serif" title="Quote">“ Quote</button>
-                            <button type="button" @click="insertMd('`', '`', 'zh')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-mono" title="Code">Code</button>
+                            <button type="button" @click="insertMd('`', '`', 'zh')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-mono" title="Code">{{ __('messages.code') }}</button>
                             <button type="button" @click="insertMd('[Link Text](', ')', 'zh')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs" title="Link">🔗</button>
                             <button type="button" @click="insertMd('\n| Col 1 | Col 2 |\n|---|---|\n| Val 1 | Val 2 |\n', '', 'zh')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-xs" title="Table">📊</button>
                         </div>

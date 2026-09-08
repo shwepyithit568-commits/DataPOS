@@ -108,15 +108,15 @@
     <div class="meta-grid">
         <div class="kpi-card">
             <span>{{ __('messages.inv_val_total_cost') }}</span>
-            <h3 class="font-mono">Ks {{ number_format($metrics['total_cost_value']) }}</h3>
+            <h3 class="font-mono">{{ format_currency($metrics['total_cost_value'], $store) }}</h3>
         </div>
         <div class="kpi-card">
             <span>{{ __('messages.inv_val_total_retail') }}</span>
-            <h3 class="font-mono">Ks {{ number_format($metrics['total_retail_value']) }}</h3>
+            <h3 class="font-mono">{{ format_currency($metrics['total_retail_value'], $store) }}</h3>
         </div>
         <div class="kpi-card">
             <span>{{ __('messages.inv_val_potential_profit') }}</span>
-            <h3 class="font-mono" style="color: #16a34a;">Ks {{ number_format($metrics['potential_profit']) }}</h3>
+            <h3 class="font-mono" style="color: #16a34a;">{{ format_currency($metrics['potential_profit'], $store) }}</h3>
         </div>
         <div class="kpi-card">
             <span>{{ __('messages.inv_val_units_on_hand') }}</span>
@@ -128,16 +128,16 @@
         <thead>
             <tr>
                 <th style="width: 30px;">#</th>
-                <th>SKU</th>
-                <th>Product Name</th>
-                <th>Category</th>
-                <th class="text-center">Qty</th>
-                <th class="text-right">Unit Cost</th>
-                <th class="text-right">Total Cost Value</th>
-                <th class="text-right">Retail Price</th>
-                <th class="text-right">Total Retail Value</th>
-                <th class="text-right">Potential Profit</th>
-                <th class="text-center">Margin</th>
+                <th>{{ __('messages.sku') }}</th>
+                <th>{{ __('messages.product_name') }}</th>
+                <th>{{ __('messages.category') }}</th>
+                <th class="text-center">{{ __('messages.qty') }}</th>
+                <th class="text-right">{{ __('messages.unit_cost') }}</th>
+                <th class="text-right">{{ __('messages.total_cost_value') }}</th>
+                <th class="text-right">{{ __('messages.retail_price') }}</th>
+                <th class="text-right">{{ __('messages.total_retail_value') }}</th>
+                <th class="text-right">{{ __('messages.potential_profit') }}</th>
+                <th class="text-center">{{ __('messages.margin') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -148,33 +148,33 @@
                     <td class="font-mono">{{ $p->sku ?? '-' }}</td>
                     <td><strong>{{ $p->name }}</strong></td>
                     <td>{{ $p->category?->name ?? '-' }}</td>
-                    <td class="text-center font-mono">{{ number_format($p->computed_qty) }}</td>
-                    <td class="text-right font-mono">{{ number_format($p->computed_cost) }}</td>
-                    <td class="text-right font-mono" style="font-weight: bold; color: #dc2626;">{{ number_format($p->computed_cost_value) }}</td>
-                    <td class="text-right font-mono">{{ number_format((float) $p->retail_price) }}</td>
-                    <td class="text-right font-mono">{{ number_format($p->computed_retail_value) }}</td>
-                    <td class="text-right font-mono" style="color: #16a34a;">{{ number_format($p->computed_profit) }}</td>
+                    <td class="text-center font-mono">{{ format_quantity($p->computed_qty, $store) }}</td>
+                    <td class="text-right font-mono">{{ format_currency($p->computed_cost, $store) }}</td>
+                    <td class="text-right font-mono" style="font-weight: bold; color: #dc2626;">{{ format_currency($p->computed_cost_value, $store) }}</td>
+                    <td class="text-right font-mono">{{ format_currency((float) $p->retail_price, $store) }}</td>
+                    <td class="text-right font-mono">{{ format_currency($p->computed_retail_value, $store) }}</td>
+                    <td class="text-right font-mono" style="color: #16a34a;">{{ format_currency($p->computed_profit, $store) }}</td>
                     <td class="text-center">{{ $p->computed_margin }}%</td>
                 </tr>
             @endforeach
         </tbody>
         <tfoot>
             <tr style="background: #f8fafc; font-weight: bold;">
-                <td colspan="4" class="text-right">Grand Total:</td>
-                <td class="text-center font-mono">{{ number_format($metrics['total_units']) }}</td>
+                <td colspan="4" class="text-right">{{ __('messages.grand_total') }}:</td>
+                <td class="text-center font-mono">{{ format_quantity($metrics['total_units'], $store) }}</td>
                 <td></td>
-                <td class="text-right font-mono">{{ number_format($metrics['total_cost_value']) }}</td>
+                <td class="text-right font-mono">{{ format_currency($metrics['total_cost_value'], $store) }}</td>
                 <td></td>
-                <td class="text-right font-mono">{{ number_format($metrics['total_retail_value']) }}</td>
-                <td class="text-right font-mono">{{ number_format($metrics['potential_profit']) }}</td>
+                <td class="text-right font-mono">{{ format_currency($metrics['total_retail_value'], $store) }}</td>
+                <td class="text-right font-mono">{{ format_currency($metrics['potential_profit'], $store) }}</td>
                 <td class="text-center">{{ $metrics['potential_margin'] }}%</td>
             </tr>
         </tfoot>
     </table>
 
     <div class="footer">
-        <span>DataPOS Inventory Valuation System</span>
-        <span>Page 1 of 1</span>
+        <span>DataPOS {{ __('messages.inventory_valuation_system') }}</span>
+        <span>{{ __('messages.page_label') }} 1 / 1</span>
     </div>
 
 </body>

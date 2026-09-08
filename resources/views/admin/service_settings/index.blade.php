@@ -298,7 +298,7 @@
                                         ✏️ {{ __('messages.edit') }}
                                     </button>
                                     <form method="POST" action="{{ route('store.admin.service_settings.destroy', [...$storeRouteParams, 'service_setting' => $item->id]) }}"
-                                          onsubmit="return confirm('{{ __('messages.confirm_delete') }}');">
+                                          data-confirm="{{ __('messages.confirm_delete') }}">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
@@ -389,7 +389,7 @@
                         <span>{{ __('messages.edit') }}</span>
                     </button>
                     <form method="POST" action="{{ route('store.admin.service_settings.destroy', [...$storeRouteParams, 'service_setting' => $item->id]) }}"
-                          onsubmit="return confirm('{{ __('messages.confirm_delete') }}');">
+                          data-confirm="{{ __('messages.confirm_delete') }}">
                         @csrf
                         @method('DELETE')
                         <button type="submit"

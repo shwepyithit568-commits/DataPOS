@@ -58,7 +58,7 @@
             <div class="min-w-0">
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.debt_aging_total_receivables') }}</p>
                 <h3 class="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight tabular-nums">
-                    Ks {{ number_format($metrics['total_outstanding']) }}
+                    {{ format_currency($metrics['total_outstanding'], $store) }}
                 </h3>
                 <p class="text-[11px] text-slate-400 font-semibold mt-0.5">{{ number_format($metrics['total_debtors']) }} {{ __('messages.debt_aging_total_debtors') }}</p>
             </div>
@@ -72,7 +72,7 @@
             <div class="min-w-0">
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.debt_aging_bucket_0_30') }}</p>
                 <h3 class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight tabular-nums">
-                    Ks {{ number_format($metrics['bucket_0_30']) }}
+                    {{ format_currency($metrics['bucket_0_30'], $store) }}
                 </h3>
                 <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">{{ $metrics['pct_current'] }}% {{ __('messages.debt_aging_pct_of_total') }}</p>
             </div>
@@ -86,7 +86,7 @@
             <div class="min-w-0">
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.debt_aging_bucket_31_60') }}</p>
                 <h3 class="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight tabular-nums">
-                    Ks {{ number_format($metrics['bucket_31_60']) }}
+                    {{ format_currency($metrics['bucket_31_60'], $store) }}
                 </h3>
                 <p class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">{{ __('messages.debt_aging_need_reminder') }}</p>
             </div>
@@ -100,7 +100,7 @@
             <div class="min-w-0">
                 <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.debt_aging_bucket_90_plus') }}</p>
                 <h3 class="text-xl sm:text-2xl font-black text-rose-700 dark:text-rose-400 font-mono tracking-tight tabular-nums">
-                    Ks {{ number_format($metrics['bucket_61_90'] + $metrics['bucket_90_plus']) }}
+                    {{ format_currency($metrics['bucket_61_90'] + $metrics['bucket_90_plus'], $store) }}
                 </h3>
                 <p class="text-[11px] text-rose-600 dark:text-rose-400 font-bold mt-0.5">{{ $metrics['high_risk_debtors'] }} {{ __('messages.debt_aging_high_risk') }}</p>
             </div>
@@ -121,7 +121,7 @@
         <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-3">
             <div class="flex items-center justify-between text-xs">
                 <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">{{ __('messages.debt_aging_health_overview') }}</span>
-                <span class="font-mono text-slate-400 font-bold">100% (Ks {{ number_format($metrics['total_outstanding']) }})</span>
+                <span class="font-mono text-slate-400 font-bold">100% ({{ format_currency($metrics['total_outstanding'], $store) }})</span>
             </div>
             
             {{-- Multi-colored segmented progress bar --}}
@@ -238,7 +238,7 @@
                     <div class="p-3 rounded-2xl bg-rose-50/60 dark:bg-rose-950/30 flex items-center justify-between">
                         <span class="text-rose-600 dark:text-rose-400 text-xs font-bold">{{ __('messages.debt_aging_total_receivables') }}</span>
                         <span class="font-mono font-black text-rose-700 dark:text-rose-300 text-base">
-                            Ks {{ number_format($c['total_due']) }}
+                            {{ format_currency($c['total_due'], $store) }}
                         </span>
                     </div>
 
@@ -246,25 +246,25 @@
                         <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                             <span class="text-slate-400 block text-[10px] font-bold">{{ __('messages.debt_aging_col_0_30') }}</span>
                             <span class="font-mono font-bold text-slate-700 dark:text-slate-300">
-                                Ks {{ number_format($c['bucket_0_30']) }}
+                                {{ format_currency($c['bucket_0_30'], $store) }}
                             </span>
                         </div>
                         <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                             <span class="text-slate-400 block text-[10px] font-bold">{{ __('messages.debt_aging_col_31_60') }}</span>
                             <span class="font-mono font-bold text-slate-700 dark:text-slate-300">
-                                Ks {{ number_format($c['bucket_31_60']) }}
+                                {{ format_currency($c['bucket_31_60'], $store) }}
                             </span>
                         </div>
                         <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                             <span class="text-slate-400 block text-[10px] font-bold">{{ __('messages.debt_aging_col_61_90') }}</span>
                             <span class="font-mono font-bold text-orange-600 dark:text-orange-400">
-                                Ks {{ number_format($c['bucket_61_90']) }}
+                                {{ format_currency($c['bucket_61_90'], $store) }}
                             </span>
                         </div>
                         <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                             <span class="text-slate-400 block text-[10px] font-bold">{{ __('messages.debt_aging_col_90_plus') }}</span>
                             <span class="font-mono font-bold text-rose-600 dark:text-rose-400">
-                                Ks {{ number_format($c['bucket_90_plus']) }}
+                                {{ format_currency($c['bucket_90_plus'], $store) }}
                             </span>
                         </div>
                     </div>
@@ -315,19 +315,19 @@
                                 </div>
                             </td>
                             <td class="py-3.5 px-4 text-right font-mono font-black text-rose-600 dark:text-rose-400 text-sm tabular-nums">
-                                Ks {{ number_format($c['total_due']) }}
+                                {{ format_currency($c['total_due'], $store) }}
                             </td>
                             <td class="py-3.5 px-4 text-right font-mono text-emerald-600 dark:text-emerald-400 font-semibold tabular-nums">
-                                {{ $c['bucket_0_30'] > 0 ? 'Ks ' . number_format($c['bucket_0_30']) : '-' }}
+                                {{ $c['bucket_0_30'] > 0 ? format_currency($c['bucket_0_30'], $store) : '-' }}
                             </td>
                             <td class="py-3.5 px-4 text-right font-mono text-amber-600 dark:text-amber-400 font-semibold tabular-nums">
-                                {{ $c['bucket_31_60'] > 0 ? 'Ks ' . number_format($c['bucket_31_60']) : '-' }}
+                                {{ $c['bucket_31_60'] > 0 ? format_currency($c['bucket_31_60'], $store) : '-' }}
                             </td>
                             <td class="py-3.5 px-4 text-right font-mono text-orange-600 dark:text-orange-400 font-semibold tabular-nums">
-                                {{ $c['bucket_61_90'] > 0 ? 'Ks ' . number_format($c['bucket_61_90']) : '-' }}
+                                {{ $c['bucket_61_90'] > 0 ? format_currency($c['bucket_61_90'], $store) : '-' }}
                             </td>
                             <td class="py-3.5 px-4 text-right font-mono text-rose-600 dark:text-rose-400 font-black tabular-nums">
-                                {{ $c['bucket_90_plus'] > 0 ? 'Ks ' . number_format($c['bucket_90_plus']) : '-' }}
+                                {{ $c['bucket_90_plus'] > 0 ? format_currency($c['bucket_90_plus'], $store) : '-' }}
                             </td>
                             <td class="py-3.5 px-4 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
                                 {{ $c['max_overdue_days'] }} {{ __('messages.debt_aging_days_unit') }}
@@ -374,7 +374,7 @@
 
             <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 text-xs font-medium text-slate-700 dark:text-slate-300 space-y-2 border border-slate-100 dark:border-slate-700">
                 <p><strong>{{ __('messages.debt_aging_reminder_customer') }}</strong> <span x-text="reminderCustomer.name"></span> (<span x-text="reminderCustomer.phone"></span>)</p>
-                <p><strong>{{ __('messages.debt_aging_reminder_balance') }}</strong> Ks <span class="font-bold text-rose-600 font-mono" x-text="Number(reminderCustomer.due).toLocaleString()"></span></p>
+                <p><strong>{{ __('messages.debt_aging_reminder_balance') }}</strong> <span class="font-bold text-rose-600 font-mono" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(reminderCustomer.due) : Number(reminderCustomer.due).toLocaleString()"></span></p>
                 <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 font-sans leading-relaxed text-slate-600 dark:text-slate-300">
                     မင်္ဂလာပါ <span class="font-bold" x-text="reminderCustomer.name"></span> ခင်ဗျာ - <strong>{{ $store->name }}</strong> မှ လူကြီးမင်း၏ ကျန်ရှိသော အကြွေးငွေ ကျပ် <strong class="text-rose-600" x-text="Number(reminderCustomer.due).toLocaleString()"></strong> အား အဆင်ပြေသည့်အချိန်တွင် လာရောက်ရှင်းလင်းပေးပါရန် လေးစားစွာ အသိပေးအပ်ပါသည်ခင်ဗျာ။
                 </div>

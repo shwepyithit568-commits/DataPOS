@@ -140,7 +140,7 @@
                     {{ __('messages.supplier_col_outstanding') }}
                 </p>
                 <div class="text-xs sm:text-sm font-black font-mono text-amber-600 dark:text-amber-400 tabular-nums mt-0.5 truncate">
-                    Ks {{ number_format((float) $stats['owing_amount'], 0) }}
+                    {{ format_currency((float) $stats['owing_amount'], $store) }}
                 </div>
             </div>
         </div>
@@ -235,7 +235,7 @@
                                             <span class="text-[10px] text-slate-400 block truncate">{{ $supplier->email }}</span>
                                         @endif
                                         @if ($highlightSupplier && (int) $highlightSupplier === (int) $supplier->id)
-                                            <span class="inline-block mt-0.5 px-1.5 py-0.2 rounded-full bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 text-[9px] font-bold">NEW</span>
+                                            <span class="inline-block mt-0.5 px-1.5 py-0.2 rounded-full bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 text-[9px] font-bold">{{ __('messages.condition_new') }}</span>
                                         @endif
                                     </div>
                                 </div>
@@ -274,7 +274,7 @@
                             <td class="py-1.5 px-2.5 text-right whitespace-nowrap">
                                 @if ($supplier->has_outstanding_balance)
                                     <span class="inline-flex items-center px-1.5 py-0.2 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs font-black font-mono">
-                                        Ks {{ number_format($supplier->remaining_balance, 0) }}
+                                        {{ format_currency($supplier->remaining_balance, $store) }}
                                     </span>
                                 @else
                                     <span class="text-xs text-slate-400 font-mono">—</span>
@@ -353,23 +353,23 @@
                     {{-- Contact & Email --}}
                     <div class="text-[11px] space-y-0.5 text-slate-500 dark:text-slate-400">
                         @if ($supplier->contact_person)
-                            <div class="truncate"><span class="text-slate-400">Contact:</span> {{ $supplier->contact_person }}</div>
+                            <div class="truncate"><span class="text-slate-400">{{ __('messages.contact') }}:</span> {{ $supplier->contact_person }}</div>
                         @endif
                         @if ($supplier->email)
-                            <div class="truncate font-mono"><span class="text-slate-400">Email:</span> {{ $supplier->email }}</div>
+                            <div class="truncate font-mono"><span class="text-slate-400">{{ __('messages.email') }}:</span> {{ $supplier->email }}</div>
                         @endif
                     </div>
 
                     {{-- Financial Stats Box --}}
                     <div class="bg-slate-50 dark:bg-slate-800/60 p-1.5 rounded border border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                         <div>
-                            <span class="text-[10px] text-slate-400 block uppercase font-bold">Purchase Orders</span>
+                            <span class="text-[10px] text-slate-400 block uppercase font-bold">{{ __('messages.purchase_orders') }}</span>
                             <span class="font-mono font-bold text-slate-700 dark:text-slate-300">{{ $supplier->purchase_orders_count }} PO</span>
                         </div>
                         <div class="text-right">
-                            <span class="text-[10px] text-slate-400 block uppercase font-bold">Payables</span>
+                            <span class="text-[10px] text-slate-400 block uppercase font-bold">{{ __('messages.payables') }}</span>
                             <span class="font-mono font-black {{ $supplier->has_outstanding_balance ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400' }}">
-                                {{ $supplier->has_outstanding_balance ? 'Ks ' . number_format($supplier->remaining_balance, 0) : 'Clear' }}
+                                {{ $supplier->has_outstanding_balance ? format_currency($supplier->remaining_balance, $store) : __('messages.clear') }}
                             </span>
                         </div>
                     </div>
@@ -506,7 +506,7 @@
                             </span>
                             <span x-show="saving" class="inline-flex items-center gap-1.5">
                                 <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                                <span>Saving...</span>
+                                <span>{{ __('messages.processing') }}</span>
                             </span>
                         </button>
                     </div>
@@ -540,7 +540,7 @@
                         <button type="submit" :disabled="deleting"
                                 class="h-7 px-4 rounded bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-2xs hover:shadow-rose-500/20 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
                             <span x-show="!deleting">{{ __('messages.delete') }}</span>
-                            <span x-show="deleting">Deleting...</span>
+                            <span x-show="deleting">{{ __('messages.deleting') }}</span>
                         </button>
                     </div>
                 </form>

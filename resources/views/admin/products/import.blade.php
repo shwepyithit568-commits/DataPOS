@@ -179,7 +179,7 @@
                                     <td class="py-1 px-2 font-bold">{{ $row['name'] }}</td>
                                     <td class="py-1 px-2 text-slate-600 dark:text-slate-400">{{ $row['brand'] ?? '—' }}</td>
                                     <td class="py-1 px-2 text-slate-600 dark:text-slate-400">{{ $row['category'] ?? '—' }}</td>
-                                    <td class="py-1 px-2 text-right font-mono font-bold tabular-nums">Ks {{ number_format((float) ($row['retail_price'] ?? 0)) }}</td>
+                                    <td class="py-1 px-2 text-right font-mono font-bold tabular-nums">{{ format_currency((float) ($row['retail_price'] ?? 0), $store) }}</td>
                                     <td class="py-1 px-2 text-center">
                                         @if (($row['stock_status'] ?? null) === 'out_of_stock')
                                             <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">{{ __('messages.out_of_stock') }}</span>
@@ -205,7 +205,7 @@
                 <details class="bg-rose-50/60 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded p-2">
                     <summary class="cursor-pointer text-xs font-bold text-rose-800 dark:text-rose-300 flex items-center justify-between select-none">
                         <span>❌ {{ __('messages.failed_products') }} ({{ count($preview['failed_rows']) }})</span>
-                        <span class="text-[10px] text-rose-600 font-normal">Click to expand</span>
+                        <span class="text-[10px] text-rose-600 font-normal">{{ __('messages.click_to_expand') }}</span>
                     </summary>
                     <div class="mt-1.5 space-y-1 text-xs bg-white dark:bg-slate-900 border border-rose-200/80 dark:border-rose-800/80 rounded p-2 max-h-40 overflow-y-auto font-mono">
                         @foreach ($preview['failed_rows'] as $fr)
@@ -324,7 +324,7 @@
                         </span>
                         <span x-show="uploading" class="inline-flex items-center gap-1">
                             <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                            <span>Processing...</span>
+                            <span>{{ __('messages.processing') }}</span>
                         </span>
                     </button>
                 </div>
@@ -352,7 +352,7 @@
                     </p>
                     <p>
                         <strong>🏷️ Variants & Specifications:</strong>
-                        The <code class="bg-slate-200 dark:bg-slate-700 px-1 py-0.2 rounded font-mono text-[10px]">variants</code> column accepts a JSON array where each variant holds its own retail_price, wholesale_price, sku, and stock_status:
+                        The <code class="bg-slate-200 dark:bg-slate-700 px-1 py-0.2 rounded font-mono text-[10px]">{{ __('messages.variants') }}</code> column accepts a JSON array where each variant holds its own retail_price, wholesale_price, sku, and stock_status:
                         <code class="block font-mono text-[10px] bg-white dark:bg-slate-900 p-1 rounded mt-1 select-all border border-slate-200 dark:border-slate-800">[{"name":"Type C","sku":"L2009-TC","retail_price":5000,"wholesale_price":4500,"stock_status":"in_stock"},{"name":"Lightning","sku":"L2009-LT","retail_price":7000,"wholesale_price":6300,"stock_status":"in_stock"}]</code>
                     </p>
                 </div>
@@ -374,12 +374,12 @@
             <table class="w-full text-left text-xs divide-y divide-slate-200 dark:divide-slate-800">
                 <thead class="bg-slate-100 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 font-bold uppercase text-[11px] select-none">
                     <tr class="divide-x divide-slate-200 dark:divide-slate-700">
-                        <th class="py-1.5 px-2.5">Date & Time</th>
-                        <th class="py-1.5 px-2.5">Filename</th>
-                        <th class="py-1.5 px-2.5">User</th>
-                        <th class="py-1.5 px-2.5 text-center">Total</th>
-                        <th class="py-1.5 px-2.5 text-center text-emerald-600 dark:text-emerald-400">Success</th>
-                        <th class="py-1.5 px-2.5 text-center text-rose-600 dark:text-rose-400">Failed</th>
+                        <th class="py-1.5 px-2.5">{{ __('messages.date_time') }}</th>
+                        <th class="py-1.5 px-2.5">{{ __('messages.filename') }}</th>
+                        <th class="py-1.5 px-2.5">{{ __('messages.user') }}</th>
+                        <th class="py-1.5 px-2.5 text-center">{{ __('messages.total') }}</th>
+                        <th class="py-1.5 px-2.5 text-center text-emerald-600 dark:text-emerald-400">{{ __('messages.success') }}</th>
+                        <th class="py-1.5 px-2.5 text-center text-rose-600 dark:text-rose-400">{{ __('messages.failed') }}</th>
                         <th class="py-1.5 px-2.5 text-center">{{ __('messages.actions') }}</th>
                     </tr>
                 </thead>

@@ -438,7 +438,7 @@
 
                                     {{-- Delete --}}
                                     <form method="POST" action="{{ route('store.admin.promotions.destroy', ['store_slug' => $store->slug, 'promotion' => $promo->id]) }}"
-                                          onsubmit="return confirm('{{ __('messages.promotion_confirm_delete') }}')" class="inline">
+                                          data-confirm="{{ __('messages.promotion_confirm_delete') }}" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
@@ -530,7 +530,7 @@
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                     </button>
                                     <form method="POST" action="{{ route('store.admin.promotions.destroy', ['store_slug' => $store->slug, 'promotion' => $promo->id]) }}"
-                                          onsubmit="return confirm('{{ __('messages.promotion_confirm_delete') }}')" class="inline">
+                                          data-confirm="{{ __('messages.promotion_confirm_delete') }}" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="p-1 text-slate-400 hover:text-rose-600 transition" title="{{ __('messages.delete') }}">
@@ -944,7 +944,7 @@
                          class="p-3 rounded-lg border space-y-1">
                         <p class="font-bold text-xs" x-text="validateResult.message"></p>
                         <template x-if="validateResult.valid">
-                            <p class="text-xs font-mono font-black" x-text="'Discount: ' + Number(validateResult.discount).toLocaleString() + ' Ks'"></p>
+                            <p class="text-xs font-mono font-black" x-text="'Discount: ' + (typeof window.formatCurrency === 'function' ? window.formatCurrency(validateResult.discount) : Number(validateResult.discount).toLocaleString())"></p>
                         </template>
                     </div>
                 </template>

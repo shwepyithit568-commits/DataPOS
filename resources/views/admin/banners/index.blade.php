@@ -278,7 +278,7 @@
                                 <span>{{ __('messages.edit') }}</span>
                             </a>
                             <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/banners/' . $banner->id) }}" class="flex-1"
-                                  onsubmit="return confirm('{{ __('messages.banners_delete_confirm') }}')">
+                                  data-confirm="{{ __('messages.banners_delete_confirm') }}">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"
@@ -383,7 +383,7 @@
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                     </a>
                                     <form method="POST" action="{{ url('/store/' . $store->slug . '/admin/banners/' . $banner->id) }}"
-                                          onsubmit="return confirm('{{ __('messages.banners_delete_confirm') }}')" class="inline">
+                                          data-confirm="{{ __('messages.banners_delete_confirm') }}" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="p-1 rounded-md text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer" title="{{ __('messages.delete') }}">

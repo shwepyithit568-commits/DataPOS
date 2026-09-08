@@ -30,7 +30,7 @@
     {{-- Error Flash --}}
     @if ($errors->any())
         <div class="p-2.5 sm:p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg text-xs text-red-700 dark:text-red-300 space-y-1">
-            <div class="flex items-center gap-2 font-bold"><span>⚠️</span><span>Errors:</span></div>
+            <div class="flex items-center gap-2 font-bold"><span>⚠️</span><span>{{ __('messages.errors') }}:</span></div>
             @foreach ($errors->all() as $error)
                 <div class="pl-6">• {{ $error }}</div>
             @endforeach
@@ -405,7 +405,7 @@
                             @if ($parentChildren->isNotEmpty())
                                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-1">
                                     <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                                        <span>Sub-categories</span>
+                                        <span>{{ __('messages.sub_categories') }}</span>
                                         <button type="button" @click="toggle({{ $parent->id }})" class="text-violet-600 hover:underline">
                                             <span x-text="isOpen({{ $parent->id }}) ? 'Hide' : 'Show ({{ $parentChildren->count() }})'"></span>
                                         </button>
@@ -519,7 +519,7 @@
                             <div class="flex items-center gap-2 mb-2">
                                 <input type="text" name="icon" x-model="formIcon" maxlength="8" placeholder="📂"
                                     class="w-20 text-center font-bold text-base rounded-lg border border-slate-200 dark:border-slate-700 px-2 py-1.5 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500" />
-                                <span class="text-[11px] text-slate-400">Choose an icon below or type emoji</span>
+                                <span class="text-[11px] text-slate-400">{{ __('messages.choose_icon') }}</span>
                             </div>
                             <div class="flex flex-wrap gap-1 max-h-20 overflow-y-auto no-scrollbar p-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                                 @foreach ($presetIcons as $pIcon)
@@ -555,12 +555,12 @@
 
                             <input type="file" name="image" accept="image/png,image/jpeg,image/webp"
                                 class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-violet-950/60 dark:file:text-violet-300 cursor-pointer border border-slate-200 dark:border-slate-700 rounded-lg p-1 bg-slate-50 dark:bg-slate-800" />
-                            <p class="text-[10px] text-slate-400 mt-1">PNG, JPG, WEBP up to 10MB</p>
+                            <p class="text-[10px] text-slate-400 mt-1">{{ __('messages.image_hint') }}</p>
                         </div>
 
                         {{-- Description --}}
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Description / Notes</label>
+                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.description_notes') }}</label>
                             <textarea name="description" x-model="formDescription" rows="2" placeholder="Enter category details..."
                                 class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-medium bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500"></textarea>
                         </div>
@@ -578,7 +578,7 @@
                                 </span>
                                 <span x-show="saving" class="inline-flex items-center gap-2">
                                     <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                                    <span>Saving...</span>
+                                    <span>{{ __('messages.saving') }}...</span>
                                 </span>
                             </button>
                         </div>
@@ -615,7 +615,7 @@
                             <button type="submit" @click="submitDelete()" :disabled="deleting"
                                 class="px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-md shadow-rose-500/20 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
                                 <span x-show="!deleting">{{ __('messages.delete') }}</span>
-                                <span x-show="deleting">Deleting...</span>
+                                <span x-show="deleting">{{ __('messages.deleting') }}...</span>
                             </button>
                         </div>
                     </form>
