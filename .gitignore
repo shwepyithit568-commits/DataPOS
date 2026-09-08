@@ -1,6 +1,8 @@
 *.log
 .DS_Store
 .env
+.env.*
+!.env.example
 .env.backup
 .env.production
 .phpactor.json
@@ -13,9 +15,12 @@
 /.zed
 /auth.json
 *.zip
+*.sql
 /database/*.sqlite
 /database/*.sqlite-*
 /database/*.sqlite.bak*
+/storage/database/*.sqlite*
+/storage/database/*.sqlite
 /node_modules
 /public/build
 /public/hot
