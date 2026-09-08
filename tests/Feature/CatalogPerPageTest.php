@@ -19,7 +19,9 @@ class CatalogPerPageTest extends TestCase
         ]);
 
         for ($i = 1; $i <= $count; $i++) {
-            Product::create([
+            $product = new Product();
+            $product->timestamps = false;
+            $product->forceFill([
                 'store_id' => $store->id,
                 'sku' => 'PP-'.str_pad((string) $i, 3, '0', STR_PAD_LEFT),
                 'name' => 'PerPage Product '.$i,
@@ -27,9 +29,9 @@ class CatalogPerPageTest extends TestCase
                 'retail_price' => 1000 + $i,
                 'wholesale_price' => 900 + $i,
                 'stock_status' => 'in_stock',
-                'created_at' => now()->subMinutes($count - $i),
-                'updated_at' => now()->subMinutes($count - $i),
-            ]);
+                'created_at' => now()->subMinutes($i),
+                'updated_at' => now()->subMinutes($i),
+            ])->save();
         }
 
         return $store;
