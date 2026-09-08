@@ -68,7 +68,7 @@
             <div class="min-w-0">
                 <p class="text-[9px] sm:text-[10px] text-rose-600/80 dark:text-rose-400/80 font-bold uppercase tracking-wider truncate">{{ __('messages.refund_total') }}</p>
                 <p class="text-xs sm:text-sm font-black text-rose-600 dark:text-rose-400 tabular-nums truncate font-outfit">
-                    Ks {{ number_format((float) $return->total) }}
+                    {{ format_currency($return->total, $store) }}
                 </p>
             </div>
         </div>
@@ -137,16 +137,16 @@
                             <td class="px-3 py-2 text-slate-400 dark:text-slate-500 font-mono text-[11px]">{{ $loop->iteration }}</td>
                             <td class="px-3 py-2 font-bold text-slate-900 dark:text-slate-100">{{ $item->product_name }}</td>
                             <td class="px-3 py-2 font-mono text-[11px] text-slate-500 dark:text-slate-400">{{ $item->sku }}</td>
-                            <td class="px-3 py-2 text-right font-mono tabular-nums font-semibold">{{ number_format((float) $item->quantity, 3) }}</td>
-                            <td class="px-3 py-2 text-right font-mono tabular-nums">Ks {{ number_format((float) $item->unit_price) }}</td>
-                            <td class="px-3 py-2 text-right font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">Ks {{ number_format((float) $item->line_total) }}</td>
+                            <td class="px-3 py-2 text-right font-mono tabular-nums font-semibold">{{ format_quantity($item->quantity, $store) }}</td>
+                            <td class="px-3 py-2 text-right font-mono tabular-nums">{{ format_currency($item->unit_price, $store) }}</td>
+                            <td class="px-3 py-2 text-right font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">{{ format_currency($item->line_total, $store) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
                 <tfoot class="bg-slate-50/80 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700">
                     <tr>
                         <td colspan="5" class="px-3 py-2 text-right font-black text-slate-900 dark:text-slate-100 text-xs">{{ __('messages.total') }}</td>
-                        <td class="px-3 py-2 text-right font-mono font-black text-rose-600 dark:text-rose-400 tabular-nums text-xs sm:text-sm">Ks {{ number_format((float) $return->total) }}</td>
+                        <td class="px-3 py-2 text-right font-mono font-black text-rose-600 dark:text-rose-400 tabular-nums text-xs sm:text-sm">{{ format_currency($return->total, $store) }}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -167,7 +167,7 @@
                         <span class="w-1.5 h-1.5 rounded-full {{ $payment->method === 'cash' ? 'bg-emerald-500' : 'bg-amber-500' }}" aria-hidden="true"></span>
                         {{ $payment->method === 'cash' ? __('messages.cash_refund') : __('messages.credit_refund') }}
                     </span>
-                    <span class="font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">Ks {{ number_format((float) $payment->amount) }}</span>
+                    <span class="font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">{{ format_currency($payment->amount, $store) }}</span>
                 </div>
             @empty
                 <div class="px-3 py-2 text-xs text-slate-400 dark:text-slate-500">{{ __('messages.no_refund_payments') }}</div>

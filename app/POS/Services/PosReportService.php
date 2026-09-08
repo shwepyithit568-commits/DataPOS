@@ -6,6 +6,7 @@ use App\Models\Store;
 use App\Models\User;
 use App\POS\Models\CashierShift;
 use App\POS\Models\InventoryBalance;
+use App\POS\Models\PosReturn;
 use App\POS\Models\PosSale;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -248,4 +249,171 @@ class PosReportService
             'technicians'          => array_values($techPerformance),
         ];
     }
+
+    /* ------------------------------------------------------------------ */
+    /*  Payment-Method Reconciliation (§10.5, §11)                         */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Reconcile payment methods across POS sales, cash drawer shifts, and returns.
+     *
+     * @return array{
+     *   methods: array<string, array{
+     *     method: string,
+     *     name: string,
+     *     is_digital: bool,
+     *     count: int,
+     *     total_amount: string,
+     *     change_given: string,
+     *     net_amount: string,
+     *     refund_amount: string,
+     *     reference_count: int,
+     *     share_percentage: float
+     *   }>,
+     *   total_collected: string,
+     *   total_change: string,
+     *   net_sales: string,
+     *   total_refunded: string,
+     *   net_settlement: string,
+     *   digital_collected: string,
+     *   cash_collected: string,
+     *   credit_collected: string,
+     *   payment_count: int,
+     *   payments: Collection
+     * }
+     */
+    public function paymentMethodReconciliation(Store $store, Carbon $from, Carbon $to): array
+    {
+        $salesQuery = PosSale::query()
+            ->with(['payments', 'cashier', 'customer'])
+            ->where('store_id', $store->id)
+            ->whereNotNull('posted_at')
+            ->whereBetween('posted_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()]);
+
+        $sales = $salesQuery->get();
+
+        // All payments across sales
+        $allPayments = $sales->flatMap(fn (PosSale $s) => $s->payments);
+
+        // Fetch all returns within the same period for refund tracing
+        $returns = PosReturn::query()
+            ->with('payments')
+            ->where('store_id', $store->id)
+            ->where('status', 'posted')
+            ->whereBetween('posted_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()])
+            ->get();
+
+        $refundsByMethod = [];
+        $totalRefunded = '0.00';
+        foreach ($returns as $ret) {
+            foreach ($ret->payments as $rp) {
+                $m = strtolower(trim((string) $rp->method));
+                $refundsByMethod[$m] = bcadd($refundsByMethod[$m] ?? '0.00', (string) $rp->amount, 2);
+                $totalRefunded = bcadd($totalRefunded, (string) $rp->amount, 2);
+            }
+        }
+
+        $methodsAgg = [];
+        $totalCollected = '0';
+        $totalChange = '0';
+        $digitalCollected = '0';
+        $cashCollected = '0';
+        $creditCollected = '0';
+
+        $digitalMethods = ['kpay', 'kbzpay', 'wavepay', 'ayapay', 'cbpay', 'cb_pay', 'mmqr', 'bank_transfer', 'card'];
+
+        foreach ($allPayments as $p) {
+            $m = strtolower(trim((string) $p->method));
+            if (! isset($methodsAgg[$m])) {
+                $methodsAgg[$m] = [
+                    'method' => $m,
+                    'count' => 0,
+                    'total_amount' => '0',
+                    'change_given' => '0',
+                    'reference_count' => 0,
+                ];
+            }
+
+            $methodsAgg[$m]['count']++;
+            $methodsAgg[$m]['total_amount'] = bcadd($methodsAgg[$m]['total_amount'], (string) $p->amount, 2);
+            $methodsAgg[$m]['change_given'] = bcadd($methodsAgg[$m]['change_given'], (string) ($p->change_given ?? 0), 2);
+
+            if (! empty($p->reference) && trim((string) $p->reference) !== '') {
+                $methodsAgg[$m]['reference_count']++;
+            }
+
+            $totalCollected = bcadd($totalCollected, (string) $p->amount, 2);
+            $totalChange = bcadd($totalChange, (string) ($p->change_given ?? 0), 2);
+
+            if (in_array($m, $digitalMethods, true)) {
+                $digitalCollected = bcadd($digitalCollected, (string) $p->amount, 2);
+            } elseif ($m === 'cash') {
+                $cashNet = bcsub((string) $p->amount, (string) ($p->change_given ?? 0), 2);
+                $cashCollected = bcadd($cashCollected, $cashNet, 2);
+            } elseif ($m === 'credit') {
+                $creditCollected = bcadd($creditCollected, (string) $p->amount, 2);
+            }
+        }
+
+        $netSales = bcsub($totalCollected, $totalChange, 2);
+        $netSettlement = bcsub($netSales, $totalRefunded, 2);
+
+        $methodNames = [
+            'cash' => 'Cash',
+            'kpay' => 'KBZPay',
+            'kbzpay' => 'KBZPay',
+            'wavepay' => 'WavePay',
+            'ayapay' => 'AYA Pay',
+            'cbpay' => 'CB Pay',
+            'cb_pay' => 'CB Pay',
+            'mmqr' => 'MMQR',
+            'bank_transfer' => 'Bank Transfer',
+            'card' => 'Debit/Credit Card',
+            'credit' => 'Customer Credit',
+            'cod' => 'Cash on Delivery',
+        ];
+
+        $reconciledMethods = [];
+        foreach ($methodsAgg as $mKey => $mData) {
+            $net = bcsub($mData['total_amount'], $mData['change_given'], 2);
+            $refRefund = $refundsByMethod[$mKey] ?? '0.00';
+            $share = (float) $totalCollected > 0
+                ? round(((float) $mData['total_amount'] / (float) $totalCollected) * 100, 1)
+                : 0.0;
+
+            $reconciledMethods[$mKey] = [
+                'method' => $mKey,
+                'name' => $methodNames[$mKey] ?? strtoupper($mKey),
+                'is_digital' => in_array($mKey, $digitalMethods, true),
+                'count' => $mData['count'],
+                'total_amount' => $mData['total_amount'],
+                'change_given' => $mData['change_given'],
+                'net_amount' => $net,
+                'refund_amount' => $refRefund,
+                'reference_count' => $mData['reference_count'],
+                'share_percentage' => $share,
+            ];
+        }
+
+        // Sort methods by total collected descending
+        uasort($reconciledMethods, fn ($a, $b) => bccomp($b['total_amount'], $a['total_amount'], 2));
+
+        // Sort individual payment ledger chronologically (latest first)
+        $latestPayments = $allPayments->sortByDesc(fn ($p) => $p->created_at);
+
+        return [
+            'methods' => $reconciledMethods,
+            'total_collected' => $totalCollected,
+            'total_change' => $totalChange,
+            'net_sales' => $netSales,
+            'total_refunded' => $totalRefunded,
+            'net_settlement' => $netSettlement,
+            'digital_collected' => $digitalCollected,
+            'cash_collected' => $cashCollected,
+            'credit_collected' => $creditCollected,
+            'payment_count' => $allPayments->count(),
+            'payments' => $latestPayments,
+        ];
+    }
 }
+

@@ -98,4 +98,30 @@ class DailyClosingController extends Controller
 
         return back()->with('success', __('messages.closing_approved') . ' — ' . $closing->business_date->toDateString());
     }
+
+    public function reopen(Request $request, string $store_slug, DailyClosing $closing, StoreContext $context): RedirectResponse
+    {
+        $store = $context->getStore();
+
+        if ((int) $closing->store_id !== (int) $store->id) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
+        ]);
+
+        try {
+            app(\App\POS\Services\PeriodLockService::class)->reopenPeriod(
+                store: $store,
+                date: $closing->business_date,
+                user: $request->user(),
+                reason: $data['reason']
+            );
+        } catch (InventoryException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', __('messages.period_reopened') . ' — ' . $closing->business_date->toDateString());
+    }
 }

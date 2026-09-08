@@ -54,7 +54,7 @@
                     @if ($closing->approver) · {{ __('messages.closing_approver') }}: {{ $closing->approver->name }} ({{ $closing->approved_at?->format('d M Y, H:i') }}) @endif
                 </p>
                 @if (bccomp((string) $closing->total_difference, '0', 2) !== 0)
-                    <p class="text-xs font-bold">{{ __('messages.closing_total_difference') }}: {{ (float) $closing->total_difference > 0 ? '+' : '' }}{{ number_format((float) $closing->total_difference) }} Ks</p>
+                    <p class="text-xs font-bold">{{ __('messages.closing_total_difference') }}: {{ (float) $closing->total_difference > 0 ? '+' : '' }}{{ format_currency((float) $closing->total_difference, $store) }}</p>
                 @endif
                 @if ($closing->explanation)
                     <p class="text-xs italic opacity-80">"{{ $closing->explanation }}"</p>
@@ -90,10 +90,10 @@
                                             <span class="block text-[10px] font-semibold text-slate-400">{{ __('messages.closing_credit_info') }}</span>
                                         @endif
                                     </td>
-                                    <td class="px-3 py-2.5 text-right font-mono font-semibold">Ks {{ number_format((float) ($closing->expected_totals[$method] ?? 0)) }}</td>
-                                    <td class="px-3 py-2.5 text-right font-mono">{{ $isCredit ? '—' : 'Ks ' . number_format((float) ($closing->counted_totals[$method] ?? 0)) }}</td>
+                                    <td class="px-3 py-2.5 text-right font-mono font-semibold">{{ format_currency((float) ($closing->expected_totals[$method] ?? 0), $store) }}</td>
+                                    <td class="px-3 py-2.5 text-right font-mono">{{ $isCredit ? '—' : format_currency((float) ($closing->counted_totals[$method] ?? 0), $store) }}</td>
                                     <td class="px-3 py-2.5 text-right font-mono font-bold {{ $diffClass }}">
-                                        {{ (float) $diff > 0 ? '+' : '' }}{{ number_format((float) $diff) }}
+                                        {{ (float) $diff > 0 ? '+' : '' }}{{ format_currency((float) $diff, $store) }}
                                     </td>
                                 </tr>
                             @endforeach
@@ -102,7 +102,7 @@
                                 <td></td>
                                 <td></td>
                                 <td class="px-3 py-2.5 text-right font-mono {{ (float) $closing->total_difference < 0 ? 'text-rose-600' : ((float) $closing->total_difference > 0 ? 'text-amber-600' : 'text-slate-400') }}">
-                                    {{ (float) $closing->total_difference > 0 ? '+' : '' }}{{ number_format((float) $closing->total_difference) }}
+                                    {{ (float) $closing->total_difference > 0 ? '+' : '' }}{{ format_currency((float) $closing->total_difference, $store) }}
                                 </td>
                             </tr>
                         </tbody>
@@ -167,7 +167,7 @@
                                             @endif
                                         </td>
                                         <td class="px-3 py-2.5 text-right font-mono font-semibold"
-                                            x-text="'Ks ' + (+expected['{{ $method }}'] || 0).toLocaleString()"></td>
+                                            x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(+expected['{{ $method }}'] || 0) : (+expected['{{ $method }}'] || 0).toLocaleString()"></td>
                                         <td class="px-3 py-2.5 text-right">
                                             <input type="number" name="counted[{{ $method }}]" min="0" step="any"
                                                    x-model.number="counted['{{ $method }}']" :disabled="{{ $isCredit ? 'true' : 'false' }}"
@@ -175,7 +175,7 @@
                                         </td>
                                         <td class="px-3 py-2.5 text-right font-mono font-bold"
                                             :class="diffs['{{ $method }}'] < 0 ? 'text-rose-600' : (diffs['{{ $method }}'] > 0 ? 'text-amber-600' : 'text-slate-400')"
-                                            x-text="(diffs['{{ $method }}'] > 0 ? '+' : '') + diffs['{{ $method }}'].toLocaleString()"></td>
+                                            x-text="(diffs['{{ $method }}'] > 0 ? '+' : '') + (typeof window.formatCurrency === 'function' ? window.formatCurrency(diffs['{{ $method }}']) : diffs['{{ $method }}'].toLocaleString())"></td>
                                     </tr>
                                 @endforeach
                                 <tr class="bg-slate-50 dark:bg-slate-800/60 font-black">
@@ -184,10 +184,22 @@
                                     <td></td>
                                     <td class="px-3 py-2.5 text-right font-mono"
                                         :class="diffs._total < 0 ? 'text-rose-600' : (diffs._total > 0 ? 'text-amber-600' : 'text-slate-400')"
-                                        x-text="(diffs._total > 0 ? '+' : '') + diffs._total.toLocaleString()"></td>
+                                        x-text="(diffs._total > 0 ? '+' : '') + (typeof window.formatCurrency === 'function' ? window.formatCurrency(diffs._total) : diffs._total.toLocaleString())"></td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    {{-- Staff Discrepancy Help Guide --}}
+                    <div x-show="diffs._total !== 0" x-cloak class="p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-xs space-y-1 text-amber-900 dark:text-amber-300">
+                        <div class="flex items-center gap-1.5 font-bold">
+                            <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                            <span x-text="diffs._total < 0 ? '{{ __('messages.closing_shortage_alert') ?? 'Cash Shortage Detected' }}' : '{{ __('messages.closing_overage_alert') ?? 'Cash Overage Detected' }}'"></span>
+                        </div>
+                        <p class="text-[11px] opacity-90">
+                            <span x-show="diffs._total < 0">ငွေစာရင်း လိုအပ်ချက် (Shortage) ရှိနေပါသည်။ အံဆွဲထဲရှိ လက်ကျန်ငွေသား၊ ပြေစာများနှင့် ကုန်ကျစရိတ်ဘောက်ချာများကို ထပ်မံစစ်ဆေးပြီး အောက်ပါရှင်းလင်းချက်တွင် အကြောင်းရင်းကို ရေးသားပေးပါ။</span>
+                            <span x-show="diffs._total > 0">ငွေစာရင်း ပိုလျှံမှု (Overage) ရှိနေပါသည်။ အပိုလက်ခံငွေ သို့မဟုတ် အမ်းငွေမှားယွင်းမှု ရှိ/မရှိ ပြန်လည်စစ်ဆေးပြီး အောက်ပါရှင်းလင်းချက်တွင် မှတ်ချက်ရေးသားပေးပါ။</span>
+                        </p>
                     </div>
 
                     <textarea name="explanation" rows="2" maxlength="2000"

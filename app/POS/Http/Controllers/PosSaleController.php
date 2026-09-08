@@ -719,7 +719,7 @@ class PosSaleController extends Controller
     {
         $store = $context->getStore();
 
-        if ((int) $sale->store_id !== (int) $store->id || ! $sale->isPosted()) {
+        if ((int) $sale->store_id !== (int) $store->id || ! ($sale->isPosted() || $sale->isVoided())) {
             abort(404);
         }
 

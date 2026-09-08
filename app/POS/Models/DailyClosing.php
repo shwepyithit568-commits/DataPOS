@@ -31,6 +31,9 @@ class DailyClosing extends Model
         'approver_id',
         'closed_at',
         'approved_at',
+        'reopened_at',
+        'reopened_by',
+        'reopen_reason',
         'created_by',
     ];
 
@@ -43,6 +46,7 @@ class DailyClosing extends Model
         'total_difference' => 'decimal:2',
         'closed_at' => 'datetime',
         'approved_at' => 'datetime',
+        'reopened_at' => 'datetime',
     ];
 
     public function store(): BelongsTo

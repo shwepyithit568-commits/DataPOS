@@ -92,6 +92,8 @@ class CashierShiftController extends Controller
 
         try {
             $this->shifts->openShift($store, $data, auth()->user());
+        } catch (\App\POS\Exceptions\PeriodLockedException $e) {
+            return back()->withErrors(['shift' => $e->getMessage()]);
         } catch (InventoryException $e) {
             return back()->withErrors(['shift' => $e->getMessage()]);
         }
@@ -128,11 +130,15 @@ class CashierShiftController extends Controller
         $data = $request->validate([
             'actual_closing_amount' => ['required', 'decimal:0,2', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'variance_reason' => ['nullable', 'string', 'max:1000'],
             'manager_approval' => ['nullable', 'boolean'],
+            'manager_signoff_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
         try {
             $this->shifts->closeShift($shift, $data, auth()->user());
+        } catch (\App\POS\Exceptions\PeriodLockedException $e) {
+            return back()->withErrors(['shift' => $e->getMessage()]);
         } catch (InventoryException $e) {
             return back()->withErrors(['shift' => $e->getMessage()]);
         }

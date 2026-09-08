@@ -39,6 +39,8 @@ class InventoryAdjustmentService
      */
     public function create(Store $store, array $items, ?string $notes, User $actor): InventoryAdjustment
     {
+        app(PeriodLockService::class)->assertDateNotLocked($store, now(), 'stock_adjustment');
+
         $normalized = $this->normalizeItems($store, $items);
 
         return DB::transaction(function () use ($store, $normalized, $notes, $actor) {
@@ -81,6 +83,8 @@ class InventoryAdjustmentService
     /** Manager approval — posts the adjustment movements atomically (idempotent). */
     public function approve(Store $store, InventoryAdjustment $adjustment, User $actor, ?string $reviewNotes = null): InventoryAdjustment
     {
+        app(PeriodLockService::class)->assertDateNotLocked($store, now(), 'stock_adjustment');
+
         $this->assertOwned($store, $adjustment);
 
         if (! $adjustment->isPending()) {
@@ -255,16 +259,10 @@ class InventoryAdjustmentService
         }
     }
 
-    /** ADJ-YYYYMMDD-#### sequence per store. */
+    /** ADJ-YYYYMMDD-#### sequence per store via DocumentSequenceService. */
     private function nextAdjustmentNumber(Store $store): string
     {
-        $prefix = 'ADJ-' . now()->format('Ymd') . '-';
-        $seq = InventoryAdjustment::query()
-            ->where('store_id', $store->id)
-            ->where('adjustment_number', 'like', $prefix . '%')
-            ->count() + 1;
-
-        return $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+        return app(DocumentSequenceService::class)->nextNumber($store, 'adjustment');
     }
 
     private function isUniqueViolation(QueryException $e): bool

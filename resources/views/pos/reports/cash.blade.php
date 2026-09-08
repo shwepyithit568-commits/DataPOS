@@ -92,7 +92,7 @@
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                 </span>
             </div>
-            <p class="text-base sm:text-xl font-black font-mono mt-1 tabular-nums text-sky-700 dark:text-sky-300">Ks {{ number_format((float) $report['expected']) }}</p>
+            <p class="text-base sm:text-xl font-black font-mono mt-1 tabular-nums text-sky-700 dark:text-sky-300">{{ format_currency($report['expected'], $store) }}</p>
         </div>
 
         <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xs">
@@ -102,7 +102,7 @@
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </span>
             </div>
-            <p class="text-base sm:text-xl font-black font-mono mt-1 tabular-nums text-emerald-700 dark:text-emerald-300">Ks {{ number_format((float) $report['actual']) }}</p>
+            <p class="text-base sm:text-xl font-black font-mono mt-1 tabular-nums text-emerald-700 dark:text-emerald-300">{{ format_currency($report['actual'], $store) }}</p>
         </div>
 
         <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 shadow-2xs">
@@ -113,7 +113,7 @@
                 </span>
             </div>
             <p class="text-base sm:text-xl font-black font-mono mt-1 tabular-nums {{ (float) $report['difference'] < 0 ? 'text-rose-600 dark:text-rose-400' : ((float) $report['difference'] > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400') }}">
-                {{ (float) $report['difference'] > 0 ? '+' : '' }}{{ number_format((float) $report['difference']) }}
+                {{ ((float) $report['difference'] < 0 ? '−' : ((float) $report['difference'] > 0 ? '+' : '')) . format_currency(abs((float) $report['difference']), $store) }}
             </p>
         </div>
     </div>
@@ -153,14 +153,14 @@
                             <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
                                 <td class="px-3 py-2 font-semibold text-slate-900 dark:text-slate-100">{{ $shift->register_name }}</td>
                                 <td class="px-3 py-2 text-slate-700 dark:text-slate-300">{{ $shift->cashier?->name ?? '—' }}</td>
-                                <td class="px-3 py-2 text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">Ks {{ number_format((float) $shift->opening_cash) }}</td>
-                                <td class="px-3 py-2 text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">Ks {{ number_format((float) $shift->cash_sales) }}</td>
-                                <td class="px-3 py-2 text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">Ks {{ number_format((float) $shift->cash_refunds) }}</td>
-                                <td class="px-3 py-2 text-right font-mono tabular-nums text-slate-700 dark:text-slate-300">+{{ number_format((float) $shift->cash_in) }} / −{{ number_format((float) $shift->cash_out) }}</td>
-                                <td class="px-3 py-2 text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">{{ $shift->expected_closing_amount !== null ? 'Ks ' . number_format((float) $shift->expected_closing_amount) : '—' }}</td>
-                                <td class="px-3 py-2 text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">{{ $shift->actual_closing_amount !== null ? 'Ks ' . number_format((float) $shift->actual_closing_amount) : '—' }}</td>
+                                <td class="px-3 py-2 text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">{{ format_currency($shift->opening_cash, $store) }}</td>
+                                <td class="px-3 py-2 text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">{{ format_currency($shift->cash_sales, $store) }}</td>
+                                <td class="px-3 py-2 text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">{{ format_currency($shift->cash_refunds, $store) }}</td>
+                                <td class="px-3 py-2 text-right font-mono tabular-nums text-slate-700 dark:text-slate-300">+{{ format_currency($shift->cash_in, $store) }} / −{{ format_currency($shift->cash_out, $store) }}</td>
+                                <td class="px-3 py-2 text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">{{ $shift->expected_closing_amount !== null ? format_currency($shift->expected_closing_amount, $store) : '—' }}</td>
+                                <td class="px-3 py-2 text-right font-mono tabular-nums text-slate-800 dark:text-slate-200">{{ $shift->actual_closing_amount !== null ? format_currency($shift->actual_closing_amount, $store) : '—' }}</td>
                                 <td class="px-3 py-2 text-right font-mono font-bold tabular-nums {{ (float) $shift->difference < 0 ? 'text-rose-600 dark:text-rose-400' : ((float) $shift->difference > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500') }}">
-                                    {{ $shift->difference !== null ? ((float) $shift->difference > 0 ? '+' : '') . number_format((float) $shift->difference) : '—' }}
+                                    {{ $shift->difference !== null ? (((float) $shift->difference < 0 ? '−' : ((float) $shift->difference > 0 ? '+' : '')) . format_currency(abs((float) $shift->difference), $store)) : '—' }}
                                 </td>
                                 <td class="px-3 py-2 text-right">
                                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold

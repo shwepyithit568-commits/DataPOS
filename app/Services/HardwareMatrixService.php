@@ -76,9 +76,148 @@ class HardwareMatrixService
         $out .= "\n\n\n";
 
         // 7. Paper cut
-        $out .= $gs . "V\x41\x00"; // Full cut
+        $out .= self::generatePaperCutCommand(false);
 
         return $out;
+    }
+
+    /**
+     * Generate standard ESC/POS Cash Drawer Kick pulse command.
+     * Pulse: ESC p m t1 t2
+     *
+     * @param int $pin 0 = Pin 2 (standard drawer), 1 = Pin 5 (secondary drawer)
+     * @param int $onTimePulse Units of 2ms (25 = 50ms pulse)
+     * @param int $offTimePulse Units of 2ms (250 = 500ms pause)
+     */
+    public static function generateCashDrawerKickCommand(int $pin = 0, int $onTimePulse = 25, int $offTimePulse = 250): string
+    {
+        $m = ($pin === 1) ? "\x01" : "\x00";
+        return "\x1B\x70" . $m . chr(min(255, max(1, $onTimePulse))) . chr(min(255, max(1, $offTimePulse)));
+    }
+
+    /**
+     * Generate standard ESC/POS Paper Cut command.
+     *
+     * @param bool $partial True for partial cut, false for full cut
+     */
+    public static function generatePaperCutCommand(bool $partial = false): string
+    {
+        return $partial ? "\x1D\x56\x42\x00" : "\x1D\x56\x41\x00";
+    }
+
+    /**
+     * Generate live ESC/POS receipt for a posted POS sale.
+     */
+    public static function generateEscPosSaleReceipt(\App\POS\Models\PosSale $sale, string $paperWidth = '80mm', bool $withDrawerKick = true): string
+    {
+        $cols = ($paperWidth === '58mm') ? 32 : 48;
+        $esc = "\x1B";
+        $gs  = "\x1D";
+
+        $out = "";
+
+        // Optional cash drawer kick
+        if ($withDrawerKick) {
+            $out .= self::generateCashDrawerKickCommand();
+        }
+
+        // Initialize printer
+        $out .= $esc . "@";
+
+        // Store header (Center align + bold)
+        $storeName = $sale->store?->name ?? 'DataPOS Store';
+        $out .= $esc . "a\x01"; // Center align
+        $out .= $esc . "!\x30"; // Double width + height
+        $out .= $storeName . "\n";
+
+        $out .= $esc . "!\x00"; // Normal font
+        if (! empty($sale->store?->setting?->address)) {
+            $out .= $sale->store->setting->address . "\n";
+        }
+        if (! empty($sale->store?->setting?->phone)) {
+            $out .= "Tel: " . $sale->store->setting->phone . "\n";
+        }
+
+        $out .= str_repeat('-', $cols) . "\n";
+
+        // Invoice metadata (Left align)
+        $out .= $esc . "a\x00";
+        $out .= self::formatColumns("Invoice:", $sale->receipt_number, $cols) . "\n";
+        $out .= self::formatColumns("Date:", $sale->posted_at?->format('Y-m-d H:i') ?? date('Y-m-d H:i'), $cols) . "\n";
+        $out .= self::formatColumns("Cashier:", $sale->cashier?->name ?? 'Cashier', $cols) . "\n";
+        if ($sale->customer) {
+            $out .= self::formatColumns("Customer:", $sale->customer->name, $cols) . "\n";
+        }
+        $out .= str_repeat('-', $cols) . "\n";
+
+        // Items
+        foreach ($sale->items as $item) {
+            $lineDesc = $item->quantity . "x " . $item->product_name;
+            $lineTotal = number_format((float) $item->line_total) . " MMK";
+            $out .= self::formatColumns($lineDesc, $lineTotal, $cols) . "\n";
+        }
+
+        $out .= str_repeat('-', $cols) . "\n";
+
+        // Totals
+        $out .= self::formatColumns("Subtotal:", number_format((float) $sale->subtotal) . " MMK", $cols) . "\n";
+        if ((float) $sale->discount > 0) {
+            $out .= self::formatColumns("Discount:", "−" . number_format((float) $sale->discount) . " MMK", $cols) . "\n";
+        }
+        $out .= str_repeat('=', $cols) . "\n";
+        $out .= self::formatColumns("TOTAL:", number_format((float) $sale->total) . " MMK", $cols) . "\n";
+        $out .= str_repeat('=', $cols) . "\n";
+
+        // Payments
+        foreach ($sale->payments as $p) {
+            $methodName = strtoupper($p->method);
+            $payInfo = number_format((float) $p->amount) . " MMK";
+            if (! empty($p->reference)) {
+                $payInfo .= " [Ref: {$p->reference}]";
+            }
+            $out .= self::formatColumns("Paid (" . $methodName . "):", $payInfo, $cols) . "\n";
+            if ((float) $p->change_given > 0) {
+                $out .= self::formatColumns("Change Given:", number_format((float) $p->change_given) . " MMK", $cols) . "\n";
+            }
+        }
+
+        $out .= "\n";
+        $out .= $esc . "a\x01"; // Center align
+        $out .= "Thank You! Please Visit Again.\n";
+
+        // Barcode
+        $out .= $gs . "h\x40"; // Height 64
+        $out .= $gs . "w\x02";
+        $out .= $gs . "k\x04" . $sale->receipt_number . "\x00";
+        $out .= "\n*" . $sale->receipt_number . "*\n";
+
+        $out .= "\n\n\n";
+        $out .= self::generatePaperCutCommand(false);
+
+        return $out;
+    }
+
+    /**
+     * Diagnostic profiles for self-service hardware verification.
+     */
+    public static function diagnoseHardwareProfiles(): array
+    {
+        return [
+            'profiles' => self::SUPPORTED_HARDWARE,
+            'esc_pos_commands' => [
+                'initialize'     => '\x1B\x40 (ESC @)',
+                'drawer_kick'    => '\x1B\x70\x00\x19\xFA (ESC p 0 25 250)',
+                'full_cut'       => '\x1D\x56\x41\x00 (GS V 65 0)',
+                'partial_cut'    => '\x1D\x56\x42\x00 (GS V 66 0)',
+                'barcode_code39' => '\x1D\x6B\x04 (GS k 4)',
+            ],
+            'scanner_spec' => [
+                'mode'           => 'HID Keyboard Wedge (Standard USB / 2.4G Wireless)',
+                'suffix'         => 'CR (Enter) Carriage Return - Keycode 13',
+                'inter_char_delay_ms' => 5,
+                'min_scan_speed_chars_per_sec' => 50,
+            ],
+        ];
     }
 
     /**

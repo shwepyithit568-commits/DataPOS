@@ -114,6 +114,8 @@ class PosReturnService
         ?CashierShift $shift = null,
         ?string $clientTransactionId = null,
     ): PosReturn {
+        app(PeriodLockService::class)->assertDateNotLocked($store, now(), 'return');
+
         // Idempotent retry: a known client transaction returns the existing
         // return BEFORE any validation (the sale may already be refunded).
         if ($clientTransactionId !== null) {
@@ -361,16 +363,10 @@ class PosReturnService
     }
 
     /**
-     * RET-YYYYMMDD-#### sequence per store.
+     * Atomic RET-YYYYMMDD-#### sequence per store via DocumentSequenceService.
      */
     private function nextRefundNumber(Store $store): string
     {
-        $prefix = 'RET-' . now()->format('Ymd') . '-';
-        $seq = PosReturn::query()
-                ->where('store_id', $store->id)
-                ->where('refund_number', 'like', $prefix . '%')
-                ->count() + 1;
-
-        return $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+        return app(DocumentSequenceService::class)->nextNumber($store, 'return');
     }
 }

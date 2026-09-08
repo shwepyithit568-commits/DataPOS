@@ -198,4 +198,26 @@ class PrinterController extends Controller
 
         return view('admin.printers.test_print', compact('store', 'printer'));
     }
+
+    /**
+     * Download raw ESC/POS binary file for direct hardware output testing.
+     */
+    public function downloadEscPos(StoreContext $context, string $store_slug, int|string $printer): \Illuminate\Http\Response
+    {
+        $store = $context->getStore();
+        if (!$store) {
+            abort(404);
+        }
+
+        $printer = Printer::where('store_id', $store->id)->findOrFail($printer);
+        $raw = \App\Services\HardwareMatrixService::generateEscPosTestReceipt($printer->paper_width, $store->name);
+        if ($printer->cash_drawer_kick) {
+            $raw = \App\Services\HardwareMatrixService::generateCashDrawerKickCommand() . $raw;
+        }
+
+        return response($raw, 200, [
+            'Content-Type' => 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="escpos_test_' . $printer->paper_width . '.bin"',
+        ]);
+    }
 }

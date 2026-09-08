@@ -151,6 +151,7 @@
         .footer { text-align: center; font-size: 10.5px; color: #64748b; margin-top: 10px; line-height: 1.4; }
         .policy { font-size: 9.5px; color: #94a3b8; margin-top: 3px; font-style: italic; }
         .reprint-note { text-align: center; font-size: 10.5px; color: #d97706; font-weight: 800; margin-top: 6px; padding: 2px; border: 1px dashed #f59e0b; border-radius: 4px; }
+        .void-banner { text-align: center; font-size: 12px; color: #dc2626; font-weight: 900; letter-spacing: 0.5px; margin: 6px 0; padding: 3px; border: 2px dashed #dc2626; border-radius: 4px; background: #fef2f2; text-transform: uppercase; }
 
         /* ---- Screen-only Action Toolbar ---- */
         .toolbar {
@@ -205,6 +206,10 @@
 
         <hr class="rule">
 
+        @if ($sale->isVoided())
+            <div class="void-banner">*** {{ __('messages.voucher_watermark_void') ?? 'VOID / CANCELLED' }} ***</div>
+        @endif
+
         <p class="receipt-no">Receipt <span>#{{ $sale->receipt_number }}</span></p>
         <hr class="rule">
 
@@ -234,12 +239,12 @@
                         <td>
                             {{ $item->product_name }}
                             @if ($item->original_unit_price !== null && (float) $item->original_unit_price != (float) $item->unit_price)
-                                <div class="qty-price">{{ rtrim(rtrim($item->quantity, '0'), '.') }} × <s>Ks {{ number_format((float) $item->original_unit_price) }}</s> Ks {{ number_format((float) $item->unit_price )}} ✏️</div>
+                                <div class="qty-price">{{ rtrim(rtrim($item->quantity, '0'), '.') }} × <s>{{ format_currency((float) $item->original_unit_price, $store) }}</s> {{ format_currency((float) $item->unit_price, $store) }} ✏️</div>
                             @else
-                                <div class="qty-price">{{ rtrim(rtrim($item->quantity, '0'), '.') }} × Ks {{ number_format((float) $item->unit_price) }}</div>
+                                <div class="qty-price">{{ rtrim(rtrim($item->quantity, '0'), '.') }} × {{ format_currency((float) $item->unit_price, $store) }}</div>
                             @endif
                         </td>
-                        <td class="amt">Ks {{ number_format((float) $item->line_total) }}</td>
+                        <td class="amt">{{ format_currency((float) $item->line_total, $store) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -252,23 +257,23 @@
             @foreach ($sale->payments as $payment)
                 <div class="total-row">
                     <span>{{ $payment->method === 'credit' ? __('messages.payment_credit') : ucfirst($payment->method) }}</span>
-                    <span>Ks {{ number_format((float) $payment->amount) }}</span>
+                    <span>{{ format_currency((float) $payment->amount, $store) }}</span>
                 </div>
                 @if ((float) $payment->change_given > 0)
                     <div class="total-row">
                         <span>{{ __('messages.change') ?? 'ပြန်အမ်းငွေ' }}</span>
-                        <span class="change">− Ks {{ number_format((float) $payment->change_given) }}</span>
+                        <span class="change">− {{ format_currency((float) $payment->change_given, $store) }}</span>
                     </div>
                 @endif
             @endforeach
             <div class="total-row grand">
                 <span>{{ __('messages.total') ?? 'စုစုပေါင်း' }}</span>
-                <span>Ks {{ number_format((float) $sale->total) }}</span>
+                <span>{{ format_currency((float) $sale->total, $store) }}</span>
             </div>
             @if ((float) $balanceDue > 0)
                 <div class="total-row" style="color:#d97706;font-weight:700;">
                     <span>Balance due ({{ __('messages.balance_due') }})</span>
-                    <span>Ks {{ number_format((float) $balanceDue) }}</span>
+                    <span>{{ format_currency((float) $balanceDue, $store) }}</span>
                 </div>
             @endif
         </div>
@@ -290,7 +295,7 @@
         @endif
 
         @if ($isReprint)
-            <p class="reprint-note">COPY — REPRINT #{{ $printCount }}</p>
+            <p class="reprint-note">*** {{ __('messages.voucher_watermark_reprint') ?? 'COPY — REPRINT' }} (REPRINT #{{ $printCount }}) — {{ now()->format('d/m/Y H:i') }} ***</p>
         @endif
 
         <div class="footer">

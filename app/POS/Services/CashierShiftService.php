@@ -2,11 +2,13 @@
 
 namespace App\POS\Services;
 
+use App\Models\AuditLog;
 use App\Models\Store;
 use App\Models\User;
 use App\POS\Exceptions\InventoryException;
 use App\POS\Models\CashEvent;
 use App\POS\Models\CashierShift;
+use App\POS\Services\PeriodLockService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -31,6 +33,8 @@ class CashierShiftService
      */
     public function openShift(Store $store, array $data, ?User $actor = null): CashierShift
     {
+        app(PeriodLockService::class)->assertDateNotLocked($store, now(), 'cashier_shift');
+
         if (! $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS)) {
             throw new InventoryException('Cashier shifts are disabled for this store.');
         }
@@ -178,17 +182,49 @@ class CashierShiftService
             );
 
             $difference = bcsub($actual, $expected, 2);
+            $absDiff = bccomp($difference, '0', 2) < 0 ? bcmul($difference, '-1', 2) : $difference;
+
+            $varianceReason = trim((string) ($data['variance_reason'] ?? $data['notes'] ?? ''));
+            $threshold = (string) ($data['variance_threshold'] ?? '5000.00');
+            $requiresReason = ($data['require_variance_reason'] ?? false) || bccomp($absDiff, $threshold, 2) > 0;
+
+            if (bccomp($absDiff, '0', 2) !== 0 && $requiresReason && $varianceReason === '') {
+                throw new InventoryException('A variance reason is required when cash drawer difference exceeds threshold (' . $threshold . ').');
+            }
+
+            $managerSignoffId = $data['manager_signoff_id'] ?? null;
+            $signedOffAt = ! empty($managerSignoffId) ? ($data['signed_off_at'] ?? now()) : null;
 
             $shift->update([
                 'status' => 'closed',
                 'expected_closing_amount' => $expected,
                 'actual_closing_amount' => $actual,
                 'difference' => $difference,
+                'variance_reason' => $varianceReason !== '' ? $varianceReason : null,
+                'manager_signoff_id' => $managerSignoffId,
+                'signed_off_at' => $signedOffAt,
                 'manager_approval' => $data['manager_approval'] ?? null,
                 'notes' => $data['notes'] ?? null,
                 'closed_at' => now(),
                 'closed_by' => $actor?->id ?? $shift->cashier_id,
             ]);
+
+            if (bccomp($difference, '0', 2) !== 0) {
+                AuditLog::write(
+                    storeId: $shift->store_id,
+                    action: 'cashier_shift_variance_closed',
+                    entityType: 'cashier_shift',
+                    entityId: $shift->id,
+                    metadata: [
+                        'expected' => $expected,
+                        'actual' => $actual,
+                        'difference' => $difference,
+                        'variance_reason' => $varianceReason !== '' ? $varianceReason : null,
+                        'manager_signoff_id' => $managerSignoffId,
+                    ],
+                    actorId: $actor?->id ?? $shift->cashier_id,
+                );
+            }
 
             return $shift;
         });

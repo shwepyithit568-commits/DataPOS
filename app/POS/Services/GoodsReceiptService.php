@@ -195,16 +195,10 @@ class GoodsReceiptService
             ->get();
     }
 
-    /** GRV-YYYYMMDD-#### sequence per store. */
+    /** GRV-YYYYMMDD-#### sequence per store via DocumentSequenceService. */
     private function nextReceiptNumber(Store $store): string
     {
-        $prefix = 'GRV-' . now()->format('Ymd') . '-';
-        $seq = GoodsReceipt::query()
-            ->where('store_id', $store->id)
-            ->where('receipt_number', 'like', $prefix . '%')
-            ->count() + 1;
-
-        return $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+        return app(DocumentSequenceService::class)->nextNumber($store, 'goods_receipt', 'GRV-{Ymd}-');
     }
 
     private function isUniqueViolation(QueryException $e): bool

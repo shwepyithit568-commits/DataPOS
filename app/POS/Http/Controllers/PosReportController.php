@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Store;
 use App\Models\User;
 use App\POS\Services\PosReportService;
+use App\Services\ExportDataSanitizer;
 use App\Services\StoreContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -67,6 +68,13 @@ class PosReportController extends Controller
 
         $report = $this->reports->salesReport($store, $from, $to, $cashierId);
 
+        ExportDataSanitizer::auditExport($store, 'sales_report', $request->user(), [
+            'format' => $format,
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+            'count' => count($report['sales'] ?? []),
+        ]);
+
         if ($format === 'xlsx') {
             return $this->exportSalesXlsx($store, $report, $from, $to);
         }
@@ -83,15 +91,15 @@ class PosReportController extends Controller
 
         return response()->streamDownload(function () use ($report, $from, $to, $store) {
             $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+            fwrite($handle, ExportDataSanitizer::utf8Bom());
 
-            fputcsv($handle, [__('messages.reports_sales'), $store->name]);
-            fputcsv($handle, [__('messages.report_period'), $from->toFormattedDateString() . ' to ' . $to->toFormattedDateString()]);
-            fputcsv($handle, [__('messages.reports_total_sales'), number_format((float) ($report['total'] ?? $report['total_sales'] ?? 0), 2)]);
-            fputcsv($handle, [__('messages.reports_total_orders'), $report['count'] ?? $report['total_orders'] ?? 0]);
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.reports_sales'), $store->name]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.report_period'), $from->toFormattedDateString() . ' to ' . $to->toFormattedDateString()]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.reports_total_sales'), number_format((float) ($report['total'] ?? $report['total_sales'] ?? 0), 2)]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.reports_total_orders'), $report['count'] ?? $report['total_orders'] ?? 0]));
             fputcsv($handle, []);
 
-            fputcsv($handle, [
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
                 __('messages.receipt'),
                 __('messages.reports_date'),
                 __('messages.cashier'),
@@ -103,9 +111,9 @@ class PosReportController extends Controller
                 __('messages.total'),
                 __('messages.reports_payment_method'),
                 __('messages.status'),
-            ]);
+            ]));
             foreach ($report['sales'] as $sale) {
-                fputcsv($handle, [
+                fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
                     $sale->receipt_number ?: $sale->invoice_no,
                     $sale->posted_at?->format('Y-m-d H:i'),
                     $sale->cashier?->name ?? $sale->creator?->name ?? '-',
@@ -117,7 +125,7 @@ class PosReportController extends Controller
                     number_format((float) $sale->total, 2),
                     $sale->payments->pluck('method')->implode(', ') ?: ($sale->payment_method ?? '-'),
                     $sale->status,
-                ]);
+                ]));
             }
 
             fclose($handle);
@@ -204,7 +212,7 @@ class PosReportController extends Controller
         $row++;
 
         foreach ($report['sales'] as $sale) {
-            $sheet->setCellValue("A{$row}", $sale->receipt_number ?: $sale->invoice_no);
+            ExportDataSanitizer::setStringCell($sheet, "A{$row}", $sale->receipt_number ?: $sale->invoice_no);
             $sheet->setCellValue("B{$row}", $sale->posted_at?->format('d/m/Y H:i'));
             $sheet->setCellValue("C{$row}", $sale->cashier?->name ?? $sale->creator?->name ?? '—');
             $sheet->setCellValue("D{$row}", $sale->customer?->name ?? 'Walk-in Customer');
@@ -272,6 +280,13 @@ class PosReportController extends Controller
         $format = $request->query('format', 'xlsx');
         $report = $this->reports->cashReport($store, $from, $to);
 
+        ExportDataSanitizer::auditExport($store, 'cash_report', $request->user(), [
+            'format' => $format,
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+            'count' => count($report['shifts'] ?? []),
+        ]);
+
         if ($format === 'csv') {
             return $this->exportCashCsv($store, $report, $from, $to);
         }
@@ -288,17 +303,17 @@ class PosReportController extends Controller
 
         return response()->streamDownload(function () use ($report, $from, $to, $store) {
             $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+            fwrite($handle, ExportDataSanitizer::utf8Bom());
 
-            fputcsv($handle, [__('messages.reports_cash'), $store->name]);
-            fputcsv($handle, [__('messages.report_period'), $from->format('d/m/Y') . ' - ' . $to->format('d/m/Y')]);
-            fputcsv($handle, [__('messages.reports_shift_count'), $report['shift_count']]);
-            fputcsv($handle, [__('messages.expected_cash'), number_format((float) $report['expected'], 2)]);
-            fputcsv($handle, [__('messages.actual_cash'), number_format((float) $report['actual'], 2)]);
-            fputcsv($handle, [__('messages.difference'), number_format((float) $report['difference'], 2)]);
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.reports_cash'), $store->name]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.report_period'), $from->format('d/m/Y') . ' - ' . $to->format('d/m/Y')]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.reports_shift_count'), $report['shift_count']]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.expected_cash'), number_format((float) $report['expected'], 2)]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.actual_cash'), number_format((float) $report['actual'], 2)]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.difference'), number_format((float) $report['difference'], 2)]));
             fputcsv($handle, []);
 
-            fputcsv($handle, [
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
                 __('messages.register'),
                 __('messages.cashier'),
                 __('messages.opening_cash'),
@@ -309,10 +324,10 @@ class PosReportController extends Controller
                 __('messages.actual'),
                 __('messages.difference'),
                 __('messages.status'),
-            ]);
+            ]));
 
             foreach ($report['shifts'] as $shift) {
-                fputcsv($handle, [
+                fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
                     $shift->register_name,
                     $shift->cashier?->name ?? '—',
                     number_format((float) $shift->opening_cash, 2),
@@ -323,7 +338,7 @@ class PosReportController extends Controller
                     $shift->actual_closing_amount !== null ? number_format((float) $shift->actual_closing_amount, 2) : '—',
                     $shift->difference !== null ? number_format((float) $shift->difference, 2) : '—',
                     $shift->status,
-                ]);
+                ]));
             }
 
             fclose($handle);
@@ -479,6 +494,11 @@ class PosReportController extends Controller
         $format = $request->query('format', 'xlsx');
         $report = $this->reports->stockReport($store, $search);
 
+        ExportDataSanitizer::auditExport($store, 'stock_report', $request->user(), [
+            'format' => $format,
+            'count' => count($report['rows'] ?? []),
+        ]);
+
         if ($format === 'csv') {
             return $this->exportStockCsv($store, $report);
         }
@@ -495,16 +515,16 @@ class PosReportController extends Controller
 
         return response()->streamDownload(function () use ($report, $store) {
             $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+            fwrite($handle, ExportDataSanitizer::utf8Bom());
 
-            fputcsv($handle, [__('messages.reports_stock'), $store->name]);
-            fputcsv($handle, [__('messages.export_date'), now()->format('d/m/Y H:i')]);
-            fputcsv($handle, [__('messages.reports_stock_total_skus'), count($report['rows'])]);
-            fputcsv($handle, [__('messages.reports_total_units'), number_format((float) $report['total_units'], 3)]);
-            fputcsv($handle, [__('messages.reports_stock_value'), number_format((float) $report['total_value'], 2)]);
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.reports_stock'), $store->name]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.export_date'), now()->format('d/m/Y H:i')]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.reports_stock_total_skus'), count($report['rows'])]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.reports_total_units'), number_format((float) $report['total_units'], 3)]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.reports_stock_value'), number_format((float) $report['total_value'], 2)]));
             fputcsv($handle, []);
 
-            fputcsv($handle, [
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
                 '#',
                 __('messages.product'),
                 __('messages.category'),
@@ -513,13 +533,13 @@ class PosReportController extends Controller
                 __('messages.on_hand_qty'),
                 __('messages.average_cost'),
                 __('messages.stock_value'),
-            ]);
+            ]));
 
             foreach ($report['rows'] as $index => $row) {
                 $qty = (float) $row['quantity_on_hand'];
                 $status = $qty > 5 ? __('messages.reports_stock_in_stock') : ($qty > 0 ? __('messages.low_stock') : __('messages.reports_stock_out_of_stock'));
 
-                fputcsv($handle, [
+                fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
                     $index + 1,
                     $row['product']?->name ?? '—',
                     $row['product']?->category?->name ?? '—',
@@ -528,11 +548,11 @@ class PosReportController extends Controller
                     number_format($qty, 3),
                     number_format((float) $row['unit_cost_avg'], 2),
                     number_format((float) $row['value'], 2),
-                ]);
+                ]));
             }
 
             fputcsv($handle, []);
-            fputcsv($handle, [
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
                 '',
                 __('messages.total'),
                 '',
@@ -541,7 +561,7 @@ class PosReportController extends Controller
                 number_format((float) $report['total_units'], 3),
                 '',
                 number_format((float) $report['total_value'], 2),
-            ]);
+            ]));
 
             fclose($handle);
         }, $filename, [
@@ -628,7 +648,7 @@ class PosReportController extends Controller
             $sheet->setCellValue("A{$row}", $index + 1);
             $sheet->setCellValue("B{$row}", $item['product']?->name ?? '—');
             $sheet->setCellValue("C{$row}", $item['product']?->category?->name ?? '—');
-            $sheet->setCellValue("D{$row}", $item['product']?->sku ?: '—');
+            ExportDataSanitizer::setStringCell($sheet, "D{$row}", $item['product']?->sku ?: '—');
             $sheet->setCellValue("E{$row}", $status);
             $sheet->setCellValue("F{$row}", $qty);
             $sheet->setCellValue("G{$row}", $cost);
@@ -756,6 +776,13 @@ class PosReportController extends Controller
 
         $report = $this->reports->serviceJobsReport($store, $from, $to, $technicianId, $status);
 
+        ExportDataSanitizer::auditExport($store, 'services_report', $request->user(), [
+            'format' => $format,
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+            'count' => count($report['jobs'] ?? []),
+        ]);
+
         if ($format === 'csv') {
             return $this->exportServicesCsv($store, $report, $from, $to);
         }
@@ -863,11 +890,11 @@ class PosReportController extends Controller
             $partsCost = (float) $job->items->where('type', 'part')->sum('cost');
             $profit = max(0, $final - $partsCost);
 
-            $sheet->setCellValue("A{$row}", $job->job_number);
-            $sheet->setCellValue("B{$row}", $job->voucher_no ?? '-');
+            ExportDataSanitizer::setStringCell($sheet, "A{$row}", $job->job_number);
+            ExportDataSanitizer::setStringCell($sheet, "B{$row}", $job->voucher_no ?? '-');
             $sheet->setCellValue("C{$row}", $job->created_at?->format('d/m/Y H:i'));
             $sheet->setCellValue("D{$row}", $job->contact_name);
-            $sheet->setCellValue("E{$row}", $job->contact_phone);
+            ExportDataSanitizer::setStringCell($sheet, "E{$row}", $job->contact_phone);
             $sheet->setCellValue("F{$row}", $job->device_type);
             $sheet->setCellValue("G{$row}", $job->brand . ' ' . $job->model);
             $sheet->setCellValue("H{$row}", $job->reported_problem);
@@ -928,15 +955,15 @@ class PosReportController extends Controller
 
         return response()->streamDownload(function () use ($report, $from, $to, $store) {
             $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+            fwrite($handle, ExportDataSanitizer::utf8Bom());
 
-            fputcsv($handle, [__('messages.sidebar_service_revenue_report'), $store->name]);
-            fputcsv($handle, [__('messages.report_period'), $from->format('d/m/Y') . ' - ' . $to->format('d/m/Y')]);
-            fputcsv($handle, [__('messages.report_total_jobs'), $report['count']]);
-            fputcsv($handle, [__('messages.report_completed_jobs'), $report['completed_count']]);
-            fputcsv($handle, [__('messages.report_pending_jobs'), $report['pending_count']]);
-            fputcsv($handle, [__('messages.report_total_revenue'), number_format($report['total_revenue'], 2)]);
-            fputcsv($handle, [__('messages.report_total_parts_cost'), number_format($report['total_parts_cost'], 2)]);
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.sidebar_service_revenue_report'), $store->name]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.report_period'), $from->format('d/m/Y') . ' - ' . $to->format('d/m/Y')]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.report_total_jobs'), $report['count']]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.report_completed_jobs'), $report['completed_count']]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.report_pending_jobs'), $report['pending_count']]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.report_total_revenue'), number_format($report['total_revenue'], 2)]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.report_total_parts_cost'), number_format($report['total_parts_cost'], 2)]));
             fputcsv($handle, []);
 
             $jobStatusLabel = function (string $status): string {
@@ -954,7 +981,7 @@ class PosReportController extends Controller
                 };
             };
 
-            fputcsv($handle, [
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
                 __('messages.report_job_no'),
                 __('messages.report_voucher_no'),
                 __('messages.stock_ledger_date'),
@@ -969,7 +996,7 @@ class PosReportController extends Controller
                 __('messages.report_final_charge'),
                 __('messages.report_paid_amount'),
                 __('messages.report_profit') ?? 'Profit',
-            ]);
+            ]));
 
             foreach ($report['jobs'] as $job) {
                 $final = (float) ($job->final_charge ?: $job->estimated_charge ?: 0);
@@ -977,7 +1004,7 @@ class PosReportController extends Controller
                 $partsCost = (float) $job->items->where('type', 'part')->sum('cost');
                 $profit = max(0, $final - $partsCost);
 
-                fputcsv($handle, [
+                fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
                     $job->job_number,
                     $job->voucher_no ?? '-',
                     $job->created_at?->format('Y-m-d H:i'),
@@ -992,7 +1019,7 @@ class PosReportController extends Controller
                     number_format($final, 2),
                     number_format($paid, 2),
                     number_format($profit, 2),
-                ]);
+                ]));
             }
 
             fclose($handle);
@@ -1063,4 +1090,226 @@ class PosReportController extends Controller
 
         return [$now->copy()->startOfMonth(), $now->copy()->endOfMonth(), 'this_month'];
     }
+
+    /**
+     * Single-Source-of-Truth Business Reconciliation (Stock & Cash Equations).
+     */
+    public function reconciliation(Request $request, StoreContext $context, \App\POS\Services\BusinessReconciliationService $recon): View
+    {
+        $store = $context->getStore();
+        if (! $store) {
+            abort(404);
+        }
+
+        [$from, $to, $preset] = $this->resolveDateRange($request);
+
+        $stock = $recon->stockReconciliation($store, $from, $to);
+        $cash = $recon->cashReconciliation($store, $to);
+
+        return view('pos.reports.reconciliation', compact('store', 'from', 'to', 'preset', 'stock', 'cash'));
+    }
+
+    /**
+     * Payment Method Reconciliation Dashboard (§10.5, §11).
+     */
+    public function payments(Request $request, StoreContext $context): View
+    {
+        $store = $context->getStore();
+        if (! $store) {
+            abort(404);
+        }
+
+        [$from, $to, $preset] = $this->resolveDateRange($request);
+
+        $report = $this->reports->paymentMethodReconciliation($store, $from, $to);
+
+        return view('pos.reports.payments', compact('store', 'from', 'to', 'preset', 'report'));
+    }
+
+    /**
+     * Export Payment Method Reconciliation as Excel (.xlsx) or CSV (.csv).
+     */
+    public function exportPayments(Request $request, StoreContext $context): BinaryFileResponse|StreamedResponse
+    {
+        $store = $context->getStore();
+        if (! $store) {
+            abort(404);
+        }
+
+        [$from, $to, $preset] = $this->resolveDateRange($request);
+        $format = $request->query('format', 'csv');
+
+        $report = $this->reports->paymentMethodReconciliation($store, $from, $to);
+
+        if ($format === 'xlsx') {
+            return $this->exportPaymentsXlsx($store, $report, $from, $to);
+        }
+
+        return $this->exportPaymentsCsv($store, $report, $from, $to);
+    }
+
+    /**
+     * Export Payment Reconciliation as CSV.
+     */
+    private function exportPaymentsCsv(Store $store, array $report, Carbon $from, Carbon $to): StreamedResponse
+    {
+        $filename = 'payments-reconciliation-' . $store->slug . '-' . $from->format('Ymd') . '-to-' . $to->format('Ymd') . '.csv';
+
+        return response()->streamDownload(function () use ($report, $from, $to, $store) {
+            $handle = fopen('php://output', 'w');
+            fwrite($handle, ExportDataSanitizer::utf8Bom());
+
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.reports_payments'), $store->name]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.report_period'), $from->toFormattedDateString() . ' to ' . $to->toFormattedDateString()]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.reports_total_sales'), number_format((float) $report['total_collected'], 2)]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.net_settlement'), number_format((float) $report['net_settlement'], 2)]));
+            fputcsv($handle, []);
+
+            // Methods Breakdown Table
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
+                __('messages.reports_payment_method'),
+                __('messages.reports_sale_count'),
+                __('messages.reports_grand_total'),
+                __('messages.change'),
+                __('messages.net_amount'),
+                __('messages.refund_amount'),
+                __('messages.reference_number'),
+                __('messages.percentage'),
+            ]));
+
+            foreach ($report['methods'] as $m) {
+                fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
+                    $m['name'],
+                    $m['count'],
+                    number_format((float) $m['total_amount'], 2),
+                    number_format((float) $m['change_given'], 2),
+                    number_format((float) $m['net_amount'], 2),
+                    number_format((float) $m['refund_amount'], 2),
+                    $m['reference_count'],
+                    $m['share_percentage'] . '%',
+                ]));
+            }
+
+            fputcsv($handle, []);
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow(['--- ' . __('messages.recent_payments') . ' ---']));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
+                __('messages.receipt'),
+                __('messages.reports_date'),
+                __('messages.reports_payment_method'),
+                __('messages.total'),
+                __('messages.change'),
+                __('messages.reference_number'),
+            ]));
+
+            foreach ($report['payments'] as $payment) {
+                fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
+                    $payment->sale?->receipt_number ?: ('#' . $payment->pos_sale_id),
+                    $payment->created_at?->format('Y-m-d H:i'),
+                    strtoupper($payment->method),
+                    number_format((float) $payment->amount, 2),
+                    number_format((float) $payment->change_given, 2),
+                    $payment->reference ?: '-',
+                ]));
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
+    /**
+     * Export Payment Reconciliation as Excel (.xlsx).
+     */
+    private function exportPaymentsXlsx(Store $store, array $report, Carbon $from, Carbon $to): BinaryFileResponse
+    {
+        $filename = 'Payments_Reconciliation_' . $store->slug . '_' . $from->format('Ymd') . '_to_' . $to->format('Ymd') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'datapos_payments_');
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Payment Reconciliation');
+
+        // Header Title Block
+        $sheet->setCellValue('A1', $store->name . ' — ' . __('messages.reports_payments'));
+        $sheet->setCellValue('A2', __('messages.report_period') . ': ' . $from->format('d/m/Y') . ' - ' . $to->format('d/m/Y') . ' | Exported: ' . now()->format('d/m/Y h:i A'));
+
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setRGB('0284C7');
+        $sheet->getStyle('A2')->getFont()->setSize(10)->getColor()->setRGB('64748B');
+
+        // Summary KPI Box
+        $sheet->setCellValue('A4', __('messages.reports_grand_total') . ': ' . number_format((float) $report['total_collected'], 2));
+        $sheet->setCellValue('B4', __('messages.digital_payments') . ': ' . number_format((float) $report['digital_collected'], 2));
+        $sheet->setCellValue('C4', __('messages.cash_collections') . ': ' . number_format((float) $report['cash_collected'], 2));
+        $sheet->setCellValue('D4', __('messages.net_settlement') . ': ' . number_format((float) $report['net_settlement'], 2));
+        $sheet->getStyle('A4:D4')->getFont()->setBold(true)->setSize(10);
+
+        // Methods Breakdown Headers
+        $row = 6;
+        $headers = [
+            'A' => __('messages.reports_payment_method'),
+            'B' => __('messages.reports_sale_count'),
+            'C' => __('messages.reports_grand_total'),
+            'D' => __('messages.change'),
+            'E' => __('messages.net_amount'),
+            'F' => __('messages.refund_amount'),
+            'G' => __('messages.reference_number'),
+            'H' => __('messages.percentage'),
+        ];
+
+        foreach ($headers as $col => $title) {
+            $sheet->setCellValue("{$col}{$row}", $title);
+        }
+
+        $sheet->getStyle("A{$row}:H{$row}")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '0284C7'],
+            ],
+            'alignment' => [
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet->getStyle("B{$row}:H{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getRowDimension($row)->setRowHeight(22);
+
+        $row++;
+        foreach ($report['methods'] as $m) {
+            $sheet->setCellValue("A{$row}", $m['name']);
+            $sheet->setCellValue("B{$row}", (int) $m['count']);
+            $sheet->setCellValue("C{$row}", (float) $m['total_amount']);
+            $sheet->setCellValue("D{$row}", (float) $m['change_given']);
+            $sheet->setCellValue("E{$row}", (float) $m['net_amount']);
+            $sheet->setCellValue("F{$row}", (float) $m['refund_amount']);
+            $sheet->setCellValue("G{$row}", (int) $m['reference_count']);
+            $sheet->setCellValue("H{$row}", $m['share_percentage'] . '%');
+
+            $sheet->getStyle("C{$row}:F{$row}")->getNumberFormat()->setFormatCode('#,##0.00');
+            $sheet->getStyle("B{$row}:H{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+            if ($row % 2 === 0) {
+                $sheet->getStyle("A{$row}:H{$row}")->applyFromArray([
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'F8FAFC'],
+                    ],
+                ]);
+            }
+            $row++;
+        }
+
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
 }
+

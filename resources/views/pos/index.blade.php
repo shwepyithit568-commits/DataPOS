@@ -1631,19 +1631,19 @@
                             <dl class="grid grid-cols-2 gap-3 text-sm mb-5">
                                 <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
                                     <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.opening_cash') }}</dt>
-                                    <dd class="font-black mt-0.5">Ks {{ number_format((float) $openShift->opening_cash) }}</dd>
+                                    <dd class="font-black mt-0.5">{{ format_currency($openShift->opening_cash, $store) }}</dd>
                                 </div>
                                 <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
                                     <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.cash_in_out') }}</dt>
-                                    <dd class="font-black mt-0.5 text-blue-600 dark:text-blue-400">+{{ number_format((float) $openShift->cash_in) }} / −{{ number_format((float) $openShift->cash_out) }}</dd>
+                                    <dd class="font-black mt-0.5 text-blue-600 dark:text-blue-400">+{{ format_currency($openShift->cash_in, $store) }} / −{{ format_currency($openShift->cash_out, $store) }}</dd>
                                 </div>
                                 <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
                                     <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.cash_sales') }}</dt>
-                                    <dd class="font-black mt-0.5">Ks {{ number_format((float) $openShift->cash_sales) }}</dd>
+                                    <dd class="font-black mt-0.5">{{ format_currency($openShift->cash_sales, $store) }}</dd>
                                 </div>
                                 <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
                                     <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.cash_refunds') }}</dt>
-                                    <dd class="font-black mt-0.5">Ks {{ number_format((float) $openShift->cash_refunds) }}</dd>
+                                    <dd class="font-black mt-0.5">{{ format_currency($openShift->cash_refunds, $store) }}</dd>
                                 </div>
                             </dl>
 
@@ -1669,7 +1669,9 @@
                                 <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/shifts/' . $openShift->id . '/close') }}"
                                       x-show="show" x-cloak class="mt-3 grid gap-2">
                                     @csrf
-                                    <input type="number" name="actual_closing_amount" min="0" step="100" required placeholder="{{ __('messages.actual_closing_amount') }} (Ks)"
+                                    <input type="number" name="actual_closing_amount" min="0" step="100" required placeholder="{{ __('messages.actual_closing_amount') }}"
+                                           class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
+                                    <input type="text" name="variance_reason" maxlength="255" placeholder="{{ __('messages.variance_reason') }}"
                                            class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
                                     <textarea name="notes" rows="2" maxlength="1000" placeholder="{{ __('messages.notes') }}"
                                               class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"></textarea>
@@ -1691,16 +1693,16 @@
                                 </div>
                                 <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
                                     <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.expected_cash') }}</dt>
-                                    <dd class="font-black mt-0.5">Ks {{ number_format((float) $summary['expected']) }}</dd>
+                                    <dd class="font-black mt-0.5">{{ format_currency($summary['expected'], $store) }}</dd>
                                 </div>
                                 <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
                                     <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.actual_cash') }}</dt>
-                                    <dd class="font-black mt-0.5">Ks {{ number_format((float) $summary['actual']) }}</dd>
+                                    <dd class="font-black mt-0.5">{{ format_currency($summary['actual'], $store) }}</dd>
                                 </div>
                                 <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3">
                                     <dt class="text-xs text-slate-500 dark:text-slate-400">{{ __('messages.difference') }}</dt>
                                     <dd class="font-black mt-0.5 {{ (float) $summary['difference'] < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
-                                        {{ (float) $summary['difference'] < 0 ? '−' : '+' }}Ks {{ number_format(abs((float) $summary['difference'])) }}
+                                        {{ ((float) $summary['difference'] < 0 ? '−' : '+') . format_currency(abs((float) $summary['difference']), $store) }}
                                     </dd>
                                 </div>
                             </dl>
@@ -1721,10 +1723,10 @@
                                             <tr>
                                                 <td class="px-3 py-2.5 font-semibold">{{ $shift->cashier?->name }}</td>
                                                 <td class="px-3 py-2.5">{{ $shift->register_name }}</td>
-                                                <td class="px-3 py-2.5 text-right">Ks {{ number_format((float) $shift->opening_cash) }}</td>
-                                                <td class="px-3 py-2.5 text-right">Ks {{ number_format((float) $shift->actual_closing_amount) }}</td>
+                                                <td class="px-3 py-2.5 text-right">{{ format_currency((float) $shift->opening_cash, $store) }}</td>
+                                                <td class="px-3 py-2.5 text-right">{{ format_currency((float) $shift->actual_closing_amount, $store) }}</td>
                                                 <td class="px-3 py-2.5 text-right font-bold {{ (float) $shift->difference < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
-                                                    {{ (float) $shift->difference < 0 ? '−' : '+' }}Ks {{ number_format(abs((float) $shift->difference)) }}
+                                                    {{ ((float) $shift->difference < 0 ? '−' : '+') . format_currency(abs((float) $shift->difference), $store) }}
                                                 </td>
                                             </tr>
                                         @endforeach

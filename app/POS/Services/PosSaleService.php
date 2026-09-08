@@ -791,6 +791,8 @@ class PosSaleService
         ?PosSale $heldSale = null,
         ?int $customerId = null,
     ): PosSale {
+        app(PeriodLockService::class)->assertDateNotLocked($store, now(), 'sale');
+
         if ($store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS)) {
             if (! $shift?->isOpen() || (int) $shift->store_id !== (int) $store->id) {
                 throw new InventoryException('An open cashier shift is required to post a sale.');
@@ -902,17 +904,21 @@ class PosSaleService
                 throw new InventoryException('Payment amounts must be positive.');
             }
 
+            $reference = isset($payment['reference']) && trim((string) $payment['reference']) !== ''
+                ? trim((string) $payment['reference'])
+                : null;
+
             if ($method === 'cash') {
                 $kept = bccomp($amount, $remaining, 2) > 0 ? $remaining : $amount;
                 $change = bcsub($amount, $kept, 2);
                 $cashKept = bcadd($cashKept, $kept, 2);
-                $paymentRows[] = ['method' => 'cash', 'amount' => $amount, 'change_given' => $change];
+                $paymentRows[] = ['method' => 'cash', 'amount' => $amount, 'change_given' => $change, 'reference' => $reference];
                 $remaining = bcsub($remaining, $kept, 2);
             } else {
                 if (bccomp($amount, $remaining, 2) > 0) {
                     throw new InventoryException("'{$method}' payment exceeds the remaining total.");
                 }
-                $paymentRows[] = ['method' => $method, 'amount' => $amount, 'change_given' => '0'];
+                $paymentRows[] = ['method' => $method, 'amount' => $amount, 'change_given' => '0', 'reference' => $reference];
                 if ($method === 'credit') {
                     $creditTotal = bcadd($creditTotal, $amount, 2);
                 }
@@ -1045,6 +1051,7 @@ class PosSaleService
                     'method' => $row['method'],
                     'amount' => $row['amount'],
                     'change_given' => $row['change_given'],
+                    'reference' => $row['reference'] ?? null,
                     'created_by' => $actor->id,
                 ]);
             }
@@ -1076,17 +1083,11 @@ class PosSaleService
     }
 
     /**
-     * RCP-YYYYMMDD-#### sequence per store.
+     * Atomic RCP-YYYYMMDD-#### sequence per store via DocumentSequenceService.
      */
     private function nextReceiptNumber(Store $store): string
     {
-        $prefix = 'RCP-' . now()->format('Ymd') . '-';
-        $seq = PosSale::query()
-                ->where('store_id', $store->id)
-                ->where('receipt_number', 'like', $prefix . '%')
-                ->count() + 1;
-
-        return $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+        return app(DocumentSequenceService::class)->nextNumber($store, 'sale');
     }
 
     private function isUniqueViolation(\Illuminate\Database\QueryException $e): bool

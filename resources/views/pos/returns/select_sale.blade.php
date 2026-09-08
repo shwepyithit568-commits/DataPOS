@@ -92,7 +92,7 @@
                                 </td>
                                 <td class="px-3 py-2 align-middle font-semibold text-slate-800 dark:text-slate-200">{{ $sale->customer?->name ?? __('messages.walk_in_customer') }}</td>
                                 <td class="px-3 py-2 align-middle text-[11px] text-slate-500 dark:text-slate-400">{{ $sale->posted_at?->format('d M Y H:i') }}</td>
-                                <td class="px-3 py-2 align-middle text-right font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">Ks {{ number_format((float) $sale->total) }}</td>
+                                <td class="px-3 py-2 align-middle text-right font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">{{ format_currency($sale->total, $store) }}</td>
                                 <td class="px-3 py-2 align-middle text-right">
                                     <a href="{{ route('pos.refund.create', [...$storeRouteParams, 'sale' => $sale->id]) }}"
                                        class="h-6 px-2.5 rounded text-[11px] font-bold text-white bg-sky-600 hover:bg-sky-500 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
@@ -124,7 +124,7 @@
                         </div>
                         <div class="text-right shrink-0">
                             <p class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide font-bold">{{ __('messages.total') }}</p>
-                            <p class="font-mono text-xs font-black text-slate-900 dark:text-slate-100 tabular-nums">Ks {{ number_format((float) $sale->total) }}</p>
+                            <p class="font-mono text-xs font-black text-slate-900 dark:text-slate-100 tabular-nums">{{ format_currency($sale->total, $store) }}</p>
                         </div>
                     </div>
                     <div class="mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1.5">

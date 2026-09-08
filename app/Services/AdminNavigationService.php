@@ -920,6 +920,14 @@ class AdminNavigationService
                             'icon' => '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>',
                         ],
                         [
+                            'key' => 'pos_reports_payments',
+                            'translation_key' => 'messages.reports_payments',
+                            'route_name' => 'pos.reports.payments',
+                            'required_permissions' => ['reports_sales.view', 'reports_sales.edit'],
+                            'active_patterns' => ['route:pos.reports.payments*'],
+                            'icon' => '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>',
+                        ],
+                        [
                             'key' => 'sales_analytics',
                             'translation_key' => 'messages.sidebar_sales_analytics',
                             'route_name' => 'store.admin.sales_analytics.index',

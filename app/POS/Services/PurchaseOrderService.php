@@ -930,15 +930,10 @@ class PurchaseOrderService
         ];
     }
 
+    /** PR-YYYYMMDD-#### sequence per store via DocumentSequenceService. */
     private function nextReturnNumber(Store $store): string
     {
-        $prefix = 'PR-' . now()->format('Ymd') . '-';
-        $seq = PurchaseReturn::query()
-            ->where('store_id', $store->id)
-            ->where('return_number', 'like', $prefix . '%')
-            ->count() + 1;
-
-        return $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+        return app(DocumentSequenceService::class)->nextNumber($store, 'purchase_return', 'PR-{Ymd}-');
     }
 
     /*  Payments (AlinThit POS parity)                                       */
@@ -1112,14 +1107,9 @@ class PurchaseOrderService
     /*  PO number: PO-YYYYMMDD-#### (sequential per store per day)         */
     /* ------------------------------------------------------------------ */
 
+    /** PO-YYYYMMDD-#### sequence per store via DocumentSequenceService. */
     private function nextPoNumber(Store $store): string
     {
-        $prefix = 'PO-' . now()->format('Ymd') . '-';
-        $seq = PurchaseOrder::query()
-            ->where('store_id', $store->id)
-            ->where('po_number', 'like', $prefix . '%')
-            ->count() + 1;
-
-        return $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+        return app(DocumentSequenceService::class)->nextNumber($store, 'purchase_order');
     }
 }

@@ -688,6 +688,7 @@ Route::prefix('store/{store_slug}')
         Route::delete('/admin/printers/{printer}', [\App\Http\Controllers\Admin\PrinterController::class, 'destroy'])->name('store.admin.printers.destroy')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:settings.delete']);
         Route::post('/admin/printers/{printer}/set-default', [\App\Http\Controllers\Admin\PrinterController::class, 'setDefault'])->name('store.admin.printers.set_default')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:settings.update']);
         Route::get('/admin/printers/{printer}/test-print', [\App\Http\Controllers\Admin\PrinterController::class, 'testPrint'])->name('store.admin.printers.test_print')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.view']);
+        Route::get('/admin/printers/{printer}/escpos-bin', [\App\Http\Controllers\Admin\PrinterController::class, 'downloadEscPos'])->name('store.admin.printers.escpos_bin')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.view']);
 
         // Voucher Customizer & Templates (sidebar_vouchers)
         Route::get('/admin/vouchers', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'index'])->name('store.admin.vouchers.index')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.view']);
@@ -696,6 +697,7 @@ Route::prefix('store/{store_slug}')
         Route::delete('/admin/vouchers/{voucher}', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'destroy'])->name('store.admin.vouchers.destroy')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:settings.delete']);
         Route::post('/admin/vouchers/{voucher}/set-default', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'setDefault'])->name('store.admin.vouchers.set_default')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:settings.update']);
         Route::get('/admin/vouchers/{voucher}/preview', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'preview'])->name('store.admin.vouchers.preview')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.view']);
+        Route::get('/admin/settings/documents', fn ($store_slug) => redirect()->route('store.admin.vouchers.index', ['store_slug' => $store_slug]))->name('store.admin.settings.documents')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.view']);
 
         // Multi-Branch Management (sidebar_branches)
         Route::middleware(['store.capability:operations.branches'])->group(function () {
@@ -904,6 +906,8 @@ Route::prefix('store/{store_slug}')
             Route::post('/closing', [\App\POS\Http\Controllers\DailyClosingController::class, 'store'])->name('pos.closing.store')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.create']);
             Route::post('/closing/{closing}/approve', [\App\POS\Http\Controllers\DailyClosingController::class, 'approve'])->name('pos.closing.approve')
                 ->middleware([EnsureStoreAccess::class . ':store_manager', 'store.capability:operations.cashier_shifts', 'store.permission:pos_closing.update']);
+            Route::post('/closing/{closing}/reopen', [\App\POS\Http\Controllers\DailyClosingController::class, 'reopen'])->name('pos.closing.reopen')
+                ->middleware([EnsureStoreAccess::class . ':store_manager', 'store.capability:operations.cashier_shifts', 'store.permission:pos_closing.update']);
 
             // POS Reports (Sales / Cash Drawer / Stock / Services & Repairs)
             Route::get('/reports/sales', [\App\POS\Http\Controllers\PosReportController::class, 'sales'])->name('pos.reports.sales')->middleware('store.permission:reports_sales.view');
@@ -914,6 +918,9 @@ Route::prefix('store/{store_slug}')
             Route::get('/reports/stock/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportStock'])->name('pos.reports.stock.export')->middleware('store.permission:inventory_valuation.export');
             Route::get('/reports/services', [\App\POS\Http\Controllers\PosReportController::class, 'services'])->name('pos.reports.services')->middleware('store.permission:reports_services.view');
             Route::get('/reports/services/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportServices'])->name('pos.reports.services.export')->middleware('store.permission:reports_services.export');
+            Route::get('/reports/reconciliation', [\App\POS\Http\Controllers\PosReportController::class, 'reconciliation'])->name('pos.reports.reconciliation')->middleware('store.permission:stock_reconciliation.view');
+            Route::get('/reports/payments', [\App\POS\Http\Controllers\PosReportController::class, 'payments'])->name('pos.reports.payments')->middleware('store.permission:reports_sales.view');
+            Route::get('/reports/payments/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportPayments'])->name('pos.reports.payments.export')->middleware('store.permission:reports_sales.export');
 
             // POS product search (used by PO create form)
             Route::get('/purchases/products', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'productSearch'])->name('pos.purchases.product-search')->middleware('store.permission:purchases.view');

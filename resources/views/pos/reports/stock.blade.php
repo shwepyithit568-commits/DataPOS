@@ -123,7 +123,7 @@
             </div>
             <div class="min-w-0">
                 <div class="text-sm sm:text-base font-black text-sky-600 dark:text-sky-400 leading-none tabular-nums font-outfit">
-                    Ks {{ number_format((float) $report['total_value']) }}
+                    {{ format_currency($report['total_value'], $store) }}
                 </div>
                 <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.reports_stock_value') }}
@@ -276,10 +276,10 @@
                                     {{ $fmtQty($qty) }}
                                 </td>
                                 <td class="py-1.5 px-2.5 text-right font-mono tabular-nums text-slate-600 dark:text-slate-400">
-                                    Ks {{ number_format($cost) }}
+                                    {{ format_currency($cost, $store) }}
                                 </td>
                                 <td class="py-1.5 px-2.5 text-right font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">
-                                    Ks {{ number_format($val) }}
+                                    {{ format_currency($val, $store) }}
                                 </td>
                                 <td class="py-1.5 px-2 text-center whitespace-nowrap">
                                     @if ($product)
@@ -309,7 +309,7 @@
                                 —
                             </td>
                             <td class="py-1.5 px-2.5 text-right font-mono font-black text-sky-700 dark:text-sky-400 tabular-nums">
-                                Ks {{ number_format((float) $report['total_value']) }}
+                                {{ format_currency($report['total_value'], $store) }}
                             </td>
                             <td class="py-1.5 px-2"></td>
                         </tr>
@@ -384,10 +384,10 @@
 
                         <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-200/50 dark:border-slate-700/50 font-mono">
                             <span class="text-[10px] text-slate-400 font-sans">
-                                {{ __('messages.stock_value') }} (@ {{ number_format($cost) }} Ks)
+                                {{ __('messages.stock_value') }} (@ {{ format_currency($cost, $store) }})
                             </span>
                             <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">
-                                Ks {{ number_format($val) }}
+                                {{ format_currency($val, $store) }}
                             </span>
                         </div>
                     </div>

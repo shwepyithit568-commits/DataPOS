@@ -1,15 +1,21 @@
 @php
     $titles = [
         'sales' => ['label' => __('messages.reports_sales'), 'desc' => 'POS Invoices, Daily Totals & Payment Methods', 'icon' => '🧾'],
+        'payments' => ['label' => __('messages.reports_payments'), 'desc' => 'Payment Gateway Reconciliation, Wallets & Reference Verification', 'icon' => '💳'],
         'cash'  => ['label' => __('messages.reports_cash'), 'desc' => 'Cashier Shifts, Cash In/Out & Drawer Reconciliation', 'icon' => '💵'],
         'stock' => ['label' => __('messages.reports_stock'), 'desc' => 'On-Hand Inventory Balances, Average Costs & Valuation', 'icon' => '📦'],
+        'services' => ['label' => __('messages.reports_services'), 'desc' => 'Service Tickets, Device Repairs & Technician Revenue', 'icon' => '🔧'],
+        'reconciliation' => ['label' => __('messages.business_reconciliation'), 'desc' => 'Single-Source-of-Truth Stock & Cash Drawer Equation Reconciliation', 'icon' => '⚖️'],
     ];
-    $current = $titles[$active] ?? ['label' => __('messages.reports_title'), 'desc' => '', 'icon' => '📊'];
+    $current = $titles[(string) ($active ?? '')] ?? ['label' => __('messages.reports_title'), 'desc' => '', 'icon' => '📊'];
 
     $tabLinks = [
         'sales' => ['name' => 'pos.reports.sales', 'label' => __('messages.reports_sales'), 'icon' => '🧾'],
+        'payments' => ['name' => 'pos.reports.payments', 'label' => __('messages.reports_payments'), 'icon' => '💳'],
         'cash'  => ['name' => 'pos.reports.cash', 'label' => __('messages.reports_cash'), 'icon' => '💵'],
         'stock' => ['name' => 'pos.reports.stock', 'label' => __('messages.reports_stock'), 'icon' => '📦'],
+        'services' => ['name' => 'pos.reports.services', 'label' => __('messages.reports_services'), 'icon' => '🔧'],
+        'reconciliation' => ['name' => 'pos.reports.reconciliation', 'label' => __('messages.business_reconciliation'), 'icon' => '⚖️'],
     ];
 @endphp
 

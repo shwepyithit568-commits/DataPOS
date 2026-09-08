@@ -88,4 +88,9 @@ class PosSale extends Model
     {
         return $this->status === 'held';
     }
+
+    public function isVoided(): bool
+    {
+        return in_array($this->status, ['voided', 'cancelled'], true) || $this->voided_at !== null;
+    }
 }
