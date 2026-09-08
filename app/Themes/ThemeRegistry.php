@@ -75,6 +75,28 @@ class ThemeRegistry
             'status'          => 'active',
             'replacement_id'  => null,
         ],
+        'royal_tech' => [
+            'name_en'         => 'Royal Tech',
+            'name_mm'         => 'ရွိုင်ရယ် တက်ခ် (ဂိမ်းမင်းနှင့် ကွန်ပျူတာ)',
+            'description'     => 'High-impact violet and cyan palette designed for gaming setups, computers, and gadget stores.',
+            'colors'          => ['primary' => '#7c3aed', 'accent' => '#38bdf8', 'header_bg' => '#ffffff', 'body_bg' => '#faf5ff', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
+            'default_font'    => 'outfit',
+            'default_density' => 'compact',
+            'version'         => '1',
+            'status'          => 'active',
+            'replacement_id'  => null,
+        ],
+        'cyber_amber' => [
+            'name_en'         => 'Cyber Amber',
+            'name_mm'         => 'ဆိုက်ဘာ အမ်ဘာ (စီစီတီဗီနှင့် အပိုပစ္စည်း)',
+            'description'     => 'Energetic gold/amber and sky blue theme tailored for CCTV, accessories, and electrical appliances.',
+            'colors'          => ['primary' => '#f59e0b', 'accent' => '#0ea5e9', 'header_bg' => '#ffffff', 'body_bg' => '#fffbeb', 'glow_style' => 'vivid', 'dark_mode' => 'auto'],
+            'default_font'    => 'outfit',
+            'default_density' => 'compact',
+            'version'         => '1',
+            'status'          => 'active',
+            'replacement_id'  => null,
+        ],
     ];
 
     /**

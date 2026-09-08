@@ -43,79 +43,103 @@
     ];
     // ─────────────────────────────────────────────────────────────────────────
 
-    // 5 visual templates + 'custom' fallback with body_bg, glow_style, and dark_mode
+    // 7 curated visual templates + 'custom' fallback with body_bg, glow_style, and dark_mode
     $templates = [
         'marketplace_pro' => [
-            'name'        => 'Marketplace Pro (Cloud White)',
-            'desc'        => 'ရှင်းလင်းသောဖြူ၊ Sky Blue နှင့် Violet',
+            'name'        => __('messages.theme_tpl_marketplace_pro'),
+            'desc'        => __('messages.theme_tpl_marketplace_pro_desc'),
             'primary'     => '#0ea5e9',
             'accent'      => '#7c3aed',
             'header_bg'   => '#ffffff',
             'body_bg'     => '#f8fafc',
             'glow_style'  => 'vivid',
             'dark_mode'   => 'auto',
-            'badge'       => 'Popular',
+            'badge'       => __('messages.theme_badge_tech_mobile'),
             'badge_color' => 'bg-sky-500',
         ],
         'retail_trust' => [
-            'name'        => 'Retail Trust (Clean Blue)',
-            'desc'        => 'သန့်ရှင်းရိုးရှင်းသော Royal Blue နှင့် Amber',
+            'name'        => __('messages.theme_tpl_retail_trust'),
+            'desc'        => __('messages.theme_tpl_retail_trust_desc'),
             'primary'     => '#2563eb',
             'accent'      => '#f59e0b',
             'header_bg'   => '#ffffff',
             'body_bg'     => '#f8fafc',
             'glow_style'  => 'subtle',
             'dark_mode'   => 'auto',
-            'badge'       => 'General Retail',
+            'badge'       => __('messages.theme_badge_general_retail'),
             'badge_color' => 'bg-blue-600',
         ],
         'emerald_fresh' => [
-            'name'        => 'Emerald Fresh (Healthcare)',
-            'desc'        => 'သဘာ၀ဆန်သော Green နှင့် Amber',
+            'name'        => __('messages.theme_tpl_emerald_fresh'),
+            'desc'        => __('messages.theme_tpl_emerald_fresh_desc'),
             'primary'     => '#10b981',
             'accent'      => '#f59e0b',
             'header_bg'   => '#ffffff',
             'body_bg'     => '#f0fdf4',
             'glow_style'  => 'vivid',
             'dark_mode'   => 'auto',
-            'badge'       => 'Pharmacy',
+            'badge'       => __('messages.theme_badge_healthcare'),
             'badge_color' => 'bg-emerald-600',
         ],
-        'midnight_tech' => [
-            'name'        => 'Midnight Tech (Dark Mode)',
-            'desc'        => 'Premium မဲ၊ Cyan နှင့် Orange accent',
-            'primary'     => '#38bdf8',
-            'accent'      => '#fb923c',
-            'header_bg'   => '#0f172a',
-            'body_bg'     => '#0f172a',
+        'royal_tech' => [
+            'name'        => __('messages.theme_tpl_royal_tech'),
+            'desc'        => __('messages.theme_tpl_royal_tech_desc'),
+            'primary'     => '#7c3aed',
+            'accent'      => '#38bdf8',
+            'header_bg'   => '#ffffff',
+            'body_bg'     => '#faf5ff',
             'glow_style'  => 'vivid',
-            'dark_mode'   => 'dark',
-            'badge'       => 'Premium Tech',
-            'badge_color' => 'bg-slate-700',
+            'dark_mode'   => 'auto',
+            'badge'       => __('messages.theme_badge_gaming_pc'),
+            'badge_color' => 'bg-violet-600',
+        ],
+        'cyber_amber' => [
+            'name'        => __('messages.theme_tpl_cyber_amber'),
+            'desc'        => __('messages.theme_tpl_cyber_amber_desc'),
+            'primary'     => '#f59e0b',
+            'accent'      => '#0ea5e9',
+            'header_bg'   => '#ffffff',
+            'body_bg'     => '#fffbeb',
+            'glow_style'  => 'vivid',
+            'dark_mode'   => 'auto',
+            'badge'       => __('messages.theme_badge_accessories_cctv'),
+            'badge_color' => 'bg-amber-600',
         ],
         'sunset_warm' => [
-            'name'        => 'Sunset Warm (Boutique)',
-            'desc'        => 'နွေးထွေးသော Rose Red နှင့် Gold',
+            'name'        => __('messages.theme_tpl_sunset_warm'),
+            'desc'        => __('messages.theme_tpl_sunset_warm_desc'),
             'primary'     => '#e11d48',
             'accent'      => '#f59e0b',
             'header_bg'   => '#fff1f2',
             'body_bg'     => '#fff5f6',
             'glow_style'  => 'subtle',
             'dark_mode'   => 'auto',
-            'badge'       => 'Fashion',
+            'badge'       => __('messages.theme_badge_boutique_fashion'),
             'badge_color' => 'bg-rose-500',
         ],
+        'midnight_tech' => [
+            'name'        => __('messages.theme_tpl_midnight_tech'),
+            'desc'        => __('messages.theme_tpl_midnight_tech_desc'),
+            'primary'     => '#38bdf8',
+            'accent'      => '#fb923c',
+            'header_bg'   => '#0f172a',
+            'body_bg'     => '#0f172a',
+            'glow_style'  => 'vivid',
+            'dark_mode'   => 'dark',
+            'badge'       => __('messages.theme_badge_dark_mode'),
+            'badge_color' => 'bg-slate-700',
+        ],
         'custom' => [
-            'name'        => 'Custom Color Scheme',
-            'desc'        => 'မိမိကိုယ်ပိုင် Brand Color ရွေးချယ်မည်',
+            'name'        => __('messages.theme_tpl_custom'),
+            'desc'        => __('messages.theme_tpl_custom_desc'),
             'primary'     => $colors['primary'],
             'accent'      => $colors['accent'],
             'header_bg'   => $colors['header_bg'],
             'body_bg'     => $colors['body_bg'] ?? '#f8fafc',
             'glow_style'  => $colors['glow_style'] ?? 'vivid',
             'dark_mode'   => $colors['dark_mode'] ?? 'auto',
-            'badge'       => null,
-            'badge_color' => null,
+            'badge'       => __('messages.theme_badge_custom'),
+            'badge_color' => 'bg-slate-600',
         ],
     ];
 
@@ -746,20 +770,31 @@ if (window.Alpine) {
         </div>
 
         {{-- Template Card Grid --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-3.5">
 
             @foreach ($templates as $tKey => $tpl)
+            @php
+                $tplPrimary = $tKey === 'custom' ? $colors['primary'] : $tpl['primary'];
+                $tplAccent  = $tKey === 'custom' ? $colors['accent'] : $tpl['accent'];
+                $tplHeader  = $tKey === 'custom' ? $colors['header_bg'] : $tpl['header_bg'];
+                $tplBody    = $tKey === 'custom' ? ($colors['body_bg'] ?? '#f8fafc') : $tpl['body_bg'];
+                $isDark     = $tpl['dark_mode'] === 'dark';
+                $cardBg     = $isDark ? '#1e293b' : '#ffffff';
+                $cardBorder = $isDark ? '#334155' : '#e2e8f0';
+                $surfaceBg  = $isDark ? '#0f172a' : $tplBody;
+                $searchBg   = $isDark ? '#1e293b' : '#f1f5f9';
+            @endphp
             <button
                 type="button"
                 @click="selectTemplate('{{ $tKey }}')"
                 :class="preset === '{{ $tKey }}'
-                    ? 'ring-2 ring-violet-600 dark:ring-violet-400 bg-violet-50/20 dark:bg-violet-950/20 shadow-md border-violet-300 dark:border-violet-700'
-                    : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-xs'"
-                class="relative overflow-hidden rounded-2xl border text-left transition-all duration-200 focus:outline-none cursor-pointer flex flex-col justify-between group"
+                    ? 'border-violet-500 border-b-[4px] border-b-violet-700 ring-2 ring-violet-500/40 bg-violet-50/25 dark:bg-violet-950/30 shadow-lg -translate-y-0.5'
+                    : 'border-slate-200 border-b-[3px] border-b-slate-300/90 dark:border-slate-700/80 dark:border-b-slate-800 bg-white dark:bg-slate-800/90 hover:border-slate-300 hover:border-b-slate-400 dark:hover:border-b-slate-700 hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-[1.5px]'"
+                class="sf-btn-3d relative overflow-hidden rounded-2xl border text-left transition-all duration-150 focus:outline-none cursor-pointer flex flex-col justify-between group select-none shadow-xs"
             >
                 {{-- Badge --}}
                 @if ($tpl['badge'])
-                    <span class="absolute right-2.5 top-2.5 z-10 rounded-full {{ $tpl['badge_color'] }} px-2 py-0.5 text-[9px] font-black text-white shadow-xs">
+                    <span class="absolute right-2.5 top-2.5 z-10 rounded-full {{ $tpl['badge_color'] }} px-2.5 py-0.5 text-[9px] font-black text-white shadow-xs tracking-wide">
                         {{ $tpl['badge'] }}
                     </span>
                 @endif
@@ -770,88 +805,144 @@ if (window.Alpine) {
                     </span>
                 @endif
 
-                {{-- ── Mini Storefront Mockup (SVG) ── --}}
-                <div class="relative w-full overflow-hidden border-b border-slate-100 dark:border-slate-700/60" style="padding-bottom: 56%;">
+                {{-- ── Realistic Storefront Mini-Mockup (SVG) ── --}}
+                <div class="relative w-full overflow-hidden border-b border-slate-100 dark:border-slate-700/60" style="padding-bottom: 58%;">
                     <svg class="absolute inset-0 h-full w-full" viewBox="0 0 240 144" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Page background -->
-                        <rect width="240" height="144" fill="{{ $tpl['dark_mode'] === 'dark' ? '#0f172a' : '#f8fafc' }}"/>
+                        <defs>
+                            <linearGradient id="goldHeartGrad_{{ $tKey }}" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#fcd34d"/>
+                                <stop offset="50%" stop-color="#fbbf24"/>
+                                <stop offset="100%" stop-color="#d97706"/>
+                            </linearGradient>
+                            <linearGradient id="primaryGrad_{{ $tKey }}" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="{{ $tplPrimary }}"/>
+                                <stop offset="100%" stop-color="{{ $tplPrimary }}" stop-opacity="0.85"/>
+                            </linearGradient>
+                        </defs>
 
-                        <!-- Header bar -->
-                        <rect width="240" height="32" fill="{{ $tKey === 'custom' ? $colors['header_bg'] : $tpl['header_bg'] }}"/>
-                        <!-- Header logo box -->
-                        <rect x="8" y="9" width="24" height="14" rx="3" fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}"/>
-                        <!-- Search bar -->
-                        <rect x="40" y="10" width="140" height="12" rx="6" fill="{{ $tpl['dark_mode'] === 'dark' ? '#1e293b' : '#f1f5f9' }}" opacity="0.8"/>
-                        <!-- Search button -->
-                        <rect x="185" y="10" width="28" height="12" rx="6" fill="{{ $tKey === 'custom' ? $colors['accent'] : $tpl['accent'] }}"/>
-                        <text x="199" y="18.5" font-size="5" fill="white" text-anchor="middle" font-weight="bold">Search</text>
-                        <!-- Cart icon area -->
-                        <circle cx="225" cy="16" r="6" fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" opacity="0.15"/>
-                        <rect x="221" y="13" width="8" height="6" rx="1" fill="none" stroke="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" stroke-width="1.2"/>
+                        <!-- Page Surface Background -->
+                        <rect width="240" height="144" fill="{{ $surfaceBg }}"/>
 
-                        <!-- Category nav strip -->
-                        <rect y="32" width="240" height="14" fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" opacity="0.08"/>
-                        <rect x="8" y="36" width="28" height="6" rx="3" fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" opacity="0.4"/>
-                        <rect x="44" y="36" width="28" height="6" rx="3" fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" opacity="0.25"/>
-                        <rect x="80" y="36" width="28" height="6" rx="3" fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" opacity="0.25"/>
-                        <rect x="116" y="36" width="28" height="6" rx="3" fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" opacity="0.25"/>
+                        <!-- Ambient Glow Orbs -->
+                        <circle cx="20" cy="50" r="38" fill="{{ $tplPrimary }}" fill-opacity="0.12"/>
+                        <circle cx="220" cy="110" r="42" fill="{{ $tplAccent }}" fill-opacity="0.10"/>
 
-                        <!-- Banner area -->
-                        <rect x="8" y="52" width="224" height="34" rx="5"
-                              fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" opacity="0.12"/>
-                        <rect x="16" y="59" width="60" height="8" rx="3"
-                              fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" opacity="0.5"/>
-                        <rect x="16" y="70" width="40" height="6" rx="3"
-                              fill="{{ $tKey === 'custom' ? $colors['accent'] : $tpl['accent'] }}" opacity="0.7"/>
+                        <!-- ── 1. Sticky Storefront Header (y: 0–26) ── -->
+                        <rect width="240" height="26" fill="{{ $tplHeader }}"/>
+                        <line x1="0" y1="26" x2="240" y2="26" stroke="{{ $isDark ? '#334155' : '#e2e8f0' }}" stroke-width="1"/>
 
-                        <!-- Product cards row -->
-                        @foreach ([8, 68, 128, 188] as $px)
-                            <rect x="{{ $px }}" y="92" width="44" height="38" rx="4" fill="{{ $tpl['dark_mode'] === 'dark' ? '#1e293b' : 'white' }}"/>
-                            <rect x="{{ $px }}" y="92" width="44" height="22" rx="4" fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" opacity="0.1"/>
-                            <rect x="{{ $px + 4 }}" y="117" width="20" height="4" rx="2" fill="#94a3b8"/>
-                            <rect x="{{ $px + 4 }}" y="123" width="14" height="3" rx="1.5" fill="{{ $tKey === 'custom' ? $colors['accent'] : $tpl['accent'] }}" opacity="0.8"/>
-                            <rect x="{{ $px + 30 }}" y="121" width="10" height="7" rx="2" fill="{{ $tKey === 'custom' ? $colors['accent'] : $tpl['accent'] }}"/>
+                        <!-- Logo Monogram Box -->
+                        <rect x="7" y="6" width="20" height="14" rx="3.5" fill="url(#primaryGrad_{{ $tKey }})"/>
+                        <rect x="11" y="10" width="12" height="6" rx="1.5" fill="#ffffff" fill-opacity="0.9"/>
+
+                        <!-- Search Bar -->
+                        <rect x="31" y="6" width="118" height="14" rx="4.5" fill="{{ $searchBg }}" stroke="{{ $tplPrimary }}" stroke-opacity="0.35" stroke-width="0.75"/>
+                        <rect x="36" y="11" width="36" height="4" rx="1.5" fill="{{ $isDark ? '#64748b' : '#94a3b8' }}"/>
+
+                        <!-- Search CTA Button -->
+                        <rect x="127" y="7" width="20" height="12" rx="3" fill="{{ $tplAccent }}"/>
+                        <rect x="131" y="11" width="12" height="4" rx="1" fill="#ffffff" fill-opacity="0.9"/>
+
+                        <!-- 3D Header Action Icons (Wishlist, Language, Cart) -->
+                        <circle cx="162" cy="13" r="5" fill="#f43f5e" fill-opacity="0.18"/>
+                        <path d="M162 14.8l-2.2-2.2c-.6-.6-.6-1.5 0-2.1.6-.6 1.5-.6 2.1 0 .6-.6 1.5-.6 2.1 0 .6.6.6 1.5 0 2.1L162 14.8z" fill="#f43f5e"/>
+
+                        <circle cx="178" cy="13" r="5" fill="{{ $tplPrimary }}" fill-opacity="0.18"/>
+                        <rect x="175" y="11" width="6" height="4" rx="1" fill="{{ $tplPrimary }}"/>
+
+                        <circle cx="194" cy="13" r="5.5" fill="{{ $tplPrimary }}" fill-opacity="0.2"/>
+                        <rect x="191" y="10" width="6" height="5" rx="1" fill="none" stroke="{{ $tplPrimary }}" stroke-width="1.2"/>
+                        <!-- Cart notification badge -->
+                        <circle cx="198" cy="9.5" r="2.2" fill="#ef4444"/>
+
+                        <circle cx="210" cy="13" r="5" fill="#64748b" fill-opacity="0.15"/>
+                        <circle cx="210" cy="13" r="2.5" fill="{{ $isDark ? '#fbbf24' : '#64748b' }}"/>
+
+                        <!-- ── 2. Category Nav Strip (y: 26–39) ── -->
+                        <rect y="26" width="240" height="13" fill="{{ $tplPrimary }}" fill-opacity="0.07"/>
+                        <!-- Active category pill -->
+                        <rect x="7" y="28.5" width="28" height="8" rx="2.5" fill="url(#primaryGrad_{{ $tKey }})"/>
+                        <rect x="11" y="31" width="20" height="3" rx="1" fill="#ffffff"/>
+                        <!-- Other category pills -->
+                        <rect x="39" y="28.5" width="24" height="8" rx="2.5" fill="{{ $isDark ? '#334155' : '#e2e8f0' }}"/>
+                        <rect x="67" y="28.5" width="26" height="8" rx="2.5" fill="{{ $isDark ? '#334155' : '#e2e8f0' }}"/>
+                        <rect x="97" y="28.5" width="24" height="8" rx="2.5" fill="{{ $isDark ? '#334155' : '#e2e8f0' }}"/>
+                        <rect x="125" y="28.5" width="26" height="8" rx="2.5" fill="{{ $isDark ? '#334155' : '#e2e8f0' }}"/>
+
+                        <!-- ── 3. Hero Section & 4 Value Trust Badges (y: 41–64) ── -->
+                        <rect x="7" y="41" width="226" height="23" rx="4" fill="{{ $tplPrimary }}" fill-opacity="0.12"/>
+                        <rect x="14" y="46" width="56" height="5" rx="1.5" fill="{{ $tplPrimary }}"/>
+                        <rect x="14" y="53" width="34" height="4" rx="1.2" fill="{{ $tplAccent }}"/>
+
+                        <!-- 4 Value Trust Strip Badges -->
+                        @foreach ([7, 65, 123, 181] as $tIdx => $tx)
+                            <rect x="{{ $tx }}" y="66" width="52" height="7" rx="2" fill="{{ $cardBg }}" stroke="{{ $cardBorder }}" stroke-width="0.6"/>
+                            <circle cx="{{ $tx + 5 }}" cy="69.5" r="2" fill="{{ $tIdx === 0 ? '#38bdf8' : ($tIdx === 1 ? '#10b981' : ($tIdx === 2 ? '#f59e0b' : '#7c3aed')) }}"/>
+                            <rect x="{{ $tx + 9 }}" y="68.5" width="36" height="2" rx="0.75" fill="{{ $isDark ? '#94a3b8' : '#64748b' }}"/>
                         @endforeach
 
-                        <!-- Footer band -->
-                        <rect y="136" width="240" height="8"
-                              fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" opacity="0.18"/>
-                        <rect x="8" y="138" width="30" height="3" rx="1.5" fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" opacity="0.4"/>
-                        <rect x="100" y="138" width="40" height="3" rx="1.5" fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" opacity="0.25"/>
-                        <rect x="200" y="138" width="32" height="3" rx="1.5" fill="{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}" opacity="0.25"/>
+                        <!-- ── 4. Product Showcase Cards Grid (y: 75–134) ── -->
+                        @foreach ([7, 65, 123, 181] as $pIdx => $px)
+                            <!-- 3D Card Box -->
+                            <rect x="{{ $px }}" y="76" width="52" height="57" rx="4" fill="{{ $cardBg }}" stroke="{{ $cardBorder }}" stroke-width="0.75"/>
+                            <line x1="{{ $px }}" y1="133" x2="{{ $px + 52 }}" y2="133" stroke="{{ $isDark ? '#0f172a' : '#cbd5e1' }}" stroke-width="1.5"/>
+
+                            <!-- Product Thumbnail Image -->
+                            <rect x="{{ $px + 2.5 }}" y="78.5" width="47" height="26" rx="3" fill="{{ $tplPrimary }}" fill-opacity="0.10"/>
+
+                            <!-- 3D Gold Wishlist Heart Button -->
+                            <rect x="{{ $px + 36 }}" y="80.5" width="11" height="9" rx="2" fill="url(#goldHeartGrad_{{ $tKey }})" stroke="#b45309" stroke-width="0.4"/>
+                            <path d="M{{ $px + 41.5 }} 86l-2-2c-.5-.5-.5-1.2 0-1.7.5-.5 1.2-.5 1.7 0 .5-.5 1.2-.5 1.7 0 .5.5.5 1.2 0 1.7L{{ $px + 41.5 }} 86z" fill="#ffffff"/>
+
+                            <!-- Title skeleton -->
+                            <rect x="{{ $px + 3.5 }}" y="107.5" width="32" height="3.5" rx="1.2" fill="{{ $isDark ? '#94a3b8' : '#64748b' }}"/>
+
+                            <!-- Price Tag -->
+                            <rect x="{{ $px + 3.5 }}" y="113.5" width="22" height="4.5" rx="1.2" fill="{{ $tplPrimary }}"/>
+
+                            <!-- 3D Add to Cart Button -->
+                            <rect x="{{ $px + 33 }}" y="119" width="16" height="11" rx="2.5" fill="url(#primaryGrad_{{ $tKey }})"/>
+                            <line x1="{{ $px + 33 }}" y1="130" x2="{{ $px + 49 }}" y2="130" stroke="{{ $isDark ? '#020617' : '#0369a1' }}" stroke-width="1"/>
+                            <rect x="{{ $px + 37 }}" y="123" width="8" height="3" rx="0.75" fill="#ffffff"/>
+                        @endforeach
+
+                        <!-- ── 5. Clean Footer Strip (y: 136–144) ── -->
+                        <rect y="136" width="240" height="8" fill="{{ $tplPrimary }}" fill-opacity="0.15"/>
+                        <rect x="7" y="139" width="28" height="2.5" rx="1" fill="{{ $tplPrimary }}" fill-opacity="0.5"/>
+                        <rect x="180" y="139" width="53" height="2.5" rx="1" fill="{{ $tplPrimary }}" fill-opacity="0.3"/>
                     </svg>
                 </div>
 
                 {{-- Card footer --}}
-                <div class="p-3">
+                <div class="p-3 bg-white/50 dark:bg-slate-800/50 backdrop-blur-xs">
                     <div class="flex items-center justify-between gap-1">
-                        <span class="text-xs font-black text-slate-900 dark:text-white">{{ $tpl['name'] }}</span>
+                        <span class="text-xs font-black text-slate-900 dark:text-white truncate">{{ $tpl['name'] }}</span>
                         {{-- Selected checkmark --}}
                         <span x-show="preset === '{{ $tKey }}'" x-cloak
-                            class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-violet-600 text-white text-[10px] shrink-0 shadow-xs">
+                            class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-violet-600 text-white text-[10px] font-bold shrink-0 shadow-xs ring-2 ring-violet-200 dark:ring-violet-800">
                             ✓
                         </span>
                     </div>
-                    <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">{{ $tpl['desc'] }}</p>
+                    <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 leading-relaxed">{{ $tpl['desc'] }}</p>
 
                     {{-- Color swatches ribbon --}}
-                    <div class="mt-2 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/60">
+                    <div class="mt-2.5 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/60">
                         <div class="flex -space-x-1">
-                            <span class="h-4 w-4 rounded-full border border-white dark:border-slate-800 shadow-xs ring-1 ring-slate-200/60"
-                                  style="background:{{ $tKey === 'custom' ? $colors['primary'] : $tpl['primary'] }}"
+                            <span class="h-4 w-4 rounded-full border border-white dark:border-slate-800 shadow-xs ring-1 ring-slate-200/80 dark:ring-slate-700"
+                                  style="background:{{ $tplPrimary }}"
                                   title="Primary"></span>
-                            <span class="h-4 w-4 rounded-full border border-white dark:border-slate-800 shadow-xs ring-1 ring-slate-200/60"
-                                  style="background:{{ $tKey === 'custom' ? $colors['accent'] : $tpl['accent'] }}"
+                            <span class="h-4 w-4 rounded-full border border-white dark:border-slate-800 shadow-xs ring-1 ring-slate-200/80 dark:ring-slate-700"
+                                  style="background:{{ $tplAccent }}"
                                   title="Accent"></span>
-                            <span class="h-4 w-4 rounded-full border border-white dark:border-slate-800 shadow-xs ring-1 ring-slate-200/60"
-                                  style="background:{{ $tKey === 'custom' ? $colors['header_bg'] : $tpl['header_bg'] }}"
+                            <span class="h-4 w-4 rounded-full border border-white dark:border-slate-800 shadow-xs ring-1 ring-slate-200/80 dark:ring-slate-700"
+                                  style="background:{{ $tplHeader }}"
                                   title="Header"></span>
-                            <span class="h-4 w-4 rounded-full border border-white dark:border-slate-800 shadow-xs ring-1 ring-slate-200/60"
-                                  style="background:{{ $tKey === 'custom' ? ($colors['body_bg'] ?? '#f8fafc') : $tpl['body_bg'] }}"
+                            <span class="h-4 w-4 rounded-full border border-white dark:border-slate-800 shadow-xs ring-1 ring-slate-200/80 dark:ring-slate-700"
+                                  style="background:{{ $tplBody }}"
                                   title="Body"></span>
                         </div>
-                        <span class="text-[10px] font-mono text-slate-400">
-                            {{ $tpl['dark_mode'] === 'dark' ? 'Dark Mode' : 'Light' }}
+                        <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300">
+                            {{ $isDark ? '🌙 Dark' : '☀️ Light' }}
                         </span>
                     </div>
                 </div>
@@ -886,76 +977,197 @@ if (window.Alpine) {
         </div>
 
         {{-- Live preview strip with interactive body background, ambient glow, and dark mode preview --}}
-        <div class="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors duration-300"
+        <div class="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 shadow-md transition-all duration-300"
              :style="'background:' + (preview_dark ? '#0b0f19' : colors.body_bg)">
 
-            {{-- Mini Live Ambient Glow Orbs in preview --}}
-            <div x-show="colors.glow_style !== 'none'" class="absolute -top-8 -left-8 w-36 h-36 rounded-full blur-2xl pointer-events-none transition-all duration-300"
-                 :style="'background:' + colors.primary + '; opacity:' + (colors.glow_style === 'vivid' ? (preview_dark ? '0.40' : '0.35') : (preview_dark ? '0.20' : '0.15'))"></div>
-            <div x-show="colors.glow_style !== 'none'" class="absolute top-1/2 -right-8 w-36 h-36 rounded-full blur-2xl pointer-events-none transition-all duration-300"
-                 :style="'background:' + colors.accent + '; opacity:' + (colors.glow_style === 'vivid' ? (preview_dark ? '0.40' : '0.35') : (preview_dark ? '0.20' : '0.15'))"></div>
+            {{-- Live Ambient Glow Orbs in preview --}}
+            <div x-show="colors.glow_style !== 'none'" class="absolute -top-12 -left-12 w-48 h-48 rounded-full blur-3xl pointer-events-none transition-all duration-300"
+                 :style="'background:' + colors.primary + '; opacity:' + (colors.glow_style === 'vivid' ? (preview_dark ? '0.45' : '0.35') : (preview_dark ? '0.22' : '0.15'))"></div>
+            <div x-show="colors.glow_style !== 'none'" class="absolute top-1/2 -right-12 w-48 h-48 rounded-full blur-3xl pointer-events-none transition-all duration-300"
+                 :style="'background:' + colors.accent + '; opacity:' + (colors.glow_style === 'vivid' ? (preview_dark ? '0.45' : '0.35') : (preview_dark ? '0.22' : '0.15'))"></div>
 
-            {{-- Mini header --}}
-            <div class="relative z-10 flex h-12 items-center gap-2 px-4 transition-colors shadow-xs" :style="'background:' + (preview_dark && colors.header_bg === '#ffffff' ? '#1e293b' : colors.header_bg)">
-                <span class="h-6 w-6 rounded-lg flex-shrink-0 transition-colors shadow-xs" :style="'background:' + colors.primary"></span>
-                <span class="flex-1 h-8 rounded-xl border transition-colors text-xs flex items-center px-3 font-medium"
-                      :style="'border-color:' + colors.primary + '50; color:' + (preview_dark ? '#cbd5e1' : '#94a3b8') + '; background:' + (preview_dark ? 'rgba(30,41,59,0.8)' : 'rgba(241,245,249,0.6)')">
-                    {{ __('messages.theme_preview_search_ph') }}
+            {{-- Storefront Interactive 3D Sticky Header --}}
+            <div class="relative z-10 flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 transition-colors border-b shadow-xs"
+                 :style="'background:' + (preview_dark && colors.header_bg === '#ffffff' ? '#1e293b' : colors.header_bg) + '; border-color:' + (preview_dark ? '#334155' : '#e2e8f0')">
+                <div class="flex items-center gap-2">
+                    <span class="h-7 w-7 rounded-xl grid place-items-center text-white text-xs font-black shadow-xs transition-colors"
+                          :style="'background:' + colors.primary">
+                        🏪
+                    </span>
+                    <div>
+                        <span class="text-xs font-black tracking-tight flex items-center gap-1.5"
+                              :class="preview_dark ? 'text-white' : 'text-slate-900'">
+                            <span>{{ $store->name ?? 'DataPOS Store' }}</span>
+                            <span class="text-[9px] font-bold px-1.5 py-0.2 rounded-full text-white shadow-2xs"
+                                  :style="'background:' + colors.primary">VERIFIED</span>
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Interactive Search Bar Mockup --}}
+                <div class="flex-1 min-w-[200px] max-w-md mx-auto flex items-center">
+                    <div class="relative w-full flex items-center">
+                        <input type="text"
+                               disabled
+                               :placeholder="@js(__('messages.theme_preview_search_ph'))"
+                               class="w-full h-8 rounded-xl border text-xs px-3 font-medium transition-colors shadow-2xs select-none"
+                               :style="'border-color:' + colors.primary + '60; color:' + (preview_dark ? '#cbd5e1' : '#64748b') + '; background:' + (preview_dark ? 'rgba(30,41,59,0.85)' : '#f8fafc')">
+                        <button type="button"
+                                class="absolute right-1 px-2.5 py-1 rounded-lg text-[11px] font-black transition-colors shadow-xs flex items-center gap-1"
+                                :style="'background:' + colors.accent + '; color:' + contrastText(colors.accent)">
+                            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <span>{{ __('messages.theme_preview_search_btn') }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Header Action 3D Icons --}}
+                <div class="flex items-center gap-1.5">
+                    {{-- Favorites icon button --}}
+                    <span class="h-7 w-7 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-gradient-to-b from-rose-50 to-rose-100 dark:from-rose-950/60 dark:to-rose-900/40 grid place-items-center text-rose-500 text-xs shadow-xs border-b-[2px] border-b-rose-300 dark:border-b-rose-800">
+                        ❤️
+                    </span>
+                    {{-- Language switcher button --}}
+                    <span class="h-7 px-2 rounded-xl border border-sky-200 dark:border-sky-900/60 bg-gradient-to-b from-sky-50 to-blue-100 dark:from-sky-950/60 dark:to-blue-900/40 flex items-center gap-1 text-[10px] font-bold text-sky-700 dark:text-sky-300 shadow-xs border-b-[2px] border-b-sky-300 dark:border-b-sky-800">
+                        🇲🇲 MM
+                    </span>
+                    {{-- Cart button with count --}}
+                    <span class="relative h-7 px-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-gradient-to-b from-emerald-50 to-teal-100 dark:from-emerald-950/60 dark:to-teal-900/40 flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 shadow-xs border-b-[2px] border-b-emerald-300 dark:border-b-emerald-800">
+                        🛒
+                        <span class="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black grid place-items-center shadow-xs ring-1 ring-white">2</span>
+                    </span>
+                </div>
+            </div>
+
+            {{-- Category Nav Strip --}}
+            <div class="relative z-10 flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold transition-colors overflow-x-auto"
+                 :style="'background:' + colors.primary + (preview_dark ? '25' : '12')">
+                <span class="rounded-lg px-2.5 py-1 text-white transition-all shadow-xs border-b-[2px] border-b-black/20"
+                      :style="'background:' + colors.primary">
+                    ⭐ {{ __('messages.all') ?? 'All' }}
                 </span>
-                <span class="rounded-xl px-3.5 py-1.5 text-xs font-black transition-colors shadow-xs"
-                      :style="'background:' + colors.accent + '; color:' + contrastText(colors.accent)">
-                    {{ __('messages.theme_preview_search_btn') }}
+                <span class="rounded-lg px-2 py-1 font-semibold transition"
+                      :class="preview_dark ? 'text-slate-200 hover:bg-slate-800/50' : 'text-slate-700 hover:bg-white/50'">
+                    📱 {{ __('messages.nav_phone') ?? 'Smartphones' }}
+                </span>
+                <span class="rounded-lg px-2 py-1 font-semibold transition"
+                      :class="preview_dark ? 'text-slate-200 hover:bg-slate-800/50' : 'text-slate-700 hover:bg-white/50'">
+                    🎧 {{ __('messages.nav_accessories') ?? 'Accessories' }}
+                </span>
+                <span class="rounded-lg px-2 py-1 font-semibold transition"
+                      :class="preview_dark ? 'text-slate-200 hover:bg-slate-800/50' : 'text-slate-700 hover:bg-white/50'">
+                    📹 CCTV & Networking
+                </span>
+                <span class="rounded-lg px-2 py-1 font-semibold transition"
+                      :class="preview_dark ? 'text-slate-200 hover:bg-slate-800/50' : 'text-slate-700 hover:bg-white/50'">
+                    💻 Computer & PC
                 </span>
             </div>
-            {{-- Category nav --}}
-            <div class="relative z-10 flex gap-2 px-4 py-2 text-[10px] font-bold transition-colors"
-                 :style="'background:' + colors.primary + (preview_dark ? '30' : '18')">
-                <span class="rounded-lg px-2.5 py-1 text-white transition-colors shadow-xs" :style="'background:' + colors.primary">All</span>
-                <span class="rounded-lg px-2.5 py-1 font-semibold" :class="preview_dark ? 'text-slate-200' : 'text-slate-600'">Phone</span>
-                <span class="rounded-lg px-2.5 py-1 font-semibold" :class="preview_dark ? 'text-slate-200' : 'text-slate-600'">Accessories</span>
-                <span class="rounded-lg px-2.5 py-1 font-semibold" :class="preview_dark ? 'text-slate-200' : 'text-slate-600'">Screen</span>
-            </div>
-            {{-- Product row mockup --}}
-            <div class="relative z-10 flex gap-2.5 px-4 py-3 backdrop-blur-xs" :class="preview_dark ? 'bg-slate-900/60' : 'bg-white/40'">
-                @foreach (range(1, 4) as $i)
-                <div class="flex-1 overflow-hidden rounded-xl border shadow-xs transition-colors"
-                     :class="preview_dark ? 'border-slate-700/80 bg-slate-800/90' : 'border-slate-200/80 bg-white/90'">
-                    <div class="h-10 w-full transition-colors" :style="'background:' + colors.primary + (preview_dark ? '30' : '18')"></div>
-                    <div class="p-2">
-                        <div class="h-2 w-3/4 rounded-full mb-1" :class="preview_dark ? 'bg-slate-600' : 'bg-slate-200'"></div>
-                        <div class="h-2.5 w-1/2 rounded-full transition-colors" :style="'background:' + colors.accent + '90'"></div>
+
+            {{-- 4-Item Value Trust Strip (Section 6.1 standard) --}}
+            <div class="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-2 px-3.5 py-2">
+                @foreach ([
+                    ['icon' => '⚡', 'title' => __('messages.fast_delivery') ?? 'အမြန်ဆုံး ပို့ဆောင်မှု', 'sub' => 'Township Delivery'],
+                    ['icon' => '🛡️', 'title' => __('messages.genuine_warranty') ?? 'စစ်မှန်သော အာမခံ', 'sub' => '100% Original'],
+                    ['icon' => '🔧', 'title' => __('messages.service_tracking') ?? 'ကျွမ်းကျင် ဆာဗစ်', 'sub' => 'Expert Tech Care'],
+                    ['icon' => '💬', 'title' => __('messages.direct_support') ?? 'တိုက်ရိုက် အကူအညီ', 'sub' => 'Viber / Telegram'],
+                ] as $tIdx => $tCard)
+                <div class="flex items-center gap-2 p-1.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60 shadow-2xs transition-colors"
+                     :class="preview_dark ? 'bg-slate-900/60' : 'bg-white/80'">
+                    <span class="text-sm shrink-0">{{ $tCard['icon'] }}</span>
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-black truncate" :class="preview_dark ? 'text-white' : 'text-slate-900'">{{ $tCard['title'] }}</p>
+                        <p class="text-[8.5px] text-slate-400 font-mono truncate">{{ $tCard['sub'] }}</p>
                     </div>
                 </div>
                 @endforeach
             </div>
+
+            {{-- Product Showcase Row Mockup --}}
+            <div class="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-2.5 px-3.5 py-2.5">
+                @php
+                    $demoProducts = [
+                        ['title' => 'Redmi Note 13 4G (8/256GB)', 'price' => '685,000', 'tag' => 'Official Warranty'],
+                        ['title' => 'Anker 20W Fast Charger Kit',  'price' => '42,000',  'tag' => 'Fast Delivery'],
+                        ['title' => 'Hikvision 2MP CCTV Camera',   'price' => '89,000',  'tag' => 'Security Pro'],
+                        ['title' => 'Logitech G102 Gaming Mouse',  'price' => '58,000',  'tag' => 'Gaming Gear'],
+                    ];
+                @endphp
+                @foreach ($demoProducts as $pIdx => $dp)
+                <div class="relative overflow-hidden rounded-2xl border shadow-xs transition-colors flex flex-col justify-between"
+                     :class="preview_dark ? 'border-slate-700/80 bg-slate-800/90' : 'border-slate-200/80 bg-white/95'">
+                    
+                    {{-- Product Image Box --}}
+                    <div class="relative w-full aspect-square transition-colors flex items-center justify-center p-3"
+                         :style="'background:' + colors.primary + (preview_dark ? '20' : '10')">
+                        <span class="text-2xl filter drop-shadow-sm">{{ $pIdx === 0 ? '📱' : ($pIdx === 1 ? '🔌' : ($pIdx === 2 ? '📹' : '🖱️')) }}</span>
+                        
+                        {{-- 3D Gold Wishlist Heart Button (Standard v1.0 §10.3) --}}
+                        <span class="absolute top-1.5 right-1.5 h-6 w-6 rounded-lg bg-gradient-to-b from-amber-300 via-amber-400 to-amber-600 border border-amber-200 border-b-[2px] border-b-amber-700 shadow-xs grid place-items-center text-white text-[10px]">
+                            ❤️
+                        </span>
+                    </div>
+
+                    {{-- Product Info --}}
+                    <div class="p-2.5 space-y-1.5 flex-1 flex flex-col justify-between">
+                        <div>
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded text-white"
+                                  :style="'background:' + colors.accent">
+                                {{ $dp['tag'] }}
+                            </span>
+                            <h4 class="text-[11px] font-bold font-myanmar mt-1 line-clamp-1"
+                                :class="preview_dark ? 'text-slate-100' : 'text-slate-800'">
+                                {{ $dp['title'] }}
+                            </h4>
+                            <p class="text-xs font-black mt-0.5"
+                               :style="'color:' + colors.primary">
+                                {{ $dp['price'] }} <span class="text-[9px] font-normal text-slate-400">MMK</span>
+                            </p>
+                        </div>
+
+                        {{-- 3D Primary Add to Cart Button (Standard v1.0 §4.2) --}}
+                        <button type="button"
+                                class="w-full py-1.5 px-2 rounded-xl text-[10px] font-black text-white transition-transform active:translate-y-0.5 border-b-[2.5px] border-b-black/30 shadow-xs flex items-center justify-center gap-1"
+                                :style="'background:' + colors.primary">
+                            <span>🛒</span>
+                            <span>{{ __('messages.add_to_cart') ?? 'Add to Cart' }}</span>
+                        </button>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+
             {{-- Preview footer bar with interactive Dark/Light toggle --}}
-            <div class="relative z-10 flex flex-wrap items-center gap-2 border-t px-4 py-2 backdrop-blur-xs transition-colors"
+            <div class="relative z-10 flex flex-wrap items-center justify-between gap-2 border-t px-4 py-2.5 backdrop-blur-xs transition-colors"
                  :class="preview_dark ? 'border-slate-800 bg-slate-900/90 text-white' : 'border-slate-200/80 bg-white/90 text-slate-800'">
-                <svg class="h-3.5 w-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                <span class="text-[11px] font-bold" :class="preview_dark ? 'text-slate-300' : 'text-slate-500'">{{ __('messages.theme_atmosphere_test') }}</span>
+                <div class="flex items-center gap-2">
+                    <svg class="h-3.5 w-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <span class="text-[11px] font-bold" :class="preview_dark ? 'text-slate-300' : 'text-slate-600'">{{ __('messages.theme_atmosphere_test') }}</span>
 
-                {{-- Mini Preview Dark Mode Toggle --}}
-                <button type="button" @click="togglePreviewDark()"
-                        class="inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[10px] font-bold transition shadow-xs cursor-pointer"
-                        :class="preview_dark ? 'border-amber-400/40 bg-amber-950/40 text-amber-300' : 'border-slate-200 bg-slate-100 text-slate-700'">
-                    <span x-text="preview_dark ? '🌙 Dark Mode' : '☀️ Light Mode'"></span>
-                </button>
+                    {{-- Mini Preview Dark Mode Toggle --}}
+                    <button type="button" @click="togglePreviewDark()"
+                            class="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[10px] font-black transition shadow-xs cursor-pointer active:scale-95"
+                            :class="preview_dark ? 'border-amber-400/40 bg-amber-950/40 text-amber-300' : 'border-slate-200 bg-slate-100 text-slate-700'">
+                        <span x-text="preview_dark ? '🌙 Dark Mode' : '☀️ Light Mode'"></span>
+                    </button>
+                </div>
 
-                <span class="flex-1"></span>
-                <span class="inline-flex h-5 items-center rounded-full px-2 text-[10px] font-bold text-white shadow-xs"
-                      :style="'background:' + colors.primary">{{ __('messages.theme_color_primary') }}</span>
-                <span class="inline-flex h-5 items-center rounded-full px-2 text-[10px] font-bold text-white shadow-xs"
-                      :style="'background:' + colors.accent">{{ __('messages.theme_color_accent') }}</span>
-                <span class="inline-flex h-5 items-center rounded-full border px-2 text-[10px] font-bold shadow-xs"
-                      :class="preview_dark ? 'text-slate-200 border-slate-600' : 'text-slate-700 border-slate-300'"
-                      :style="'background:' + (preview_dark && colors.header_bg === '#ffffff' ? '#1e293b' : colors.header_bg)">
-                    Header
-                </span>
-                <span class="inline-flex h-5 items-center rounded-full border px-2 text-[10px] font-bold shadow-xs"
-                      :class="preview_dark ? 'text-slate-200 border-slate-600' : 'text-slate-700 border-slate-300'"
-                      :style="'background:' + (preview_dark ? '#0b0f19' : colors.body_bg)">
-                    Body BG
-                </span>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="inline-flex h-5 items-center rounded-full px-2 text-[10px] font-bold text-white shadow-xs"
+                          :style="'background:' + colors.primary">{{ __('messages.theme_color_primary') }}</span>
+                    <span class="inline-flex h-5 items-center rounded-full px-2 text-[10px] font-bold text-white shadow-xs"
+                          :style="'background:' + colors.accent">{{ __('messages.theme_color_accent') }}</span>
+                    <span class="inline-flex h-5 items-center rounded-full border px-2 text-[10px] font-bold shadow-xs"
+                          :class="preview_dark ? 'text-slate-200 border-slate-600' : 'text-slate-700 border-slate-300'"
+                          :style="'background:' + (preview_dark && colors.header_bg === '#ffffff' ? '#1e293b' : colors.header_bg)">
+                        Header
+                    </span>
+                    <span class="inline-flex h-5 items-center rounded-full border px-2 text-[10px] font-bold shadow-xs"
+                          :class="preview_dark ? 'text-slate-200 border-slate-600' : 'text-slate-700 border-slate-300'"
+                          :style="'background:' + (preview_dark ? '#0b0f19' : colors.body_bg)">
+                        Body BG
+                    </span>
+                </div>
             </div>
         </div>
 

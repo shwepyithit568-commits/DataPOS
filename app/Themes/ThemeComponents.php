@@ -49,6 +49,8 @@ final class ThemeComponents
         'emerald_fresh'   => ['header_variant' => 'classic', 'nav_style' => 'pill',      'product_card_variant' => 'compact',  'footer_variant' => 'standard'],
         'midnight_tech'   => ['header_variant' => 'premium', 'nav_style' => 'underline', 'product_card_variant' => 'showcase', 'footer_variant' => 'standard'],
         'sunset_warm'     => ['header_variant' => 'classic', 'nav_style' => 'pill',      'product_card_variant' => 'showcase', 'footer_variant' => 'standard'],
+        'royal_tech'      => ['header_variant' => 'premium', 'nav_style' => 'pill',      'product_card_variant' => 'showcase', 'footer_variant' => 'standard'],
+        'cyber_amber'     => ['header_variant' => 'classic', 'nav_style' => 'pill',      'product_card_variant' => 'compact',  'footer_variant' => 'standard'],
     ];
 
     /**

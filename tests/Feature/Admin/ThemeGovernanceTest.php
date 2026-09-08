@@ -112,8 +112,8 @@ class ThemeGovernanceTest extends TestCase
             ->get(route('store.admin.settings.section', ['store_slug' => $store->slug, 'section' => 'appearance']))
             ->getContent();
 
-        $this->assertStringNotContainsString('Retail Trust (Clean Blue)', $content);
-        $this->assertStringContainsString('Marketplace Pro (Cloud White)', $content);
+        $this->assertStringNotContainsString(__('messages.theme_tpl_retail_trust'), $content);
+        $this->assertStringContainsString(__('messages.theme_tpl_marketplace_pro'), $content);
     }
 
     public function test_deprecated_theme_stays_renderable_and_publishable(): void
@@ -149,7 +149,7 @@ class ThemeGovernanceTest extends TestCase
             ->get(route('store.admin.settings.section', ['store_slug' => $store->slug, 'section' => 'appearance']))
             ->getContent();
 
-        $this->assertStringContainsString('Retail Trust (Clean Blue)', $content);
+        $this->assertStringContainsString(__('messages.theme_tpl_retail_trust'), $content);
         $this->assertStringContainsString('Deprecated', $content);
     }
 
