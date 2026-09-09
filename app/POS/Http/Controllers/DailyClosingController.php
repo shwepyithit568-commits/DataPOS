@@ -45,6 +45,15 @@ class DailyClosingController extends Controller
         $store = $context->getStore();
         $user = $request->user();
 
+        $countedKeys = array_keys($request->input('counted', []));
+        $allowedCounted = DailyClosing::countedMethods();
+        $unknownKeys = array_diff($countedKeys, $allowedCounted);
+        if (!empty($unknownKeys)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'counted' => 'Unknown counted payment key(s): ' . implode(', ', $unknownKeys),
+            ]);
+        }
+
         $data = $request->validate([
             'business_date' => ['required', 'date', 'before_or_equal:today'],
             // decimal (not plain numeric): the closing service compares with
@@ -184,8 +193,27 @@ class DailyClosingController extends Controller
 
     public function reopen(Request $request, string $store_slug, DailyClosing $closing, StoreContext $context): RedirectResponse
     {
-        // Phase 2 Approved Architecture Decision:
-        // "ဤ Phase တွင် approved Z-Report ကို password/PIN ဖြင့် reopen လုပ်နိုင်သော feature မတည်ဆောက်ပါနှင့်။ Approved closing မှားယွင်းပါက နောက်ပိုင်းတွင် သီးခြား authorized correction/adjustment document workflow တည်ဆောက်နိုင်သည်။ ယခု Phase တွင် direct reopen/edit မလုပ်ရ။"
-        abort(403, 'Direct reopening of approved daily closing is disabled in Phase 2.');
+        $store = $context->getStore();
+
+        if ((int) $closing->store_id !== (int) $store->id) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
+        ]);
+
+        try {
+            app(\App\POS\Services\PeriodLockService::class)->reopenPeriod(
+                store: $store,
+                date: $closing->business_date,
+                user: $request->user(),
+                reason: $data['reason']
+            );
+        } catch (InventoryException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', __('messages.period_reopened') . ' — ' . $closing->business_date->toDateString());
     }
 }

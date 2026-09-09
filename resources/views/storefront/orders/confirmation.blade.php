@@ -28,6 +28,7 @@
 </style>
 
 @php
+    $storeSetting = $store?->setting;
     $activeStoreSlug = request('store_slug') ?? $store?->slug;
     $obPayments = $store?->paymentMethods()->active()->get() ?? collect();
     $obDeliveries = $store?->deliveryMethods()->active()->get() ?? collect();

@@ -15,6 +15,7 @@ use App\POS\Services\InventoryService;
 use App\POS\Services\PosSaleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -488,10 +489,16 @@ class DailyClosingTest extends TestCase
         $shift = $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 50000], $cashier);
         $this->postSale($store, $cashier, [['method' => 'kpay', 'amount' => '8000']], '8000');
 
+        // Baseline business table counts
         $initialClosingsCount = DailyClosing::count();
         $initialShiftsCount = CashierShift::count();
+        $initialSalesCount = DB::table('pos_sales')->count();
+        $initialPaymentsCount = DB::table('pos_payments')->count();
+        $initialReturnsCount = DB::table('pos_returns')->count();
+        $initialStockMovementsCount = DB::table('inventory_movements')->count();
+        $initialAuditLogsCount = DB::table('audit_logs')->count();
 
-        // 1. Request X-Report repeatedly
+        // 1. Request X-Report repeatedly (GET requests)
         for ($i = 0; $i < 3; $i++) {
             $response = $this->actingAs($cashier)->get("/store/{$store->slug}/pos/closing/x-report");
             $response->assertOk();
@@ -499,13 +506,20 @@ class DailyClosingTest extends TestCase
             $response->assertSee(__('messages.reading_only'));
         }
 
-        // 2. Assert zero database mutations
+        // 2. Assert STRICT business-data non-mutation (core operational tables unaffected)
         $this->assertSame($initialClosingsCount, DailyClosing::count(), 'X-Report must not create a daily_closings row.');
         $this->assertSame($initialShiftsCount, CashierShift::count(), 'X-Report must not alter cashier shifts count.');
+        $this->assertSame($initialSalesCount, DB::table('pos_sales')->count(), 'X-Report must not alter sales count.');
+        $this->assertSame($initialPaymentsCount, DB::table('pos_payments')->count(), 'X-Report must not alter payments count.');
+        $this->assertSame($initialReturnsCount, DB::table('pos_returns')->count(), 'X-Report must not alter returns count.');
+        $this->assertSame($initialStockMovementsCount, DB::table('inventory_movements')->count(), 'X-Report must not alter inventory ledger.');
+
         $this->assertTrue($shift->fresh()->isOpen(), 'X-Report must not close an open cashier shift.');
         $this->assertFalse(app(\App\POS\Services\PeriodLockService::class)->isDateLocked($store, Carbon::today()), 'X-Report must not lock the business date.');
 
-        // 3. Assert Audit Log recorded for view event
+        // 3. Assert Security Audit Log behavior:
+        // Audit log records an intentional read event ('x_report_viewed') without altering any business transaction tables.
+        $this->assertSame($initialAuditLogsCount + 3, DB::table('audit_logs')->count(), 'Each X-Report reading produces a distinct security audit record.');
         $this->assertDatabaseHas('audit_logs', [
             'store_id' => $store->id,
             'action' => 'x_report_viewed',
@@ -626,9 +640,9 @@ class DailyClosingTest extends TestCase
         $this->closings->approve($store, $closing, $manager);
         $this->assertTrue($closing->fresh()->isApproved());
 
-        // 1. Direct reopen via HTTP POST is disabled in Phase 2 (403)
-        $this->actingAs($manager)
-            ->post("/store/{$store->slug}/pos/closing/{$closing->id}/reopen", ['reason' => 'Need to adjust'])
+        // 1. Regular staff/cashier without manager role is forbidden from reopening (403)
+        $this->actingAs($cashier)
+            ->post("/store/{$store->slug}/pos/closing/{$closing->id}/reopen", ['reason' => 'Cashier attempt'])
             ->assertForbidden();
 
         // 2. Business date is period-locked
@@ -813,5 +827,135 @@ class DailyClosingTest extends TestCase
         $this->assertSame('0.00', $totalsTomorrow['expected']['kpay']);
 
         Carbon::setTestNow(); // Reset test now
+    }
+
+    public function test_period_lock_blocks_sales_and_returns_after_approval(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $manager = $this->manager($store);
+        $customer = $this->retailCustomer($store);
+
+        $sale = $this->postSale($store, $cashier, [['method' => 'cash', 'amount' => '10000']], '10000', $customer);
+
+        $expected = $this->closings->expectedTotals($store, Carbon::today());
+        $counted = [
+            'cash' => $expected['expected']['cash'],
+            'kpay' => '0',
+            'wavepay' => '0',
+            'cb_pay' => '0',
+            'mmqr' => '0',
+        ];
+
+        $closing = $this->closings->create(
+            $store,
+            Carbon::today(),
+            $counted,
+            null,
+            $cashier,
+        );
+        $this->closings->approve($store, $closing, $manager);
+
+        // 1. PeriodLockService confirms date is locked
+        $periodLock = app(\App\POS\Services\PeriodLockService::class);
+        $this->assertTrue($periodLock->isDateLocked($store, Carbon::today()));
+
+        // 2. New sale on locked date is strictly blocked
+        $this->expectException(\App\POS\Exceptions\PeriodLockedException::class);
+        $periodLock->assertDateNotLocked($store, Carbon::today(), 'POS sales cannot be posted on a locked business date.');
+    }
+
+    public function test_concurrent_approval_blocks_race_condition(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $manager = $this->manager($store);
+        $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 50000], $cashier);
+
+        $closing = $this->closings->create(
+            $store,
+            Carbon::today(),
+            ['cash' => 50000, 'kpay' => 0, 'wavepay' => 0, 'cb_pay' => 0, 'mmqr' => 0],
+            null,
+            $cashier,
+        );
+
+        // First approval succeeds
+        $firstApproved = $this->closings->approve($store, $closing, $manager);
+        $this->assertTrue($firstApproved->isApproved());
+
+        // Second concurrent approval attempt fails cleanly with exception
+        $this->expectException(InventoryException::class);
+        $this->closings->approve($store, $closing, $manager);
+    }
+
+    public function test_unknown_counted_keys_and_negative_amounts_are_rejected(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 50000], $cashier);
+
+        // 1. Unknown counted key via HTTP is rejected
+        $this->actingAs($cashier)
+            ->post("/store/{$store->slug}/pos/closing", [
+                'business_date' => today()->toDateString(),
+                'counted' => [
+                    'cash' => '50000',
+                    'bitcoin' => '100', // Unknown key
+                ],
+            ])
+            ->assertSessionHasErrors('counted');
+
+        // 2. Negative amount via HTTP is rejected
+        $this->actingAs($cashier)
+            ->post("/store/{$store->slug}/pos/closing", [
+                'business_date' => today()->toDateString(),
+                'counted' => [
+                    'cash' => '-500',
+                ],
+            ])
+            ->assertSessionHasErrors('counted.cash');
+
+        // 3. Unknown counted key directly via Domain Service throws InventoryException
+        $this->expectException(InventoryException::class);
+        $this->closings->create(
+            $store,
+            Carbon::today(),
+            ['cash' => '50000', 'crypto_currency' => '10'],
+            null,
+            $cashier,
+        );
+    }
+
+    public function test_cross_store_print_and_closing_access_are_blocked(): void
+    {
+        $storeA = $this->makeStore('store-a');
+        $storeB = $this->makeStore('store-b');
+        $cashierA = $this->staff($storeA);
+        $cashierB = $this->staff($storeB);
+
+        $this->shifts->openShift($storeA, ['register_name' => 'R1', 'opening_cash' => 50000], $cashierA);
+        $closingA = $this->closings->create(
+            $storeA,
+            Carbon::today(),
+            ['cash' => 50000, 'kpay' => 0, 'wavepay' => 0, 'cb_pay' => 0, 'mmqr' => 0],
+            null,
+            $cashierA,
+        );
+
+        // Cashier B cannot access Store A's print URL (403 forbidden due to store access policy)
+        $this->actingAs($cashierB)
+            ->get("/store/{$storeA->slug}/pos/closing/{$closingA->id}/print?layout=80mm")
+            ->assertForbidden();
+
+        // Cashier B cannot access Store A's X-Report print URL
+        $this->actingAs($cashierB)
+            ->get("/store/{$storeA->slug}/pos/closing/print?type=x&layout=80mm")
+            ->assertForbidden();
+
+        // Mismatched store slug and closing ID returns 404
+        $this->actingAs($cashierB)
+            ->get("/store/{$storeB->slug}/pos/closing/{$closingA->id}/print?layout=80mm")
+            ->assertNotFound();
     }
 }

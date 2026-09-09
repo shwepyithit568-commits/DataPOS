@@ -285,6 +285,12 @@ class DailyClosingService
 
         $totals = $this->expectedTotals($store, $date);
 
+        // Reject any unknown payment methods in counted array
+        $unknownKeys = array_diff(array_keys($counted), DailyClosing::countedMethods());
+        if (!empty($unknownKeys)) {
+            throw new InventoryException('Unknown counted payment method: ' . implode(', ', $unknownKeys));
+        }
+
         // Counted: only drawer/collection methods; missing → 0, normalized to 2dp.
         $normalized = [];
         foreach (DailyClosing::countedMethods() as $method) {
