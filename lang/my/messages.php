@@ -2129,7 +2129,7 @@ return array(
   'pos_price_pin_required' => 'လျှော့ဈေး သတ်မှတ်ချက် ကျော်လွန်နေပါသည် — အတည်ပြုရန် Manager PIN ထည့်ပါ။',
   'pos_price_set' => 'ရောင်းဈေး ပြင်ဆင်ပြီးပါပြီ',
   'pos_products' => 'ကုန်ပစ္စည်းများ',
-  'pos_quick_add_customer' => 'ဖောက်သည် အမြန်ထည့်ရန်',
+  'pos_quick_add_customer' => 'ဖောက်သည်အသစ်',
   'pos_recall_order' => 'ဆိုင်းငံ့ထားသော အရောင်းများ ပြန်ခေါ်ရန်',
   'pos_receipt_title' => 'အရောင်း ပြေစာ/ဘောက်ချာ',
   'pos_remaining' => 'လက်ကျန်',
