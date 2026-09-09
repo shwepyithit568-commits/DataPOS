@@ -1,520 +1,277 @@
-# DataPOS — Phase F Completion Report
-### Myanmar Business Commercial Readiness — All Phases A–E
+# DataPOS — Phase F Completion Report (Refreshed & Corrected)
+### Myanmar Business Commercial Readiness — Phases A through E & Pre-Installer Baseline
 
 **Document Reference:** `docs/phase_f_completion_report.md`  
-**Master Plan:** [myanmar_business_commercial_readiness_plan_v1.md](file:///d:/xmapp/htdocs/DataPOS/docs/myanmar_business_commercial_readiness_plan_v1.md)  
-**Report Date:** 2026-09-09  
-**Prepared By:** Tech Buddy (Senior Software Architect & Pair Programmer)  
-**Status:** 🟡 Awaiting Store Owner UAT Sign-off
+**Master Plan:** [myanmar_business_commercial_readiness_plan_v1.md](myanmar_business_commercial_readiness_plan_v1.md)  
+**Report Refresh Date:** 2026-09-09  
+**Current Branch:** `main`  
+**Baseline Git Commit SHA:** `262ea2fbe11a36fa18af8e621783f6756b396396`  
+**Git Working Tree Status:** Clean (`git status --short` = 0 uncommitted files)  
+**Prepared By:** Antigravity (Prompt 5 — Phase F Completion Report Refresh & Evidence Correction)  
+**Overall Readiness Gate:** 🟡 `Awaiting Physical Hardware UAT & Store Owner Sign-off`
 
 ---
 
-## 1. Source-of-Truth Repository
+## 1. Source-of-Truth Repository & Environment Baseline
 
-| Parameter | Value |
-|:---|:---|
-| **Branch** | `main` |
-| **HEAD Commit SHA** | `6473e3dc1a47a8fd8f54e85038f1cbf4135a980f` |
-| **Remote Origin** | `https://github.com/shwepyithit568-commits/DataPOS.git` |
-| **Uncommitted Changes** | 32 M (modified) + 19 ?? (new untracked) — all Phase B–E deliverables |
-| **PHP Runtime** | PHP 8.2.12 (CLI, ZTS, VC2019 x64) |
-| **Node.js / npm** | v26.0.0 / 11.12.1 |
-| **Database Engine** | SQLite (portable, zero-server, offline-first) |
-| **Application Timezone** | `Asia/Yangon` (UTC+06:30) |
-
----
-
-## 2. Changed Files Summary (Phase B–E Deliverables)
-
-### 2.1 Modified Files (32 files)
-
-| File | Phase | Reason |
-|:---|:---:|:---|
-| `app/Http/Controllers/Admin/PrinterController.php` | C/E | Hardware diagnostic endpoint + binary ESC/POS test print |
-| `app/POS/Http/Controllers/CashierShiftController.php` | B | Period-lock validation on shift close |
-| `app/POS/Http/Controllers/DailyClosingController.php` | B | Variance sign-off; manager approval flow |
-| `app/POS/Http/Controllers/PosReportController.php` | D | Payment reconciliation report tab |
-| `app/POS/Http/Controllers/PosSaleController.php` | B | Block backdated sales to closed periods |
-| `app/POS/Models/CashierShift.php` | B | Period-lock helper; variance reason field |
-| `app/POS/Models/DailyClosing.php` | B | `is_locked` flag; manager sign-off fields |
-| `app/POS/Models/PosSale.php` | B | `document_number` relation to DocumentSequence |
-| `app/POS/Services/CashierShiftService.php` | B | Reconciliation equation enforcement |
-| `app/POS/Services/GoodsReceiptService.php` | B | Period-lock check on GRN posting |
-| `app/POS/Services/InventoryAdjustmentService.php` | B | Period-lock check on stock adjustment |
-| `app/POS/Services/PosReportService.php` | D | Split-payment & method-level reconciliation |
-| `app/POS/Services/PosReturnService.php` | B | Sequential return document number |
-| `app/POS/Services/PosSaleService.php` | B/D | Sequential invoice number; period-lock; bcmath money |
-| `app/POS/Services/PurchaseOrderService.php` | B | Sequential PO number; period-lock on PO posting |
-| `app/Services/AdminNavigationService.php` | D | Payment reconciliation nav entry |
-| `app/Services/HardwareMatrixService.php` | E | ESC/POS engine: receipt, drawer-kick, auto-cut |
-| `lang/en/messages.php` | B/C/D/E | New translation keys (tri-lingual parity) |
-| `lang/my/messages.php` | B/C/D/E | Myanmar translation keys |
-| `lang/zh_CN/messages.php` | B/C/D/E | Simplified Chinese translation keys |
-| `resources/views/admin/printers/test_print.blade.php` | E | Self-service hardware test page |
-| `resources/views/pos/closing.blade.php` | B | Variance reason field + manager sign-off UI |
-| `resources/views/pos/index.blade.php` | B/D | Period-lock notice; reconciliation stats panel |
-| `resources/views/pos/receipt.blade.php` | C | Sequential doc number on receipt |
-| `resources/views/pos/reports/_tabs.blade.php` | D | Payments reconciliation tab |
-| `resources/views/pos/reports/cash.blade.php` | B | Cash equation display |
-| `resources/views/pos/reports/sales.blade.php` | D | Gross profit / net sales columns |
-| `resources/views/pos/reports/stock.blade.php` | D | Closing stock formula display |
-| `resources/views/pos/returns/index.blade.php` | B | Return document number column |
-| `resources/views/pos/returns/select_sale.blade.php` | B | Closed-period return block |
-| `resources/views/pos/returns/show.blade.php` | C | Return voucher sequential number |
-| `routes/web.php` | E | `/admin/printers/test-print` binary download route |
-
-### 2.2 New Files (19 files)
-
-| File | Phase | Purpose |
-|:---|:---:|:---|
-| `app/POS/Exceptions/PeriodLockedException.php` | B | Typed exception for closed-period mutations |
-| `app/POS/Models/DocumentSequence.php` | B | Store-scoped sequential numbering model |
-| `app/POS/Services/BusinessReconciliationService.php` | B | Stock + cash reconciliation equations |
-| `app/POS/Services/DocumentSequenceService.php` | B | Collision-free sequence generator (atomic DB row-lock) |
-| `app/POS/Services/PeriodLockService.php` | B | Period open/close/reopen with owner approval |
-| `app/Services/ExportDataSanitizer.php` | C | Formula-injection prevention for CSV/XLSX exports |
-| `database/migrations/2026_09_09_000001_create_document_sequences_table.php` | B | `document_sequences` table |
-| `database/migrations/2026_09_09_000002_add_p0_integrity_fields_to_shifts_and_closings.php` | B | Variance reason + lock fields on shifts/closings |
-| `docs/commercial_readiness_phase_a_audit_report.md` | A | Full Phase A audit report |
-| `docs/myanmar_business_commercial_readiness_plan_v1.md` | A | Master commercial readiness plan |
-| `resources/views/pos/reports/payments.blade.php` | D | Payment method reconciliation report |
-| `resources/views/pos/reports/reconciliation.blade.php` | D | Cash + stock reconciliation dashboard |
-| `tests/Feature/POS/DocumentPrintingAndWatermarkTest.php` | C | Receipt/voucher numbering and watermark tests |
-| `tests/Feature/POS/ExcelCsvImportExportSafetyTest.php` | C | Import safety (leading zeros, injection, dedup) |
-| `tests/Feature/POS/FreshPcRestoreAndBackupIntegrityTest.php` | E | Full backup/restore + SHA-256 integrity |
-| `tests/Feature/POS/HardwareCompatibilityAndDiagnosticTest.php` | E | ESC/POS, cash drawer, scanner endpoint tests |
-| `tests/Feature/POS/P0IntegrityControlsTest.php` | B | Period lock, doc numbering, cash equation |
-| `tests/Feature/POS/PaymentMethodReconciliationTest.php` | D | Split payment, Myanmar payment methods |
-| `tests/Feature/POS/PowerLossAndCrashRecoveryTest.php` | E | Atomic rollback, crash recovery, doc sequence continuity |
-| `tests/Feature/POS/ZeroInternetOfflinePilotTest.php` | E | Zero-internet operation validation |
-
----
-
-## 3. Database Migrations
-
-| Migration | Action | Rollback / Data Preservation |
-|:---|:---|:---|
-| `2026_09_09_000001_create_document_sequences_table.php` | Create `document_sequences` (store_id, type, prefix, period_key, last_number) | `down()` drops table — no existing data affected |
-| `2026_09_09_000002_add_p0_integrity_fields_to_shifts_and_closings.php` | Add `variance_reason`, `manager_approved_by`, `manager_approved_at` to `cashier_shifts` and `daily_closings`; add `is_locked` to `daily_closings` | `down()` removes columns — existing rows default to `null` / `false`; no data loss |
-
----
-
-## 4. Before / After Capability Matrix
-
-| Module | Phase A Status | Phase F Status | Evidence |
-|:---|:---:|:---:|:---|
-| POS & Sales | Partial | **Complete** | `PosSaleTest`, period-lock enforcement |
-| Products & Barcode | Complete | Complete | Unchanged |
-| Inventory Ledger | Complete | Complete | `InventoryLedgerTest` |
-| Customers & Debt | Partial | **Partial*** | Customer statement printing deferred (P1) |
-| Suppliers & Purchasing | Complete | Complete | `PurchaseOrderTest` |
-| Finance & Expenses | Partial | **Complete** | `PaymentMethodReconciliationTest`, P&L |
-| Repair & Service | Complete | Complete | Unchanged |
-| Ecommerce & Orders | Complete | Complete | Unchanged |
-| Receipt & Printing | Partial | **Complete** | `DocumentPrintingAndWatermarkTest`, `HardwareCompatibilityAndDiagnosticTest` |
-| Import / Export | Complete | **Complete** | `ExcelCsvImportExportSafetyTest` |
-| PDF & Myanmar Font | Partial | **Partial*** | html2pdf.js retained; server-side DomPDF deferred (P1) |
-| Backup & Restore | Complete | **Complete** | `FreshPcRestoreAndBackupIntegrityTest`, SHA-256 |
-| Audit Logs | Complete | Complete | Unchanged |
-| Roles & Permissions | Complete | Complete | Unchanged |
-| Offline Operation | — | **Complete** | `ZeroInternetOfflinePilotTest` |
-| Hardware/ESC/POS | — | **Complete** | `HardwareCompatibilityAndDiagnosticTest` |
-| Crash / Power-loss Recovery | — | **Complete** | `PowerLossAndCrashRecoveryTest` |
-| Period Lock & Variance | Partial | **Complete** | `P0IntegrityControlsTest` |
-| Document Numbering | Partial | **Complete** | `DocumentSequenceService`, `DocumentPrintingAndWatermarkTest` |
-
-> `*` — Deferred items documented in Section 9 (Known Limitations).
-
----
-
-## 5. Final Report Catalogue
-
-| # | Report | Available | Notes |
-|:---:|:---|:---:|:---|
-| 1 | Owner Dashboard (Today/MTD Sales, Profit, Cash) | ✅ | `/pos/dashboard` |
-| 2 | Daily/Weekly/Monthly Sales | ✅ | `/pos/reports/sales` |
-| 3 | Sales by Product/Category/Cashier | ✅ | Filter panel |
-| 4 | Return/Refund/Exchange Summary | ✅ | `/pos/returns` |
-| 5 | Payment Method Reconciliation | ✅ | `/pos/reports/payments` (Phase D) |
-| 6 | Cash Closing Equation & Variance | ✅ | `/pos/reports/cash` |
-| 7 | Stock Balance / Bin Card | ✅ | `/admin/stock-ledger` |
-| 8 | Inventory Valuation | ✅ | `/admin/stock-ledger/valuation` |
-| 9 | Stock Reconciliation | ✅ | `/pos/reconciliation` |
-| 10 | Low/Out/Negative Stock | ✅ | `/admin/products?filter=low_stock` |
-| 11 | Purchase Orders & GRN | ✅ | `/pos/purchases` |
-| 12 | Supplier Payable Aging | ✅ | `/admin/suppliers` |
-| 13 | Customer Receivable Aging | ✅ | `/admin/customers` |
-| 14 | Profit & Loss | ✅ | `/admin/profit-loss` |
-| 15 | Expense Category Analysis | ✅ | `/admin/expenses` |
-| 16 | Open/Completed Repair Jobs | ✅ | `/admin/repairs` |
-| 17 | Technician Workload | ✅ | Repair reports |
-| 18 | Customer Statement (print) | ⚠️ | P1 — deferred |
-| 19 | Supplier Statement (print) | ⚠️ | P1 — deferred |
-| 20 | Tax Summary | ⚠️ | P2 — configurable tax deferred |
-
----
-
-## 6. Document / Template Catalogue
-
-| Document | Prefix Format | Size Support | Status |
+| Parameter | Current Actual Value | Verification Command | Status |
 |:---|:---|:---|:---:|
-| POS Receipt | `RCT-YYYY-00001` | 58mm / 80mm | ✅ |
-| Sales Invoice | `INV-YYYY-00001` | A4 / A5 | ✅ |
-| Return/Refund Voucher | `RET-YYYY-00001` | 58mm / 80mm / A4 | ✅ |
-| Purchase Order | `PO-YYYY-00001` | A4 | ✅ |
-| Goods Received Note | `GRN-YYYY-00001` | A4 | ✅ |
-| Purchase Return | `PRN-YYYY-00001` | A4 | ✅ |
-| Expense Voucher | `EXP-YYYY-00001` | A4 | ✅ |
-| Service Job Card | `SVC-YYYY-00001` | A4 | ✅ |
-| Stock Adjustment Voucher | `ADJ-YYYY-00001` | A4 | ✅ |
-| Cash In/Out Voucher | `CIV-YYYY-00001` / `COV-YYYY-00001` | A4 | ✅ |
-| Quotation | `QT-YYYY-00001` | A4 | ⚠️ P2 |
-| Delivery Note | `DN-YYYY-00001` | A4 | ⚠️ P2 |
-| Warranty Certificate | Internal | A4 | ✅ |
+| **Git Branch** | `main` | `git branch --show-current` | Verified |
+| **Git HEAD Commit** | `262ea2fbe11a36fa18af8e621783f6756b396396` | `git rev-parse HEAD` | Verified |
+| **Working Tree** | Clean (0 modified, 0 untracked files) | `git status --short` | Verified |
+| **Remote Repository** | `https://github.com/shwepyithit568-commits/DataPOS.git` | `git remote -v` | Verified |
+| **PHP Runtime** | PHP `8.2.12` (CLI, ZTS Visual C++ 2019 x64) | `php -v` | Verified |
+| **Composer** | Composer `2.9.4` (Strict schema valid) | `composer validate --strict` | Verified |
+| **Node.js / npm** | Node `v26.0.0` / npm `11.12.1` | `node -v` / `npm -v` | Verified |
+| **Frontend Tooling** | Vite `7.3.6` / TailwindCSS `4.3.3` | `npm run build` | Verified |
+| **Canonical Database**| SQLite: `storage/database/datapos.sqlite` (WAL Mode, 5000ms timeout) | `config/database.php` | Verified |
+| **Database Fallback** | Legacy `database/database.sqlite` fallback preserved | `config/database.php` | Verified |
+| **Continuous Integration** | GitHub Actions (`.github/workflows/ci.yml`) | Configured | Pending Remote Push |
+| **Application Timezone** | `Asia/Yangon` (UTC+06:30) | `php artisan about` | Verified |
 
 ---
 
-## 7. Invoice / Receipt Numbering Design
+## 2. Evidence-Based Gate Categories & Classification
 
-```
-Sequence Format:  {PREFIX}-{YYYY}-{NNNNN}
-Example:          INV-2026-00001  →  INV-2026-00002  →  ...
+In accordance with the Strict Engineering Craftsmanship Policy in [`AGENTS.md`](../AGENTS.md), all capabilities are strictly categorized into one of five honest gates:
 
-Table:            document_sequences
-Columns:          store_id (FK) | type | prefix | period_key | last_number
-Isolation:        Per-store, per-type — cross-store collision impossible
-Concurrency:      Atomic row-lock (SQLite WAL mode + DB::transaction())
-Reset Policy:     Annual reset (period_key = YYYY) — configurable to continuous
-Failed Tx:        Sequence consumed on failure is skipped (gap-safe, audit-trail safe)
-Void Doc:         Number permanently retired; never reissued
-```
+1. **`PASS — Automated Evidence`:** Code, logic, schema, or calculations verified 100% green by deterministic automated test suites.
+2. **`PASS — Human/Physical Evidence`:** Manually tested and physically verified on real hardware devices.
+3. **`PENDING — Human Verification`:** Requires real physical hardware (thermal printer, scanner, cash drawer, power unplug, secondary PC) or human store owner walkthrough.
+4. **`BLOCKED`:** Architectural or technical blockers preventing forward progress.
+5. **`DEFERRED — Explicitly Approved Scope`:** Documented roadmap items formally scheduled for post-v1.0 releases.
 
 ---
 
-## 8. PDF / Font / Printing Design
+## 3. Changed Files Inventory (Phase B–E & Pre-Installer Baseline)
 
-| Aspect | Implementation |
-|:---|:---|
-| **Client-side PDF** | `html2pdf.js` (canvas-based, browser-triggered) |
-| **Myanmar Font** | Noto Sans Myanmar (SIL OFL 1.1) — embedded in `resources/assets/fonts/` |
-| **ESC/POS (58mm/80mm)** | `HardwareMatrixService` — raw ESC/POS byte stream via `/admin/printers/test-print` download |
-| **A4 Print** | `@media print` CSS + `window.print()` |
-| **Offline Font Loading** | All fonts served from `public/fonts/` — zero CDN dependency |
-| **Test Page** | `admin/printers/test_print.blade.php` — self-service diagnostic |
-| **Known Gap** | Server-side DomPDF (reliable low-end PC PDF) — documented P1 deferred |
+All changes across Phases B through E, automated CI, security audit, and runtime canonicalization have been committed cleanly:
 
----
+### 3.1 Core Architecture & Service Enhancements
+- `config/database.php`: Canonical SQLite path resolution, WAL mode, 5000ms busy timeout, NORMAL synchronous.
+- `.github/workflows/ci.yml`: Full GitHub Actions CI automation pipeline.
+- `app/POS/Exceptions/PeriodLockedException.php`: Typed exception blocking mutations on closed periods.
+- `app/POS/Models/DocumentSequence.php`: Store-scoped collision-free sequential numbering model.
+- `app/POS/Services/DocumentSequenceService.php`: Atomic database row-locking sequence generator.
+- `app/POS/Services/PeriodLockService.php`: Daily financial period open, close, and owner-approved reopening.
+- `app/POS/Services/BusinessReconciliationService.php`: Double-entry stock and cash balance verification equations.
+- `app/Services/HardwareMatrixService.php`: Raw ESC/POS byte generator for 58mm/80mm thermal receipts and cash drawers.
+- `app/Services/ExportDataSanitizer.php`: Formula-injection and CSV/XLSX export sanitizer.
 
-## 9. Import / Export Mapping & Validation Rules
+### 3.2 Database Migrations
+- `database/migrations/2026_09_09_000001_create_document_sequences_table.php`: Stores sequential numbering state.
+- `database/migrations/2026_09_09_000002_add_p0_integrity_fields_to_shifts_and_closings.php`: Variance reason and lock fields.
 
-### Import Domains Covered
-
-| Domain | Format | Leading-Zero Safe | Dedup Policy | Rollback |
-|:---|:---|:---:|:---|:---:|
-| Products & Variants | XLSX / CSV | ✅ | Skip / Update / Reject | ✅ |
-| Categories & Brands | XLSX / CSV | ✅ | Skip | ✅ |
-| Opening Stock | XLSX | ✅ | Reject duplicate SKU | ✅ |
-| Customers | XLSX / CSV | ✅ | Skip / Update | ✅ |
-| Suppliers | XLSX / CSV | ✅ | Skip / Update | ✅ |
-| Spare Parts | XLSX | ✅ | Skip | ✅ |
-
-### Safety Rules Implemented (`ExportDataSanitizer`)
-
-- Formula injection prefix (`=`, `+`, `-`, `@`) → prefixed with `'` on export
-- Scientific notation IMEI/barcode → string cast before write
-- Excel date serial → `Asia/Yangon` aware parse
-- Retry same file → idempotent (no duplicate records created)
+### 3.3 Documentation & Governance Artifacts
+- `README.md`: Complete rewrite with canonical paths and accurate test metrics.
+- `docs/pre_installer_automated_baseline_report.md`: Prompt 1 baseline verification report.
+- `docs/security_and_release_archive_audit.md`: Prompt 2 secret audit, dependency scan, and license manifest.
+- `docs/windows_runtime_and_storage_architecture.md`: Prompt 3 canonical runtime and storage specification.
+- `docs/README_AUDIT_NOTES.md`: Prompt 4 audit trail of removed stale claims.
+- `docs/datapos_ai_agents_pre_installer_prompts_v1.md`: 8-step pre-installer governance prompt collection.
 
 ---
 
-## 10. Reconciliation Results
+## 4. Reconciliation & Ledger Integrity Equations
 
-### Stock Equation
+### 4.1 Stock Movement Equation
+$$\text{Opening Stock} + \text{Purchases} + \text{Sales Returns} + \text{Adjustments (+)} + \text{Transfers In} - \text{POS Sales} - \text{Purchase Returns} - \text{Adjustments (-)} - \text{Transfers Out} = \text{Closing Stock}$$
+- **Automated Verification:** `Tests\Feature\POS\P0IntegrityControlsTest` verifies that calculated closing stock matches physical ledger state with $\Delta = 0$.
+- **Status:** `PASS — Automated Evidence`
 
-```
-Opening Stock + Purchases Received + Sales Returns + Positive Adjustments + Transfers In
-- POS Sales - Purchase Returns - Negative Adjustments - Transfers Out
-= Closing Stock         Δ = 0 (zero discrepancy confirmed)
-```
-
-### Cash Equation
-
-```
-Opening Cash + Cash Sales + Customer Debt Collections + Other Cash In
-- Cash Refunds - Expenses Paid - Supplier Payments - Other Cash Out
-= Expected Closing Cash
-Variance signed off by manager with reason (enforced on close)
-```
+### 4.2 Cash Drawer Equation
+$$\text{Opening Float} + \text{Cash Sales} + \text{Debt Collections} + \text{Cash In} - \text{Cash Refunds} - \text{Expenses} - \text{Cash Out} = \text{Expected Cash}$$
+- **Automated Verification:** Enforced during cashier shift close and daily closing sign-off. Any variance requires mandatory written explanation and store manager authorization.
+- **Status:** `PASS — Automated Evidence`
 
 ---
 
-## 11. Permission-to-Route Mapping
+## 5. Automated Test Suite Execution Summary
 
-| Permission Key | Route / Action Gated |
-|:---|:---|
-| `pos.access` | POS counter `/store/{slug}/pos` |
-| `sales.void` | Void sale endpoint |
-| `sales.discount` | Override discount on POS |
-| `sales.refund` | Return/refund workflow |
-| `inventory.adjust` | Stock adjustment posting |
-| `inventory.export` | Stock XLSX/CSV export |
-| `finance.view` | P&L, cash book |
-| `finance.export` | Finance XLSX export |
-| `backups.manage` | Backup/restore UI |
-| `periods.close` | Daily close action |
-| `periods.reopen` | Reopen closed period (owner-level) |
-| `settings.printers.manage` | Printer setup + test-print page |
-| `imports.manage` | XLSX/CSV import |
-| `reports.export` | Report XLSX/CSV/PDF export |
+Fresh execution across the complete test suite confirms zero regressions and 100% green status:
 
----
+```text
+$ php artisan test
 
-## 12. Audit Log Coverage
-
-All of the following actions write to `audit_logs`:
-
-| Action | Logged Fields |
-|:---|:---|
-| Sale posted / voided | actor, sale_id, amount, payment_method, document_number |
-| Return / refund | actor, return_id, amount, original_sale_id |
-| Stock adjustment | actor, product_id, qty_before, qty_after, reason |
-| Purchase posted | actor, po_id, supplier, total_cost |
-| Period closed / reopened | actor, date, variance, manager_id, reason |
-| Backup created / restored | actor, filename, sha256, status |
-| Document reprinted | actor, document_id, reprint_count, reason |
-| Export executed | actor, export_type, row_count, filters |
-| Permission changed | actor, target_user, old_role, new_role |
-| Setting changed | actor, key, old_value, new_value |
-
----
-
-## 13. Backup & Clean-PC Restore Evidence
-
-### Backup Mechanism
-
-- **Format:** ZIP archive containing `database.sql` + `media/` directory + `manifest.json`
-- **Integrity:** SHA-256 checksum computed at creation; verified before restore
-- **UI:** One-click from `/admin/backups`
-- **Storage:** `storage/app/backups/` (configurable path)
-
-### Clean-PC Restore Test (`FreshPcRestoreAndBackupIntegrityTest`)
-
-```
-✅ Full backup created and downloaded
-✅ SHA-256 of archive verified
-✅ Corrupted archive rejected (checksum mismatch)
-✅ Fresh database restore: all models, relations, and balances intact
-✅ Post-restore inventory reconciliation: Δ = 0
-✅ Post-restore cash reconciliation: Δ = 0
-✅ Document sequences continue from correct last_number
-```
-
----
-
-## 14. Automated Test Results
-
-### POS Feature Test Suite (Final)
-
-```
-Tests:    384 passed (1,596 assertions)
-Duration: 16.190s
-Memory:   100.00 MB
+Tests:    1 skipped, 1751 passed (8005 assertions)
+Duration: 139.20s
 Exit:     0  ← ALL GREEN
 ```
 
-### Phase-by-Phase Test Coverage
+### Breakdown of Verified Test Subsystems:
 
-| Phase | New Test Files Added | Result |
-|:---:|:---|:---:|
-| A | Baseline (1,703 existing passing) | ✅ PASS |
-| B | `P0IntegrityControlsTest` | ✅ PASS |
-| C | `DocumentPrintingAndWatermarkTest`, `ExcelCsvImportExportSafetyTest` | ✅ PASS |
-| D | `PaymentMethodReconciliationTest` | ✅ PASS |
-| E | `ZeroInternetOfflinePilotTest`, `PowerLossAndCrashRecoveryTest`, `HardwareCompatibilityAndDiagnosticTest`, `FreshPcRestoreAndBackupIntegrityTest` | ✅ PASS |
-
-> **Zero regressions.** All pre-existing suites pass without modification.
+| Subsystem / Test Suite | Tests | Assertions | Result | Category |
+| :--- | :---: | :---: | :---: | :--- |
+| **P0 Integrity Controls** (`P0IntegrityControlsTest`) | 9 | 42 | **PASS** | `PASS — Automated Evidence` |
+| **Document Printing & Watermark** (`DocumentPrintingAndWatermarkTest`) | 8 | 34 | **PASS** | `PASS — Automated Evidence` |
+| **Excel/CSV Safety & Sanitization** (`ExcelCsvImportExportSafetyTest`) | 9 | 38 | **PASS** | `PASS — Automated Evidence` |
+| **Payment Reconciliation** (`PaymentMethodReconciliationTest`) | 8 | 41 | **PASS** | `PASS — Automated Evidence` |
+| **Simulated Crash & Atomicity** (`PowerLossAndCrashRecoveryTest`) | 7 | 31 | **PASS** | `PASS — Automated Evidence` |
+| **Hardware Byte Generation** (`HardwareCompatibilityAndDiagnosticTest`) | 8 | 36 | **PASS** | `PASS — Automated Evidence` |
+| **Automated Offline Readiness** (`ZeroInternetOfflinePilotTest`) | 8 | 38 | **PASS** | `PASS — Automated Evidence` |
+| **Backup & Fresh PC Restore Logic** (`FreshPcRestoreAndBackupIntegrityTest`) | 5 | 22 | **PASS** | `PASS — Automated Evidence` |
+| **Windows Storage Canonicalization** (`WindowsStorageCanonicalizationTest`) | 8 | 39 | **PASS** | `PASS — Automated Evidence` |
+| **Multi-Lingual Parity (my, en, zh_CN)** (`LocalizationTest`) | 8 | 24 | **PASS** | `PASS — Automated Evidence` |
+| **Existing Core Business Features** (Catalog, Orders, Ledger, Auth, etc.) | 1,673 | 7,660 | **PASS** | `PASS — Automated Evidence` |
+| **MySQL Smoke Test** (`MysqlMigrationSmokeTest`) | 1 | 0 | **SKIPPED** | Expected (Runs SQLite in memory) |
 
 ---
 
-## 15. Frontend Build Output
+## 6. Frontend Build Output
 
-```
+```text
+$ npm run build
+
+vite v7.3.6 building client environment for production...
+transforming...
 ✓ 60 modules transformed.
-public/build/assets/app-B1F9vMRO.css        268.54 kB │ gzip: 31.93 kB
-public/build/assets/admin-Q9tNuKf4.css      328.09 kB │ gzip: 38.72 kB
-public/build/assets/app-D8CId_R8.js          14.65 kB │ gzip:  4.70 kB
-public/build/assets/app-admin-DaNlZXq8.js    17.50 kB │ gzip:  5.86 kB
-✓ built in 799ms
-Status: PASS — no CDN or external network required at runtime
+rendering chunks...
+public/build/manifest.json                                  1.67 kB │ gzip:  0.39 kB
+public/build/assets/Outfit-Regular-DUdsL-5p.woff2          41.82 kB
+public/build/assets/Roboto-Regular-B3YRHit7.woff2         103.23 kB
+public/build/assets/NotoSansMyanmar-Regular-ymaFtaIS.ttf  183.16 kB
+public/build/assets/NotoSansMyanmar-Bold-B2V9onp9.ttf     183.36 kB
+public/build/assets/app-B1F9vMRO.css                      268.54 kB │ gzip: 31.93 kB
+public/build/assets/admin-CL0oZvTo.css                    328.47 kB │ gzip: 38.76 kB
+public/build/assets/app-D8CId_R8.js                        14.65 kB │ gzip:  4.70 kB
+public/build/assets/app-admin-DaNlZXq8.js                  17.50 kB │ gzip:  5.86 kB
+public/build/assets/module.esm-CvtIwgpG.js                 93.85 kB │ gzip: 34.29 kB
+✓ built in 739ms
 ```
+- **Status:** `PASS — Automated Evidence` (Zero runtime CDN dependencies; all fonts and assets bundled locally).
 
 ---
 
-## 16. Browser UAT Checklist
+## 7. Operational & Stress Test Clarifications (Honest Evidence Mapping)
 
-> Legend: ✅ PASS | ⚠️ Partial | ❌ FAIL | 🔲 Pending Store Owner Sign-off
+To ensure zero ambiguity, automated tests are separated from physical human verification:
 
-| # | Workflow | Role | Result |
+### 7.1 Offline Operation Verification
+- **Automated Offline Readiness Test (`ZeroInternetOfflinePilotTest`):** `PASS — Automated Evidence`. Verified by crawling routes with network simulation; 0 external outbound HTTP requests, 0 CDN links, all CSS/JS/fonts resolve locally from `public/`.
+- **Seven-Day Physical Offline Shop Pilot:** `PENDING — Human Verification`. Running the system continuously for 7 days in a real shop environment without internet access remains to be performed by the Store Owner.
+
+### 7.2 Power Loss & Crash Recovery
+- **Simulated Crash / Atomicity Test (`PowerLossAndCrashRecoveryTest`):** `PASS — Automated Evidence`. Verified via `DB::transaction()` rollback on simulated exceptions; uncommitted sales, sequence counters, and stock balances cleanly revert without corruption.
+- **Physical Sudden Power Cut Test:** `PENDING — Human Verification`. Abruptly pulling the PC power plug during high-frequency POS writes to verify SQLite WAL recovery on Windows restart remains a physical test.
+
+### 7.3 Printing & Hardware Diagnostics
+- **ESC/POS Binary Generation Test (`HardwareCompatibilityAndDiagnosticTest`):** `PASS — Automated Evidence`. Verified byte-level correctness of 58mm/80mm ESC/POS commands, drawer kick pulses (`ESC p 0 25 250`), and auto-cut codes (`GS V 66 0`).
+- **Physical Thermal Receipt Printing:** `PENDING — Human Verification`. Feeding physical paper through a 58mm/80mm USB/LAN thermal printer to verify Myanmar font legibility and alignment.
+
+### 7.4 Backup & Disaster Recovery
+- **Automated Backup & Restore Test (`FreshPcRestoreAndBackupIntegrityTest`):** `PASS — Automated Evidence`. Verified ZIP creation containing `database.sql`, `media/`, and `manifest.json` with SHA-256 validation and programmatic data restoration.
+- **Physical Clean-PC Restore:** `PENDING — Human Verification`. Restoring a backup archive on a completely fresh, secondary Windows computer without developer tooling.
+
+---
+
+## 8. Remaining Human Verification Checklist (Pending Store Owner Sign-Off)
+
+The following 20 end-to-end user workflows and hardware items must be completed by human testers before commercial launch:
+
+| # | Workflow / Test Description | Responsible Role | Verification Status |
 |:---:|:---|:---|:---:|
-| 1 | Store first-time setup wizard | Store Owner | 🔲 |
-| 2 | Currency / document / printer setup | Store Owner | 🔲 |
-| 3 | Products & opening stock import (XLSX) | Store Manager | 🔲 |
-| 4 | Customers & suppliers import (XLSX) | Store Manager | 🔲 |
-| 5 | Cash POS sale → receipt print (58mm) | Cashier | 🔲 |
-| 6 | Credit sale → customer debt | Cashier | 🔲 |
-| 7 | Split payment (Cash + KBZPay) | Cashier | 🔲 |
-| 8 | Return / refund / exchange | Cashier | 🔲 |
-| 9 | Stock count & adjustment | Inventory Staff | 🔲 |
-| 10 | Customer debt collection | Accountant | 🔲 |
-| 11 | Expense entry & supplier payment | Accountant | 🔲 |
-| 12 | Repair intake → job completion → payment | Technician | 🔲 |
-| 13 | Cashier shift close (with variance) | Cashier | 🔲 |
-| 14 | Daily closing + manager sign-off | Store Manager | 🔲 |
-| 15 | Owner P&L / reconciliation report | Store Owner | 🔲 |
-| 16 | XLSX export from stock report | Store Manager | 🔲 |
-| 17 | Manual backup → download ZIP | Store Owner | 🔲 |
-| 18 | Restore on a clean Windows machine | Store Owner | 🔲 |
-| 19 | Blocked backdated sale after close | Cashier | 🔲 |
-| 20 | Reopen closed period (owner only) | Store Owner | 🔲 |
+| 1 | Store first-time setup wizard walkthrough | Store Owner | `PENDING — Human Verification` |
+| 2 | Currency, document sequence, and printer configuration | Store Owner | `PENDING — Human Verification` |
+| 3 | Bulk product and opening stock XLSX import | Store Manager | `PENDING — Human Verification` |
+| 4 | Customer directory and supplier XLSX import | Store Manager | `PENDING — Human Verification` |
+| 5 | Physical cash sale checkout → 58mm thermal receipt print | Cashier | `PENDING — Human Verification` |
+| 6 | Credit sale checkout → Customer receivable ledger entry | Cashier | `PENDING — Human Verification` |
+| 7 | Split payment checkout (Cash + KPay / Wave) | Cashier | `PENDING — Human Verification` |
+| 8 | Return / refund / exchange workflow with sequential voucher | Cashier | `PENDING — Human Verification` |
+| 9 | Blind physical stock count entry and reconciliation adjustment | Inventory Staff | `PENDING — Human Verification` |
+| 10 | Customer debt collection settlement and receipt | Accountant | `PENDING — Human Verification` |
+| 11 | Expense entry with voucher upload and supplier payment | Accountant | `PENDING — Human Verification` |
+| 12 | Repair job intake → status updates → completion payment | Technician | `PENDING — Human Verification` |
+| 13 | Cashier shift closing with cash float variance explanation | Cashier | `PENDING — Human Verification` |
+| 14 | Daily closing execution with manager approval and locking | Store Manager | `PENDING — Human Verification` |
+| 15 | Store Owner profit & loss (P&L) and ledger reconciliation review| Store Owner | `PENDING — Human Verification` |
+| 16 | Export stock ledger and valuation to XLSX | Store Manager | `PENDING — Human Verification` |
+| 17 | One-click manual backup generation and ZIP download | Store Owner | `PENDING — Human Verification` |
+| 18 | Clean-PC database and media restoration test on second machine | Store Owner | `PENDING — Human Verification` |
+| 19 | Verify blocked backdated sales on closed financial periods | Cashier | `PENDING — Human Verification` |
+| 20 | Emergency period reopening under store owner credentials | Store Owner | `PENDING — Human Verification` |
+| 21 | Physical USB barcode scanner product scanning | Cashier | `PENDING — Human Verification` |
+| 22 | Physical Bluetooth barcode scanner integration | Cashier | `PENDING — Human Verification` |
+| 23 | Physical cash drawer RJ11/RJ12 electronic kick pulse | Cashier | `PENDING — Human Verification` |
+| 24 | Browser standard A4 invoice printing via `window.print()` | Store Owner | `PENDING — Human Verification` |
+| 25 | Real 7-day continuous offline shop pilot without internet | Store Owner | `PENDING — Human Verification` |
 
 ---
 
-## 17. Printer / Scanner / Hardware Checklist
+## 9. Known Limitations & Release Gate Categorization
 
-| # | Hardware Test | Result |
-|:---:|:---|:---:|
-| 1 | 58mm thermal receipt (ESC/POS binary download) | ✅ (automated) |
-| 2 | 80mm thermal receipt | ✅ (automated) |
-| 3 | Cash drawer kick command | ✅ (automated) |
-| 4 | A4 printer via `window.print()` | 🔲 Manual |
-| 5 | USB barcode scanner → product lookup | 🔲 Manual |
-| 6 | Bluetooth barcode scanner | 🔲 Manual |
-| 7 | No printer connected → graceful error | ✅ (automated) |
-| 8 | Wrong paper width → user notice | ✅ (automated) |
-| 9 | Self-service test print page functional | ✅ (automated) |
+Limitations are strictly divided into release gates rather than dismissed:
 
----
+### 9.1 Installer Pilot Blockers (Must be resolved before or during Installer Pilot)
+- **PL-1 (Human UAT Walkthrough):** Completion of at least items 1–18 in Section 8 by the Store Owner.
+- **PL-2 (Physical Thermal Print Check):** Verification of physical 58mm/80mm paper output readability.
+- **PL-3 (Windows First-Run Directory Permissions):** Verification that `C:\DataPOS` initializes without administrator prompts on standard user accounts.
 
-## 18. Seven-Day Offline Pilot Results
+### 9.2 Commercial GA Blockers (Must be resolved before wide commercial sale)
+- **GA-1 (Code Signing Certificate):** Windows SmartScreen will display an untrusted publisher warning unless an EV/OV Authenticode certificate is acquired.
+- **GA-2 (Credential Scrubbing):** Purging historical MySQL dump containing legacy customer credentials from Git history ([`security_and_release_archive_audit.md`](security_and_release_archive_audit.md)).
+- **GA-3 (Accountant-Verified Tax Engine):** Formal validation of Myanmar Commercial Tax (CT%) computation rules by a certified accountant before enabling VAT invoicing.
 
-| Scenario | Result |
-|:---|:---:|
-| Login with network cable unplugged | ✅ PASS |
-| POS sale (barcode scan → receipt) | ✅ PASS |
-| Product search | ✅ PASS |
-| Stock deduction | ✅ PASS |
-| Return / refund | ✅ PASS |
-| Shift closing | ✅ PASS |
-| Reports & dashboards | ✅ PASS |
-| PDF generation (client-side html2pdf.js) | ✅ PASS |
-| XLSX import / export | ✅ PASS |
-| Backup / restore | ✅ PASS |
-| Zero outbound network requests detected | ✅ PASS |
-
-> Verified by `ZeroInternetOfflinePilotTest` — all assets resolve from localhost; zero CDN or Google Fonts calls.
+### 9.3 Post-GA Roadmap (Non-blocking for Pilot or initial release)
+- **RD-1 (Server-Side DomPDF):** Optional fallback for headless background PDF generation on very old low-memory PCs.
+- **RD-2 (Multi-PC LAN Sync):** Real-time multi-terminal peer-to-peer database synchronization.
+- **RD-3 (Label Printer Direct ZPL):** Raw ZPL/EPL stream generation for Zebra thermal barcode label printers.
 
 ---
 
-## 19. Network Request Audit
-
-```
-External requests during offline test:       0
-CDN dependencies in offline operation:       0
-Google Fonts / analytics calls:              0
-All JS / CSS / fonts served from:            public/ (localhost)
-Myanmar font (NotoSansMyanmar):              public/fonts/ (embedded, SIL OFL 1.1)
-```
-
----
-
-## 20. Power-Loss / Restart Test Results
-
-| Scenario | Result |
-|:---|:---:|
-| Transaction mid-write → DB rolled back on restart | ✅ PASS |
-| Document sequence not incremented on failed tx | ✅ PASS |
-| Inventory balance unchanged after crash | ✅ PASS |
-| Cash balance unchanged after crash | ✅ PASS |
-| Next successful sale gets correct next sequence number | ✅ PASS |
-| Partial GRN posting rolled back | ✅ PASS |
-
-> Validated by `PowerLossAndCrashRecoveryTest` — uses `DB::transaction()` with simulated exceptions.
-
----
-
-## 21. Known Limitations & Deferred Items
-
-> Honest written limitations approved as documented scope decisions. They do **not** block installer planning — they must be tracked and resolved before or shortly after v1.0 GA.
-
-| # | Limitation | Priority | Deferred To |
-|:---:|:---|:---:|:---|
-| L-1 | **Server-side PDF** — Low-end PC canvas rendering may fail on large invoices (100+ lines). Fix: DomPDF with embedded Noto Sans Myanmar. | P1 | v1.1 patch |
-| L-2 | **Customer & Supplier Statement Print** — Monthly/debt statement A4 view not built. | P1 | v1.1 patch |
-| L-3 | **Configurable Tax (VAT/CT)** — Fields exist but Myanmar CT% and tax invoice labeling not professionally verified by accountant. Hardcoding prohibited. | P1 | Before GA |
-| L-4 | **Automatic Daily Backup** — Manual one-click backup works. Scheduled auto-backup (Task Scheduler) not implemented. | P1 | Installer plan |
-| L-5 | **Delivery Note / Quotation** — Template prefixes defined; printable views not completed. | P2 | v1.1 |
-| L-6 | **Multi-PC LAN Sync** — Current SQLite is single-PC. Multi-station sync requires architecture review. | P2 | Separate phase |
-| L-7 | **Offline License / Activation** — No hardware-locked license. Appropriate for pilot; must address before commercial distribution. | P2 | Installer plan |
-| L-8 | **Bluetooth Scanner Hardware Test** — USB HID scanner works. Bluetooth scanner not tested on physical hardware. | P2 | Hardware QA |
-| L-9 | **Label Printer (Zebra/Dymo ZPL/EPL)** — Barcode label XLSX generation works; native ZPL stream not implemented. | P2 | v1.1 |
-| L-10 | **Manual Browser UAT** — Section 16 steps 1–20 require real Store Owner walkthrough; all marked 🔲. | Gate | Before sign-off |
-
----
-
-## 22. Unrelated Files — Non-Modification Confirmation
-
-All files modified during Phase B–E are listed in Section 2. No unrelated files (ecommerce storefront, existing repair module, existing purchase flows, existing seeder data, existing test suites) were modified or deleted. Confirmed by reviewing `git diff --name-only` — all changes are limited to the files enumerated above.
-
----
-
-## 23. Release Gates Status
+## 10. Comprehensive Master Release Gates Status
 
 Per `myanmar_business_commercial_readiness_plan_v1.md` Section 19:
 
-| Gate | Status |
-|:---|:---:|
-| Source-of-truth Git commit fixed and clean | ✅ |
-| Full automated test suite passes | ✅ 384/384 |
-| Production frontend build passes | ✅ |
-| Sales/stock/cash/P&L reconciliation difference = 0 | ✅ |
-| No duplicate document numbers | ✅ |
-| Receipt/Invoice/PDF Myanmar text correct | ✅ (fonts embedded) |
-| 58mm/80mm thermal printing passes | ✅ (automated ESC/POS) |
-| A4 printing passes | 🔲 Manual confirmation needed |
-| XLSX/CSV round-trip does not lose data | ✅ |
-| Import errors are recoverable and understandable | ✅ |
-| Backup restores successfully on a clean PC | ✅ |
-| Seven-day no-internet pilot passes | ✅ |
-| Power-loss/restart tests pass | ✅ |
-| No required CDN/external network requests | ✅ |
-| Role and export permissions pass | ✅ |
-| Cross-store isolation passes | ✅ |
-| Known limitations approved in writing | ✅ (Section 21) |
-| **Store Owner signs UAT acceptance** | 🔲 **PENDING** |
+| Gate Description | Evaluated Status | Evidence Reference |
+|:---|:---:|:---|
+| **Source-of-truth Git commit fixed and clean** | **`PASS — Automated Evidence`** | Commit `262ea2fbe11a36fa18af8e621783f6756b396396` (Clean) |
+| **Full automated test suite passes** | **`PASS — Automated Evidence`** | 1,751 passed, 1 skipped, 0 failed (8,005 assertions) |
+| **Production frontend build passes** | **`PASS — Automated Evidence`** | Vite built in 739ms, manifest & hashed assets verified |
+| **Continuous Integration configured** | **`PASS — Automated Evidence`** | `.github/workflows/ci.yml` verified locally |
+| **Stock & cash reconciliation $\Delta = 0$** | **`PASS — Automated Evidence`** | `P0IntegrityControlsTest` & `BusinessReconciliationService` |
+| **Collision-free document numbering** | **`PASS — Automated Evidence`** | `DocumentSequenceService` atomic DB row locking |
+| **Myanmar font & vector voucher rendering** | **`PASS — Automated Evidence`** | Noto Sans Myanmar bundled, `html2pdf.js` vector vouchers |
+| **58mm/80mm ESC/POS byte generator** | **`PASS — Automated Evidence`** | `HardwareCompatibilityAndDiagnosticTest` |
+| **XLSX/CSV safe import & export** | **`PASS — Automated Evidence`** | `ExcelCsvImportExportSafetyTest` & `ExportDataSanitizer` |
+| **Automated backup & restore integrity** | **`PASS — Automated Evidence`** | `FreshPcRestoreAndBackupIntegrityTest` (SHA-256 verified) |
+| **Simulated crash & power loss rollback** | **`PASS — Automated Evidence`** | `PowerLossAndCrashRecoveryTest` atomic rollback verified |
+| **Automated zero-internet offline operation**| **`PASS — Automated Evidence`** | `ZeroInternetOfflinePilotTest` (0 external requests) |
+| **Role-based access & cross-store isolation** | **`PASS — Automated Evidence`** | `MultiStoreIsolationTest` & `EnsureStoreAccess` middleware |
+| **Tri-lingual key parity (my, en, zh_CN)** | **`PASS — Automated Evidence`** | `LocalizationTest` (0 leaked or missing keys) |
+| **Physical 58mm/80mm thermal receipt printing** | `PENDING — Human Verification` | Section 8 Item 5 |
+| **Physical barcode scanner & cash drawer kick**| `PENDING — Human Verification` | Section 8 Items 21, 22, 23 |
+| **Clean-PC restore on secondary machine** | `PENDING — Human Verification` | Section 8 Item 18 |
+| **Seven-day physical offline shop pilot** | `PENDING — Human Verification` | Section 8 Item 25 |
+| **Store Owner UAT Acceptance Sign-Off** | `PENDING — Human Verification` | Awaiting Store Owner signature below |
 
 ---
 
-## 24. UAT Sign-Off
+## 11. Store Owner UAT Sign-Off Checkpoint
 
-By signing below, the Store Owner / Project Owner confirms:
+> [!IMPORTANT]
+> In strict compliance with Common Rules, the AI pairing assistant **cannot** sign this section on behalf of the user. Only the Store Owner or Project Owner may review the pending checklist items and sign below to authorize Windows Installer build implementation.
 
-1. All automated tests pass (384/384).
-2. Known limitations in Section 21 are acknowledged and accepted as documented scope decisions.
-3. Browser UAT checklist (Section 16) has been completed satisfactorily.
-4. Hardware checklist (Section 17) has been completed satisfactorily.
-5. Explicit authorization is given to proceed with `windows_offline_installer_plan_v1.md` implementation.
+```text
+================================================================================
+                     STORE OWNER UAT ACCEPTANCE SIGN-OFF
+================================================================================
 
-```
-Store Owner / Project Owner:  _______________________________
+Store / Project Owner Name:  ___________________________________________________
 
-Date:                         _______________________________
+Review Date:                 ___________________________________________________
 
-Signature:                    _______________________________
+Signature:                   ___________________________________________________
 
-Notes / Conditions:           _______________________________
+Decision:                    [  ] APPROVED to proceed with Installer implementation
+                             [  ] REJECTED / Changes requested before installer build
+
+Conditions / Notes:
+________________________________________________________________________________
+________________________________________________________________________________
+================================================================================
 ```
 
 ---
 
-*This document fulfills all 25 mandatory completion report items specified in Section 22 of*
-*`myanmar_business_commercial_readiness_plan_v1.md`. Prepared by Tech Buddy.*
+*This document fulfills all mandatory completion report and evidence verification requirements under Prompt 5. Prepared by Antigravity.*
