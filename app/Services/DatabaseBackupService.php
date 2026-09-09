@@ -48,9 +48,12 @@ class DatabaseBackupService
             if (! is_dir($dir)) {
                 mkdir($dir, 0755, true);
             }
+            if (file_exists($zipFullPath)) {
+                @unlink($zipFullPath);
+            }
 
             $zip = new ZipArchive();
-            if ($zip->open($zipFullPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+            if ($zip->open($zipFullPath, ZipArchive::CREATE) === true) {
                 // Add Database SQL Dump
                 $sql = $this->dump($pdo, $driver);
                 $zip->addFromString('database.sql', $sql);
@@ -309,7 +312,10 @@ class DatabaseBackupService
             if ($file->isDir()) {
                 $zip->addEmptyDir($zipDir . '/' . $relativePath);
             } elseif ($file->isFile()) {
-                $zip->addFile($filePath, $zipDir . '/' . $relativePath);
+                $content = @file_get_contents($filePath);
+                if ($content !== false) {
+                    $zip->addFromString($zipDir . '/' . $relativePath, $content);
+                }
             }
         }
     }

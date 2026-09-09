@@ -16,6 +16,8 @@
 /auth.json
 *.zip
 *.sql
+*.bundle
+/dist
 /database/*.sqlite
 /database/*.sqlite-*
 /database/*.sqlite.bak*

@@ -9,3 +9,9 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+*.sql export-ignore
+manual_2026-08-30_015910.mysql.sql export-ignore
+"AlinnThit Mobile Shop Notes data" export-ignore
+storage/app/backups export-ignore
+dist export-ignore
+
