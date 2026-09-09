@@ -479,6 +479,27 @@ class PosSaleController extends Controller
      * Find an active store manager/owner of this store whose POS PIN matches.
      */
     /**
+     * Set or clear the order-level discount for the cart.
+     */
+    public function setDiscount(Request $request, StoreContext $context): JsonResponse|RedirectResponse
+    {
+        $store = $context->getStore();
+
+        $data = $request->validate([
+            'discount' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $amount = isset($data['discount']) && $data['discount'] !== null ? (string) $data['discount'] : '0';
+        $this->sales->setDiscount($store, $amount);
+
+        return $this->jsonOrRedirect(
+            $request,
+            $store,
+            bccomp($amount, '0', 2) > 0 ? __('messages.pos_discount_applied') : __('messages.pos_discount_cleared')
+        );
+    }
+
+    /**
      * Drop the whole session cart (F4 clear-cart shortcut).
      */
     public function clearCart(Request $request, StoreContext $context): JsonResponse|RedirectResponse
@@ -649,6 +670,7 @@ class PosSaleController extends Controller
             // ("1e3") — the rule rejects it before it ever reaches a bc* call.
             'payments.*.amount' => ['nullable', 'decimal:0,2', 'min:0'], // empty = unused method, dropped in the service
             'customer_id' => ['nullable', 'integer', 'exists:users,id'],
+            'discount' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'web_order_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('orders', 'id')->where('store_id', $store->id)],
         ]);
@@ -680,6 +702,7 @@ class PosSaleController extends Controller
                 shift: $shift,
                 heldSale: $sale,
                 customerId: isset($data['customer_id']) ? (int) $data['customer_id'] : null,
+                explicitDiscount: isset($data['discount']) && $data['discount'] !== null ? (string) $data['discount'] : null,
             );
         } catch (InventoryException $e) {
             return back()->with('error', $e->getMessage());

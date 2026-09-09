@@ -222,6 +222,27 @@ class PosSaleService
         return 'pos.resumed_sale.' . $store->id;
     }
 
+    private function cartDiscountKey(Store $store): string
+    {
+        return 'pos.cart_discount.' . $store->id;
+    }
+
+    public function getDiscount(Store $store): string
+    {
+        $val = session()->get($this->cartDiscountKey($store), '0');
+        return is_numeric($val) && (float) $val >= 0 ? (string) $val : '0';
+    }
+
+    public function setDiscount(Store $store, string $discount): void
+    {
+        session()->put($this->cartDiscountKey($store), $discount);
+    }
+
+    public function clearDiscount(Store $store): void
+    {
+        session()->forget($this->cartDiscountKey($store));
+    }
+
     /**
      * True when the user is an active retail/wholesale customer of this store
      * (the same membership rule post() enforces — never cross-store).
@@ -439,6 +460,7 @@ class PosSaleService
         session()->forget($this->cartKey($store));
         session()->forget($this->cartCustomerKey($store));
         session()->forget($this->resumedSaleKey($store));
+        $this->clearDiscount($store);
     }
 
     /**
@@ -464,6 +486,9 @@ class PosSaleService
             $quantity = $line['quantity'];
 
             $retailPrice = (string) ($variant?->retail_price ?? $product->retail_price);
+            $isTaxable = (bool) ($product->is_taxable ?? true);
+            $taxRate = $product->tax_rate !== null ? (float) $product->tax_rate : null;
+
             $out[] = [
                 'index' => $i,
                 'product_id' => $product->id,
@@ -478,6 +503,8 @@ class PosSaleService
                 'line_retail_total' => bcmul($retailPrice, $quantity, 2),
                 'approved_by' => isset($line['approved_by']) ? (int) $line['approved_by'] : null,
                 'balance' => $this->inventory->totalOnHand($store->id, $product->id, $variant?->id),
+                'is_taxable' => $isTaxable,
+                'tax_rate' => $taxRate,
                 'product' => $product,
             ];
         }
@@ -498,22 +525,74 @@ class PosSaleService
     }
 
     /**
-     * @return array{subtotal:string, retail_subtotal:string, discount:string, total:string}
+     * @return array{subtotal:string, retail_subtotal:string, discount:string, tax:string, tax_type:string, tax_enabled:bool, default_tax_rate:float, taxable_subtotal:string, exempt_subtotal:string, total:string}
      */
     public function cartTotals(Store $store): array
     {
         $subtotal = '0';
         $retailSubtotal = '0';
+        $taxableSubtotal = '0';
+        $exemptSubtotal = '0';
+        $taxTotal = '0';
+
+        $enableTax = (bool) ($store->setting?->getPosSetting('enable_tax', false));
+        $defaultRate = (string) ($store->setting?->getPosSetting('default_tax_rate', 5.0));
+        $taxType = (string) ($store->setting?->getPosSetting('tax_type', 'exclusive'));
+
         foreach ($this->cartResolved($store) as $line) {
             $subtotal = bcadd($subtotal, $line['line_total'], 2);
             $retailSubtotal = bcadd($retailSubtotal, $line['line_retail_total'], 2);
+
+            if ($enableTax) {
+                $isTaxable = (bool) ($line['is_taxable'] ?? true);
+                $rate = $line['tax_rate'] !== null ? (string) $line['tax_rate'] : $defaultRate;
+                if (bccomp($rate, '0', 2) <= 0) {
+                    $isTaxable = false;
+                }
+
+                if ($isTaxable) {
+                    $taxableSubtotal = bcadd($taxableSubtotal, $line['line_total'], 2);
+                    if ($taxType === 'inclusive') {
+                        $lineTax = bcdiv(bcmul($line['line_total'], $rate, 4), bcadd('100', $rate, 4), 2);
+                    } else {
+                        $lineTax = bcmul($line['line_total'], bcdiv($rate, '100', 6), 2);
+                    }
+                    $taxTotal = bcadd($taxTotal, $lineTax, 2);
+                } else {
+                    $exemptSubtotal = bcadd($exemptSubtotal, $line['line_total'], 2);
+                }
+            } else {
+                $exemptSubtotal = bcadd($exemptSubtotal, $line['line_total'], 2);
+            }
+        }
+
+        $discount = $this->getDiscount($store);
+        if ($enableTax && $taxType === 'exclusive') {
+            $rawTotal = bcadd($subtotal, $taxTotal, 2);
+        } else {
+            $rawTotal = $subtotal;
+        }
+
+        if (bccomp($discount, $rawTotal, 2) > 0) {
+            $discount = $rawTotal;
+        }
+
+        $total = bcsub($rawTotal, $discount, 2);
+        if (bccomp($total, '0', 2) < 0) {
+            $total = '0.00';
         }
 
         return [
             'subtotal' => $subtotal,
             'retail_subtotal' => $retailSubtotal,
-            'discount' => '0',
-            'total' => $subtotal,
+            'discount' => $discount,
+            'tax' => $taxTotal,
+            'tax_type' => $taxType,
+            'tax_enabled' => $enableTax,
+            'default_tax_rate' => (float) $defaultRate,
+            'taxable_subtotal' => $taxableSubtotal,
+            'exempt_subtotal' => $exemptSubtotal,
+            'total' => $total,
         ];
     }
 
@@ -545,6 +624,8 @@ class PosSaleService
                 'approved_by' => $line['approved_by'],
                 'approved_by_name' => $line['approved_by_name'],
                 'balance' => $line['balance'],
+                'is_taxable' => $line['is_taxable'] ?? true,
+                'tax_rate' => $line['tax_rate'] ?? null,
             ];
         }, $this->cartResolved($store));
 
@@ -652,10 +733,7 @@ class PosSaleService
         session()->forget($this->resumedSaleKey($store));
 
         return DB::transaction(function () use ($store, $lines, $actor, $shift) {
-            $subtotal = '0';
-            foreach ($lines as $line) {
-                $subtotal = bcadd($subtotal, $line['line_total'], 2);
-            }
+            $totals = $this->cartTotals($store);
 
             $sale = PosSale::create([
                 'store_id' => $store->id,
@@ -663,10 +741,13 @@ class PosSaleService
                 'cashier_shift_id' => $shift?->id,
                 'cashier_id' => $actor->id,
                 'status' => 'held',
-                'subtotal' => $subtotal,
-                'discount' => '0',
-                'tax' => '0',
-                'total' => $subtotal,
+                'subtotal' => $totals['subtotal'],
+                'discount' => $totals['discount'],
+                'tax' => $totals['tax'],
+                'tax_type' => $totals['tax_type'],
+                'taxable_amount' => $totals['taxable_subtotal'],
+                'exempt_amount' => $totals['exempt_subtotal'],
+                'total' => $totals['total'],
                 'created_by' => $actor->id,
             ]);
 
@@ -683,6 +764,9 @@ class PosSaleService
                     'approved_by' => $line['approved_by'] ?? null,
                     'quantity' => $line['quantity'],
                     'line_total' => $line['line_total'],
+                    'is_taxable' => $line['is_taxable'] ?? true,
+                    'tax_rate' => $line['tax_rate'] ?? 0,
+                    'tax_amount' => '0',
                 ]);
             }
 
@@ -729,6 +813,12 @@ class PosSaleService
         // without the sale id) reuses THE SAME row instead of orphaning a
         // 'resumed' record that can never be closed.
         session([$this->resumedSaleKey($store) => $sale->id]);
+
+        if (bccomp((string) $sale->discount, '0', 2) > 0) {
+            $this->setDiscount($store, (string) $sale->discount);
+        } else {
+            $this->clearDiscount($store);
+        }
 
         session([$this->cartKey($store) => $lines]);
     }
@@ -790,6 +880,7 @@ class PosSaleService
         ?CashierShift $shift = null,
         ?PosSale $heldSale = null,
         ?int $customerId = null,
+        ?string $explicitDiscount = null,
     ): PosSale {
         app(PeriodLockService::class)->assertDateNotLocked($store, now(), 'sale');
 
@@ -884,11 +975,55 @@ class PosSaleService
             ];
         }
 
-        // Payment math: total of payments must cover the total; cash may
-        // overpay (change returned), other methods must not overpay.
-        $discount = '0';
-        $tax = '0';
-        $total = bcsub(bcadd($subtotal, $tax, 2), $discount, 2);
+        // Payment math: calculate Commercial Tax according to store settings and product exemptions.
+        $enableTax = (bool) ($store->setting?->getPosSetting('enable_tax', false));
+        $defaultRate = (string) ($store->setting?->getPosSetting('default_tax_rate', 5.0));
+        $taxType = (string) ($store->setting?->getPosSetting('tax_type', 'exclusive'));
+
+        $taxableAmount = '0';
+        $exemptAmount = '0';
+        $taxTotal = '0';
+
+        foreach ($resolved as &$resItem) {
+            $isTaxable = (bool) ($resItem['product']->is_taxable ?? true);
+            $rate = $resItem['product']->tax_rate !== null ? (string) $resItem['product']->tax_rate : $defaultRate;
+            if (bccomp($rate, '0', 2) <= 0) {
+                $isTaxable = false;
+            }
+
+            if ($enableTax && $isTaxable) {
+                $taxableAmount = bcadd($taxableAmount, $resItem['line_total'], 2);
+                if ($taxType === 'inclusive') {
+                    $itemTax = bcdiv(bcmul($resItem['line_total'], $rate, 4), bcadd('100', $rate, 4), 2);
+                } else {
+                    $itemTax = bcmul($resItem['line_total'], bcdiv($rate, '100', 6), 2);
+                }
+                $taxTotal = bcadd($taxTotal, $itemTax, 2);
+                $resItem['is_taxable'] = true;
+                $resItem['tax_rate'] = $rate;
+                $resItem['tax_amount'] = $itemTax;
+            } else {
+                $exemptAmount = bcadd($exemptAmount, $resItem['line_total'], 2);
+                $resItem['is_taxable'] = false;
+                $resItem['tax_rate'] = '0';
+                $resItem['tax_amount'] = '0';
+            }
+        }
+        unset($resItem);
+
+        $discount = $explicitDiscount !== null ? (string) $explicitDiscount : $this->getDiscount($store);
+        if (bccomp($discount, '0', 2) < 0) {
+            $discount = '0.00';
+        }
+        $tax = $enableTax ? $taxTotal : '0';
+        if ($enableTax && $taxType === 'exclusive') {
+            $total = bcsub(bcadd($subtotal, $tax, 2), $discount, 2);
+        } else {
+            $total = bcsub($subtotal, $discount, 2);
+        }
+        if (bccomp($total, '0', 2) < 0) {
+            $total = '0.00';
+        }
 
         $remaining = $total;
         $cashKept = '0';
@@ -937,7 +1072,7 @@ class PosSaleService
                 return $this->postTransaction(
                     $store, $resolved, $paymentRows, $actor, $shift, $heldSale,
                     $subtotal, $discount, $tax, $total, $warehouseId, $cashKept,
-                    $customerId, $creditTotal,
+                    $customerId, $creditTotal, $taxType, $taxableAmount, $exemptAmount,
                 );
             } catch (\Illuminate\Database\QueryException $e) {
                 if ($attempt === 2 || ! $this->isUniqueViolation($e)) {
@@ -968,11 +1103,14 @@ class PosSaleService
         string $cashKept,
         ?int $customerId = null,
         string $creditTotal = '0',
+        string $taxType = 'exclusive',
+        string $taxableAmount = '0',
+        string $exemptAmount = '0',
     ): PosSale {
         return DB::transaction(function () use (
             $store, $resolved, $paymentRows, $actor, $shift, $heldSale,
             $subtotal, $discount, $tax, $total, $warehouseId, $cashKept,
-            $customerId, $creditTotal,
+            $customerId, $creditTotal, $taxType, $taxableAmount, $exemptAmount,
         ) {
             if ($heldSale) {
                 // held = still waiting in the held list; resumed = recalled
@@ -995,6 +1133,9 @@ class PosSaleService
                 'subtotal' => $subtotal,
                 'discount' => $discount,
                 'tax' => $tax,
+                'tax_type' => $taxType,
+                'taxable_amount' => $taxableAmount,
+                'exempt_amount' => $exemptAmount,
                 'total' => $total,
                 'posted_at' => now(),
                 'created_by' => $actor->id,
@@ -1025,6 +1166,9 @@ class PosSaleService
                     'quantity' => $line['quantity'],
                     'unit_cost' => $unitCost,
                     'line_total' => $line['line_total'],
+                    'is_taxable' => $line['is_taxable'] ?? true,
+                    'tax_rate' => $line['tax_rate'] ?? 0,
+                    'tax_amount' => $line['tax_amount'] ?? 0,
                 ]);
 
                 // Ledger movement — the single source of truth. Idempotent via

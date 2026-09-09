@@ -335,4 +335,72 @@ class CashierShiftTest extends TestCase
         $this->assertSame('61000.00', (string) $shift->fresh()->actual_closing_amount);
         $this->assertSame('1000.00', (string) $shift->fresh()->difference);
     }
+
+    public function test_record_pos_expense_via_ajax_creates_expense_and_syncs_cash_shift(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+
+        $shift = $this->service->openShift($store, ['register_name' => 'R1', 'opening_cash' => 50000], $cashier);
+
+        $response = $this->actingAs($cashier)->postJson("/store/{$store->slug}/pos/expenses", [
+            'title' => 'သောက်ရေသန့်ဖိုး',
+            'amount' => 3000,
+            'payment_method' => 'cash',
+            'paid_to' => 'မောင်မောင် ရေသန့်',
+            'notes' => 'ဆိုင်သုံး ၂ ဘူး',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('expenses', [
+            'store_id' => $store->id,
+            'title' => 'သောက်ရေသန့်ဖိုး',
+            'amount' => 3000,
+            'payment_method' => 'cash',
+            'paid_to' => 'မောင်မောင် ရေသန့်',
+        ]);
+
+        // Verify cash_out was recorded in cash_events and on the shift
+        $this->assertDatabaseHas('cash_events', [
+            'cashier_shift_id' => $shift->id,
+            'type' => 'cash_out',
+            'amount' => 3000,
+        ]);
+        $this->assertSame('3000.00', (string) $shift->fresh()->cash_out);
+    }
+
+    public function test_record_pos_expense_with_digital_payment_does_not_add_shift_cash_event(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+
+        $shift = $this->service->openShift($store, ['register_name' => 'R1', 'opening_cash' => 50000], $cashier);
+
+        $response = $this->actingAs($cashier)->postJson("/store/{$store->slug}/pos/expenses", [
+            'title' => 'Internet Bill',
+            'amount' => 25000,
+            'payment_method' => 'kpay',
+            'paid_to' => 'Fiber Provider',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('expenses', [
+            'store_id' => $store->id,
+            'title' => 'Internet Bill',
+            'amount' => 25000,
+            'payment_method' => 'kpay',
+        ]);
+
+        // No cash_out event should be created on cash shift
+        $this->assertDatabaseMissing('cash_events', [
+            'cashier_shift_id' => $shift->id,
+            'type' => 'cash_out',
+        ]);
+        $this->assertSame('0.00', (string) $shift->fresh()->cash_out);
+    }
 }
+

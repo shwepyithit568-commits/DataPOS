@@ -20,11 +20,17 @@ class OrderItem extends Model
         'unit_price',
         'quantity',
         'subtotal',
+        'is_taxable',
+        'tax_rate',
+        'tax_amount',
     ];
 
     protected $casts = [
         'unit_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'is_taxable' => 'boolean',
+        'tax_rate' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
     ];
 
     public function order(): BelongsTo

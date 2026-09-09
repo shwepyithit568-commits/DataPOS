@@ -1311,5 +1311,223 @@ class PosReportController extends Controller
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ])->deleteFileAfterSend(true);
     }
+
+    /**
+     * POS Commercial Tax (ကုန်သွယ်လုပ်ငန်းခွန်) Report.
+     */
+    public function tax(Request $request, StoreContext $context): View
+    {
+        $store = $context->getStore();
+        if (! $store) {
+            abort(404);
+        }
+
+        [$from, $to, $preset] = $this->resolveDateRange($request);
+        $cashierId = $request->filled('cashier_id') ? (int) $request->input('cashier_id') : null;
+
+        $report = $this->reports->taxReport($store, $from, $to, $cashierId);
+
+        $cashiers = User::query()
+            ->whereHas('stores', fn ($q) => $q->where('stores.id', $store->id)->whereIn('store_user.role', ['store_manager', 'staff']))
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('pos.reports.tax', compact('store', 'from', 'to', 'preset', 'cashierId', 'report', 'cashiers'));
+    }
+
+    /**
+     * Export POS Commercial Tax Report as Excel (.xlsx) or CSV (.csv).
+     */
+    public function exportTax(Request $request, StoreContext $context): BinaryFileResponse|StreamedResponse
+    {
+        $store = $context->getStore();
+        if (! $store) {
+            abort(404);
+        }
+
+        [$from, $to, $preset] = $this->resolveDateRange($request);
+        $cashierId = $request->filled('cashier_id') ? (int) $request->input('cashier_id') : null;
+        $format = $request->query('format', 'csv');
+
+        $report = $this->reports->taxReport($store, $from, $to, $cashierId);
+
+        ExportDataSanitizer::auditExport($store, 'commercial_tax_report', $request->user(), [
+            'format' => $format,
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+            'count' => count($report['sales'] ?? []),
+        ]);
+
+        if ($format === 'xlsx') {
+            return $this->exportTaxXlsx($store, $report, $from, $to);
+        }
+
+        return $this->exportTaxCsv($store, $report, $from, $to);
+    }
+
+    /**
+     * Export Commercial Tax Report as CSV.
+     */
+    private function exportTaxCsv(Store $store, array $report, Carbon $from, Carbon $to): StreamedResponse
+    {
+        $filename = 'tax-report-' . $store->slug . '-' . $from->format('Ymd') . '-to-' . $to->format('Ymd') . '.csv';
+
+        return response()->streamDownload(function () use ($report, $from, $to, $store) {
+            $handle = fopen('php://output', 'w');
+            fwrite($handle, ExportDataSanitizer::utf8Bom());
+
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.reports_commercial_tax'), $store->name]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.report_period'), $from->toFormattedDateString() . ' to ' . $to->toFormattedDateString()]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.total_sales'), number_format((float) ($report['total_sales'] ?? 0), 2)]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.taxable_sales'), number_format((float) ($report['taxable_sales'] ?? 0), 2)]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.exempt_sales'), number_format((float) ($report['exempt_sales'] ?? 0), 2)]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.commercial_tax'), number_format((float) ($report['total_tax'] ?? 0), 2)]));
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([__('messages.net_sales'), number_format((float) ($report['net_sales'] ?? 0), 2)]));
+            fputcsv($handle, []);
+
+            fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
+                __('messages.receipt'),
+                __('messages.reports_date'),
+                __('messages.cashier'),
+                __('messages.customer'),
+                __('messages.tax_type'),
+                __('messages.taxable_amount'),
+                __('messages.exempt_amount'),
+                __('messages.commercial_tax'),
+                __('messages.total'),
+            ]));
+
+            foreach ($report['sales'] as $sale) {
+                fputcsv($handle, ExportDataSanitizer::sanitizeCsvRow([
+                    $sale->receipt_number ?: $sale->invoice_no,
+                    $sale->posted_at?->format('Y-m-d H:i'),
+                    $sale->cashier?->name ?? $sale->creator?->name ?? '-',
+                    $sale->customer?->name ?? __('messages.reports_walk_in_customer'),
+                    strtoupper($sale->tax_type ?? 'inclusive'),
+                    number_format((float) ($sale->taxable_amount ?? 0), 2),
+                    number_format((float) ($sale->exempt_amount ?? 0), 2),
+                    number_format((float) ($sale->tax ?? 0), 2),
+                    number_format((float) ($sale->total ?? 0), 2),
+                ]));
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    /**
+     * Export Commercial Tax Report as Excel (.xlsx).
+     */
+    private function exportTaxXlsx(Store $store, array $report, Carbon $from, Carbon $to): BinaryFileResponse
+    {
+        $filename = 'tax-report-' . $store->slug . '-' . $from->format('Ymd') . '-to-' . $to->format('Ymd') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'tax_rep_') . '.xlsx';
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle(__('messages.reports_commercial_tax'));
+
+        // Title Block
+        $sheet->setCellValue('A1', $store->name . ' - ' . __('messages.reports_commercial_tax'));
+        $sheet->mergeCells('A1:I1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+
+        $tin = $store->setting?->getPosSetting('tax_id_number');
+        $periodText = __('messages.report_period') . ': ' . $from->toFormattedDateString() . ' - ' . $to->toFormattedDateString();
+        if ($tin) {
+            $periodText .= ' | TIN: ' . $tin;
+        }
+        $sheet->setCellValue('A2', $periodText);
+        $sheet->mergeCells('A2:I2');
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->getColor()->setRGB('64748B');
+
+        // Summary KPI Box
+        $sheet->setCellValue('A4', __('messages.total_sales'));
+        $sheet->setCellValue('B4', (float) $report['total_sales']);
+        $sheet->setCellValue('C4', __('messages.taxable_sales'));
+        $sheet->setCellValue('D4', (float) $report['taxable_sales']);
+        $sheet->setCellValue('E4', __('messages.exempt_sales'));
+        $sheet->setCellValue('F4', (float) $report['exempt_sales']);
+        $sheet->setCellValue('G4', __('messages.commercial_tax'));
+        $sheet->setCellValue('H4', (float) $report['total_tax']);
+        $sheet->setCellValue('I4', (float) $report['net_sales']);
+
+        $sheet->getStyle('A4:I4')->getFont()->setBold(true);
+        $sheet->getStyle('B4')->getNumberFormat()->setFormatCode('#,##0.00');
+        $sheet->getStyle('D4')->getNumberFormat()->setFormatCode('#,##0.00');
+        $sheet->getStyle('F4')->getNumberFormat()->setFormatCode('#,##0.00');
+        $sheet->getStyle('H4')->getNumberFormat()->setFormatCode('#,##0.00');
+        $sheet->getStyle('I4')->getNumberFormat()->setFormatCode('#,##0.00');
+
+        // Table Headers
+        $row = 6;
+        $headers = [
+            'A' => __('messages.receipt'),
+            'B' => __('messages.reports_date'),
+            'C' => __('messages.cashier'),
+            'D' => __('messages.customer'),
+            'E' => __('messages.tax_type'),
+            'F' => __('messages.taxable_amount'),
+            'G' => __('messages.exempt_amount'),
+            'H' => __('messages.commercial_tax'),
+            'I' => __('messages.total'),
+        ];
+
+        foreach ($headers as $col => $title) {
+            $sheet->setCellValue("{$col}{$row}", $title);
+        }
+
+        $sheet->getStyle("A{$row}:I{$row}")->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '0284C7'],
+            ],
+            'alignment' => [
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+        $sheet->getStyle("F{$row}:I{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getRowDimension($row)->setRowHeight(22);
+
+        $row++;
+        foreach ($report['sales'] as $sale) {
+            $sheet->setCellValue("A{$row}", $sale->receipt_number ?: $sale->invoice_no);
+            $sheet->setCellValue("B{$row}", $sale->posted_at?->format('Y-m-d H:i'));
+            $sheet->setCellValue("C{$row}", $sale->cashier?->name ?? $sale->creator?->name ?? '-');
+            $sheet->setCellValue("D{$row}", $sale->customer?->name ?? __('messages.reports_walk_in_customer'));
+            $sheet->setCellValue("E{$row}", strtoupper($sale->tax_type ?? 'inclusive'));
+            $sheet->setCellValue("F{$row}", (float) ($sale->taxable_amount ?? 0));
+            $sheet->setCellValue("G{$row}", (float) ($sale->exempt_amount ?? 0));
+            $sheet->setCellValue("H{$row}", (float) ($sale->tax ?? 0));
+            $sheet->setCellValue("I{$row}", (float) ($sale->total ?? 0));
+
+            $sheet->getStyle("F{$row}:I{$row}")->getNumberFormat()->setFormatCode('#,##0.00');
+            $sheet->getStyle("F{$row}:I{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+            if ($row % 2 === 0) {
+                $sheet->getStyle("A{$row}:I{$row}")->applyFromArray([
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'F8FAFC'],
+                    ],
+                ]);
+            }
+            $row++;
+        }
+
+        foreach (range('A', 'I') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
 }
 

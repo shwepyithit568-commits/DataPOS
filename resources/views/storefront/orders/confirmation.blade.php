@@ -71,6 +71,13 @@
                 <span x-show="copied" x-cloak class="text-emerald-600 dark:text-emerald-400 font-black">✓ {{ __('messages.copied') }}</span>
             </button>
         </div>
+
+        @if ($storeSetting?->getPosSetting('show_tax_id') && $storeSetting?->getPosSetting('tax_id_number'))
+            <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-xs font-mono font-bold text-slate-700 dark:text-slate-300 shadow-2xs">
+                <span class="text-slate-400 dark:text-slate-500">TIN:</span>
+                <span>{{ $storeSetting->getPosSetting('tax_id_number') }}</span>
+            </div>
+        @endif
     </div>
 
     {{-- 2. 4-Stage Visual Status Stepper / Live Tracking --}}
@@ -286,12 +293,30 @@
                 @endforeach
             </div>
 
-            {{-- Grand Total --}}
-            <div class="mt-2 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-between px-1">
-                <span class="font-black text-xs sm:text-sm text-slate-900 dark:text-white">{{ __('messages.total_amount') }}</span>
-                <span class="font-black text-base sm:text-lg text-[color:var(--sf-primary)] font-outfit">
-                    {{ format_currency($order->total_amount, $store ?? null) }}
-                </span>
+            {{-- Grand Total & Tax Breakdown --}}
+            <div class="mt-2 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700 space-y-1.5 px-1">
+                @if ((float) $order->tax > 0 && $order->tax_type === 'exclusive')
+                    @php $itemsSubtotal = $order->items->sum('subtotal'); @endphp
+                    <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                        <span>{{ __('messages.subtotal') }}</span>
+                        <span class="font-mono font-bold">{{ format_currency($itemsSubtotal, $store ?? null) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                        <span>{{ __('messages.tax') }} ({{ __('messages.commercial_tax') }})</span>
+                        <span class="font-mono font-bold">+ {{ format_currency($order->tax, $store ?? null) }}</span>
+                    </div>
+                @endif
+                <div class="flex items-center justify-between">
+                    <span class="font-black text-xs sm:text-sm text-slate-900 dark:text-white">{{ __('messages.total_amount') }}</span>
+                    <span class="font-black text-base sm:text-lg text-[color:var(--sf-primary)] font-outfit">
+                        {{ format_currency($order->total_amount, $store ?? null) }}
+                    </span>
+                </div>
+                @if ((float) $order->tax > 0 && $order->tax_type === 'inclusive')
+                    <p class="text-[11px] text-slate-400 dark:text-slate-500 text-right">
+                        ({{ __('messages.tax_inclusive_notice', ['amount' => format_currency($order->tax, $store ?? null)]) }})
+                    </p>
+                @endif
             </div>
         </div>
         @endif

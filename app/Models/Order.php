@@ -25,6 +25,9 @@ class Order extends Model
         'contact_identifier',
         'pricing_type',
         'total_amount',
+        'tax',
+        'tax_type',
+        'taxable_amount',
         'agreed_amount',
         'payment_status',
         'status',
@@ -32,6 +35,8 @@ class Order extends Model
 
     protected $casts = [
         'total_amount' => 'decimal:2',
+        'tax' => 'decimal:2',
+        'taxable_amount' => 'decimal:2',
         'agreed_amount' => 'decimal:2',
     ];
 

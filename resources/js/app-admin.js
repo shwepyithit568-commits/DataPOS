@@ -180,6 +180,11 @@ Alpine.data('posApp', (opts = {}) => ({
     kpay: 0, wavepay: 0, cbpay: 0, mmqr: 0, credit: 0,
     cq: '', cresults: [], copen: false,
     quickAddOpen: false, quickBusy: false, qname: '', qphone: '', qtype: 'retail_customer',
+    // Shop Expense Modal (quick cash-out / daily store expense)
+    expenseModalOpen: false, expenseBusy: false, expenseTitle: '', expenseAmount: '',
+    expenseCategoryId: '', expensePaymentMethod: 'cash', expensePaidTo: '', expenseNotes: '',
+    // Discount Modal
+    discountModalOpen: false, discountBusy: false, discountType: 'fixed', discountValue: '',
     notice: '', noticeType: '', noticeTimer: null,
 
     /* ---- init ---- */
@@ -187,14 +192,26 @@ Alpine.data('posApp', (opts = {}) => ({
         await this.loadGrid();
         await this.refreshCart();
         window.addEventListener('keydown', (e) => this.shortcut(e));
+        window.addEventListener('pos:reload', () => this.reloadPos());
         // Desktop: focus the search box so a cashier can type / scan immediately.
-        if (window.innerWidth >= 1024 && this.$refs && this.$refs.searchInput) {
-            this.$nextTick(() => this.$refs.searchInput.focus());
+        if (window.innerWidth >= 1024) {
+            this.$nextTick(() => {
+                const searchInput = document.getElementById('pos-search-input') || (this.$refs && this.$refs.searchInput);
+                if (searchInput) searchInput.focus();
+            });
         }
     },
 
     url(path) {
         return this.baseUrl + path;
+    },
+
+    formatCurrency(val) {
+        return (typeof window.formatCurrency === 'function') ? window.formatCurrency(val) : Number(val || 0).toLocaleString();
+    },
+
+    formatQuantity(val) {
+        return (typeof window.formatQuantity === 'function') ? window.formatQuantity(val) : String(val ?? 0);
     },
 
     async fetchJson(path, options = {}) {
@@ -212,21 +229,47 @@ Alpine.data('posApp', (opts = {}) => ({
     },
 
     /* ---- product grid ---- */
-    async loadGrid() {
+    async loadGrid(autoAddIfSingle = false) {
         this.gridLoading = true;
         try {
             const params = new URLSearchParams();
-            if (this.q.trim()) params.set('q', this.q.trim());
+            const trimmedQ = this.q.trim();
+            if (trimmedQ) params.set('q', trimmedQ);
             if (this.categoryId) params.set('category_id', this.categoryId);
             if (this.brandId) params.set('brand_id', this.brandId);
             const data = await this.fetchJson('/products-grid?' + params.toString());
             this.products = data.products || [];
             this.categories = data.categories || [];
             this.brands = data.brands || [];
+
+            // If triggered by Enter (e.g. barcode scanner) and exactly 1 match found:
+            if (autoAddIfSingle && trimmedQ && this.products.length === 1) {
+                const singleProd = this.products[0];
+                await this.addProduct(singleProd);
+                this.q = '';
+                await this.loadGrid();
+            }
         } catch (e) {
             this.flash(e.message, 'error');
         } finally {
             this.gridLoading = false;
+        }
+    },
+
+    async reloadPos() {
+        this.gridLoading = true;
+        window.dispatchEvent(new CustomEvent('pos:loading', { detail: true }));
+        try {
+            await Promise.all([
+                this.loadGrid(),
+                this.refreshCart(),
+            ]);
+            this.flash(this.labels.pos_reloaded || 'အချက်အလက်များ ပြန်လည်ရယူပြီးပါပြီ', 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        } finally {
+            this.gridLoading = false;
+            window.dispatchEvent(new CustomEvent('pos:loading', { detail: false }));
         }
     },
 
@@ -437,10 +480,18 @@ Alpine.data('posApp', (opts = {}) => ({
 
     openPayment() {
         if (this.shiftsEnabled && !this.shiftOpen) { this.flash(this.labels.shift_required || 'Open a shift first', 'error'); return; }
-        if (!this.cart.lines.length) return;
+        if (!this.cart.lines.length) { this.flash(this.labels.pos_cart_empty || 'ဈေးခြင်းထဲတွင် ပစ္စည်းမရှိသေးပါ', 'error'); return; }
+        this.mobileCartOpen = false;
         // Pre-fill cash with the exact total unless the cashier already typed one.
-        if (!this.cash || parseFloat(this.cash) === 0) this.cash = this.cart.totals.total;
+        if (!this.cash || parseFloat(this.cash) === 0) this.cash = parseFloat(this.cart.totals.total || 0);
         this.showPayment = true;
+        this.$nextTick(() => {
+            const cashInput = document.getElementById('pos-cash-input') || (this.$refs && this.$refs.cashInput);
+            if (cashInput) {
+                cashInput.focus();
+                cashInput.select();
+            }
+        });
     },
 
     /* ---- customer attach (credit/debt) ---- */
@@ -496,7 +547,12 @@ Alpine.data('posApp', (opts = {}) => ({
         await this.clearCustomer();
         this.$nextTick(() => {
             this.csearch(true);
-            this.$refs.customerInput?.focus();
+            const ci = document.getElementById('pos-customer-input') || (this.$refs && this.$refs.customerInput);
+            if (ci) {
+                ci.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                ci.focus();
+                ci.select();
+            }
         });
     },
 
@@ -541,6 +597,146 @@ Alpine.data('posApp', (opts = {}) => ({
         }
     },
 
+    /* ---- POS Expense Modal ---- */
+    openExpenseModal(presetTitle = '') {
+        this.expenseTitle = presetTitle;
+        this.expenseAmount = '';
+        this.expenseCategoryId = '';
+        this.expensePaymentMethod = 'cash';
+        this.expensePaidTo = '';
+        this.expenseNotes = '';
+        this.expenseModalOpen = true;
+        this.$nextTick(() => {
+            if (this.expenseTitle) {
+                this.$refs.expenseAmountInput?.focus();
+            } else {
+                this.$refs.expenseTitleInput?.focus();
+            }
+        });
+    },
+
+    setQuickExpense(title) {
+        this.expenseTitle = title;
+        this.$nextTick(() => this.$refs.expenseAmountInput?.focus());
+    },
+
+    setQuickExpenseAmount(amt) {
+        this.expenseAmount = String(amt);
+    },
+
+    async submitExpense() {
+        if (!this.expenseTitle.trim() || !this.expenseAmount || this.expenseBusy) return;
+        const amt = parseFloat(this.expenseAmount);
+        if (isNaN(amt) || amt <= 0) {
+            this.flash(this.labels.pos_price_invalid || 'Invalid amount', 'error');
+            return;
+        }
+
+        this.expenseBusy = true;
+        try {
+            const body = {
+                title: this.expenseTitle.trim(),
+                amount: String(amt),
+                payment_method: this.expensePaymentMethod,
+            };
+            if (this.expenseCategoryId) body.expense_category_id = String(this.expenseCategoryId);
+            if (this.expensePaidTo.trim()) body.paid_to = this.expensePaidTo.trim();
+            if (this.expenseNotes.trim()) body.notes = this.expenseNotes.trim();
+
+            const data = await this.fetchJson('/expenses', {
+                method: 'POST',
+                body: new URLSearchParams(body),
+            });
+
+            this.expenseModalOpen = false;
+            await this.refreshCart();
+            this.flash(data.message || this.labels.expense_created_success || 'Expense recorded successfully', 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        } finally {
+            this.expenseBusy = false;
+        }
+    },
+
+    /* ---- Discount Modal ---- */
+    openDiscountModal() {
+        if (!this.cart.lines || !this.cart.lines.length) {
+            this.flash(this.labels.pos_cart_empty || 'ဈေးခြင်းထဲတွင် ပစ္စည်းမရှိသေးပါ', 'error');
+            return;
+        }
+        this.discountType = 'fixed';
+        this.discountValue = Number(this.cart.totals.discount || 0) > 0 ? String(this.cart.totals.discount) : '';
+        this.discountModalOpen = true;
+        this.$nextTick(() => {
+            const input = document.getElementById('pos-discount-input') || (this.$refs && this.$refs.discountInput);
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        });
+    },
+
+    setQuickDiscountPercent(pct) {
+        this.discountType = 'percent';
+        this.discountValue = String(pct);
+        this.applyDiscount();
+    },
+
+    async applyDiscount() {
+        if (this.discountBusy) return;
+        let discountAmt = 0;
+        const raw = parseFloat(this.discountValue || 0);
+        if (isNaN(raw) || raw < 0) {
+            this.flash(this.labels.pos_price_invalid || 'Invalid discount amount', 'error');
+            return;
+        }
+
+        const subtotal = parseFloat(this.cart.totals.subtotal || 0);
+        if (this.discountType === 'percent') {
+            if (raw > 100) {
+                this.flash('Discount percentage cannot exceed 100%', 'error');
+                return;
+            }
+            discountAmt = Math.round((subtotal * (raw / 100)) * 100) / 100;
+        } else {
+            discountAmt = raw;
+        }
+
+        this.discountBusy = true;
+        try {
+            const data = await this.fetchJson('/cart/discount', {
+                method: 'POST',
+                body: new URLSearchParams({ discount: String(discountAmt) }),
+            });
+            this.discountModalOpen = false;
+            this.applyCart(data);
+            this.flash(data.success || this.labels.pos_discount_applied || 'Discount applied', 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        } finally {
+            this.discountBusy = false;
+        }
+    },
+
+    async clearDiscount() {
+        if (this.discountBusy) return;
+        this.discountBusy = true;
+        try {
+            const data = await this.fetchJson('/cart/discount', {
+                method: 'POST',
+                body: new URLSearchParams({ discount: '0' }),
+            });
+            this.discountModalOpen = false;
+            this.discountValue = '';
+            this.applyCart(data);
+            this.flash(data.success || this.labels.pos_discount_cleared || 'Discount cleared', 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        } finally {
+            this.discountBusy = false;
+        }
+    },
+
     /* ---- payment math ---- */
     get paid() {
         return ['cash', 'kpay', 'wavepay', 'cbpay', 'mmqr', 'credit'].reduce((s, k) => s + (parseFloat(this[k]) || 0), 0);
@@ -567,25 +763,116 @@ Alpine.data('posApp', (opts = {}) => ({
 
     /* ---- keyboard shortcuts ---- */
     shortcut(e) {
-        if (!e.key || !e.key.toUpperCase().startsWith('F')) return;
-        const k = e.key.toUpperCase();
+        const k = e.key ? e.key.toUpperCase() : '';
+
+        // Global Escape handling
+        if (k === 'ESCAPE') {
+            if (this.discountModalOpen) { this.discountModalOpen = false; e.preventDefault(); return; }
+            if (this.showPayment) { this.showPayment = false; e.preventDefault(); return; }
+            if (this.variantProduct) { this.variantProduct = null; e.preventDefault(); return; }
+            if (this.copen) { this.copen = false; e.preventDefault(); return; }
+            if (this.quickAddOpen) { this.quickAddOpen = false; e.preventDefault(); return; }
+            if (this.expenseModalOpen) { this.expenseModalOpen = false; e.preventDefault(); return; }
+            if (this.webOrdersOpen) { this.webOrdersOpen = false; e.preventDefault(); return; }
+            if (this.mobileCartOpen) { this.mobileCartOpen = false; e.preventDefault(); return; }
+            const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+            if (this.q && activeTag !== 'input' && activeTag !== 'textarea') {
+                this.q = '';
+                this.loadGrid();
+                e.preventDefault();
+                return;
+            }
+            return;
+        }
+
+        // Only handle function keys F1-F12
+        if (!k.startsWith('F') || k.length < 2) return;
+
         const actions = {
-            F1: () => { e.preventDefault(); this.$refs.searchInput && this.$refs.searchInput.focus(); },
-            F2: () => { e.preventDefault(); this.openPayment(); },
+            F1: () => {
+                e.preventDefault();
+                if (this.showPayment) this.showPayment = false;
+                if (this.variantProduct) this.variantProduct = null;
+                const desktopInput = document.getElementById('pos-search-input');
+                const mobileInput = document.getElementById('pos-mobile-search-input');
+                const input = (window.innerWidth >= 1024 && desktopInput && desktopInput.offsetParent !== null)
+                    ? desktopInput
+                    : (mobileInput && mobileInput.offsetParent !== null ? mobileInput : desktopInput);
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            },
+            F2: () => {
+                e.preventDefault();
+                this.openPayment();
+            },
             F3: () => {
                 e.preventDefault();
+                if (window.innerWidth < 1024) {
+                    this.mobileCartOpen = true;
+                }
                 if (this.customer) {
                     this.changeCustomer();
                 } else {
                     this.csearch(true);
-                    this.$nextTick(() => this.$refs.customerInput?.focus());
+                    this.$nextTick(() => {
+                        const ci = document.getElementById('pos-customer-input') || (this.$refs && this.$refs.customerInput);
+                        if (ci) {
+                            ci.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            ci.focus();
+                            ci.select();
+                        }
+                    });
                 }
             },
-            F4: () => { e.preventDefault(); this.clearCart(); },
-            F5: () => { e.preventDefault(); this.loadGrid(); },
-            F6: () => { e.preventDefault(); this.hold(); },
-            F7: () => { e.preventDefault(); const el = document.getElementById('pos-held-toggle'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+            F4: () => {
+                e.preventDefault();
+                if (!this.cart.lines || !this.cart.lines.length) {
+                    this.flash(this.labels.pos_cart_empty || 'ဈေးခြင်းထဲတွင် ပစ္စည်းမရှိသေးပါ', 'error');
+                    return;
+                }
+                if (confirm(this.labels.confirm_clear_cart || 'ဈေးခြင်းထဲရှိ ပစ္စည်းအားလုံးကို ရှင်းလင်းရန် သေချာပါသလား?')) {
+                    this.clearCart();
+                }
+            },
+            F5: () => {
+                e.preventDefault();
+                if (e.ctrlKey) {
+                    // Ctrl+F5 = Hard cache-bust reload
+                    if ('caches' in window) {
+                        try { caches.keys().then(keys => Promise.all(keys.map(name => caches.delete(name)))); } catch (err) {}
+                    }
+                    const u = new URL(window.location.href);
+                    u.searchParams.set('_r', Date.now().toString());
+                    window.location.replace(u.toString());
+                } else {
+                    // Normal F5 = Fast in-place AJAX reload without page reload
+                    this.reloadPos();
+                }
+            },
+            F6: () => {
+                e.preventDefault();
+                if (!this.cart.lines || !this.cart.lines.length) {
+                    this.flash(this.labels.pos_cart_empty || 'ဆိုင်းငံ့ရန် ဈေးခြင်းထဲတွင် ပစ္စည်းမရှိသေးပါ', 'error');
+                    return;
+                }
+                this.hold();
+            },
+            F7: () => {
+                e.preventDefault();
+                if (!this.cart.held || !this.cart.held.length) {
+                    this.flash(this.labels.no_held_sales || 'ဆိုင်းငံ့ထားသော အရောင်းများ မရှိသေးပါ', 'info');
+                    return;
+                }
+                this.mobileCartOpen = false;
+                this.$nextTick(() => {
+                    const el = document.getElementById('pos-held-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            },
         };
+
         if (actions[k]) actions[k]();
     },
 }))

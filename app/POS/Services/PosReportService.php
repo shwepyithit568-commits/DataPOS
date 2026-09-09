@@ -69,6 +69,63 @@ class PosReportService
         ];
     }
 
+    /**
+     * Commercial Tax Report (ကုန်သွယ်လုပ်ငန်းခွန် အစီရင်ခံစာ) for Myanmar IRD.
+     *
+     * @return array{sales: Collection, count:int, total_sales:string, taxable_sales:string, exempt_sales:string, total_tax:string, net_sales:string}
+     */
+    public function taxReport(Store $store, Carbon $from, Carbon $to, ?int $cashierId = null): array
+    {
+        $query = PosSale::query()
+            ->with(['items', 'cashier', 'customer'])
+            ->where('store_id', $store->id)
+            ->where('status', 'posted')
+            ->whereNotNull('posted_at')
+            ->whereBetween('posted_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()]);
+
+        if ($cashierId) {
+            $query->where('cashier_id', $cashierId);
+        }
+
+        $sales = $query->latest('posted_at')->get();
+
+        $totalSales = '0';
+        $taxableSales = '0';
+        $exemptSales = '0';
+        $totalTax = '0';
+
+        foreach ($sales as $sale) {
+            $totalSales = bcadd($totalSales, (string) $sale->total, 2);
+            $totalTax = bcadd($totalTax, (string) $sale->tax, 2);
+
+            $taxable = (string) $sale->taxable_amount;
+            $exempt = (string) $sale->exempt_amount;
+
+            if (bccomp($taxable, '0', 2) === 0 && bccomp($exempt, '0', 2) === 0) {
+                if (bccomp((string) $sale->tax, '0', 2) > 0) {
+                    $taxable = (string) $sale->subtotal;
+                } else {
+                    $exempt = (string) $sale->subtotal;
+                }
+            }
+
+            $taxableSales = bcadd($taxableSales, $taxable, 2);
+            $exemptSales = bcadd($exemptSales, $exempt, 2);
+        }
+
+        $netSales = bcsub($totalSales, $totalTax, 2);
+
+        return [
+            'sales' => $sales,
+            'count' => $sales->count(),
+            'total_sales' => $totalSales,
+            'taxable_sales' => $taxableSales,
+            'exempt_sales' => $exemptSales,
+            'total_tax' => $totalTax,
+            'net_sales' => $netSales,
+        ];
+    }
+
     /* ------------------------------------------------------------------ */
     /*  Cash drawer                                                        */
     /* ------------------------------------------------------------------ */

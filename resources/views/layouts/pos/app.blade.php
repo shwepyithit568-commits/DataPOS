@@ -114,7 +114,7 @@
     @keydown.window="handlePosCalcKey($event)">
 
     <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800">
-        <div class="mx-auto max-w-[1600px] px-4 py-3 flex items-center justify-between gap-3">
+        <div class="w-full px-2 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
                 <div class="w-9 h-9 rounded-xl bg-blue-600/15 text-blue-600 dark:text-blue-400 grid place-items-center">
                     {{-- POS cash-register mark --}}
@@ -163,19 +163,19 @@
                      class="sm:hidden font-black text-sm tabular-nums text-slate-700 dark:text-slate-200"
                      x-text="t"></div>
 
-                {{-- Language Switcher --}}
-                <x-language-switcher id="pos-header" />
+                {{-- Language Switcher (3D Sky/Telegram) --}}
+                <x-language-switcher id="pos-header" btn-class="sf-btn-3d-telegram w-10 h-10 rounded-xl inline-flex items-center justify-center text-base cursor-pointer shadow-xs text-white" />
 
-                {{-- POS Display Mode Dropdown (Standard Light / High-Contrast Daylight / OLED Dark) --}}
+                {{-- POS Display Mode Dropdown (3D Gold) --}}
                 <div class="relative" @click.away="displayMenuOpen = false">
                     <button @click="displayMenuOpen = !displayMenuOpen" type="button"
-                            class="sf-btn-3d w-10 h-10 rounded-xl cursor-pointer"
+                            class="sf-btn-3d-gold w-10 h-10 rounded-xl cursor-pointer text-white grid place-items-center shadow-xs"
                             aria-label="Display Mode"
                             title="POS Display Mode">
-                        <svg x-show="displayMode === 'oled_dark' || isDark" x-cloak class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg x-show="displayMode === 'oled_dark' || isDark" x-cloak class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                         </svg>
-                        <svg x-show="displayMode !== 'oled_dark' && !isDark" class="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg x-show="displayMode !== 'oled_dark' && !isDark" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="4"/>
                             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
                         </svg>
@@ -204,20 +204,23 @@
                     </div>
                 </div>
 
-                {{-- Calculator button --}}
+                {{-- Calculator button (3D Primary Blue) --}}
                 <button type="button" @click="openCalculator()"
-                        class="sf-btn-3d w-10 h-10 rounded-xl cursor-pointer"
+                        class="sf-btn-3d-primary w-10 h-10 rounded-xl cursor-pointer text-white grid place-items-center shadow-xs"
                         aria-label="{{ __('messages.calculator') }}"
                         title="{{ __('messages.calculator') }}">
-                    <svg class="w-4 h-4 text-slate-700 dark:text-slate-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="5" y="3" width="14" height="18" rx="2"/>
                         <path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"/>
                     </svg>
                 </button>
 
+                @yield('header_extra')
+
+                {{-- Admin Panel button (3D Accent Purple) --}}
                 <a href="{{ url('/store/' . $store->slug . '/admin/dashboard') }}"
-                   class="sf-btn-3d inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-xs font-bold cursor-pointer">
-                    <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                   class="sf-btn-3d-accent inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-xs font-bold cursor-pointer text-white shadow-xs">
+                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                     <span class="hidden sm:inline">{{ __('messages.admin_panel') }}</span>
                 </a>
                 <form method="POST" action="{{ url('/logout') }}">
@@ -231,7 +234,7 @@
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-[1600px] mx-auto px-2 sm:px-4 py-1.5 sm:py-2">
+    <main class="flex-1 w-full px-2 sm:px-4 py-1.5 sm:py-2">
         @if (session('success'))
             <div class="mb-4 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-sm font-semibold" role="alert">
                 {{ session('success') }}

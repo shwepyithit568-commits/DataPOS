@@ -72,7 +72,7 @@
             </div>
             <div class="min-w-0">
                 <div class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400 leading-none tabular-nums font-outfit truncate">
-                    Ks {{ number_format((float) $summary['total_value']) }}
+                    {{ format_currency((float) $summary['total_value'], $store) }}
                 </div>
                 <p class="text-[9px] sm:text-[10px] text-rose-600/80 dark:text-rose-400/80 mt-0.5 truncate font-bold uppercase tracking-wider">
                     {{ __('messages.total_value') }}
@@ -234,7 +234,7 @@
                                 </td>
                                 <td class="px-3 py-2 align-middle text-slate-500 dark:text-slate-400 tabular-nums font-semibold">{{ $buyback->items->count() }}</td>
                                 <td class="px-3 py-2 align-middle text-right font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">
-                                    Ks {{ number_format((float) $buyback->total_value) }}
+                                    {{ format_currency((float) $buyback->total_value, $store) }}
                                 </td>
                                 <td class="px-3 py-2 align-middle">
                                     @php
@@ -289,7 +289,7 @@
                             </div>
                             <div class="text-right shrink-0">
                                 <p class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide font-bold">{{ __('messages.total_value') }}</p>
-                                <p class="font-mono text-xs font-black text-slate-900 dark:text-slate-100 tabular-nums">Ks {{ number_format((float) $buyback->total_value) }}</p>
+                                <p class="font-mono text-xs font-black text-slate-900 dark:text-slate-100 tabular-nums">{{ format_currency((float) $buyback->total_value, $store) }}</p>
                             </div>
                         </div>
                     </div>

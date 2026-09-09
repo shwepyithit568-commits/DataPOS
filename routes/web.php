@@ -773,6 +773,18 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/reports/debt-aging/export', [\App\Http\Controllers\Admin\DebtAgingController::class, 'exportCsv'])->name('store.admin.debt_aging.export')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:debt_aging.export']);
         Route::get('/admin/reports/debt-aging/print', [\App\Http\Controllers\Admin\DebtAgingController::class, 'printReport'])->name('store.admin.debt_aging.print')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:debt_aging.view']);
 
+        // Commercial Tax Report in Admin
+        Route::get('/admin/reports/tax', [\App\POS\Http\Controllers\PosReportController::class, 'tax'])->name('store.admin.reports.tax')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:reports_sales.view']);
+        Route::get('/admin/reports/tax/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportTax'])->name('store.admin.reports.tax.export')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:reports_sales.export']);
+        Route::get('/admin/reports/commercial-tax', [\App\POS\Http\Controllers\PosReportController::class, 'tax'])->name('store.admin.reports.commercial_tax')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:reports_sales.view']);
+        Route::get('/admin/reports/commercial-tax/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportTax'])->name('store.admin.reports.commercial_tax.export')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:reports_sales.export']);
+        Route::get('/reports/tax', [\App\POS\Http\Controllers\PosReportController::class, 'tax'])->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:reports_sales.view']);
+        Route::get('/reports/tax/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportTax'])->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:reports_sales.export']);
+
+        // Business Reconciliation Report in Admin
+        Route::get('/admin/reports/reconciliation', [\App\POS\Http\Controllers\PosReportController::class, 'reconciliation'])->name('store.admin.reports.reconciliation')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:stock_reconciliation.view']);
+        Route::get('/reports/reconciliation', [\App\POS\Http\Controllers\PosReportController::class, 'reconciliation'])->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:stock_reconciliation.view']);
+
         // Staff Roles & Granular Permissions (sidebar_roles)
         Route::get('/admin/security/roles', [\App\Http\Controllers\Admin\StaffRoleController::class, 'index'])->name('store.admin.roles.index')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:roles.view']);
         Route::post('/admin/security/roles', [\App\Http\Controllers\Admin\StaffRoleController::class, 'store'])->name('store.admin.roles.store')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:roles.create']);
@@ -872,6 +884,7 @@ Route::prefix('store/{store_slug}')
             Route::post('/shifts', [\App\POS\Http\Controllers\CashierShiftController::class, 'open'])->name('pos.shifts.open')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.create']);
             Route::post('/shifts/{shift}/cash-events', [\App\POS\Http\Controllers\CashierShiftController::class, 'cashEvent'])->name('pos.shifts.cash-event')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.update']);
             Route::post('/shifts/{shift}/close', [\App\POS\Http\Controllers\CashierShiftController::class, 'close'])->name('pos.shifts.close')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.update']);
+            Route::post('/expenses', [\App\POS\Http\Controllers\CashierShiftController::class, 'recordExpense'])->name('pos.expenses.record')->middleware('store.permission:pos_sales.view');
 
             // POS cart + sale posting (target-design §2.8).
             Route::get('/products', [\App\POS\Http\Controllers\PosSaleController::class, 'search'])->name('pos.products.search')->middleware('store.permission:pos_sales.view');
@@ -885,8 +898,9 @@ Route::prefix('store/{store_slug}')
             Route::post('/customers/detach', [\App\POS\Http\Controllers\PosSaleController::class, 'detachCustomer'])->name('pos.customers.detach')->middleware('store.permission:pos_sales.update');
             Route::post('/customers/{customer}/collect', [\App\POS\Http\Controllers\PosSaleController::class, 'collect'])->name('pos.customers.collect')->middleware('store.permission:pos_sales.update');
             Route::post('/cart', [\App\POS\Http\Controllers\PosSaleController::class, 'addItem'])->name('pos.cart.add')->middleware('store.permission:pos_sales.create');
-            // /cart/clear must be registered before /cart/{line} (route order).
+            // /cart/clear and /cart/discount must be registered before /cart/{line} (route order).
             Route::post('/cart/clear', [\App\POS\Http\Controllers\PosSaleController::class, 'clearCart'])->name('pos.cart.clear')->middleware('store.permission:pos_sales.update');
+            Route::post('/cart/discount', [\App\POS\Http\Controllers\PosSaleController::class, 'setDiscount'])->name('pos.cart.discount')->middleware('store.permission:pos_sales.update');
             Route::post('/cart/{line}', [\App\POS\Http\Controllers\PosSaleController::class, 'updateLine'])->name('pos.cart.update')->middleware('store.permission:pos_sales.update');
             Route::post('/cart/{line}/price', [\App\POS\Http\Controllers\PosSaleController::class, 'setLinePrice'])->name('pos.cart.price')->middleware('store.permission:pos_sales.update');
             Route::delete('/cart/{line}', [\App\POS\Http\Controllers\PosSaleController::class, 'removeLine'])->name('pos.cart.remove')->middleware('store.permission:pos_sales.update');
@@ -921,6 +935,8 @@ Route::prefix('store/{store_slug}')
             Route::get('/reports/reconciliation', [\App\POS\Http\Controllers\PosReportController::class, 'reconciliation'])->name('pos.reports.reconciliation')->middleware('store.permission:stock_reconciliation.view');
             Route::get('/reports/payments', [\App\POS\Http\Controllers\PosReportController::class, 'payments'])->name('pos.reports.payments')->middleware('store.permission:reports_sales.view');
             Route::get('/reports/payments/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportPayments'])->name('pos.reports.payments.export')->middleware('store.permission:reports_sales.export');
+            Route::get('/reports/tax', [\App\POS\Http\Controllers\PosReportController::class, 'tax'])->name('pos.reports.tax')->middleware('store.permission:reports_sales.view');
+            Route::get('/reports/tax/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportTax'])->name('pos.reports.tax.export')->middleware('store.permission:reports_sales.export');
 
             // POS product search (used by PO create form)
             Route::get('/purchases/products', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'productSearch'])->name('pos.purchases.product-search')->middleware('store.permission:purchases.view');

@@ -40,7 +40,7 @@
         createModalOpen: false,
         editModalOpen: false,
         assignModalOpen: false,
-        allRolesList: {{ Illuminate\Support\Js::from($rolesArray) }},
+        allRolesList: {{ Illuminate\Support\Js::from($allRoles ?? $rolesArray) }},
         allStaffList: {{ Illuminate\Support\Js::from($staffArray) }},
         permissionGroups: {{ Illuminate\Support\Js::from($allPermGroupKeys) }},
         allAvailablePermissions: {{ Illuminate\Support\Js::from(array_unique($allAvailableKeys)) }},
@@ -241,16 +241,29 @@
             this.permSearch = '';
             const staff = this.allStaffList.find(s => s.user_id === userId);
             if (staff) {
+                const existingRole = staff.staff_role_id ? this.allRolesList.find(r => r.id === staff.staff_role_id) : null;
+                let existingPerms = [];
+                if (existingRole) {
+                    existingPerms = Array.isArray(existingRole.permissions) ? [...existingRole.permissions] : [];
+                    if (existingPerms.includes('*')) {
+                        existingPerms = [...this.allAvailablePermissions];
+                    }
+                }
+                const isCustomExisting = existingRole && !existingRole.is_system;
+
                 this.assignData = {
                     user_id: staff.user_id,
                     user_name: staff.user_name,
                     user_phone: staff.user_phone || staff.user_email || '',
                     staff_role_id: staff.staff_role_id || '',
+                    role_id: isCustomExisting ? existingRole.id : null,
+                    is_custom_existing: isCustomExisting,
+                    existing_role_name: existingRole ? existingRole.name : '',
                     mode: initialMode,
-                    custom_role_name: staff.user_name ? (staff.user_name + ' Role') : 'Custom Staff Role',
-                    custom_role_desc: 'Custom assigned permissions for ' + (staff.user_name || 'staff member'),
-                    custom_role_color: '#0284c7',
-                    permissions: []
+                    custom_role_name: existingRole ? existingRole.name : (staff.user_name ? (staff.user_name + ' Role') : 'Custom Staff Role'),
+                    custom_role_desc: existingRole ? (existingRole.description || '') : ('Custom assigned permissions for ' + (staff.user_name || 'staff member')),
+                    custom_role_color: existingRole ? (existingRole.color || '#0284c7') : '#0284c7',
+                    permissions: existingRole ? existingPerms : []
                 };
                 this.assignModalOpen = true;
             }
@@ -704,11 +717,14 @@
                                 {{-- Current Role Badge --}}
                                 <td class="py-3 px-4">
                                     @if ($staff->role_name)
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border"
-                                              style="background-color: {{ $staff->role_color ?: '#0284c7' }}15; color: {{ $staff->role_color ?: '#0284c7' }}; border-color: {{ $staff->role_color ?: '#0284c7' }}30;">
+                                        <button type="button" @click.stop="openEditModalById({{ (int) $staff->staff_role_id }})"
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border transition hover:opacity-85 hover:scale-[1.02] cursor-pointer shadow-2xs group"
+                                                style="background-color: {{ $staff->role_color ?: '#0284c7' }}15; color: {{ $staff->role_color ?: '#0284c7' }}; border-color: {{ $staff->role_color ?: '#0284c7' }}30;"
+                                                title="{{ __('messages.roles_edit_permissions') }}">
                                             <span class="w-1.5 h-1.5 rounded-full" style="background-color: {{ $staff->role_color ?: '#0284c7' }};"></span>
                                             <span>{{ $staff->role_name }}</span>
-                                        </span>
+                                            <span class="text-[10px] opacity-60 group-hover:opacity-100">✏️</span>
+                                        </button>
                                     @else
                                         <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/50">
                                             {{ __('messages.roles_staff_unassigned') }}
@@ -753,16 +769,25 @@
                                 {{-- Actions --}}
                                 <td class="py-3 px-4 text-right">
                                     <div class="inline-flex items-center gap-1">
+                                        @if ($staff->staff_role_id)
+                                            <button type="button" @click.stop="openEditModalById({{ (int) $staff->staff_role_id }})"
+                                                    class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/60 dark:text-amber-300 transition inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                                                    title="{{ __('messages.roles_edit_permissions') }}">
+                                                <span>✏️</span>
+                                                <span>{{ __('messages.roles_edit') }}</span>
+                                            </button>
+                                        @endif
+
                                         <button type="button" @click.stop="openAssignModalById({{ (int) $staff->user_id }}, 'select')"
-                                                class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 transition inline-flex items-center gap-1 shadow-xs"
-                                                title="Select Standard or Custom Role">
+                                                class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 transition inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                                                title="{{ __('messages.roles_staff_change_role') }}">
                                             <span>🎭</span>
                                             <span>{{ __('messages.roles_staff_change_role') }}</span>
                                         </button>
 
                                         <button type="button" @click.stop="openAssignModalById({{ (int) $staff->user_id }}, 'create_custom')"
-                                                class="px-2 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 transition inline-flex items-center gap-1 shadow-xs"
-                                                title="Create a tailor-made custom role for this staff member">
+                                                class="px-2 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 transition inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                                                title="{{ $staff->staff_role_id ? __('messages.roles_edit_permissions') : __('messages.custom_role') }}">
                                             <span>✨</span>
                                             <span>{{ __('messages.custom_role') }}</span>
                                         </button>
@@ -1359,6 +1384,7 @@
                 @csrf
                 <input type="hidden" name="user_id" :value="assignData.user_id">
                 <input type="hidden" name="action_mode" :value="assignData.mode === 'create_custom' ? 'create_and_assign' : 'select'">
+                <input type="hidden" name="role_id" :value="assignData.role_id || ''">
 
                 {{-- Hidden permissions serialization inputs for create_custom mode --}}
                 <template x-for="p in assignData.permissions" :key="p">
@@ -1408,6 +1434,21 @@
 
                 {{-- MODE 2: CREATE & ASSIGN CUSTOM ROLE ON THE FLY --}}
                 <div x-show="assignData.mode === 'create_custom'" class="space-y-4">
+                    {{-- Notice if updating existing custom role --}}
+                    <div x-show="assignData.is_custom_existing" class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">✏️</span>
+                            <div>
+                                <span class="text-xs font-bold text-amber-900 dark:text-amber-200 block">Editing existing role: <span class="font-extrabold" x-text="assignData.existing_role_name"></span></span>
+                                <span class="text-[10px] text-amber-700 dark:text-amber-400">Saving will update this staff member's custom role directly.</span>
+                            </div>
+                        </div>
+                        <button type="button" @click="assignData.is_custom_existing = false; assignData.role_id = null; assignData.custom_role_name = assignData.custom_role_name + ' (Copy)'"
+                                class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-slate-700 shrink-0">
+                            Create as New Role instead
+                        </button>
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl">
                         <div>
                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Custom Role Name *</label>
@@ -1622,8 +1663,8 @@
                     <button type="button" @click="assignModalOpen = false" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
                         {{ __('messages.cancel') }}
                     </button>
-                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/20 transition">
-                        <span x-text="assignData.mode === 'create_custom' ? 'Create & Assign Custom Role' : '{{ __('messages.roles_confirm_assignment') }}'"></span>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/20 transition flex items-center gap-1.5">
+                        <span x-text="assignData.mode === 'create_custom' ? (assignData.is_custom_existing ? '💾 {{ __('messages.save') }} & Update Role' : '✨ Create & Assign Custom Role') : '✓ {{ __('messages.roles_confirm_assignment') }}'"></span>
                     </button>
                 </div>
             </form>

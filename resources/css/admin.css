@@ -746,8 +746,27 @@ main div.w-full.grid > div {
 .sf-btn-3d-orange,
 .pos-btn-3d-orange,
 .sf-btn-3d-viber,
+.pos-btn-3d-viber,
 .sf-btn-3d-telegram,
-.sf-btn-3d-facebook {
+.pos-btn-3d-telegram,
+.sf-btn-3d-facebook,
+.pos-btn-3d-facebook,
+.sf-btn-3d-teal,
+.pos-btn-3d-teal,
+.sf-btn-3d-fuchsia,
+.pos-btn-3d-fuchsia,
+.sf-btn-3d-lime,
+.pos-btn-3d-lime,
+.sf-btn-3d-slate,
+.pos-btn-3d-slate,
+.sf-btn-3d-indigo,
+.pos-btn-3d-indigo,
+.sf-btn-3d-amber,
+.pos-btn-3d-amber,
+.sf-btn-3d-cyan,
+.pos-btn-3d-cyan,
+.sf-btn-3d-sky,
+.pos-btn-3d-sky {
     position: relative;
     display: inline-flex;
     flex-direction: row;
@@ -793,57 +812,53 @@ main div.w-full.grid > div {
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), inset 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-/* Primary 3D Button (Blue) */
+/* 1. Primary (Blue / Sky) */
 .sf-btn-3d.active,
 .pos-btn-3d.active,
 .sf-btn-3d-primary,
 .pos-btn-3d-primary {
-    background: linear-gradient(180deg, var(--sf-primary, #2563eb) 0%, color-mix(in srgb, var(--sf-primary, #2563eb) 85%, #000000) 100%);
+    background: linear-gradient(180deg, var(--sf-primary, #0284c7) 0%, #0369a1 100%);
     color: #ffffff !important;
-    border: 1px solid color-mix(in srgb, var(--sf-primary, #2563eb) 80%, #ffffff);
-    border-bottom: 3px solid var(--sf-primary-bevel, #1d4ed8);
-    box-shadow: 0 2px 6px -1px color-mix(in srgb, var(--sf-primary, #2563eb) 35%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    border: 1px solid #38bdf8;
+    border-bottom: 3px solid #075985;
+    box-shadow: 0 2px 6px -1px rgba(2, 132, 199, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
-
 .sf-btn-3d.active:hover,
 .pos-btn-3d.active:hover,
 .sf-btn-3d-primary:hover,
 .pos-btn-3d-primary:hover {
     transform: translateY(-1.5px);
-    background: linear-gradient(180deg, var(--sf-primary-hover, #3b82f6) 0%, var(--sf-primary, #2563eb) 100%);
-    border-bottom: 4px solid var(--sf-primary-bevel, #1d4ed8);
-    box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--sf-primary, #2563eb) 50%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+    border-bottom: 4px solid #0c4a6e;
+    box-shadow: 0 4px 12px -2px rgba(2, 132, 199, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.55);
     color: #ffffff !important;
 }
-
 .sf-btn-3d.active:active,
 .pos-btn-3d.active:active,
 .sf-btn-3d-primary:active,
 .pos-btn-3d-primary:active {
     transform: translateY(1.5px);
-    border-bottom: 1.5px solid var(--sf-primary-bevel, #1d4ed8);
-    box-shadow: 0 1px 2px color-mix(in srgb, var(--sf-primary, #2563eb) 25%, transparent), inset 0 1px 2px rgba(0, 0, 0, 0.15);
+    border-bottom: 1.5px solid #075985;
+    box-shadow: 0 1px 2px rgba(2, 132, 199, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* Success 3D Button (Emerald) */
+/* 2. Success (Emerald / Green) */
 .sf-btn-3d-success,
 .pos-btn-3d-success {
     background: linear-gradient(180deg, #10b981 0%, #059669 100%);
     color: #ffffff !important;
     border: 1px solid #34d399;
     border-bottom: 3px solid #047857;
-    box-shadow: 0 2px 6px -1px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    box-shadow: 0 2px 6px -1px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
-
 .sf-btn-3d-success:hover,
 .pos-btn-3d-success:hover {
     transform: translateY(-1.5px);
     background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
     border-bottom: 4px solid #065f46;
-    box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.55);
     color: #ffffff !important;
 }
-
 .sf-btn-3d-success:active,
 .pos-btn-3d-success:active {
     transform: translateY(1.5px);
@@ -851,25 +866,23 @@ main div.w-full.grid > div {
     box-shadow: 0 1px 2px rgba(16, 185, 129, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* Danger 3D Button (Rose/Red) */
+/* 3. Danger (Rose / Red) */
 .sf-btn-3d-danger,
 .pos-btn-3d-danger {
     background: linear-gradient(180deg, #f43f5e 0%, #e11d48 100%);
     color: #ffffff !important;
     border: 1px solid #fb7185;
     border-bottom: 3px solid #be123c;
-    box-shadow: 0 2px 6px -1px rgba(244, 63, 94, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    box-shadow: 0 2px 6px -1px rgba(244, 63, 94, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
-
 .sf-btn-3d-danger:hover,
 .pos-btn-3d-danger:hover {
     transform: translateY(-1.5px);
     background: linear-gradient(180deg, #fb7185 0%, #f43f5e 100%);
     border-bottom: 4px solid #9f1239;
-    box-shadow: 0 4px 12px -2px rgba(244, 63, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    box-shadow: 0 4px 12px -2px rgba(244, 63, 94, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.55);
     color: #ffffff !important;
 }
-
 .sf-btn-3d-danger:active,
 .pos-btn-3d-danger:active {
     transform: translateY(1.5px);
@@ -877,7 +890,7 @@ main div.w-full.grid > div {
     box-shadow: 0 1px 2px rgba(244, 63, 94, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* Gold / Amber 3D Button */
+/* 4. Gold / Amber */
 .sf-btn-3d-gold,
 .pos-btn-3d-gold {
     background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
@@ -886,7 +899,6 @@ main div.w-full.grid > div {
     border-bottom: 3px solid #b45309;
     box-shadow: 0 2px 6px -1px rgba(217, 119, 6, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
-
 .sf-btn-3d-gold:hover,
 .pos-btn-3d-gold:hover {
     transform: translateY(-1.5px);
@@ -895,7 +907,6 @@ main div.w-full.grid > div {
     box-shadow: 0 4px 12px -2px rgba(217, 119, 6, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.85);
     color: #ffffff !important;
 }
-
 .sf-btn-3d-gold:active,
 .pos-btn-3d-gold:active {
     transform: translateY(1.5px);
@@ -903,7 +914,7 @@ main div.w-full.grid > div {
     box-shadow: 0 1px 2px rgba(217, 119, 6, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* Orange 3D Button */
+/* 5. Orange */
 .sf-btn-3d-orange,
 .pos-btn-3d-orange {
     background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
@@ -912,7 +923,6 @@ main div.w-full.grid > div {
     border-bottom: 3px solid #9a3412;
     box-shadow: 0 2px 6px -1px rgba(234, 88, 12, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
-
 .sf-btn-3d-orange:hover,
 .pos-btn-3d-orange:hover {
     transform: translateY(-1.5px);
@@ -921,39 +931,293 @@ main div.w-full.grid > div {
     box-shadow: 0 4px 12px -2px rgba(234, 88, 12, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
     color: #ffffff !important;
 }
-
 .sf-btn-3d-orange:active,
 .pos-btn-3d-orange:active {
     transform: translateY(1.5px);
     border-bottom: 1.5px solid #9a3412;
+    box-shadow: 0 1px 2px rgba(234, 88, 12, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* Accent 3D Button */
+/* 6. Accent (Indigo / Violet) */
 .sf-btn-3d-accent,
 .pos-btn-3d-accent {
-    background: linear-gradient(180deg, var(--sf-accent, #6366f1) 0%, color-mix(in srgb, var(--sf-accent, #6366f1) 85%, #000000) 100%);
+    background: linear-gradient(180deg, var(--sf-accent, #6366f1) 0%, #4f46e5 100%);
     color: #ffffff !important;
-    border: 1px solid color-mix(in srgb, var(--sf-accent, #6366f1) 80%, #ffffff);
-    border-bottom: 3px solid var(--sf-accent-bevel, #4338ca);
-    box-shadow: 0 2px 6px -1px color-mix(in srgb, var(--sf-accent, #6366f1) 35%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    border: 1px solid #818cf8;
+    border-bottom: 3px solid #3730a3;
+    box-shadow: 0 2px 6px -1px rgba(79, 70, 229, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
-
 .sf-btn-3d-accent:hover,
 .pos-btn-3d-accent:hover {
     transform: translateY(-1.5px);
-    background: linear-gradient(180deg, var(--sf-accent-hover, #818cf8) 0%, var(--sf-accent, #6366f1) 100%);
-    border-bottom: 4px solid var(--sf-accent-bevel, #3730a3);
-    box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--sf-accent, #6366f1) 50%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    background: linear-gradient(180deg, #818cf8 0%, #6366f1 100%);
+    border-bottom: 4px solid #312e81;
+    box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.55);
     color: #ffffff !important;
 }
-
 .sf-btn-3d-accent:active,
 .pos-btn-3d-accent:active {
     transform: translateY(1.5px);
-    border-bottom: 1.5px solid var(--sf-accent-bevel, #4338ca);
+    border-bottom: 1.5px solid #3730a3;
 }
 
-/* Dark Mode 3D Buttons */
+/* 7. Teal (Cash Drawer) */
+.sf-btn-3d-teal,
+.pos-btn-3d-teal {
+    background: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%);
+    color: #ffffff !important;
+    border: 1px solid #2dd4bf;
+    border-bottom: 3px solid #0f766e;
+    box-shadow: 0 2px 6px -1px rgba(13, 148, 136, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-teal:hover,
+.pos-btn-3d-teal:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #2dd4bf 0%, #14b8a6 100%);
+    border-bottom: 4px solid #115e59;
+    box-shadow: 0 4px 12px -2px rgba(13, 148, 136, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-teal:active,
+.pos-btn-3d-teal:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #0f766e;
+    box-shadow: 0 1px 2px rgba(13, 148, 136, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* 8. Facebook (Products / Royal Blue) */
+.sf-btn-3d-facebook,
+.pos-btn-3d-facebook {
+    background: linear-gradient(180deg, #1877f2 0%, #0d65d9 100%);
+    color: #ffffff !important;
+    border: 1px solid #4a9aff;
+    border-bottom: 3px solid #084298;
+    box-shadow: 0 2px 6px -1px rgba(13, 101, 217, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-facebook:hover,
+.pos-btn-3d-facebook:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #3b8bf5 0%, #1877f2 100%);
+    border-bottom: 4px solid #052c65;
+    box-shadow: 0 4px 12px -2px rgba(13, 101, 217, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+.sf-btn-3d-facebook:active,
+.pos-btn-3d-facebook:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #084298;
+}
+
+/* 9. Viber (Purchases / Brand Violet) */
+.sf-btn-3d-viber,
+.pos-btn-3d-viber {
+    background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%);
+    color: #ffffff !important;
+    border: 1px solid #a78bfa;
+    border-bottom: 3px solid #4c1d95;
+    box-shadow: 0 2px 6px -1px rgba(109, 40, 217, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-viber:hover,
+.pos-btn-3d-viber:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #a78bfa 0%, #7c3aed 100%);
+    border-bottom: 4px solid #3b0764;
+    box-shadow: 0 4px 12px -2px rgba(109, 40, 217, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+.sf-btn-3d-viber:active,
+.pos-btn-3d-viber:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #4c1d95;
+}
+
+/* 10. Fuchsia (Payables / Deep Pink-Fuchsia) */
+.sf-btn-3d-fuchsia,
+.pos-btn-3d-fuchsia {
+    background: linear-gradient(180deg, #d946ef 0%, #c026d3 100%);
+    color: #ffffff !important;
+    border: 1px solid #e879f9;
+    border-bottom: 3px solid #a21caf;
+    box-shadow: 0 2px 6px -1px rgba(192, 38, 211, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-fuchsia:hover,
+.pos-btn-3d-fuchsia:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #e879f9 0%, #d946ef 100%);
+    border-bottom: 4px solid #86198f;
+    box-shadow: 0 4px 12px -2px rgba(192, 38, 211, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-fuchsia:active,
+.pos-btn-3d-fuchsia:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #a21caf;
+}
+
+/* 11. Telegram (Orders / Cyan-Sky) */
+.sf-btn-3d-telegram,
+.pos-btn-3d-telegram {
+    background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
+    color: #ffffff !important;
+    border: 1px solid #7dd3fc;
+    border-bottom: 3px solid #0369a1;
+    box-shadow: 0 2px 6px -1px rgba(2, 132, 199, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-telegram:hover,
+.pos-btn-3d-telegram:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #38bdf8 0%, #0ea5e9 100%);
+    border-bottom: 4px solid #075985;
+    box-shadow: 0 4px 12px -2px rgba(2, 132, 199, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+.sf-btn-3d-telegram:active,
+.pos-btn-3d-telegram:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #0369a1;
+}
+
+/* 12. Lime (Transfers / Vivid Lime) */
+.sf-btn-3d-lime,
+.pos-btn-3d-lime {
+    background: linear-gradient(180deg, #65a30d 0%, #4d7c0f 100%);
+    color: #ffffff !important;
+    border: 1px solid #84cc16;
+    border-bottom: 3px solid #3f6212;
+    box-shadow: 0 2px 6px -1px rgba(77, 124, 15, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-lime:hover,
+.pos-btn-3d-lime:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #84cc16 0%, #65a30d 100%);
+    border-bottom: 4px solid #365314;
+    box-shadow: 0 4px 12px -2px rgba(77, 124, 15, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-lime:active,
+.pos-btn-3d-lime:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #3f6212;
+}
+
+/* 13. Slate (Reconciliation / Graphite Slate) */
+.sf-btn-3d-slate,
+.pos-btn-3d-slate {
+    background: linear-gradient(180deg, #64748b 0%, #475569 100%);
+    color: #ffffff !important;
+    border: 1px solid #94a3b8;
+    border-bottom: 3px solid #334155;
+    box-shadow: 0 2px 6px -1px rgba(71, 85, 105, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-slate:hover,
+.pos-btn-3d-slate:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+    border-bottom: 4px solid #1e293b;
+    box-shadow: 0 4px 12px -2px rgba(71, 85, 105, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-slate:active,
+.pos-btn-3d-slate:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #334155;
+}
+
+/* 14. Indigo (Opening Stock / Deep Indigo) */
+.sf-btn-3d-indigo,
+.pos-btn-3d-indigo {
+    background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff !important;
+    border: 1px solid #818cf8;
+    border-bottom: 3px solid #3730a3;
+    box-shadow: 0 2px 6px -1px rgba(79, 70, 229, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-indigo:hover,
+.pos-btn-3d-indigo:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #818cf8 0%, #6366f1 100%);
+    border-bottom: 4px solid #312e81;
+    box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-indigo:active,
+.pos-btn-3d-indigo:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #3730a3;
+}
+
+/* 15. Amber (Adjustments / Vivid Amber) */
+.sf-btn-3d-amber,
+.pos-btn-3d-amber {
+    background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+    color: #ffffff !important;
+    border: 1px solid #fbbf24;
+    border-bottom: 3px solid #b45309;
+    box-shadow: 0 2px 6px -1px rgba(217, 119, 6, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-amber:hover,
+.pos-btn-3d-amber:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+    border-bottom: 4px solid #92400e;
+    box-shadow: 0 4px 12px -2px rgba(217, 119, 6, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-amber:active,
+.pos-btn-3d-amber:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #b45309;
+}
+
+/* 16. Cyan (Physical Stock Count / Vivid Cyan) */
+.sf-btn-3d-cyan,
+.pos-btn-3d-cyan {
+    background: linear-gradient(180deg, #06b6d4 0%, #0891b2 100%);
+    color: #ffffff !important;
+    border: 1px solid #22d3ee;
+    border-bottom: 3px solid #0e7490;
+    box-shadow: 0 2px 6px -1px rgba(8, 145, 178, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-cyan:hover,
+.pos-btn-3d-cyan:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #22d3ee 0%, #06b6d4 100%);
+    border-bottom: 4px solid #155e75;
+    box-shadow: 0 4px 12px -2px rgba(8, 145, 178, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-cyan:active,
+.pos-btn-3d-cyan:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #0e7490;
+}
+
+/* 17. Sky (Reconciliation / Vivid Sky) */
+.sf-btn-3d-sky,
+.pos-btn-3d-sky {
+    background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
+    color: #ffffff !important;
+    border: 1px solid #38bdf8;
+    border-bottom: 3px solid #0369a1;
+    box-shadow: 0 2px 6px -1px rgba(2, 132, 199, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-sky:hover,
+.pos-btn-3d-sky:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #38bdf8 0%, #0ea5e9 100%);
+    border-bottom: 4px solid #075985;
+    box-shadow: 0 4px 12px -2px rgba(2, 132, 199, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-sky:active,
+.pos-btn-3d-sky:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #0369a1;
+}
+
+/* ══════════════════════════════════════════════════════
+   DARK MODE 3D BUTTON PALETTE
+   ══════════════════════════════════════════════════════ */
 .dark .sf-btn-3d,
 .dark .pos-btn-3d {
     background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
@@ -962,7 +1226,6 @@ main div.w-full.grid > div {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     color: #e2e8f0;
 }
-
 .dark .sf-btn-3d:hover,
 .dark .pos-btn-3d:hover {
     transform: translateY(-1.5px);
@@ -971,7 +1234,6 @@ main div.w-full.grid > div {
     box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
     color: #ffffff;
 }
-
 .dark .sf-btn-3d:active,
 .dark .pos-btn-3d:active {
     transform: translateY(1.5px);
@@ -979,58 +1241,401 @@ main div.w-full.grid > div {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
+/* Dark Primary */
 .dark .sf-btn-3d.active,
 .dark .pos-btn-3d.active,
 .dark .sf-btn-3d-primary,
 .dark .pos-btn-3d-primary {
-    background: linear-gradient(180deg, var(--sf-primary, #2563eb) 0%, color-mix(in srgb, var(--sf-primary, #2563eb) 80%, #000000) 100%);
+    background: linear-gradient(180deg, #0284c7 0%, #0c4a6e 100%);
     color: #ffffff !important;
-    border: 1px solid color-mix(in srgb, var(--sf-primary, #2563eb) 70%, #ffffff);
-    border-bottom: 3px solid var(--sf-primary-bevel, #1e3a8a);
-    box-shadow: 0 2px 8px -1px color-mix(in srgb, var(--sf-primary, #2563eb) 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(56, 189, 248, 0.6);
+    border-bottom: 3px solid #082f49;
+    box-shadow: 0 2px 8px -1px rgba(2, 132, 199, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
-
 .dark .sf-btn-3d.active:hover,
 .dark .pos-btn-3d.active:hover,
 .dark .sf-btn-3d-primary:hover,
 .dark .pos-btn-3d-primary:hover {
     transform: translateY(-1.5px);
-    background: linear-gradient(180deg, var(--sf-primary-hover, #3b82f6) 0%, var(--sf-primary, #2563eb) 100%);
-    border-bottom: 4px solid var(--sf-primary-bevel, #1e3a8a);
-    box-shadow: 0 4px 14px -2px color-mix(in srgb, var(--sf-primary, #2563eb) 60%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    background: linear-gradient(180deg, #0ea5e9 0%, #0369a1 100%);
+    border-bottom: 4px solid #041f31;
+    box-shadow: 0 4px 14px -2px rgba(2, 132, 199, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
     color: #ffffff !important;
 }
-
 .dark .sf-btn-3d.active:active,
 .dark .pos-btn-3d.active:active,
 .dark .sf-btn-3d-primary:active,
 .dark .pos-btn-3d-primary:active {
     transform: translateY(1.5px);
-    border-bottom: 1.5px solid var(--sf-primary-bevel, #1e3a8a);
+    border-bottom: 1.5px solid #082f49;
 }
 
-.dark .sf-btn-3d-gold,
-.dark .pos-btn-3d-gold {
-    background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
-    border: 1px solid rgba(253, 230, 138, 0.7);
-    border-bottom: 3px solid #78350f;
-    box-shadow: 0 2px 8px -1px rgba(245, 158, 11, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+/* Dark Success */
+.dark .sf-btn-3d-success,
+.dark .pos-btn-3d-success {
+    background: linear-gradient(180deg, #059669 0%, #064e3b 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(52, 211, 153, 0.6);
+    border-bottom: 3px solid #022c22;
+    box-shadow: 0 2px 8px -1px rgba(5, 150, 105, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-success:hover,
+.dark .pos-btn-3d-success:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+    border-bottom: 4px solid #011914;
+    box-shadow: 0 4px 14px -2px rgba(5, 150, 105, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
     color: #ffffff !important;
 }
+.dark .sf-btn-3d-success:active,
+.dark .pos-btn-3d-success:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #022c22;
+}
 
+/* Dark Danger */
+.dark .sf-btn-3d-danger,
+.dark .pos-btn-3d-danger {
+    background: linear-gradient(180deg, #e11d48 0%, #881337 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(251, 113, 133, 0.6);
+    border-bottom: 3px solid #4c0519;
+    box-shadow: 0 2px 8px -1px rgba(225, 29, 72, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-danger:hover,
+.dark .pos-btn-3d-danger:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #f43f5e 0%, #be123c 100%);
+    border-bottom: 4px solid #28020c;
+    box-shadow: 0 4px 14px -2px rgba(225, 29, 72, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-danger:active,
+.dark .pos-btn-3d-danger:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #4c0519;
+}
+
+/* Dark Gold */
+.dark .sf-btn-3d-gold,
+.dark .pos-btn-3d-gold {
+    background: linear-gradient(180deg, #d97706 0%, #78350f 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(253, 230, 138, 0.6);
+    border-bottom: 3px solid #451a03;
+    box-shadow: 0 2px 8px -1px rgba(217, 119, 6, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
 .dark .sf-btn-3d-gold:hover,
 .dark .pos-btn-3d-gold:hover {
     transform: translateY(-1.5px);
-    background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
-    border-bottom: 4px solid #451a03;
-    box-shadow: 0 4px 14px -2px rgba(245, 158, 11, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
+    border-bottom: 4px solid #260d01;
+    box-shadow: 0 4px 14px -2px rgba(217, 119, 6, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.55);
     color: #ffffff !important;
 }
-
 .dark .sf-btn-3d-gold:active,
 .dark .pos-btn-3d-gold:active {
     transform: translateY(1.5px);
+    border-bottom: 1.5px solid #451a03;
+}
+
+/* Dark Orange */
+.dark .sf-btn-3d-orange,
+.dark .pos-btn-3d-orange {
+    background: linear-gradient(180deg, #ea580c 0%, #9a3412 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(251, 146, 60, 0.6);
+    border-bottom: 3px solid #431407;
+    box-shadow: 0 2px 8px -1px rgba(234, 88, 12, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-orange:hover,
+.dark .pos-btn-3d-orange:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #f97316 0%, #c2410c 100%);
+    border-bottom: 4px solid #270b04;
+    box-shadow: 0 4px 14px -2px rgba(234, 88, 12, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-orange:active,
+.dark .pos-btn-3d-orange:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #431407;
+}
+
+/* Dark Accent */
+.dark .sf-btn-3d-accent,
+.dark .pos-btn-3d-accent {
+    background: linear-gradient(180deg, #4f46e5 0%, #312e81 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(129, 140, 248, 0.6);
+    border-bottom: 3px solid #1e1b4b;
+    box-shadow: 0 2px 8px -1px rgba(79, 70, 229, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-accent:hover,
+.dark .pos-btn-3d-accent:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #6366f1 0%, #4338ca 100%);
+    border-bottom: 4px solid #17153a;
+    box-shadow: 0 4px 14px -2px rgba(79, 70, 229, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-accent:active,
+.dark .pos-btn-3d-accent:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #1e1b4b;
+}
+
+/* Dark Teal */
+.dark .sf-btn-3d-teal,
+.dark .pos-btn-3d-teal {
+    background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(45, 212, 191, 0.6);
+    border-bottom: 3px solid #042f2e;
+    box-shadow: 0 2px 8px -1px rgba(13, 148, 136, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-teal:hover,
+.dark .pos-btn-3d-teal:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%);
+    border-bottom: 4px solid #021a19;
+    box-shadow: 0 4px 14px -2px rgba(13, 148, 136, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-teal:active,
+.dark .pos-btn-3d-teal:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #042f2e;
+}
+
+/* Dark Facebook */
+.dark .sf-btn-3d-facebook,
+.dark .pos-btn-3d-facebook {
+    background: linear-gradient(180deg, #1877f2 0%, #0c56be 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(74, 154, 255, 0.6);
+    border-bottom: 3px solid #052c65;
+    box-shadow: 0 2px 8px -1px rgba(13, 101, 217, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-facebook:hover,
+.dark .pos-btn-3d-facebook:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #3b8bf5 0%, #1877f2 100%);
+    border-bottom: 4px solid #021838;
+    box-shadow: 0 4px 14px -2px rgba(13, 101, 217, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-facebook:active,
+.dark .pos-btn-3d-facebook:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #052c65;
+}
+
+/* Dark Viber */
+.dark .sf-btn-3d-viber,
+.dark .pos-btn-3d-viber {
+    background: linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(167, 139, 250, 0.6);
+    border-bottom: 3px solid #2e1065;
+    box-shadow: 0 2px 8px -1px rgba(124, 58, 237, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-viber:hover,
+.dark .pos-btn-3d-viber:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%);
+    border-bottom: 4px solid #1e053a;
+    box-shadow: 0 4px 14px -2px rgba(124, 58, 237, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-viber:active,
+.dark .pos-btn-3d-viber:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #2e1065;
+}
+
+/* Dark Fuchsia */
+.dark .sf-btn-3d-fuchsia,
+.dark .pos-btn-3d-fuchsia {
+    background: linear-gradient(180deg, #c026d3 0%, #a21caf 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(232, 121, 249, 0.6);
+    border-bottom: 3px solid #4a044e;
+    box-shadow: 0 2px 8px -1px rgba(192, 38, 211, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-fuchsia:hover,
+.dark .pos-btn-3d-fuchsia:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #d946ef 0%, #c026d3 100%);
+    border-bottom: 4px solid #2a022d;
+    box-shadow: 0 4px 14px -2px rgba(192, 38, 211, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-fuchsia:active,
+.dark .pos-btn-3d-fuchsia:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #4a044e;
+}
+
+/* Dark Telegram */
+.dark .sf-btn-3d-telegram,
+.dark .pos-btn-3d-telegram {
+    background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(125, 211, 252, 0.6);
+    border-bottom: 3px solid #082f49;
+    box-shadow: 0 2px 8px -1px rgba(2, 132, 199, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-telegram:hover,
+.dark .pos-btn-3d-telegram:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
+    border-bottom: 4px solid #041b2c;
+    box-shadow: 0 4px 14px -2px rgba(2, 132, 199, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-telegram:active,
+.dark .pos-btn-3d-telegram:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #082f49;
+}
+
+/* Dark Lime */
+.dark .sf-btn-3d-lime,
+.dark .pos-btn-3d-lime {
+    background: linear-gradient(180deg, #4d7c0f 0%, #365314 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(163, 230, 53, 0.6);
+    border-bottom: 3px solid #1a2e05;
+    box-shadow: 0 2px 8px -1px rgba(77, 124, 15, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-lime:hover,
+.dark .pos-btn-3d-lime:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #65a30d 0%, #4d7c0f 100%);
+    border-bottom: 4px solid #0d1702;
+    box-shadow: 0 4px 14px -2px rgba(77, 124, 15, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-lime:active,
+.dark .pos-btn-3d-lime:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #1a2e05;
+}
+
+/* Dark Slate */
+.dark .sf-btn-3d-slate,
+.dark .pos-btn-3d-slate {
+    background: linear-gradient(180deg, #475569 0%, #334155 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    border-bottom: 3px solid #0f172a;
+    box-shadow: 0 2px 8px -1px rgba(51, 65, 85, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.dark .sf-btn-3d-slate:hover,
+.dark .pos-btn-3d-slate:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #64748b 0%, #475569 100%);
+    border-bottom: 4px solid #020617;
+    box-shadow: 0 4px 14px -2px rgba(51, 65, 85, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-slate:active,
+.dark .pos-btn-3d-slate:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #0f172a;
+}
+
+/* Dark Indigo */
+.dark .sf-btn-3d-indigo,
+.dark .pos-btn-3d-indigo {
+    background: linear-gradient(180deg, #4f46e5 0%, #3730a3 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(129, 140, 248, 0.6);
+    border-bottom: 3px solid #1e1b4b;
+    box-shadow: 0 2px 8px -1px rgba(79, 70, 229, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-indigo:hover,
+.dark .pos-btn-3d-indigo:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+    border-bottom: 4px solid #17153a;
+    box-shadow: 0 4px 14px -2px rgba(79, 70, 229, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-indigo:active,
+.dark .pos-btn-3d-indigo:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #1e1b4b;
+}
+
+/* Dark Amber (Adjustments) */
+.dark .sf-btn-3d-amber,
+.dark .pos-btn-3d-amber {
+    background: linear-gradient(180deg, #d97706 0%, #b45309 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(251, 191, 36, 0.6);
+    border-bottom: 3px solid #78350f;
+    box-shadow: 0 2px 8px -1px rgba(217, 119, 6, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-amber:hover,
+.dark .pos-btn-3d-amber:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+    border-bottom: 4px solid #451a03;
+    box-shadow: 0 4px 14px -2px rgba(217, 119, 6, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-amber:active,
+.dark .pos-btn-3d-amber:active {
+    transform: translateY(1.5px);
     border-bottom: 1.5px solid #78350f;
+}
+
+/* Dark Cyan (Physical Stock Count) */
+.dark .sf-btn-3d-cyan,
+.dark .pos-btn-3d-cyan {
+    background: linear-gradient(180deg, #0891b2 0%, #0e7490 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(34, 211, 238, 0.6);
+    border-bottom: 3px solid #164e63;
+    box-shadow: 0 2px 8px -1px rgba(8, 145, 178, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-cyan:hover,
+.dark .pos-btn-3d-cyan:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #06b6d4 0%, #0891b2 100%);
+    border-bottom: 4px solid #083344;
+    box-shadow: 0 4px 14px -2px rgba(8, 145, 178, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-cyan:active,
+.dark .pos-btn-3d-cyan:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #164e63;
+}
+
+/* Dark Sky (Reconciliation) */
+.dark .sf-btn-3d-sky,
+.dark .pos-btn-3d-sky {
+    background: linear-gradient(180deg, #0284c7 0%, #0369a1 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(56, 189, 248, 0.6);
+    border-bottom: 3px solid #075985;
+    box-shadow: 0 2px 8px -1px rgba(2, 132, 199, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-sky:hover,
+.dark .pos-btn-3d-sky:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
+    border-bottom: 4px solid #0c4a6e;
+    box-shadow: 0 4px 14px -2px rgba(2, 132, 199, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-sky:active,
+.dark .pos-btn-3d-sky:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #075985;
 }
 
 /* Disabled State for all 3D Buttons */
@@ -1044,6 +1649,32 @@ main div.w-full.grid > div {
 .sf-btn-3d-danger[disabled],
 .sf-btn-3d-gold:disabled,
 .sf-btn-3d-gold[disabled],
+.sf-btn-3d-orange:disabled,
+.sf-btn-3d-orange[disabled],
+.sf-btn-3d-accent:disabled,
+.sf-btn-3d-accent[disabled],
+.sf-btn-3d-teal:disabled,
+.sf-btn-3d-teal[disabled],
+.sf-btn-3d-facebook:disabled,
+.sf-btn-3d-facebook[disabled],
+.sf-btn-3d-viber:disabled,
+.sf-btn-3d-viber[disabled],
+.sf-btn-3d-fuchsia:disabled,
+.sf-btn-3d-fuchsia[disabled],
+.sf-btn-3d-telegram:disabled,
+.sf-btn-3d-telegram[disabled],
+.sf-btn-3d-lime:disabled,
+.sf-btn-3d-lime[disabled],
+.sf-btn-3d-slate:disabled,
+.sf-btn-3d-slate[disabled],
+.sf-btn-3d-indigo:disabled,
+.sf-btn-3d-indigo[disabled],
+.sf-btn-3d-amber:disabled,
+.sf-btn-3d-amber[disabled],
+.sf-btn-3d-cyan:disabled,
+.sf-btn-3d-cyan[disabled],
+.sf-btn-3d-sky:disabled,
+.sf-btn-3d-sky[disabled],
 .pos-btn-3d:disabled,
 .pos-btn-3d[disabled],
 .pos-btn-3d-primary:disabled,
@@ -1053,7 +1684,33 @@ main div.w-full.grid > div {
 .pos-btn-3d-danger:disabled,
 .pos-btn-3d-danger[disabled],
 .pos-btn-3d-gold:disabled,
-.pos-btn-3d-gold[disabled] {
+.pos-btn-3d-gold[disabled],
+.pos-btn-3d-orange:disabled,
+.pos-btn-3d-orange[disabled],
+.pos-btn-3d-accent:disabled,
+.pos-btn-3d-accent[disabled],
+.pos-btn-3d-teal:disabled,
+.pos-btn-3d-teal[disabled],
+.pos-btn-3d-facebook:disabled,
+.pos-btn-3d-facebook[disabled],
+.pos-btn-3d-viber:disabled,
+.pos-btn-3d-viber[disabled],
+.pos-btn-3d-fuchsia:disabled,
+.pos-btn-3d-fuchsia[disabled],
+.pos-btn-3d-telegram:disabled,
+.pos-btn-3d-telegram[disabled],
+.pos-btn-3d-lime:disabled,
+.pos-btn-3d-lime[disabled],
+.pos-btn-3d-slate:disabled,
+.pos-btn-3d-slate[disabled],
+.pos-btn-3d-indigo:disabled,
+.pos-btn-3d-indigo[disabled],
+.pos-btn-3d-amber:disabled,
+.pos-btn-3d-amber[disabled],
+.pos-btn-3d-cyan:disabled,
+.pos-btn-3d-cyan[disabled],
+.pos-btn-3d-sky:disabled,
+.pos-btn-3d-sky[disabled] {
     opacity: 0.45 !important;
     cursor: not-allowed !important;
     transform: none !important;

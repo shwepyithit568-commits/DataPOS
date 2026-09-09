@@ -134,11 +134,14 @@ class StaffRoleController extends Controller
             ->values()
             ->toArray();
 
+        $allRoles = StaffRole::where('store_id', $store->id)->orderBy('name')->get();
+
         return view('admin.roles.index', [
             'store'                 => $store,
             'roles'                 => $roles,
             'staffMembers'          => $staffMembers,
             'allRolesForSelect'     => $allRolesForSelect,
+            'allRoles'              => $allRoles,
             'roleTemplates'         => $roleTemplates,
             'metrics'               => $metrics,
             'totalRoles'            => $totalRoles,
@@ -336,13 +339,14 @@ class StaffRoleController extends Controller
 
         $actionMode = $request->input('action_mode', 'select');
 
-        if ($actionMode === 'create_and_assign') {
+        if ($actionMode === 'create_and_assign' || $actionMode === 'update_and_assign') {
             $validated = $request->validate([
                 'user_id'          => [
                     'required',
                     'integer',
                     Rule::exists('store_user', 'user_id')->where('store_id', $store->id),
                 ],
+                'role_id'          => 'nullable|integer',
                 'role_name'        => 'required|string|max:100',
                 'role_description' => 'nullable|string|max:500',
                 'role_color'       => 'nullable|string|max:20',
@@ -367,6 +371,35 @@ class StaffRoleController extends Controller
             // Privilege Ceiling (Plan §6.1)
             if (! $permService->canAssignPermissions($actor, $store, $submittedPermissions)) {
                 abort(422, 'Cannot assign permissions exceeding your own privilege ceiling or protected permissions.');
+            }
+
+            $existingRoleId = !empty($validated['role_id']) ? (int) $validated['role_id'] : null;
+            $existingCustomRole = null;
+            if ($existingRoleId) {
+                $existingCustomRole = StaffRole::where('store_id', $store->id)
+                    ->where('is_system', false)
+                    ->find($existingRoleId);
+            }
+
+            if ($existingCustomRole) {
+                DB::transaction(function () use ($store, $existingCustomRole, $validated, $submittedPermissions) {
+                    $existingCustomRole->update([
+                        'name'        => $validated['role_name'],
+                        'description' => $validated['role_description'] ?? null,
+                        'color'       => $validated['role_color'] ?? $existingCustomRole->color,
+                        'permissions' => $submittedPermissions,
+                        'is_active'   => true,
+                    ]);
+
+                    DB::table('store_user')
+                        ->where('store_id', $store->id)
+                        ->where('user_id', $validated['user_id'])
+                        ->update(['staff_role_id' => $existingCustomRole->id]);
+                });
+
+                \App\Services\StorePermissionService::invalidateCache($store->id, $targetUser->id);
+
+                return back()->with('success', __('messages.role_updated_success'));
             }
 
             $baseSlug = Str::slug($validated['role_name']) ?: 'custom-role';

@@ -119,11 +119,35 @@
                     </template>
                 </div>
 
-                {{-- Price Total Box --}}
-                <div class="pt-2 sm:pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs sm:text-sm">
-                    <span class="font-bold text-slate-700 dark:text-slate-300">{{ __('messages.total_amount') }}:</span>
-                    <span class="text-base sm:text-xl font-black text-[color:var(--sf-primary)] dark:text-[color:var(--sf-primary-hover)] font-sans"
-                          x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency($store.orderBuilder ? $store.orderBuilder.totalAmount : 0) : ($store.orderBuilder ? $store.orderBuilder.totalAmount.toLocaleString() : 0)"></span>
+                {{-- Price Total Box with Commercial Tax --}}
+                @php
+                    $taxEnabled = (bool) ($storeSetting?->getPosSetting('enable_tax', false));
+                    $taxRate = (float) ($storeSetting?->getPosSetting('default_tax_rate', 5));
+                    $taxType = (string) ($storeSetting?->getPosSetting('tax_type', 'exclusive'));
+                @endphp
+                <div class="pt-2 sm:pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5 text-xs sm:text-sm">
+                    @if ($taxEnabled && $taxType === 'exclusive')
+                        <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                            <span>{{ __('messages.subtotal') }}:</span>
+                            <span class="font-mono font-bold"
+                                  x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency($store.orderBuilder ? $store.orderBuilder.totalAmount : 0) : ($store.orderBuilder ? $store.orderBuilder.totalAmount.toLocaleString() : 0)"></span>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                            <span>{{ __('messages.tax') }} ({{ __('messages.commercial_tax') }} {{ $taxRate }}%):</span>
+                            <span class="font-mono font-bold"
+                                  x-text="'+ ' + (typeof window.formatCurrency === 'function' ? window.formatCurrency(Math.round(($store.orderBuilder ? $store.orderBuilder.totalAmount : 0) * {{ $taxRate }} / 100)) : Math.round(($store.orderBuilder ? $store.orderBuilder.totalAmount : 0) * {{ $taxRate }} / 100).toLocaleString())"></span>
+                        </div>
+                    @endif
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-700 dark:text-slate-300">{{ __('messages.total_amount') }}:</span>
+                        <span class="text-base sm:text-xl font-black text-[color:var(--sf-primary)] dark:text-[color:var(--sf-primary-hover)] font-sans"
+                              x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency({{ $taxEnabled && $taxType === 'exclusive' ? 'Math.round(($store.orderBuilder ? $store.orderBuilder.totalAmount : 0) * (1 + ' . ($taxRate / 100) . '))' : '($store.orderBuilder ? $store.orderBuilder.totalAmount : 0)' }}) : ({{ $taxEnabled && $taxType === 'exclusive' ? 'Math.round(($store.orderBuilder ? $store.orderBuilder.totalAmount : 0) * (1 + ' . ($taxRate / 100) . ')).toLocaleString()' : '($store.orderBuilder ? $store.orderBuilder.totalAmount.toLocaleString() : 0)' }})"></span>
+                    </div>
+                    @if ($taxEnabled && $taxType === 'inclusive')
+                        <p class="text-[11px] text-slate-400 dark:text-slate-500 text-right">
+                            ({{ __('messages.tax_inclusive_notice_simple', ['rate' => $taxRate]) }})
+                        </p>
+                    @endif
                 </div>
             </div>
 

@@ -204,7 +204,56 @@ class OrderController extends Controller
             ];
         }
 
-        $order = DB::transaction(function () use ($store, $user, $validated, $pricingType, $totalAmount, $orderItemsData) {
+        $enableTax = (bool) ($store->setting?->getPosSetting('enable_tax', false));
+        $defaultRate = (string) ($store->setting?->getPosSetting('default_tax_rate', 5.0));
+        $taxType = (string) ($store->setting?->getPosSetting('tax_type', 'exclusive'));
+
+        $subtotalAmount = '0';
+        $taxableAmount = '0';
+        $taxTotal = '0';
+
+        foreach ($orderItemsData as &$it) {
+            $lineSubtotal = (string) ($it['subtotal'] ?? 0);
+            $subtotalAmount = bcadd($subtotalAmount, $lineSubtotal, 2);
+
+            $isTaxable = true;
+            $rate = $defaultRate;
+            if (!empty($it['product_id'])) {
+                $p = Product::find($it['product_id']);
+                $isTaxable = (bool) ($p?->is_taxable ?? true);
+                if ($p?->tax_rate !== null) {
+                    $rate = (string) $p->tax_rate;
+                }
+            } else {
+                $isTaxable = false;
+            }
+
+            if ($enableTax && $isTaxable && bccomp($rate, '0', 2) > 0) {
+                $taxableAmount = bcadd($taxableAmount, $lineSubtotal, 2);
+                if ($taxType === 'inclusive') {
+                    $itemTax = bcdiv(bcmul($lineSubtotal, $rate, 4), bcadd('100', $rate, 4), 2);
+                } else {
+                    $itemTax = bcmul($lineSubtotal, bcdiv($rate, '100', 6), 2);
+                }
+                $taxTotal = bcadd($taxTotal, $itemTax, 2);
+                $it['is_taxable'] = true;
+                $it['tax_rate'] = $rate;
+                $it['tax_amount'] = $itemTax;
+            } else {
+                $it['is_taxable'] = false;
+                $it['tax_rate'] = '0';
+                $it['tax_amount'] = '0';
+            }
+        }
+        unset($it);
+
+        if ($enableTax && $taxType === 'exclusive') {
+            $finalTotal = bcadd($subtotalAmount, $taxTotal, 2);
+        } else {
+            $finalTotal = $subtotalAmount;
+        }
+
+        $order = DB::transaction(function () use ($store, $user, $validated, $pricingType, $finalTotal, $taxTotal, $taxType, $taxableAmount, $enableTax, $orderItemsData) {
             $order = Order::create([
                 'store_id' => $store->id,
                 'user_id' => $user?->id,
@@ -216,7 +265,10 @@ class OrderController extends Controller
                 'contact_channel' => $validated['contact_channel'],
                 'contact_identifier' => $validated['contact_identifier'] ?? null,
                 'pricing_type' => $pricingType,
-                'total_amount' => $totalAmount,
+                'total_amount' => $finalTotal,
+                'tax' => $enableTax ? $taxTotal : 0,
+                'tax_type' => $taxType,
+                'taxable_amount' => $taxableAmount,
                 'status' => 'pending_contact',
             ]);
 

@@ -41,6 +41,8 @@ class Product extends Model
         'service_duration',
         'digital_delivery_method',
         'is_ecommerce',
+        'is_taxable',
+        'tax_rate',
     ];
 
     protected $casts = [
@@ -53,12 +55,15 @@ class Product extends Model
         'reorder_level' => 'decimal:3',
         'purchase_cost' => 'decimal:4',
         'is_ecommerce' => 'boolean',
+        'is_taxable' => 'boolean',
+        'tax_rate' => 'decimal:2',
         'specs' => 'array',
     ];
 
     /** Matches the DB default — products are online until marked counter-only. */
     protected $attributes = [
         'is_ecommerce' => true,
+        'is_taxable' => true,
         'product_type' => 'standard',
     ];
 

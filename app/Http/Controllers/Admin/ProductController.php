@@ -602,6 +602,8 @@ class ProductController extends Controller
             'service_duration'=> ['nullable', 'string', 'max:100'],
             'digital_delivery_method' => ['nullable', 'string', 'max:100'],
             'is_ecommerce'    => ['nullable', 'boolean'],
+            'is_taxable'      => ['nullable', 'boolean'],
+            'tax_rate'        => ['nullable', 'numeric', 'min:0', 'max:100'],
             'image'           => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
             'gallery_images'  => ['nullable', 'array', 'max:' . self::MAX_GALLERY_IMAGES],
             'gallery_images.*'=> ['image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
@@ -693,6 +695,8 @@ class ProductController extends Controller
             'digital_delivery_method' => $validated['digital_delivery_method'] ?? null,
             // Hidden 0-input + checkbox: boolean() reflects the checkbox state.
             'is_ecommerce'    => $request->boolean('is_ecommerce', true),
+            'is_taxable'      => $request->boolean('is_taxable', true),
+            'tax_rate'        => ($validated['tax_rate'] ?? '') !== '' ? (float) $validated['tax_rate'] : null,
         ]);
 
         $this->storeGalleryImages($product, $request->file('gallery_images', []));
@@ -779,6 +783,8 @@ class ProductController extends Controller
             'service_duration'=> ['nullable', 'string', 'max:100'],
             'digital_delivery_method' => ['nullable', 'string', 'max:100'],
             'is_ecommerce'    => ['nullable', 'boolean'],
+            'is_taxable'      => ['nullable', 'boolean'],
+            'tax_rate'        => ['nullable', 'numeric', 'min:0', 'max:100'],
             'image'           => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
             'gallery_images'  => ['nullable', 'array', 'max:' . self::MAX_GALLERY_IMAGES],
             'gallery_images.*'=> ['image', 'mimes:png,jpg,jpeg,webp', 'max:' . self::IMAGE_MAX_KB],
@@ -884,6 +890,8 @@ class ProductController extends Controller
             'service_duration'=> $request->has('service_duration') ? ($validated['service_duration'] ?? null) : $product->service_duration,
             'digital_delivery_method' => $request->has('digital_delivery_method') ? ($validated['digital_delivery_method'] ?? null) : $product->digital_delivery_method,
             'is_ecommerce'    => $request->has('is_ecommerce') ? $request->boolean('is_ecommerce') : $product->is_ecommerce,
+            'is_taxable'      => $request->has('is_taxable') ? $request->boolean('is_taxable') : $product->is_taxable,
+            'tax_rate'        => $request->has('tax_rate') ? (($validated['tax_rate'] ?? '') !== '' ? (float) $validated['tax_rate'] : null) : $product->tax_rate,
         ]);
 
         if ($galleryFiles !== []) {

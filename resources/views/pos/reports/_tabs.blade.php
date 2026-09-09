@@ -5,6 +5,7 @@
         'cash'  => ['label' => __('messages.reports_cash'), 'desc' => 'Cashier Shifts, Cash In/Out & Drawer Reconciliation', 'icon' => '💵'],
         'stock' => ['label' => __('messages.reports_stock'), 'desc' => 'On-Hand Inventory Balances, Average Costs & Valuation', 'icon' => '📦'],
         'services' => ['label' => __('messages.reports_services'), 'desc' => 'Service Tickets, Device Repairs & Technician Revenue', 'icon' => '🔧'],
+        'tax' => ['label' => __('messages.reports_commercial_tax'), 'desc' => 'Myanmar Commercial Tax (5%) & IRD Statements', 'icon' => '🏛️'],
         'reconciliation' => ['label' => __('messages.business_reconciliation'), 'desc' => 'Single-Source-of-Truth Stock & Cash Drawer Equation Reconciliation', 'icon' => '⚖️'],
     ];
     $current = $titles[(string) ($active ?? '')] ?? ['label' => __('messages.reports_title'), 'desc' => '', 'icon' => '📊'];
@@ -15,6 +16,7 @@
         'cash'  => ['name' => 'pos.reports.cash', 'label' => __('messages.reports_cash'), 'icon' => '💵'],
         'stock' => ['name' => 'pos.reports.stock', 'label' => __('messages.reports_stock'), 'icon' => '📦'],
         'services' => ['name' => 'pos.reports.services', 'label' => __('messages.reports_services'), 'icon' => '🔧'],
+        'tax' => ['name' => 'pos.reports.tax', 'label' => __('messages.reports_commercial_tax'), 'icon' => '🏛️'],
         'reconciliation' => ['name' => 'pos.reports.reconciliation', 'label' => __('messages.business_reconciliation'), 'icon' => '⚖️'],
     ];
 @endphp
@@ -55,16 +57,5 @@
             </div>
         </div>
     </div>
-
-    {{-- Tabs Navigation Bar --}}
-    <div class="flex items-center gap-1 p-1 bg-slate-200/70 dark:bg-slate-900/80 rounded-lg border border-slate-200/80 dark:border-slate-800 overflow-x-auto shadow-2xs">
-        @foreach ($tabLinks as $tKey => $tab)
-            @php $isActiveTab = ($active === $tKey); @endphp
-            <a href="{{ route($tab['name'], ['store_slug' => $store->slug]) }}"
-               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold whitespace-nowrap transition {{ $isActiveTab ? 'bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/50 dark:hover:bg-slate-800/50' }}">
-                <span>{{ $tab['icon'] }}</span>
-                <span>{{ $tab['label'] }}</span>
-            </a>
-        @endforeach
-    </div>
 </div>
+

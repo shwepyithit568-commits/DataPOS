@@ -23,6 +23,9 @@ class PosSaleItem extends Model
         'quantity',
         'unit_cost',
         'line_total',
+        'is_taxable',
+        'tax_rate',
+        'tax_amount',
     ];
 
     protected $casts = [
@@ -32,6 +35,9 @@ class PosSaleItem extends Model
         'quantity' => 'decimal:3',
         'unit_cost' => 'decimal:4',
         'line_total' => 'decimal:2',
+        'is_taxable' => 'boolean',
+        'tax_rate' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
     ];
 
     public function sale(): BelongsTo

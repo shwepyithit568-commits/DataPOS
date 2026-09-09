@@ -202,6 +202,9 @@
             @if ($phone)
                 <p class="store-meta">{{ $phone }}</p>
             @endif
+            @if ($store->setting?->getPosSetting('show_tax_id') && $store->setting?->getPosSetting('tax_id_number'))
+                <p class="store-meta" style="font-weight:700;letter-spacing:0.3px;">TIN: {{ $store->setting->getPosSetting('tax_id_number') }}</p>
+            @endif
         </div>
 
         <hr class="rule">
@@ -253,23 +256,46 @@
         <hr class="rule">
 
         <div class="totals">
+            @if ((float) $sale->tax > 0 && $sale->tax_type === 'exclusive')
+                <div class="total-row">
+                    <span>{{ __('messages.subtotal') }}</span>
+                    <span>{{ format_currency((float) $sale->subtotal, $store) }}</span>
+                </div>
+                <div class="total-row">
+                    <span>{{ __('messages.tax') }} ({{ __('messages.commercial_tax') }})</span>
+                    <span>+ {{ format_currency((float) $sale->tax, $store) }}</span>
+                </div>
+            @endif
+            @if ((float) $sale->discount > 0)
+                <div class="total-row">
+                    <span>{{ __('messages.discount') }}</span>
+                    <span style="color:#d97706;">− {{ format_currency((float) $sale->discount, $store) }}</span>
+                </div>
+            @endif
+            <div class="total-row grand">
+                <span>{{ __('messages.total') ?? 'စုစုပေါင်း' }}</span>
+                <span>{{ format_currency((float) $sale->total, $store) }}</span>
+            </div>
+            @if ((float) $sale->tax > 0 && $sale->tax_type === 'inclusive')
+                <div class="total-row" style="font-size:10px;color:#64748b;font-style:italic;">
+                    <span>({{ __('messages.commercial_tax') }} Included)</span>
+                    <span>{{ format_currency((float) $sale->tax, $store) }}</span>
+                </div>
+            @endif
+
             @php $balanceDue = $sale->payments->firstWhere('method', 'credit')?->amount ?? '0'; @endphp
             @foreach ($sale->payments as $payment)
-                <div class="total-row">
+                <div class="total-row" style="font-size:11px;color:#475569;">
                     <span>{{ $payment->method === 'credit' ? __('messages.payment_credit') : ucfirst($payment->method) }}</span>
                     <span>{{ format_currency((float) $payment->amount, $store) }}</span>
                 </div>
                 @if ((float) $payment->change_given > 0)
-                    <div class="total-row">
+                    <div class="total-row" style="font-size:11px;">
                         <span>{{ __('messages.change') ?? 'ပြန်အမ်းငွေ' }}</span>
                         <span class="change">− {{ format_currency((float) $payment->change_given, $store) }}</span>
                     </div>
                 @endif
             @endforeach
-            <div class="total-row grand">
-                <span>{{ __('messages.total') ?? 'စုစုပေါင်း' }}</span>
-                <span>{{ format_currency((float) $sale->total, $store) }}</span>
-            </div>
             @if ((float) $balanceDue > 0)
                 <div class="total-row" style="color:#d97706;font-weight:700;">
                     <span>Balance due ({{ __('messages.balance_due') }})</span>

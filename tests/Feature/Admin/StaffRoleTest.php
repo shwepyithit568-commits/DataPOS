@@ -56,6 +56,35 @@ class StaffRoleTest extends TestCase
             'store_id' => $this->store->id,
             'slug'     => 'store_manager',
         ]);
+
+        $cashierRole = StaffRole::where('store_id', $this->store->id)->where('slug', 'cashier')->firstOrFail();
+        $this->assertTrue(in_array('repairs.view', $cashierRole->permissions, true));
+        $this->assertTrue(in_array('repairs.create', $cashierRole->permissions, true));
+        $this->assertTrue(in_array('repairs.update', $cashierRole->permissions, true));
+        $this->assertTrue(in_array('ecommerce_orders.view', $cashierRole->permissions, true));
+        $this->assertTrue(in_array('ecommerce_orders.update', $cashierRole->permissions, true));
+        $this->assertTrue(in_array('warranty.view', $cashierRole->permissions, true));
+        $this->assertTrue(in_array('promotions.view', $cashierRole->permissions, true));
+
+        $managerRole = StaffRole::where('store_id', $this->store->id)->where('slug', 'store_manager')->firstOrFail();
+        $this->assertTrue(in_array('warranty.view', $managerRole->permissions, true));
+        $this->assertTrue(in_array('transactions.view', $managerRole->permissions, true));
+        $this->assertTrue(in_array('price_wizard.view', $managerRole->permissions, true));
+
+        $technicianRole = StaffRole::where('store_id', $this->store->id)->where('slug', 'technician')->firstOrFail();
+        $this->assertTrue(in_array('warranty.view', $technicianRole->permissions, true));
+        $this->assertTrue(in_array('stock_balance.view', $technicianRole->permissions, true));
+        $this->assertTrue(in_array('service_settings.view', $technicianRole->permissions, true));
+
+        $stockKeeperRole = StaffRole::where('store_id', $this->store->id)->where('slug', 'stock_keeper')->firstOrFail();
+        $this->assertTrue(in_array('purchases.create', $stockKeeperRole->permissions, true));
+        $this->assertTrue(in_array('purchase_returns.view', $stockKeeperRole->permissions, true));
+        $this->assertTrue(in_array('spare_parts.view', $stockKeeperRole->permissions, true));
+
+        $accountantRole = StaffRole::where('store_id', $this->store->id)->where('slug', 'accountant')->firstOrFail();
+        $this->assertTrue(in_array('pos_closing.view', $accountantRole->permissions, true));
+        $this->assertTrue(in_array('pos_returns.view', $accountantRole->permissions, true));
+        $this->assertTrue(in_array('reports_services.view', $accountantRole->permissions, true));
     }
 
     public function test_manager_can_create_custom_staff_role(): void
@@ -172,6 +201,54 @@ class StaffRoleTest extends TestCase
             'store_id'      => $this->store->id,
             'user_id'       => $this->staff->id,
             'staff_role_id' => $createdRole->id,
+        ]);
+    }
+
+    public function test_manager_can_edit_existing_assigned_custom_role_without_creating_duplicate(): void
+    {
+        $customRole = StaffRole::create([
+            'store_id'    => $this->store->id,
+            'name'        => 'Special Junior Cashier',
+            'slug'        => 'special-junior-cashier',
+            'color'       => '#10b981',
+            'permissions' => ['pos_sales.view'],
+            'is_system'   => false,
+            'is_active'   => true,
+        ]);
+
+        $this->staff->stores()->updateExistingPivot($this->store->id, [
+            'staff_role_id' => $customRole->id,
+        ]);
+
+        $initialCount = StaffRole::where('store_id', $this->store->id)->count();
+
+        // Updating the assigned custom role via assign_staff with role_id
+        $response = $this->actingAs($this->manager)
+            ->post("/store/{$this->store->slug}/admin/security/roles/assign-staff", [
+                'user_id'          => $this->staff->id,
+                'action_mode'      => 'create_and_assign',
+                'role_id'          => $customRole->id,
+                'role_name'        => 'Special Senior Cashier Updated',
+                'role_description' => 'Updated permissions for Cashier',
+                'role_color'       => '#6366f1',
+                'role_permissions' => ['pos_sales.view', 'pos_sales.edit', 'products.view', 'products.edit'],
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // Verify count of roles did NOT increase (no duplicate created)
+        $this->assertSame($initialCount, StaffRole::where('store_id', $this->store->id)->count());
+
+        $customRole->refresh();
+        $this->assertSame('Special Senior Cashier Updated', $customRole->name);
+        $this->assertSame('#6366f1', $customRole->color);
+        $this->assertEquals(['pos_sales.view', 'pos_sales.edit', 'products.view', 'products.edit'], $customRole->permissions);
+
+        $this->assertDatabaseHas('store_user', [
+            'store_id'      => $this->store->id,
+            'user_id'       => $this->staff->id,
+            'staff_role_id' => $customRole->id,
         ]);
     }
 

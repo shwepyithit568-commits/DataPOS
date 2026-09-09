@@ -688,6 +688,233 @@ h1, h2, h3, h4 {
     border-bottom: 1.5px solid #052c65;
 }
 
+/* Teal 3D Button (Cash Drawer & Accounts) */
+.sf-btn-3d-teal {
+    position: relative;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transform: translateZ(0);
+    transition: transform 120ms ease, border-bottom-width 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%);
+    color: #ffffff !important;
+    border: 1px solid #2dd4bf;
+    border-bottom: 3px solid #0f766e;
+    box-shadow: 0 2px 6px -1px rgba(13, 148, 136, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    text-decoration: none !important;
+}
+.sf-btn-3d-teal:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #2dd4bf 0%, #14b8a6 100%);
+    border-bottom: 4px solid #115e59;
+    box-shadow: 0 4px 12px -2px rgba(13, 148, 136, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-teal:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #0f766e;
+    box-shadow: 0 1px 2px rgba(13, 148, 136, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+.dark .sf-btn-3d-teal {
+    background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%);
+    border: 1px solid rgba(45, 212, 191, 0.6);
+    border-bottom: 3px solid #042f2e;
+}
+.dark .sf-btn-3d-teal:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%);
+    border-bottom: 4px solid #021a19;
+}
+.dark .sf-btn-3d-teal:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #042f2e;
+}
+
+/* Fuchsia 3D Button (Payables & Supplier Accounts) */
+.sf-btn-3d-fuchsia {
+    position: relative;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transform: translateZ(0);
+    transition: transform 120ms ease, border-bottom-width 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #d946ef 0%, #c026d3 100%);
+    color: #ffffff !important;
+    border: 1px solid #e879f9;
+    border-bottom: 3px solid #a21caf;
+    box-shadow: 0 2px 6px -1px rgba(192, 38, 211, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    text-decoration: none !important;
+}
+.sf-btn-3d-fuchsia:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #e879f9 0%, #d946ef 100%);
+    border-bottom: 4px solid #86198f;
+    box-shadow: 0 4px 12px -2px rgba(192, 38, 211, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-fuchsia:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #a21caf;
+}
+.dark .sf-btn-3d-fuchsia {
+    background: linear-gradient(180deg, #c026d3 0%, #a21caf 100%);
+    border: 1px solid rgba(232, 121, 249, 0.6);
+    border-bottom: 3px solid #4a044e;
+}
+.dark .sf-btn-3d-fuchsia:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #d946ef 0%, #c026d3 100%);
+    border-bottom: 4px solid #2a022d;
+}
+.dark .sf-btn-3d-fuchsia:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #4a044e;
+}
+
+/* Lime 3D Button (Stock Adjustments & Transfers) */
+.sf-btn-3d-lime {
+    position: relative;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transform: translateZ(0);
+    transition: transform 120ms ease, border-bottom-width 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #84cc16 0%, #65a30d 100%);
+    color: #ffffff !important;
+    border: 1px solid #a3e635;
+    border-bottom: 3px solid #4d7c0f;
+    box-shadow: 0 2px 6px -1px rgba(101, 163, 13, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    text-decoration: none !important;
+}
+.sf-btn-3d-lime:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #a3e635 0%, #84cc16 100%);
+    border-bottom: 4px solid #3f6212;
+    box-shadow: 0 4px 12px -2px rgba(101, 163, 13, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-lime:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #4d7c0f;
+}
+.dark .sf-btn-3d-lime {
+    background: linear-gradient(180deg, #65a30d 0%, #4d7c0f 100%);
+    border: 1px solid rgba(163, 230, 53, 0.6);
+    border-bottom: 3px solid #1a2e05;
+}
+.dark .sf-btn-3d-lime:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #84cc16 0%, #65a30d 100%);
+    border-bottom: 4px solid #0d1702;
+}
+.dark .sf-btn-3d-lime:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #1a2e05;
+}
+
+/* Slate 3D Button (Audit & Reconciliation) */
+.sf-btn-3d-slate {
+    position: relative;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transform: translateZ(0);
+    transition: transform 120ms ease, border-bottom-width 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #64748b 0%, #475569 100%);
+    color: #ffffff !important;
+    border: 1px solid #94a3b8;
+    border-bottom: 3px solid #334155;
+    box-shadow: 0 2px 6px -1px rgba(71, 85, 105, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    text-decoration: none !important;
+}
+.sf-btn-3d-slate:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+    border-bottom: 4px solid #1e293b;
+    box-shadow: 0 4px 12px -2px rgba(71, 85, 105, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-slate:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #334155;
+}
+.dark .sf-btn-3d-slate {
+    background: linear-gradient(180deg, #475569 0%, #334155 100%);
+    border: 1px solid rgba(148, 163, 184, 0.5);
+    border-bottom: 3px solid #0f172a;
+}
+.dark .sf-btn-3d-slate:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #64748b 0%, #475569 100%);
+    border-bottom: 4px solid #020617;
+}
+.dark .sf-btn-3d-slate:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #0f172a;
+}
+
+/* Indigo 3D Button (Opening Stock & Inventory Setup) */
+.sf-btn-3d-indigo {
+    position: relative;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transform: translateZ(0);
+    transition: transform 120ms ease, border-bottom-width 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff !important;
+    border: 1px solid #818cf8;
+    border-bottom: 3px solid #3730a3;
+    box-shadow: 0 2px 6px -1px rgba(79, 70, 229, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    text-decoration: none !important;
+}
+.sf-btn-3d-indigo:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #818cf8 0%, #6366f1 100%);
+    border-bottom: 4px solid #312e81;
+    box-shadow: 0 4px 12px -2px rgba(79, 70, 229, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-indigo:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #3730a3;
+}
+.dark .sf-btn-3d-indigo {
+    background: linear-gradient(180deg, #4f46e5 0%, #3730a3 100%);
+    border: 1px solid rgba(129, 140, 248, 0.6);
+    border-bottom: 3px solid #1e1b4b;
+}
+.dark .sf-btn-3d-indigo:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+    border-bottom: 4px solid #17153a;
+}
+.dark .sf-btn-3d-indigo:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #1e1b4b;
+}
+
+
 /* ══════════════════════════════════════════════════════
    STOREFRONT TWO-PANE CATEGORY BROWSER (SHOPEE / LAZADA STYLE)
    ══════════════════════════════════════════════════════ */

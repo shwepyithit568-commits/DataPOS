@@ -6,12 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Store;
 use App\POS\Exceptions\InventoryException;
 use App\POS\Models\CashierShift;
+use App\POS\Models\Expense;
+use App\POS\Models\ExpenseCategory;
 use App\POS\Services\CashierShiftService;
 use App\POS\Services\CustomerDebtService;
 use App\POS\Services\PosSaleService;
 use App\Services\StoreContext;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -74,7 +78,113 @@ class CashierShiftController extends Controller
         $outstanding = $this->debts->outstandingCustomers($store);
         $outstandingTotal = array_reduce($outstanding, fn ($carry, $c) => bcadd($carry, $c['balance'], 2), '0');
 
-        return view('pos.index', compact('store', 'openShift', 'occupiedRegisters', 'summary', 'cart', 'cartTotals', 'todaySales', 'outstanding', 'outstandingTotal'));
+        $expenseCategories = ExpenseCategory::query()
+            ->where('store_id', $store->id)
+            ->active()
+            ->ordered()
+            ->get(['id', 'name', 'code']);
+
+        if ($expenseCategories->isEmpty()) {
+            $defaultCats = \Database\Seeders\ExpenseCategorySeeder::DEFAULT_CATEGORIES;
+            foreach ($defaultCats as $cat) {
+                ExpenseCategory::firstOrCreate(
+                    ['store_id' => $store->id, 'code' => $cat['code']],
+                    [
+                        'name' => $cat['name'],
+                        'description' => $cat['description'],
+                        'color' => $cat['color'],
+                        'sort_order' => $cat['sort_order'],
+                        'is_active' => $cat['is_active'],
+                    ]
+                );
+            }
+            $expenseCategories = ExpenseCategory::query()
+                ->where('store_id', $store->id)
+                ->active()
+                ->ordered()
+                ->get(['id', 'name', 'code']);
+        }
+
+        return view('pos.index', compact('store', 'openShift', 'occupiedRegisters', 'summary', 'cart', 'cartTotals', 'todaySales', 'outstanding', 'outstandingTotal', 'expenseCategories'));
+    }
+
+    public function recordExpense(Request $request, StoreContext $context): JsonResponse|RedirectResponse
+    {
+        $store = $context->getStore();
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'amount' => ['required', 'numeric', 'min:0.01', 'max:999999999999'],
+            'expense_category_id' => [
+                'nullable',
+                Rule::exists('expense_categories', 'id')->where('store_id', $store->id),
+            ],
+            'payment_method' => ['required', 'string', 'in:cash,kpay,wave,cbpay,bank_transfer,other'],
+            'paid_to' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $title = trim($data['title']);
+        $amount = (float) $data['amount'];
+        $paymentMethod = $data['payment_method'];
+
+        $expenseNumber = Expense::generateExpenseNumber($store->id);
+
+        $expense = Expense::create([
+            'store_id' => $store->id,
+            'expense_category_id' => ! empty($data['expense_category_id']) ? (int) $data['expense_category_id'] : null,
+            'expense_number' => $expenseNumber,
+            'title' => $title,
+            'amount' => $amount,
+            'expense_date' => now()->toDateString(),
+            'payment_method' => $paymentMethod,
+            'paid_to' => ! empty($data['paid_to']) ? trim($data['paid_to']) : null,
+            'reference_no' => null,
+            'notes' => ! empty($data['notes']) ? trim($data['notes']) : null,
+            'recorded_by' => auth()->id(),
+        ]);
+
+        // If paid in cash and cashier shift tracking is enabled, link cash_out event to current cashier shift
+        $shiftsEnabled = $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS);
+        if ($paymentMethod === 'cash' && $shiftsEnabled) {
+            $openShift = $this->shifts->openShiftFor($store, auth()->user());
+            if ($openShift) {
+                try {
+                    $this->shifts->addCashEvent($openShift, [
+                        'type' => 'cash_out',
+                        'amount' => number_format($amount, 2, '.', ''),
+                        'reason' => 'Expense: ' . $title . ($expense->expense_number ? ' (' . $expense->expense_number . ')' : ''),
+                    ], auth()->user());
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning('Could not record cash_out event for pos expense: ' . $e->getMessage());
+                }
+            }
+        }
+
+        \App\Models\AuditLog::write(
+            storeId: $store->id,
+            action: 'pos_expense_recorded',
+            entityType: 'expense',
+            entityId: $expense->id,
+            metadata: [
+                'expense_number' => $expense->expense_number,
+                'title' => $expense->title,
+                'amount' => (string) $expense->amount,
+                'payment_method' => $expense->payment_method,
+            ],
+            actorId: auth()->id(),
+            ipAddress: $request->ip(),
+        );
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('messages.expense_created_success'),
+                'expense' => $expense,
+            ]);
+        }
+
+        return back()->with('success', __('messages.expense_created_success'));
     }
 
     public function open(Request $request, StoreContext $context): RedirectResponse

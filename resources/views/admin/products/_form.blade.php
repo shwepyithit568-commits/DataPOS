@@ -429,6 +429,41 @@
                     @error('sale_ends_at')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                 </div>
             </div>
+
+            {{-- Commercial Tax (ကုန်သွယ်လုပ်ငန်းခွန်) Settings --}}
+            <div class="pt-2.5 mt-2 border-t border-slate-100 dark:border-slate-800"
+                 x-data="{ isTaxable: {{ old('is_taxable', $product->is_taxable ?? true) ? 'true' : 'false' }} }">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="hidden" name="is_taxable" value="0">
+                            <input type="checkbox" name="is_taxable" value="1" x-model="isTaxable"
+                                   class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700 dark:bg-slate-800 transition">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                {{ __('messages.product_form_taxable_label') }}
+                            </span>
+                        </label>
+                        <p class="{{ $hint }}">
+                            <span x-show="isTaxable" x-cloak>{{ __('messages.product_form_taxable_hint') }}</span>
+                            <span x-show="!isTaxable" x-cloak class="text-amber-600 dark:text-amber-400 font-bold">⚠️ {{ __('messages.product_form_tax_exempt_hint') }}</span>
+                        </p>
+                    </div>
+
+                    <div x-show="isTaxable" x-cloak class="w-full sm:w-64">
+                        <label class="{{ $label }} flex items-center justify-between">
+                            <span>{{ __('messages.product_form_custom_tax_rate') }}</span>
+                            <span class="text-[10px] text-slate-400 font-normal">({{ __('messages.product_form_store_default_note') }})</span>
+                        </label>
+                        <div class="relative">
+                            <input type="number" step="0.1" min="0" max="100" name="tax_rate"
+                                   value="{{ old('tax_rate', $product->tax_rate) }}"
+                                   class="{{ $input }} pr-7"
+                                   placeholder="{{ $store->setting?->getPosSetting('default_tax_rate', 5) }}%" />
+                            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 

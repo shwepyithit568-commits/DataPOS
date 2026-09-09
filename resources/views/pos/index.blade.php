@@ -1,5 +1,32 @@
 @extends('layouts.pos.app')
 
+@section('header_extra')
+    {{-- Reload POS button in Header (3D Teal with Hard Reload cache-bust like Ctrl+Shift+R) --}}
+    <button type="button"
+            x-data="{ reloading: false }"
+            @click="reloading = true; (async () => {
+                if ('caches' in window) {
+                    try {
+                        const keys = await caches.keys();
+                        await Promise.all(keys.map(k => caches.delete(k)));
+                    } catch (e) {}
+                }
+                const u = new URL(window.location.href);
+                u.searchParams.set('_r', Date.now().toString());
+                window.location.replace(u.toString());
+            })()"
+            class="sf-btn-3d-teal shrink-0 w-10 h-10 rounded-xl grid place-items-center cursor-pointer text-white shadow-xs"
+            aria-label="{{ __('messages.pos_reload') }}"
+            title="{{ __('messages.pos_reload') }} 🔄 (Ctrl+Shift+R)">
+        <svg class="w-4 h-4 text-white" :class="reloading ? 'animate-spin' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+            <path d="M16 16h5v5"/>
+        </svg>
+    </button>
+@endsection
+
 @section('content')
     @php
         /** @var array<int, array{customer_id: int, name: string, phone: string|null, balance: string|float, last_activity: string|null}> $outstanding */
@@ -17,6 +44,9 @@
             'low_stock' => __('messages.low_stock'),
             'no_products' => __('messages.pos_no_products'),
             'clear_cart' => __('messages.pos_clear_cart'),
+            'confirm_clear_cart' => __('messages.pos_cart_clear_confirm'),
+            'pos_cart_empty' => __('messages.pos_cart_empty'),
+            'no_held_sales' => __('messages.pos_no_held_sales'),
             'cart' => __('messages.cart'),
             'resumed' => __('messages.sale_resumed'),
             'voided' => __('messages.sale_voided'),
@@ -40,23 +70,105 @@
             'pos_price_pin_invalid' => __('messages.pos_price_pin_invalid'),
             'pos_price_pin_label' => __('messages.pos_price_pin_label'),
             'web_order_imported' => __('messages.web_order_imported'),
+            'expense_created_success' => __('messages.expense_created_success'),
+            'pos_expense_saving' => __('messages.pos_expense_saving'),
+            'pos_reload' => __('messages.pos_reload'),
+            'pos_reloaded' => __('messages.pos_reloaded'),
         ];
 
-        // Module links row — high-frequency daily operation links with inline SVG icons.
-        $moduleLinks = [
-            ['pos/closing', 'pos_mod_closing', '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4"/>'],
-            ['admin/expenses', 'pos_mod_expenses', '<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>'],
-            ['pos/reports/sales', 'pos_mod_sales', '<path d="M18 20V10M12 20V4M6 20v-6"/>'],
-            ['pos/reports/cash', 'pos_mod_cash', '<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>'],
-            ['pos/reports/stock', 'pos_mod_stock', '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>'],
-            ['pos/purchases', 'pos_mod_purchases', '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>'],
-            ['pos/purchases/payables', 'pos_mod_payables', '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>'],
-            ['admin/products', 'pos_mod_products', '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>'],
-            ['admin/orders', 'pos_mod_orders', '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>'],
-            ['pos/adjustments', 'pos_mod_adjustments', '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-3-3 2.4-2.4Z"/>'],
-            ['pos/reconciliation', 'pos_mod_reconciliation', '<path d="M12 3v18M5 7h14M7.5 7 5 11a2.5 2.5 0 0 0 5 0L7.5 7Zm9 0L14 11a2.5 2.5 0 0 0 5 0l-2.5-4ZM8.5 21h7"/>'],
-            ['pos/opening-stock', 'pos_mod_opening_stock', '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/>'],
-        ];
+        // Module links row — authentic 3D tactile color-coded high-frequency buttons with inline SVG icons.
+        $moduleLinks = [];
+
+        if ($store->hasCapability(\App\Capabilities\Capability::SERVICE_REPAIR_JOBS)) {
+            $moduleLinks[] = [
+                'path' => 'admin/service-jobs/create',
+                'label' => 'pos_mod_services',
+                'btn_3d' => 'sf-btn-3d-orange',
+                'icon' => '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+                'is_action' => false,
+                'target_blank' => true,
+            ];
+        }
+
+        $moduleLinks = array_merge($moduleLinks, [
+            [
+                'path' => 'admin/expenses',
+                'label' => 'pos_mod_expenses',
+                'btn_3d' => 'sf-btn-3d-gold',
+                'icon' => '<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>',
+                'is_action' => 'expense',
+            ],
+            [
+                'path' => 'pos/reports/sales',
+                'label' => 'pos_mod_sales',
+                'btn_3d' => 'sf-btn-3d-success',
+                'icon' => '<path d="M18 20V10M12 20V4M6 20v-6"/>',
+                'is_action' => false,
+            ],
+            [
+                'path' => 'pos/returns',
+                'label' => 'pos_mod_returns',
+                'btn_3d' => 'sf-btn-3d-danger',
+                'icon' => '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>',
+                'is_action' => false,
+            ],
+            [
+                'path' => 'admin/customers',
+                'label' => 'pos_mod_customers',
+                'btn_3d' => 'sf-btn-3d-primary',
+                'icon' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+                'is_action' => false,
+            ],
+            [
+                'path' => 'pos/reports/cash',
+                'label' => 'pos_mod_cash',
+                'btn_3d' => 'sf-btn-3d-teal',
+                'icon' => '<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>',
+                'is_action' => false,
+            ],
+            [
+                'path' => 'pos/reports/stock',
+                'label' => 'pos_mod_stock',
+                'btn_3d' => 'sf-btn-3d-accent',
+                'icon' => '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>',
+                'is_action' => false,
+            ],
+            [
+                'path' => 'admin/products',
+                'label' => 'pos_mod_products',
+                'btn_3d' => 'sf-btn-3d-facebook',
+                'icon' => '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+                'is_action' => false,
+            ],
+            [
+                'path' => 'pos/purchases',
+                'label' => 'pos_mod_purchases',
+                'btn_3d' => 'sf-btn-3d-viber',
+                'icon' => '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>',
+                'is_action' => false,
+            ],
+            [
+                'path' => 'pos/purchases/payables',
+                'label' => 'pos_mod_payables',
+                'btn_3d' => 'sf-btn-3d-fuchsia',
+                'icon' => '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
+                'is_action' => false,
+            ],
+            [
+                'path' => 'admin/orders',
+                'label' => 'pos_mod_orders',
+                'btn_3d' => 'sf-btn-3d-telegram',
+                'icon' => '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+                'is_action' => false,
+            ],
+            [
+                'path' => 'pos/opening-stock',
+                'label' => 'pos_mod_opening_stock',
+                'btn_3d' => 'sf-btn-3d-indigo',
+                'icon' => '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/>',
+                'is_action' => false,
+            ],
+        ]);
     @endphp
 
     <div class="space-y-1"
@@ -66,6 +178,7 @@
              labels: {{ \Illuminate\Support\Js::from($posLabels) }},
              shiftsEnabled: {{ $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS) ? 'true' : 'false' }}
          })"
+         @pos:reload.window="reloadPos()"
          x-init="init()">
 
         {{-- Toast notice (AJAX feedback) --}}
@@ -137,17 +250,229 @@
             </div>
         </div>
 
+        {{-- Shop Expense Modal (quick cash-out / daily store expense) --}}
+        <div x-show="expenseModalOpen" x-cloak class="fixed inset-0 z-[95] grid place-items-center p-3 sm:p-4"
+             @keydown.escape.window="expenseModalOpen = false">
+            <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="expenseModalOpen = false"></div>
+            <div class="relative w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xl space-y-3.5 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 grid place-items-center">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-black text-slate-900 dark:text-slate-100">{{ __('messages.pos_expense_modal_title') }}</h3>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ __('messages.expenses_subtitle') }}</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="expenseModalOpen = false"
+                            class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition">✕</button>
+                </div>
+
+                {{-- Quick Expense Title Chips --}}
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">{{ __('messages.pos_expense_quick_title') }}</label>
+                    <div class="flex flex-wrap gap-1.5">
+                        @foreach (['သောက်ရေသန့်', 'Delivery / ပို့ခ', 'မုန့်ဖိုး / လက်ဖက်ရည်', 'ဆိုင်သုံးပစ္စည်း', 'ဖုန်းဘေလ်'] as $quickTitle)
+                            <button type="button" @click="setQuickExpense('{{ $quickTitle }}')"
+                                    class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-950/50 hover:text-amber-700 dark:hover:text-amber-300 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700 transition">
+                                {{ $quickTitle }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Title / Reason --}}
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.expense_title') }} <span class="text-rose-500">*</span></label>
+                    <input type="text" x-model="expenseTitle" x-ref="expenseTitleInput" @keydown.enter="$refs.expenseAmountInput?.focus()"
+                           class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-amber-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition"
+                           placeholder="{{ __('messages.expense_title') }}">
+                </div>
+
+                {{-- Amount & Quick Amount Chips --}}
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.expense_amount') }} <span class="text-rose-500">*</span></label>
+                    <input type="number" step="any" min="0" x-model="expenseAmount" x-ref="expenseAmountInput" @keydown.enter="submitExpense()"
+                           class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 text-sm font-mono font-bold focus:ring-2 focus:ring-amber-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition"
+                           placeholder="0">
+                    <div class="flex flex-wrap gap-1 mt-2">
+                        @foreach ([1000, 2000, 3000, 5000, 10000, 20000, 50000] as $chipAmt)
+                            <button type="button" @click="setQuickExpenseAmount({{ $chipAmt }})"
+                                    class="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition">
+                                {{ number_format($chipAmt) }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Category & Payment Method Grid --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.expense_categories_title') }}</label>
+                        <select x-model="expenseCategoryId"
+                                class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-amber-500 outline-none transition">
+                            <option value="">-- {{ __('messages.expense_all_categories') }} --</option>
+                            @if (isset($expenseCategories))
+                                @foreach ($expenseCategories as $category)
+                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.expense_payment_method') }}</label>
+                        <select x-model="expensePaymentMethod"
+                                class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-amber-500 outline-none transition">
+                            <option value="cash">{{ __('messages.cash') }}</option>
+                            <option value="kpay">KBZPay</option>
+                            <option value="wave">WavePay</option>
+                            <option value="cbpay">CB Pay</option>
+                            <option value="bank_transfer">{{ __('messages.bank_transfer') }}</option>
+                            <option value="other">{{ __('messages.other') }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                {{-- Cash Shift sync notice --}}
+                <div x-show="expensePaymentMethod === 'cash' && shiftsEnabled" x-cloak
+                     class="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-[11px] font-medium text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                    <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>{{ __('messages.pos_expense_shift_cash_sync') }}</span>
+                </div>
+
+                {{-- Optional Paid To & Notes --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.expense_paid_to') }}</label>
+                        <input type="text" x-model="expensePaidTo"
+                               class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none transition"
+                               placeholder="{{ __('messages.expense_paid_to') }}">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.expense_notes') }}</label>
+                        <input type="text" x-model="expenseNotes"
+                               class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-amber-500 outline-none transition"
+                               placeholder="{{ __('messages.expense_notes') }}">
+                    </div>
+                </div>
+
+                {{-- Action Buttons --}}
+                <div class="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" @click="expenseModalOpen = false"
+                            class="sf-btn-3d flex-1 rounded-xl px-4 py-2.5 text-sm font-bold cursor-pointer">{{ __('messages.cancel') }}</button>
+                    <button type="button" @click="submitExpense()" :disabled="expenseBusy || !expenseTitle.trim() || !expenseAmount"
+                            class="sf-btn-3d-primary flex-1 rounded-xl px-4 py-2.5 text-sm font-black disabled:opacity-50 transition flex items-center justify-center gap-2 cursor-pointer !bg-amber-600 hover:!bg-amber-500 !border-amber-700 text-white shadow-amber-900/30">
+                        <svg x-show="expenseBusy" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                        <span x-text="expenseBusy ? (labels.pos_expense_saving || '{{ __('messages.pos_expense_saving') }}') : '{{ __('messages.save') }}'"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Discount Modal (order-level discount: amount or percentage) --}}
+        <div x-show="discountModalOpen" x-cloak class="fixed inset-0 z-[95] grid place-items-center p-3 sm:p-4"
+             @keydown.escape.window="discountModalOpen = false">
+            <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="discountModalOpen = false"></div>
+            <div class="relative w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 grid place-items-center">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-black text-slate-900 dark:text-slate-100">{{ __('messages.order_discount') }}</h3>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                {{ __('messages.subtotal') }}: <span class="font-extrabold text-slate-700 dark:text-slate-200" x-text="formatCurrency(cart.totals.subtotal)"></span>
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" @click="discountModalOpen = false"
+                            class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer">✕</button>
+                </div>
+
+                {{-- Type Switcher: Fixed Amount vs Percentage --}}
+                <div class="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800">
+                    <button type="button" @click="discountType = 'fixed'"
+                            :class="discountType === 'fixed' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm font-black' : 'text-slate-600 dark:text-slate-400 font-semibold'"
+                            class="py-2 rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5">
+                        <span x-text="window.__currencyConfig?.currency_symbol || 'Ks'"></span>
+                        <span>{{ __('messages.amount') }}</span>
+                    </button>
+                    <button type="button" @click="discountType = 'percent'"
+                            :class="discountType === 'percent' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm font-black' : 'text-slate-600 dark:text-slate-400 font-semibold'"
+                            class="py-2 rounded-lg text-xs transition cursor-pointer flex items-center justify-center gap-1.5">
+                        <span>%</span>
+                        <span>{{ __('messages.percentage') }}</span>
+                    </button>
+                </div>
+
+                {{-- Quick percentage buttons --}}
+                <div x-show="discountType === 'percent'" class="space-y-1.5">
+                    <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400">{{ __('messages.quick_discount') }}</label>
+                    <div class="grid grid-cols-4 gap-1.5">
+                        @foreach ([5, 10, 15, 20] as $pct)
+                            <button type="button" @click="setQuickDiscountPercent({{ $pct }})"
+                                    class="sf-btn-3d py-2 rounded-xl text-xs font-black text-slate-700 dark:text-slate-200 transition cursor-pointer">
+                                {{ $pct }}%
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Input field --}}
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1"
+                           x-text="discountType === 'percent' ? '{{ __('messages.discount_rate') }} (%)' : '{{ __('messages.discount_amount') }}'"></label>
+                    <div class="relative">
+                        <input id="pos-discount-input"
+                               type="number"
+                               step="any"
+                               min="0"
+                               x-ref="discountInput"
+                               x-model="discountValue"
+                               @keydown.enter.prevent="applyDiscount()"
+                               class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3.5 py-2.5 text-base font-extrabold tabular-nums focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition"
+                               :placeholder="discountType === 'percent' ? '0%' : '0'">
+                        <span class="absolute right-3.5 top-2.5 text-xs font-extrabold text-slate-400 pointer-events-none"
+                              x-text="discountType === 'percent' ? '%' : (window.__currencyConfig?.currency_symbol || 'Ks')"></span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1" x-show="discountType === 'percent' && Number(discountValue) > 0">
+                        {{ __('messages.discount') }}: <span class="font-bold text-rose-600 dark:text-rose-400" x-text="formatCurrency(Math.round((Number(cart.totals.subtotal || 0) * (Number(discountValue) / 100)) * 100) / 100)"></span>
+                    </p>
+                </div>
+
+                {{-- Action Buttons --}}
+                <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" @click="clearDiscount()" x-show="Number(cart.totals.discount) > 0"
+                            class="sf-btn-3d-danger px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer">
+                        {{ __('messages.clear_discount') }}
+                    </button>
+                    <button type="button" @click="discountModalOpen = false"
+                            class="sf-btn-3d flex-1 rounded-xl px-4 py-2.5 text-xs font-bold cursor-pointer">
+                        {{ __('messages.cancel') }}
+                    </button>
+                    <button type="button" @click="applyDiscount()" :disabled="discountBusy || !discountValue"
+                            class="sf-btn-3d-primary flex-1 rounded-xl px-4 py-2.5 text-xs font-black disabled:opacity-50 transition flex items-center justify-center gap-1.5 cursor-pointer text-white">
+                        <svg x-show="discountBusy" class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                        <span>{{ __('messages.apply_discount') }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         {{-- Flash messages --}}
         @if (session('success'))
             <div class="rounded-xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-4 py-3 text-sm font-semibold">
                 <svg class="inline w-4 h-4 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                 {{ session('success') }}
                 @if (session('posted_receipt'))
-                    <span class="block mt-1 text-xs font-mono">#{{ session('posted_receipt') }} · {{ __('messages.change') }}: Ks {{ number_format((float) session('posted_change')) }}</span>
+                    <span class="block mt-1 text-xs font-mono">#{{ session('posted_receipt') }} · {{ __('messages.change') }}: {{ format_currency((float) session('posted_change'), $store) }}</span>
                     @if (session('posted_debt'))
                         <span class="block mt-1 text-xs font-bold text-amber-600 dark:text-amber-400">
                             <svg class="inline w-3.5 h-3.5 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-                            {{ __('messages.balance_due') }}: Ks {{ number_format((float) session('posted_debt')) }}
+                            {{ __('messages.balance_due') }}: {{ format_currency((float) session('posted_debt'), $store) }}
                         </span>
                     @endif
                     @if (session('posted_sale_id'))
@@ -206,7 +531,7 @@
                                        placeholder="{{ __('messages.register_name_placeholder') }}">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">{{ __('messages.opening_cash') }} (Ks)</label>
+                                <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">{{ __('messages.opening_cash') }}</label>
                                 <input type="number" name="opening_cash" min="0" step="100" value="{{ old('opening_cash', 0) }}"
                                        class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm">
                             </div>
@@ -285,12 +610,21 @@
                             <span class="px-2 py-0.5 rounded-full bg-amber-500 text-white text-xs font-black" x-text="cart.held_count"></span>
                         </button>
                         <div class="grid grid-cols-2 gap-2 pt-1">
-                            @foreach ($moduleLinks as [$path, $label, $icon])
-                                <a href="{{ url('/store/' . $store->slug . '/' . $path) }}"
-                                   class="min-h-12 rounded-xl px-3 py-2.5 text-xs font-bold border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 text-slate-700 dark:text-slate-200 flex items-center gap-2 hover:border-blue-400 hover:text-blue-600 transition">
-                                    <svg class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $icon !!}</svg>
-                                    <span class="truncate">{{ __('messages.' . $label) }}</span>
-                                </a>
+                            @foreach ($moduleLinks as $link)
+                                @if (!empty($link['is_action']))
+                                    <button type="button" @click="fsOpen = false; openExpenseModal()"
+                                            class="{{ $link['btn_3d'] }} min-h-12 rounded-xl px-3 py-2.5 text-xs font-bold text-left cursor-pointer flex items-center gap-2 text-white shadow-xs">
+                                        <svg class="w-4 h-4 shrink-0 text-white/95" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $link['icon'] !!}</svg>
+                                        <span class="truncate text-white">{{ __('messages.' . $link['label']) }}</span>
+                                    </button>
+                                @else
+                                    <a href="{{ url('/store/' . $store->slug . '/' . $link['path']) }}"
+                                       @if (!empty($link['target_blank'])) target="_blank" rel="noopener noreferrer" @endif
+                                       class="{{ $link['btn_3d'] }} min-h-12 rounded-xl px-3 py-2.5 text-xs font-bold flex items-center gap-2 text-white shadow-xs">
+                                        <svg class="w-4 h-4 shrink-0 text-white/95" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $link['icon'] !!}</svg>
+                                        <span class="truncate text-white">{{ __('messages.' . $link['label']) }}</span>
+                                    </a>
+                                @endif
                             @endforeach
                         </div>
                     </div>
@@ -373,12 +707,12 @@
                                 <template x-for="(item, i) in order.items" :key="i">
                                     <p class="text-xs text-slate-600 dark:text-slate-300 flex justify-between gap-2">
                                         <span class="min-w-0 truncate" x-text="'×' + item.quantity + '  ' + item.name"></span>
-                                        <span class="shrink-0 font-mono tabular-nums" x-text="'Ks ' + Number(item.unit_price).toLocaleString()"></span>
+                                        <span class="shrink-0 font-mono tabular-nums" x-text="formatCurrency(item.unit_price)"></span>
                                     </p>
                                 </template>
                             </div>
                             <div class="mt-2.5 flex items-center justify-between gap-2">
-                                <p class="text-sm font-black text-slate-900 dark:text-slate-100 tabular-nums" x-text="'Ks ' + Number(order.total).toLocaleString()"></p>
+                                <p class="text-sm font-black text-slate-900 dark:text-slate-100 tabular-nums" x-text="formatCurrency(order.total)"></p>
                                 <button type="button" @click="importWebOrder(order)"
                                         class="sf-btn-3d-primary min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-black cursor-pointer">
                                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
@@ -407,7 +741,7 @@
                         <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                         </span>
-                        <input type="text" x-ref="mobileSearchInput" x-model="q" @input="onSearch()" @keydown.enter.prevent="loadGrid()"
+                        <input id="pos-mobile-search-input" type="text" x-ref="mobileSearchInput" x-model="q" @input="onSearch()" @keydown.enter.prevent="loadGrid(true)" @keydown.escape.prevent="if (q) { q = ''; loadGrid(); }"
                                placeholder="{{ __('messages.pos_search_placeholder') }}"
                                class="w-full h-11 rounded-xl border border-blue-600/20 dark:border-blue-500/20 bg-slate-50 dark:bg-slate-800 pl-10 pr-3 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
@@ -419,11 +753,25 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/><path d="M7 8h10"/><path d="M7 16h10"/></svg>
                     </button>
 
+                    {{-- Reload POS (3D) --}}
+                    <button type="button" @click="reloadPos()"
+                            class="sf-btn-3d-teal shrink-0 w-11 h-11 rounded-xl transition grid place-items-center cursor-pointer"
+                            title="{{ __('messages.pos_reload') }} 🔄"
+                            :disabled="gridLoading">
+                        <svg class="w-4 h-4 text-white" :class="gridLoading ? 'animate-spin' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                            <path d="M3 3v5h5"/>
+                            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                            <path d="M16 16h5v5"/>
+                        </svg>
+                    </button>
+
                     @if ($store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS))
-                    {{-- Shift status --}}
+                    {{-- Shift status (Mobile) --}}
                     <button type="button" @click="if (shiftOpen) { switchTab('registers'); $nextTick(() => document.getElementById('pos-shift-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } else { window.dispatchEvent(new CustomEvent('pos:open-register')); }"
-                            class="sf-btn-3d shrink-0 inline-flex items-center justify-center min-h-11 px-3 gap-1.5 rounded-xl text-[11px] font-black uppercase tracking-wide cursor-pointer">
-                        <span class="w-2 h-2 rounded-full shrink-0" :class="shiftOpen ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'"></span>
+                            class="shrink-0 inline-flex items-center justify-center min-h-11 px-3 gap-1.5 rounded-xl text-[11px] font-black uppercase tracking-wide cursor-pointer text-white shadow-xs"
+                            :class="shiftOpen ? 'sf-btn-3d-success' : 'sf-btn-3d-gold'">
+                        <span class="w-2 h-2 rounded-full shrink-0 bg-white" :class="shiftOpen ? 'animate-pulse' : ''"></span>
                         <span x-text="shiftOpen ? '{{ __('messages.pos_shift_active') }}' : '{{ __('messages.pos_shift_required') }}'"></span>
                     </button>
 
@@ -461,8 +809,9 @@
                         @if ($store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS))
                         {{-- Shift status pill --}}
                         <button type="button" @click="if (shiftOpen) { switchTab('registers'); $nextTick(() => document.getElementById('pos-shift-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } else { window.dispatchEvent(new CustomEvent('pos:open-register')); }"
-                                class="sf-btn-3d shrink-0 inline-flex items-center gap-2 h-9 px-3 rounded-xl text-xs font-black uppercase tracking-wide cursor-pointer whitespace-nowrap">
-                            <span class="w-2 h-2 rounded-full shrink-0" :class="shiftOpen ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'"></span>
+                                class="shrink-0 inline-flex items-center gap-2 h-9 px-3 rounded-xl text-xs font-black uppercase tracking-wide cursor-pointer whitespace-nowrap text-white shadow-xs"
+                                :class="shiftOpen ? 'sf-btn-3d-success' : 'sf-btn-3d-gold'">
+                            <span class="w-2 h-2 rounded-full shrink-0 bg-white" :class="shiftOpen ? 'animate-pulse' : ''"></span>
                             <span x-text="shiftOpen ? '{{ __('messages.pos_shift_active') }}' : '{{ __('messages.pos_shift_required') }}'"></span>
                         </button>
 
@@ -489,8 +838,8 @@
 
                         {{-- နေ့စဉ် အရောင်းပိတ် (Daily closing) --}}
                         <a href="{{ url('/store/' . $store->slug . '/pos/closing') }}"
-                           class="sf-btn-3d shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap">
-                            <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           class="sf-btn-3d-danger shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap text-white shadow-xs">
+                            <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4"/>
                             </svg>
                             <span>{{ __('messages.closing_title') }}</span>
@@ -544,12 +893,21 @@
 
             {{-- Row 1: More / Quick Module Links (horizontal chip-scroll) --}}
             <x-pos.chip-scroll :label="__('messages.pos_more')" variant="chips" class="bg-slate-50/60 dark:bg-slate-800/30 rounded-t-2xl">
-                @foreach ($moduleLinks as [$path, $label, $icon])
-                    <a href="{{ url('/store/' . $store->slug . '/' . $path) }}"
-                       class="sf-btn-3d shrink-0 snap-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition">
-                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $icon !!}</svg>
-                        {{ __('messages.' . $label) }}
-                    </a>
+                @foreach ($moduleLinks as $link)
+                    @if (!empty($link['is_action']))
+                        <button type="button" @click="openExpenseModal()"
+                                class="{{ $link['btn_3d'] }} shrink-0 snap-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer text-white shadow-xs">
+                            <svg class="w-3.5 h-3.5 shrink-0 text-white/95" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $link['icon'] !!}</svg>
+                            <span class="text-white">{{ __('messages.' . $link['label']) }}</span>
+                        </button>
+                    @else
+                        <a href="{{ url('/store/' . $store->slug . '/' . $link['path']) }}"
+                           @if (!empty($link['target_blank'])) target="_blank" rel="noopener noreferrer" @endif
+                           class="{{ $link['btn_3d'] }} shrink-0 snap-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer text-white shadow-xs">
+                            <svg class="w-3.5 h-3.5 shrink-0 text-white/95" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $link['icon'] !!}</svg>
+                            <span class="text-white">{{ __('messages.' . $link['label']) }}</span>
+                        </a>
+                    @endif
                 @endforeach
             </x-pos.chip-scroll>
 
@@ -566,7 +924,7 @@
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                             </span>
-                            <input type="text" x-ref="searchInput" x-model="q" @input="onSearch()" @keydown.enter.prevent="loadGrid()"
+                            <input id="pos-search-input" type="text" x-ref="searchInput" x-model="q" @input="onSearch()" @keydown.enter.prevent="loadGrid(true)" @keydown.escape.prevent="if (q) { q = ''; loadGrid(); }"
                                    placeholder="{{ __('messages.pos_search_placeholder') }}"
                                    class="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/60 pl-9 pr-11 text-xs font-bold placeholder:font-semibold focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition">
                             <span class="hidden sm:inline absolute right-2 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded-md bg-blue-600/10 text-blue-600 dark:text-blue-400 text-[9px] font-black">F1</span>
@@ -741,7 +1099,7 @@
             <span class="w-px h-4 bg-slate-200 dark:bg-slate-700 shrink-0"></span>
             <span class="inline-flex items-center gap-1.5 shrink-0">
                 <svg class="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-                <span class="text-emerald-700 dark:text-emerald-400 font-extrabold">Ks {{ number_format($todayTotal) }}</span>
+                <span class="text-emerald-700 dark:text-emerald-400 font-extrabold">{{ format_currency($todayTotal, $store) }}</span>
             </span>
             <span class="w-px h-4 bg-slate-200 dark:bg-slate-700 shrink-0"></span>
             <span class="inline-flex items-center gap-1.5 shrink-0 text-slate-500 dark:text-slate-400">
@@ -752,7 +1110,7 @@
         @endif
 
         {{-- ── Two-panel: product grid (left) + cart (right) ─────────────── --}}
-        <div class="grid gap-1 lg:grid-cols-[minmax(0,1fr)_400px] items-start">
+        <div class="grid gap-1 lg:grid-cols-[minmax(0,1fr)_460px] xl:grid-cols-[minmax(0,1fr)_500px] 2xl:grid-cols-[minmax(0,1fr)_540px] items-start">
 
             {{-- LEFT: product grid --}}
             <section class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 shadow-sm min-w-0"
@@ -788,7 +1146,7 @@
                 {{-- Product cards (grid / list mode) --}}
                 {{-- GRID MODE (Mobile: 2 columns, Tablet: 3-4 columns, Desktop: 5 columns) --}}
                 <div x-show="gridMode !== 'list'"
-                     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 min-[1350px]:grid-cols-5 2xl:grid-cols-5 gap-0.5 max-h-[58vh] overflow-y-auto pr-1 pb-1">
+                     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 min-[1350px]:grid-cols-5 2xl:grid-cols-6 min-[1900px]:grid-cols-7 gap-0.5 max-h-[58vh] overflow-y-auto pr-1 pb-1">
                     <template x-for="p in products" :key="p.id">
                         <div class="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden p-2 flex flex-col justify-between transition hover:shadow-md hover:-translate-y-0.5 active:scale-[.98]"
                              :class="parseFloat(p.balance) > 0 ? '' : 'opacity-55'">
@@ -823,13 +1181,13 @@
                                 <div class="mt-1.5 flex items-end justify-between gap-1.5">
                                     <div class="min-w-0">
                                         {{-- Retail/walk-in: show the sale (old) price struck through --}}
-                                        <p class="text-[10px] text-rose-500 font-bold line-through truncate" x-show="p.tier !== 'wholesale' && p.old_price && parseFloat(p.old_price) > parseFloat(p.price)" x-text="'Ks ' + Number(p.old_price).toLocaleString()"></p>
+                                        <p class="text-[10px] text-rose-500 font-bold line-through truncate" x-show="p.tier !== 'wholesale' && p.old_price && parseFloat(p.old_price) > parseFloat(p.price)" x-text="formatCurrency(p.old_price)"></p>
                                         {{-- Wholesale tier: strike the retail price the shopper is NOT paying --}}
-                                        <p class="text-[10px] text-rose-500 font-bold line-through truncate" x-show="p.tier === 'wholesale' && parseFloat(p.retail_price) > parseFloat(p.price)" x-text="'Ks ' + Number(p.retail_price).toLocaleString()"></p>
-                                        <p class="text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400 leading-tight" x-text="'Ks ' + Number(p.price).toLocaleString()"></p>
+                                        <p class="text-[10px] text-rose-500 font-bold line-through truncate" x-show="p.tier === 'wholesale' && parseFloat(p.retail_price) > parseFloat(p.price)" x-text="formatCurrency(p.retail_price)"></p>
+                                        <p class="text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400 leading-tight" x-text="formatCurrency(p.price)"></p>
                                         <p class="text-[9px] font-black text-amber-600 dark:text-amber-400 truncate"
                                            x-show="p.tier === 'wholesale' && parseFloat(p.retail_price) > parseFloat(p.price)"
-                                           x-text="'−Ks ' + (parseFloat(p.retail_price) - parseFloat(p.price)).toLocaleString()"></p>
+                                           x-text="'−' + formatCurrency(parseFloat(p.retail_price) - parseFloat(p.price))"></p>
                                     </div>
                                     <button type="button" @click="addProduct(p)" :disabled="parseFloat(p.balance) <= 0"
                                             class="sf-btn-3d-primary shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg grid place-items-center cursor-pointer"
@@ -867,7 +1225,7 @@
                                   :class="stockPillClass(p.balance)"
                                   x-text="stockPillText(p.balance)"></span>
                             {{-- Price --}}
-                            <p class="shrink-0 text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400 tabular-nums" x-text="'Ks ' + Number(p.price).toLocaleString()"></p>
+                            <p class="shrink-0 text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400 tabular-nums" x-text="formatCurrency(p.price)"></p>
                             {{-- Add button --}}
                             <button type="button" @click="addProduct(p)" :disabled="parseFloat(p.balance) <= 0"
                                     class="sf-btn-3d-primary shrink-0 w-8 h-8 rounded-lg grid place-items-center cursor-pointer"
@@ -962,7 +1320,7 @@
                 <div class="hidden max-lg:flex items-center justify-between gap-3 px-4 pb-3 pt-2 border-b border-slate-100 dark:border-slate-800">
                     <p class="text-sm font-black uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ __('messages.pos_cart_title') }}</p>
                     <div class="flex items-center gap-2">
-                        <span class="px-2.5 py-1 rounded-full text-xs font-black bg-blue-600/10 text-blue-600 dark:text-blue-400" x-text="cart.lines.length + ' · Ks ' + Number(cart.totals.total).toLocaleString()"></span>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-black bg-blue-600/10 text-blue-600 dark:text-blue-400" x-text="cart.lines.length + ' · ' + formatCurrency(cart.totals.total)"></span>
                         <button type="button" @click="mobileCartOpen = false" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition">✕</button>
                     </div>
                 </div>
@@ -1004,7 +1362,7 @@
                                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
                                     {{ __('messages.outstanding_debt') }}:
                                 </span>
-                                <span class="font-black text-amber-700 dark:text-amber-400 font-mono" x-text="'Ks ' + Number(customer.balance).toLocaleString()"></span>
+                                <span class="font-black text-amber-700 dark:text-amber-400 font-mono" x-text="formatCurrency(customer.balance)"></span>
                             </div>
                         </template>
                     </div>
@@ -1032,10 +1390,12 @@
                         <div class="relative" @click.outside="copen = false">
                             <div class="relative flex items-center">
                                 <span class="absolute left-3 text-slate-400 pointer-events-none text-xs">🔍</span>
-                                <input type="text" x-ref="customerInput" x-model="cq"
+                                <input id="pos-customer-input" type="text" x-ref="customerInput" x-model="cq"
                                        @focus="csearch(true)"
                                        @click="csearch(true)"
                                        @input.debounce.200ms="csearch()"
+                                       @keydown.escape.stop="copen = false"
+                                       @keydown.enter.prevent="if (cresults.length > 0) { attach(cresults[0]); } else if (cq.trim()) { openQuickAdd(cq.trim()); }"
                                        placeholder="{{ __('messages.customer_search_placeholder') }} (F3)"
                                        class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 pl-8 pr-14 py-2 text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition">
                                 <div class="absolute right-2 flex items-center gap-1">
@@ -1077,7 +1437,7 @@
                                                   :class="c.role === 'wholesale_customer' ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'"
                                                   x-text="c.role === 'wholesale_customer' ? '{{ __('messages.pos_customer_wholesale') }}' : '{{ __('messages.pos_customer_retail') }}'"></span>
                                             <span x-show="parseFloat(c.balance) > 0" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 font-mono"
-                                                  x-text="'Ks ' + Number(c.balance).toLocaleString()"></span>
+                                                  x-text="formatCurrency(c.balance)"></span>
                                         </div>
                                     </button>
                                 </template>
@@ -1105,71 +1465,80 @@
                 {{-- Cart lines --}}
                 <div class="space-y-2.5 px-4 max-h-[38vh] overflow-y-auto pr-2">
                     <template x-for="line in cart.lines" :key="line.index">
-                        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 px-3 py-2.5 shadow-sm">
-                            <div class="flex items-start justify-between gap-2">
-                                <div class="min-w-0">
-                                    <p class="text-sm font-bold leading-snug truncate" x-text="line.name"></p>
-                                    {{-- Negotiated override: strike the tier price it replaced --}}
-                                    <p class="text-[10px] text-rose-500 font-bold line-through mt-0.5" x-show="line.original_unit_price !== null && parseFloat(line.original_unit_price) > parseFloat(line.unit_price)" x-text="'Ks ' + Number(line.original_unit_price).toLocaleString()"></p>
-                                    <p class="text-xs font-mono mt-0.5" :class="(line.original_unit_price !== null && parseFloat(line.original_unit_price) > parseFloat(line.unit_price)) || parseFloat(line.retail_unit_price) > parseFloat(line.unit_price) ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-400'" x-text="'Ks ' + Number(line.unit_price).toLocaleString()"></p>
-                                    {{-- Override savings (amber) takes precedence over the wholesale comparison --}}
-                                    <p class="text-[10px] font-black text-amber-600 dark:text-amber-400" x-show="line.original_unit_price !== null && parseFloat(line.original_unit_price) > parseFloat(line.unit_price)" x-text="'−Ks ' + (parseFloat(line.original_unit_price) - parseFloat(line.unit_price)).toLocaleString()"></p>
-                                    <p class="text-[10px] font-black text-amber-600 dark:text-amber-400" x-show="(line.original_unit_price === null || parseFloat(line.original_unit_price) <= parseFloat(line.unit_price)) && parseFloat(line.retail_unit_price) > parseFloat(line.unit_price)" x-text="'−Ks ' + (parseFloat(line.retail_unit_price) - parseFloat(line.unit_price)).toLocaleString()"></p>
-                                    {{-- Manager-approved deep override (audit badge) --}}
-                                    <p class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 inline-flex items-center gap-1" x-show="line.approved_by">
-                                        <svg class="inline w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                        {{ __('messages.pos_price_manager_approved') }}<span x-show="line.approved_by_name" x-text="' · ' + line.approved_by_name"></span>
-                                    </p>
+                        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 px-3 py-2 shadow-sm transition hover:border-slate-300 dark:hover:border-slate-700">
+                            <div class="flex items-center justify-between gap-2">
+                                {{-- Product Name & Unit Price / Badges (Left) --}}
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs sm:text-sm font-bold leading-tight truncate" :title="line.name" x-text="line.name"></p>
+                                    <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                        {{-- Negotiated override: strike the tier price it replaced --}}
+                                        <span class="text-[10px] text-rose-500 font-bold line-through" x-show="line.original_unit_price !== null && parseFloat(line.original_unit_price) > parseFloat(line.unit_price)" x-text="formatCurrency(line.original_unit_price)"></span>
+                                        <span class="text-[11px] font-mono" :class="(line.original_unit_price !== null && parseFloat(line.original_unit_price) > parseFloat(line.unit_price)) || parseFloat(line.retail_unit_price) > parseFloat(line.unit_price) ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-400'" x-text="'@ ' + formatCurrency(line.unit_price)"></span>
+                                        {{-- Override savings (amber) takes precedence over the wholesale comparison --}}
+                                        <span class="text-[10px] font-black text-amber-600 dark:text-amber-400" x-show="line.original_unit_price !== null && parseFloat(line.original_unit_price) > parseFloat(line.unit_price)" x-text="'−' + formatCurrency(parseFloat(line.original_unit_price) - parseFloat(line.unit_price))"></span>
+                                        <span class="text-[10px] font-black text-amber-600 dark:text-amber-400" x-show="(line.original_unit_price === null || parseFloat(line.original_unit_price) <= parseFloat(line.unit_price)) && parseFloat(line.retail_unit_price) > parseFloat(line.unit_price)" x-text="'−' + formatCurrency(parseFloat(line.retail_unit_price) - parseFloat(line.unit_price))"></span>
+                                        {{-- Manager-approved deep override (audit badge) --}}
+                                        <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1" x-show="line.approved_by">
+                                            <svg class="inline w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                            <span x-text="line.approved_by_name || '{{ __('messages.pos_price_manager_approved') }}'"></span>
+                                        </span>
+                                    </div>
                                 </div>
-                                <button type="button" @click="removeLine(line)"
-                                        class="sf-btn-3d-danger shrink-0 w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition"
-                                        :title="labels.remove_item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                </button>
-                            </div>
-                            <div class="flex items-center justify-between gap-2 mt-2">
-                                {{-- Qty stepper with inline edit on click --}}
-                                 <div class="inline-flex items-center gap-1 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100/60 dark:bg-slate-900/60 shadow-xs"
-                                      x-data="{ editing: false, editVal: '' }">
-                                     <button type="button" @click="changeQty(line, -1)" class="sf-btn-3d w-7 h-7 rounded-lg text-blue-600 dark:text-blue-400 font-black flex items-center justify-center cursor-pointer transition">−</button>
-                                     {{-- Click qty to type directly --}}
-                                     <template x-if="!editing">
-                                         <span class="w-8 text-center text-sm font-black cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/40 transition rounded"
-                                               x-text="line.quantity"
-                                               @click="editing = true; editVal = String(line.quantity); $nextTick(() => $refs['qtyInput_' + line.index]?.select())">
-                                         </span>
-                                     </template>
-                                     <template x-if="editing">
-                                         <input type="number" min="1" step="1"
-                                                :x-ref="'qtyInput_' + line.index"
-                                                x-model.number="editVal"
-                                                class="w-12 text-center text-sm font-black border-x border-blue-400 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 outline-none py-1 tabular-nums rounded"
-                                                @keydown.enter.prevent="if (editVal >= 1) { setQty(line, editVal); } editing = false"
-                                                @keydown.escape.prevent="editing = false"
-                                                @blur="if (editVal >= 1) { setQty(line, editVal); } editing = false"
-                                                x-init="$nextTick(() => $el.focus())">
-                                     </template>
-                                     <button type="button" @click="changeQty(line, 1)" class="sf-btn-3d w-7 h-7 rounded-lg text-blue-600 dark:text-blue-400 font-black flex items-center justify-center cursor-pointer transition">+</button>
-                                 </div>
-                                <div class="flex items-center gap-1.5">
-                                    <input x-show="priceEditIndex === line.index" x-model="priceEditValue" type="number" min="0" step="100"
-                                           @keydown.enter="saveLinePrice(line)" @keydown.escape="priceEditIndex = null"
-                                           class="w-24 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-2 py-1 text-right text-sm font-semibold focus:ring-2 focus:ring-amber-500 outline-none">
-                                    <input x-show="priceEditIndex === line.index && pricePinIndex === line.index" x-model="pricePinValue" type="password" inputmode="numeric" maxlength="6"
-                                           @keydown.enter="saveLinePrice(line)" @keydown.escape="pricePinIndex = null"
-                                           :placeholder="labels.pos_price_pin_label"
-                                           class="w-20 rounded-lg border border-rose-300 dark:border-rose-700 bg-white dark:bg-slate-900 px-2 py-1 text-center text-sm font-bold tracking-widest focus:ring-2 focus:ring-rose-500 outline-none"
-                                           :title="labels.pos_price_pin_label">
-                                    <button x-show="priceEditIndex === line.index" type="button" @click="saveLinePrice(line)"
-                                            class="sf-btn-3d-success w-8 h-8 rounded-lg flex items-center justify-center font-black cursor-pointer transition">✓</button>
-                                    <button x-show="priceEditIndex === line.index" type="button" @click="priceEditIndex = null; pricePinIndex = null; pricePinValue = ''"
-                                            class="sf-btn-3d-danger w-8 h-8 rounded-lg flex items-center justify-center font-black cursor-pointer transition">✕</button>
-                                    <button x-show="priceEditIndex !== line.index" type="button" @click="startPriceEdit(line)"
-                                            class="sf-btn-3d w-8 h-8 rounded-lg flex items-center justify-center text-amber-600 dark:text-amber-400 cursor-pointer transition"
-                                            :title="labels.pos_price_edit">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+
+                                {{-- Controls: Stepper + Price Edit + Total + Remove (Single Row, Right) --}}
+                                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                    {{-- Qty stepper with inline edit on click --}}
+                                    <div class="inline-flex items-center gap-0.5 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100/60 dark:bg-slate-900/60 shadow-xs"
+                                         x-data="{ editing: false, editVal: '' }">
+                                        <button type="button" @click="changeQty(line, -1)" class="sf-btn-3d w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-blue-600 dark:text-blue-400 font-black flex items-center justify-center cursor-pointer transition text-xs sm:text-sm">−</button>
+                                        {{-- Click qty to type directly --}}
+                                        <template x-if="!editing">
+                                            <span class="w-6 sm:w-7 text-center text-xs sm:text-sm font-black cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/40 transition rounded"
+                                                  x-text="line.quantity"
+                                                  @click="editing = true; editVal = String(line.quantity); $nextTick(() => $refs['qtyInput_' + line.index]?.select())">
+                                            </span>
+                                        </template>
+                                        <template x-if="editing">
+                                            <input type="number" min="1" step="1"
+                                                   :x-ref="'qtyInput_' + line.index"
+                                                   x-model.number="editVal"
+                                                   class="w-10 sm:w-12 text-center text-xs sm:text-sm font-black border-x border-blue-400 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 outline-none py-0.5 tabular-nums rounded"
+                                                   @keydown.enter.prevent="if (editVal >= 1) { setQty(line, editVal); } editing = false"
+                                                   @keydown.escape.prevent="editing = false"
+                                                   @blur="if (editVal >= 1) { setQty(line, editVal); } editing = false"
+                                                   x-init="$nextTick(() => $el.focus())">
+                                        </template>
+                                        <button type="button" @click="changeQty(line, 1)" class="sf-btn-3d w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-blue-600 dark:text-blue-400 font-black flex items-center justify-center cursor-pointer transition text-xs sm:text-sm">+</button>
+                                    </div>
+
+                                    {{-- Price edit / inputs if editing --}}
+                                    <div class="flex items-center gap-1">
+                                        <input x-show="priceEditIndex === line.index" x-model="priceEditValue" type="number" min="0" step="100"
+                                               @keydown.enter="saveLinePrice(line)" @keydown.escape="priceEditIndex = null"
+                                               class="w-20 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-1.5 py-0.5 text-right text-xs font-semibold focus:ring-2 focus:ring-amber-500 outline-none">
+                                        <input x-show="priceEditIndex === line.index && pricePinIndex === line.index" x-model="pricePinValue" type="password" inputmode="numeric" maxlength="6"
+                                               @keydown.enter="saveLinePrice(line)" @keydown.escape="pricePinIndex = null"
+                                               :placeholder="labels.pos_price_pin_label"
+                                               class="w-16 rounded-lg border border-rose-300 dark:border-rose-700 bg-white dark:bg-slate-900 px-1.5 py-0.5 text-center text-xs font-bold tracking-widest focus:ring-2 focus:ring-rose-500 outline-none"
+                                               :title="labels.pos_price_pin_label">
+                                        <button x-show="priceEditIndex === line.index" type="button" @click="saveLinePrice(line)"
+                                                class="sf-btn-3d-success w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-xs font-black cursor-pointer transition">✓</button>
+                                        <button x-show="priceEditIndex === line.index" type="button" @click="priceEditIndex = null; pricePinIndex = null; pricePinValue = ''"
+                                                class="sf-btn-3d-danger w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-xs font-black cursor-pointer transition">✕</button>
+                                        <button x-show="priceEditIndex !== line.index" type="button" @click="startPriceEdit(line)"
+                                                class="sf-btn-3d w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-amber-600 dark:text-amber-400 cursor-pointer transition"
+                                                :title="labels.pos_price_edit">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                        </button>
+                                        <p class="text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400 min-w-[70px] sm:min-w-[85px] text-right font-mono" x-text="formatCurrency(line.line_total)"></p>
+                                    </div>
+
+                                    {{-- Remove line button --}}
+                                    <button type="button" @click="removeLine(line)"
+                                            class="sf-btn-3d-danger shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center cursor-pointer transition ml-0.5"
+                                            :title="labels.remove_item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                     </button>
-                                    <p class="text-sm font-extrabold text-blue-600 dark:text-blue-400" x-text="'Ks ' + Number(line.line_total).toLocaleString()"></p>
                                 </div>
                             </div>
                         </div>
@@ -1187,26 +1556,46 @@
                 <div class="mt-3 border-t border-slate-100 dark:border-slate-800 px-4 pt-3 pb-4 bg-slate-50/60 dark:bg-slate-800/30 rounded-t-2xl">
                     <p class="flex justify-between text-sm text-slate-500 dark:text-slate-400 mb-1">
                         <span>{{ __('messages.subtotal') }}</span>
-                        <span class="font-bold text-slate-700 dark:text-slate-200" x-text="'Ks ' + Number(cart.totals.subtotal).toLocaleString()"></span>
+                        <span class="font-bold text-slate-700 dark:text-slate-200" x-text="formatCurrency(cart.totals.subtotal)"></span>
                     </p>
-                    <p class="flex justify-between text-sm text-amber-600 dark:text-amber-400 mb-1" x-show="Number(cart.totals.retail_subtotal) > Number(cart.totals.total)">
+                    <p class="flex justify-between text-sm text-slate-500 dark:text-slate-400 mb-1"
+                       x-show="cart.totals.tax_enabled && cart.totals.tax_type === 'exclusive'" x-cloak>
+                        <span>{{ __('messages.tax') }} ({{ __('messages.commercial_tax') }} <span x-text="cart.totals.default_tax_rate"></span>%):</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-200" x-text="'+ ' + formatCurrency(cart.totals.tax)"></span>
+                    </p>
+                    {{-- Discount row --}}
+                    <div class="flex justify-between items-center text-sm mb-1">
+                        <button type="button" @click="openDiscountModal()" class="inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+                            <span>{{ __('messages.discount') }}</span>
+                            <span x-show="Number(cart.totals.discount) > 0" class="text-[10px] bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded-full font-bold ml-0.5">Edit</span>
+                        </button>
+                        <span class="font-bold cursor-pointer text-xs sm:text-sm" @click="openDiscountModal()"
+                              :class="Number(cart.totals.discount) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400'"
+                              x-text="Number(cart.totals.discount) > 0 ? ('− ' + formatCurrency(cart.totals.discount)) : '+ {{ __('messages.add_discount') }}'"></span>
+                    </div>
+                    <p class="flex justify-between text-sm text-amber-600 dark:text-amber-400 mb-1" x-show="Number(cart.totals.retail_subtotal) > Number(cart.totals.total) && Number(cart.totals.discount) <= 0">
                         <span class="inline-flex items-center gap-1">
                             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/></svg>
                             {{ __('messages.pos_tier_total_savings') }}
                         </span>
-                        <span class="font-bold" x-text="'−Ks ' + (Number(cart.totals.retail_subtotal) - Number(cart.totals.total)).toLocaleString()"></span>
+                        <span class="font-bold" x-text="'−' + formatCurrency(Number(cart.totals.retail_subtotal) - Number(cart.totals.total))"></span>
                     </p>
                     <div class="border-t border-dashed border-slate-200 dark:border-slate-700 my-2.5"></div>
-                    <p class="flex justify-between items-center mb-4">
+                    <p class="flex justify-between items-center mb-1">
                         <span class="text-base font-black">{{ __('messages.total') }}</span>
-                        <span class="text-2xl font-extrabold text-blue-600 dark:text-blue-400" x-text="'Ks ' + Number(cart.totals.total).toLocaleString()"></span>
+                        <span class="text-2xl font-extrabold text-blue-600 dark:text-blue-400" x-text="formatCurrency(cart.totals.total)"></span>
+                    </p>
+                    <p class="text-[11px] text-slate-400 dark:text-slate-500 text-right mb-4"
+                       x-show="cart.totals.tax_enabled && Number(cart.totals.tax) > 0 && cart.totals.tax_type === 'inclusive'" x-cloak>
+                        ({{ __('messages.commercial_tax') }} <span x-text="cart.totals.default_tax_rate"></span>% <span x-text="formatCurrency(cart.totals.tax)"></span> {{ __('messages.included') }})
                     </p>
 
                     <div class="flex items-stretch gap-2">
                         <button type="button" @click="clearCart()" :disabled="!cart.lines.length"
                                 class="sf-btn-3d-danger shrink-0 w-12 rounded-xl flex items-center justify-center transition cursor-pointer"
                                 :title="labels.clear_cart">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 12.5-5 5"/><path d="m9.5 12.5 5 5"/><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                         </button>
                         <button type="button" @click="hold()" :disabled="!cart.lines.length"
                                 class="sf-btn-3d-gold flex-1 rounded-xl px-3 py-3 text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5">
@@ -1233,17 +1622,19 @@
             </aside>
 
                 {{-- Floating cart + checkout button (mobile only) --}}
-                <button type="button" @click="mobileCartOpen = true"
-                        class="sf-btn-3d-primary hidden max-lg:inline-flex fixed bottom-5 right-5 z-40 items-center gap-2.5 rounded-2xl text-white pl-4 pr-5 py-3 shadow-2xl transition cursor-pointer">
-                    <span class="relative shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-                        <span class="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black grid place-items-center" x-text="cart.lines.length"></span>
-                    </span>
-                    <span class="text-left leading-tight">
-                        <span class="block text-[10px] font-bold uppercase tracking-wide opacity-80">{{ __('messages.pos_cart_title') }}</span>
-                        <span class="block text-sm font-black" x-text="'Ks ' + Number(cart.totals.total).toLocaleString()"></span>
-                    </span>
-                </button>
+                <div class="hidden max-lg:block fixed bottom-5 right-4 sm:right-5 z-40">
+                    <button type="button" @click="mobileCartOpen = true"
+                            class="sf-btn-3d-primary inline-flex items-center gap-2.5 rounded-2xl text-white pl-4 pr-5 py-3 shadow-2xl transition cursor-pointer">
+                        <span class="relative shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                            <span class="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black grid place-items-center" x-text="cart.lines.length"></span>
+                        </span>
+                        <span class="text-left leading-tight">
+                            <span class="block text-[10px] font-bold uppercase tracking-wide opacity-80">{{ __('messages.pos_cart_title') }}</span>
+                            <span class="block text-sm font-black" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(cart.totals.total) : Number(cart.totals.total).toLocaleString()"></span>
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1267,8 +1658,8 @@
                                 <span class="block text-[11px] text-slate-500 font-mono" x-text="v.sku || ''"></span>
                             </span>
                             <span class="shrink-0 text-right">
-                                <span class="block text-[10px] text-rose-500 font-bold line-through" x-show="variantProduct.tier === 'wholesale' && parseFloat(v.retail_price) > parseFloat(v.price)" x-text="'Ks ' + Number(v.retail_price).toLocaleString()"></span>
-                                <span class="block text-sm font-black text-blue-600 dark:text-blue-400" x-text="'Ks ' + Number(v.price).toLocaleString()"></span>
+                                <span class="block text-[10px] text-rose-500 font-bold line-through" x-show="variantProduct.tier === 'wholesale' && parseFloat(v.retail_price) > parseFloat(v.price)" x-text="formatCurrency(v.retail_price)"></span>
+                                <span class="block text-sm font-black text-blue-600 dark:text-blue-400" x-text="formatCurrency(v.price)"></span>
                                 <span class="block text-[10px] font-bold"
                                       :class="parseFloat(v.balance) <= 0 ? 'text-rose-500' : (parseFloat(v.balance) <= 5 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')"
                                       x-text="stockPillText(v.balance)"></span>
@@ -1304,16 +1695,19 @@
                         <h3 class="text-base font-black">{{ __('messages.payments') }}</h3>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                             {{ __('messages.total') }}:
-                            <span class="font-extrabold text-blue-600 dark:text-blue-400" x-text="'Ks ' + Number(cart.totals.total).toLocaleString()"></span>
+                            <span class="font-extrabold text-blue-600 dark:text-blue-400" x-text="formatCurrency(cart.totals.total)"></span>
                         </p>
                     </div>
                     <button type="button" @click="showPayment = false"
                             class="sf-btn-3d w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 font-black cursor-pointer transition">✕</button>
                 </div>
 
-                <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/post') }}" class="flex flex-col max-h-[85dvh] overflow-y-auto">
+                <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/post') }}"
+                      class="flex flex-col max-h-[85dvh] overflow-y-auto"
+                      @keydown.enter="if (exact) { $el.requestSubmit(); }">
                     @csrf
                     <input type="hidden" name="customer_id" :value="customer ? customer.id : ''">
+                    <input type="hidden" name="discount" :value="cart.totals.discount || '0'">
                     <input type="hidden" name="web_order_id" :value="pendingWebOrderId || ''">
                     {{-- Hidden payment method inputs (unchanged — server-side reads these) --}}
                     @foreach (['cash', 'kpay', 'wavepay', 'cb_pay', 'mmqr', 'credit'] as $i => $method)
@@ -1377,12 +1771,23 @@
                                 </div>
                             </div>
 
-                            {{-- Cash amount display + numpad --}}
+                            {{-- Cash amount display + editable input --}}
                             <div class="rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 overflow-hidden">
-                                {{-- Amount display --}}
                                 <div class="px-4 pt-3 pb-2 flex items-center justify-between gap-2">
-                                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('messages.payment_cash') }}</p>
-                                    <p class="text-2xl font-extrabold tabular-nums text-slate-800 dark:text-slate-100" x-text="'Ks ' + Number(cash||0).toLocaleString()"></p>
+                                    <label for="pos-cash-input" class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('messages.payment_cash') }}</label>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-base font-extrabold text-blue-600 dark:text-blue-400" x-text="window.__currencyConfig?.currency_symbol || 'Ks'"></span>
+                                        <input id="pos-cash-input"
+                                               type="number"
+                                               min="0"
+                                               step="any"
+                                               x-ref="cashInput"
+                                               x-model.number="cash"
+                                               @focus="$event.target.select()"
+                                               @keydown.enter.prevent="if (exact) { $el.closest('form')?.requestSubmit(); }"
+                                               class="w-48 text-right text-2xl font-extrabold tabular-nums text-slate-800 dark:text-slate-100 bg-transparent border-b-2 border-blue-500/60 focus:border-blue-500 focus:outline-none px-1 py-0.5"
+                                               placeholder="0">
+                                    </div>
                                 </div>
                                 {{-- Numpad --}}
                                 <div class="grid grid-cols-4 gap-1.5 p-2 bg-slate-100/70 dark:bg-slate-900/60 border-t border-slate-200 dark:border-slate-700">
@@ -1410,7 +1815,7 @@
                         {{-- Other payment methods: simple input --}}
                         @foreach (['kpay', 'wavepay', 'cb_pay', 'mmqr', 'credit'] as $method)
                         <div x-show="activeMethod === '{{ $method }}'" x-cloak class="space-y-2">
-                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">{{ __('messages.payment_' . $method) }} (Ks)</p>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">{{ __('messages.payment_' . $method) }}</p>
                             @php $xmodel = $method === 'cb_pay' ? 'cbpay' : $method; @endphp
                             <div class="flex flex-wrap gap-1.5 mb-2">
                                 @foreach ([1000, 2000, 5000, 10000, 20000, 50000, 100000] as $amt)
@@ -1433,29 +1838,42 @@
 
                         {{-- Summary box --}}
                         <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 px-4 py-3 space-y-1.5 text-sm">
-                            <p class="flex justify-between" x-show="Number(cart.totals.retail_subtotal) > Number(cart.totals.total)">
+                            <p class="flex justify-between text-slate-500 dark:text-slate-400">
+                                <span>{{ __('messages.subtotal') }}</span>
+                                <span class="font-bold text-slate-700 dark:text-slate-200" x-text="formatCurrency(cart.totals.subtotal)"></span>
+                            </p>
+                            <p class="flex justify-between text-slate-500 dark:text-slate-400" x-show="cart.totals.tax_enabled && Number(cart.totals.tax) > 0 && cart.totals.tax_type === 'exclusive'" x-cloak>
+                                <span>{{ __('messages.tax') }} ({{ __('messages.commercial_tax') }} <span x-text="cart.totals.default_tax_rate"></span>%):</span>
+                                <span class="font-bold text-slate-700 dark:text-slate-200" x-text="'+ ' + formatCurrency(cart.totals.tax)"></span>
+                            </p>
+                            <p class="flex justify-between text-rose-600 dark:text-rose-400 font-semibold" x-show="Number(cart.totals.discount) > 0" x-cloak>
+                                <span>{{ __('messages.discount') }}</span>
+                                <span class="font-bold" x-text="'− ' + formatCurrency(cart.totals.discount)"></span>
+                            </p>
+                            <p class="flex justify-between" x-show="Number(cart.totals.retail_subtotal) > Number(cart.totals.total) && Number(cart.totals.discount) <= 0">
                                 <span class="text-amber-600 dark:text-amber-400 inline-flex items-center gap-1">
                                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/></svg>
                                     {{ __('messages.pos_tier_total_savings') }}
                                 </span>
-                                <span class="font-black text-amber-600 dark:text-amber-400" x-text="'−Ks ' + (Number(cart.totals.retail_subtotal) - Number(cart.totals.total)).toLocaleString()"></span>
+                                <span class="font-black text-amber-600 dark:text-amber-400" x-text="'−' + formatCurrency(Number(cart.totals.retail_subtotal) - Number(cart.totals.total))"></span>
                             </p>
+                            <div class="border-t border-dashed border-slate-200 dark:border-slate-700 my-1"></div>
                             <p class="flex justify-between font-bold">
-                                <span class="text-slate-500">{{ __('messages.total') }}</span>
-                                <span x-text="'Ks ' + Number(cart.totals.total).toLocaleString()"></span>
+                                <span class="text-slate-800 dark:text-slate-100">{{ __('messages.total') }}</span>
+                                <span class="text-blue-600 dark:text-blue-400 font-black text-base" x-text="formatCurrency(cart.totals.total)"></span>
                             </p>
                             <div class="border-t border-dashed border-slate-200 dark:border-slate-700 my-1"></div>
                             <p class="flex justify-between" x-show="remaining !== 0">
                                 <span class="text-slate-500">{{ __('messages.pos_remaining') }}</span>
-                                <span class="font-bold" :class="remaining < 0 ? 'text-rose-600' : 'text-amber-600'" x-text="'Ks ' + remaining.toLocaleString()"></span>
+                                <span class="font-bold" :class="remaining < 0 ? 'text-rose-600' : 'text-amber-600'" x-text="formatCurrency(remaining)"></span>
                             </p>
                             <p class="flex justify-between" x-show="change > 0">
                                 <span class="text-slate-500">{{ __('messages.change') }}</span>
-                                <span class="font-extrabold text-emerald-600 text-lg" x-text="'Ks ' + change.toLocaleString()"></span>
+                                <span class="font-extrabold text-emerald-600 text-lg" x-text="formatCurrency(change)"></span>
                             </p>
                             <p class="flex justify-between" x-show="credit > 0">
                                 <span class="text-slate-500">{{ __('messages.balance_due') }}</span>
-                                <span class="font-black text-amber-600 dark:text-amber-400" x-text="'Ks ' + credit.toLocaleString()"></span>
+                                <span class="font-black text-amber-600 dark:text-amber-400" x-text="formatCurrency(credit)"></span>
                             </p>
                         </div>
 
@@ -1565,7 +1983,7 @@
                                                 @if ($sale->customer)
                                                     <span class="font-semibold">{{ $sale->customer->name }}</span>
                                                     @if ((float) $saleDebt > 0)
-                                                        <span class="block text-[10px] font-bold text-amber-600 dark:text-amber-400">{{ __('messages.debt') }} Ks {{ number_format((float) $saleDebt) }}</span>
+                                                        <span class="block text-[10px] font-bold text-amber-600 dark:text-amber-400">{{ __('messages.debt') }} {{ format_currency((float) $saleDebt, $store) }}</span>
                                                     @endif
                                                 @else
                                                     <span class="text-slate-400">—</span>
@@ -1576,10 +1994,10 @@
                                             </td>
                                             <td class="px-3 py-2.5 text-xs">
                                                 @foreach ($sale->payments as $payment)
-                                                    <span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-mono mr-1">{{ $payment->method }} {{ number_format((float) $payment->amount) }}</span>
+                                                    <span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-mono mr-1">{{ $payment->method }} {{ format_currency((float) $payment->amount, $store) }}</span>
                                                 @endforeach
                                             </td>
-                                            <td class="px-3 py-2.5 text-right font-black">Ks {{ number_format((float) $sale->total) }}</td>
+                                            <td class="px-3 py-2.5 text-right font-black">{{ format_currency((float) $sale->total, $store) }}</td>
                                             <td class="px-3 py-2.5 text-center whitespace-nowrap">
                                                 <div class="inline-flex items-center gap-1.5">
                                                     @if ($sale->status !== 'refunded')
@@ -1652,7 +2070,7 @@
                                         <option value="cash_in">+ {{ __('messages.cash_in') }}</option>
                                         <option value="cash_out">− {{ __('messages.cash_out') }}</option>
                                     </select>
-                                    <input type="number" name="amount" min="1" step="100" required placeholder="Ks"
+                                    <input type="number" name="amount" min="1" step="100" required :placeholder="window.__currencyConfig?.currency_symbol || '0'"
                                            class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
                                 </div>
                                 <input type="text" name="reason" maxlength="255" placeholder="{{ __('messages.reason') }}"
