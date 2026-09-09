@@ -127,9 +127,9 @@
                 </div>
                 <div class="flex gap-2 pt-1">
                     <button type="button" @click="quickAddOpen = false"
-                            class="flex-1 rounded-xl px-4 py-2.5 text-sm font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.cancel') }}</button>
+                            class="sf-btn-3d flex-1 rounded-xl px-4 py-2.5 text-sm font-bold cursor-pointer">{{ __('messages.cancel') }}</button>
                     <button type="button" @click="quickAdd()" :disabled="quickBusy || !qname.trim() || !qphone.trim()"
-                            class="flex-1 rounded-xl px-4 py-2.5 text-sm font-black bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
+                            class="sf-btn-3d-primary flex-1 rounded-xl px-4 py-2.5 text-sm font-black disabled:opacity-50 transition flex items-center justify-center gap-2 cursor-pointer">
                         <svg x-show="quickBusy" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
                         <span x-text="quickBusy ? (labels.pos_customer_saving || 'Saving...') : '+ ' + '{{ __('messages.pos_customer_add') }}'"></span>
                     </button>
@@ -152,7 +152,7 @@
                     @endif
                     @if (session('posted_sale_id'))
                         <a href="{{ url('/store/' . $store->slug . '/pos/sales/' . session('posted_sale_id') . '/receipt') }}" target="_blank"
-                           class="inline-flex items-center gap-1.5 mt-2 rounded-lg bg-emerald-600 text-white px-3 py-1.5 text-xs font-bold hover:bg-emerald-500 transition">
+                           class="sf-btn-3d-success inline-flex items-center gap-1.5 mt-2 rounded-lg px-3 py-1.5 text-xs font-bold cursor-pointer">
                             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
                             {{ __('messages.print_receipt') }}
                         </a>
@@ -189,7 +189,7 @@
                                 </div>
                             </div>
                             <button type="button" @click="open = false" aria-label="{{ __('messages.close') }}"
-                                    class="shrink-0 w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition">✕</button>
+                                    class="sf-btn-3d shrink-0 w-8 h-8 rounded-lg font-black cursor-pointer">✕</button>
                         </div>
 
                         <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/shifts') }}" class="grid gap-3">
@@ -210,7 +210,7 @@
                                 <input type="number" name="opening_cash" min="0" step="100" value="{{ old('opening_cash', 0) }}"
                                        class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm">
                             </div>
-                            <button type="submit" class="rounded-xl px-4 py-3 text-sm font-black bg-blue-600 text-white hover:bg-blue-500 transition">{{ __('messages.open_shift') }}</button>
+                            <button type="submit" class="sf-btn-3d-primary rounded-xl px-4 py-3 text-sm font-black cursor-pointer">{{ __('messages.open_shift') }}</button>
                         </form>
 
                         @if ($occupiedRegisters->isNotEmpty())
@@ -380,7 +380,7 @@
                             <div class="mt-2.5 flex items-center justify-between gap-2">
                                 <p class="text-sm font-black text-slate-900 dark:text-slate-100 tabular-nums" x-text="'Ks ' + Number(order.total).toLocaleString()"></p>
                                 <button type="button" @click="importWebOrder(order)"
-                                        class="min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-500 shadow-sm transition">
+                                        class="sf-btn-3d-primary min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-black cursor-pointer">
                                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
                                     {{ __('messages.web_order_load_cart') }}
                                 </button>
@@ -414,7 +414,7 @@
 
                     {{-- Scan barcode --}}
                     <button type="button" @click="$refs.mobileSearchInput?.focus()"
-                            class="shrink-0 w-11 h-11 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 transition grid place-items-center cursor-pointer"
+                            class="sf-btn-3d-primary shrink-0 w-11 h-11 rounded-xl transition grid place-items-center cursor-pointer"
                             title="{{ __('messages.pos_scan_barcode') }}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/><path d="M7 8h10"/><path d="M7 16h10"/></svg>
                     </button>
@@ -422,8 +422,7 @@
                     @if ($store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS))
                     {{-- Shift status --}}
                     <button type="button" @click="if (shiftOpen) { switchTab('registers'); $nextTick(() => document.getElementById('pos-shift-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } else { window.dispatchEvent(new CustomEvent('pos:open-register')); }"
-                            class="shrink-0 inline-flex items-center justify-center min-h-11 px-3 gap-1.5 rounded-xl text-[11px] font-black uppercase tracking-wide border transition cursor-pointer"
-                            :class="shiftOpen ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'">
+                            class="sf-btn-3d shrink-0 inline-flex items-center justify-center min-h-11 px-3 gap-1.5 rounded-xl text-[11px] font-black uppercase tracking-wide cursor-pointer">
                         <span class="w-2 h-2 rounded-full shrink-0" :class="shiftOpen ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'"></span>
                         <span x-text="shiftOpen ? '{{ __('messages.pos_shift_active') }}' : '{{ __('messages.pos_shift_required') }}'"></span>
                     </button>
@@ -431,7 +430,7 @@
                     {{-- End shift --}}
                     <button type="button" x-show="shiftOpen" x-cloak
                             @click="switchTab('registers'); $nextTick(() => document.getElementById('pos-shift-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))"
-                            class="shrink-0 w-11 h-11 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition grid place-items-center cursor-pointer"
+                            class="sf-btn-3d-gold shrink-0 w-11 h-11 rounded-xl transition grid place-items-center cursor-pointer"
                             title="{{ __('messages.pos_end_shift') }}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
                     </button>
@@ -439,7 +438,7 @@
 
                     {{-- Mobile filters drawer button --}}
                     <button type="button" @click="window.dispatchEvent(new CustomEvent('pos:open-filters'))"
-                            class="shrink-0 min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl border text-xs font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 transition cursor-pointer"
+                            class="sf-btn-3d shrink-0 min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-bold transition cursor-pointer"
                             title="{{ __('messages.pos_filters') }}">
                         <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3Z"/></svg>
                         {{ __('messages.pos_filters') }}
@@ -450,7 +449,7 @@
 
                     {{-- Mobile held sales --}}
                     <button type="button" @click="document.getElementById('pos-held-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
-                            class="shrink-0 min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl border text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 transition cursor-pointer">
+                            class="sf-btn-3d-gold shrink-0 min-h-11 inline-flex items-center gap-1.5 px-3.5 rounded-xl text-xs font-bold transition cursor-pointer">
                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/></svg>
                         {{ __('messages.held_sales') }} <span x-text="'(' + cart.held_count + ')'"></span>
                     </button>
@@ -462,8 +461,7 @@
                         @if ($store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS))
                         {{-- Shift status pill --}}
                         <button type="button" @click="if (shiftOpen) { switchTab('registers'); $nextTick(() => document.getElementById('pos-shift-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); } else { window.dispatchEvent(new CustomEvent('pos:open-register')); }"
-                                class="shrink-0 inline-flex items-center gap-2 h-9 px-3 rounded-xl text-xs font-black uppercase tracking-wide border transition cursor-pointer whitespace-nowrap"
-                                :class="shiftOpen ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20'">
+                                class="sf-btn-3d shrink-0 inline-flex items-center gap-2 h-9 px-3 rounded-xl text-xs font-black uppercase tracking-wide cursor-pointer whitespace-nowrap">
                             <span class="w-2 h-2 rounded-full shrink-0" :class="shiftOpen ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'"></span>
                             <span x-text="shiftOpen ? '{{ __('messages.pos_shift_active') }}' : '{{ __('messages.pos_shift_required') }}'"></span>
                         </button>
@@ -471,7 +469,7 @@
                         {{-- End shift button --}}
                         <button type="button" x-show="shiftOpen" x-cloak
                                 @click="switchTab('registers'); $nextTick(() => document.getElementById('pos-shift-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))"
-                                class="shrink-0 h-9 px-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 transition inline-flex items-center gap-1 text-xs font-bold cursor-pointer whitespace-nowrap"
+                                class="sf-btn-3d-gold shrink-0 h-9 px-2.5 rounded-xl transition inline-flex items-center gap-1 text-xs font-bold cursor-pointer whitespace-nowrap"
                                 title="{{ __('messages.pos_end_shift') }}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
                             <span>{{ __('messages.pos_end_shift') }}</span>
@@ -482,7 +480,7 @@
 
                         {{-- Held sales toggle (ဆိုင်းငံ့ထားသော အရောင်းများ) --}}
                         <button type="button" id="pos-held-toggle"
-                                class="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-800 transition cursor-pointer whitespace-nowrap"
+                                class="sf-btn-3d-gold shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap"
                                 @click="document.getElementById('pos-held-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })">
                             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/></svg>
                             <span>{{ __('messages.held_sales') }}</span>
@@ -491,7 +489,7 @@
 
                         {{-- နေ့စဉ် အရောင်းပိတ် (Daily closing) --}}
                         <a href="{{ url('/store/' . $store->slug . '/pos/closing') }}"
-                           class="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer shadow-xs whitespace-nowrap">
+                           class="sf-btn-3d shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap">
                             <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4"/>
                             </svg>
@@ -548,7 +546,7 @@
             <x-pos.chip-scroll :label="__('messages.pos_more')" variant="chips" class="bg-slate-50/60 dark:bg-slate-800/30 rounded-t-2xl">
                 @foreach ($moduleLinks as [$path, $label, $icon])
                     <a href="{{ url('/store/' . $store->slug . '/' . $path) }}"
-                       class="shrink-0 snap-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 shadow-xs transition">
+                       class="sf-btn-3d shrink-0 snap-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition">
                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">{!! $icon !!}</svg>
                         {{ __('messages.' . $label) }}
                     </a>
@@ -578,7 +576,7 @@
                     {{-- Scan barcode button --}}
                     <div class="self-end">
                         <button type="button" @click="$refs.searchInput?.focus()"
-                                class="shrink-0 w-10 h-10 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 border border-blue-600/20 transition grid place-items-center cursor-pointer"
+                                class="sf-btn-3d-primary shrink-0 w-10 h-10 rounded-xl grid place-items-center cursor-pointer"
                                 title="{{ __('messages.pos_scan_barcode') }}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/><path d="M7 8h10"/><path d="M7 16h10"/></svg>
                         </button>
@@ -587,7 +585,7 @@
                     {{-- Import web order button --}}
                     <div class="self-end">
                         <button type="button" @click="openWebOrders()"
-                                class="shrink-0 w-10 h-10 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 border border-blue-600/20 transition grid place-items-center cursor-pointer"
+                                class="sf-btn-3d-primary shrink-0 w-10 h-10 rounded-xl grid place-items-center cursor-pointer"
                                 title="{{ __('messages.pos_import_web_order') }}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
                         </button>
@@ -602,10 +600,10 @@
                         </label>
                         <button type="button"
                                 @click="catDropdownOpen = !catDropdownOpen; brandDropdownOpen = false; if (catDropdownOpen) $nextTick(() => $refs.catSearchInput?.focus())"
-                                class="min-w-[190px] max-w-[240px] h-10 px-3 rounded-xl border text-xs font-bold flex items-center justify-between gap-2 shadow-xs transition cursor-pointer"
+                                class="sf-btn-3d min-w-[190px] max-w-[240px] h-10 px-3 rounded-xl text-xs font-bold flex items-center justify-between gap-2 cursor-pointer"
                                 :class="categoryId > 0 
-                                    ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 ring-2 ring-blue-500/20' 
-                                    : 'bg-slate-50/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
+                                    ? 'active ring-2 ring-blue-500/20' 
+                                    : ''">
                             <div class="flex items-center gap-2 min-w-0">
                                 <svg class="w-3.5 h-3.5 shrink-0" :class="categoryId > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
                                 <span class="truncate font-black" x-text="selectedCategoryName"></span>
@@ -655,10 +653,10 @@
                         </label>
                         <button type="button"
                                 @click="brandDropdownOpen = !brandDropdownOpen; catDropdownOpen = false; if (brandDropdownOpen) $nextTick(() => $refs.brandSearchInput?.focus())"
-                                class="min-w-[190px] max-w-[240px] h-10 px-3 rounded-xl border text-xs font-bold flex items-center justify-between gap-2 shadow-xs transition cursor-pointer"
+                                class="sf-btn-3d min-w-[190px] max-w-[240px] h-10 px-3 rounded-xl text-xs font-bold flex items-center justify-between gap-2 cursor-pointer"
                                 :class="brandId > 0 
-                                    ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700 ring-2 ring-blue-500/20' 
-                                    : 'bg-slate-50/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-blue-400'">
+                                    ? 'active ring-2 ring-blue-500/20' 
+                                    : ''">
                             <div class="flex items-center gap-2 min-w-0">
                                 <svg class="w-3.5 h-3.5 shrink-0" :class="brandId > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><path d="M7 7h.01"/></svg>
                                 <span class="truncate font-black" x-text="selectedBrandName"></span>
@@ -666,7 +664,6 @@
                             <div class="flex items-center gap-1 shrink-0">
                                 <span x-show="brandId > 0" @click.stop="toggleBrand(0)" class="w-4 h-4 rounded-full bg-blue-200 dark:bg-blue-800 text-blue-700 dark:text-blue-200 hover:bg-blue-300 grid place-items-center text-[10px] font-black" title="{{ __('messages.clear') }}">✕</span>
                                 <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="brandDropdownOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-                            </div>
                         </button>
 
                         {{-- Dropdown Menu --}}
@@ -771,15 +768,15 @@
                         {{-- Grid / List mode switcher (visible on all screens including mobile) --}}
                         <div class="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
                             <button type="button" @click="gridMode = 'grid'"
-                                    :class="gridMode !== 'list' ? 'bg-white dark:bg-slate-700 shadow text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'"
-                                    class="w-8 h-8 rounded-lg transition grid place-items-center"
+                                    :class="gridMode !== 'list' ? 'sf-btn-3d-primary active' : 'sf-btn-3d text-slate-500 dark:text-slate-400'"
+                                    class="w-8 h-8 rounded-lg transition grid place-items-center cursor-pointer"
                                     aria-label="Grid View"
                                     title="Grid View (၂ ကော်လံပုံစံ)">
                                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
                             </button>
                             <button type="button" @click="gridMode = 'list'"
-                                    :class="gridMode === 'list' ? 'bg-white dark:bg-slate-700 shadow text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'"
-                                    class="w-8 h-8 rounded-lg transition grid place-items-center"
+                                    :class="gridMode === 'list' ? 'sf-btn-3d-primary active' : 'sf-btn-3d text-slate-500 dark:text-slate-400'"
+                                    class="w-8 h-8 rounded-lg transition grid place-items-center cursor-pointer"
                                     aria-label="List View"
                                     title="List View (စာရင်းပုံစံ)">
                                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
@@ -835,7 +832,7 @@
                                            x-text="'−Ks ' + (parseFloat(p.retail_price) - parseFloat(p.price)).toLocaleString()"></p>
                                     </div>
                                     <button type="button" @click="addProduct(p)" :disabled="parseFloat(p.balance) <= 0"
-                                            class="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-blue-600 text-white grid place-items-center shadow-md shadow-blue-600/30 hover:bg-blue-500 active:scale-90 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                                            class="sf-btn-3d-primary shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg grid place-items-center cursor-pointer"
                                             :title="p.variants && p.variants.length > 0 ? labels.select_variant : labels.add_to_cart">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                                     </button>
@@ -873,7 +870,7 @@
                             <p class="shrink-0 text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400 tabular-nums" x-text="'Ks ' + Number(p.price).toLocaleString()"></p>
                             {{-- Add button --}}
                             <button type="button" @click="addProduct(p)" :disabled="parseFloat(p.balance) <= 0"
-                                    class="shrink-0 w-8 h-8 rounded-lg bg-blue-600 text-white grid place-items-center shadow-sm hover:bg-blue-500 active:scale-90 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                                    class="sf-btn-3d-primary shrink-0 w-8 h-8 rounded-lg grid place-items-center cursor-pointer"
                                     :title="p.variants && p.variants.length > 0 ? labels.select_variant : labels.add_to_cart">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                             </button>
@@ -1125,18 +1122,19 @@
                                     </p>
                                 </div>
                                 <button type="button" @click="removeLine(line)"
-                                        class="shrink-0 w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 grid place-items-center transition">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                        class="sf-btn-3d-danger shrink-0 w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition"
+                                        :title="labels.remove_item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                 </button>
                             </div>
                             <div class="flex items-center justify-between gap-2 mt-2">
                                 {{-- Qty stepper with inline edit on click --}}
-                                 <div class="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm overflow-hidden"
+                                 <div class="inline-flex items-center gap-1 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100/60 dark:bg-slate-900/60 shadow-xs"
                                       x-data="{ editing: false, editVal: '' }">
-                                     <button type="button" @click="changeQty(line, -1)" class="w-9 h-9 text-blue-600 dark:text-blue-400 font-black hover:bg-slate-100 dark:hover:bg-slate-800 transition">−</button>
+                                     <button type="button" @click="changeQty(line, -1)" class="sf-btn-3d w-7 h-7 rounded-lg text-blue-600 dark:text-blue-400 font-black flex items-center justify-center cursor-pointer transition">−</button>
                                      {{-- Click qty to type directly --}}
                                      <template x-if="!editing">
-                                         <span class="w-9 text-center text-sm font-black cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/40 transition rounded"
+                                         <span class="w-8 text-center text-sm font-black cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/40 transition rounded"
                                                x-text="line.quantity"
                                                @click="editing = true; editVal = String(line.quantity); $nextTick(() => $refs['qtyInput_' + line.index]?.select())">
                                          </span>
@@ -1145,13 +1143,13 @@
                                          <input type="number" min="1" step="1"
                                                 :x-ref="'qtyInput_' + line.index"
                                                 x-model.number="editVal"
-                                                class="w-12 text-center text-sm font-black border-x border-blue-400 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 outline-none py-1 tabular-nums"
+                                                class="w-12 text-center text-sm font-black border-x border-blue-400 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 outline-none py-1 tabular-nums rounded"
                                                 @keydown.enter.prevent="if (editVal >= 1) { setQty(line, editVal); } editing = false"
                                                 @keydown.escape.prevent="editing = false"
                                                 @blur="if (editVal >= 1) { setQty(line, editVal); } editing = false"
                                                 x-init="$nextTick(() => $el.focus())">
                                      </template>
-                                     <button type="button" @click="changeQty(line, 1)" class="w-9 h-9 text-blue-600 dark:text-blue-400 font-black hover:bg-slate-100 dark:hover:bg-slate-800 transition">+</button>
+                                     <button type="button" @click="changeQty(line, 1)" class="sf-btn-3d w-7 h-7 rounded-lg text-blue-600 dark:text-blue-400 font-black flex items-center justify-center cursor-pointer transition">+</button>
                                  </div>
                                 <div class="flex items-center gap-1.5">
                                     <input x-show="priceEditIndex === line.index" x-model="priceEditValue" type="number" min="0" step="100"
@@ -1163,11 +1161,11 @@
                                            class="w-20 rounded-lg border border-rose-300 dark:border-rose-700 bg-white dark:bg-slate-900 px-2 py-1 text-center text-sm font-bold tracking-widest focus:ring-2 focus:ring-rose-500 outline-none"
                                            :title="labels.pos_price_pin_label">
                                     <button x-show="priceEditIndex === line.index" type="button" @click="saveLinePrice(line)"
-                                            class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 grid place-items-center transition font-black">✓</button>
+                                            class="sf-btn-3d-success w-8 h-8 rounded-lg flex items-center justify-center font-black cursor-pointer transition">✓</button>
                                     <button x-show="priceEditIndex === line.index" type="button" @click="priceEditIndex = null; pricePinIndex = null; pricePinValue = ''"
-                                            class="w-8 h-8 rounded-lg bg-slate-500/10 text-slate-500 hover:bg-slate-500/20 grid place-items-center transition font-black">✕</button>
+                                            class="sf-btn-3d-danger w-8 h-8 rounded-lg flex items-center justify-center font-black cursor-pointer transition">✕</button>
                                     <button x-show="priceEditIndex !== line.index" type="button" @click="startPriceEdit(line)"
-                                            class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 grid place-items-center transition"
+                                            class="sf-btn-3d w-8 h-8 rounded-lg flex items-center justify-center text-amber-600 dark:text-amber-400 cursor-pointer transition"
                                             :title="labels.pos_price_edit">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                                     </button>
@@ -1206,27 +1204,28 @@
 
                     <div class="flex items-stretch gap-2">
                         <button type="button" @click="clearCart()" :disabled="!cart.lines.length"
-                                class="shrink-0 w-12 rounded-xl border-2 border-rose-500/20 text-rose-500 hover:bg-rose-500/10 grid place-items-center transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                class="sf-btn-3d-danger shrink-0 w-12 rounded-xl flex items-center justify-center transition cursor-pointer"
                                 :title="labels.clear_cart">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 12.5-5 5"/><path d="m9.5 12.5 5 5"/><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 12.5-5 5"/><path d="m9.5 12.5 5 5"/><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>
                         </button>
                         <button type="button" @click="hold()" :disabled="!cart.lines.length"
-                                class="flex-1 rounded-xl px-3 py-3 text-xs font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                                class="sf-btn-3d-gold flex-1 rounded-xl px-3 py-3 text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5">
                             <svg class="inline w-3.5 h-3.5 -mt-0.5" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
-                            {{ __('messages.hold_sale') }}
+                            <span>{{ __('messages.hold_sale') }}</span>
                         </button>
                         <button type="button" x-show="cart.held_count > 0" x-cloak
                                 @click="document.getElementById('pos-held-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
-                                class="shrink-0 w-12 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600/20 grid place-items-center transition"
+                                class="sf-btn-3d shrink-0 w-12 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 transition cursor-pointer"
                                 :title="labels.held">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                         </button>
                         <button type="button" id="pos-checkout-btn"
                                 @click="if (shiftsEnabled && !shiftOpen) { window.dispatchEvent(new CustomEvent('pos:open-register')); mobileCartOpen = false; return; } if (!cart.lines.length) return; openPayment(); mobileCartOpen = false"
-                                :class="(!cart.lines.length || (shiftsEnabled && !shiftOpen)) ? 'opacity-40 cursor-not-allowed' : ''"
+                                :disabled="!cart.lines.length || (shiftsEnabled && !shiftOpen)"
                                 :aria-disabled="(!cart.lines.length || (shiftsEnabled && !shiftOpen)) ? 'true' : 'false'"
-                                class="flex-[2] rounded-xl px-3 py-3 text-sm font-black text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30 transition">
-                            {{ __('messages.post_sale') }}
+                                class="sf-btn-3d-success flex-[2] rounded-xl px-3 py-3 text-sm font-black text-white transition cursor-pointer flex items-center justify-center gap-1.5 shadow-lg">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            <span>{{ __('messages.post_sale') }}</span>
                         </button>
                     </div>
                     <p x-show="shiftsEnabled && !shiftOpen" class="mt-2 text-[11px] font-bold text-amber-600 dark:text-amber-400" x-text="labels.shift_required"></p>
@@ -1235,7 +1234,7 @@
 
                 {{-- Floating cart + checkout button (mobile only) --}}
                 <button type="button" @click="mobileCartOpen = true"
-                        class="hidden max-lg:inline-flex fixed bottom-5 right-5 z-40 items-center gap-2.5 rounded-2xl bg-blue-600 text-white pl-4 pr-5 py-3.5 shadow-xl shadow-blue-600/40 hover:bg-blue-500 active:scale-95 transition">
+                        class="sf-btn-3d-primary hidden max-lg:inline-flex fixed bottom-5 right-5 z-40 items-center gap-2.5 rounded-2xl text-white pl-4 pr-5 py-3 shadow-2xl transition cursor-pointer">
                     <span class="relative shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                         <span class="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black grid place-items-center" x-text="cart.lines.length"></span>
@@ -1256,13 +1255,13 @@
                         <h3 class="text-base font-black" x-text="labels.select_variant"></h3>
                         <p class="text-sm text-slate-500 truncate" x-text="variantProduct ? variantProduct.name : ''"></p>
                     </div>
-                    <button type="button" @click="variantProduct = null" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                    <button type="button" @click="variantProduct = null" class="sf-btn-3d w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 font-bold cursor-pointer transition">✕</button>
                 </div>
-                <div class="space-y-2 max-h-72 overflow-y-auto">
+                <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
                     <template x-for="v in variantProduct ? variantProduct.variants : []" :key="v.id">
                         <button type="button" @click="addVariant(v)" :disabled="parseFloat(v.balance) <= 0"
-                                class="w-full text-left rounded-xl border px-3 py-2.5 flex items-center justify-between gap-2 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                                :class="parseFloat(v.balance) > 0 ? 'border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:shadow-md' : 'border-slate-200 dark:border-slate-800 opacity-60'">
+                                class="sf-btn-3d w-full text-left rounded-xl px-3 py-2.5 flex items-center justify-between gap-2 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                                :class="parseFloat(v.balance) > 0 ? '' : 'opacity-60'">
                             <span class="min-w-0">
                                 <span class="block text-sm font-bold truncate" x-text="v.name"></span>
                                 <span class="block text-[11px] text-slate-500 font-mono" x-text="v.sku || ''"></span>
@@ -1309,7 +1308,7 @@
                         </p>
                     </div>
                     <button type="button" @click="showPayment = false"
-                            class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition">✕</button>
+                            class="sf-btn-3d w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 font-black cursor-pointer transition">✕</button>
                 </div>
 
                 <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/post') }}" class="flex flex-col max-h-[85dvh] overflow-y-auto">
@@ -1342,12 +1341,10 @@
                                 <button type="button"
                                         @click="activeMethod = '{{ $mid }}'; {{ $mid === 'credit' ? '' : '' }}"
                                         :disabled="{{ $mid === 'credit' ? '!customer' : 'false' }}"
-                                        :class="activeMethod === '{{ $mid }}'
-                                            ? '{{ $mactiveBg }} text-white shadow-lg ring-2 ring-{{ $mcolor }}-400/40'
-                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
-                                        class="flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 text-[10px] font-black transition disabled:opacity-40 disabled:cursor-not-allowed">
+                                        :class="activeMethod === '{{ $mid }}' ? 'sf-btn-3d-primary active text-white shadow-md' : 'sf-btn-3d text-slate-700 dark:text-slate-200'"
+                                        class="flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 text-[10px] font-black transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
                                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ $micon }}"/></svg>
-                                    {{ __('messages.' . $mlabel) }}
+                                    <span>{{ __('messages.' . $mlabel) }}</span>
                                 </button>
                                 @endforeach
                             </div>
@@ -1367,14 +1364,14 @@
                                 <div class="flex flex-wrap gap-1.5">
                                     @foreach ([1000, 2000, 5000, 10000, 20000, 50000, 100000] as $amt)
                                     <button type="button" @click="cash = {{ $amt }}"
-                                            :class="cash == {{ $amt }} ? 'bg-blue-600 text-white ring-2 ring-blue-600/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-blue-100 dark:hover:bg-blue-950'"
-                                            class="px-3 py-1.5 rounded-xl text-xs font-black tabular-nums transition">
+                                            :class="cash == {{ $amt }} ? 'sf-btn-3d-primary active text-white' : 'sf-btn-3d text-slate-700 dark:text-slate-200'"
+                                            class="px-3 py-1.5 rounded-xl text-xs font-black tabular-nums transition cursor-pointer">
                                         {{ number_format($amt) }}
                                     </button>
                                     @endforeach
                                     <button type="button" @click="setExact()"
-                                            :class="change === 0 && cash > 0 ? 'bg-emerald-600 text-white ring-2 ring-emerald-600/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-emerald-100 dark:hover:bg-emerald-950'"
-                                            class="px-3 py-1.5 rounded-xl text-xs font-black transition">
+                                            :class="change === 0 && cash > 0 ? 'sf-btn-3d-success active text-white' : 'sf-btn-3d-success text-white'"
+                                            class="px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer">
                                         ✓ {{ __('messages.exact') }}
                                     </button>
                                 </div>
@@ -1388,19 +1385,17 @@
                                     <p class="text-2xl font-extrabold tabular-nums text-slate-800 dark:text-slate-100" x-text="'Ks ' + Number(cash||0).toLocaleString()"></p>
                                 </div>
                                 {{-- Numpad --}}
-                                <div class="grid grid-cols-4 border-t border-slate-200 dark:border-slate-700">
+                                <div class="grid grid-cols-4 gap-1.5 p-2 bg-slate-100/70 dark:bg-slate-900/60 border-t border-slate-200 dark:border-slate-700">
                                     @foreach (['7','8','9','←','4','5','6','C','1','2','3','000','0','00','',null] as $key)
                                         @if ($key === null)
-                                            {{-- empty cell --}}
-                                            <span class="border-r border-b border-slate-200 dark:border-slate-700"></span>
+                                            <span class="h-11"></span>
                                         @elseif ($key === '')
-                                            {{-- empty spacer --}}
-                                            <span class="border-r border-b border-slate-200 dark:border-slate-700"></span>
+                                            <span class="h-11"></span>
                                         @else
                                             <button type="button"
                                                     @click="padCash('{{ $key }}')"
-                                                    class="h-11 text-center font-black text-sm border-r border-b border-slate-200 dark:border-slate-700 transition
-                                                           {{ $key === 'C' ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950' : ($key === '←' ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800') }} active:scale-95">
+                                                    class="h-11 rounded-lg text-center font-black text-sm transition cursor-pointer flex items-center justify-center
+                                                           {{ $key === 'C' ? 'sf-btn-3d-danger text-white' : ($key === '←' ? 'sf-btn-3d-gold text-white' : 'sf-btn-3d text-slate-800 dark:text-slate-100') }}">
                                                 {{ $key }}
                                             </button>
                                         @endif
@@ -1420,13 +1415,13 @@
                             <div class="flex flex-wrap gap-1.5 mb-2">
                                 @foreach ([1000, 2000, 5000, 10000, 20000, 50000, 100000] as $amt)
                                 <button type="button" @click="{{ $xmodel }} = {{ $amt }}"
-                                        :class="{{ $xmodel }} == {{ $amt }} ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-blue-100'"
-                                        class="px-3 py-1.5 rounded-xl text-xs font-black tabular-nums transition">
+                                        :class="{{ $xmodel }} == {{ $amt }} ? 'sf-btn-3d-primary active text-white' : 'sf-btn-3d text-slate-700 dark:text-slate-200'"
+                                        class="px-3 py-1.5 rounded-xl text-xs font-black tabular-nums transition cursor-pointer">
                                     {{ number_format($amt) }}
                                 </button>
                                 @endforeach
                                 <button type="button" @click="{{ $xmodel }} = Math.max(0, Number(cart.totals.total) - Number(cash||0) - {{ collect(['kpay','wavepay','cb_pay','mmqr','credit'])->reject(fn($m)=>$m===$method)->map(fn($m)=>$m==='cb_pay'?'cbpay':$m)->map(fn($m)=>"Number($m||0)")->implode(' - ') }})"
-                                        class="px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 transition">
+                                        class="sf-btn-3d-success px-3 py-1.5 rounded-xl text-xs font-black text-white transition cursor-pointer">
                                     ✓ {{ __('messages.exact') }}
                                 </button>
                             </div>
@@ -1466,9 +1461,10 @@
 
                         {{-- Submit --}}
                         <button type="submit" :disabled="!exact"
-                                :class="exact ? 'bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'"
-                                class="w-full rounded-xl px-4 py-4 text-base font-black text-white transition">
-                            {{ __('messages.post_sale') }}
+                                :class="exact ? 'sf-btn-3d-success text-white shadow-lg cursor-pointer' : 'sf-btn-3d opacity-45 cursor-not-allowed pointer-events-none'"
+                                class="w-full rounded-xl px-4 py-4 text-base font-black transition flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                            <span>{{ __('messages.post_sale') }}</span>
                         </button>
                     </div>
                 </form>
@@ -1504,17 +1500,16 @@
                     <div class="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/30 p-3 flex items-center justify-between gap-2">
                         <div class="min-w-0">
                             <p class="text-xs font-bold text-amber-700 dark:text-amber-300" x-text="'#' + h.id + ' · ' + h.items_count + ' ' + labels.cart"></p>
-                            <p class="text-sm font-black" x-text="'Ks ' + Number(h.total).toLocaleString()"></p>
                             <p class="mt-1 inline-flex items-center gap-1 rounded-md bg-amber-200/70 dark:bg-amber-900/60 px-1.5 py-0.5 text-[10px] font-black text-amber-800 dark:text-amber-200">
                                 <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                                 <span x-text="labels.held_since.replace(':time', h.held_at)"></span>
                             </p>
                         </div>
-                        <div class="flex gap-1">
+                        <div class="flex gap-1.5">
                             <button type="button" @click="resumeHeld(h.id)" :disabled="cartBusy"
-                                    class="text-xs font-bold px-2 py-1 rounded-lg bg-amber-500 text-white hover:bg-amber-400 disabled:opacity-50">{{ __('messages.resume') }}</button>
+                                    class="sf-btn-3d-gold text-xs font-black px-2.5 py-1.5 rounded-lg cursor-pointer transition">{{ __('messages.resume') }}</button>
                             <button type="button" @click="voidHeld(h.id)" :disabled="cartBusy"
-                                    class="text-xs font-bold px-2 py-1 rounded-lg bg-rose-500 text-white hover:bg-rose-400 disabled:opacity-50">{{ __('messages.void_sale') }}</button>
+                                    class="sf-btn-3d-danger text-xs font-black px-2.5 py-1.5 rounded-lg cursor-pointer transition">{{ __('messages.void_sale') }}</button>
                         </div>
                     </div>
                 </template>
@@ -1523,8 +1518,8 @@
 
         {{-- ── Reporting tabs: Today | Registers | Debt ─────────────────── --}}
         <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            <nav class="bg-slate-100/90 dark:bg-slate-800/80 p-1 rounded-t-2xl" role="tablist" aria-label="{{ __('messages.today_summary') }}">
-                <div class="flex items-stretch gap-1 overflow-x-auto scrollbar-thin">
+            <nav class="bg-slate-100/90 dark:bg-slate-800/80 p-1.5 rounded-t-2xl" role="tablist" aria-label="{{ __('messages.today_summary') }}">
+                <div class="flex items-stretch gap-1.5 overflow-x-auto scrollbar-thin">
                     @foreach ([
                         ['today', 'pos_tab_today', 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z', true],
                         ['registers', 'pos_tab_registers', 'M4 5h16v5H4V5Zm2 5v9h12v-9M7 12h2m-2 4h2m5-4h3m-3 4h3', $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS)],
@@ -1533,8 +1528,8 @@
                         @if ($visible)
                         <button type="button" role="tab" @click="activeTab = '{{ $key }}'"
                                 :aria-selected="activeTab === '{{ $key }}' ? 'true' : 'false'"
-                                class="group relative flex-1 sm:flex-none min-w-0 inline-flex items-center justify-center sm:justify-start gap-2 rounded-xl px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-black transition min-h-[44px]"
-                                :class="activeTab === '{{ $key }}' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-700/50'">
+                                class="group relative flex-1 sm:flex-none min-w-0 inline-flex items-center justify-center sm:justify-start gap-2 rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-black transition min-h-[40px] cursor-pointer"
+                                :class="activeTab === '{{ $key }}' ? 'sf-btn-3d active bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400' : 'sf-btn-3d text-slate-600 dark:text-slate-300'">
                             <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ $icon }}"/></svg>
                             <span class="truncate">{{ __('messages.' . $labelKey) }}</span>
                         </button>
@@ -1586,18 +1581,20 @@
                                             </td>
                                             <td class="px-3 py-2.5 text-right font-black">Ks {{ number_format((float) $sale->total) }}</td>
                                             <td class="px-3 py-2.5 text-center whitespace-nowrap">
-                                                @if ($sale->status !== 'refunded')
-                                                    <a href="{{ url('/store/' . $store->slug . '/pos/sales/' . $sale->id . '/refund') }}"
-                                                       class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 hover:text-rose-600 transition"
-                                                       title="{{ __('messages.refund_sale') }}">
-                                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-4-4m0 0l4-4m-4 4h11a4 4 0 010 8h-1"/></svg>
+                                                <div class="inline-flex items-center gap-1.5">
+                                                    @if ($sale->status !== 'refunded')
+                                                        <a href="{{ url('/store/' . $store->slug . '/pos/sales/' . $sale->id . '/refund') }}"
+                                                           class="sf-btn-3d-danger inline-flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition"
+                                                           title="{{ __('messages.refund_sale') }}">
+                                                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-4-4m0 0l4-4m-4 4h11a4 4 0 010 8h-1"/></svg>
+                                                        </a>
+                                                    @endif
+                                                    <a href="{{ url('/store/' . $store->slug . '/pos/sales/' . $sale->id . '/receipt') }}" target="_blank"
+                                                       class="sf-btn-3d inline-flex items-center justify-center w-8 h-8 rounded-lg text-blue-600 dark:text-blue-400 cursor-pointer transition"
+                                                       title="{{ __('messages.print_receipt') }}">
+                                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
                                                     </a>
-                                                @endif
-                                                <a href="{{ url('/store/' . $store->slug . '/pos/sales/' . $sale->id . '/receipt') }}" target="_blank"
-                                                   class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-600 transition"
-                                                   title="{{ __('messages.print_receipt') }}">
-                                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
-                                                </a>
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -1660,12 +1657,12 @@
                                 </div>
                                 <input type="text" name="reason" maxlength="255" placeholder="{{ __('messages.reason') }}"
                                        class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
-                                <button type="submit" class="rounded-xl px-4 py-2 text-sm font-bold bg-blue-600 text-white hover:bg-blue-500 transition">{{ __('messages.save') }}</button>
+                                <button type="submit" class="sf-btn-3d-primary rounded-xl px-4 py-2 text-sm font-bold text-white cursor-pointer transition">{{ __('messages.save') }}</button>
                             </form>
 
                             <div x-data="{ show: false }" class="border-t border-slate-200 dark:border-slate-800 pt-4">
                                 <button type="button" @click="show = !show"
-                                        class="w-full rounded-xl px-4 py-3 text-sm font-bold bg-rose-600 text-white hover:bg-rose-500 transition">{{ __('messages.close_shift') }}</button>
+                                        class="sf-btn-3d-danger w-full rounded-xl px-4 py-3 text-sm font-bold text-white cursor-pointer transition">{{ __('messages.close_shift') }}</button>
                                 <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/shifts/' . $openShift->id . '/close') }}"
                                       x-show="show" x-cloak class="mt-3 grid gap-2">
                                     @csrf
@@ -1675,7 +1672,7 @@
                                            class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
                                     <textarea name="notes" rows="2" maxlength="1000" placeholder="{{ __('messages.notes') }}"
                                               class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"></textarea>
-                                    <button type="submit" class="rounded-xl px-4 py-2 text-sm font-bold bg-rose-600 text-white hover:bg-rose-500 transition">{{ __('messages.confirm_close_shift') }}</button>
+                                    <button type="submit" class="sf-btn-3d-danger rounded-xl px-4 py-2 text-sm font-bold text-white cursor-pointer transition">{{ __('messages.confirm_close_shift') }}</button>
                                 </form>
                             </div>
                         </section>
@@ -1776,12 +1773,12 @@
                                             <td class="px-3 py-2.5 text-xs text-slate-500">{{ $customer['last_activity'] ? \Illuminate\Support\Carbon::parse($customer['last_activity'])->diffForHumans() : '—' }}</td>
                                             <td class="px-3 py-2.5 text-right">
                                                 <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/customers/' . $customer['customer_id'] . '/collect') }}"
-                                                      class="inline-flex items-center gap-1" x-data="{ amount: '' }">
+                                                      class="inline-flex items-center gap-1.5" x-data="{ amount: '' }">
                                                     @csrf
                                                     <input type="number" name="amount" min="0.01" :max="{{ $customer['balance'] }}" step="any" required placeholder="0" x-model="amount"
                                                            class="w-28 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 text-right text-sm font-semibold">
                                                     <button type="submit" :disabled="!amount || parseFloat(amount) <= 0"
-                                                            class="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                                                            class="sf-btn-3d-success text-xs font-bold px-3 py-1.5 rounded-lg text-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition">
                                                         {{ __('messages.collect') }}
                                                     </button>
                                                 </form>

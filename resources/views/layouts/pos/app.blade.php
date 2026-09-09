@@ -169,7 +169,7 @@
                 {{-- POS Display Mode Dropdown (Standard Light / High-Contrast Daylight / OLED Dark) --}}
                 <div class="relative" @click.away="displayMenuOpen = false">
                     <button @click="displayMenuOpen = !displayMenuOpen" type="button"
-                            class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-slate-700 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm cursor-pointer"
+                            class="sf-btn-3d w-10 h-10 rounded-xl cursor-pointer"
                             aria-label="Display Mode"
                             title="POS Display Mode">
                         <svg x-show="displayMode === 'oled_dark' || isDark" x-cloak class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -206,23 +206,23 @@
 
                 {{-- Calculator button --}}
                 <button type="button" @click="openCalculator()"
-                        class="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400 transition inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm"
+                        class="sf-btn-3d w-10 h-10 rounded-xl cursor-pointer"
                         aria-label="{{ __('messages.calculator') }}"
                         title="{{ __('messages.calculator') }}">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="w-4 h-4 text-slate-700 dark:text-slate-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="5" y="3" width="14" height="18" rx="2"/>
                         <path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"/>
                     </svg>
                 </button>
 
                 <a href="{{ url('/store/' . $store->slug . '/admin/dashboard') }}"
-                   class="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition">
+                   class="sf-btn-3d inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-xs font-bold cursor-pointer">
                     <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                     <span class="hidden sm:inline">{{ __('messages.admin_panel') }}</span>
                 </a>
                 <form method="POST" action="{{ url('/logout') }}">
                     @csrf
-                    <button type="submit" class="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-300 hover:text-rose-600 dark:hover:text-rose-400 shadow-sm transition cursor-pointer">
+                    <button type="submit" class="sf-btn-3d inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-xs font-semibold hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer">
                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
                         <span class="hidden sm:inline">{{ __('messages.logout') }}</span>
                     </button>
@@ -270,7 +270,7 @@
                     <h2 id="pos-calculator-title" class="text-sm font-black text-slate-700 dark:text-slate-100">{{ __('messages.calculator') }}</h2>
                 </div>
                 <button x-ref="posCalcClose" @click="closeCalculator()" type="button"
-                    class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    class="sf-btn-3d inline-flex h-10 w-10 items-center justify-center rounded-full cursor-pointer"
                     aria-label="{{ __('messages.close') }}">
                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M6 6l12 12M18 6 6 18" />
@@ -285,38 +285,38 @@
             <div class="grid grid-cols-5 gap-2 pb-3">
                 @foreach ([5, 10, 15, 20, 30] as $percent)
                     <button type="button" @click="applyPercent({{ $percent }})"
-                        class="min-h-12 rounded-xl bg-slate-600 px-2 text-sm font-black text-white shadow-sm hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:hover:bg-slate-600 sm:min-h-11">
+                        class="sf-btn-3d min-h-12 rounded-xl px-2 text-sm font-black sm:min-h-11 cursor-pointer">
                         {{ $percent }}%
                     </button>
                 @endforeach
             </div>
 
             <div class="grid grid-cols-4 gap-2">
-                <button type="button" @click="resetCalculator()" class="min-h-16 rounded-xl sm:min-h-14 bg-red-400 text-xl font-black text-white shadow-sm hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-400">C</button>
-                <button type="button" @click="backspaceCalculator()" class="min-h-16 rounded-xl sm:min-h-14 bg-amber-300 text-xl font-black text-white shadow-sm hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400" aria-label="{{ __('messages.backspace') }}">
+                <button type="button" @click="resetCalculator()" class="sf-btn-3d-danger min-h-16 rounded-xl sm:min-h-14 text-xl font-black cursor-pointer">C</button>
+                <button type="button" @click="backspaceCalculator()" class="sf-btn-3d-gold min-h-16 rounded-xl sm:min-h-14 text-xl font-black cursor-pointer" aria-label="{{ __('messages.backspace') }}">
                     <svg class="mx-auto h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 6H9l-5 6 5 6h11V6Zm-4 4-4 4m0-4 4 4"/></svg>
                 </button>
-                <button type="button" @click="chooseCalcOperator('/')" class="min-h-16 rounded-xl sm:min-h-14 bg-blue-500 text-xl font-black text-white shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">÷</button>
-                <button type="button" @click="chooseCalcOperator('*')" class="min-h-16 rounded-xl sm:min-h-14 bg-blue-500 text-xl font-black text-white shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">×</button>
+                <button type="button" @click="chooseCalcOperator('/')" class="sf-btn-3d-primary min-h-16 rounded-xl sm:min-h-14 text-xl font-black cursor-pointer">÷</button>
+                <button type="button" @click="chooseCalcOperator('*')" class="sf-btn-3d-primary min-h-16 rounded-xl sm:min-h-14 text-xl font-black cursor-pointer">×</button>
 
                 @foreach ([7, 8, 9] as $digit)
-                    <button type="button" @click="inputCalcDigit('{{ $digit }}')" class="min-h-16 rounded-xl sm:min-h-14 border border-slate-200 bg-slate-50 text-xl font-black text-slate-900 shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">{{ $digit }}</button>
+                    <button type="button" @click="inputCalcDigit('{{ $digit }}')" class="sf-btn-3d min-h-16 rounded-xl sm:min-h-14 text-xl font-black cursor-pointer">{{ $digit }}</button>
                 @endforeach
-                <button type="button" @click="chooseCalcOperator('-')" class="min-h-16 rounded-xl sm:min-h-14 bg-blue-500 text-xl font-black text-white shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">-</button>
+                <button type="button" @click="chooseCalcOperator('-')" class="sf-btn-3d-primary min-h-16 rounded-xl sm:min-h-14 text-xl font-black cursor-pointer">-</button>
 
                 @foreach ([4, 5, 6] as $digit)
-                    <button type="button" @click="inputCalcDigit('{{ $digit }}')" class="min-h-16 rounded-xl sm:min-h-14 border border-slate-200 bg-slate-50 text-xl font-black text-slate-900 shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">{{ $digit }}</button>
+                    <button type="button" @click="inputCalcDigit('{{ $digit }}')" class="sf-btn-3d min-h-16 rounded-xl sm:min-h-14 text-xl font-black cursor-pointer">{{ $digit }}</button>
                 @endforeach
-                <button type="button" @click="chooseCalcOperator('+')" class="min-h-16 rounded-xl sm:min-h-14 bg-blue-500 text-xl font-black text-white shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">+</button>
+                <button type="button" @click="chooseCalcOperator('+')" class="sf-btn-3d-primary min-h-16 rounded-xl sm:min-h-14 text-xl font-black cursor-pointer">+</button>
 
                 @foreach ([1, 2, 3] as $digit)
-                    <button type="button" @click="inputCalcDigit('{{ $digit }}')" class="min-h-16 rounded-xl sm:min-h-14 border border-slate-200 bg-slate-50 text-xl font-black text-slate-900 shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">{{ $digit }}</button>
+                    <button type="button" @click="inputCalcDigit('{{ $digit }}')" class="sf-btn-3d min-h-16 rounded-xl sm:min-h-14 text-xl font-black cursor-pointer">{{ $digit }}</button>
                 @endforeach
-                <button type="button" @click="calculateResult()" class="row-span-2 min-h-16 rounded-xl sm:min-h-14 bg-green-500 text-xl font-black text-white shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500">=</button>
+                <button type="button" @click="calculateResult()" class="sf-btn-3d-success row-span-2 min-h-16 rounded-xl sm:min-h-14 text-xl font-black cursor-pointer">=</button>
 
-                <button type="button" @click="inputCalcDigit('0')" class="min-h-16 rounded-xl sm:min-h-14 border border-slate-200 bg-slate-50 text-xl font-black text-slate-900 shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">0</button>
-                <button type="button" @click="inputCalcDigit('.')" class="min-h-16 rounded-xl sm:min-h-14 border border-slate-200 bg-slate-50 text-xl font-black text-slate-900 shadow-sm hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">.</button>
-                <button type="button" @click="applyPercent(100)" class="min-h-16 rounded-xl sm:min-h-14 bg-blue-500 text-xl font-black text-white shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">%</button>
+                <button type="button" @click="inputCalcDigit('0')" class="sf-btn-3d min-h-16 rounded-xl sm:min-h-14 text-xl font-black cursor-pointer">0</button>
+                <button type="button" @click="inputCalcDigit('.')" class="sf-btn-3d min-h-16 rounded-xl sm:min-h-14 text-xl font-black cursor-pointer">.</button>
+                <button type="button" @click="applyPercent(100)" class="sf-btn-3d-primary min-h-16 rounded-xl sm:min-h-14 text-xl font-black cursor-pointer">%</button>
             </div>
         </div>
     </div>

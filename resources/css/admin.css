@@ -718,5 +718,349 @@ main div.w-full.grid > div {
     padding: 3px 5px !important;
 }
 
+/* ==========================================================================
+   3D Button System (Storefront Tactile 3D Buttons ported to POS & Admin)
+   ========================================================================== */
+:root {
+    --sf-primary: #2563eb;
+    --sf-primary-hover: #3b82f6;
+    --sf-primary-bevel: #1d4ed8;
+    --sf-primary-active: #1e40af;
+    --sf-accent: #6366f1;
+    --sf-accent-hover: #818cf8;
+    --sf-accent-bevel: #4338ca;
+}
+
+.sf-btn-3d,
+.pos-btn-3d,
+.sf-btn-3d-primary,
+.pos-btn-3d-primary,
+.sf-btn-3d-accent,
+.pos-btn-3d-accent,
+.sf-btn-3d-success,
+.pos-btn-3d-success,
+.sf-btn-3d-danger,
+.pos-btn-3d-danger,
+.sf-btn-3d-gold,
+.pos-btn-3d-gold,
+.sf-btn-3d-orange,
+.pos-btn-3d-orange,
+.sf-btn-3d-viber,
+.sf-btn-3d-telegram,
+.sf-btn-3d-facebook {
+    position: relative;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transform: translateZ(0);
+    transition: transform 120ms ease, border-bottom-width 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(203, 213, 225, 0.9);
+    border-bottom: 3px solid #cbd5e1;
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    color: #1e293b;
+    text-decoration: none !important;
+}
+
+.sf-btn-3d.flex-col,
+.pos-btn-3d.flex-col {
+    flex-direction: column;
+}
+
+.sf-btn-3d.rounded-md, .pos-btn-3d.rounded-md { border-radius: 0.375rem !important; }
+.sf-btn-3d.rounded-lg, .pos-btn-3d.rounded-lg { border-radius: 0.5rem !important; }
+.sf-btn-3d.rounded-xl, .pos-btn-3d.rounded-xl { border-radius: 0.75rem !important; }
+.sf-btn-3d.rounded-2xl, .pos-btn-3d.rounded-2xl { border-radius: 1rem !important; }
+.sf-btn-3d.rounded-full, .pos-btn-3d.rounded-full { border-radius: 9999px !important; }
+
+.sf-btn-3d:hover,
+.pos-btn-3d:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+    border-bottom: 4px solid #94a3b8;
+    box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+    color: #0f172a;
+}
+
+.sf-btn-3d:active,
+.pos-btn-3d:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #cbd5e1;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Primary 3D Button (Blue) */
+.sf-btn-3d.active,
+.pos-btn-3d.active,
+.sf-btn-3d-primary,
+.pos-btn-3d-primary {
+    background: linear-gradient(180deg, var(--sf-primary, #2563eb) 0%, color-mix(in srgb, var(--sf-primary, #2563eb) 85%, #000000) 100%);
+    color: #ffffff !important;
+    border: 1px solid color-mix(in srgb, var(--sf-primary, #2563eb) 80%, #ffffff);
+    border-bottom: 3px solid var(--sf-primary-bevel, #1d4ed8);
+    box-shadow: 0 2px 6px -1px color-mix(in srgb, var(--sf-primary, #2563eb) 35%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.sf-btn-3d.active:hover,
+.pos-btn-3d.active:hover,
+.sf-btn-3d-primary:hover,
+.pos-btn-3d-primary:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, var(--sf-primary-hover, #3b82f6) 0%, var(--sf-primary, #2563eb) 100%);
+    border-bottom: 4px solid var(--sf-primary-bevel, #1d4ed8);
+    box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--sf-primary, #2563eb) 50%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+
+.sf-btn-3d.active:active,
+.pos-btn-3d.active:active,
+.sf-btn-3d-primary:active,
+.pos-btn-3d-primary:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid var(--sf-primary-bevel, #1d4ed8);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--sf-primary, #2563eb) 25%, transparent), inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* Success 3D Button (Emerald) */
+.sf-btn-3d-success,
+.pos-btn-3d-success {
+    background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+    color: #ffffff !important;
+    border: 1px solid #34d399;
+    border-bottom: 3px solid #047857;
+    box-shadow: 0 2px 6px -1px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.sf-btn-3d-success:hover,
+.pos-btn-3d-success:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+    border-bottom: 4px solid #065f46;
+    box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+
+.sf-btn-3d-success:active,
+.pos-btn-3d-success:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #047857;
+    box-shadow: 0 1px 2px rgba(16, 185, 129, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* Danger 3D Button (Rose/Red) */
+.sf-btn-3d-danger,
+.pos-btn-3d-danger {
+    background: linear-gradient(180deg, #f43f5e 0%, #e11d48 100%);
+    color: #ffffff !important;
+    border: 1px solid #fb7185;
+    border-bottom: 3px solid #be123c;
+    box-shadow: 0 2px 6px -1px rgba(244, 63, 94, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.sf-btn-3d-danger:hover,
+.pos-btn-3d-danger:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #fb7185 0%, #f43f5e 100%);
+    border-bottom: 4px solid #9f1239;
+    box-shadow: 0 4px 12px -2px rgba(244, 63, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+
+.sf-btn-3d-danger:active,
+.pos-btn-3d-danger:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #be123c;
+    box-shadow: 0 1px 2px rgba(244, 63, 94, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* Gold / Amber 3D Button */
+.sf-btn-3d-gold,
+.pos-btn-3d-gold {
+    background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+    color: #ffffff !important;
+    border: 1px solid #fde68a;
+    border-bottom: 3px solid #b45309;
+    box-shadow: 0 2px 6px -1px rgba(217, 119, 6, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.sf-btn-3d-gold:hover,
+.pos-btn-3d-gold:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #fde047 0%, #f59e0b 100%);
+    border-bottom: 4px solid #92400e;
+    box-shadow: 0 4px 12px -2px rgba(217, 119, 6, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    color: #ffffff !important;
+}
+
+.sf-btn-3d-gold:active,
+.pos-btn-3d-gold:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #b45309;
+    box-shadow: 0 1px 2px rgba(217, 119, 6, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* Orange 3D Button */
+.sf-btn-3d-orange,
+.pos-btn-3d-orange {
+    background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
+    color: #ffffff !important;
+    border: 1px solid #fb923c;
+    border-bottom: 3px solid #9a3412;
+    box-shadow: 0 2px 6px -1px rgba(234, 88, 12, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.sf-btn-3d-orange:hover,
+.pos-btn-3d-orange:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #fb923c 0%, #f97316 100%);
+    border-bottom: 4px solid #7c2d12;
+    box-shadow: 0 4px 12px -2px rgba(234, 88, 12, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+
+.sf-btn-3d-orange:active,
+.pos-btn-3d-orange:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #9a3412;
+}
+
+/* Accent 3D Button */
+.sf-btn-3d-accent,
+.pos-btn-3d-accent {
+    background: linear-gradient(180deg, var(--sf-accent, #6366f1) 0%, color-mix(in srgb, var(--sf-accent, #6366f1) 85%, #000000) 100%);
+    color: #ffffff !important;
+    border: 1px solid color-mix(in srgb, var(--sf-accent, #6366f1) 80%, #ffffff);
+    border-bottom: 3px solid var(--sf-accent-bevel, #4338ca);
+    box-shadow: 0 2px 6px -1px color-mix(in srgb, var(--sf-accent, #6366f1) 35%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.sf-btn-3d-accent:hover,
+.pos-btn-3d-accent:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, var(--sf-accent-hover, #818cf8) 0%, var(--sf-accent, #6366f1) 100%);
+    border-bottom: 4px solid var(--sf-accent-bevel, #3730a3);
+    box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--sf-accent, #6366f1) 50%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+
+.sf-btn-3d-accent:active,
+.pos-btn-3d-accent:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid var(--sf-accent-bevel, #4338ca);
+}
+
+/* Dark Mode 3D Buttons */
+.dark .sf-btn-3d,
+.dark .pos-btn-3d {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(51, 65, 85, 0.9);
+    border-bottom: 3px solid #020617;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    color: #e2e8f0;
+}
+
+.dark .sf-btn-3d:hover,
+.dark .pos-btn-3d:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+    border-bottom: 4px solid #000000;
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+.dark .sf-btn-3d:active,
+.dark .pos-btn-3d:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #020617;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.dark .sf-btn-3d.active,
+.dark .pos-btn-3d.active,
+.dark .sf-btn-3d-primary,
+.dark .pos-btn-3d-primary {
+    background: linear-gradient(180deg, var(--sf-primary, #2563eb) 0%, color-mix(in srgb, var(--sf-primary, #2563eb) 80%, #000000) 100%);
+    color: #ffffff !important;
+    border: 1px solid color-mix(in srgb, var(--sf-primary, #2563eb) 70%, #ffffff);
+    border-bottom: 3px solid var(--sf-primary-bevel, #1e3a8a);
+    box-shadow: 0 2px 8px -1px color-mix(in srgb, var(--sf-primary, #2563eb) 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.dark .sf-btn-3d.active:hover,
+.dark .pos-btn-3d.active:hover,
+.dark .sf-btn-3d-primary:hover,
+.dark .pos-btn-3d-primary:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, var(--sf-primary-hover, #3b82f6) 0%, var(--sf-primary, #2563eb) 100%);
+    border-bottom: 4px solid var(--sf-primary-bevel, #1e3a8a);
+    box-shadow: 0 4px 14px -2px color-mix(in srgb, var(--sf-primary, #2563eb) 60%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+
+.dark .sf-btn-3d.active:active,
+.dark .pos-btn-3d.active:active,
+.dark .sf-btn-3d-primary:active,
+.dark .pos-btn-3d-primary:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid var(--sf-primary-bevel, #1e3a8a);
+}
+
+.dark .sf-btn-3d-gold,
+.dark .pos-btn-3d-gold {
+    background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
+    border: 1px solid rgba(253, 230, 138, 0.7);
+    border-bottom: 3px solid #78350f;
+    box-shadow: 0 2px 8px -1px rgba(245, 158, 11, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+
+.dark .sf-btn-3d-gold:hover,
+.dark .pos-btn-3d-gold:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+    border-bottom: 4px solid #451a03;
+    box-shadow: 0 4px 14px -2px rgba(245, 158, 11, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #ffffff !important;
+}
+
+.dark .sf-btn-3d-gold:active,
+.dark .pos-btn-3d-gold:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #78350f;
+}
+
+/* Disabled State for all 3D Buttons */
+.sf-btn-3d:disabled,
+.sf-btn-3d[disabled],
+.sf-btn-3d-primary:disabled,
+.sf-btn-3d-primary[disabled],
+.sf-btn-3d-success:disabled,
+.sf-btn-3d-success[disabled],
+.sf-btn-3d-danger:disabled,
+.sf-btn-3d-danger[disabled],
+.sf-btn-3d-gold:disabled,
+.sf-btn-3d-gold[disabled],
+.pos-btn-3d:disabled,
+.pos-btn-3d[disabled],
+.pos-btn-3d-primary:disabled,
+.pos-btn-3d-primary[disabled],
+.pos-btn-3d-success:disabled,
+.pos-btn-3d-success[disabled],
+.pos-btn-3d-danger:disabled,
+.pos-btn-3d-danger[disabled],
+.pos-btn-3d-gold:disabled,
+.pos-btn-3d-gold[disabled] {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    pointer-events: none;
+}
+
+
 
 
