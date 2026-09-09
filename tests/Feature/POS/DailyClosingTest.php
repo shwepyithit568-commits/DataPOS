@@ -476,4 +476,342 @@ class DailyClosingTest extends TestCase
             ->post("/store/{$storeB->slug}/pos/closing/{$closing->id}/approve")
             ->assertNotFound();
     }
+
+    /* ------------------------------------------------------------------ */
+    /*  Phase 2: Comprehensive X-Report & Z-Report Production Tests       */
+    /* ------------------------------------------------------------------ */
+
+    public function test_x_report_get_request_is_non_mutating_repeatable_and_audited(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $shift = $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 50000], $cashier);
+        $this->postSale($store, $cashier, [['method' => 'kpay', 'amount' => '8000']], '8000');
+
+        $initialClosingsCount = DailyClosing::count();
+        $initialShiftsCount = CashierShift::count();
+
+        // 1. Request X-Report repeatedly
+        for ($i = 0; $i < 3; $i++) {
+            $response = $this->actingAs($cashier)->get("/store/{$store->slug}/pos/closing/x-report");
+            $response->assertOk();
+            $response->assertSee('X-Report');
+            $response->assertSee(__('messages.reading_only'));
+        }
+
+        // 2. Assert zero database mutations
+        $this->assertSame($initialClosingsCount, DailyClosing::count(), 'X-Report must not create a daily_closings row.');
+        $this->assertSame($initialShiftsCount, CashierShift::count(), 'X-Report must not alter cashier shifts count.');
+        $this->assertTrue($shift->fresh()->isOpen(), 'X-Report must not close an open cashier shift.');
+        $this->assertFalse(app(\App\POS\Services\PeriodLockService::class)->isDateLocked($store, Carbon::today()), 'X-Report must not lock the business date.');
+
+        // 3. Assert Audit Log recorded for view event
+        $this->assertDatabaseHas('audit_logs', [
+            'store_id' => $store->id,
+            'action' => 'x_report_viewed',
+            'entity_type' => 'x_report',
+        ]);
+    }
+
+    public function test_unauthorized_cross_store_and_future_date_x_report_are_blocked(): void
+    {
+        $storeA = $this->makeStore('store-a');
+        $storeB = $this->makeStore('store-b');
+        $cashierA = $this->staff($storeA);
+        $outsider = User::create([
+            'name' => 'Outsider',
+            'phone' => '09' . rand(10000000, 99999999),
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+
+        // Unauthorized user 403
+        $this->actingAs($outsider)
+            ->get("/store/{$storeA->slug}/pos/closing/x-report")
+            ->assertForbidden();
+
+        // Cross-store user 403/404
+        $this->actingAs($cashierA)
+            ->get("/store/{$storeB->slug}/pos/closing/x-report")
+            ->assertForbidden();
+
+        // Future date 422
+        $tomorrow = Carbon::tomorrow()->toDateString();
+        $this->actingAs($cashierA)
+            ->get("/store/{$storeA->slug}/pos/closing/x-report?date={$tomorrow}")
+            ->assertStatus(422);
+    }
+
+    public function test_electronic_refund_reduces_matching_electronic_method(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $customer = $this->retailCustomer($store);
+
+        // Sale with WavePay 20000
+        $sale = $this->postSale($store, $cashier, [['method' => 'wavepay', 'amount' => '20000']], '20000', $customer);
+
+        $totalsBefore = $this->closings->expectedTotals($store, Carbon::today());
+        $this->assertSame('20000.00', $totalsBefore['expected']['wavepay']);
+
+        // Return with WavePay 5000 refund
+        $return = \App\POS\Models\PosReturn::query()->create([
+            'store_id' => $store->id,
+            'pos_sale_id' => $sale->id,
+            'return_number' => 'RET-WAVE-1',
+            'status' => 'posted',
+            'total' => 5000,
+            'posted_at' => now(),
+        ]);
+        \App\POS\Models\PosReturnPayment::query()->create([
+            'pos_return_id' => $return->id,
+            'method' => 'wavepay',
+            'amount' => 5000,
+        ]);
+
+        $totalsAfter = $this->closings->expectedTotals($store, Carbon::today());
+        $this->assertSame('15000.00', $totalsAfter['expected']['wavepay'], 'WavePay refund must reduce matching expected total.');
+    }
+
+    public function test_split_payment_not_double_counted_and_credit_does_not_affect_drawer_cash(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $customer = $this->retailCustomer($store);
+
+        // Split sale: Cash 10000, KPay 15000, Credit 25000 (Total 50000)
+        $shift = $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 50000], $cashier);
+        $product = $this->makeProduct($store, ['retail_price' => '50000']);
+        $this->seedStock($store, $product, '5');
+        $this->sales->addToCart($store, $product->id, null, '1');
+
+        $this->sales->post(
+            $store,
+            $this->sales->cartLines($store),
+            [
+                ['method' => 'cash', 'amount' => '10000'],
+                ['method' => 'kpay', 'amount' => '15000'],
+                ['method' => 'credit', 'amount' => '25000'],
+            ],
+            $cashier,
+            $shift,
+            null,
+            $customer->id,
+        );
+
+        $totals = $this->closings->expectedTotals($store, Carbon::today());
+
+        $this->assertSame('15000.00', $totals['expected']['kpay']);
+        $this->assertSame('25000.00', $totals['expected']['credit']);
+        // Drawer cash = opening 50000 + cash sale 10000 = 60000 (KPay and Credit do not increase drawer cash)
+        $this->assertSame('60000.00', $totals['expected']['cash']);
+        $this->assertSame('50000.00', $totals['summary']['net_sales']);
+    }
+
+    public function test_approved_closing_is_immutable_and_direct_reopen_disabled(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $manager = $this->manager($store);
+        $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 50000], $cashier);
+
+        $closing = $this->closings->create(
+            $store,
+            Carbon::today(),
+            ['cash' => 50000, 'kpay' => 0, 'wavepay' => 0, 'cb_pay' => 0, 'mmqr' => 0],
+            null,
+            $cashier,
+        );
+
+        $this->closings->approve($store, $closing, $manager);
+        $this->assertTrue($closing->fresh()->isApproved());
+
+        // 1. Direct reopen via HTTP POST is disabled in Phase 2 (403)
+        $this->actingAs($manager)
+            ->post("/store/{$store->slug}/pos/closing/{$closing->id}/reopen", ['reason' => 'Need to adjust'])
+            ->assertForbidden();
+
+        // 2. Business date is period-locked
+        $this->assertTrue(app(\App\POS\Services\PeriodLockService::class)->isDateLocked($store, Carbon::today()));
+
+        // 3. Resubmitting on same date is rejected
+        $this->actingAs($cashier)
+            ->post("/store/{$store->slug}/pos/closing", [
+                'business_date' => today()->toDateString(),
+                'counted' => ['cash' => 50000, 'kpay' => 0, 'wavepay' => 0, 'cb_pay' => 0, 'mmqr' => 0],
+            ])
+            ->assertRedirect(); // Fails domain create and redirects with error flash
+
+        $this->assertSame(1, DailyClosing::where('store_id', $store->id)->count());
+    }
+
+    public function test_print_view_renders_all_six_layouts_and_markers(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $manager = $this->manager($store);
+        $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 50000], $cashier);
+
+        $closing = $this->closings->create(
+            $store,
+            Carbon::today(),
+            ['cash' => 50000, 'kpay' => 0, 'wavepay' => 0, 'cb_pay' => 0, 'mmqr' => 0],
+            null,
+            $cashier,
+        );
+        $this->closings->approve($store, $closing, $manager);
+
+        $layouts = [
+            '58mm' => 'size: 58mm auto',
+            '80mm' => 'size: 80mm auto',
+            'a5_portrait' => 'size: A5 portrait',
+            'a5_landscape' => 'size: A5 landscape',
+            'a4_portrait' => 'size: A4 portrait',
+            'a4_landscape' => 'size: A4 landscape',
+        ];
+
+        // 1. Test Z-Report print across all 6 layouts
+        foreach ($layouts as $layoutKey => $expectedPageCss) {
+            $resp = $this->actingAs($cashier)->get("/store/{$store->slug}/pos/closing/{$closing->id}/print?layout={$layoutKey}");
+            $resp->assertOk();
+            $resp->assertSee($expectedPageCss, false);
+            $resp->assertSee('Z-REPORT', false);
+            $resp->assertSee('FINAL DAILY CLOSING', false);
+            $resp->assertSee('50,000'); // Opening float / cash rendered
+        }
+
+        // 2. Test X-Report print across all 6 layouts
+        foreach ($layouts as $layoutKey => $expectedPageCss) {
+            $resp = $this->actingAs($cashier)->get("/store/{$store->slug}/pos/closing/print?type=x&layout={$layoutKey}");
+            $resp->assertOk();
+            $resp->assertSee($expectedPageCss, false);
+            $resp->assertSee('X-REPORT', false);
+            $resp->assertSee('READING ONLY', false);
+        }
+    }
+
+    public function test_reports_daily_closing_alias_routes_and_navigation(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 50000], $cashier);
+
+        // 1. Alias routes resolve with 200
+        $this->actingAs($cashier)
+            ->get("/store/{$store->slug}/pos/reports/daily-closing")
+            ->assertOk()
+            ->assertSee(__('messages.closing_title'));
+
+        $this->actingAs($cashier)
+            ->get("/store/{$store->slug}/pos/reports/daily-closing/print?type=x&layout=80mm")
+            ->assertOk()
+            ->assertSee('X-REPORT', false);
+
+        // 2. Navigation tree contains daily closing in Reports group
+        $navService = app(\App\Services\AdminNavigationService::class);
+        $tree = $navService->getFilteredNavigationTree($cashier, $store);
+
+        $reportsGroup = collect($tree)->firstWhere('key', 'reports');
+        $this->assertNotNull($reportsGroup, 'Reports navigation group must exist.');
+
+        $closingChild = collect($reportsGroup['children'])->firstWhere('key', 'reports_daily_closing');
+        $this->assertNotNull($closingChild, 'Daily Closing must be present in Reports navigation.');
+        $this->assertSame(route('pos.closing.index', ['store_slug' => $store->slug]), $closingChild['url']);
+
+        // POS group still has operational pos_closing
+        $posGroup = collect($tree)->firstWhere('key', 'pos');
+        $this->assertNotNull($posGroup);
+        $this->assertNotNull(collect($posGroup['children'])->firstWhere('key', 'pos_closing'));
+    }
+
+    public function test_trilingual_translation_keys_parity_for_phase_two(): void
+    {
+        $requiredKeys = [
+            'closing_title',
+            'closing_expected',
+            'closing_counted',
+            'closing_difference',
+            'x_report',
+            'z_report',
+            'x_report_reading',
+            'z_report_closing',
+            'reading_only',
+            'final_closing',
+            'expected',
+            'counted',
+            'difference',
+            'over',
+            'short',
+            'submit',
+            'approve',
+            'pending',
+            'approved',
+            'print_58mm',
+            'print_80mm',
+            'print_a5',
+            'print_a5_portrait',
+            'print_a5_landscape',
+            'print_a4',
+            'print_a4_portrait',
+            'print_a4_landscape',
+            'paper_size',
+            'orientation',
+            'portrait',
+            'landscape',
+            'reprint',
+            'explanation_required',
+            'cannot_modify_approved_closing',
+            'pending_offline_warning',
+            'gross_sales',
+            'net_sales',
+            'discounts',
+            'tax_collected',
+            'returns_refunds',
+            'opening_float',
+            'expected_cash',
+            'counted_cash',
+            'cashier_signature',
+            'manager_signature',
+        ];
+
+        foreach (['my', 'en', 'zh_CN'] as $locale) {
+            $trans = include resource_path("../lang/{$locale}/messages.php");
+            foreach ($requiredKeys as $key) {
+                $this->assertArrayHasKey($key, $trans, "Locale '{$locale}' is missing required key '{$key}'.");
+            }
+        }
+    }
+
+    public function test_store_timezone_business_date_boundary(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+
+        $shift = $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 50000], $cashier);
+
+        // Sale posted at 23:59:00 of today (Asia/Yangon)
+        $todayLate = Carbon::today('Asia/Yangon')->setTime(23, 59, 0);
+        $product = $this->makeProduct($store, ['retail_price' => '10000']);
+        $this->seedStock($store, $product, '10');
+        $this->sales->addToCart($store, $product->id, null, '1');
+
+        Carbon::setTestNow($todayLate);
+
+        $this->sales->post(
+            $store,
+            $this->sales->cartLines($store),
+            [['method' => 'kpay', 'amount' => '10000']],
+            $cashier,
+            $shift,
+        );
+
+        $totalsToday = $this->closings->expectedTotals($store, Carbon::today('Asia/Yangon'));
+        $this->assertSame('10000.00', $totalsToday['expected']['kpay']);
+
+        // Expected totals for tomorrow should NOT include today's late night sale
+        $totalsTomorrow = $this->closings->expectedTotals($store, Carbon::tomorrow('Asia/Yangon'));
+        $this->assertSame('0.00', $totalsTomorrow['expected']['kpay']);
+
+        Carbon::setTestNow(); // Reset test now
+    }
 }
