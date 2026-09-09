@@ -912,6 +912,16 @@ class AdminNavigationService
                     'icon' => '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></svg>',
                     'children' => [
                         [
+                            'key' => 'reports_daily_closing',
+                            'translation_key' => 'messages.closing_title',
+                            'route_name' => 'pos.closing.index',
+                            'required_channel' => Store::CHANNEL_POS,
+                            'required_capability' => Capability::OPERATIONS_CASHIER_SHIFTS,
+                            'required_permissions' => ['pos_closing.view', 'pos_closing.edit'],
+                            'active_patterns' => ['route:pos.closing.*', 'path:store/*/pos/closing*', 'route:pos.reports.daily_closing*', 'path:store/*/pos/reports/daily-closing*'],
+                            'icon' => '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4"/></svg>',
+                        ],
+                        [
                             'key' => 'pos_reports_sales',
                             'translation_key' => 'messages.reports_sales',
                             'route_name' => 'pos.reports.sales',

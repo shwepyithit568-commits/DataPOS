@@ -99,29 +99,93 @@ class DailyClosingController extends Controller
         return back()->with('success', __('messages.closing_approved') . ' — ' . $closing->business_date->toDateString());
     }
 
-    public function reopen(Request $request, string $store_slug, DailyClosing $closing, StoreContext $context): RedirectResponse
+    public function xReport(Request $request, StoreContext $context): View
+    {
+        $store = $context->getStore();
+        $dateInput = $request->query('date', today()->toDateString());
+        $date = Carbon::parse($dateInput);
+
+        if ($date->isFuture()) {
+            abort(422, __('messages.future_date_not_allowed') ?? 'Cannot generate X-Report for a future date.');
+        }
+
+        $xData = $this->closings->xReport($store, $date, $request->user());
+
+        return view('pos.closing_x_report', compact('store', 'date', 'xData'));
+    }
+
+    public function print(Request $request, string $store_slug, StoreContext $context, ?DailyClosing $closing = null): View
     {
         $store = $context->getStore();
 
-        if ((int) $closing->store_id !== (int) $store->id) {
+        if ($closing && (int) $closing->store_id !== (int) $store->id) {
             abort(404);
         }
 
-        $data = $request->validate([
-            'reason' => ['required', 'string', 'min:3', 'max:500'],
-        ]);
-
-        try {
-            app(\App\POS\Services\PeriodLockService::class)->reopenPeriod(
-                store: $store,
-                date: $closing->business_date,
-                user: $request->user(),
-                reason: $data['reason']
-            );
-        } catch (InventoryException $e) {
-            return back()->with('error', $e->getMessage());
+        $allowedLayouts = ['58mm', '80mm', 'a5_portrait', 'a5_landscape', 'a4_portrait', 'a4_landscape'];
+        $layout = (string) $request->query('layout', '80mm');
+        if (! in_array($layout, $allowedLayouts, true)) {
+            $layout = '80mm';
         }
 
-        return back()->with('success', __('messages.period_reopened') . ' — ' . $closing->business_date->toDateString());
+        $dateString = $closing ? $closing->business_date->toDateString() : $request->query('date', today()->toDateString());
+        $date = Carbon::parse($dateString);
+
+        if ($date->isFuture()) {
+            abort(422, 'Cannot print report for a future date.');
+        }
+
+        $type = (string) $request->query('type', $closing ? 'z' : 'x');
+        if (! in_array($type, ['x', 'z'], true)) {
+            $type = 'z';
+        }
+
+        // If closing is not injected directly in route, try finding one for date if type is z
+        if (! $closing && $type === 'z') {
+            $closing = $this->closings->forDate($store, $date);
+        }
+
+        $xData = null;
+        $totals = null;
+
+        if ($type === 'x') {
+            $xData = $this->closings->xReport($store, $date, $request->user());
+            $totals = $xData['totals'];
+        } else {
+            // Z-Report
+            if ($closing) {
+                // Use snapshotted values from daily_closing record
+                $totals = [
+                    'opening_amount' => (string) $closing->opening_amount,
+                    'expected' => $closing->expected_totals ?? [],
+                    'counted' => $closing->counted_totals ?? [],
+                    'differences' => $closing->differences ?? [],
+                    'total_difference' => (string) $closing->total_difference,
+                    'date' => $closing->business_date->toDateString(),
+                    'summary' => $this->closings->expectedTotals($store, $date)['summary'] ?? [],
+                ];
+            } else {
+                // If closing not yet submitted, calculate current totals
+                $calcTotals = $this->closings->expectedTotals($store, $date);
+                $totals = [
+                    'opening_amount' => $calcTotals['opening_amount'],
+                    'expected' => $calcTotals['expected'],
+                    'counted' => [],
+                    'differences' => [],
+                    'total_difference' => '0.00',
+                    'date' => $date->toDateString(),
+                    'summary' => $calcTotals['summary'],
+                ];
+            }
+        }
+
+        return view('pos.closing_print', compact('store', 'date', 'type', 'layout', 'closing', 'totals', 'xData'));
+    }
+
+    public function reopen(Request $request, string $store_slug, DailyClosing $closing, StoreContext $context): RedirectResponse
+    {
+        // Phase 2 Approved Architecture Decision:
+        // "ဤ Phase တွင် approved Z-Report ကို password/PIN ဖြင့် reopen လုပ်နိုင်သော feature မတည်ဆောက်ပါနှင့်။ Approved closing မှားယွင်းပါက နောက်ပိုင်းတွင် သီးခြား authorized correction/adjustment document workflow တည်ဆောက်နိုင်သည်။ ယခု Phase တွင် direct reopen/edit မလုပ်ရ။"
+        abort(403, 'Direct reopening of approved daily closing is disabled in Phase 2.');
     }
 }
