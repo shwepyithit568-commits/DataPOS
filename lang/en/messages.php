@@ -3546,6 +3546,7 @@ return array (
   'stock_on_hand' => 'On Hand',
   'stock_status' => 'Stock Status',
   'stock_value' => 'Stock Value',
+  'all_stores' => 'All Stores',
   'store' => 'Store',
   'store_about' => 'We deliver smartphones, phone glass and mobile accessories nationwide across Myanmar, fast and trustworthy.',
   'store_actions' => 'Actions',

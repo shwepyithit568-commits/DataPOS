@@ -3546,6 +3546,7 @@ return array (
   'stock_on_hand' => '库存',
   'stock_status' => '库存状态',
   'stock_value' => '库存总值',
+  'all_stores' => '所有店铺',
   'store' => '店铺',
   'store_about' => '我们向缅甸全国快速、可靠地配送智能手机、钢化膜和手机配件。',
   'store_actions' => '操作',
