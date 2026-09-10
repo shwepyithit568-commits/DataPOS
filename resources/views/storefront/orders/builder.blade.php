@@ -133,7 +133,7 @@
                                   x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency($store.orderBuilder ? $store.orderBuilder.totalAmount : 0) : ($store.orderBuilder ? $store.orderBuilder.totalAmount.toLocaleString() : 0)"></span>
                         </div>
                         <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
-                            <span>{{ __('messages.commercial_tax') }} ({{ $taxRate }}%):</span>
+                            <span>{{ __('messages.commercial_tax') }}:</span>
                             <span class="font-mono font-bold"
                                   x-text="'+ ' + (typeof window.formatCurrency === 'function' ? window.formatCurrency(Math.round(((($store.orderBuilder && typeof $store.orderBuilder.taxableAmount === 'number') ? $store.orderBuilder.taxableAmount : ($store.orderBuilder ? $store.orderBuilder.totalAmount : 0)) || 0) * {{ $taxRate }} / 100)) : Math.round(((($store.orderBuilder && typeof $store.orderBuilder.taxableAmount === 'number') ? $store.orderBuilder.taxableAmount : ($store.orderBuilder ? $store.orderBuilder.totalAmount : 0)) || 0) * {{ $taxRate }} / 100).toLocaleString())"></span>
                         </div>
@@ -145,7 +145,7 @@
                     </div>
                     @if ($taxEnabled && $taxType === 'inclusive')
                         <p class="text-[11px] text-slate-400 dark:text-slate-500 text-right">
-                            ({{ __('messages.tax_inclusive_notice_simple', ['rate' => $taxRate]) }})
+                            ({{ __('messages.tax_inclusive_notice_simple') }})
                         </p>
                     @endif
                 </div>

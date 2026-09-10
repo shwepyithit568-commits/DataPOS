@@ -5,7 +5,7 @@
         'cash'  => ['label' => __('messages.reports_cash'), 'desc' => 'Cashier Shifts, Cash In/Out & Drawer Reconciliation', 'icon' => '💵'],
         'stock' => ['label' => __('messages.reports_stock'), 'desc' => 'On-Hand Inventory Balances, Average Costs & Valuation', 'icon' => '📦'],
         'services' => ['label' => __('messages.reports_services'), 'desc' => 'Service Tickets, Device Repairs & Technician Revenue', 'icon' => '🔧'],
-        'tax' => ['label' => __('messages.reports_commercial_tax'), 'desc' => 'Myanmar Commercial Tax (5%) & IRD Statements', 'icon' => '🏛️'],
+        'tax' => ['label' => __('messages.reports_commercial_tax'), 'desc' => __('messages.commercial_tax_report_desc'), 'icon' => '🏛️'],
         'reconciliation' => ['label' => __('messages.business_reconciliation'), 'desc' => 'Single-Source-of-Truth Stock & Cash Drawer Equation Reconciliation', 'icon' => '⚖️'],
     ];
     $current = $titles[(string) ($active ?? '')] ?? ['label' => __('messages.reports_title'), 'desc' => '', 'icon' => '📊'];
