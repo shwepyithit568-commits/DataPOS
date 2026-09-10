@@ -48,7 +48,12 @@ class PosReturnController extends Controller
         $creditLeft = $this->returns->refundableCreditTotal($store, $sale);
         $shift = $this->shifts->openShiftFor($store, $request->user());
 
-        return view('pos.refund', compact('store', 'sale', 'refunded', 'creditLeft', 'shift'));
+        $unitPrices = [];
+        foreach ($sale->items as $item) {
+            $unitPrices[$item->id] = (float) $this->returns->refundableUnitValue($store, $sale, $item);
+        }
+
+        return view('pos.refund', compact('store', 'sale', 'refunded', 'creditLeft', 'shift', 'unitPrices'));
     }
 
     public function store(Request $request, string $store_slug, PosSale $sale, StoreContext $context): RedirectResponse

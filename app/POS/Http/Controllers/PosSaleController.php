@@ -486,7 +486,9 @@ class PosSaleController extends Controller
         $store = $context->getStore();
 
         $data = $request->validate([
-            'discount' => ['nullable', 'numeric', 'min:0'],
+            // decimal (not plain numeric): bcmath throws on scientific notation
+            // ("1e3") — the rule rejects it before it reaches bc* calls.
+            'discount' => ['nullable', 'decimal:0,2', 'min:0'],
         ]);
 
         $amount = isset($data['discount']) && $data['discount'] !== null ? (string) $data['discount'] : '0';
@@ -670,7 +672,7 @@ class PosSaleController extends Controller
             // ("1e3") — the rule rejects it before it ever reaches a bc* call.
             'payments.*.amount' => ['nullable', 'decimal:0,2', 'min:0'], // empty = unused method, dropped in the service
             'customer_id' => ['nullable', 'integer', 'exists:users,id'],
-            'discount' => ['nullable', 'numeric', 'min:0'],
+            'discount' => ['nullable', 'decimal:0,2', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'web_order_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('orders', 'id')->where('store_id', $store->id)],
         ]);

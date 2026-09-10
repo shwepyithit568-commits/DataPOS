@@ -731,21 +731,21 @@ class DailyClosingTest extends TestCase
             ->assertOk()
             ->assertSee('X-REPORT', false);
 
-        // 2. Navigation tree contains daily closing in Reports group
+        // 2. Navigation tree contains daily closing under POS group without duplication in Reports group
         $navService = app(\App\Services\AdminNavigationService::class);
         $tree = $navService->getFilteredNavigationTree($cashier, $store);
 
-        $reportsGroup = collect($tree)->firstWhere('key', 'reports');
-        $this->assertNotNull($reportsGroup, 'Reports navigation group must exist.');
-
-        $closingChild = collect($reportsGroup['children'])->firstWhere('key', 'reports_daily_closing');
-        $this->assertNotNull($closingChild, 'Daily Closing must be present in Reports navigation.');
+        // POS group contains operational pos_closing
+        $posGroup = collect($tree)->firstWhere('key', 'pos');
+        $this->assertNotNull($posGroup, 'POS navigation group must exist.');
+        $closingChild = collect($posGroup['children'])->firstWhere('key', 'pos_closing');
+        $this->assertNotNull($closingChild, 'Daily Closing must be present in POS navigation.');
         $this->assertSame(route('pos.closing.index', ['store_slug' => $store->slug]), $closingChild['url']);
 
-        // POS group still has operational pos_closing
-        $posGroup = collect($tree)->firstWhere('key', 'pos');
-        $this->assertNotNull($posGroup);
-        $this->assertNotNull(collect($posGroup['children'])->firstWhere('key', 'pos_closing'));
+        // Reports group does not contain duplicate reports_daily_closing
+        $reportsGroup = collect($tree)->firstWhere('key', 'reports');
+        $this->assertNotNull($reportsGroup, 'Reports navigation group must exist.');
+        $this->assertNull(collect($reportsGroup['children'])->firstWhere('key', 'reports_daily_closing'), 'Daily Closing must not be duplicated in Reports group.');
     }
 
     public function test_trilingual_translation_keys_parity_for_phase_two(): void

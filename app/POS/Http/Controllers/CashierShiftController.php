@@ -15,6 +15,7 @@ use App\Services\StoreContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -128,37 +129,52 @@ class CashierShiftController extends Controller
         $amount = (float) $data['amount'];
         $paymentMethod = $data['payment_method'];
 
-        $expenseNumber = Expense::generateExpenseNumber($store->id);
-
-        $expense = Expense::create([
-            'store_id' => $store->id,
-            'expense_category_id' => ! empty($data['expense_category_id']) ? (int) $data['expense_category_id'] : null,
-            'expense_number' => $expenseNumber,
-            'title' => $title,
-            'amount' => $amount,
-            'expense_date' => now()->toDateString(),
-            'payment_method' => $paymentMethod,
-            'paid_to' => ! empty($data['paid_to']) ? trim($data['paid_to']) : null,
-            'reference_no' => null,
-            'notes' => ! empty($data['notes']) ? trim($data['notes']) : null,
-            'recorded_by' => auth()->id(),
-        ]);
-
-        // If paid in cash and cashier shift tracking is enabled, link cash_out event to current cashier shift
         $shiftsEnabled = $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS);
+        $openShift = null;
         if ($paymentMethod === 'cash' && $shiftsEnabled) {
             $openShift = $this->shifts->openShiftFor($store, auth()->user());
-            if ($openShift) {
-                try {
+            if (! $openShift) {
+                $errorMsg = 'An open cashier shift is required to record cash expenses.';
+                if ($request->expectsJson()) {
+                    return response()->json(['error' => $errorMsg], 422);
+                }
+                return back()->withInput()->withErrors(['payment_method' => $errorMsg])->with('error', $errorMsg);
+            }
+        }
+
+        try {
+            $expense = DB::transaction(function () use ($store, $data, $title, $amount, $paymentMethod, $openShift) {
+                $expenseNumber = Expense::generateExpenseNumber($store->id);
+
+                $expense = Expense::create([
+                    'store_id' => $store->id,
+                    'expense_category_id' => ! empty($data['expense_category_id']) ? (int) $data['expense_category_id'] : null,
+                    'expense_number' => $expenseNumber,
+                    'title' => $title,
+                    'amount' => $amount,
+                    'expense_date' => now()->toDateString(),
+                    'payment_method' => $paymentMethod,
+                    'paid_to' => ! empty($data['paid_to']) ? trim($data['paid_to']) : null,
+                    'reference_no' => null,
+                    'notes' => ! empty($data['notes']) ? trim($data['notes']) : null,
+                    'recorded_by' => auth()->id(),
+                ]);
+
+                if ($openShift) {
                     $this->shifts->addCashEvent($openShift, [
                         'type' => 'cash_out',
                         'amount' => number_format($amount, 2, '.', ''),
                         'reason' => 'Expense: ' . $title . ($expense->expense_number ? ' (' . $expense->expense_number . ')' : ''),
                     ], auth()->user());
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::warning('Could not record cash_out event for pos expense: ' . $e->getMessage());
                 }
+
+                return $expense;
+            });
+        } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => $e->getMessage()], 422);
             }
+            return back()->withInput()->with('error', $e->getMessage());
         }
 
         \App\Models\AuditLog::write(

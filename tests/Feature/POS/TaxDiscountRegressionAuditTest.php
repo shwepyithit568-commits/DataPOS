@@ -85,6 +85,7 @@ class TaxDiscountRegressionAuditTest extends TestCase
                 'name' => 'Custom Role ' . Str::random(4),
                 'slug' => 'custom-' . Str::random(6),
                 'permissions' => $permissions,
+                'is_active' => true,
             ]);
             $user->stores()->updateExistingPivot($store->id, ['staff_role_id' => $role->id]);
         }
@@ -127,14 +128,12 @@ class TaxDiscountRegressionAuditTest extends TestCase
 
     /**
      * TEST A: Exclusive Tax (20,000 + 1,000 tax = 21,000 total paid by customer)
-     * Demonstrates the return bug in PosReturnService:
-     * 1. PosReturnService lines 178-179 computes returnTotal as unit_price * quantity (20,000).
-     * 2. Customer paid 21,000.
-     * 3. Trying to refund 21,000 throws InventoryException because refundTotal (21,000) != returnTotal (20,000).
-     * 4. When refunding 20,000, the sale status becomes 'partially_refunded' (PosReturnService:361)
-     *    even though 100% of the items were returned, because refunded (20,000) < sale->total (21,000).
+     * Verifies that:
+     * 1. PosReturnService refunds the full customer paid amount (21,000) including tax.
+     * 2. When 100% of quantity is returned, sale status transitions to 'refunded'.
+     * 3. Register cash refund records the exact 21,000.
      */
-    public function test_audit_scenario_a_exclusive_tax_return_defect()
+    public function test_remediated_scenario_a_exclusive_tax_full_refund()
     {
         $store = $this->makeStore('tax-a', [
             'enable_tax' => true,
@@ -161,46 +160,34 @@ class TaxDiscountRegressionAuditTest extends TestCase
 
         $saleItem = $sale->items->first();
 
-        // 1. Attempting to refund 21,000 (what customer actually paid) FAILS:
-        try {
-            $this->returns->post(
-                $store,
-                $sale,
-                [['pos_sale_item_id' => $saleItem->id, 'quantity' => '1']],
-                [['method' => 'cash', 'amount' => '21000.00']],
-                $cashier,
-                $shift
-            );
-            $this->fail('Expected InventoryException when refunding actual paid amount with tax!');
-        } catch (InventoryException $e) {
-            $this->assertStringContainsString('Refund payments must equal the returned value (Ks 20000)', $e->getMessage());
-        }
-
-        // 2. Refunding 20,000 (the returned value without tax):
+        // Refunding 21,000 (what customer actually paid) now succeeds:
         $refund = $this->returns->post(
             $store,
             $sale,
             [['pos_sale_item_id' => $saleItem->id, 'quantity' => '1']],
-            [['method' => 'cash', 'amount' => '20000.00']],
+            [['method' => 'cash', 'amount' => '21000.00']],
             $cashier,
             $shift
         );
 
+        $this->assertEquals('21000.00', (string) $refund->total);
+
         $sale->refresh();
-        // The customer lost 1,000 Ks tax, AND the sale is permanently trapped in 'partially_refunded'!
-        $this->assertEquals('20000.00', (string) $refund->total);
-        $this->assertEquals('partially_refunded', $sale->status, 'BUG: Sale stuck at partially_refunded despite 100% quantity returned!');
+        // Verifies 100% returned quantity marks sale as 'refunded'
+        $this->assertEquals('refunded', $sale->status);
+
+        $shift->refresh();
+        $this->assertEquals('21000.00', (string) $shift->cash_refunds);
     }
 
     /**
      * TEST B: Exclusive Tax + Cart Discount (20,000 + 1,000 tax - 2,000 discount = 19,000 paid)
-     * Demonstrates that PosReturnService ignores cart discount during return:
-     * 1. Customer paid 19,000.
-     * 2. When returning the item, returnTotal is calculated as unit_price * 1 = 20,000.
-     * 3. Cashier is forced to refund 20,000. If cashier enters 19,000, it throws InventoryException.
-     * 4. As a result, the store gives away 20,000 cash for an item sold for 19,000! (1,000 Ks loss).
+     * Verifies that:
+     * 1. Effective line value accounts for pro-rata discount and tax: 20,000 + 1,000 - 2,000 = 19,000.
+     * 2. Attempting to refund 20,000 fails (store is protected from paying more than received).
+     * 3. Refunding 19,000 succeeds and sale status becomes 'refunded'.
      */
-    public function test_audit_scenario_b_tax_plus_cart_discount_return_defect()
+    public function test_remediated_scenario_b_tax_plus_cart_discount_return_calculation()
     {
         $store = $this->makeStore('tax-b', [
             'enable_tax' => true,
@@ -230,41 +217,43 @@ class TaxDiscountRegressionAuditTest extends TestCase
 
         $saleItem = $sale->items->first();
 
-        // Cashier tries to refund 19,000 (actual payment) -> Throws exception!
+        // Cashier tries to refund 20,000 (unadjusted retail price) -> Throws exception!
         try {
             $this->returns->post(
                 $store,
                 $sale,
                 [['pos_sale_item_id' => $saleItem->id, 'quantity' => '1']],
-                [['method' => 'cash', 'amount' => '19000.00']],
+                [['method' => 'cash', 'amount' => '20000.00']],
                 $cashier,
                 $shift
             );
-            $this->fail('Expected exception when entering actual paid amount');
+            $this->fail('Expected exception when attempting to refund unadjusted retail price');
         } catch (InventoryException $e) {
-            $this->assertStringContainsString('Refund payments must equal the returned value (Ks 20000)', $e->getMessage());
+            $this->assertStringContainsString('Refund payments must equal the returned value (Ks 19000)', $e->getMessage());
         }
 
-        // Cashier is FORCED to pay 20,000 to the customer!
+        // Cashier refunds 19,000 (actual net payment) -> Succeeds!
         $refund = $this->returns->post(
             $store,
             $sale,
             [['pos_sale_item_id' => $saleItem->id, 'quantity' => '1']],
-            [['method' => 'cash', 'amount' => '20000.00']],
+            [['method' => 'cash', 'amount' => '19000.00']],
             $cashier,
             $shift
         );
 
-        $this->assertEquals('20000.00', (string) $refund->total);
-        // Cash in drawer reduced by 20,000!
+        $this->assertEquals('19000.00', (string) $refund->total);
         $shift->refresh();
-        $this->assertEquals('20000.00', (string) $shift->cash_refunds);
+        $this->assertEquals('19000.00', (string) $shift->cash_refunds);
+
+        $sale->refresh();
+        $this->assertEquals('refunded', $sale->status);
     }
 
     /**
      * TEST C: Partial returns sequence & duplicate prevention
      */
-    public function test_audit_scenario_c_partial_returns_and_duplicate_prevention()
+    public function test_remediated_scenario_c_partial_returns_and_duplicate_prevention()
     {
         $store = $this->makeStore('tax-c');
         $cashier = $this->makeStaff($store);
@@ -283,48 +272,47 @@ class TaxDiscountRegressionAuditTest extends TestCase
 
         $saleItem = $sale->items->first();
 
-        // 1st return: 1 unit
+        // 1st return: 1 unit (10,500 Ks net)
         $ret1 = $this->returns->post(
             $store,
             $sale,
             [['pos_sale_item_id' => $saleItem->id, 'quantity' => '1']],
-            [['method' => 'cash', 'amount' => '10000.00']],
+            [['method' => 'cash', 'amount' => '10500.00']],
             $cashier,
             $shift
         );
-        $this->assertEquals('10000.00', (string) $ret1->total);
+        $this->assertEquals('10500.00', (string) $ret1->total);
         $this->assertEquals('partially_refunded', $sale->refresh()->status);
 
-        // 2nd return: 1 unit
+        // 2nd return: 1 unit (10,500 Ks net)
         $ret2 = $this->returns->post(
             $store,
             $sale,
             [['pos_sale_item_id' => $saleItem->id, 'quantity' => '1']],
-            [['method' => 'cash', 'amount' => '10000.00']],
+            [['method' => 'cash', 'amount' => '10500.00']],
             $cashier,
             $shift
         );
-        $this->assertEquals('10000.00', (string) $ret2->total);
-        // Total returned = 20,000 < sale total 21,000. Still partially_refunded!
-        $this->assertEquals('partially_refunded', $sale->refresh()->status);
+        $this->assertEquals('10500.00', (string) $ret2->total);
+        // All units returned -> now marked as 'refunded'!
+        $this->assertEquals('refunded', $sale->refresh()->status);
 
-        // 3rd return: Attempting to return 1 more unit throws InventoryException (all units returned)
+        // 3rd return: Attempting to return 1 more unit throws InventoryException (already fully returned)
         $this->expectException(InventoryException::class);
         $this->returns->post(
             $store,
             $sale,
             [['pos_sale_item_id' => $saleItem->id, 'quantity' => '1']],
-            [['method' => 'cash', 'amount' => '10000.00']],
+            [['method' => 'cash', 'amount' => '10500.00']],
             $cashier,
             $shift
         );
     }
 
     /**
-     * TEST D: Tax Report completely drops partially refunded sales!
-     * PosReportService::taxReport() queries ->where('status', 'posted')
+     * TEST D: Tax Report includes partially refunded sales with adjusted net amounts!
      */
-    public function test_audit_scenario_d_tax_report_drops_partially_refunded_sales()
+    public function test_remediated_scenario_d_tax_report_includes_partially_refunded_sales()
     {
         $store = $this->makeStore('tax-d');
         $cashier = $this->makeStaff($store);
@@ -347,18 +335,18 @@ class TaxDiscountRegressionAuditTest extends TestCase
         $from = Carbon::now()->subDay();
         $to = Carbon::now()->addDay();
 
-        // Before return: tax report includes this sale
+        // Before return: 1 sale, 1000.00 tax
         $reportBefore = $this->reports->taxReport($store, $from, $to);
         $this->assertEquals(1, $reportBefore['count']);
         $this->assertEquals('1000.00', (string) $reportBefore['total_tax']);
 
-        // Return 1 item
+        // Return 1 item (10,500 net paid)
         $saleItem = $sale->items->first();
         $this->returns->post(
             $store,
             $sale,
             [['pos_sale_item_id' => $saleItem->id, 'quantity' => '1']],
-            [['method' => 'cash', 'amount' => '10000.00']],
+            [['method' => 'cash', 'amount' => '10500.00']],
             $cashier,
             $shift
         );
@@ -366,18 +354,18 @@ class TaxDiscountRegressionAuditTest extends TestCase
         $sale->refresh();
         $this->assertEquals('partially_refunded', $sale->status);
 
-        // After return: tax report check
+        // After return: tax report STILL includes the invoice, with remaining pro-rata tax!
         $reportAfter = $this->reports->taxReport($store, $from, $to);
-
-        // CONFIRMED DEFECT: The entire invoice disappears from the Commercial Tax Report!
-        $this->assertEquals(0, $reportAfter['count'], 'BUG: Partially refunded sale vanished from tax report!');
-        $this->assertEquals(0, (float) $reportAfter['total_tax'], 'BUG: Remaining tax is missing from IRD report!');
+        $this->assertEquals(1, $reportAfter['count'], 'Partially refunded sale must be present in tax report');
+        $this->assertEquals('500.00', (string) $reportAfter['total_tax'], 'Tax report reflects remaining non-returned tax');
+        $this->assertEquals('10000.00', (string) $reportAfter['taxable_sales'], 'Remaining taxable sales');
+        $this->assertEquals('10500.00', (string) $reportAfter['total_sales'], 'Remaining total sales');
     }
 
     /**
-     * TEST E: Storefront Preview vs Backend Checkout Tax Mismatch
+     * TEST E: Storefront Preview matches Backend Checkout Tax
      */
-    public function test_audit_scenario_e_storefront_preview_vs_backend_tax_mismatch()
+    public function test_remediated_scenario_e_storefront_preview_matches_backend_tax()
     {
         $store = $this->makeStore('tax-e', [
             'enable_tax' => true,
@@ -389,8 +377,8 @@ class TaxDiscountRegressionAuditTest extends TestCase
         $exemptProd = $this->makeProduct($store, 5000, ['is_taxable' => false]);
 
         $items = [
-            ['id' => $taxableProd->id, 'quantity' => 1, 'price' => 10000],
-            ['id' => $exemptProd->id, 'quantity' => 1, 'price' => 5000],
+            ['id' => $taxableProd->id, 'quantity' => 1, 'price' => 10000, 'is_taxable' => true],
+            ['id' => $exemptProd->id, 'quantity' => 1, 'price' => 5000, 'is_taxable' => false],
         ];
 
         // Backend OrderController calculation:
@@ -410,45 +398,59 @@ class TaxDiscountRegressionAuditTest extends TestCase
         $backendTax = round($taxableAmount * 0.05, 2); // 500.00
         $backendTotal = $subtotal + $backendTax; // 15,500.00
 
-        // Frontend builder.blade.php calculation:
-        $frontendSubtotal = 15000;
-        $frontendTax = round($frontendSubtotal * 0.05, 2); // 750.00
-        $frontendTotal = $frontendSubtotal + $frontendTax; // 15,750.00
+        // Frontend builder calculation with taxableAmount getter:
+        $frontendSubtotal = collect($items)->sum(fn ($i) => $i['price'] * $i['quantity']);
+        $frontendTaxable = collect($items)->where('is_taxable', true)->sum(fn ($i) => $i['price'] * $i['quantity']);
+        $frontendTax = round($frontendTaxable * 0.05, 2);
+        $frontendTotal = $frontendSubtotal + $frontendTax;
 
         $this->assertEquals(500.00, $backendTax);
         $this->assertEquals(15500.00, $backendTotal);
-        $this->assertEquals(750.00, $frontendTax);
-        $this->assertEquals(15750.00, $frontendTotal);
-        $this->assertNotEquals($frontendTotal, $backendTotal, 'Storefront builder preview does not match backend checkout total!');
+        $this->assertEquals($backendTax, $frontendTax);
+        $this->assertEquals($backendTotal, $frontendTotal);
     }
 
     /**
-     * TEST F: POS Expenses permission gap and drawer desync
+     * TEST F: POS Expenses authorization and shift requirement
      */
-    public function test_audit_scenario_f_pos_expense_permission_gap()
+    public function test_remediated_scenario_f_pos_expense_authorization_and_shift_requirement()
     {
         $store = $this->makeStore('tax-f');
-        // Staff has only pos_sales.view, NO expenses.create
-        $cashier = $this->makeStaff($store, ['pos_sales.view']);
-        $shift = $this->shifts->openShift($store, ['register_name' => 'REG-1', 'opening_cash' => 50000], $cashier);
+        $cashierWithoutPerm = $this->makeStaff($store, ['pos_sales.view']);
+        $cashierWithPerm = $this->makeStaff($store, ['pos_sales.view', 'expenses.view', 'expenses.create']);
 
         $category = ExpenseCategory::create([
             'store_id' => $store->id,
             'name' => 'Supplies',
         ]);
 
-        $response = $this->actingAs($cashier)->post(route('pos.expenses.record', ['store_slug' => $store->slug]), [
+        // 1. Staff without expenses.create receives 403 Forbidden:
+        $resForbidden = $this->actingAs($cashierWithoutPerm)->post(route('pos.expenses.record', ['store_slug' => $store->slug]), [
             'title' => 'Tea money',
             'amount' => 5000,
             'expense_category_id' => $category->id,
             'payment_method' => 'cash',
         ]);
+        $resForbidden->assertStatus(403);
 
-        // Request succeeds (redirect) despite staff lacking expenses.create!
-        $this->assertTrue(
-            $response->isRedirect(),
-            'SECURITY GAP: Cashier with only pos_sales.view was able to record expense and withdraw cash!'
-        );
+        // 2. Staff with expenses.create but NO open shift gets rejected for cash payment:
+        $resNoShift = $this->actingAs($cashierWithPerm)->post(route('pos.expenses.record', ['store_slug' => $store->slug]), [
+            'title' => 'Tea money',
+            'amount' => 5000,
+            'expense_category_id' => $category->id,
+            'payment_method' => 'cash',
+        ]);
+        $resNoShift->assertSessionHasErrors('payment_method');
+
+        // 3. Staff with expenses.create AND an open shift succeeds:
+        $shift = $this->shifts->openShift($store, ['register_name' => 'REG-1', 'opening_cash' => 50000], $cashierWithPerm);
+        $resSuccess = $this->actingAs($cashierWithPerm)->post(route('pos.expenses.record', ['store_slug' => $store->slug]), [
+            'title' => 'Tea money',
+            'amount' => 5000,
+            'expense_category_id' => $category->id,
+            'payment_method' => 'cash',
+        ]);
+        $resSuccess->assertRedirect();
         $this->assertDatabaseHas('expenses', [
             'store_id' => $store->id,
             'amount' => 5000.00,
@@ -456,9 +458,9 @@ class TaxDiscountRegressionAuditTest extends TestCase
     }
 
     /**
-     * TEST G: Discount validation inputs ("1e3" scientific notation vs 500 error)
+     * TEST G: Discount validation rejects non-decimal inputs like scientific notation "1e3"
      */
-    public function test_audit_scenario_g_discount_validation_and_scientific_notation()
+    public function test_remediated_scenario_g_discount_validation_rejects_scientific_notation()
     {
         $store = $this->makeStore('tax-g');
         $cashier = $this->makeStaff($store, ['pos_sales.view', 'pos_sales.update']);
@@ -471,50 +473,42 @@ class TaxDiscountRegressionAuditTest extends TestCase
         ]);
         $resNegative->assertSessionHasErrors('discount');
 
-        // 2. "1e3" scientific notation passes 'numeric' validation rule
-        // but causes ValueError / 500 in bccomp() during cartTotals or checkout!
+        // 2. "1e3" scientific notation is now rejected by 'decimal:0,2' validation rule:
         $resSci = $this->actingAs($cashier)->post(route('pos.cart.discount', ['store_slug' => $store->slug]), [
             'discount' => '1e3',
         ]);
-        // Validation PASSED because rule is 'numeric' instead of 'decimal:0,2'!
-        $this->assertFalse(session()->hasOldInput('errors'), 'Scientific notation 1e3 slipped past validation!');
+        $resSci->assertSessionHasErrors('discount');
 
-        // Now calling cartTotals with "1e3" triggers bcmath ValueError!
-        try {
-            $this->sales->cartTotals($store);
-            $this->fail('Expected ValueError on bccomp with 1e3');
-        } catch (\ValueError $e) {
-            $this->assertStringContainsString('is not well-formed', $e->getMessage());
-        }
+        // 3. Valid decimal amount is accepted:
+        $resValid = $this->actingAs($cashier)->post(route('pos.cart.discount', ['store_slug' => $store->slug]), [
+            'discount' => '1000.00',
+        ]);
+        $resValid->assertRedirect();
+        $totals = $this->sales->cartTotals($store);
+        $this->assertEquals('1000.00', (string) $totals['discount']);
     }
 
     /**
-     * TEST H: Reports Navigation Permission Mismatch
-     * - Staff with stock_balance.view sees the link in sidebar navigation,
-     *   but visiting the route pos.reports.stock gives 403 Forbidden!
+     * TEST H: Reports Navigation Permission Alignment
+     * - Staff with stock_balance.view can view pos.reports.stock without 403 Forbidden.
      */
-    public function test_audit_scenario_h_reports_navigation_permission_mismatch()
+    public function test_remediated_scenario_h_reports_navigation_permission_aligned()
     {
         $store = $this->makeStore('nav-h');
-        // Staff has only stock_balance.view, NO inventory_valuation.view
         $staff = $this->makeStaff($store, ['stock_balance.view']);
 
         $request = \Illuminate\Http\Request::create('/store/' . $store->slug . '/admin/dashboard');
         $navService = app(AdminNavigationService::class);
         $sidebarTree = $navService->getFilteredNavigationTree($staff, $store, $request);
 
-        // Check if "pos_reports_stock" is visible in sidebar
+        // Sidebar displays Stock Report link
         $reportsGroup = collect($sidebarTree)->firstWhere('key', 'reports');
-        $this->assertNotNull($reportsGroup, 'Reports group should exist');
+        $this->assertNotNull($reportsGroup);
         $hasStockLink = collect($reportsGroup['children'] ?? [])->contains('key', 'pos_reports_stock');
+        $this->assertTrue($hasStockLink);
 
-        // Nav service displays the link because userHasPermission checked stock_balance.view:
-        $this->assertTrue($hasStockLink, 'Sidebar displays Stock Report link to user with stock_balance.view');
-
-        // BUT when user navigates to the route pos.reports.stock:
+        // Accessing the route now succeeds with 200 OK!
         $response = $this->actingAs($staff)->get(route('pos.reports.stock', ['store_slug' => $store->slug]));
-
-        // CONFIRMED DEFECT: 403 Forbidden!
-        $response->assertStatus(403);
+        $response->assertStatus(200);
     }
 }

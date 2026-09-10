@@ -115,7 +115,8 @@ Alpine.store('orderBuilder', {
                 price: parseFloat(product.price || 0),
                 quantity: 1,
                 sku: product.sku || '',
-                image_path: product.image_path || ''
+                image_path: product.image_path || '',
+                is_taxable: product.is_taxable !== undefined ? Boolean(product.is_taxable) : true
             });
         }
         this.save();
@@ -140,7 +141,8 @@ Alpine.store('orderBuilder', {
                 price: 0,
                 quantity: 1,
                 sku: code,
-                image_path: ''
+                image_path: '',
+                is_taxable: false
             });
         }
         this.save();
@@ -199,6 +201,12 @@ Alpine.store('orderBuilder', {
 
     get totalAmount() {
         return (this.items || []).reduce((sum, i) => sum + ((parseFloat(i.price) || 0) * (parseInt(i.quantity) || 0)), 0);
+    },
+
+    get taxableAmount() {
+        return (this.items || [])
+            .filter(i => i.is_taxable !== false)
+            .reduce((sum, i) => sum + ((parseFloat(i.price) || 0) * (parseInt(i.quantity) || 0)), 0);
     }
 });
 
