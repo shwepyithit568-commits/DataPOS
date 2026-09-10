@@ -881,7 +881,7 @@ Theme UI redesign should start only after the profile/capability boundary is sta
 - `docs/pos-resale-plan/02-target-design.md` - single-codebase, inventory and deployment target design
 - `docs/MYANMAR_SME_COMMERCIALIZATION_GUIDE.md` - commercialization and pilot guidance
 - `docs/SMART_PRODUCT_AND_STORE_ARCHITECTURE_SPEC.md` - product/store architecture direction
-- `Source_of_Truth_MM.md` - approved project-level rules and decisions
+- [`Source_of_Truth_Master_MM.md`](Source_of_Truth_Master_MM.md) - approved project-level rules and decisions
 
 ---
 

@@ -2,7 +2,7 @@
 
 > **ဒီဖိုင်မှာ:** POS စနစ်ကို ဘယ်လို ပုံစံနဲ့ တည်ဆောက်မလဲ — architecture, module ခွဲထားမှု, deployment model ၂ မျိုး, inventory ledger, money policy, sale lifecycle။
 >
-> **အခြေခံ:** `Source_of_Truth_MM.md` (SoT) — ဒါက ဒီဖိုင်ရဲ့ အနှစ်ချုပ် ပုံစံပါ။ **Revision 2 (2026-08-10)** — owner မှ အတည်ပြုထားသော architecture corrections များ ထည့်ပြီး။
+> **အခြေခံ:** [`../Source_of_Truth_Master_MM.md`](../Source_of_Truth_Master_MM.md) (Master SoT) — Single Codebase Multi-Store architecture နှင့် inventory ledger စည်းမျဉ်းများ။ မူလ v1/v2 draft များကို `docs/archive/source-of-truth-history/` တွင် archive ပြုလုပ်ထားသည်။
 >
 > **သတိပြုရန်:** ဒီဖိုင်က SoT နဲ့ ဆန့်ကျင်နေသော အချက်များရှိပါက — SoT amendment ကို Owner ထံ တင်ပြပြီး အတည်ပြုမှ ရေးသားရမည် (SoT §33)။ လက်ရှိ ဆန့်ကျင်ချက်စာရင်း → ဒီဖိုင် အောက်ဆုံး "SoT Conflicts" အပိုင်း။
 

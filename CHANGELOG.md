@@ -13,12 +13,12 @@
 
 | အချက် | အသေးစိတ် |
 |---|---|
-| Project နေရာ | `D:\xmapp\htdocs\data_ecommerce` |
-| Framework | Laravel 12.64 (PHP 8.2, SQLite) |
-| Store slug | `datapos-mobile` |
+| Project နေရာ | `D:\xmapp\htdocs\DataPOS` |
+| Framework | Laravel 12 (PHP 8.2, SQLite WAL) |
+| Store slug | `datapos-mobile` / multi-store |
 | Server run ရန် | `php artisan serve --host=0.0.0.0 --port=8500` |
-| ဖုန်းနဲ့စမ်းရန် | `http://192.168.10.161:8500/?store_slug=datapos-mobile` |
-| Product list စာမျက်နှာ | `http://192.168.10.161:8500/products?store_slug=datapos-mobile` |
+| ဖုန်းနဲ့စမ်းရန် | `http://192.168.10.161:8500/store/datapos-mobile` |
+| Product list စာမျက်နှာ | `http://192.168.10.161:8500/store/datapos-mobile/catalog` |
 
 > ⚠️ Port 8000 က အယင် Botble project (အဟောင်း) — ဒီ project က 8500 ပါ။
 
@@ -2806,3 +2806,29 @@ Confirm Import လုပ်တဲ့အခါ 500 မတက်တော့ဘူ
 - **Fixes `InventoryService` namespace** in controllers (`App\POS\Services`).
 
 > **⚠️ NOTE (2026-08-20, review follow-ups):** the two commits above initially sat unpushed on `main` (ahead 2 of `origin/main`) and are documented now. Review found two follow-ups pending: (1) the `/admin/warehouses` index/store/update routes are registered outside any `EnsureStoreAccess` group (only `auth` + `ResolveStoreContext` apply) — reachable by any logged-in user with no cross-store warehouse/branch guard — fix pending; (2) `app/Http/Controllers/Admin/SupplierController.php` contains a Windows-1252 byte (0x97) where a UTF-8 em-dash is expected, so the file is not strict UTF-8 — fix pending. Both tracked in README “Next steps / Open issues”.
+
+---
+
+## 2026-09-08 / 2026-09-09 — Windows Storage Canonicalization & Pre-Installer Baseline Verification
+
+- **Windows Runtime Canonicalization:** SQLite database configuration updated to canonical `storage/database/datapos.sqlite` path. SQLite WAL mode (`journal_mode = WAL`), busy timeout (`5000ms`), and foreign key enforcement enabled by default.
+- **Automated Verification:** Verified via `tests/Feature/Runtime/WindowsStorageCanonicalizationTest.php`.
+- **Pre-Installer Specifications:** Generated canonical Windows runtime architecture (`docs/windows_runtime_and_storage_architecture.md`) and offline installer plan v2 (`docs/windows_offline_installer_plan_v2.md`).
+
+---
+
+## 2026-09-10 — Phase 2 Daily Closing, X-Report & Z-Report Immutability (Commits `8bfacdf` ~ `54a7f73`)
+
+- **Permissions & Security:** Added standalone migration for `pos_closing.approve` permission. Removed direct reopen route to prevent tampering; closed/approved closings are immutable.
+- **Fail-Closed Tampering Checks:** Re-calculates and validates stored closing summary snapshot against raw ledger rows on show/print; detects data tampering and prevents forged reprints.
+- **X-Report & Z-Report UI:** Implemented dedicated thermal print preview and X/Z-report view with print audit log.
+- **Trilingual Localization:** Added Burmese, English, and Chinese translations for all Daily Closing, X-Report, and Z-Report actions and error messages.
+
+---
+
+## 2026-09-10 — Active Guides Consolidation & Documentation Archive Reorganization (Commit `31d0ca9`)
+
+- **Canonical Index:** Created master documentation index at `docs/README.md` and archive index at `docs/archive/README.md`.
+- **Consolidated Playbook:** Synthesized 10 legacy QA/fix prompts into `docs/prompts/AI_AGENT_QA_PLAYBOOK.md`.
+- **Archive Isolation:** Relocated historical audits, phase completion reports, legacy prompt fragments, and superseded plans into `docs/archive/` subdirectories with zero content loss.
+- **Link Normalization:** Cleaned all local Windows absolute paths (`file:///d:/...`) across active documents, ensuring 100% repository-relative links and 0 broken links.

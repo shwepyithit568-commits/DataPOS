@@ -30,7 +30,7 @@ Before changing code:
 
 1. Read:
    - `AGENTS.md`
-   - `Source_of_Truth_MM.md`
+   - [`../Source_of_Truth_Master_MM.md`](../Source_of_Truth_Master_MM.md)
    - `README.md`
    - relevant `CHANGELOG.md`
    - relevant testing/QA docs

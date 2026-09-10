@@ -45,8 +45,8 @@
 
 ## ဆက်စပ်ဖိုင်များ
 
-- `Source_of_Truth_MM.md` / `DataPOS_Mobile_Offline_POS_Project_Source_of_Truth.md` — POS စနစ်ရဲ့ အခြေခံ စည်းမျဉ်း (အရေးအကြီးဆုံး — ဒီပြင်ဆင်ချက်တွေနဲ့ ဆန့်ကျင်နေတဲ့ အခန်းတွေ ရှိနေလို့ amendment လိုအပ်မယ်)
-- `CHANGELOG.md` — implementation history / changelog (items 1–271)
+- [`../Source_of_Truth_Master_MM.md`](../Source_of_Truth_Master_MM.md) — Single Codebase Multi-Store Master Source of Truth (မူလ v1/v2 draft များကို `docs/archive/source-of-truth-history/` တွင် archive ပြုလုပ်ထားသည်)
+- `CHANGELOG.md` — implementation history / changelog
 - `docs/archive/deployment-runbook.md` — အရင် site ရဲ့ deploy history (archived 2026-08-13)
 - `docs/ops/DEPLOYMENT.md` — deploy / backup-restore / secrets scrub မှတ်တမ်း
 

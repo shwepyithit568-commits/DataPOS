@@ -17,9 +17,11 @@ Commit SHA၊ test count၊ dependency version နှင့် deployment status
 
 | Document | Role |
 |---|---|
+| [`Source_of_Truth_Master_MM.md`](Source_of_Truth_Master_MM.md) | Platform master domain architecture, invariants and multi-store source of truth |
 | [`pos-resale-plan/02-target-design.md`](pos-resale-plan/02-target-design.md) | Cloud/local deployment models၊ ledger၊ branch၊ POS နှင့် offline architecture |
 | [`pos-resale-plan/ROADMAP.md`](pos-resale-plan/ROADMAP.md) | Implementation sequence and release gates |
 | [`SMART_PRODUCT_AND_STORE_ARCHITECTURE_SPEC.md`](SMART_PRODUCT_AND_STORE_ARCHITECTURE_SPEC.md) | Product/store domain design |
+| [`guides/ALINN_THIT_MOBILE_SKU_LOGIC_MM.md`](guides/ALINN_THIT_MOBILE_SKU_LOGIC_MM.md) | Client-specific mobile accessories SKU normalization standard |
 | [`MULTI_STORE_DATA_ISOLATION_AUDIT_PLAN.md`](MULTI_STORE_DATA_ISOLATION_AUDIT_PLAN.md) | Tenant-isolation controls and audit coverage |
 | [`reports_implementation_plan_v2.md`](reports_implementation_plan_v2.md) | Reporting architecture and remaining roadmap; baseline section is historical |
 | [`DataPOS Theme Plan.md`](DataPOS%20Theme%20Plan.md) | Theme governance and storefront customization |
@@ -71,6 +73,7 @@ These documents are related but not duplicates: the Growth Plan explains product
 - `archive/completed-phases/` — historical completion reports
 - `archive/superseded-plans/` — replaced plan versions
 - `archive/legacy-prompts/` — consolidated prompt fragments
+- `archive/source-of-truth-history/` — historical source-of-truth drafts and original notes
 - `archive/deployment-runbook.md` — legacy deployment history
 
 ## Maintenance rules
