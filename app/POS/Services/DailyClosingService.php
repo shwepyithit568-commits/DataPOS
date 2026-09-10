@@ -27,16 +27,14 @@ use Illuminate\Support\Facades\DB;
  */
 class DailyClosingService
 {
+    public function __construct(
+        protected StoreBusinessDateService $businessDate
+    ) {}
+
     /* ------------------------------------------------------------------ */
     /*  Expected totals (derived from the ledgers)                         */
     /* ------------------------------------------------------------------ */
 
-    /**
-     * Expected totals per payment method for a business date, plus the
-     * combined opening amount.
-     *
-     * @return array{opening_amount:string, expected:array<string,string>, date:string}
-     */
     /**
      * Expected totals per payment method for a business date, plus the
      * combined opening amount and comprehensive sales/drawer summary.
@@ -45,8 +43,7 @@ class DailyClosingService
      */
     public function expectedTotals(Store $store, Carbon $date): array
     {
-        $start = $date->copy()->startOfDay();
-        $end = $date->copy()->endOfDay();
+        [$start, $endExclusive] = $this->businessDate->queryRange($store, $date);
 
         $opening = '0.00';
         $cashSales = '0.00';
@@ -58,7 +55,8 @@ class DailyClosingService
         // Cash expectation = the day's shifts' drawer math (open or closed).
         CashierShift::query()
             ->where('store_id', $store->id)
-            ->whereBetween('opened_at', [$start, $end])
+            ->where('opened_at', '>=', $start)
+            ->where('opened_at', '<', $endExclusive)
             ->get(['opening_cash', 'cash_sales', 'cash_refunds', 'cash_in', 'cash_out'])
             ->each(function (CashierShift $s) use (&$opening, &$cashSales, &$cashRefunds, &$cashIn, &$cashOut, &$drawerCash) {
                 $opening = bcadd($opening, (string) $s->opening_cash, 2);
@@ -84,7 +82,8 @@ class DailyClosingService
                 ->where('pos_sales.store_id', $store->id)
                 ->where('pos_payments.method', $method)
                 ->where('pos_sales.status', 'posted')
-                ->whereBetween('pos_sales.posted_at', [$start, $end])
+                ->where('pos_sales.posted_at', '>=', $start)
+                ->where('pos_sales.posted_at', '<', $endExclusive)
                 ->sum('pos_payments.amount');
 
             $refunded = (string) DB::table('pos_return_payments')
@@ -92,7 +91,8 @@ class DailyClosingService
                 ->where('pos_returns.store_id', $store->id)
                 ->where('pos_return_payments.method', $method)
                 ->where('pos_returns.status', 'posted')
-                ->whereBetween('pos_returns.posted_at', [$start, $end])
+                ->where('pos_returns.posted_at', '>=', $start)
+                ->where('pos_returns.posted_at', '<', $endExclusive)
                 ->sum('pos_return_payments.amount');
 
             $net = bcsub(
@@ -110,7 +110,8 @@ class DailyClosingService
             ->where('pos_sales.store_id', $store->id)
             ->where('pos_payments.method', 'credit')
             ->where('pos_sales.status', 'posted')
-            ->whereBetween('pos_sales.posted_at', [$start, $end])
+            ->where('pos_sales.posted_at', '>=', $start)
+            ->where('pos_sales.posted_at', '<', $endExclusive)
             ->sum('pos_payments.amount');
 
         // Credit refunds reduce the receivable created that day.
@@ -119,7 +120,8 @@ class DailyClosingService
             ->where('pos_returns.store_id', $store->id)
             ->where('pos_return_payments.method', 'credit')
             ->where('pos_returns.status', 'posted')
-            ->whereBetween('pos_returns.posted_at', [$start, $end])
+            ->where('pos_returns.posted_at', '>=', $start)
+            ->where('pos_returns.posted_at', '<', $endExclusive)
             ->sum('pos_return_payments.amount');
 
         $expected['credit'] = bcsub(
@@ -132,31 +134,36 @@ class DailyClosingService
         $grossSales = (string) DB::table('pos_sales')
             ->where('store_id', $store->id)
             ->where('status', 'posted')
-            ->whereBetween('posted_at', [$start, $end])
+            ->where('posted_at', '>=', $start)
+            ->where('posted_at', '<', $endExclusive)
             ->sum('subtotal');
 
         $discounts = (string) DB::table('pos_sales')
             ->where('store_id', $store->id)
             ->where('status', 'posted')
-            ->whereBetween('posted_at', [$start, $end])
+            ->where('posted_at', '>=', $start)
+            ->where('posted_at', '<', $endExclusive)
             ->sum('discount');
 
         $tax = (string) DB::table('pos_sales')
             ->where('store_id', $store->id)
             ->where('status', 'posted')
-            ->whereBetween('posted_at', [$start, $end])
+            ->where('posted_at', '>=', $start)
+            ->where('posted_at', '<', $endExclusive)
             ->sum('tax');
 
         $returnsTotal = (string) DB::table('pos_returns')
             ->where('store_id', $store->id)
             ->where('status', 'posted')
-            ->whereBetween('posted_at', [$start, $end])
+            ->where('posted_at', '>=', $start)
+            ->where('posted_at', '<', $endExclusive)
             ->sum('total');
 
         $netSales = (string) DB::table('pos_sales')
             ->where('store_id', $store->id)
             ->where('status', 'posted')
-            ->whereBetween('posted_at', [$start, $end])
+            ->where('posted_at', '>=', $start)
+            ->where('posted_at', '<', $endExclusive)
             ->sum('total');
 
         $summary = [
@@ -198,34 +205,37 @@ class DailyClosingService
             throw new InventoryException('Cannot generate X-Report for a future business date.');
         }
 
-        $start = $date->copy()->startOfDay();
-        $end = $date->copy()->endOfDay();
+        [$start, $endExclusive] = $this->businessDate->queryRange($store, $date);
 
         $totals = $this->expectedTotals($store, $date);
 
         // Shifts metadata
         $shiftsCount = CashierShift::query()
             ->where('store_id', $store->id)
-            ->whereBetween('opened_at', [$start, $end])
+            ->where('opened_at', '>=', $start)
+            ->where('opened_at', '<', $endExclusive)
             ->count();
 
         $openShiftsCount = CashierShift::query()
             ->where('store_id', $store->id)
             ->where('status', 'open')
-            ->whereBetween('opened_at', [$start, $end])
+            ->where('opened_at', '>=', $start)
+            ->where('opened_at', '<', $endExclusive)
             ->count();
 
         // Transaction counts
         $salesCount = DB::table('pos_sales')
             ->where('store_id', $store->id)
             ->where('status', 'posted')
-            ->whereBetween('posted_at', [$start, $end])
+            ->where('posted_at', '>=', $start)
+            ->where('posted_at', '<', $endExclusive)
             ->count();
 
         $returnsCount = DB::table('pos_returns')
             ->where('store_id', $store->id)
             ->where('status', 'posted')
-            ->whereBetween('posted_at', [$start, $end])
+            ->where('posted_at', '>=', $start)
+            ->where('posted_at', '<', $endExclusive)
             ->count();
 
         // Log X-Report reading event
@@ -323,6 +333,10 @@ class DailyClosingService
                 'expected_totals' => $totals['expected'],
                 'counted_totals' => $normalized,
                 'differences' => $differences,
+                'summary_snapshot' => [
+                    'version' => 1,
+                    'metrics' => $totals['summary'],
+                ],
                 'total_difference' => $totalDifference,
                 'explanation' => trim((string) $explanation) !== '' ? $explanation : null,
                 'pending_offline_transaction_count' => 0, // MVP — offline queue (Phase 3) not wired yet

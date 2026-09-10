@@ -11,7 +11,13 @@
 
     $isX = ($type ?? 'z') === 'x';
     $title = $isX ? __('messages.x_report_reading') : __('messages.z_report_closing');
-    $marker = $isX ? '*** X-REPORT — READING ONLY / စာရင်းကြည့်ရှုရန်သာ ***' : '*** Z-REPORT — FINAL DAILY CLOSING / နောက်ဆုံး နေ့စဉ်စာရင်းချုပ် ***';
+    if ($isX) {
+        $marker = '*** X-REPORT — READING ONLY / စာရင်းကြည့်ရှုရန်သာ ***';
+    } elseif ($closing && $closing->isApproved()) {
+        $marker = '*** Z-REPORT — FINAL/APPROVED DAILY CLOSING / အတည်ပြုပြီး နေ့စဉ်စာရင်းချုပ် ***';
+    } else {
+        $marker = '*** PENDING Z-REPORT — SUBMITTED (UNAPPROVED) / ဆိုင်းငံ့ နေ့စဉ်စာရင်းချုပ် ***';
+    }
 
     $logoPath = $store->setting?->adminLogo();
     $logoUrl = $logoPath ? asset('storage/' . $logoPath) : null;
@@ -489,6 +495,11 @@
                     </tr>
                 @endif
             </table>
+            @if (!empty($summary['is_legacy']))
+                <div style="margin-top: 6px; padding: 4px 8px; background: #f1f5f9; border-left: 3px solid #94a3b8; font-size: 10px; color: #475569;">
+                    * {{ __('messages.legacy_closing_notice') }}
+                </div>
+            @endif
 
             <hr class="solid-rule">
 
