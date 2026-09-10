@@ -176,7 +176,9 @@
              baseUrl: '{{ url('/store/' . $store->slug . '/pos') }}',
              csrf: '{{ csrf_token() }}',
              labels: {{ \Illuminate\Support\Js::from($posLabels) }},
-             shiftsEnabled: {{ $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS) ? 'true' : 'false' }}
+             shiftsEnabled: {{ $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS) ? 'true' : 'false' }},
+             staffPhone: '{{ auth()->user()?->phone ?? '' }}',
+             staffName: '{{ addslashes(auth()->user()?->name ?? '') }}'
          })"
          @pos:reload.window="reloadPos()"
          x-init="init()">
@@ -209,13 +211,19 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.pos_customer_name') }} <span class="text-rose-500">*</span></label>
-                    <input type="text" x-model="qname" x-ref="quickName" @keydown.enter="$refs.quickPhone?.focus()"
+                    <input type="text" name="quick_customer_name" x-model="qname" x-ref="quickName"
+                           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                           data-lpignore="true" data-1p-ignore="true" data-form-type="other"
+                           @keydown.enter="$refs.quickPhone?.focus()"
                            class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition"
                            placeholder="{{ __('messages.pos_customer_name') }}">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.pos_customer_phone') }} <span class="text-rose-500">*</span></label>
-                    <input type="tel" x-model="qphone" x-ref="quickPhone" @keydown.enter="quickAdd()"
+                    <input type="tel" name="quick_customer_phone" x-model="qphone" x-ref="quickPhone"
+                           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                           data-lpignore="true" data-1p-ignore="true" data-form-type="other"
+                           @keydown.enter="quickAdd()"
                            class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 text-sm font-mono font-semibold focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition"
                            placeholder="09 123 456 789">
                 </div>
@@ -1390,13 +1398,27 @@
                         <div class="relative" @click.outside="copen = false">
                             <div class="relative flex items-center">
                                 <span class="absolute left-3 text-slate-400 pointer-events-none text-xs">🔍</span>
-                                <input id="pos-customer-input" type="text" x-ref="customerInput" x-model="cq"
+                                <input id="pos-customer-input"
+                                       type="search"
+                                       name="pos_customer_search"
+                                       x-ref="customerInput"
+                                       x-model="cq"
                                        @focus="csearch(true)"
                                        @click="csearch(true)"
-                                       @input.debounce.200ms="csearch()"
+                                       @input.debounce.200ms="if (isStaffPhone(cq)) { cq = ''; } else { csearch(); }"
+                                       @change="if (isStaffPhone(cq)) { cq = ''; }"
                                        @keydown.escape.stop="copen = false"
-                                       @keydown.enter.prevent="if (cresults.length > 0) { attach(cresults[0]); } else if (cq.trim()) { openQuickAdd(cq.trim()); }"
+                                       @keydown.enter.prevent="if (cresults.length > 0) { attach(cresults[0]); } else if (cq.trim() && !isStaffPhone(cq)) { openQuickAdd(cq.trim()); }"
                                        placeholder="{{ __('messages.customer_search_placeholder') }} (F3)"
+                                       autocomplete="off"
+                                       autocorrect="off"
+                                       autocapitalize="off"
+                                       spellcheck="false"
+                                       role="searchbox"
+                                       aria-autocomplete="list"
+                                       data-lpignore="true"
+                                       data-1p-ignore="true"
+                                       data-form-type="other"
                                        class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 pl-8 pr-14 py-2 text-xs font-semibold focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition">
                                 <div class="absolute right-2 flex items-center gap-1">
                                     <button type="button" x-show="cq.trim() !== ''" @click="cq = ''; csearch(true); $refs.customerInput?.focus()"
@@ -1516,8 +1538,18 @@
                                         <input x-show="priceEditIndex === line.index" x-model="priceEditValue" type="number" min="0" step="100"
                                                @keydown.enter="saveLinePrice(line)" @keydown.escape="priceEditIndex = null"
                                                class="w-20 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-1.5 py-0.5 text-right text-xs font-semibold focus:ring-2 focus:ring-amber-500 outline-none">
-                                        <input x-show="priceEditIndex === line.index && pricePinIndex === line.index" x-model="pricePinValue" type="password" inputmode="numeric" maxlength="6"
-                                               @keydown.enter="saveLinePrice(line)" @keydown.escape="pricePinIndex = null"
+                                        <input x-show="priceEditIndex === line.index && pricePinIndex === line.index"
+                                               x-model="pricePinValue"
+                                               type="password"
+                                               name="manager_override_pin"
+                                               autocomplete="new-password"
+                                               inputmode="numeric"
+                                               maxlength="6"
+                                               data-lpignore="true"
+                                               data-1p-ignore="true"
+                                               data-form-type="other"
+                                               @keydown.enter="saveLinePrice(line)"
+                                               @keydown.escape="pricePinIndex = null"
                                                :placeholder="labels.pos_price_pin_label"
                                                class="w-16 rounded-lg border border-rose-300 dark:border-rose-700 bg-white dark:bg-slate-900 px-1.5 py-0.5 text-center text-xs font-bold tracking-widest focus:ring-2 focus:ring-rose-500 outline-none"
                                                :title="labels.pos_price_pin_label">

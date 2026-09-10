@@ -109,6 +109,8 @@ Alpine.data('posApp', (opts = {}) => ({
     csrf: opts.csrf || '',
     labels: opts.labels || {},
     shiftsEnabled: opts.shiftsEnabled ?? true,
+    staffPhone: opts.staffPhone || '',
+    staffName: opts.staffName || '',
 
     // Product grid
     q: '',
@@ -193,6 +195,27 @@ Alpine.data('posApp', (opts = {}) => ({
         await this.refreshCart();
         window.addEventListener('keydown', (e) => this.shortcut(e));
         window.addEventListener('pos:reload', () => this.reloadPos());
+
+        // Shield customer search from browser autofilling cashier/staff credentials or phone
+        const clearStaffAutofill = () => {
+            if (this.isStaffPhone(this.cq)) {
+                this.cq = '';
+                this.cresults = [];
+                this.copen = false;
+            }
+            const el = document.getElementById('pos-customer-input');
+            if (el && this.isStaffPhone(el.value)) {
+                el.value = '';
+                this.cq = '';
+                this.cresults = [];
+                this.copen = false;
+            }
+        };
+        this.$nextTick(clearStaffAutofill);
+        setTimeout(clearStaffAutofill, 100);
+        setTimeout(clearStaffAutofill, 400);
+        setTimeout(clearStaffAutofill, 1000);
+
         // Desktop: focus the search box so a cashier can type / scan immediately.
         if (window.innerWidth >= 1024) {
             this.$nextTick(() => {
@@ -200,6 +223,16 @@ Alpine.data('posApp', (opts = {}) => ({
                 if (searchInput) searchInput.focus();
             });
         }
+    },
+
+    isStaffPhone(val) {
+        if (!this.staffPhone || !val) return false;
+        const cleanStaff = String(this.staffPhone).replace(/\D/g, '');
+        const cleanVal = String(val).replace(/\D/g, '');
+        if (!cleanStaff || !cleanVal) return false;
+        return cleanStaff === cleanVal
+            || (cleanVal.length >= 7 && cleanStaff.endsWith(cleanVal))
+            || (cleanStaff.length >= 7 && cleanVal.endsWith(cleanStaff));
     },
 
     url(path) {
@@ -496,6 +529,12 @@ Alpine.data('posApp', (opts = {}) => ({
 
     /* ---- customer attach (credit/debt) ---- */
     async csearch(forceOpen = false) {
+        if (this.isStaffPhone(this.cq)) {
+            this.cq = '';
+            this.cresults = [];
+            this.copen = false;
+            return;
+        }
         const query = this.cq ? this.cq.trim() : '';
         if (query === '' && !forceOpen) {
             this.cresults = [];
@@ -558,6 +597,13 @@ Alpine.data('posApp', (opts = {}) => ({
 
     openQuickAdd(query = '') {
         const trimmed = String(query || '').trim();
+        if (this.isStaffPhone(trimmed)) {
+            this.qname = '';
+            this.qphone = '';
+            this.quickAddOpen = true;
+            this.$nextTick(() => this.$refs.quickName?.focus());
+            return;
+        }
         // Check if query is likely a phone number (digits only or starts with 09 / +95 / 9)
         const isPhone = /^(\+?95|0?9|\d{6,})/.test(trimmed.replace(/[\s\-]/g, '')) && /^[\d\s\-\+]+$/.test(trimmed);
         if (isPhone) {
