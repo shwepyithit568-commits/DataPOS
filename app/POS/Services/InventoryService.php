@@ -480,6 +480,11 @@ class InventoryService
     /** products.stock_status is a derived cache (SoT §5) — refresh from the ledger. */
     public function refreshProductStockStatus(int $storeId, int $productId): void
     {
+        $product = Product::find($productId);
+        if ($product && in_array($product->product_type, ['service', 'digital'], true)) {
+            return;
+        }
+
         $total = DB::table('inventory_balances')
             ->where('store_id', $storeId)
             ->where('product_id', $productId)
@@ -510,6 +515,26 @@ class InventoryService
                 $variant->update(['stock_status' => $stockStatus]);
             }
         }
+    }
+
+    /**
+     * Re-synchronize derived stock_status cache across all products for a store (or all stores).
+     */
+    public function syncAllStockStatuses(?int $storeId = null): int
+    {
+        $query = Product::query()->whereNotIn('product_type', ['service', 'digital']);
+        if ($storeId !== null) {
+            $query->where('store_id', $storeId);
+        }
+
+        $count = 0;
+        $products = $query->get(['id', 'store_id']);
+        foreach ($products as $p) {
+            $this->refreshProductStockStatus((int) $p->store_id, (int) $p->id);
+            $count++;
+        }
+
+        return $count;
     }
 
     /**

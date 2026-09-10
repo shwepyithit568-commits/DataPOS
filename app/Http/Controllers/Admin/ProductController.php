@@ -659,9 +659,12 @@ class ProductController extends Controller
             ? ImageOptimizer::store($request->file('image'), 'products', 1600)
             : null;
 
-        // Auto-derive stock status: if initial stock is provided, starts in_stock; else out_of_stock (or passed value)
+        // Auto-derive stock status: physical products without stock start as out_of_stock
         $initialStock = isset($validated['initial_stock']) ? (float) $validated['initial_stock'] : 0.0;
-        $stockStatus = $initialStock > 0 ? 'in_stock' : ($validated['stock_status'] ?? 'out_of_stock');
+        $isServiceOrDigital = in_array($validated['product_type'] ?? 'standard', ['service', 'digital'], true);
+        $stockStatus = $isServiceOrDigital
+            ? ($validated['stock_status'] ?? 'in_stock')
+            : ($initialStock > 0 ? 'in_stock' : 'out_of_stock');
 
         $product = Product::create([
             'store_id'        => $store->id,
@@ -1629,6 +1632,8 @@ class ProductController extends Controller
         }
 
         $name = $product->name . ' (Copy)';
+        $isPhysical = ! in_array($product->product_type, ['service', 'digital'], true);
+        $initialStockStatus = $isPhysical ? 'out_of_stock' : $product->stock_status;
 
         $copy = Product::create([
             'store_id'        => $store->id,
@@ -1638,16 +1643,20 @@ class ProductController extends Controller
             'name'            => $name,
             'slug'            => Str::slug($name . '-' . Str::random(5)),
             'description'     => $product->description,
+            'product_type'    => $product->product_type,
             'retail_price'    => $product->retail_price,
             'old_price'       => $product->old_price,
             'sale_starts_at'  => $product->sale_starts_at,
             'sale_ends_at'    => $product->sale_ends_at,
             'wholesale_price' => $product->wholesale_price,
-            'stock_status'    => $product->stock_status,
+            'stock_status'    => $initialStockStatus,
             'image_path'      => $this->copyImageFile($product->image_path),
             'warranty'        => $product->warranty,
             'return_policy'   => $product->return_policy,
             'is_featured'     => false,
+            'is_ecommerce'    => $product->is_ecommerce,
+            'is_taxable'      => $product->is_taxable,
+            'tax_rate'        => $product->tax_rate,
         ]);
 
         foreach ($product->images as $image) {
@@ -1665,7 +1674,8 @@ class ProductController extends Controller
                 'sku' => $variant->sku ? $this->uniqueCopyVariantSku($store, $variant->sku) : null,
                 'retail_price' => $variant->retail_price,
                 'wholesale_price' => $variant->wholesale_price,
-                'stock_status' => $variant->stock_status,
+                'quantity_on_hand' => 0,
+                'stock_status' => $isPhysical ? 'out_of_stock' : $variant->stock_status,
                 'image_path' => $this->copyImageFile($variant->image_path),
                 'is_default' => $variant->is_default,
                 'sort_order' => $variant->sort_order,

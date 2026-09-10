@@ -91,7 +91,13 @@ class CatalogController extends Controller
 
         $query = Product::where('store_id', $store->id)
             ->where('is_ecommerce', true)
-            ->with(['category', 'brand', 'images', 'variants']);
+            ->withSum('inventoryBalances as on_hand_qty', 'quantity_on_hand')
+            ->with([
+                'category',
+                'brand',
+                'images',
+                'variants' => fn ($vq) => $vq->withSum('inventoryBalances as on_hand_qty', 'quantity_on_hand'),
+            ]);
 
         // Search by keyword or SKU
         if ($request->filled('search')) {
@@ -292,10 +298,12 @@ class CatalogController extends Controller
                 $q->whereLike('name', '%' . $search . '%')
                   ->orWhereLike('sku', '%' . $search . '%');
             })
+            ->withSum('inventoryBalances as on_hand_qty', 'quantity_on_hand')
+            ->with(['variants' => fn ($vq) => $vq->withSum('inventoryBalances as on_hand_qty', 'quantity_on_hand')])
             ->orderByRaw("CASE WHEN stock_status = 'in_stock' THEN 0 ELSE 1 END")
             ->latest()
             ->limit(8)
-            ->get(['id', 'name', 'slug', 'retail_price', 'old_price', 'image_path', 'stock_status']);
+            ->get(['id', 'name', 'slug', 'retail_price', 'old_price', 'image_path', 'stock_status', 'product_type']);
 
         $storeSlugQuery = $store->slug ? '&store_slug=' . $store->slug : '';
 
@@ -328,7 +336,7 @@ class CatalogController extends Controller
                         : null,
                     'image' => $product->image_path ? asset('storage/' . $product->image_path) : null,
                     'url' => url('/store/' . $store->slug . '/product/' . $product->slug),
-                    'stock_status' => $product->stock_status,
+                    'stock_status' => $product->isInStock() ? 'in_stock' : 'out_of_stock',
                 ];
             })->values(),
         ]);
@@ -343,7 +351,13 @@ class CatalogController extends Controller
         $product = Product::where('store_id', $store->id)
             ->where('is_ecommerce', true)
             ->where('slug', $slug)
-            ->with(['category', 'brand', 'images', 'variants'])
+            ->withSum('inventoryBalances as on_hand_qty', 'quantity_on_hand')
+            ->with([
+                'category',
+                'brand',
+                'images',
+                'variants' => fn ($vq) => $vq->withSum('inventoryBalances as on_hand_qty', 'quantity_on_hand'),
+            ])
             ->firstOrFail();
 
         $user = auth()->user();

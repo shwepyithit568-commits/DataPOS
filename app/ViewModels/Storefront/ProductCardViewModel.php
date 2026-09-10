@@ -81,7 +81,7 @@ class ProductCardViewModel
 
     public function isOutOfStock(): bool
     {
-        return $this->product->stock_status === 'out_of_stock';
+        return ! $this->product->isInStock();
     }
 
     public function isFeatured(): bool

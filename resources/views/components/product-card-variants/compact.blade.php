@@ -27,7 +27,7 @@
     $effectivePrice = $isWholesaleApproved && $wholesalePrice > 0 ? $wholesalePrice : $retailPrice;
     $effectiveSku = $defaultVariant?->sku ?: $product->sku;
     $cartName = $defaultVariant ? "{$product->name} - {$defaultVariant->name}" : $product->name;
-    $cardInStock = $defaultVariant ? $defaultVariant->isInStock() : $product->isInStock();
+    $cardInStock = $product->isInStock();
     $showRetailSale = ! $isWholesaleApproved && $product->isOnSale();
 
     // One-click share links (no backend — standard platform share URLs)
@@ -140,7 +140,7 @@
                 class="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2.5 pt-10 pb-3 bg-gradient-to-t from-slate-900/60 via-slate-900/25 to-transparent transition-opacity duration-200"
                 :class="reveal ? 'opacity-100 pointer-events-auto' : 'opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto'"
             >
-                @if ($cardInStock)
+                @if ($cardInStock && (! $defaultVariant || $defaultVariant->isInStock()))
                     <button
                         @click.stop.prevent="if (Date.now() - revealAt > 400) $store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: {{ $defaultVariant?->id ?? 'null' }}, variant_id: {{ $defaultVariant?->id ?? 'null' }}, name: {{ json_encode($cartName) }}, price: {{ $effectivePrice }}, sku: {{ json_encode($effectiveSku ?? '') }}, image_path: {{ json_encode($cardImage ?? '') }}, is_taxable: {{ $product->is_taxable ? 'true' : 'false' }} })"
                         type="button"

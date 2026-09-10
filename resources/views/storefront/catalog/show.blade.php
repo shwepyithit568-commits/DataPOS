@@ -71,7 +71,8 @@
             'sku' => $v->sku,
             'retail_price' => (float) $v->retail_price,
             'wholesale_price' => $v->wholesale_price !== null ? (float) $v->wholesale_price : null,
-            'stock_status' => $v->stock_status,
+            'in_stock' => $v->isInStock(),
+            'stock_status' => $v->isInStock() ? 'in_stock' : 'out_of_stock',
             'image_path' => $v->image_path,
             'is_default' => (bool) $v->is_default,
         ])),
@@ -125,7 +126,7 @@
         },
         // No variants selected → fall back to the product's own stock status so
         // the reactive label can't contradict the server-rendered badge.
-        get inStock() { return this.selected ? this.selected.stock_status === 'in_stock' : {{ $product->stock_status === 'in_stock' ? 'true' : 'false' }}; },
+        get inStock() { return this.selected ? (typeof this.selected.in_stock !== 'undefined' ? this.selected.in_stock : this.selected.stock_status === 'in_stock') : {{ $product->isInStock() ? 'true' : 'false' }}; },
         get onSale() { return !this.isWholesale && this.baseOld !== null && this.baseOld > this.price; },
         get discountPct() { if (!this.onSale) return 0; return Math.round(((this.baseOld - this.price) / this.baseOld) * 100); },
         fmt(n) { return (typeof window.formatCurrency === 'function') ? window.formatCurrency(n) : Number(n).toLocaleString('en-US'); },

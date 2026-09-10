@@ -221,6 +221,30 @@ class Product extends Model
 
     public function isInStock(): bool
     {
+        if ($this->stock_status === 'out_of_stock') {
+            return false;
+        }
+
+        if (in_array($this->product_type, ['service', 'digital'], true)) {
+            return $this->stock_status === 'in_stock';
+        }
+
+        if ($this->relationLoaded('variants') && $this->variants->isNotEmpty()) {
+            return $this->variants->contains(fn ($v) => $v->isInStock());
+        }
+
+        if (isset($this->attributes['on_hand_qty'])) {
+            return (float) $this->attributes['on_hand_qty'] > 0;
+        }
+
+        if ($this->relationLoaded('inventoryBalances')) {
+            return (float) $this->inventoryBalances->sum('quantity_on_hand') > 0;
+        }
+
+        if ($this->inventoryBalances()->exists()) {
+            return (float) $this->inventoryBalances()->sum('quantity_on_hand') > 0;
+        }
+
         return $this->stock_status === 'in_stock';
     }
 
@@ -241,6 +265,14 @@ class Product extends Model
 
     public function getStockOnHandAttribute(): float
     {
+        if (isset($this->attributes['on_hand_qty'])) {
+            return (float) $this->attributes['on_hand_qty'];
+        }
+
+        if ($this->relationLoaded('inventoryBalances')) {
+            return (float) $this->inventoryBalances->sum('quantity_on_hand');
+        }
+
         return (float) $this->inventoryBalances()->sum('quantity_on_hand');
     }
 

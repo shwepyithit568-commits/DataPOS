@@ -22,7 +22,7 @@
     $effectivePrice = $isWholesaleApproved && $wholesalePrice > 0 ? $wholesalePrice : $retailPrice;
     $effectiveSku = $defaultVariant?->sku ?: $product->sku;
     $cartName = $defaultVariant ? "{$product->name} - {$defaultVariant->name}" : $product->name;
-    $cardInStock = $defaultVariant ? $defaultVariant->isInStock() : $product->isInStock();
+    $cardInStock = $product->isInStock();
     $showRetailSale = ! $isWholesaleApproved && $product->isOnSale();
     $allImages = $product->getAllImagePathsAttribute();
     $hoverImage = $allImages[1] ?? null;
@@ -107,7 +107,7 @@
 
     {{-- One prominent action row --}}
     <div class="mt-3 flex items-center justify-center gap-2">
-        @if ($cardInStock)
+        @if ($cardInStock && (! $defaultVariant || $defaultVariant->isInStock()))
             <button
                 @click.stop.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: {{ $defaultVariant?->id ?? 'null' }}, variant_id: {{ $defaultVariant?->id ?? 'null' }}, name: {{ json_encode($cartName) }}, price: {{ $effectivePrice }}, sku: {{ json_encode($effectiveSku ?? '') }}, image_path: {{ json_encode($cardImage ?? '') }}, is_taxable: {{ $product->is_taxable ? 'true' : 'false' }} })"
                 type="button"
