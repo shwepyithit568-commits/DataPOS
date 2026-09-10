@@ -1,168 +1,174 @@
 # Phase 2 — Daily Closing, X-Report & Z-Report Production Verification & Completion Report
 
 ## 1. Starting and Final HEAD
-- **Starting Baseline HEAD:** `2728c477c6670e159df779773bc6b03ab49430d2` (`feat(tax,pos,reports): implement Myanmar Commercial Tax, POS Cart Discount, and Reports Navigation restructuring`)
-- **Final Working HEAD:** `88d1227443153676239162aa7fae3e602787895e` (`fix(pos): enforce strict counted key validation, period lock assertions, and restore reopen compatibility`)
-- **Git Branch:** `feature/reports-daily-closing-xz`
+- **Remote Baseline HEAD:** `9e0dd83e1c890d9156c483fb4ab3090dc1c44a55` (`fix(i18n): deduplicate translation keys and simplify Rule import in CashierShiftController`)
+- **Current Local Working HEAD:** `3f4080d8e87eb2e46a835583196b1df939ece014` (`fix(pos): remove direct reopen route, enforce fail-closed tampering checks, and add trilingual messages`)
+- **Working Branch:** `feature/reports-daily-closing-xz`
 - **Target Remote:** `origin` (`https://github.com/shwepyithit568-commits/DataPOS.git`)
 
 ---
 
-## 2. All Commit SHAs & Descriptions
-1. `d3b26df`: `feat(pos): implement X-Report preview and robust Z-Report closing services with route aliases`
-   - Added `DailyClosingService::xReport()`, financial summary math expansion, concurrency safe approval transaction with `lockForUpdate()`, controller actions and route aliases.
-2. `3d1a6ca`: `feat(pos): add 6-layout print templates, X-Report preview view, Admin UI v4.1, and tri-lingual keys`
-   - Created `closing_print.blade.php` with 6 `@page` rules, `closing_x_report.blade.php`, upgraded `closing.blade.php`, and tri-lingual dictionary synchronization (`my`, `en`, `zh_CN`).
-3. `56a206f`: `test(pos): add comprehensive test coverage for X-Report non-mutation, Z-Report lifecycle, and 6 print layouts`
-   - Added automated feature tests covering non-mutation, electronic refund deduction, split payments, print views, routes, navigation and translation parity.
-4. `88d1227`: `fix(pos): enforce strict counted key validation, period lock assertions, and restore reopen compatibility`
-   - Enforced counted array keys validation, restored `reopen` compatibility method and route for P0 integrity suite, and verified strict business data non-mutation.
+## 2. All Commit SHAs & Descriptions (Final Remediation Phase)
+1. `08a6c09`: `feat(pos): add store business date service with half-open query intervals`
+   - Created `StoreBusinessDateService` providing strict ISO `Y-m-d` parsing, application timezone resolution (`Asia/Yangon`), future date rejection, and half-open query intervals `[$startOfDay, $nextDayStartOfDay)`.
+   - Added comprehensive feature tests in `tests/Feature/POS/StoreBusinessDateTest.php` (8 tests passing).
+2. `8bfacdf`: `feat(pos): backfill pos_closing.approve permission with model-independent migration`
+   - Created model-independent migration `2026_09_10_000003_add_pos_closing_approve_to_manager_roles.php` operating directly via `DB::table('staff_roles')` with JSON parsing to backfill `pos_closing.approve` strictly to system `store_manager` roles.
+   - Added `pos_closing.approve` to `StaffRole::PERMISSION_GROUPS` and `bootstrapDefaultRoles()`.
+   - Excluded `.approve` permissions from default legacy unassigned staff fallback in `StorePermissionService`.
+   - Verified zero runtime aliasing between `pos_closing.update` and `pos_closing.approve`.
+3. `5a225fc`: `feat(pos): add summary snapshot to daily closings and immutable reprint logic`
+   - Added migration `2026_09_10_000004_add_summary_snapshot_to_daily_closings_table.php` adding nullable `summary_snapshot` JSON column.
+   - Implemented `DailyClosing::getSummarySnapshot()` with legacy fallback (`is_legacy => true`).
+   - Injected snapshot storing on closing creation `{version: 1, metrics: $totals['summary']}`.
+   - Enforced that Z-Report reprint strictly reads persisted snapshots without executing live queries.
+   - Added distinct markers in `closing_print.blade.php`:
+     - X-Report: `*** X-REPORT — READING ONLY / စာရင်းကြည့်ရှုရန်သာ ***`
+     - Pending Z-Report: `*** PENDING Z-REPORT — SUBMITTED (UNAPPROVED) / ဆိုင်းငံ့ နေ့စဉ်စာရင်းချုပ် ***`
+     - Approved Z-Report: `*** Z-REPORT — FINAL/APPROVED DAILY CLOSING / အတည်ပြုပြီး နေ့စဉ်စာရင်းချုပ် ***`
+4. `3f4080d`: `fix(pos): remove direct reopen route, enforce fail-closed tampering checks, and add trilingual messages`
+   - Completely removed direct reopen route (`pos.closing.reopen`) and controller action `DailyClosingController::reopen()`.
+   - Updated `pos.closing.approve` middleware to `['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.approve']`.
+   - Implemented fail-closed anti-tampering in `DailyClosingController::store`: returns HTTP 422 if request contains financial truth fields (`expected_totals`, `differences`, `total_difference`, `opening_amount`).
+   - Validated `counted` array against nested arrays/objects and scientific notation (`decimal:0,2`).
+   - Guaranteed HTTP 404 if `type=z` print is requested without a persisted closing record.
+   - Verified Storefront confirmation page line 31 `$storeSetting = $store?->setting;` with 4 isolated tests in `OrderRequestTest.php`.
+   - Added complete tri-lingual translations for all new messages across `lang/en/messages.php`, `lang/my/messages.php`, and `lang/zh_CN/messages.php`.
 
 ---
 
 ## 3. Changed Files
+- `app/Models/StaffRole.php`
 - `app/POS/Http/Controllers/DailyClosingController.php`
+- `app/POS/Models/DailyClosing.php`
 - `app/POS/Services/DailyClosingService.php`
-- `app/Services/AdminNavigationService.php`
-- `docs/reports_implementation_plan_v2.md`
+- `app/POS/Services/StoreBusinessDateService.php` (New)
+- `app/Services/StorePermissionService.php`
+- `database/migrations/2026_09_10_000003_add_pos_closing_approve_to_manager_roles.php` (New)
+- `database/migrations/2026_09_10_000004_add_summary_snapshot_to_daily_closings_table.php` (New)
 - `lang/en/messages.php`
 - `lang/my/messages.php`
 - `lang/zh_CN/messages.php`
-- `resources/views/pos/closing.blade.php`
-- `resources/views/pos/closing_print.blade.php` (New)
-- `resources/views/pos/closing_x_report.blade.php` (New)
-- `resources/views/storefront/orders/confirmation.blade.php`
+- `resources/views/pos/closing_print.blade.php`
 - `routes/web.php`
+- `tests/Feature/Admin/StaffRoleTest.php`
+- `tests/Feature/OrderRequestTest.php`
 - `tests/Feature/POS/DailyClosingTest.php`
+- `tests/Feature/POS/P0IntegrityControlsTest.php`
+- `tests/Feature/POS/StoreBusinessDateTest.php` (New)
 
 ---
 
 ## 4. Full Targeted-Test Outputs
 
-### A. Daily Closing Test (`DailyClosingTest.php`)
-```text
-PHPUnit 11.5.56 by Sebastian Bergmann and contributors.
-Runtime:       PHP 8.2.12
-Configuration: D:\xmapp\htdocs\DataPOS\phpunit.xml
-
-PASS Tests\Feature\POS\DailyClosingTest
-✓ expected cash matches shift drawer math
-✓ expected e methods come from posted sales
-✓ expected credit reduces by credit refunds
-✓ create pending closing snapshots totals
-✓ create requires explanation when difference non zero
-✓ create blocks duplicate and future dates
-✓ approve by manager sets approver and audits
-✓ approve blocks double approval and cross store
-✓ approve blocks on pending offline transactions
-✓ approve blocks difference without explanation
-✓ closing page renders for staff
-✓ staff can create but not approve
-✓ manager approves via http
-✓ non staff cannot view closing
-✓ cross store closing is blocked
-✓ x report get request is non mutating repeatable and audited
-✓ unauthorized cross store and future date x report are blocked
-✓ electronic refund reduces matching electronic method
-✓ split payment not double counted and credit does not affect drawer cash
-✓ approved closing is immutable and direct reopen disabled
-✓ print view renders all six layouts and markers
-✓ reports daily closing alias routes and navigation
-✓ trilingual translation keys parity for phase two
-✓ store timezone business date boundary
-✓ period lock blocks sales and returns after approval
-✓ concurrent approval blocks race condition
-✓ unknown counted keys and negative amounts are rejected
-✓ cross store print and closing access are blocked
-
-Tests: 28 passed (286 assertions)
-Duration: 2.39s
+### Command Executed:
+```bash
+php artisan test --filter="DailyClosingTest|StoreBusinessDateTest|StaffRoleTest|OrderRequestTest|P0IntegrityControlsTest"
 ```
 
-### B. Payment Method Reconciliation Test
+### Actual Output:
 ```text
-PASS Tests\Feature\POS\PaymentMethodReconciliationTest
-✓ payment reconciliation aggregates multiple tender types with change and refunds
-✓ payments report http render for staff
-✓ payments export csv and xlsx with formula sanitization
-✓ payment reconciliation store isolation
+   PASS  Tests\Feature\Admin\StaffRoleTest
+  ✓ manager can access roles dashboard and bootstraps defaults                                                   0.66s  
+  ✓ manager can create custom staff role                                                                         0.03s  
+  ✓ manager can update role permissions                                                                          0.03s  
+  ✓ system role cannot be deleted but custom role can                                                            0.03s  
+  ✓ manager can assign staff role                                                                                0.03s  
+  ✓ manager can create and assign custom role on the fly                                                         0.03s  
+  ✓ manager can edit existing assigned custom role without creating duplicate                                    0.04s  
+  ✓ staff roles export and isolation                                                                             0.11s  
+  ✓ roles type filter system and custom                                                                          0.17s  
+  ✓ store owner role cannot have wildcard stripped or be deactivated                                             0.03s  
+  ✓ staff role catalog contains pos closing approve permission                                                   0.02s  
+  ✓ system manager receives approve permission without escalating custom roles                                   0.02s  
 
-Tests: 4 passed (40 assertions)
-Duration: 1.16s
-```
+   PASS  Tests\Feature\OrderRequestTest
+  ✓ guest and logged user can submit order request                                                               0.04s  
+  ✓ approved wholesale user gets wholesale pricing                                                               0.04s  
+  ✓ out of stock product blocked from ordering                                                                   0.02s  
+  ✓ address is required                                                                                          0.03s  
+  ✓ order submission redirects to confirmation page                                                              0.10s  
+  ✓ confirmation token is protected from mass assignment                                                         0.03s  
+  ✓ confirmation links normalize telegram username and clear cart after success                                  0.06s  
+  ✓ admin order status forms require explicit update button                                                      0.14s  
+  ✓ store isolation and admin order confirmation                                                                 0.06s  
+  ✓ storefront confirmation renders with tax id enabled                                                          0.05s  
+  ✓ storefront confirmation renders with tax id disabled                                                         0.05s  
+  ✓ storefront confirmation renders when store setting is null                                                   0.05s  
+  ✓ storefront confirmation cross store order isolation                                                          0.02s  
 
-### C. POS Report Test
-```text
-PASS Tests\Feature\POS\PosReportTest
-✓ sales report totals and method breakdown
-✓ sales report filters by cashier and range
-✓ sales report is store scoped
-✓ cash report aggregates shift drawer math
-✓ cash report covers only requested range
-✓ stock report shows ledger qty cost and value
-✓ stock report searches by name and sku and is store scoped
-✓ report pages render for staff
-✓ non staff cannot view reports
+   PASS  Tests\Feature\POS\DailyClosingTest
+  ✓ expected cash matches shift drawer math                                                                      0.04s  
+  ✓ expected e methods come from posted sales                                                                    0.04s  
+  ✓ expected credit reduces by credit refunds                                                                    0.04s  
+  ✓ create pending closing snapshots totals                                                                      0.03s  
+  ✓ create requires explanation when difference non zero                                                         0.03s  
+  ✓ create blocks duplicate and future dates                                                                     0.03s  
+  ✓ approve by manager sets approver and audits                                                                  0.03s  
+  ✓ approve blocks double approval and cross store                                                               0.03s  
+  ✓ approve blocks on pending offline transactions                                                               0.03s  
+  ✓ approve blocks difference without explanation                                                                0.03s  
+  ✓ closing page renders for staff                                                                               0.04s  
+  ✓ staff can create but not approve                                                                             0.04s  
+  ✓ manager approves via http                                                                                    0.03s  
+  ✓ non staff cannot view closing                                                                                0.03s  
+  ✓ cross store closing is blocked                                                                               0.04s  
+  ✓ x report get request is non mutating repeatable and audited                                                  0.18s  
+  ✓ unauthorized cross store and future date x report are blocked                                                0.48s  
+  ✓ electronic refund reduces matching electronic method                                                         0.04s  
+  ✓ split payment not double counted and credit does not affect drawer cash                                      0.04s  
+  ✓ approved closing is immutable and direct reopen disabled                                                     0.04s  
+  ✓ print view renders all six layouts and markers                                                               0.10s  
+  ✓ reports daily closing alias routes and navigation                                                            0.08s  
+  ✓ trilingual translation keys parity for phase two                                                             0.03s  
+  ✓ store timezone business date boundary                                                                        0.03s  
+  ✓ period lock blocks sales and returns after approval                                                          0.04s  
+  ✓ concurrent approval blocks race condition                                                                    0.03s  
+  ✓ unknown counted keys and negative amounts are rejected                                                       0.04s  
+  ✓ cross store print and closing access are blocked                                                             0.04s  
+  ✓ z report reprint is immutable under source data changes                                                      0.05s  
+  ✓ z print without persisted closing is rejected with 404                                                       0.04s  
+  ✓ print markers distinguish x reading pending z and approved z                                                 0.05s  
+  ✓ client tampering with financial truth fields rejected with 422                                               0.03s  
+  ✓ counted nested array and malformed payload rejected with 422                                                 0.03s  
+  ✓ cashier without approval permission cannot approve closing                                                   0.04s  
+  ✓ user with pos closing update only cannot approve closing                                                     0.04s  
+  ✓ custom staff role with explicit pos closing approve can approve                                              0.03s  
+  ✓ inactive membership cannot approve closing even with permissions                                             0.03s  
+  ✓ overnight shift and opening float not double counted across closings                                         0.03s  
 
-PASS Tests\Feature\PosReportsRevampTest
-✓ pos sales report page renders with kpi and records
-✓ pos sales report csv export
-✓ pos sales report xlsx export
-✓ pos cash report csv export
-✓ pos cash report xlsx export
-✓ pos stock report csv export
-✓ pos stock report xlsx export
-✓ pos service jobs report renders with kpis
-✓ pos service jobs report csv export
-✓ pos service jobs report xlsx export
+   PASS  Tests\Feature\POS\P0IntegrityControlsTest
+  ✓ approved daily closing locks period and prevents backdating                                                  0.57s  
+  ✓ owner can reopen locked period with audit trail                                                              0.03s  
+  ✓ document sequence generates consecutive collision free numbers                                               0.02s  
+  ✓ shift close requires variance reason when variance exceeds threshold                                         0.02s  
+  ✓ shift close with variance reason and signoff succeeds and logs audit                                         0.02s  
+  ✓ stock reconciliation equation calculates clean balance                                                       0.02s  
+  ✓ cash reconciliation equation calculates drawer math                                                          0.02s  
+  ✓ reconciliation web view accessible to manager                                                                0.12s  
+  ✓ reopen period web route disabled and returns 404                                                             0.04s  
 
-Tests: 19 passed (74 assertions)
-Duration: 1.89s
-```
+   PASS  Tests\Feature\POS\StoreBusinessDateTest
+  ✓ date service resolves application timezone                                                                   0.04s  
+  ✓ strict iso date parsing                                                                                      0.02s  
+  ✓ invalid date format throws validation exception without 500                                                  0.02s  
+  ✓ malformed date string throws validation exception                                                            0.02s  
+  ✓ future date assertion throws validation exception                                                            0.03s  
+  ✓ today and past dates pass future assertion                                                                   0.02s  
+  ✓ half open range captures midnight and excludes next day midnight                                             0.02s  
+  ✓ date service respects configured application timezone                                                        0.02s  
 
-### D. Commercial Tax Test
-```text
-PASS Tests\Feature\POS\CommercialTaxTest
-✓ exclusive tax calculation and post
-✓ inclusive tax calculation and post
-✓ commercial tax report and endpoints
-✓ tax report aliases do not 404
-✓ pos cart discount and posting with tax and discount
-
-Tests: 5 passed (49 assertions)
-Duration: 1.48s
-```
-
-### E. Localization Parity Test
-```text
-PASS Tests\Feature\LocalizationKeysParityTest
-✓ all locales expose identical key sets
-✓ no locale contains duplicate keys
-✓ batch3 navigation and admin keys present in all locales
-✓ rebranded store name is consistent across locales
-
-Tests: 21 passed (169 assertions)
-Duration: 1.89s
+  Tests:    80 passed (564 assertions)
+  Duration: 5.67s
 ```
 
 ---
 
-## 5. Full Test-Suite Exact Output
-Command: `php artisan test`
-```text
-Tests:    1 skipped, 1778 passed (8387 assertions)
-Duration: 145.74s
-Result:   100% Green / Zero Failures across the entire repository.
+## 5. Front-End Assets Build
+```bash
+npm run build
 ```
-
----
-
-## 6. `npm ci` & Build Outputs
 ```text
-> npm ci
-added 114 packages, and audited 115 packages in 4s
-
-> npm run build
 vite v7.3.6 building client environment for production...
 transforming...
 ✓ 60 modules transformed.
@@ -178,130 +184,53 @@ public/build/assets/admin-UNhIiZ3m.css                    352.85 kB │ gzip: 41
 public/build/assets/app-D8CId_R8.js                        14.65 kB │ gzip:  4.70 kB
 public/build/assets/app-admin-DzUDzZCT.js                  24.46 kB │ gzip:  7.34 kB
 public/build/assets/module.esm-CvtIwgpG.js                 93.85 kB │ gzip: 34.29 kB
-✓ built in 733ms
+✓ built in 785ms
 ```
 
 ---
 
-## 7. X-Report Business-Data Non-Mutation Evidence
-- **Semantics Defined:** An X-Report is strictly an interim reading of active shifts and tender types.
-- **Core Business Tables Verified Unchanged:**
-  - `DailyClosing::count()` remains unchanged before and after calls.
-  - `CashierShift::count()` remains unchanged and open shifts remain in `status = 'open'`.
-  - `pos_sales` row count and statuses remain unchanged.
-  - `pos_payments` row count remains unchanged.
-  - `pos_returns` row count remains unchanged.
-  - `inventory_movements` (stock ledger) row count remains unchanged.
-  - Date locking (`PeriodLockService::isDateLocked()`) remains `false`.
-- **Repeatability:** Requesting X-Report 3 times consecutively produces identical reading results without state corruption.
+## 6. GitHub Actions CI Status & Policy Statement
+- **CI Workflow Trigger Policy:**
+  Per `.github/workflows/ci.yml`:
+  ```yaml
+  on:
+    push:
+      branches: [ main ]
+    pull_request:
+      branches: [ main ]
+  ```
+- **Current Status:**
+  `No workflow run exists for current feature-branch HEAD (3f4080d)` because GitHub Actions only triggers on `main` branch pushes/PRs. Local test execution was rigorously verified with 100% passing results across 80 tests.
 
 ---
 
-## 8. Audit-Log Behavior
-- **X-Report:** Each X-Report reading generates an intentional security audit entry (`action: 'x_report_viewed'`, `entity_type: 'x_report'`) tracking cashier ID, business date, sales count, and shift count for non-repudiation.
-- **Z-Report Submit:** Creates audit log (`action: 'daily_closing.created'`).
-- **Z-Report Approval:** Creates audit log (`action: 'daily_closing.approved'`) with manager ID and timestamp.
-- **Z-Report Reopen:** Existing compatibility method logs audit (`action: 'daily_closing.reopened'`) with required reason.
+## 7. QA Verification & Boundaries Statement
+- **Automated Verification:**
+  - Print CSS `@page` media queries (`58mm auto`, `80mm auto`, `A5 portrait`, `A5 landscape`, `A4 portrait`, `A4 landscape`) verified across all 6 layouts via automated assertions in `DailyClosingTest::test_print_view_renders_all_six_layouts_and_markers`.
+- **Browser Automation Verification:**
+  - Tested on live Laravel server (port 8501) using browser automation agent.
+  - Inspected `/store/uat-pos-store/pos/closing` (Daily Closing dashboard with status cards, payment breakdown, and action controls).
+  - Inspected `/store/uat-pos-store/pos/closing/print?type=x&layout=80mm` (X-Report preview with header, layout switch pills, and distinct marker badge).
+  - Screen recording: `daily_closing_qa_1789008459924.webp`
+  - Screenshots captured: `pos_daily_closing_1789008744269.png`, `x_report_print_preview_1789008801379.png`.
+- **Honest Boundary Declaration:**
+  `Print CSS and generated HTML/PDF verified; native browser print dialog not independently automated.`
 
 ---
 
-## 9. Period-Lock Evidence
-- Verified via `test_period_lock_blocks_sales_and_returns_after_approval()`.
-- Upon approval, `PeriodLockService::assertDateNotLocked()` throws `PeriodLockedException` if any attempt is made to post a sale or return for that business date.
+## 8. Final Git Evidence
+```bash
+git rev-parse HEAD
+# Output:
+3f4080d8e87eb2e46a835583196b1df939ece014
 
----
+git ls-remote origin refs/heads/feature/reports-daily-closing-xz
+# Output:
+9e0dd83e1c890d9156c483fb4ab3090dc1c44a55	refs/heads/feature/reports-daily-closing-xz
 
-## 10. Concurrent Approval Evidence
-- Verified via `test_concurrent_approval_blocks_race_condition()`.
-- Uses `DB::transaction()` with `lockForUpdate()` on `daily_closings` record. If two approval requests execute concurrently, the second transaction sees `approval_status == 'approved'` and throws `InventoryException('Daily closing is already approved.')`.
+git status --short
+# Output: (Clean working directory)
 
----
-
-## 11. Payment-Method Calculation Evidence
-- **Cash Drawer Math:** `opening_amount + cash_sales + cash_in - cash_refunds - cash_out`.
-- **Electronic Sales Isolation:** Payments made via KPay, WavePay, CB Pay, and MMQR increment only their respective expected tender totals and do not increase physical drawer cash.
-- **Electronic Refund Deduction:** Electronic refunds (e.g. WavePay return) accurately subtract from matching electronic expected totals (`test_electronic_refund_reduces_matching_electronic_method`).
-- **Split Payments:** Sales split across Cash, KPay, and Credit allocate amounts cleanly without double-counting gross or net sales (`test_split_payment_not_double_counted_and_credit_does_not_affect_drawer_cash`).
-
----
-
-## 12. Print Layout Matrix
-
-| Layout Identifier | Paper Size | CSS `@page` Rule | Orientation | Use Case |
-|---|---|---|---|---|
-| `58mm` | 58mm Roll | `@page { size: 58mm auto; margin: 2mm; }` | Portrait | Mini thermal POS printer |
-| `80mm` | 80mm Roll | `@page { size: 80mm auto; margin: 3mm; }` | Portrait | Standard 80mm ESC/POS thermal printer |
-| `a5_portrait` | A5 Sheet | `@page { size: A5 portrait; margin: 8mm; }` | Portrait | Compact office sheet with signatures |
-| `a5_landscape` | A5 Sheet | `@page { size: A5 landscape; margin: 8mm; }` | Landscape | Compact ledger sheet with signatures |
-| `a4_portrait` | A4 Sheet | `@page { size: A4 portrait; margin: 12mm; }` | Portrait | Formal accounting document with signatures |
-| `a4_landscape` | A4 Sheet | `@page { size: A4 landscape; margin: 12mm; }` | Landscape | Full wide audit spreadsheet format with signatures |
-
----
-
-## 13. Screenshot Evidence
-All visual states captured during Browser Subagent execution:
-- `daily_closing_index` / `qa_1440x900_daily_closing`: Main closing screen with centered stat cards, X-report action, and responsive grid.
-- `x_report_preview`: Reading-only interim screen with sales counts, open shifts count, and warning badge.
-- `print_layout_58mm`: 58mm thermal preview with compact table and auto margins.
-- `print_layout_80mm`: 80mm standard receipt with clean alignment and header logo.
-- `print_layout_a5_portrait`: A5 portrait with cash variance breakdown and dual signature block.
-- `print_layout_a5_landscape`: A5 landscape sheet layout.
-- `print_layout_a4_portrait`: Formal A4 sheet with full business metadata and signatures.
-- `print_layout_a4_landscape`: A4 landscape ledger view.
-- `viewport_1366x600`: Medium desktop responsiveness.
-- `viewport_768x1024`: Tablet portrait view with stacked cards.
-- `viewport_390x844`: Mobile smartphone view with horizontal table scrolling and accessible buttons.
-
----
-
-## 14. Browser Role & Viewport QA
-- **Roles Tested:**
-  - Store Manager / Owner: Full access to Daily Closing, approval actions, print layouts, and navigation.
-  - Cashier (Staff): Allowed to view X-Report reading, submit count, and print reports. Forbidden from approving (`403 Forbidden`).
-  - Unauthorized Customer / Outsider: Forbidden from viewing closing or X-Report (`403 Forbidden`).
-  - Cross-Store Staff: Tampering with store slug or closing ID results in `404 Not Found` or `403 Forbidden`.
-- **Viewports Tested:** `1440x900`, `1366x600`, `768x1024`, `390x844`. All viewports rendered without overflow or clipped buttons.
-
----
-
-## 15. Console & Network Result
-- **Browser Console Errors:** `0` errors across all tested views.
-- **Network Requests:** All assets (`app.css`, `admin.css`, `app.js`, fonts) loaded with HTTP `200` status. Zero 404s or 500s.
-
----
-
-## 16. Translation Parity Result
-Verified via `LocalizationKeysParityTest` and `DailyClosingTest::test_trilingual_translation_keys_parity_for_phase_two`:
-- Locales: `lang/my/messages.php`, `lang/en/messages.php`, `lang/zh_CN/messages.php`.
-- Zero missing keys.
-- Clean natural Burmese phrasing without awkward punctuation or untranslated fallback English strings.
-
----
-
-## 17. Known Limitations
-- Direct reopening of an approved closing is restricted on the UI for cashiers. Any adjustment to historical locked dates requires manager intervention via audit-logged period reopen or adjusting documents.
-- Currency formatting follows store setting dynamically; custom decimal places must be configured through `/admin/settings/currency`.
-
----
-
-## 18. Pending Physical Hardware Tests
-- **Notice:** Software verification performed via standard Browser Print Preview and Virtual PDF rendering engines.
-- **Pending Physical Hardware:** Direct ESC/POS hardware tests with physical 58mm/80mm thermal printers (USB/Bluetooth/Network ESC/POS cutters and drawer kickers) must be validated on-site with physical hardware.
-
----
-
-## 19. Clean Working-Tree Result
-```text
-On branch feature/reports-daily-closing-xz
-nothing to commit, working tree clean
+git diff --check
+# Output: (No whitespace errors or conflicts)
 ```
-
----
-
-## 20. GitHub Branch & Commit Links
-- **Branch URL:** [https://github.com/shwepyithit568-commits/DataPOS/tree/feature/reports-daily-closing-xz](https://github.com/shwepyithit568-commits/DataPOS/tree/feature/reports-daily-closing-xz)
-- **Pull Request Creation URL:** [https://github.com/shwepyithit568-commits/DataPOS/pull/new/feature/reports-daily-closing-xz](https://github.com/shwepyithit568-commits/DataPOS/pull/new/feature/reports-daily-closing-xz)
-- **Commit 1 (`d3b26df`):** [d3b26df](https://github.com/shwepyithit568-commits/DataPOS/commit/d3b26df) — `feat(pos): implement X-Report preview and robust Z-Report closing services with route aliases`
-- **Commit 2 (`3d1a6ca`):** [3d1a6ca](https://github.com/shwepyithit568-commits/DataPOS/commit/3d1a6ca) — `feat(pos): add 6-layout print templates, X-Report preview view, Admin UI v4.1, and tri-lingual keys`
-- **Commit 3 (`56a206f`):** [56a206f](https://github.com/shwepyithit568-commits/DataPOS/commit/56a206f) — `test(pos): add comprehensive test coverage for X-Report non-mutation, Z-Report lifecycle, and 6 print layouts`
-- **Commit 4 (`88d1227`):** [88d1227](https://github.com/shwepyithit568-commits/DataPOS/commit/88d1227) — `fix(pos): enforce strict counted key validation, period lock assertions, and restore reopen compatibility`
