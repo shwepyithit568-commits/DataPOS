@@ -5,7 +5,7 @@
 > **Archived Date:** 2026-09-10
 > **Historical Baseline:** GitHub `main` commit `c3981434b1bfb214a7a60f87c013b411ee2d56d0`
 > **Status:** Delivered & Superseded by canonical architecture documents
-> **Current Architecture References:** [`../../README.md`](../../README.md), [`../../ADMIN_MODULES_EXECUTION_ROADMAP.md`](../../ADMIN_MODULES_EXECUTION_ROADMAP.md), [`../../MULTI_STORE_DATA_ISOLATION_AUDIT_PLAN.md`](../../MULTI_STORE_DATA_ISOLATION_AUDIT_PLAN.md)
+> **Current Architecture References:** [`../../README.md`](../../README.md), [`../../ADMIN_MODULES_EXECUTION_ROADMAP.md`](../../plans/ADMIN_MODULES_EXECUTION_ROADMAP.md), [`../../MULTI_STORE_DATA_ISOLATION_AUDIT_PLAN.md`](../../architecture/MULTI_STORE_DATA_ISOLATION_AUDIT_PLAN.md)
 > **Repository:** `shwepyithit568-commits/DataPOS`
 
 ## 1. Objective and non-negotiable outcomes

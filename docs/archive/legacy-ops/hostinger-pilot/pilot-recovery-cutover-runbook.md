@@ -1,5 +1,9 @@
 # AlinnThit Pilot — Recovery & Cutover Runbook
 
+> [!NOTE]
+> **Archived Historical Runbook:** ဤ runbook သည် ၂၀၂၆ ခုနှစ် သြဂုတ်လ Phase 2.5 AlinnThit pilot recovery/cutover ကာလမှ သမိုင်းဝင် runbook ဖြစ်သည်။
+> လက်ရှိ Production Deployment အတွက် [`../../../operations/DEPLOYMENT.md`](../../../operations/DEPLOYMENT.md) နှင့် Backup/Restore အတွက် [`../../../operations/release_snapshot_and_backup_guide.md`](../../../operations/release_snapshot_and_backup_guide.md) ကို ကြည့်ရှုအသုံးပြုပါ။
+
 > **ရည်ရွယ်ချက်:** Phase 2.5 (AlinnThit production pilot) အတွက် backup → restore → rollback → failover → cutover အကုန် ဘယ်လို လုပ်ရမယ်ဆိုတဲ့ လက်တွေ့ လုပ်ထုံးလုပ်နည်း။ Pilot မတည်မငြိမ်ခင် **ပြင်ပဖောက်သည်ကို မရောင်းရ** ဆိုတဲ့ စည်းကမ်း (ROADMAP.md Phase 2.5 exit criteria) ရဲ့ အခြေခံ။
 >
 > **အခြေအနေ:** Phase 2 (Online POS MVP, items 261–270) ပြီးပြီ · Phase 2.5 part 1 (pilot data import hub, item 271) ပြီးပြီ · **2026-08-17:** opening-stock reconciliation ✅ (`8c504ba`) + debt opening balances import ✅ (`7b354c2`) — အောက်က ၃.၁ စာရင်းတွင် မှတ်ပြီး · ဒီ runbook က Phase 2.5 ရဲ့ ကျန် "Backup & restore test" + "Written recovery/cutover runbook" items အတွက်။

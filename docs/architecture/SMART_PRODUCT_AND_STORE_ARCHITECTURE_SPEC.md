@@ -3,7 +3,7 @@
 
 ---
 
-> **Related Client Standard:** မိုဘိုင်းဖုန်းနှင့် ဆက်စပ်ပစ္စည်းများအတွက် အသေးစိတ် SKU Code ဖွဲ့စည်းမှုနှင့် Naming စံနှုန်းများကို [`guides/ALINN_THIT_MOBILE_SKU_LOGIC_MM.md`](guides/ALINN_THIT_MOBILE_SKU_LOGIC_MM.md) တွင် သီးသန့် လေ့လာနိုင်သည်။
+> **Related Client Standard:** မိုဘိုင်းဖုန်းနှင့် ဆက်စပ်ပစ္စည်းများအတွက် အသေးစိတ် SKU Code ဖွဲ့စည်းမှုနှင့် Naming စံနှုန်းများကို [`guides/ALINN_THIT_MOBILE_SKU_LOGIC_MM.md`](../guides/ALINN_THIT_MOBILE_SKU_LOGIC_MM.md) တွင် သီးသန့် လေ့လာနိုင်သည်။
 
 ---
 

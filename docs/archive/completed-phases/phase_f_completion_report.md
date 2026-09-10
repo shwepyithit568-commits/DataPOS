@@ -1,13 +1,13 @@
 # DataPOS — Phase F Completion Report (Refreshed & Corrected)
 ### Myanmar Business Commercial Readiness — Phases A through E & Pre-Installer Baseline
 
-**Document Reference:** `docs/phase_f_completion_report.md`  
-**Master Plan:** [myanmar_business_commercial_readiness_plan_v1.md](myanmar_business_commercial_readiness_plan_v1.md)  
-**Report Refresh Date:** 2026-09-09  
-**Current Branch:** `main`  
-**Baseline Git Commit SHA:** `262ea2fbe11a36fa18af8e621783f6756b396396`  
-**Git Working Tree Status:** Clean (`git status --short` = 0 uncommitted files)  
-**Prepared By:** Antigravity (Prompt 5 — Phase F Completion Report Refresh & Evidence Correction)  
+**Document Reference:** `docs/phase_f_completion_report.md`
+**Master Plan:** [myanmar_business_commercial_readiness_plan_v1.md](../../plans/myanmar_business_commercial_readiness_plan_v1.md)
+**Report Refresh Date:** 2026-09-09
+**Current Branch:** `main`
+**Baseline Git Commit SHA:** `262ea2fbe11a36fa18af8e621783f6756b396396`
+**Git Working Tree Status:** Clean (`git status --short` = 0 uncommitted files)
+**Prepared By:** Antigravity (Prompt 5 — Phase F Completion Report Refresh & Evidence Correction)
 **Overall Readiness Gate:** 🟡 `Awaiting Physical Hardware UAT & Store Owner Sign-off`
 
 ---
@@ -33,7 +33,7 @@
 
 ## 2. Evidence-Based Gate Categories & Classification
 
-In accordance with the Strict Engineering Craftsmanship Policy in [`AGENTS.md`](../AGENTS.md), all capabilities are strictly categorized into one of five honest gates:
+In accordance with the Strict Engineering Craftsmanship Policy in [`AGENTS.md`](../../../AGENTS.md), all capabilities are strictly categorized into one of five honest gates:
 
 1. **`PASS — Automated Evidence`:** Code, logic, schema, or calculations verified 100% green by deterministic automated test suites.
 2. **`PASS — Human/Physical Evidence`:** Manually tested and physically verified on real hardware devices.
@@ -209,7 +209,7 @@ Limitations are strictly divided into release gates rather than dismissed:
 
 ### 9.2 Commercial GA Blockers (Must be resolved before wide commercial sale)
 - **GA-1 (Code Signing Certificate):** Windows SmartScreen will display an untrusted publisher warning unless an EV/OV Authenticode certificate is acquired.
-- **GA-2 (Credential Scrubbing):** Purging historical MySQL dump containing legacy customer credentials from Git history ([`security_and_release_archive_audit.md`](security_and_release_archive_audit.md)).
+- **GA-2 (Credential Scrubbing):** Purging historical MySQL dump containing legacy customer credentials from Git history ([`security_and_release_archive_audit.md`](../audits/security_and_release_archive_audit.md)).
 - **GA-3 (Accountant-Verified Tax Engine):** Formal validation of Myanmar Commercial Tax (CT%) computation rules by a certified accountant before enabling VAT invoicing.
 
 ### 9.3 Post-GA Roadmap (Non-blocking for Pilot or initial release)

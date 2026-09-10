@@ -1,9 +1,9 @@
 # DataPOS — Myanmar Business Commercial Readiness Audit & Baseline Report (Phase A)
 
-**Document Reference:** `docs/commercial_readiness_phase_a_audit_report.md`  
-**Master Plan:** [docs/myanmar_business_commercial_readiness_plan_v1.md](file:///d:/xmapp/htdocs/DataPOS/docs/myanmar_business_commercial_readiness_plan_v1.md)  
-**Audit Execution Date:** 2026-09-09  
-**Auditor:** Tech Buddy (Senior Software Architect & Pair Programmer)  
+**Document Reference:** `docs/commercial_readiness_phase_a_audit_report.md`
+**Master Plan:** [docs/myanmar_business_commercial_readiness_plan_v1.md](../../plans/myanmar_business_commercial_readiness_plan_v1.md)
+**Audit Execution Date:** 2026-09-09
+**Auditor:** Tech Buddy (Senior Software Architect & Pair Programmer)
 **Status:** Completed — Ready for Project Owner Review
 
 ---

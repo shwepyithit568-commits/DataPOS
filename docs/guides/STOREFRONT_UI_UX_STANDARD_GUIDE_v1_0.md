@@ -407,16 +407,16 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
 
 ### ၉.၁။ ပင်မ အရောင်းနှင့် စျေးဝယ်စာမျက်နှာများ (Core Commerce Pages)
 - [x] **Storefront Home (ပင်မစာမျက်နှာ):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/welcome.blade.php`](../resources/views/welcome.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/welcome.blade.php`](../../resources/views/welcome.blade.php)
   - **လုပ်ဆောင်ချက်များ:** 3D Desktop Navigation, Compact Category Sidebar (`40px`), Slim Flyout Panel (`256px`), Value Trust Strip 3D Cards, Section Headers ရှိ "အားလုံးကြည့်မည် (View All)" Link များအား `sf-btn-3d active` Mini Push Buttons သို့ ပြောင်းလဲခြင်း၊ Glass Finder CTA အား `sf-btn-3d active` သို့ ပြင်ဆင်ခြင်း၊ Direct Support Modal ခလုတ်များ (Viber, Telegram, Phone) အား 3D Bevel Buttons သို့ ပြောင်းလဲခြင်း၊ Dynamic Theming Tokens အပြည့်အဝ ချိတ်ဆက်ခြင်း၊ **Browse Left-Rail Style Category Scroll Cards & Smooth Navigation:** "လူကြိုက်အများဆုံး အမျိုးအစားများ" Horizontal Scroll Cards များအား Browse Left-Rail ၏ `sf-btn-3d aspect-[3/4]` စံအတိုင်း Full-bleed edge-to-edge ဓာတ်ပုံ (~၈၀%)၊ ထိပ်ညာဘက် Semi-transparent Count Badge၊ ပါးလွှာကျစ်လျစ်သော အမည်ပြား၊ `/browse?category_id=...` သို့ Deep-link Auto-scroll Active စနစ်၊ Buttery-Smooth Inertial Drag (1:1 Physics with Click Protection) နှင့် Header ရှိ 3D Prev/Next Navigation Arrow Buttons (`❮` / `❯`) တို့ဖြင့် စုံလင်စွာ ပြင်ဆင်ပြီးစီး။ **Hero Section Subtle Corners Standard (`rounded-md sm:rounded-lg`):** Category Sidebar Background Card, Flyout Subcategory Panels, Hero Banner Photo Slider Container, Banner Navigation Controls, Fallback Hero Card နှင့် Trust Strip ကတ်များ/အိုင်ကွန်များအားလုံးတွင် ဖောင်းကြွနေသော `rounded-2xl` / `rounded-3xl` အဝိုက်ကြီးများ အားလုံးကို လျှော့ချပြီး ကျစ်လျစ်သပ်ရပ်သော `rounded-md sm:rounded-lg` (4px–8px) စံနှုန်းသို့ ပြင်ဆင်ပြီးစီး။ **Hero Section Anti-Drop Flexbox Architecture (Layout Stability):** CSS Grid Auto-placement ချို့ယွင်းချက်ကြောင့် အင်တာနက် အနည်းငယ်နှေးချိန် သို့မဟုတ် Rendering မပြီးပြတ်မီအချိန်များတွင် Hero Banner Slider သည် Row 2 သို့ ဆင်းကျသွားပြီး Sidebar ညာဘက်တွင် ကွက်လပ်ကြီးဖြစ်သွားသည့် ပြဿနာအား အပြီးအပိုင် ဖြေရှင်းနိုင်ရန် စိတ်ချရသော Flexbox Layout (`flex flex-col lg:flex-row items-stretch`) သို့ အဆင့်မြှင့်တင်ပြီး Category Sidebar (`lg:w-72 xl:w-80 shrink-0`) နှင့် Banner Slider Column (`w-full flex-1 min-w-0`) အမြဲတမ်း ဘေးချင်းယှဉ် တည်ငြိမ်စွာ ရပ်တည်နိုင်စေရန် ပြုပြင်ပြီးစီး။
 - [x] **Product Catalog & Search (ကုန်ပစ္စည်းစာရင်းနှင့် ရှာဖွေမှု):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/catalog/index.blade.php`](../resources/views/storefront/catalog/index.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/catalog/index.blade.php`](../../resources/views/storefront/catalog/index.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Hardcoded `Ks` နှင့် `(Ks)` များ အကုန်ဖယ်ရှားပြီး `format_currency()` သို့ ပြောင်းလဲခြင်း၊ Hardcoded ကာလာများ ဖယ်ရှားပြီး Dynamic 3D Push Button Suite (`sf-btn-3d`, `sf-btn-3d-primary`, `sf-btn-3d-danger`, `sf-btn-3d-success`, `sf-btn-3d-accent`) တပ်ဆင်ခြင်း၊ Grid/List view switcher 3D ပြောင်းခြင်း၊ Slim Category/Brand Hover Flyout (`256px` Zero GPU Lag) တပ်ဆင်ခြင်း၊ Desktop 2-Column Side-by-Side Grid Layout နှင့် Product Card Action Buttons များကို 3D ပြုလုပ်ပြီးစီး။
 - [x] **Product Details & Variant Specs (ကုန်ပစ္စည်းအသေးစိတ်):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/catalog/show.blade.php`](../resources/views/storefront/catalog/show.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/catalog/show.blade.php`](../../resources/views/storefront/catalog/show.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Hardcoded inline gradient styles အားလုံး ဖယ်ရှားပြီး 3D Tactile Suite ဖြင့် အစားထိုးခြင်း၊ "Buy Now" CTA အား `.sf-btn-3d-orange` ဖြင့်လည်းကောင်း၊ "Add to Order" CTA အား `.sf-btn-3d-primary` ဖြင့်လည်းကောင်း တပ်ဆင်ခြင်း၊ Direct Order (Viber & Telegram) အတွက် `.sf-btn-3d-viber` နှင့် `.sf-btn-3d-telegram` 3D Buttons အသစ်များ တည်ဆောက် တပ်ဆင်ခြင်း၊ 3D Variant Matrix Pills (Color/Storage/Specs) များတွင် Tactile push physics နှင့် active state သတ်မှတ်ခြင်း၊ 3D Wholesale Badge နှင့် Promo Pill များ တပ်ဆင်ခြင်း၊ 3D Metallic Gold / Rose Favorite Heart Button နှင့် 3D Share Button တပ်ဆင်ခြင်း၊ `lang/{en,my,zh_CN}/messages.php` သုံးဘာသာစလုံးတွင် `'buy_now'` key အပြည့်အစုံ ဖြည့်စွက်ပြီးစီး။
 - [x] **Category Browser (ကုန်ပစ္စည်း ကဏ္ဍစုံ ရှာဖွေမှု):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/browse/index.blade.php`](../resources/views/storefront/browse/index.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/browse/index.blade.php`](../../resources/views/storefront/browse/index.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Shopee/Lazada ပုံစံ 2-Pane Split-Screen Layout (ဘယ်ဘက် Vertical Categories Rail + ညာဘက် Category Details/Brands/Sub-categories Pane) ဖြင့် စနစ်ကျစွာ တည်ဆောက်ပြီးစီး။
     - **Admin Master Data Categories Synchronization:** `/admin/categories` တွင် ထည့်သွင်းထားသော Main Categories (၁၅) ခုလုံးအား Storefront တွင် အမည်၊ အရေအတွက်နှင့် အစဉ်လိုက် တိကျစွာ ပြသခြင်း။
     - **Sharp Rectangular 3D Card Architecture (`rounded-none`):** Category Cards၊ Brand Cards၊ Sub-category Pills နှင့် Product Grid Cards များအားလုံး၏ ထောင့် ၄ ဖက်လုံးမှ Rounded အဝိုက်များအားလုံးကို အပြီးအပိုင် ဖြုတ်ပယ်ပြီး လေးထောင့်စပ်စပ် 3D Tactile Push Tiles စတိုင်လ်သို့ ပြောင်းလဲခြင်း။
@@ -428,7 +428,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Single Search Bar Policy:** ရှုပ်ထွေးမှု ကင်းဝေးစေရန် browse container အပေါ်ရှိ ပိုနေသော ဒုတိယ Search Bar ကို ဖယ်ရှားပြီး Universal Header Search Bar နှင့် ဘယ်ဘက်ခြမ်း Realtime Filter စနစ်ဖြင့်သာ သန့်ရှင်းစွာ ထားရှိခြင်း။
     - **Localization & Formatting:** ကွင်းစကွင်းပိတ် အပိုများ မပါရှိသော သဘာဝကျသည့် မြန်မာစကား၊ အင်္ဂလိပ်နှင့် တရုတ် သုံးဘာသာစလုံး ပြည့်စုံစွာ ဖြည့်သွင်းထားပြီး Hardcoded "Ks" လုံးဝမပါရှိစေဘဲ Dynamic Currency စနစ်ဖြင့် တည်ဆောက်ပြီးစီး။
 - [x] **Shopping Cart & Order Builder (ခြင်းတောင်းနှင့် အော်ဒါပြင်ဆင်မှု):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/orders/builder.blade.php`](../resources/views/storefront/orders/builder.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/orders/builder.blade.php`](../../resources/views/storefront/orders/builder.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Production-ready အဆင့်မီ Fully Responsive Layout နှင့် UI/UX Polish ပြီးစီး။
     - **Mobile Full-Bleed 2px Padding:** မိုဘိုင်းဖုန်းများတွင် ဘေးဘက် space အလေအလွင့်မရှိစေရန် `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် 2px edge padding တပ်ဆင်ခြင်း။
     - **Desktop 12-Column Grid:** ဘယ်ဘက် ၇ ကော်လံတွင် ရွေးချယ်ထားသော ပစ္စည်းစာရင်း (Selected Products) နှင့် ညာဘက် ၅ ကော်လံတွင် Sticky Checkout Form သို့ ခွဲခြမ်းပြသခြင်း။
@@ -440,7 +440,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Zero Hardcoding Policy:** Static `#f85606` အရောင်များနှင့် "Ks" အသေရေးသားမှုများအားလုံး ဖယ်ရှားပြီး Dynamic Theme Tokens (`[color:var(--sf-primary)]`) နှင့် `window.formatCurrency()` သို့ ချိတ်ဆက်ခြင်း။
     - **Tri-Lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) သုံးဘာသာစလုံးအတွက် Translation Keys များ ပြည့်စုံစွာ ဖြည့်သွင်းပြီးစီး။
 - [x] **Order Confirmation & Slip Attachment (အော်ဒါအတည်ပြုခြင်းနှင့် ပြေစာတင်ခြင်း):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/orders/confirmation.blade.php`](../resources/views/storefront/orders/confirmation.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/orders/confirmation.blade.php`](../../resources/views/storefront/orders/confirmation.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Production-ready အဆင့်မီ Fully Responsive Layout နှင့် UI/UX Polish ပြီးစီး (Core Commerce Flow ၁၀၀% အပြည့်အဝ ပြီးမြောက်)။
     - **Success Hero Banner & 1-Tap Quick Copy:** Emerald Checkmark Hero Card နှင့် Order Number (#ORD-...) အား Clipboard သို့ 1-Tap Copy ချက်ချင်း ကူးယူနိုင်သော 3D Button တပ်ဆင်ခြင်း။
     - **4-Stage Visual Status Stepper:** အော်ဒါတင်ပြီး ➔ ဆိုင်မှ အတည်ပြုခြင်း ➔ ငွေပေးချေမှု/ထုပ်ပိုးခြင်း ➔ ပို့ဆောင်ခြင်း အဆင့် ၄ ဆင့်အား မိုဘိုင်းနှင့် ကွန်ပျူတာ အလိုက် သပ်ရပ်သော Visual Progress Stepper ဖြင့် ဖော်ပြခြင်း။
@@ -453,7 +453,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
 
 ### ၉.၂။ Customer ဝန်ဆောင်မှုနှင့် Self-Service စာမျက်နှာများ (Customer Service & Tools)
 - [x] **Service Tracking Search (ဆာဗစ်စစ် ရှာဖွေမှု ပင်မ):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/service_tracking/index.blade.php`](../resources/views/storefront/service_tracking/index.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/service_tracking/index.blade.php`](../../resources/views/storefront/service_tracking/index.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Production-ready အဆင့်မီ Fully Responsive Layout နှင့် UI/UX Polish ပြီးစီး။
     - **Mobile Full-Bleed 2px Padding:** မိုဘိုင်းဖုန်းများတွင် ဘေးဘက် space အလေအလွင့်မရှိစေရန် `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် 2px edge padding တပ်ဆင်ခြင်း။
     - **Subtle Modern Rounded Corners Standard (`rounded-lg sm:rounded-xl` & `rounded-md`):** မူလ `rounded-2xl` အဝိုက်ကြီးများ ဖယ်ရှားပြီး ကျစ်လျစ်သပ်ရပ်သော Subtle Rounded Corners စံနှုန်းသို့ ပြောင်းလဲခြင်း။
@@ -463,8 +463,8 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) သုံးဘာသာစလုံးအတွက် Translation Keys များ ပြည့်စုံစွာ ဖြည့်သွင်းပြီးစီး။
 - [x] **Service Tracking Status Stepper & A5 Slip Download (ပြင်ဆင်မှု အခြေအနေ အသေးစိတ်နှင့် ပြေစာ PDF ဖိုင်သိမ်းဆည်းမှု):**
   - **ဖိုင်လမ်းကြောင်းများ:**
-    - [`resources/views/storefront/service_tracking/show.blade.php`](../resources/views/storefront/service_tracking/show.blade.php)
-    - [`resources/views/storefront/service_tracking/print.blade.php`](../resources/views/storefront/service_tracking/print.blade.php)
+    - [`resources/views/storefront/service_tracking/show.blade.php`](../../resources/views/storefront/service_tracking/show.blade.php)
+    - [`resources/views/storefront/service_tracking/print.blade.php`](../../resources/views/storefront/service_tracking/print.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Production-ready အဆင့်မီ 5-Stage Animated Progress Stepper၊ A5 Preview Modal နှင့် Computer/Phone ထဲသို့ တိုက်ရိုက် PDF ဖိုင်သိမ်းဆည်းနိုင်သော စနစ် ပြီးစီး။
     - **Top Actions Toolbar:** ရှာဖွေမှု စာမျက်နှာသို့ ပြန်သွားရန် ခလုတ်၊ စာရွက်ဖြင့် ပြေစာထုတ်ယူရန် Print Slip (`window.print`) ခလုတ်၊ ခြေရာခံ Tracking Link အား Clipboard သို့ 1-Tap ကူးယူနိုင်သော `.sf-btn-3d active` Copy Link Button နှင့် A5 Slip Preview Modal ဖွင့်ရန် `📄 ပြေစာ အစမ်းကြည့်/ထုတ်မည်` ခလုတ်များ တပ်ဆင်ခြင်း။
     - **A5 Sheet Proportional Service Slip Preview Modal:** ဖောက်သည်များ ပြေစာကို အွန်လိုင်းမှ ကြည့်ရှုစစ်ဆေးနိုင်ရန် Root `@stack('modals')` တွင် `z-[100]` ဖြင့် Sticky Header များ၏ အပေါ်၌ အစစ်အမှန် A5 စာရွက်အချိုးအစား (`max-w-[480px]`, `1:1.414` ratio) ဖြင့် ပေါ်ထွက်လာသော သပ်ရပ်ကြည်လင်သည့် Dialog Box တပ်ဆင်ခြင်း။
@@ -478,7 +478,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Official Brand Direct Contact Channels:** ကျွမ်းကျင်ပညာရှင် သို့မဟုတ် ဆိုင်သို့ အလွယ်တကူ ဆက်သွယ်နိုင်ရန် တရားဝင် Brand Colors များဖြစ်သော `.sf-btn-3d-viber`၊ `.sf-btn-3d-telegram` နှင့် `.sf-btn-3d-success` (ဖုန်းခေါ်ဆိုရန်) ခလုတ်များ စုံလင်စွာ တပ်ဆင်ခြင်း။
     - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) သုံးဘာသာစလုံးအတွက် Translation Keys များ (`track_service_save_pdf`, `track_service_generating_pdf` စသည်) အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
 - [x] **Glass / Screen Protector Finder (မှန်မကွဲ အလွယ်ရှာစနစ်):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/glass_finder/index.blade.php`](../resources/views/storefront/glass_finder/index.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/glass_finder/index.blade.php`](../../resources/views/storefront/glass_finder/index.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Production-ready အဆင့်မီ Brand/Model Cascading Dropdown, Real-time Compatible Models Matrix နှင့် Quick Buy 3D Button တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
     - **Brand/Model Cascading Dropdown Toolbar:** ဖုန်း Brand ရွေးချယ်လိုက်သည်နှင့် သက်ဆိုင်ရာ Model များ ချက်ချင်း အလိုအလျောက် ရွေးချယ်နိုင်သော Dynamic Cascading Dropdown နှင့် အလွယ်တကူ စာရိုက်ရှာဖွေနိုင်သည့် Smart Search Input တပ်ဆင်ခြင်း။
     - **Fast-Tap Horizontal Brand Chips:** လက်မတစ်ချက်နှိပ်ရုံဖြင့် Brand အလိုက် ကူးပြောင်းကြည့်ရှုနိုင်သော `.sf-btn-3d` Horizontal Touch Chips များ တပ်ဆင်ခြင်း။
@@ -489,7 +489,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Direct Shop Inquiries:** Viber (`.sf-btn-3d-viber`) နှင့် Telegram (`.sf-btn-3d-telegram`) တို့ဖြင့် သက်ဆိုင်ရာ Glass Code ကို pre-filled စာသားဖြင့် တိုက်ရိုက်မေးမြန်းနိုင်စေခြင်း။
     - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) သုံးဘာသာစလုံးအတွက် Translation Keys များ ပြည့်စုံစွာ ဖြည့်သွင်းပြီးစီး။
 - [x] **How To Order Guide (စျေးဝယ်နည်း လမ်းညွှန်):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/how_to_order/index.blade.php`](../resources/views/storefront/how_to_order/index.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/how_to_order/index.blade.php`](../../resources/views/storefront/how_to_order/index.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Visual Infographic Steps, Payment Transfer Instructions, Bus Gate Delivery FAQ, 3D Accordion Expanders တို့ဖြင့် ပြည့်စုံစွာ အဆင့်မြှင့်တင်ပြီးစီး။
     - **Visual Infographic Steps:** အဆင့် ၁ မှ ၅ အထိ လှပသော နံပါတ်စဉ် 3D Badge (`.sf-btn-3d active`) နှင့် အဆင့်လိုက် ညွှန်ပြချက်များဖြင့် ရှင်းလင်းစွာ ဖော်ပြခြင်း။
     - **Payment Transfer Instructions Box:** KPay, WavePay, Mobile Banking ငွေလွှဲနည်း၊ Screenshot ရိုက်သိမ်းနည်း၊ Viber သို့ ပို့ဆောင်အတည်ပြုနည်း အဆင့် (၃) ဆင့် လမ်းညွှန်ချက်။
@@ -498,7 +498,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Direct Shop Inquiries & Official Brand 3D Buttons:** Viber (`.sf-btn-3d-viber` ခရမ်းရောင်)၊ Telegram (`.sf-btn-3d-telegram` အပြာရောင်) နှင့် ဖုန်းခေါ်ဆိုရန် (`.sf-btn-3d-success` အစိမ်းရောင်) တရားဝင် Brand Colors များဖြင့် တပ်ဆင်ထားပြီး၊ ခလုတ်ပေါ်တွင် ဖုန်းနံပါတ်စာသား ရှည်လျားစွာ မပေါ်စေဘဲ ကလစ်နှိပ်မှ ဖုန်းခေါ် App ထဲသို့ နံပါတ် အလိုအလျောက် ရောက်ရှိစေမည့် စံနှုန်း တပ်ဆင်ခြင်း။
     - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
 - [x] **Wholesale Registration (လက်ကားဖောက်သည် လျှောက်ထားလွှာ):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/wholesale/apply.blade.php`](../resources/views/storefront/wholesale/apply.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/wholesale/apply.blade.php`](../../resources/views/storefront/wholesale/apply.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Clean Shop Verification Form, Wholesale Benefits Highlights, Live Application Status Box, 3D Submit Button တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
     - **Wholesale Partner Program Hero Header:** 3D Eyebrow Badge (`💼 Wholesale Partner Program`) နှင့် ခေါင်းစဉ်/စာသား ရှင်းလင်းချက်များ။
     - **Wholesale Benefits Highlights:** သီးသန့် လက်ကားစျေးနှုန်းများ၊ ဦးစားပေး ကားဂိတ်တင်ပို့မှု၊ သီးသန့် မန်နေဂျာနှင့် တိုက်ရိုက်ဆွေးနွေးမှု အကျိုးကျေးဇူး ၃ ရပ် ကတ်များ တပ်ဆင်ခြင်း။
@@ -507,7 +507,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Guest Safety & Direct Partner Hotline:** အကောင့်မဝင်ရသေးသူများအတွက် Customer Login အသိပေးကတ်နှင့် Viber, Telegram, Direct Call တရားဝင် Brand Colors ခလုတ်များ တပ်ဆင်ခြင်း။
     - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
 - [x] **POS-Only Storefront Notice (စတိုးဆိုင်ပိတ် သို့မဟုတ် POS သီးသန့် အသိပေးချက်):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/pos_only.blade.php`](../resources/views/storefront/pos_only.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/pos_only.blade.php`](../../resources/views/storefront/pos_only.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Friendly In-Store POS Notice Badge, Direct Store Contact Hotline (3D Viber, Telegram, Phone Buttons), Store Working Hours & Address Cards, Google Maps Directions Button, POS Sale Redirect Button (`.sf-btn-3d-primary`) တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
     - **In-Store / POS Only Badge:** ခေတ်မီ 3D Alert Eyebrow Badge (`🏬 ဆိုင်တွင်သာ လူကိုယ်တိုင် လာရောက်ဝယ်ယူနိုင်ပါသည် (In-Store / POS Only)`) တပ်ဆင်ခြင်း။
     - **Store Working Hours & Physical Address Cards:** ဆိုင်ဖွင့်ချိန်၊ ပိတ်ရက်နှင့် တည်နေရာလိပ်စာတို့ကို ကတ်သန့်သန့်ဖြင့် ရှင်းလင်းစွာ ဖော်ပြခြင်း။
@@ -516,7 +516,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
 
 - [x] **Customer Profile Dashboard (အကောင့် ပင်မမျက်နှာပြင်):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/customer/account/index.blade.php`](../resources/views/customer/account/index.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/customer/account/index.blade.php`](../../resources/views/customer/account/index.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Retail Customer Wholesale CTA, Conditional Visibility, Live Status Indicator တို့ဖြင့် အဆင့်မြှင့်တင်ပြီးစီး။
     - **Wholesale Partner Invitation Banner:** လက်လီဖောက်သည် (Retail Customer) များအတွက် လက်ကားဝယ်ယူခွင့် အကျိုးကျေးဇူးဖော်ပြချက်နှင့် `.sf-btn-3d-primary` "လက်ကား လျှောက်ထားရန်" ခလုတ် တပ်ဆင်ခြင်း။
     - **Quick Actions Compact 3D Tactile Buttons (2-Columns on Mobile):** Mobile View တွင် အံဝင်ခွင်ကျဖြစ်စေသော ၂ ကော်လံ စနစ်ဖြင့် အော်ဒါမှတ်တမ်း (Orders)၊ သိမ်းဆည်းထားသည်များ (Favorites)၊ ရွှေဝါရောင် 3D Button (`.sf-btn-3d-gold`) ပါဝင်သည့် လက်ကားလျှောက်ထားရန် (Wholesale) နှင့် အနီရောင် 3D Button (`.sf-btn-3d-danger`) ပါဝင်သည့် အကောင့်မှထွက်ရန် (Log Out) ခလုတ်များကို tactile depth အပြည့်ဖြင့် တပ်ဆင်ခြင်း။
@@ -524,7 +524,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Web Push Preference & Floating Bell Sync:** Notification Toggle switch အား Event Listener ချိတ်ဆက်ပြီး၊ Toggle ပိတ်ထားချိန်တွင် Floating 🔔 Bell icon အား မျက်နှာပြင်မှ လုံးဝ ဖုံးကွယ်ထားစေခြင်း (`style="display: none;"` / `!hidden`)၊ Toggle အခြေအနေအား မြန်မာစာသား "အသိပေးချက်များ ပိတ်ထားပါသည်" ဖြင့် ချက်ချင်း ပြောင်းလဲဖော်ပြစေခြင်း။
     - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
 - [x] **Customer Order History (မှာယူမှု မှတ်တမ်းများ):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/customer/account/orders.blade.php`](../resources/views/customer/account/orders.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/customer/account/orders.blade.php`](../../resources/views/customer/account/orders.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Status Filter Tabs, Search Bar, 1-Tap Reorder, Dynamic Currency, Card/Table Switcher တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
     - **Ultra-Dense Mobile Layout:** `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် Mobile View တွင် Full-bleed အံဝင်ခွင်ကျ ပြသခြင်း။
     - **Live Status Filter Pills:** အားလုံး (All), ဆက်သွယ်ရန် စောင့်ဆိုင်းဆဲ (Pending Contact), အတည်ပြုပြီး (Confirmed), ပို့ဆောင်ပြီး (Delivered), ပယ်ဖျက်ပြီး (Cancelled) အဆင့်များအလိုက် Badge Count များဖြင့် စစ်ထုတ်နိုင်ခြင်း။
@@ -534,7 +534,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Empty State & Pagination:** အော်ဒါမှတ်တမ်း မရှိသေးချိန် သို့မဟုတ် စစ်ထုတ်မှု ရလဒ်မရှိချိန်တွင် ကုန်ပစ္စည်းများ ကြည့်ရှုမည့် 3D CTA နှင့် Laravel Query String-preserved Pagination စနစ်။
     - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
 - [x] **Customer Order Detail & Invoice (အော်ဒါအသေးစိတ်နှင့် ပြေစာ):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/customer/account/order_show.blade.php`](../resources/views/customer/account/order_show.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/customer/account/order_show.blade.php`](../../resources/views/customer/account/order_show.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ 4-Stage Live Delivery Status Tracking, Simulated 80mm/58mm Thermal Receipt Modal, Pure ESC/POS Print View, 1-Tap Reorder, Direct Store Hotline 3D Buttons တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
     - **Ultra-Dense Layout & Header:** `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် Mobile View တွင် အံဝင်ခွင်ကျ ပြသခြင်း၊ အော်ဒါအမှတ် `#ORD-XXXX` အား ကလစ်တစ်ချက်ဖြင့် Copy ကူးယူနိုင်သော 3D Action ခလုတ် ပါဝင်ခြင်း။
     - **Live Order Delivery Stepper:** အော်ဒါတင်ပြီး (Order Placed) -> ဆိုင်မှ အတည်ပြုဆဲ (Under Review) -> ငွေပေးချေမှု/ထုပ်ပိုးခြင်း (Confirmed/Payment) -> ပို့ဆောင်ခြင်း (Delivery) အဆင့် (၄) ဆင့်အား Live Status အရောင်များနှင့် လှပစွာ ခြေရာခံပြသခြင်း (ပယ်ဖျက်ထားပါက အနီရောင် Notice ဖြင့် အသိပေးခြင်း)။
@@ -544,7 +544,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Direct Hotline Official Brand Buttons:** ဆိုင်သို့ တိုက်ရိုက်မေးမြန်းနိုင်သည့် Viber (`.sf-btn-3d-viber`)၊ Telegram (`.sf-btn-3d-telegram`) နှင့် ဖုန်းခေါ်ဆိုရန် (`.sf-btn-3d-success`) 3D ခလုတ်များ။
     - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
 - [x] **Customer Wishlist (နှစ်သက်သော ပစ္စည်းများ စာရင်း):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/customer/account/favorites.blade.php`](../resources/views/customer/account/favorites.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/customer/account/favorites.blade.php`](../../resources/views/customer/account/favorites.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Compact Product Cards, Move to Cart 3D Button, Remove 3D Danger Button, Stock Availability Badges, Client/Cloud Dual-Sync တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
     - **Ultra-Dense Mobile Layout:** `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် Mobile View တွင် Full-bleed အံဝင်ခွင်ကျ ပြသခြင်း။
     - **Compact Product Grid:** ဖုန်းမျက်နှာပြင်တွင် ၂ ကော်လံ (`grid-cols-2`)၊ Tablet တွင် ၃ ကော်လံ (`sm:grid-cols-3`) နှင့် Desktop တွင် ၄ ကော်လံ (`lg:grid-cols-4`) စနစ်ကျသော Aspect-square image container နှင့် Brand Letter Fallback Avatar ဖြင့် ပြသပေးခြင်း။
@@ -557,7 +557,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
 
 ### ၉.၄။ သတင်း၊ အကြောင်းအရာနှင့် CMS စာမျက်နှာများ (Content & CMS)
 - [x] **Tech Blog / News List (သတင်းဆောင်းပါးများ စာရင်း):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/blog/index.blade.php`](../resources/views/storefront/blog/index.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/blog/index.blade.php`](../../resources/views/storefront/blog/index.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Modern Card Grid, Read Time Badge, Featured Post Hero Card, Category Filter Pills, Live Search Bar တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
     - **Ultra-Dense Mobile Layout:** `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် မိုဘိုင်းမျက်နှာပြင်တွင် ဘေးဘောင်ကျဉ်းကျဉ်းဖြင့် နေရာလွတ်မဖြုန်းဘဲ အံဝင်ခွင်ကျ ပြသခြင်း။
     - **Top Header & Search Toolbar:** စတိုးဆိုင် Logo, ဆောင်းပါးအရေအတွက် 3D Badge, Keyword Search Input Form, Live Count ပါဝင်သည့် Cart 3D Button (`.sf-btn-3d-gold`) နှင့် Products Link တို့ဖြင့် စနစ်တကျ ဖွဲ့စည်းထားခြင်း။
@@ -567,7 +567,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Empty State & Trust Badges:** ဆောင်းပါးရှာမတွေ့ပါက သန့်ရှင်းသော မက်ဆေ့ခ်ျနှင့် Clear Filter / Browse Products ခလုတ်များ၊ အောက်ခြေတွင် Authentic, Expert Guidance, Fast Delivery, Tech Support စတိုးဆိုင် အာမခံ Badge ၄ ခု တပ်ဆင်ခြင်း။
     - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
 - [x] **Blog Post Detail (ဆောင်းပါး အသေးစိတ်):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/blog/show.blade.php`](../resources/views/storefront/blog/show.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/blog/show.blade.php`](../../resources/views/storefront/blog/show.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Typography Readability (`font-myanmar leading-relaxed`), Social Share 3D Toolbar, Shop Consultation Hotline Banner, Prev/Next 3D Navigation, Related Articles Grid တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
     - **Ultra-Dense Mobile Layout:** `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် မိုဘိုင်းမျက်နှာပြင်တွင် ဘေးဘောင်ကျဉ်းကျဉ်းဖြင့် အံဝင်ခွင်ကျ ပြသခြင်း။
     - **Top Navigation Bar:** `← Back to blog` 3D ခလုတ်၊ Category Badge (`.sf-btn-3d active`)၊ Live Cart Count ပါဝင်သည့် Cart 3D Gold Button (`.sf-btn-3d-gold`) နှင့် Products Button များ တပ်ဆင်ခြင်း။
@@ -579,7 +579,7 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
     - **Google Rich Results Schema.org:** Article structured data JSON-LD အပြည့်အစုံ ပါဝင်ခြင်း။
     - **Tri-lingual Localization:** မြန်မာ၊ အင်္ဂလိပ်နှင့် တရုတ် (zh_CN) ၃ ဘာသာစလုံးအတွက် Translation Keys များ အပြည့်အစုံ ဖြည့်သွင်းပြီးစီး။
 - [x] **Custom CMS Pages (Terms, Privacy, About Us):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/pages/show.blade.php`](../resources/views/storefront/pages/show.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/pages/show.blade.php`](../../resources/views/storefront/pages/show.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Storefront UI/UX Standard v1.0 နှင့်အညီ Clean Markdown/HTML Rendering, Table of Contents Quick Nav, Policy Switcher Pills, Social Share 3D Toolbar, Shop Hotline Banner တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
     - **Ultra-Dense Mobile Layout:** `@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')` ဖြင့် မိုဘိုင်းမျက်နှာပြင်တွင် ဘေးဘောင်ကျဉ်းကျဉ်းဖြင့် နေရာလွတ်မဖြုန်းဘဲ အံဝင်ခွင်ကျ ပြသခြင်း။
     - **Top Header Bar:** Home ခလုတ်၊ လက်ရှိ စာမျက်နှာ အိုင်ကွန်နှင့် အမည် Badge (`.sf-btn-3d active`)၊ Live Cart Count ပါဝင်သည့် Cart 3D Gold Button (`.sf-btn-3d-gold`) နှင့် Products Button များ တပ်ဆင်ခြင်း။
@@ -592,16 +592,16 @@ Storefront တစ်ခုလုံးအား အပေါ်ယံမဟု�
 
 ### ၉.၅။ အများသုံး Component များနှင့် Footer (Universal Components & Layouts)
 - [x] **Storefront Base Layout (ပင်မ Layout နှင့် Header):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/layouts/storefront/app.blade.php`](../resources/views/layouts/storefront/app.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/layouts/storefront/app.blade.php`](../../resources/views/layouts/storefront/app.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Dynamic Theming Tokens, 3D Bottom Nav Bar, Search Bar Integration, Cart Count Badge, Colorful 3D Action Buttons (Favorites, Language, Cart, Dark Mode, Mobile Menu) ပြီးစီး။
 - [x] **Search Suggestions Dropdown (အမြန် ရှာဖွေမှု အကြံပြုချက်):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/components/search-suggestions-dropdown.blade.php`](../resources/views/storefront/components/search-suggestions-dropdown.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/components/search-suggestions-dropdown.blade.php`](../../resources/views/storefront/components/search-suggestions-dropdown.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Matched Keywords Highlighting (`x-html="highlight(...)"` with XSS sanitation), Product Thumbnail, Dynamic Price & Strikethrough (`format_currency`), Live Stock Badges (`in_stock` / `out_of_stock`), Full Keyboard Arrow Navigation (`ArrowUp`, `ArrowDown`, `Enter`, `Escape`), Trending Searches Chips (`.sf-btn-3d`) တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
 - [x] **Direct Viber Order Modal (Viber မှာယူမှု Dialog):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/components/_viber_order_modal.blade.php`](../resources/views/storefront/components/_viber_order_modal.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/storefront/components/_viber_order_modal.blade.php`](../../resources/views/storefront/components/_viber_order_modal.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Pre-filled Customer Phone & Delivery Address, 3D Quantity Steppers (`+` / `-`), Dynamic Subtotal & Total calculation, Send Order 3D Button (`.sf-btn-3d-viber`), Direct Phone Call (`.sf-btn-3d-success`), Viber QR Code & Contact Fallback Expandable Accordion တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
 - [x] **Storefront Universal Footer (စတိုးဆိုင် အောက်ခြေပိုင်း):**
-  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/components/storefront-footer.blade.php`](../resources/views/components/storefront-footer.blade.php)
+  - **ဖိုင်လမ်းကြောင်း:** [`resources/views/components/storefront-footer.blade.php`](../../resources/views/components/storefront-footer.blade.php)
   - **လုပ်ဆောင်ချက်များ:** Store Physical Address, Working Hours & Off Days, Official Social & Direct Chat 3D Buttons (Viber `.sf-btn-3d-viber`, Telegram `.sf-btn-3d-telegram`), Payment Partners Badges (KPay, WavePay, CBPay, AYAPay, COD), Mobile Safe Area Inset Padding (`pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]`), 3D Back-to-Top Smooth Scroll Button (`.sf-btn-3d`) တို့ဖြင့် အပြည့်အဝ ပြီးစီး။
 
 ---
@@ -616,24 +616,24 @@ Admin Panel ရှိ **Theme Creation & Color Customization (အပြင်အ
 
 | Component / Feature | File Path | ပြင်ဆင်ချက် အကျဉ်းချုပ် |
 | :--- | :--- | :--- |
-| **Storefront Base Header** | [`resources/views/layouts/storefront/app.blade.php`](../resources/views/layouts/storefront/app.blade.php) | Header Action Buttons (Favorites, Language, Cart, Dark Mode, Mobile Menu) များအား သီးသန့် Color-coded 3D Tactile Buttons အဖြစ် အဆင့်မြှင့်တင်ခြင်း။ |
-| **Language Switcher Component** | [`resources/views/components/language-switcher.blade.php`](../resources/views/components/language-switcher.blade.php) | Storefront Header နှင့် Admin/POS များ ခွဲခြားသတ်မှတ်နိုင်ရန် `$btnClass` (`btn-class` attribute) ထည့်သွင်းပေးခြင်း။ |
-| **Product Card (Compact Variant)** | [`resources/views/components/product-card-variants/compact.blade.php`](../resources/views/components/product-card-variants/compact.blade.php) | Wishlist ခလုတ်အား မနှိပ်ခင် 3D Metallic Gold Button + White Heart၊ နှိပ်ပြီးပါက 3D Crimson Red Button + White Heart သို့ ပြောင်းလဲခြင်း။ |
-| **Product Card (Showcase Variant)** | [`resources/views/components/product-card-variants/showcase.blade.php`](../resources/views/components/product-card-variants/showcase.blade.php) | Showcase Grid Card ပေါ်ရှိ Favorite ခလုတ်အား 3D Gold / Red Toggle အဖြစ် အဆင့်မြှင့်တင်ခြင်း။ |
-| **Product Card (List Variant)** | [`resources/views/components/product-card-list.blade.php`](../resources/views/components/product-card-list.blade.php) | List View ရှိ Favorite ခလုတ်အား 3D Gold / Red Toggle အဖြစ် ပြင်ဆင်ခြင်း။ |
-| **Storefront Home Page** | [`resources/views/welcome.blade.php`](../resources/views/welcome.blade.php) | Hero Category Sidebar Nav Height (`max-height: 384px`) နှင့် Banner + Trust Cards ညာဘက်ခြမ်း Pixel-perfect ညီညာအောင် ချိန်ညှိခြင်း။ |
-| **Product Catalog & Filter Toolbar** | [`resources/views/storefront/catalog/index.blade.php`](../resources/views/storefront/catalog/index.blade.php) | Mobile Filter Toolbar Text ကို Row တစ်တန်းတည်း ညီညာစေခြင်း၊ Desktop Sidebar Categories & Brands ခလုတ်များ `w-full` အပြည့်ထားရှိခြင်း၊ Header Count Pill အပိုများ ရှင်းထုတ်ခြင်း။ |
-| **Category Browser Split View** | [`resources/views/storefront/browse/index.blade.php`](../resources/views/storefront/browse/index.blade.php) | Sharp Rectangular 3D Cards (`rounded-none`)၊ Left Rail 80% Full-bleed Image၊ Brands Horizontal Scroll Track၊ Subcategory `h-9 sm:h-10`၊ Top-0 Flush Sticky Controls နှင့် Stacking Context Isolation (`relative isolate`) တပ်ဆင်ခြင်း။ |
-| **Shopping Cart & Order Builder** | [`resources/views/storefront/orders/builder.blade.php`](../resources/views/storefront/orders/builder.blade.php) | Mobile 2px Full-Bleed Padding (`@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')`)၊ Sharp Rectangular 3D Tiles (`rounded-none`)၊ Pure CSS 3D Tactile Steppers (`+`/`-`)၊ Dynamic Theme Tokens၊ Dynamic Currency Formatter နှင့် Tri-Lingual Localization တပ်ဆင်ခြင်း။ |
-| **Product Card Component Dispatcher** | [`resources/views/components/product-card.blade.php`](../resources/views/components/product-card.blade.php) | Callers များမှ ကတ်ထောင့်ဝိုက်ခြင်း သတ်မှတ်နိုင်ရန် `:rounded` prop ထည့်သွင်းခြင်း (ဥပမာ- `:rounded="'rounded-none'"` ဖြင့် Sharp 3D Tiles ဖွဲ့စည်းနိုင်ခြင်း)။ |
-| **Product Card (Compact Variant)** | [`resources/views/components/product-card-variants/compact.blade.php`](../resources/views/components/product-card-variants/compact.blade.php) | Favorite Button အရွယ်အစားအား `w-7 h-7 sm:w-8 sm:h-8` (`icon: w-3.5 h-3.5 sm:w-4 sm:h-4`) သို့ ကျစ်လျစ်စွာ ပြင်ဆင်ခြင်း၊ `:rounded` prop dynamic binding နှင့် image ပေါ် blocking ဖြစ်မှု ကာကွယ်ခြင်း။ |
-| **Global Storefront CSS** | [`resources/css/app.css`](../resources/css/app.css) | `.sf-btn-3d`, `.hero-cat-nav` နှင့် 3D Push Button Utility Classes များ တည်ဆောက်ခြင်း။ |
-| **POS-Only Storefront Notice** | [`resources/views/storefront/pos_only.blade.php`](../resources/views/storefront/pos_only.blade.php) | In-Store POS Notice Badge၊ Store Working Hours & Physical Address Cards၊ 3D Hotline Action Suite (`.sf-btn-3d-success`, `.sf-btn-3d-viber`, `.sf-btn-3d-telegram`)၊ Google Maps Direction ခလုတ်နှင့် Staff Direct POS Access CTA တပ်ဆင်ခြင်း။ |
-| **Search Suggestions Dropdown** | [`resources/views/storefront/components/search-suggestions-dropdown.blade.php`](../resources/views/storefront/components/search-suggestions-dropdown.blade.php) | Matched Keyword Highlighting (XSS-safe)၊ Product Thumbnail၊ Dynamic Currency Price (`format_currency`)၊ Live Stock Badges (`in_stock`/`out_of_stock`)၊ Full Arrow Keyboard Nav နှင့် 3D Trending Chips တပ်ဆင်ခြင်း။ |
-| **Direct Viber Order Modal** | [`resources/views/storefront/components/_viber_order_modal.blade.php`](../resources/views/storefront/components/_viber_order_modal.blade.php) | Pre-filled Customer Phone/Address၊ 3D Quantity Steppers (`+`/`-`)၊ Dynamic Pricing၊ Send Order 3D Button (`.sf-btn-3d-viber`)၊ Direct Call (`.sf-btn-3d-success`)၊ Viber QR Code & Backup Contact Accordion တပ်ဆင်ခြင်း။ |
-| **Storefront Universal Footer** | [`resources/views/components/storefront-footer.blade.php`](../resources/views/components/storefront-footer.blade.php) | Physical Address & Hours Cards၊ Official Social 3D Buttons (Viber/Telegram)၊ Payment Partners Badges၊ Mobile Safe Area Inset Padding (`pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]`)၊ 3D Back-to-Top Button တပ်ဆင်ခြင်း။ |
-| **Catalog Controller Suggestions** | [`app/Http/Controllers/Storefront/CatalogController.php`](../app/Http/Controllers/Storefront/CatalogController.php) | Live search suggestions API တွင် hardcoded `Ks` ဖယ်ရှား၍ `format_currency($product->retail_price, $store)` နှင့် `format_currency($product->old_price, $store)` အသုံးပြုခြင်း။ |
-| **Storefront Client JS Engine** | [`resources/js/app.js`](../resources/js/app.js) | Alpine `searchSuggestions` component တွင် XSS-safe `highlight(text)` နှင့် `escapeHtml(str)` utility methods များ ဖြည့်စွက်ပြီး Vite compilation ပြီးစီး။ |
+| **Storefront Base Header** | [`resources/views/layouts/storefront/app.blade.php`](../../resources/views/layouts/storefront/app.blade.php) | Header Action Buttons (Favorites, Language, Cart, Dark Mode, Mobile Menu) များအား သီးသန့် Color-coded 3D Tactile Buttons အဖြစ် အဆင့်မြှင့်တင်ခြင်း။ |
+| **Language Switcher Component** | [`resources/views/components/language-switcher.blade.php`](../../resources/views/components/language-switcher.blade.php) | Storefront Header နှင့် Admin/POS များ ခွဲခြားသတ်မှတ်နိုင်ရန် `$btnClass` (`btn-class` attribute) ထည့်သွင်းပေးခြင်း။ |
+| **Product Card (Compact Variant)** | [`resources/views/components/product-card-variants/compact.blade.php`](../../resources/views/components/product-card-variants/compact.blade.php) | Wishlist ခလုတ်အား မနှိပ်ခင် 3D Metallic Gold Button + White Heart၊ နှိပ်ပြီးပါက 3D Crimson Red Button + White Heart သို့ ပြောင်းလဲခြင်း။ |
+| **Product Card (Showcase Variant)** | [`resources/views/components/product-card-variants/showcase.blade.php`](../../resources/views/components/product-card-variants/showcase.blade.php) | Showcase Grid Card ပေါ်ရှိ Favorite ခလုတ်အား 3D Gold / Red Toggle အဖြစ် အဆင့်မြှင့်တင်ခြင်း။ |
+| **Product Card (List Variant)** | [`resources/views/components/product-card-list.blade.php`](../../resources/views/components/product-card-list.blade.php) | List View ရှိ Favorite ခလုတ်အား 3D Gold / Red Toggle အဖြစ် ပြင်ဆင်ခြင်း။ |
+| **Storefront Home Page** | [`resources/views/welcome.blade.php`](../../resources/views/welcome.blade.php) | Hero Category Sidebar Nav Height (`max-height: 384px`) နှင့် Banner + Trust Cards ညာဘက်ခြမ်း Pixel-perfect ညီညာအောင် ချိန်ညှိခြင်း။ |
+| **Product Catalog & Filter Toolbar** | [`resources/views/storefront/catalog/index.blade.php`](../../resources/views/storefront/catalog/index.blade.php) | Mobile Filter Toolbar Text ကို Row တစ်တန်းတည်း ညီညာစေခြင်း၊ Desktop Sidebar Categories & Brands ခလုတ်များ `w-full` အပြည့်ထားရှိခြင်း၊ Header Count Pill အပိုများ ရှင်းထုတ်ခြင်း။ |
+| **Category Browser Split View** | [`resources/views/storefront/browse/index.blade.php`](../../resources/views/storefront/browse/index.blade.php) | Sharp Rectangular 3D Cards (`rounded-none`)၊ Left Rail 80% Full-bleed Image၊ Brands Horizontal Scroll Track၊ Subcategory `h-9 sm:h-10`၊ Top-0 Flush Sticky Controls နှင့် Stacking Context Isolation (`relative isolate`) တပ်ဆင်ခြင်း။ |
+| **Shopping Cart & Order Builder** | [`resources/views/storefront/orders/builder.blade.php`](../../resources/views/storefront/orders/builder.blade.php) | Mobile 2px Full-Bleed Padding (`@section('main_padding', 'px-0.5 sm:px-3 lg:px-6 py-1 sm:py-3')`)၊ Sharp Rectangular 3D Tiles (`rounded-none`)၊ Pure CSS 3D Tactile Steppers (`+`/`-`)၊ Dynamic Theme Tokens၊ Dynamic Currency Formatter နှင့် Tri-Lingual Localization တပ်ဆင်ခြင်း။ |
+| **Product Card Component Dispatcher** | [`resources/views/components/product-card.blade.php`](../../resources/views/components/product-card.blade.php) | Callers များမှ ကတ်ထောင့်ဝိုက်ခြင်း သတ်မှတ်နိုင်ရန် `:rounded` prop ထည့်သွင်းခြင်း (ဥပမာ- `:rounded="'rounded-none'"` ဖြင့် Sharp 3D Tiles ဖွဲ့စည်းနိုင်ခြင်း)။ |
+| **Product Card (Compact Variant)** | [`resources/views/components/product-card-variants/compact.blade.php`](../../resources/views/components/product-card-variants/compact.blade.php) | Favorite Button အရွယ်အစားအား `w-7 h-7 sm:w-8 sm:h-8` (`icon: w-3.5 h-3.5 sm:w-4 sm:h-4`) သို့ ကျစ်လျစ်စွာ ပြင်ဆင်ခြင်း၊ `:rounded` prop dynamic binding နှင့် image ပေါ် blocking ဖြစ်မှု ကာကွယ်ခြင်း။ |
+| **Global Storefront CSS** | [`resources/css/app.css`](../../resources/css/app.css) | `.sf-btn-3d`, `.hero-cat-nav` နှင့် 3D Push Button Utility Classes များ တည်ဆောက်ခြင်း။ |
+| **POS-Only Storefront Notice** | [`resources/views/storefront/pos_only.blade.php`](../../resources/views/storefront/pos_only.blade.php) | In-Store POS Notice Badge၊ Store Working Hours & Physical Address Cards၊ 3D Hotline Action Suite (`.sf-btn-3d-success`, `.sf-btn-3d-viber`, `.sf-btn-3d-telegram`)၊ Google Maps Direction ခလုတ်နှင့် Staff Direct POS Access CTA တပ်ဆင်ခြင်း။ |
+| **Search Suggestions Dropdown** | [`resources/views/storefront/components/search-suggestions-dropdown.blade.php`](../../resources/views/storefront/components/search-suggestions-dropdown.blade.php) | Matched Keyword Highlighting (XSS-safe)၊ Product Thumbnail၊ Dynamic Currency Price (`format_currency`)၊ Live Stock Badges (`in_stock`/`out_of_stock`)၊ Full Arrow Keyboard Nav နှင့် 3D Trending Chips တပ်ဆင်ခြင်း။ |
+| **Direct Viber Order Modal** | [`resources/views/storefront/components/_viber_order_modal.blade.php`](../../resources/views/storefront/components/_viber_order_modal.blade.php) | Pre-filled Customer Phone/Address၊ 3D Quantity Steppers (`+`/`-`)၊ Dynamic Pricing၊ Send Order 3D Button (`.sf-btn-3d-viber`)၊ Direct Call (`.sf-btn-3d-success`)၊ Viber QR Code & Backup Contact Accordion တပ်ဆင်ခြင်း။ |
+| **Storefront Universal Footer** | [`resources/views/components/storefront-footer.blade.php`](../../resources/views/components/storefront-footer.blade.php) | Physical Address & Hours Cards၊ Official Social 3D Buttons (Viber/Telegram)၊ Payment Partners Badges၊ Mobile Safe Area Inset Padding (`pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]`)၊ 3D Back-to-Top Button တပ်ဆင်ခြင်း။ |
+| **Catalog Controller Suggestions** | [`app/Http/Controllers/Storefront/CatalogController.php`](../../app/Http/Controllers/Storefront/CatalogController.php) | Live search suggestions API တွင် hardcoded `Ks` ဖယ်ရှား၍ `format_currency($product->retail_price, $store)` နှင့် `format_currency($product->old_price, $store)` အသုံးပြုခြင်း။ |
+| **Storefront Client JS Engine** | [`resources/js/app.js`](../../resources/js/app.js) | Alpine `searchSuggestions` component တွင် XSS-safe `highlight(text)` နှင့် `escapeHtml(str)` utility methods များ ဖြည့်စွက်ပြီး Vite compilation ပြီးစီး။ |
 
 ---
 

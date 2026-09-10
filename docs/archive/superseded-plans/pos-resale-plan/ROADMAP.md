@@ -1,5 +1,9 @@
 # DataPOS POS + Resale Plan — ခြုံငုံဖတ်ရန်
 
+> [!NOTE]
+> **Archived Historical Document:** ဤဖိုင်သည် ၂၀၂၆ ခုနှစ် သြဂုတ်လ Phase 2/2.5 ကာလမှ မူလ Resale Plan စာရွက်စာတမ်းဟောင်း ဖြစ်သည်။
+> လက်ရှိ Canonical Architecture နှင့် Growth Strategy အတွက် [`../../../architecture/Source_of_Truth_Master_MM.md`](../../../architecture/Source_of_Truth_Master_MM.md) နှင့် [`../../../plans/DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md`](../../../plans/DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md) ကိုသာ ကြည့်ရှုအသုံးပြုပါ။
+
 > **ရည်ရွယ်ချက်:** ဒီဖိုဒါမှာ DataPOS ရဲ့ **POS စနစ်** ကို ဘယ်လို တည်ဆောက်မယ်၊ ကိုယ့်ဆိုင်မှာ ဘယ်လို သုံးမယ်၊ ပြီးတော့ **အခြားလုပ်ငန်းရှင်တွေကို ပြန်ရောင်းချ** မယ့် ပုံစံတွေကို ရှင်းပြထားတဲ့ စာရွက်စာတမ်းတွေ ဖြစ်ပါတယ်။
 >
 > **ဖတ်ရမယ့်သူ:** Project Owner (ဆရာကြီး) — နားလည်ပြီး ဆွေးနွေးဖို့အတွက်
@@ -45,7 +49,7 @@
 
 ## ဆက်စပ်ဖိုင်များ
 
-- [`../Source_of_Truth_Master_MM.md`](../Source_of_Truth_Master_MM.md) — Single Codebase Multi-Store Master Source of Truth (မူလ v1/v2 draft များကို `docs/archive/source-of-truth-history/` တွင် archive ပြုလုပ်ထားသည်)
+- [`../Source_of_Truth_Master_MM.md`](../../../architecture/Source_of_Truth_Master_MM.md) — Single Codebase Multi-Store Master Source of Truth (မူလ v1/v2 draft များကို `docs/archive/source-of-truth-history/` တွင် archive ပြုလုပ်ထားသည်)
 - `CHANGELOG.md` — implementation history / changelog
 - `docs/archive/deployment-runbook.md` — အရင် site ရဲ့ deploy history (archived 2026-08-13)
 - `docs/ops/DEPLOYMENT.md` — deploy / backup-restore / secrets scrub မှတ်တမ်း

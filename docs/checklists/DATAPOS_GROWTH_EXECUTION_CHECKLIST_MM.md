@@ -1,7 +1,7 @@
 # DataPOS Single-Codebase Growth — အဆင့်လိုက် အကောင်အထည်ဖော်မှု မာစတာ Checklist
 **Document Type:** Execution Master Checklist & Quality Gates  
 **Status:** Active Execution Baseline  
-**Master Architecture Reference:** [DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md](DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md)
+**Master Architecture Reference:** [DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md](../plans/DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md)
 **Primary Constraints:** One Owner/Developer + AI Agents | Single Codebase | Myanmar SME Realities  
 **Version:** 3.0.0 (Full Alignment with Growth Plan — Phase Exit Criteria Edition)
 

@@ -2,7 +2,7 @@
 
 > **Document Type:** Client-Specific Operational Guide & SKU Normalization Standard
 > **Status:** Canonical Client Guide (AlinnThit Mobile & Electronics Scope)
-> **Generic Architecture Reference:** [../SMART_PRODUCT_AND_STORE_ARCHITECTURE_SPEC.md](../SMART_PRODUCT_AND_STORE_ARCHITECTURE_SPEC.md)
+> **Generic Architecture Reference:** [../SMART_PRODUCT_AND_STORE_ARCHITECTURE_SPEC.md](../architecture/SMART_PRODUCT_AND_STORE_ARCHITECTURE_SPEC.md)
 > **Historical Archive:** [../archive/source-of-truth-history/ALINN_THIT_Ecommerce_Product_SKU_Logic_Original.md](../archive/source-of-truth-history/ALINN_THIT_Ecommerce_Product_SKU_Logic_Original.md)
 > **Notice:** ဤလမ်းညွှန်သည် AlinnThit Mobile Shop ၏ electronics/mobile accessories SKU decoding နှင့် naming စံနှုန်းများဖြစ်ပြီး DataPOS generic platform ၏ core schema နှင့်မရောထွေးဘဲ client store adapter သို့မဟုတ် catalog management တွင် အသုံးပြုရန်ဖြစ်သည်။
 

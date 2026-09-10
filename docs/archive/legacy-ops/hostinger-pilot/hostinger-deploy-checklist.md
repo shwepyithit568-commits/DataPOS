@@ -1,5 +1,9 @@
 # Hostinger Deploy Checklist — DataPOS (datapos.com)
 
+> [!NOTE]
+> **Archived Historical Checklist:** ဤ checklist သည် ၂၀၂၆ ခုနှစ် သြဂုတ်လ Phase 2.5 Hostinger pilot deployment ကာလမှ သမိုင်းဝင် checklist ဖြစ်သည်။
+> လက်ရှိ Production Deployment အတွက် [`../../../operations/DEPLOYMENT.md`](../../../operations/DEPLOYMENT.md) ကို ကြည့်ရှုအသုံးပြုပါ။
+
 > **ရည်ရွယ်ချက်:** Local validation (full suite green + MySQL smoke test + Drill #3 rehearsal) ပြီးသွားတဲ့ code ကို Hostinger ပေါ်တင် → migrate → production-safe seed → verify အဆုံး အတိအကျ လုပ်ရမယ့် အဆင့်တွေ။
 >
 > **မူ:** ဒီ checklist က `deploy-datapos.sh` (split layout: `laravel_app/` + `public_html/`) ကို အခြေခံတယ် — server `.env`, `vendor/`, `node_modules/`, `storage/` caches တွေကို **ဘယ်တော့မှ မဖျက်/မရေးလွန်း**။
