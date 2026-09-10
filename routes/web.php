@@ -922,9 +922,7 @@ Route::prefix('store/{store_slug}')
             Route::get('/closing/{closing}/print', [\App\POS\Http\Controllers\DailyClosingController::class, 'print'])->name('pos.closing.print_closing')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.view']);
             Route::post('/closing', [\App\POS\Http\Controllers\DailyClosingController::class, 'store'])->name('pos.closing.store')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.create']);
             Route::post('/closing/{closing}/approve', [\App\POS\Http\Controllers\DailyClosingController::class, 'approve'])->name('pos.closing.approve')
-                ->middleware([EnsureStoreAccess::class . ':store_manager', 'store.capability:operations.cashier_shifts', 'store.permission:pos_closing.update']);
-            Route::post('/closing/{closing}/reopen', [\App\POS\Http\Controllers\DailyClosingController::class, 'reopen'])->name('pos.closing.reopen')
-                ->middleware([EnsureStoreAccess::class . ':store_manager', 'store.capability:operations.cashier_shifts', 'store.permission:pos_closing.update']);
+                ->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.approve']);
 
             // POS Reports (Sales / Cash Drawer / Stock / Services & Repairs)
             Route::get('/reports/daily-closing', [\App\POS\Http\Controllers\DailyClosingController::class, 'index'])->name('pos.reports.daily_closing')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.view']);

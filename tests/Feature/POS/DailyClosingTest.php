@@ -624,6 +624,8 @@ class DailyClosingTest extends TestCase
 
     public function test_approved_closing_is_immutable_and_direct_reopen_disabled(): void
     {
+        $this->assertFalse(\Illuminate\Support\Facades\Route::has('pos.closing.reopen'));
+
         $store = $this->makeStore();
         $cashier = $this->staff($store);
         $manager = $this->manager($store);
@@ -640,10 +642,14 @@ class DailyClosingTest extends TestCase
         $this->closings->approve($store, $closing, $manager);
         $this->assertTrue($closing->fresh()->isApproved());
 
-        // 1. Regular staff/cashier without manager role is forbidden from reopening (403)
+        // 1. Direct reopen route is absent -> POST returns 404 for both cashier and manager
         $this->actingAs($cashier)
             ->post("/store/{$store->slug}/pos/closing/{$closing->id}/reopen", ['reason' => 'Cashier attempt'])
-            ->assertForbidden();
+            ->assertNotFound();
+
+        $this->actingAs($manager)
+            ->post("/store/{$store->slug}/pos/closing/{$closing->id}/reopen", ['reason' => 'Manager attempt'])
+            ->assertNotFound();
 
         // 2. Business date is period-locked
         $this->assertTrue(app(\App\POS\Services\PeriodLockService::class)->isDateLocked($store, Carbon::today()));
@@ -690,7 +696,7 @@ class DailyClosingTest extends TestCase
             $resp->assertOk();
             $resp->assertSee($expectedPageCss, false);
             $resp->assertSee('Z-REPORT', false);
-            $resp->assertSee('FINAL DAILY CLOSING', false);
+            $resp->assertSee('FINAL/APPROVED DAILY CLOSING', false);
             $resp->assertSee('50,000'); // Opening float / cash rendered
         }
 
@@ -786,6 +792,14 @@ class DailyClosingTest extends TestCase
             'counted_cash',
             'cashier_signature',
             'manager_signature',
+            'invalid_date_format',
+            'future_date_not_allowed',
+            'closing_not_found',
+            'financial_truth_tampering_rejected',
+            'invalid_counted_payload',
+            'nested_counted_key_rejected',
+            'unknown_counted_payment_methods',
+            'legacy_closing_notice',
         ];
 
         foreach (['my', 'en', 'zh_CN'] as $locale) {
@@ -957,5 +971,332 @@ class DailyClosingTest extends TestCase
         $this->actingAs($cashierB)
             ->get("/store/{$storeB->slug}/pos/closing/{$closingA->id}/print?layout=80mm")
             ->assertNotFound();
+    }
+
+    public function test_z_report_reprint_is_immutable_under_source_data_changes(): void
+    {
+        $store = $this->makeStore('immutable-print-shop');
+        $mgr = $this->manager($store);
+        $cashier = $this->staff($store);
+
+        $this->postSale($store, $cashier, [['method' => 'cash', 'amount' => '10000']], '10000');
+
+        $closing = $this->closings->create(
+            $store,
+            Carbon::today(),
+            ['cash' => 60000, 'kpay' => 0, 'wavepay' => 0, 'cb_pay' => 0, 'mmqr' => 0],
+            null,
+            $cashier
+        );
+        $this->closings->approve($store, $closing, $mgr);
+
+        // Verify snapshot was stored
+        $closing->refresh();
+        $snapshot = $closing->getSummarySnapshot();
+        $this->assertSame('10000.00', $snapshot['gross_sales']);
+        $this->assertSame('60000.00', $snapshot['expected_cash']);
+
+        // Directly mutate or inject new sales in DB after closing was approved
+        DB::table('pos_sales')->insert([
+            'store_id' => $store->id,
+            'receipt_number' => 'MUTATED-' . time(),
+            'subtotal' => 50000,
+            'discount' => 0,
+            'tax' => 0,
+            'total' => 50000,
+            'status' => 'posted',
+            'posted_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Reprint Z-Report: must render original snapshotted numbers, NEVER live recalculated numbers
+        $response = $this->actingAs($mgr)
+            ->get("/store/{$store->slug}/pos/closing/{$closing->id}/print?type=z&layout=80mm");
+        $response->assertOk();
+
+        // View data totals summary must match snapshot exactly
+        $viewTotals = $response->viewData('totals');
+        $this->assertSame('10000.00', $viewTotals['summary']['gross_sales']);
+        $this->assertSame('60000.00', $viewTotals['summary']['expected_cash']);
+    }
+
+    public function test_z_print_without_persisted_closing_is_rejected_with_404(): void
+    {
+        $store = $this->makeStore('no-closing-shop');
+        $mgr = $this->manager($store);
+
+        // Date has no closing submitted
+        $unclosedDate = Carbon::today()->subDay()->toDateString();
+
+        // Attempting to print Z-Report returns 404
+        $responseZ = $this->actingAs($mgr)
+            ->get("/store/{$store->slug}/pos/closing/print?type=z&date={$unclosedDate}&layout=80mm");
+        $responseZ->assertNotFound();
+
+        // X-Report reading on same date succeeds (200)
+        $responseX = $this->actingAs($mgr)
+            ->get("/store/{$store->slug}/pos/closing/print?type=x&date={$unclosedDate}&layout=80mm");
+        $responseX->assertOk();
+    }
+
+    public function test_print_markers_distinguish_x_reading_pending_z_and_approved_z(): void
+    {
+        $store = $this->makeStore('markers-shop');
+        $mgr = $this->manager($store);
+        $cashier = $this->staff($store);
+
+        $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 10000], $cashier);
+
+        // 1. X-Report marker
+        $resX = $this->actingAs($mgr)->get("/store/{$store->slug}/pos/closing/print?type=x&layout=80mm");
+        $resX->assertOk();
+        $resX->assertSee('*** X-REPORT — READING ONLY / စာရင်းကြည့်ရှုရန်သာ ***');
+
+        // Create pending closing
+        $closing = $this->closings->create(
+            $store,
+            Carbon::today(),
+            ['cash' => 10000, 'kpay' => 0, 'wavepay' => 0, 'cb_pay' => 0, 'mmqr' => 0],
+            null,
+            $cashier
+        );
+
+        // 2. Pending Z-Report marker
+        $resPending = $this->actingAs($mgr)->get("/store/{$store->slug}/pos/closing/{$closing->id}/print?type=z&layout=80mm");
+        $resPending->assertOk();
+        $resPending->assertSee('*** PENDING Z-REPORT — SUBMITTED (UNAPPROVED) / ဆိုင်းငံ့ နေ့စဉ်စာရင်းချုပ် ***');
+        $resPending->assertDontSee('*** Z-REPORT — FINAL/APPROVED DAILY CLOSING');
+
+        // Approve closing
+        $this->closings->approve($store, $closing, $mgr);
+        $closing->refresh();
+
+        // 3. Approved Z-Report marker
+        $resApproved = $this->actingAs($mgr)->get("/store/{$store->slug}/pos/closing/{$closing->id}/print?type=z&layout=80mm");
+        $resApproved->assertOk();
+        $resApproved->assertSee('*** Z-REPORT — FINAL/APPROVED DAILY CLOSING / အတည်ပြုပြီး နေ့စဉ်စာရင်းချုပ် ***');
+    }
+
+    public function test_client_tampering_with_financial_truth_fields_rejected_with_422(): void
+    {
+        $store = $this->makeStore('tamper-shop');
+        $cashier = $this->staff($store);
+
+        $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 10000], $cashier);
+
+        // Client attempts to inject calculated financial truth fields
+        $response = $this->actingAs($cashier)
+            ->post("/store/{$store->slug}/pos/closing", [
+                'business_date' => today()->toDateString(),
+                'counted' => ['cash' => '10000'],
+                'expected_totals' => ['cash' => '0'], // Malicious forgery
+            ]);
+
+        $response->assertSessionHasErrors('counted');
+    }
+
+    public function test_counted_nested_array_and_malformed_payload_rejected_with_422(): void
+    {
+        $store = $this->makeStore('malformed-shop');
+        $cashier = $this->staff($store);
+
+        $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 10000], $cashier);
+
+        // 1. Nested array inside counted
+        $resNested = $this->actingAs($cashier)
+            ->post("/store/{$store->slug}/pos/closing", [
+                'business_date' => today()->toDateString(),
+                'counted' => [
+                    'cash' => ['nested' => 1000],
+                ],
+            ]);
+        $resNested->assertSessionHasErrors('counted');
+
+        // 2. Scientific notation
+        $resScientific = $this->actingAs($cashier)
+            ->post("/store/{$store->slug}/pos/closing", [
+                'business_date' => today()->toDateString(),
+                'counted' => [
+                    'cash' => '1e3',
+                ],
+            ]);
+        $resScientific->assertSessionHasErrors('counted.cash');
+    }
+
+    public function test_cashier_without_approval_permission_cannot_approve_closing(): void
+    {
+        $store = $this->makeStore('cashier-gating-shop');
+        $cashier = $this->staff($store);
+
+        $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 10000], $cashier);
+        $closing = $this->closings->create(
+            $store,
+            Carbon::today(),
+            ['cash' => 10000, 'kpay' => 0, 'wavepay' => 0, 'cb_pay' => 0, 'mmqr' => 0],
+            null,
+            $cashier
+        );
+
+        // Cashier attempts approval -> 403 Forbidden
+        $response = $this->actingAs($cashier)
+            ->post("/store/{$store->slug}/pos/closing/{$closing->id}/approve");
+        $response->assertForbidden();
+    }
+
+    public function test_user_with_pos_closing_update_only_cannot_approve_closing(): void
+    {
+        $store = $this->makeStore('no-alias-shop');
+        \App\Models\StaffRole::bootstrapDefaultRoles($store);
+
+        // Create custom role with update permission only (NO approve)
+        $role = \App\Models\StaffRole::create([
+            'store_id' => $store->id,
+            'name' => 'Updater Only',
+            'slug' => 'updater-only',
+            'is_system' => false,
+            'is_active' => true,
+            'permissions' => ['pos_closing.view', 'pos_closing.create', 'pos_closing.update'],
+        ]);
+
+        $updaterUser = User::create([
+            'name' => 'Updater Staff',
+            'phone' => '09' . rand(10000000, 99999999),
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $updaterUser->stores()->attach($store->id, [
+            'role' => 'staff',
+            'staff_role_id' => $role->id,
+            'status' => 'active',
+        ]);
+
+        $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 10000], $updaterUser);
+        $closing = $this->closings->create(
+            $store,
+            Carbon::today(),
+            ['cash' => 10000, 'kpay' => 0, 'wavepay' => 0, 'cb_pay' => 0, 'mmqr' => 0],
+            null,
+            $updaterUser
+        );
+
+        // Attempting approval must fail with 403 Forbidden (Strictly NO update -> approve alias!)
+        $response = $this->actingAs($updaterUser)
+            ->post("/store/{$store->slug}/pos/closing/{$closing->id}/approve");
+        $response->assertForbidden();
+    }
+
+    public function test_custom_staff_role_with_explicit_pos_closing_approve_can_approve(): void
+    {
+        $store = $this->makeStore('custom-approve-shop');
+        \App\Models\StaffRole::bootstrapDefaultRoles($store);
+
+        // Store Owner explicitly creates a role with pos_closing.approve
+        $role = \App\Models\StaffRole::create([
+            'store_id' => $store->id,
+            'name' => 'Closing Approver Lead',
+            'slug' => 'closing-approver-lead',
+            'is_system' => false,
+            'is_active' => true,
+            'permissions' => ['pos_closing.view', 'pos_closing.create', 'pos_closing.approve'],
+        ]);
+
+        $leadUser = User::create([
+            'name' => 'Lead Staff',
+            'phone' => '09' . rand(10000000, 99999999),
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $leadUser->stores()->attach($store->id, [
+            'role' => 'staff',
+            'staff_role_id' => $role->id,
+            'status' => 'active',
+        ]);
+
+        $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 10000], $leadUser);
+        $closing = $this->closings->create(
+            $store,
+            Carbon::today(),
+            ['cash' => 10000, 'kpay' => 0, 'wavepay' => 0, 'cb_pay' => 0, 'mmqr' => 0],
+            null,
+            $leadUser
+        );
+
+        // Lead user approves successfully (302 Redirect)
+        $response = $this->actingAs($leadUser)
+            ->post("/store/{$store->slug}/pos/closing/{$closing->id}/approve");
+        $response->assertRedirect();
+        $closing->refresh();
+        $this->assertTrue($closing->isApproved());
+    }
+
+    public function test_inactive_membership_cannot_approve_closing_even_with_permissions(): void
+    {
+        $store = $this->makeStore('inactive-user-shop');
+        $mgr = $this->manager($store);
+        $cashier = $this->staff($store);
+
+        $this->shifts->openShift($store, ['register_name' => 'R1', 'opening_cash' => 10000], $cashier);
+        $closing = $this->closings->create(
+            $store,
+            Carbon::today(),
+            ['cash' => 10000, 'kpay' => 0, 'wavepay' => 0, 'cb_pay' => 0, 'mmqr' => 0],
+            null,
+            $cashier
+        );
+
+        // Set manager's store membership to inactive
+        DB::table('store_user')->where('store_id', $store->id)->where('user_id', $mgr->id)->update([
+            'status' => 'inactive',
+        ]);
+
+        $response = $this->actingAs($mgr)
+            ->post("/store/{$store->slug}/pos/closing/{$closing->id}/approve");
+        $response->assertForbidden();
+    }
+
+    public function test_overnight_shift_and_opening_float_not_double_counted_across_closings(): void
+    {
+        $store = $this->makeStore('overnight-shift-shop');
+        $cashier = $this->staff($store);
+
+        $day1 = Carbon::parse('2026-09-08 10:00:00');
+        $day2 = Carbon::parse('2026-09-09 10:00:00');
+
+        // Shift 1 opened on Day 1 at 22:00:00 with float 50,000
+        $shift1 = CashierShift::create([
+            'store_id' => $store->id,
+            'register_name' => 'Overnight-R1',
+            'cashier_id' => $cashier->id,
+            'status' => 'open',
+            'opened_at' => Carbon::parse('2026-09-08 22:00:00'),
+            'opening_cash' => 50000,
+            'cash_sales' => 10000,
+            'cash_refunds' => 0,
+            'cash_in' => 0,
+            'cash_out' => 0,
+        ]);
+
+        // Day 1 totals: opening_amount = 50,000
+        $day1Totals = $this->closings->expectedTotals($store, $day1);
+        $this->assertSame('50000.00', $day1Totals['opening_amount']);
+
+        // Shift 2 opened on Day 2 at 08:00:00 with float 30,000
+        $shift2 = CashierShift::create([
+            'store_id' => $store->id,
+            'register_name' => 'Morning-R2',
+            'cashier_id' => $cashier->id,
+            'status' => 'open',
+            'opened_at' => Carbon::parse('2026-09-09 08:00:00'),
+            'opening_cash' => 30000,
+            'cash_sales' => 5000,
+            'cash_refunds' => 0,
+            'cash_in' => 0,
+            'cash_out' => 0,
+        ]);
+
+        // Day 2 totals: Shift 1's opening float MUST NOT be double-counted!
+        $day2Totals = $this->closings->expectedTotals($store, $day2);
+        $this->assertSame('30000.00', $day2Totals['opening_amount']);
     }
 }

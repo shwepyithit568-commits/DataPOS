@@ -322,8 +322,10 @@ class P0IntegrityControlsTest extends TestCase
         $response->assertSeeText(__('messages.business_reconciliation'));
     }
 
-    public function test_reopen_period_web_route(): void
+    public function test_reopen_period_web_route_disabled_and_returns_404(): void
     {
+        $this->assertFalse(\Illuminate\Support\Facades\Route::has('pos.closing.reopen'));
+
         $store = $this->makeStore();
         $manager = $this->makeUser($store, 'store_manager');
         $cashier = $this->makeUser($store, 'staff');
@@ -339,11 +341,11 @@ class P0IntegrityControlsTest extends TestCase
         $this->closingService->approve($store, $closing, $manager);
 
         $response = $this->actingAs($manager)
-            ->post(route('pos.closing.reopen', ['store_slug' => $store->slug, 'closing' => $closing->id]), [
-                'reason' => 'Reopening for manager verification',
+            ->post("/store/{$store->slug}/pos/closing/{$closing->id}/reopen", [
+                'reason' => 'Reopening attempt',
             ]);
 
-        $response->assertRedirect();
-        $this->assertFalse($this->periodLock->isDateLocked($store, $closedDate));
+        $response->assertNotFound();
+        $this->assertTrue($this->periodLock->isDateLocked($store, $closedDate));
     }
 }
