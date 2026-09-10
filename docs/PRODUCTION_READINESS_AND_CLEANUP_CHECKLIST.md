@@ -4,7 +4,7 @@
 **System Stack:** Laravel 12 + Alpine.js + Vanilla CSS + ESC/POS Thermal Printing  
 **Architecture Rule:** Single Codebase | Multi-Store Tenant Isolated | No Livewire | No jQuery  
 **Author:** Boss + Tech Buddy  
-**Reference:** [DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md](file:///d:/xmapp/htdocs/DataPOS/docs/DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md)  
+**Reference:** [DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md](DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md)
 **Date:** August 2026
 
 > **AI Agent အတွက် မှတ်ချက်:** ဒီ Checklist ကို စစ်ဆေးသောအခါ `[x]` သည် "UI ရှိသည်" သက်သက်ဖြင့် mark မလုပ်ရ။ "End-to-end browser test ပြုလုပ်ပြီး စစ်မှန်သော Cashier workflow တွင် အလုပ်လုပ်ကြောင်း verify ဖြစ်ပြီး" မှသာ `[x]` ဟု မှတ်တမ်းတင်ရမည်။

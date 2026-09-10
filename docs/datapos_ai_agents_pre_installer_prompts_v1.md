@@ -24,7 +24,7 @@ Agent တစ်ယောက်ပြီးမှ နောက် Agent ကို
 
 Prompt တစ်ခုချင်းစီအောက်တွင် အောက်ပါစည်းကမ်းများ အကျုံးဝင်သည်—
 
-1. Repository ရှိ `AGENTS.md`၊ `README.md`၊ Source of Truth documents၊ `docs/myanmar_business_commercial_readiness_plan_v1.md`၊ `docs/phase_f_completion_report.md` နှင့် `docs/windows_offline_installer_plan_v1.md` ရှိပါက အပြည့်အစုံဖတ်ပါ။
+1. Repository ရှိ `AGENTS.md`၊ `README.md`၊ `docs/README.md`၊ Source of Truth documents၊ `docs/myanmar_business_commercial_readiness_plan_v1.md`၊ historical `docs/archive/completed-phases/phase_f_completion_report.md` နှင့် superseded `docs/archive/superseded-plans/windows_offline_installer_plan_v1.md` ရှိပါက အပြည့်အစုံဖတ်ပါ။
 2. Existing unrelated changes ကို မဖျက်၊ reset၊ overwrite သို့မဟုတ် commit မလုပ်ပါနှင့်။
 3. `git reset --hard`၊ `git clean -fd`၊ `migrate:fresh`၊ production database reset စသည့် destructive command မသုံးပါနှင့်။
 4. Real `.env`၊ credentials၊ APP_KEY၊ customer database၊ backup contents သို့မဟုတ် secret values ကို output/report/GitHub မှာ မဖော်ပြပါနှင့်။
@@ -85,7 +85,7 @@ https://github.com/shwepyithit568-commits/DataPOS
 ## Deliverables
 
 - CI workflow file
-- Baseline verification report: `docs/pre_installer_automated_baseline_report.md`
+- Baseline verification report: `docs/archive/audits/pre_installer_automated_baseline_report.md`
 - Exact test/build summaries
 - Full commit SHA and changed files
 - Remaining automated blockers
@@ -130,7 +130,7 @@ DataPOS public GitHub repository ကို Windows installer/release archive မ
 
 ## Deliverables
 
-- `docs/security_and_release_archive_audit.md`
+- `docs/archive/audits/security_and_release_archive_audit.md`
 - Sanitized secret findings table
 - Required credential rotation checklist for Project Owner
 - Installer/source ZIP inclusion-exclusion matrix
@@ -273,7 +273,7 @@ README အဟောင်းကို စကားလုံးပြောင်
 ## Deliverables
 
 - Rewritten root `README.md`
-- Optional `docs/README_AUDIT_NOTES.md` with removed stale claims and reasons
+- Optional historical `docs/archive/audits/README_AUDIT_NOTES.md` with removed stale claims and reasons
 - Exact verification results
 - Full commit SHA and changed files
 
@@ -285,7 +285,7 @@ README အဟောင်းကို စကားလုံးပြောင်
 # Prompt 5 — Phase F Completion Report Refresh and Evidence Correction
 
 ```text
-`docs/phase_f_completion_report.md` ကို current GitHub main HEAD နှင့် actual test evidence အပေါ်အခြေခံပြီး ပြန်စစ်၊ ပြန်ရေးပါ။ Report အဟောင်းထဲက stale SHA၊ uncommitted changes၊ exaggerated automated/manual claims နှင့် inconsistent test counts ကို ပြင်ပါ။
+Historical `docs/archive/completed-phases/phase_f_completion_report.md` ကို မပြန်ရေးဘဲ current GitHub HEAD နှင့် actual test evidence အတွက် completion report အသစ်ရေးပါ။ Report အဟောင်းထဲက stale SHA၊ uncommitted changes၊ exaggerated automated/manual claims နှင့် inconsistent test counts ကို မကူးပါနှင့်။
 
 အလုပ်မစမီ Common Rules အားလုံးလိုက်နာပါ။ Prompt 1–4 ပြီးဆုံးသော latest main ကိုသုံးပါ။
 
@@ -315,7 +315,7 @@ README အဟောင်းကို စကားလုံးပြောင်
 
 ## Deliverables
 
-- Updated `docs/phase_f_completion_report.md`
+- New current completion report; historical `docs/archive/completed-phases/phase_f_completion_report.md` ကိုမပြင်ရ
 - Evidence-to-claim matrix
 - Remaining human checklist (မလုပ်သေးပါ)
 - Installer pilot blockers
@@ -390,7 +390,7 @@ DataPOS ကို installer မတည်ဆောက်မီ recoverable releas
 # Prompt 7 — Windows Installer Plan v2 Correction Only
 
 ```text
-လက်ရှိ `docs/windows_offline_installer_plan_v1.md` ကို implementation မစဘဲ repository evidence၊ Prompt 1–6 outputs နှင့် updated Phase F report အပေါ်အခြေခံ၍ `docs/windows_offline_installer_plan_v2.md` အဖြစ် ပြန်ရေးပါ။ v1 ကို history/reference အဖြစ်မဖျက်ပါနှင့်။
+Archived `docs/archive/superseded-plans/windows_offline_installer_plan_v1.md` ကို historical reference အဖြစ်သာဖတ်ပြီး repository evidence နှင့် current verification outputs အပေါ်အခြေခံ၍ `docs/windows_offline_installer_plan_v2.md` ကိုသာ active plan အဖြစ် update လုပ်ပါ။
 
 အလုပ်မစမီ Common Rules အားလုံးလိုက်နာပါ။
 

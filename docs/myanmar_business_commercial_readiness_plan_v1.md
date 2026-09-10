@@ -5,7 +5,7 @@
 - **Purpose:** DataPOS ကို Windows Offline Installer/EXE မထုတ်မီ မြန်မာနိုင်ငံရှိ retail၊ mobile/electronics၊ repair/service၊ wholesale နှင့် ecommerce လုပ်ငန်းများတွင် ရောင်းချအသုံးပြုနိုင်သောအဆင့်အထိ ပြင်ဆင်ရန် implementation plan
 - **Status:** Approval Draft — v1
 - **Rule:** ဤ plan ကို Store Owner/Project Owner က approval မပေးမီ production code၊ migrations၊ database records သို့မဟုတ် installer ကို မပြင်ရ။ Read-only audit၊ test baseline နှင့် documentation ပြုလုပ်ခြင်းသာ ခွင့်ပြုသည်။
-- **Next document:** ဤ plan အောင်မြင်ပြီး UAT approval ရမှ `windows_offline_installer_plan_v1.md` ကိုရေးရန်
+- **Next document:** ဤ plan အောင်မြင်ပြီး UAT approval ရမှ active `windows_offline_installer_plan_v2.md` ကို current evidence နှင့်အညီ update လုပ်ရန် (`v1` သည် archive ထဲရှိ historical plan ဖြစ်သည်)
 
 ---
 
@@ -742,7 +742,7 @@ Demo data သာမက လက်တွေ့ဆိုင် workflow ဖြင�
 - [ ] Known limitations approved in writing
 - [ ] Store Owner signs UAT acceptance
 
-Gate တစ်ခု FAIL ဖြစ်ပါက `windows_offline_installer_plan_v1.md` implementation မစရ။
+Gate တစ်ခု FAIL ဖြစ်ပါက active `windows_offline_installer_plan_v2.md` implementation မစရ။
 
 ---
 
@@ -787,7 +787,7 @@ Gate တစ်ခု FAIL ဖြစ်ပါက `windows_offline_installer_plan_
 - Completion report
 - Known limitations
 - UAT sign-off
-- Then create `windows_offline_installer_plan_v1.md`
+- Then review/update `windows_offline_installer_plan_v2.md`
 
 ---
 
@@ -848,4 +848,4 @@ Approval မရမီ—
 - Installer/EXE မထုတ်ရ
 - Existing records မပြောင်းရ
 
-Approval ရပြီး implementation၊ automated tests၊ real-store UAT နှင့် offline pilot အားလုံး Release Gates ဖြတ်ပြီးမှ `windows_offline_installer_plan_v1.md` ကို ဆက်ရေးရမည်။
+Approval ရပြီး implementation၊ automated tests၊ real-store UAT နှင့် offline pilot အားလုံး Release Gates ဖြတ်ပြီးမှ `windows_offline_installer_plan_v2.md` ကို ဆက်ရေးရမည်။

@@ -1,9 +1,9 @@
 # DataPOS — Windows Offline Installer Plan v2
 
 > **Document Reference:** `docs/windows_offline_installer_plan_v2.md`  
-> **Predecessor Reference:** [windows_offline_installer_plan_v1.md](file:///d:/xmapp/htdocs/DataPOS/docs/windows_offline_installer_plan_v1.md) (Preserved as architectural history)  
-> **Parent Document:** [myanmar_business_commercial_readiness_plan_v1.md](file:///d:/xmapp/htdocs/DataPOS/docs/myanmar_business_commercial_readiness_plan_v1.md)  
-> **Completion Report:** [phase_f_completion_report.md](file:///d:/xmapp/htdocs/DataPOS/docs/phase_f_completion_report.md)  
+> **Predecessor Reference:** [windows_offline_installer_plan_v1.md](archive/superseded-plans/windows_offline_installer_plan_v1.md) (Preserved as architectural history)
+> **Parent Document:** [myanmar_business_commercial_readiness_plan_v1.md](myanmar_business_commercial_readiness_plan_v1.md)
+> **Completion Report:** [phase_f_completion_report.md](archive/completed-phases/phase_f_completion_report.md)
 > **Created Date:** 2026-09-09  
 > **Status:** 🟡 Awaiting Project Owner Approval Before Implementation  
 > **Engineering Invariant:** This document is an architectural and procedural specification. **NO installer scripts, launcher executables, or binary packages may be built before explicit Project Owner sign-off.**
@@ -464,4 +464,4 @@ Specific Instructions / Decisions for Q-1 through Q-6:
 ---
 
 *Prepared by Tech Buddy per `docs/datapos_ai_agents_pre_installer_prompts_v1.md` (Prompt 7).*  
-*Predecessor Artifact: `docs/windows_offline_installer_plan_v1.md` (Maintained for version comparison).*
+*Predecessor Artifact: `docs/archive/superseded-plans/windows_offline_installer_plan_v1.md` (Maintained for version comparison).*
