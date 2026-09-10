@@ -303,7 +303,7 @@
                         <span class="font-mono font-bold">{{ format_currency($itemsSubtotal, $store ?? null) }}</span>
                     </div>
                     <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
-                        <span>{{ __('messages.tax') }} ({{ __('messages.commercial_tax') }})</span>
+                        <span>{{ __('messages.commercial_tax') }}</span>
                         <span class="font-mono font-bold">+ {{ format_currency($order->tax, $store ?? null) }}</span>
                     </div>
                 @endif

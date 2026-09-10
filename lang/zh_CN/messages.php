@@ -5222,6 +5222,7 @@ return array (
 
   // ── Commercial Tax (商业税) ──
   'commercial_tax' => '商业税',
+  'tax' => '税费',
   'tax_inclusive_notice' => '所有适用商品价格均已包含商业税 (5%)',
   'tax_inclusive_notice_simple' => '含商业税 (5%)',
   'tax_exclusive' => '价外税 (Tax Exclusive)',

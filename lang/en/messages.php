@@ -5222,6 +5222,7 @@ return array (
 
   // ── Commercial Tax (ကုန်သွယ်လုပ်ငန်းခွန်) ──
   'commercial_tax' => 'Commercial Tax',
+  'tax' => 'Tax',
   'tax_inclusive_notice' => 'All prices include Commercial Tax (5%) where applicable',
   'tax_inclusive_notice_simple' => 'Includes Commercial Tax (5%)',
   'tax_exclusive' => 'Tax Exclusive',

@@ -262,7 +262,7 @@
                     <span>{{ format_currency((float) $sale->subtotal, $store) }}</span>
                 </div>
                 <div class="total-row">
-                    <span>{{ __('messages.tax') }} ({{ __('messages.commercial_tax') }})</span>
+                    <span>{{ __('messages.commercial_tax') }}</span>
                     <span>+ {{ format_currency((float) $sale->tax, $store) }}</span>
                 </div>
             @endif

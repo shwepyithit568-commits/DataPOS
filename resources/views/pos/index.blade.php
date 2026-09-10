@@ -1560,7 +1560,7 @@
                     </p>
                     <p class="flex justify-between text-sm text-slate-500 dark:text-slate-400 mb-1"
                        x-show="cart.totals.tax_enabled && cart.totals.tax_type === 'exclusive'" x-cloak>
-                        <span>{{ __('messages.tax') }} ({{ __('messages.commercial_tax') }} <span x-text="cart.totals.default_tax_rate"></span>%):</span>
+                        <span>{{ __('messages.commercial_tax') }} (<span x-text="cart.totals.default_tax_rate"></span>%):</span>
                         <span class="font-bold text-slate-700 dark:text-slate-200" x-text="'+ ' + formatCurrency(cart.totals.tax)"></span>
                     </p>
                     {{-- Discount row --}}
@@ -1843,7 +1843,7 @@
                                 <span class="font-bold text-slate-700 dark:text-slate-200" x-text="formatCurrency(cart.totals.subtotal)"></span>
                             </p>
                             <p class="flex justify-between text-slate-500 dark:text-slate-400" x-show="cart.totals.tax_enabled && Number(cart.totals.tax) > 0 && cart.totals.tax_type === 'exclusive'" x-cloak>
-                                <span>{{ __('messages.tax') }} ({{ __('messages.commercial_tax') }} <span x-text="cart.totals.default_tax_rate"></span>%):</span>
+                                <span>{{ __('messages.commercial_tax') }} (<span x-text="cart.totals.default_tax_rate"></span>%):</span>
                                 <span class="font-bold text-slate-700 dark:text-slate-200" x-text="'+ ' + formatCurrency(cart.totals.tax)"></span>
                             </p>
                             <p class="flex justify-between text-rose-600 dark:text-rose-400 font-semibold" x-show="Number(cart.totals.discount) > 0" x-cloak>
