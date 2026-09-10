@@ -35,7 +35,7 @@
                   rows: @js($sale->items->map(fn ($item) => [
                       'id' => $item->id,
                       'name' => $item->product_name,
-                      'price' => (float) $item->unit_price,
+                      'price' => (float) ($unitPrices[$item->id] ?? $item->unit_price),
                       'already' => (float) ($refunded[$item->id] ?? '0'),
                       'refundable' => (float) (bcsub((string) $item->quantity, $refunded[$item->id] ?? '0', 3)),
                       'qty' => (float) (bcsub((string) $item->quantity, $refunded[$item->id] ?? '0', 3)),

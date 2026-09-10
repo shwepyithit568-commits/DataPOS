@@ -109,7 +109,7 @@
     <div class="mt-3 flex items-center justify-center gap-2">
         @if ($cardInStock)
             <button
-                @click.stop.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: {{ $defaultVariant?->id ?? 'null' }}, variant_id: {{ $defaultVariant?->id ?? 'null' }}, name: {{ json_encode($cartName) }}, price: {{ $effectivePrice }}, sku: {{ json_encode($effectiveSku ?? '') }}, image_path: {{ json_encode($cardImage ?? '') }} })"
+                @click.stop.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: {{ $defaultVariant?->id ?? 'null' }}, variant_id: {{ $defaultVariant?->id ?? 'null' }}, name: {{ json_encode($cartName) }}, price: {{ $effectivePrice }}, sku: {{ json_encode($effectiveSku ?? '') }}, image_path: {{ json_encode($cardImage ?? '') }}, is_taxable: {{ $product->is_taxable ? 'true' : 'false' }} })"
                 type="button"
                 class="sf-btn-3d-primary min-h-9 flex-1 !text-xs !py-1.5 inline-flex items-center justify-center gap-1.5"
             >

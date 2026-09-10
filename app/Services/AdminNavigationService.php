@@ -428,7 +428,7 @@ class AdminNavigationService
                             'required_channel' => Store::CHANNEL_POS,
                             'required_capability' => Capability::OPERATIONS_CASHIER_SHIFTS,
                             'required_permissions' => ['pos_closing.view', 'pos_closing.edit'],
-                            'active_patterns' => ['route:pos.closing.*', 'path:store/*/pos/closing*'],
+                            'active_patterns' => ['route:pos.closing.*', 'path:store/*/pos/closing*', 'route:pos.reports.daily_closing*', 'path:store/*/pos/reports/daily-closing*'],
                             'icon' => '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 9 2 2 4-4"/></svg>',
                         ],
                         [
@@ -986,7 +986,7 @@ class AdminNavigationService
                             'key' => 'pos_reports_stock',
                             'translation_key' => 'messages.reports_stock',
                             'route_name' => 'pos.reports.stock',
-                            'required_permissions' => ['stock_balance.view', 'stock_balance.edit', 'reports_sales.view'],
+                            'required_permissions' => ['stock_balance.view', 'stock_balance.edit', 'inventory_valuation.view'],
                             'active_patterns' => ['path:store/*/pos/reports/stock*', 'route:pos.reports.stock*'],
                             'icon' => '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7.5 12 3 4 7.5M20 7.5 12 12m8-4.5v9l-8 4.5M12 12 4 7.5M12 12v9M4 7.5v9l8 4.5"/></svg>',
                         ],

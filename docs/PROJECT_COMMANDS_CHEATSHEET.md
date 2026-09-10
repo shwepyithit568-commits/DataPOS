@@ -299,7 +299,7 @@ php artisan pail --timeout=0
 
 ## 8. Myanmar SME Demo Stores & Test Accounts
 
-> 📖 အသေးစိတ် လမ်းညွှန်နှင့် Client Demo Workflow များအတွက် [DEMO_STORES_AND_TEST_ACCOUNTS.md](file:///d:/xmapp/htdocs/DataPOS/docs/DEMO_STORES_AND_TEST_ACCOUNTS.md) ကို ကြည့်ရှုပါ။
+> 📖 အသေးစိတ် လမ်းညွှန်နှင့် Client Demo Workflow များအတွက် [DEMO_STORES_AND_TEST_ACCOUNTS.md](DEMO_STORES_AND_TEST_ACCOUNTS.md) ကို ကြည့်ရှုပါ။
 
 Demo Stores တည်ဆောက်ရန် / နမူနာဒေတာ ပြန်ဆင်ရန်:
 

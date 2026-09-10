@@ -714,7 +714,7 @@
                     @if ($product->isInStock())
                         {{-- Buy Now (Primary 3D Orange Push Button) --}}
                         <button
-                            @click.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: variantId, variant_id: variantId, name: cartName, price: price, sku: sku, image_path: selectedImagePath }); window.location.href='{{ url('/order-builder?store_slug=' . $storeSlug) }}'"
+                            @click.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: variantId, variant_id: variantId, name: cartName, price: price, sku: sku, image_path: selectedImagePath, is_taxable: {{ $product->is_taxable ? 'true' : 'false' }} }); window.location.href='{{ url('/order-builder?store_slug=' . $storeSlug) }}'"
                             :disabled="!inStock"
                             type="button"
                             class="sf-btn-3d-orange flex-1 h-12 px-4 sm:px-6 disabled:opacity-50 text-white font-black text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 cursor-pointer select-none"
@@ -725,7 +725,7 @@
 
                         {{-- Add to Cart / Order (Secondary 3D Primary Dynamic Sky/Brand Button) --}}
                         <button
-                            @click.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: variantId, variant_id: variantId, name: cartName, price: price, sku: sku, image_path: selectedImagePath })"
+                            @click.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: variantId, variant_id: variantId, name: cartName, price: price, sku: sku, image_path: selectedImagePath, is_taxable: {{ $product->is_taxable ? 'true' : 'false' }} })"
                             :disabled="!inStock"
                             type="button"
                             class="sf-btn-3d-primary flex-1 h-12 px-4 sm:px-6 disabled:opacity-50 text-white font-black text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 cursor-pointer select-none"

@@ -84,7 +84,7 @@
         <div class="flex items-center gap-2 mt-2.5">
             @if ($cardInStock)
                 <button
-                    @click.stop.prevent="if ($store.orderBuilder) $store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: {{ $defaultVariant?->id ?? 'null' }}, variant_id: {{ $defaultVariant?->id ?? 'null' }}, name: {{ json_encode($cartName) }}, price: {{ $effectivePrice }}, sku: {{ json_encode($effectiveSku ?? '') }}, image_path: {{ json_encode($cardImage ?? '') }} })"
+                    @click.stop.prevent="if ($store.orderBuilder) $store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: {{ $defaultVariant?->id ?? 'null' }}, variant_id: {{ $defaultVariant?->id ?? 'null' }}, name: {{ json_encode($cartName) }}, price: {{ $effectivePrice }}, sku: {{ json_encode($effectiveSku ?? '') }}, image_path: {{ json_encode($cardImage ?? '') }}, is_taxable: {{ $product->is_taxable ? 'true' : 'false' }} })"
                     type="button"
                     class="sf-btn-3d-primary !rounded-full shrink-0 w-11 h-11 !p-0 flex items-center justify-center shadow-md ring-1 ring-white/60"
                     title="{{ __('messages.add_to_order') }}"

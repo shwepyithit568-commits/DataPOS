@@ -332,4 +332,58 @@ class StaffRoleTest extends TestCase
         $this->assertTrue((bool) $ownerRole->is_active, 'Store owner role must remain active');
         $this->assertSame(['*'], $ownerRole->permissions, 'Store owner role must retain wildcard full permissions');
     }
+
+    public function test_staff_role_catalog_contains_pos_closing_approve_permission(): void
+    {
+        $posModules = StaffRole::PERMISSION_GROUPS['pos']['modules'];
+        $this->assertArrayHasKey('pos_closing', $posModules);
+        $this->assertArrayHasKey('approve', $posModules['pos_closing']['permissions']);
+        $this->assertSame('pos_closing.approve', $posModules['pos_closing']['permissions']['approve']);
+
+        StaffRole::bootstrapDefaultRoles($this->store);
+        $managerRole = StaffRole::where('store_id', $this->store->id)->where('slug', 'store_manager')->firstOrFail();
+        $this->assertContains('pos_closing.approve', $managerRole->permissions);
+    }
+
+    public function test_system_manager_receives_approve_permission_without_escalating_custom_roles(): void
+    {
+        // 1. Create a system store_manager role without pos_closing.approve
+        $systemManager = StaffRole::create([
+            'store_id'    => $this->store->id,
+            'name'        => 'Old System Manager',
+            'slug'        => 'store_manager',
+            'is_system'   => true,
+            'is_active'   => true,
+            'permissions' => ['pos_closing.view', 'pos_closing.create', 'pos_closing.update'],
+        ]);
+
+        // 2. Create a custom staff role that happens to have pos_closing.update
+        $customRole = StaffRole::create([
+            'store_id'    => $this->store->id,
+            'name'        => 'Supervisor',
+            'slug'        => 'supervisor',
+            'is_system'   => false,
+            'is_active'   => true,
+            'permissions' => ['pos_closing.view', 'pos_closing.create', 'pos_closing.update'],
+        ]);
+
+        // 3. Run migration logic
+        $migration = require database_path('migrations/2026_09_10_000003_add_pos_closing_approve_to_manager_roles.php');
+        $migration->up();
+
+        // 4. Assert system manager got approve
+        $systemManager->refresh();
+        $this->assertContains('pos_closing.approve', $systemManager->permissions);
+
+        // 5. Assert custom role did NOT receive approve (Privilege escalation prevented)
+        $customRole->refresh();
+        $this->assertNotContains('pos_closing.approve', $customRole->permissions);
+        $this->assertSame(['pos_closing.view', 'pos_closing.create', 'pos_closing.update'], $customRole->permissions);
+
+        // 6. Test idempotency - running up again does not duplicate
+        $migration->up();
+        $systemManager->refresh();
+        $count = count(array_keys($systemManager->permissions, 'pos_closing.approve', true));
+        $this->assertSame(1, $count);
+    }
 }

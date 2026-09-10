@@ -184,7 +184,7 @@ class StorePermissionService
                     if (in_array($perm, self::PROTECTED_PERMISSIONS, true)) {
                         return false;
                     }
-                    if (str_ends_with($perm, '.delete')) {
+                    if (str_ends_with($perm, '.delete') || str_ends_with($perm, '.approve')) {
                         return false;
                     }
                     if (str_starts_with($perm, 'settings.') || str_starts_with($perm, 'backups.') || str_starts_with($perm, 'database.') || str_starts_with($perm, 'roles.') || str_starts_with($perm, 'staff.')) {

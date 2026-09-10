@@ -24,6 +24,7 @@ class DailyClosing extends Model
         'expected_totals',
         'counted_totals',
         'differences',
+        'summary_snapshot',
         'total_difference',
         'explanation',
         'pending_offline_transaction_count',
@@ -43,11 +44,42 @@ class DailyClosing extends Model
         'expected_totals' => 'array',
         'counted_totals' => 'array',
         'differences' => 'array',
+        'summary_snapshot' => 'array',
         'total_difference' => 'decimal:2',
         'closed_at' => 'datetime',
         'approved_at' => 'datetime',
         'reopened_at' => 'datetime',
     ];
+
+    /**
+     * Get the immutable summary snapshot or reconstruct legacy snapshot without ledger queries.
+     *
+     * @return array<string, mixed>
+     */
+    public function getSummarySnapshot(): array
+    {
+        if (!empty($this->summary_snapshot) && is_array($this->summary_snapshot)) {
+            if (isset($this->summary_snapshot['metrics']) && is_array($this->summary_snapshot['metrics'])) {
+                return $this->summary_snapshot['metrics'];
+            }
+            return $this->summary_snapshot;
+        }
+
+        return [
+            'gross_sales'   => null,
+            'discounts'     => null,
+            'tax'           => null,
+            'returns'       => null,
+            'net_sales'     => null,
+            'opening_cash'  => (string) $this->opening_amount,
+            'cash_sales'    => null,
+            'cash_refunds'  => null,
+            'cash_in'       => null,
+            'cash_out'      => null,
+            'expected_cash' => (string) ($this->expected_totals['cash'] ?? '0.00'),
+            'is_legacy'     => true,
+        ];
+    }
 
     public function store(): BelongsTo
     {

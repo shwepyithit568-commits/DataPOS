@@ -884,7 +884,7 @@ Route::prefix('store/{store_slug}')
             Route::post('/shifts', [\App\POS\Http\Controllers\CashierShiftController::class, 'open'])->name('pos.shifts.open')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.create']);
             Route::post('/shifts/{shift}/cash-events', [\App\POS\Http\Controllers\CashierShiftController::class, 'cashEvent'])->name('pos.shifts.cash-event')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.update']);
             Route::post('/shifts/{shift}/close', [\App\POS\Http\Controllers\CashierShiftController::class, 'close'])->name('pos.shifts.close')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.update']);
-            Route::post('/expenses', [\App\POS\Http\Controllers\CashierShiftController::class, 'recordExpense'])->name('pos.expenses.record')->middleware('store.permission:pos_sales.view');
+            Route::post('/expenses', [\App\POS\Http\Controllers\CashierShiftController::class, 'recordExpense'])->name('pos.expenses.record')->middleware('store.permission:expenses.create|pos_closing.update');
 
             // POS cart + sale posting (target-design §2.8).
             Route::get('/products', [\App\POS\Http\Controllers\PosSaleController::class, 'search'])->name('pos.products.search')->middleware('store.permission:pos_sales.view');
@@ -917,19 +917,22 @@ Route::prefix('store/{store_slug}')
 
             // Branch daily closing (SoT §18) — view/create by staff, approve by manager.
             Route::get('/closing', [\App\POS\Http\Controllers\DailyClosingController::class, 'index'])->name('pos.closing.index')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.view']);
+            Route::get('/closing/x-report', [\App\POS\Http\Controllers\DailyClosingController::class, 'xReport'])->name('pos.closing.x-report')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.view']);
+            Route::get('/closing/print', [\App\POS\Http\Controllers\DailyClosingController::class, 'print'])->name('pos.closing.print')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.view']);
+            Route::get('/closing/{closing}/print', [\App\POS\Http\Controllers\DailyClosingController::class, 'print'])->name('pos.closing.print_closing')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.view']);
             Route::post('/closing', [\App\POS\Http\Controllers\DailyClosingController::class, 'store'])->name('pos.closing.store')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.create']);
             Route::post('/closing/{closing}/approve', [\App\POS\Http\Controllers\DailyClosingController::class, 'approve'])->name('pos.closing.approve')
-                ->middleware([EnsureStoreAccess::class . ':store_manager', 'store.capability:operations.cashier_shifts', 'store.permission:pos_closing.update']);
-            Route::post('/closing/{closing}/reopen', [\App\POS\Http\Controllers\DailyClosingController::class, 'reopen'])->name('pos.closing.reopen')
-                ->middleware([EnsureStoreAccess::class . ':store_manager', 'store.capability:operations.cashier_shifts', 'store.permission:pos_closing.update']);
+                ->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.approve']);
 
             // POS Reports (Sales / Cash Drawer / Stock / Services & Repairs)
+            Route::get('/reports/daily-closing', [\App\POS\Http\Controllers\DailyClosingController::class, 'index'])->name('pos.reports.daily_closing')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.view']);
+            Route::get('/reports/daily-closing/print', [\App\POS\Http\Controllers\DailyClosingController::class, 'print'])->name('pos.reports.daily_closing.print')->middleware(['store.capability:operations.cashier_shifts', 'store.permission:pos_closing.view']);
             Route::get('/reports/sales', [\App\POS\Http\Controllers\PosReportController::class, 'sales'])->name('pos.reports.sales')->middleware('store.permission:reports_sales.view');
             Route::get('/reports/sales/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportSales'])->name('pos.reports.sales.export')->middleware('store.permission:reports_sales.export');
             Route::get('/reports/cash', [\App\POS\Http\Controllers\PosReportController::class, 'cash'])->name('pos.reports.cash')->middleware('store.permission:reports_cash.view');
             Route::get('/reports/cash/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportCash'])->name('pos.reports.cash.export')->middleware('store.permission:reports_cash.export');
-            Route::get('/reports/stock', [\App\POS\Http\Controllers\PosReportController::class, 'stock'])->name('pos.reports.stock')->middleware('store.permission:inventory_valuation.view');
-            Route::get('/reports/stock/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportStock'])->name('pos.reports.stock.export')->middleware('store.permission:inventory_valuation.export');
+            Route::get('/reports/stock', [\App\POS\Http\Controllers\PosReportController::class, 'stock'])->name('pos.reports.stock')->middleware('store.permission:inventory_valuation.view|stock_balance.view');
+            Route::get('/reports/stock/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportStock'])->name('pos.reports.stock.export')->middleware('store.permission:inventory_valuation.export|stock_balance.export');
             Route::get('/reports/services', [\App\POS\Http\Controllers\PosReportController::class, 'services'])->name('pos.reports.services')->middleware('store.permission:reports_services.view');
             Route::get('/reports/services/export', [\App\POS\Http\Controllers\PosReportController::class, 'exportServices'])->name('pos.reports.services.export')->middleware('store.permission:reports_services.export');
             Route::get('/reports/reconciliation', [\App\POS\Http\Controllers\PosReportController::class, 'reconciliation'])->name('pos.reports.reconciliation')->middleware('store.permission:stock_reconciliation.view');

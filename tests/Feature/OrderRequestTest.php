@@ -425,4 +425,95 @@ class OrderRequestTest extends TestCase
         ]);
         $responseHacked->assertStatus(403);
     }
+
+    public function test_storefront_confirmation_renders_with_tax_id_enabled(): void
+    {
+        $store = Store::create(['name' => 'Tax Enabled Store', 'slug' => 'tax-enabled-store']);
+        $store->setting()->create([
+            'store_name' => 'Tax Enabled Store',
+            'pos_settings' => [
+                'show_tax_id' => true,
+                'tax_id_number' => 'TAX-MM-9999',
+            ],
+        ]);
+
+        $order = Order::create([
+            'store_id' => $store->id,
+            'order_number' => 'ORD-CONFIRM-1',
+            'customer_name' => 'Ko Aung',
+            'customer_phone' => '09123456789',
+            'pricing_type' => 'retail',
+            'total_amount' => 5000.00,
+            'status' => 'pending_contact',
+        ]);
+
+        $response = $this->get("/store/{$store->slug}/orders/{$order->id}/confirmation?token={$order->confirmation_token}");
+        $response->assertOk();
+        $response->assertSee('TAX-MM-9999');
+    }
+
+    public function test_storefront_confirmation_renders_with_tax_id_disabled(): void
+    {
+        $store = Store::create(['name' => 'Tax Disabled Store', 'slug' => 'tax-disabled-store']);
+        $store->setting()->create([
+            'store_name' => 'Tax Disabled Store',
+            'pos_settings' => [
+                'show_tax_id' => false,
+                'tax_id_number' => 'TAX-MM-9999',
+            ],
+        ]);
+
+        $order = Order::create([
+            'store_id' => $store->id,
+            'order_number' => 'ORD-CONFIRM-2',
+            'customer_name' => 'Ko Aung',
+            'customer_phone' => '09123456789',
+            'pricing_type' => 'retail',
+            'total_amount' => 5000.00,
+            'status' => 'pending_contact',
+        ]);
+
+        $response = $this->get("/store/{$store->slug}/orders/{$order->id}/confirmation?token={$order->confirmation_token}");
+        $response->assertOk();
+        $response->assertDontSee('TAX-MM-9999');
+    }
+
+    public function test_storefront_confirmation_renders_when_store_setting_is_null(): void
+    {
+        $store = Store::create(['name' => 'No Setting Store', 'slug' => 'no-setting-store']);
+        // Do NOT create store setting (null)
+
+        $order = Order::create([
+            'store_id' => $store->id,
+            'order_number' => 'ORD-CONFIRM-3',
+            'customer_name' => 'Ko Aung',
+            'customer_phone' => '09123456789',
+            'pricing_type' => 'retail',
+            'total_amount' => 5000.00,
+            'status' => 'pending_contact',
+        ]);
+
+        $response = $this->get("/store/{$store->slug}/orders/{$order->id}/confirmation?token={$order->confirmation_token}");
+        $response->assertOk();
+    }
+
+    public function test_storefront_confirmation_cross_store_order_isolation(): void
+    {
+        $storeA = Store::create(['name' => 'Store A', 'slug' => 'store-a']);
+        $storeB = Store::create(['name' => 'Store B', 'slug' => 'store-b']);
+
+        $orderA = Order::create([
+            'store_id' => $storeA->id,
+            'order_number' => 'ORD-CONFIRM-A',
+            'customer_name' => 'Ko Aung',
+            'customer_phone' => '09123456789',
+            'pricing_type' => 'retail',
+            'total_amount' => 5000.00,
+            'status' => 'pending_contact',
+        ]);
+
+        // Access Order A via Store B's slug -> 404
+        $response = $this->get("/store/{$storeB->slug}/orders/{$orderA->id}/confirmation?token={$orderA->confirmation_token}");
+        $response->assertStatus(404);
+    }
 }

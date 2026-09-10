@@ -49,10 +49,11 @@ class StaffRole extends Model
                     'name' => 'Daily Shift Closing (နေ့ချုပ်စာရင်း)',
                     'desc' => 'Shift handover & cash register closing',
                     'permissions' => [
-                        'view'   => 'pos_closing.view',
-                        'create' => 'pos_closing.create',
-                        'update' => 'pos_closing.update',
-                        'delete' => 'pos_closing.delete',
+                        'view'    => 'pos_closing.view',
+                        'create'  => 'pos_closing.create',
+                        'update'  => 'pos_closing.update',
+                        'approve' => 'pos_closing.approve',
+                        'delete'  => 'pos_closing.delete',
                     ]
                 ],
                 'pos_returns' => [
@@ -709,6 +710,7 @@ class StaffRole extends Model
                     'pos_closing.create',
                     'pos_closing.update',
                     'pos_closing.edit',
+                    'pos_closing.approve',
                     'pos_returns.view',
                     'pos_returns.create',
                     'pos_returns.update',

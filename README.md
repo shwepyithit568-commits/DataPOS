@@ -6,10 +6,10 @@ DataPOS သည် မြန်မာနိုင်ငံရှိ မိုဘ�
 
 ## 1. Current Release & Readiness Status
 
-- **Status:** `Release Candidate (RC) — Pre-Installer Automated Verification Baseline`
-- **Current Git HEAD:** `d9c4aeac275e7682e4f4b6b72f3b909967a3a29e` (`main` branch)
-- **Automated Verification:** **1,743 Passed, 1 Skipped, 0 Failed (7,966 Assertions)**
-- **Continuous Integration:** Automated GitHub Actions CI workflow active via [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+- **Status:** `Active development — release readiness must be verified on the target commit`
+- **Current Git HEAD:** Run `git rev-parse HEAD`; this document intentionally does not cache a changing SHA.
+- **Automated Verification:** Run `php artisan test` on the target commit and retain its exact output; historical counts are not current evidence.
+- **Continuous Integration:** Workflow configuration is stored in [`.github/workflows/ci.yml`](.github/workflows/ci.yml); confirm that a successful run exists for the exact release SHA.
 - **Physical Hardware Verification:** `PENDING — Human Verification` (Thermal printers, barcode scanners, cash drawers, clean PC restores)
 
 ---
@@ -112,7 +112,7 @@ To maintain architectural honesty, the following capabilities are explicitly def
 
 ## 7. Canonical Database & Storage Paths
 
-Following the [Windows Runtime and Storage Architecture](docs/windows_runtime_and_storage_architecture.md), program binaries and writable application state are strictly decoupled:
+Following the [Windows Runtime and Storage Architecture](docs/01_CORE_ARCHITECTURE.md), program binaries and writable application state are strictly decoupled:
 
 - **Canonical Database Path:** `storage/database/datapos.sqlite`
 - **Legacy Fallback Path:** `database/database.sqlite` (Automatically recognized if present; zero data loss)
@@ -268,7 +268,7 @@ DataPOS features a zero-configuration, self-contained disaster recovery engine (
 
 - **Zero Secrets in Repository:** Real `.env` files, APP_KEYs, database passwords, and API credentials must **never** be committed to Git.
 - **Database Dumps Protected:** All database dumps (`*.sql`, `*.sqlite`) are gitignored.
-- **Public Git Exposure Notice:** If sensitive legacy dump files are present in historical commits, refer to [Security and Release Archive Audit](docs/security_and_release_archive_audit.md) for credential rotation procedures.
+- **Public Git Exposure Notice:** If sensitive legacy dump files are present in historical commits, refer to the historical [Security and Release Archive Audit](docs/archive/01_HISTORICAL_AUDITS.md) for credential rotation procedures.
 
 ---
 
@@ -289,17 +289,18 @@ git reset --hard                   # Overwrites local modifications
 
 ## 16. Documentation Index
 
-All project documentation uses repository-relative markdown links:
+All project documentation is consolidated into canonical master volumes with repository-relative markdown links:
 
-- [Project Commands Cheatsheet](docs/PROJECT_COMMANDS_CHEATSHEET.md) — Daily development and operational commands.
-- [Myanmar Business Commercial Readiness Plan](docs/myanmar_business_commercial_readiness_plan_v1.md) — 20-point enterprise readiness specification.
-- [Pre-Installer Automated Baseline Report](docs/pre_installer_automated_baseline_report.md) — Prompt 1 baseline verification report.
-- [Security and Release Archive Audit](docs/security_and_release_archive_audit.md) — Prompt 2 secret audit, dependency scan, and license manifest.
-- [Windows Runtime and Storage Architecture](docs/windows_runtime_and_storage_architecture.md) — Prompt 3 canonical storage and runtime specification.
-- [Phase F Completion Report](docs/phase_f_completion_report.md) — Automated audit report and evidence matrix.
-- [AI Agents Pre-Installer Prompts v1](docs/datapos_ai_agents_pre_installer_prompts_v1.md) — 8-step pre-installer governance roadmap.
-- [Production Deployment Guide](docs/ops/DEPLOYMENT.md) — Infrastructure setup and deployment instructions.
-- [Storefront UI/UX Standard Guide v1.0](docs/STOREFRONT_UI_UX_STANDARD_GUIDE_v1_0.md) — Comprehensive storefront component guide.
+- [Documentation Master Index](docs/README.md) — Main entry point and volume guide.
+- [Core Architecture](docs/01_CORE_ARCHITECTURE.md) — Platform master domain architecture, invariants, multi-store isolation, and Windows runtime.
+- [UI, Theme & Storefront](docs/02_UI_THEME_AND_STOREFRONT.md) — Admin UI standards, Storefront UI standards, and Theme governance.
+- [Products & SKU Logic](docs/03_PRODUCTS_AND_SKU.md) — Smart product & store architecture specification and mobile SKU logic.
+- [Roadmaps & Implementation Plans](docs/04_ROADMAPS_AND_IMPLEMENTATION_PLANS.md) — Single codebase growth plan, admin module roadmap, reporting suite, and offline installer plans.
+- [Operations & Deployment](docs/05_OPERATIONS_AND_DEPLOYMENT.md) — Production deployment, command cheatsheets, demo store accounts, and release snapshot & backup guides.
+- [QA & Release Checklists](docs/06_QA_AND_RELEASE_CHECKLISTS.md) — Growth execution master tracker and production readiness checklists.
+- [AI Agent Prompts](docs/07_AI_AGENT_PROMPTS.md) — Consolidated QA playbook, admin/storefront pre-production audit prompts, and baseline verification prompts.
+- [Historical Archive](docs/archive/01_HISTORICAL_AUDITS.md) — Historical audits, completed phase reports, superseded plans, and legacy operations/prompts.
+- [Consolidation Manifest](docs/CONSOLIDATION_MANIFEST.md) — Full mapping of 69 original documentation files into the consolidated volumes.
 
 ---
 
@@ -320,7 +321,7 @@ In compliance with the project's Strict Engineering Craftsmanship Policy, automa
 
 ## 18. Windows Offline Installer Status & Prerequisites
 
-- **Status:** Architectural specification complete ([`windows_runtime_and_storage_architecture.md`](docs/windows_runtime_and_storage_architecture.md)); Inno Setup script creation and binary build are deferred until Prompt 7 approval.
+- **Status:** Architectural specification complete ([`docs/01_CORE_ARCHITECTURE.md`](docs/01_CORE_ARCHITECTURE.md)); Inno Setup script creation and binary build are deferred until Prompt 7 approval.
 - **Prerequisites:** Project Owner resolution of open design questions (code signing certificate, auto-backup schedule, clean PC verification).
 
 ---

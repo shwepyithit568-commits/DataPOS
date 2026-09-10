@@ -79,7 +79,7 @@ class PosReportService
         $query = PosSale::query()
             ->with(['items', 'cashier', 'customer'])
             ->where('store_id', $store->id)
-            ->where('status', 'posted')
+            ->whereIn('status', ['posted', 'partially_refunded'])
             ->whereNotNull('posted_at')
             ->whereBetween('posted_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()]);
 
@@ -94,7 +94,69 @@ class PosReportService
         $exemptSales = '0';
         $totalTax = '0';
 
+        // Pre-fetch refunded items for partially_refunded sales to accurately calculate net tax/sales
+        $saleIds = $sales->where('status', 'partially_refunded')->pluck('id')->all();
+        $refundedItemQtys = [];
+        if (!empty($saleIds)) {
+            $returnRows = DB::table('pos_return_items')
+                ->join('pos_returns', 'pos_returns.id', '=', 'pos_return_items.pos_return_id')
+                ->where('pos_returns.store_id', $store->id)
+                ->whereIn('pos_returns.pos_sale_id', $saleIds)
+                ->where('pos_returns.status', 'posted')
+                ->groupBy('pos_return_items.pos_sale_item_id')
+                ->selectRaw('pos_return_items.pos_sale_item_id, SUM(pos_return_items.quantity) AS qty')
+                ->get();
+            foreach ($returnRows as $row) {
+                $refundedItemQtys[(int) $row->pos_sale_item_id] = (string) $row->qty;
+            }
+        }
+
         foreach ($sales as $sale) {
+            if ($sale->status === 'partially_refunded') {
+                $saleTaxable = '0';
+                $saleExempt = '0';
+                $saleTax = '0';
+                $saleSubtotal = '0';
+
+                foreach ($sale->items as $item) {
+                    $retQty = $refundedItemQtys[$item->id] ?? '0';
+                    $remQty = bcsub((string) $item->quantity, $retQty, 3);
+                    if (bccomp($remQty, '0', 3) <= 0) {
+                        continue;
+                    }
+                    $ratio = bcdiv($remQty, (string) $item->quantity, 6);
+                    $lineSubtotal = bcmul((string) $item->line_total, $ratio, 2);
+                    $saleSubtotal = bcadd($saleSubtotal, $lineSubtotal, 2);
+
+                    if ($item->is_taxable) {
+                        $saleTaxable = bcadd($saleTaxable, $lineSubtotal, 2);
+                        $itemTax = bcmul((string) ($item->tax_amount ?? '0'), $ratio, 2);
+                        $saleTax = bcadd($saleTax, $itemTax, 2);
+                    } else {
+                        $saleExempt = bcadd($saleExempt, $lineSubtotal, 2);
+                    }
+                }
+
+                $saleDiscount = '0';
+                if (bccomp((string) $sale->discount, '0', 2) > 0 && bccomp((string) $sale->subtotal, '0', 2) > 0) {
+                    $saleDiscount = bcmul((string) $sale->discount, bcdiv($saleSubtotal, (string) $sale->subtotal, 6), 2);
+                }
+
+                if ($sale->tax_type === 'exclusive') {
+                    $saleTotal = bcsub(bcadd($saleSubtotal, $saleTax, 2), $saleDiscount, 2);
+                } else {
+                    $saleTotal = bcsub($saleSubtotal, $saleDiscount, 2);
+                }
+                if (bccomp($saleTotal, '0', 2) < 0) {
+                    $saleTotal = '0.00';
+                }
+
+                $sale->taxable_amount = $saleTaxable;
+                $sale->exempt_amount = $saleExempt;
+                $sale->tax = $saleTax;
+                $sale->total = $saleTotal;
+            }
+
             $totalSales = bcadd($totalSales, (string) $sale->total, 2);
             $totalTax = bcadd($totalTax, (string) $sale->tax, 2);
 

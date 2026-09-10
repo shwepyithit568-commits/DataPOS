@@ -67,6 +67,54 @@ class PosReturnService
     }
 
     /**
+     * Total refund values already returned per sale line item.
+     *
+     * @return array<int, string>
+     */
+    public function refundedValues(Store $store, PosSale $sale): array
+    {
+        $rows = DB::table('pos_return_items')
+            ->join('pos_returns', 'pos_returns.id', '=', 'pos_return_items.pos_return_id')
+            ->where('pos_returns.store_id', $store->id)
+            ->where('pos_returns.pos_sale_id', $sale->id)
+            ->where('pos_returns.status', 'posted')
+            ->groupBy('pos_return_items.pos_sale_item_id')
+            ->selectRaw('pos_return_items.pos_sale_item_id, SUM(pos_return_items.line_total) AS val')
+            ->get();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[(int) $row->pos_sale_item_id] = number_format((float) $row->val, 2, '.', '');
+        }
+
+        return $out;
+    }
+
+    /**
+     * Compute the effective unit refundable price for an item, accounting for
+     * line-level tax and pro-rata order-level discount.
+     */
+    public function refundableUnitValue(Store $store, PosSale $sale, PosSaleItem $item): string
+    {
+        $rawSubtotal = (string) $item->line_total;
+        $tax = ($sale->tax_type === 'exclusive' ? (string) ($item->tax_amount ?? '0') : '0');
+        $discount = '0';
+        if (bccomp((string) $sale->discount, '0', 2) > 0 && bccomp((string) $sale->subtotal, '0', 2) > 0) {
+            $discount = bcmul((string) $sale->discount, bcdiv($rawSubtotal, (string) $sale->subtotal, 6), 2);
+        }
+        $effectiveLineTotal = bcsub(bcadd($rawSubtotal, $tax, 2), $discount, 2);
+        if (bccomp($effectiveLineTotal, '0', 2) < 0) {
+            $effectiveLineTotal = '0.00';
+        }
+
+        if (bccomp((string) $item->quantity, '0', 3) <= 0) {
+            return '0.00';
+        }
+
+        return bcdiv($effectiveLineTotal, (string) $item->quantity, 2);
+    }
+
+    /**
      * Refund amount already returned against a sale's credit portion.
      */
     public function refundedCreditTotal(Store $store, PosSale $sale): string
@@ -146,6 +194,7 @@ class PosReturnService
         // across documents) — plus a running tally for THIS request, so the
         // same sale line cannot be submitted twice and return more than sold.
         $already = $this->refundedQuantities($store, $sale);
+        $alreadyValues = $this->refundedValues($store, $sale);
         $inRequest = [];
 
         $sale->loadMissing(['items', 'payments']);
@@ -175,7 +224,33 @@ class PosReturnService
             }
             $inRequest[$saleItem->id] = bcadd($requested, $quantity, 3);
 
-            $lineTotal = bcmul((string) $saleItem->unit_price, $quantity, 2);
+            // Calculate effective net paid value for this item line (original subtotal + exclusive tax - pro-rata discount)
+            $rawLineSubtotal = (string) $saleItem->line_total;
+            $lineTax = ($sale->tax_type === 'exclusive' ? (string) ($saleItem->tax_amount ?? '0') : '0');
+            $lineDiscount = '0';
+            if (bccomp((string) $sale->discount, '0', 2) > 0 && bccomp((string) $sale->subtotal, '0', 2) > 0) {
+                $lineDiscount = bcmul((string) $sale->discount, bcdiv($rawLineSubtotal, (string) $sale->subtotal, 6), 2);
+            }
+            $effectiveLineTotal = bcsub(bcadd($rawLineSubtotal, $lineTax, 2), $lineDiscount, 2);
+            if (bccomp($effectiveLineTotal, '0', 2) < 0) {
+                $effectiveLineTotal = '0.00';
+            }
+
+            $alreadyRefundedValue = $alreadyValues[$saleItem->id] ?? '0';
+            $remainingRefundableValue = bcsub($effectiveLineTotal, $alreadyRefundedValue, 2);
+            if (bccomp($remainingRefundableValue, '0', 2) < 0) {
+                $remainingRefundableValue = '0.00';
+            }
+
+            if (bccomp($quantity, $refundable, 3) === 0) {
+                $lineTotal = $remainingRefundableValue;
+            } else {
+                $lineTotal = bcmul($effectiveLineTotal, bcdiv($quantity, (string) $saleItem->quantity, 6), 2);
+                if (bccomp($lineTotal, $remainingRefundableValue, 2) > 0) {
+                    $lineTotal = $remainingRefundableValue;
+                }
+            }
+
             $returnTotal = bcadd($returnTotal, $lineTotal, 2);
 
             $resolved[] = [
@@ -352,7 +427,17 @@ class PosReturnService
             ->where('status', 'posted')
             ->sum('total');
 
-        $status = bccomp(number_format((float) $refunded, 2, '.', ''), (string) $sale->total, 2) >= 0
+        $refundedQty = $this->refundedQuantities($store, $sale);
+        $allReturned = true;
+        foreach ($sale->items as $item) {
+            $rem = bcsub((string) $item->quantity, $refundedQty[$item->id] ?? '0', 3);
+            if (bccomp($rem, '0', 3) > 0) {
+                $allReturned = false;
+                break;
+            }
+        }
+
+        $status = (bccomp(number_format((float) $refunded, 2, '.', ''), (string) $sale->total, 2) >= 0 || $allReturned)
             ? 'refunded'
             : 'partially_refunded';
 
