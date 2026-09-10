@@ -206,4 +206,39 @@ class AdminDashboardTest extends TestCase
             );
         }
     }
+
+    public function test_dashboard_quick_actions_render_valid_canonical_routes(): void
+    {
+        $store = Store::create(['name' => 'Store Quick', 'slug' => 'store-quick']);
+        $manager = User::create([
+            'name' => 'Manager Quick',
+            'phone' => '09888888888',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $manager->stores()->attach($store->id, ['role' => 'store_manager', 'status' => 'active']);
+
+        $response = $this->actingAs($manager)
+            ->get(route('store.admin.dashboard', ['store_slug' => $store->slug]));
+
+        $response->assertOk();
+
+        // Verify the 12 quick action links
+        $response->assertSee(route('pos.index', ['store_slug' => $store->slug]), false);
+        $response->assertSee(route('store.admin.products.index', ['store_slug' => $store->slug]), false);
+        $response->assertSee(route('store.admin.products.create', ['store_slug' => $store->slug]), false);
+        $response->assertSee(route('pos.purchases.create', ['store_slug' => $store->slug]), false);
+        $response->assertSee(route('store.admin.orders.index', ['store_slug' => $store->slug]), false);
+        $response->assertSee(route('store.admin.receivables.index', ['store_slug' => $store->slug]), false);
+        $response->assertSee(route('pos.purchases.payables', ['store_slug' => $store->slug]), false);
+        $response->assertSee(route('store.admin.expenses.index', ['store_slug' => $store->slug]), false);
+        $response->assertSee(route('store.admin.stock_ledger.index', ['store_slug' => $store->slug]), false);
+        $response->assertSee(route('pos.closing.index', ['store_slug' => $store->slug]), false);
+
+        // Ensure broken 404 links are never rendered
+        $response->assertDontSee('/pos/credit-sales');
+        $response->assertDontSee('/pos/daily-closing');
+        $response->assertDontSee('/admin/stock-balance');
+    }
 }
+

@@ -25,21 +25,21 @@
         </a>
 
         {{-- 2. Products List --}}
-        <a href="{{ url('/store/' . $store->slug . '/admin/products') }}"
+        <a href="{{ route('store.admin.products.index', ['store_slug' => $store->slug]) }}"
            class="btn-3d-action group">
             <span class="btn-3d-icon bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">🏷️</span>
             <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_products') }}</span>
         </a>
 
         {{-- 3. Add Product --}}
-        <a href="{{ url('/store/' . $store->slug . '/admin/products/create') }}"
+        <a href="{{ route('store.admin.products.create', ['store_slug' => $store->slug]) }}"
            class="btn-3d-action group">
             <span class="btn-3d-icon bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400">📦</span>
             <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_add_product') }}</span>
         </a>
 
         {{-- 4. Purchase / Stock In --}}
-        <a href="{{ url('/store/' . $store->slug . '/pos/purchases/create') }}"
+        <a href="{{ route('pos.purchases.create', ['store_slug' => $store->slug]) }}"
            class="btn-3d-action group">
             <span class="btn-3d-icon bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">📥</span>
             <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_purchase_stock') }}</span>
@@ -54,7 +54,7 @@
 
         {{-- 6. Service / Repair Jobs or Secondary --}}
         @if (store_can('service.repair_jobs', $store))
-            <a href="{{ url('/store/' . $store->slug . '/admin/repairs') }}"
+            <a href="{{ route('store.admin.repairs.index', ['store_slug' => $store->slug]) }}"
                class="btn-3d-action group">
                 <span class="btn-3d-icon bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">🛠️</span>
                 <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_service_repairs') }}</span>
@@ -66,7 +66,7 @@
                 <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.glass_finder') }}</span>
             </a>
         @else
-            <a href="{{ url('/store/' . $store->slug . '/admin/stock-balance') }}"
+            <a href="{{ route('pos.reports.stock', ['store_slug' => $store->slug]) }}"
                class="btn-3d-action group">
                 <span class="btn-3d-icon bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">📊</span>
                 <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.stock') }}</span>
@@ -74,28 +74,28 @@
         @endif
 
         {{-- 7. Customer Receivables AR --}}
-        <a href="{{ url('/store/' . $store->slug . '/pos/credit-sales') }}"
+        <a href="{{ route('store.admin.receivables.index', ['store_slug' => $store->slug]) }}"
            class="btn-3d-action group">
             <span class="btn-3d-icon bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">👥</span>
             <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_credit_ar') }}</span>
         </a>
 
         {{-- 8. Supplier Payables AP --}}
-        <a href="{{ url('/store/' . $store->slug . '/admin/payables') }}"
+        <a href="{{ route('pos.purchases.payables', ['store_slug' => $store->slug]) }}"
            class="btn-3d-action group">
             <span class="btn-3d-icon bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400">🤝</span>
             <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_payables') }}</span>
         </a>
 
         {{-- 9. Record Expense --}}
-        <a href="{{ url('/store/' . $store->slug . '/admin/expenses') }}"
+        <a href="{{ route('store.admin.expenses.index', ['store_slug' => $store->slug]) }}"
            class="btn-3d-action group">
             <span class="btn-3d-icon bg-fuchsia-100 dark:bg-fuchsia-950/60 text-fuchsia-600 dark:text-fuchsia-400">💸</span>
             <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_record_expense') }}</span>
         </a>
 
         {{-- 10. Stock Movement Ledger --}}
-        <a href="{{ url('/store/' . $store->slug . '/admin/stock-ledger') }}"
+        <a href="{{ route('store.admin.stock_ledger.index', ['store_slug' => $store->slug]) }}"
            class="btn-3d-action group">
             <span class="btn-3d-icon bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">📊</span>
             <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_stock_ledger') }}</span>
@@ -103,13 +103,13 @@
 
         {{-- 11. Warranty & IMEI Tracker / Customer Lookup --}}
         @if (store_can('service.warranty_tracking', $store))
-            <a href="{{ url('/store/' . $store->slug . '/admin/warranty') }}"
+            <a href="{{ route('store.admin.warranty.index', ['store_slug' => $store->slug]) }}"
                class="btn-3d-action group">
                 <span class="btn-3d-icon bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400">🛡️</span>
                 <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_warranty') }}</span>
             </a>
         @else
-            <a href="{{ url('/store/' . $store->slug . '/admin/customers') }}"
+            <a href="{{ route('store.admin.customers.index', ['store_slug' => $store->slug]) }}"
                class="btn-3d-action group">
                 <span class="btn-3d-icon bg-cyan-100 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400">👥</span>
                 <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_customers') }}</span>
@@ -117,7 +117,7 @@
         @endif
 
         {{-- 12. Daily Closing X/Z --}}
-        <a href="{{ url('/store/' . $store->slug . '/pos/daily-closing') }}"
+        <a href="{{ route('pos.closing.index', ['store_slug' => $store->slug]) }}"
            class="btn-3d-action group">
             <span class="btn-3d-icon bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">🖨️</span>
             <span class="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate w-full block">{{ __('messages.dashboard_daily_closing') }}</span>
@@ -249,7 +249,7 @@
     <section aria-label="Business domain highlights">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1">
             {{-- 1. Monthly Expense Card --}}
-            <a href="{{ url('/store/' . $store->slug . '/admin/expenses') }}"
+            <a href="{{ route('store.admin.expenses.index', ['store_slug' => $store->slug]) }}"
                class="stat-card-3d flex items-center justify-center gap-2.5 sm:gap-3 group">
                 <div class="shrink-0 w-8 h-8 rounded-lg grid place-items-center bg-fuchsia-100 text-fuchsia-600 dark:bg-fuchsia-950/70 dark:text-fuchsia-300 shadow-inner text-sm font-bold">
                     💸
@@ -269,7 +269,7 @@
 
             @if (store_can('service.repair_jobs', $store))
             {{-- 2. Service & Repairs Card --}}
-            <a href="{{ url('/store/' . $store->slug . '/admin/repairs') }}"
+            <a href="{{ route('store.admin.repairs.index', ['store_slug' => $store->slug]) }}"
                class="stat-card-3d flex items-center justify-center gap-2.5 sm:gap-3 group">
                 <div class="shrink-0 w-8 h-8 rounded-lg grid place-items-center bg-indigo-100 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-300 shadow-inner text-sm font-bold">
                     🛠️
@@ -288,7 +288,7 @@
             </a>
             @else
             {{-- 2. Inventory & Stock Card (Retail fallback) --}}
-            <a href="{{ url('/store/' . $store->slug . '/admin/products') }}"
+            <a href="{{ route('store.admin.products.index', ['store_slug' => $store->slug]) }}"
                class="stat-card-3d flex items-center justify-center gap-2.5 sm:gap-3 group">
                 <div class="shrink-0 w-8 h-8 rounded-lg grid place-items-center bg-indigo-100 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-300 shadow-inner text-sm font-bold">
                     📦
@@ -308,7 +308,7 @@
             @endif
 
             {{-- 3. Ecommerce Online Storefront Card --}}
-            <a href="{{ url('/store/' . $store->slug . '/admin/web-products') }}"
+            <a href="{{ route('store.admin.web_products.index', ['store_slug' => $store->slug]) }}"
                class="stat-card-3d flex items-center justify-center gap-2.5 sm:gap-3 group">
                 <div class="shrink-0 w-8 h-8 rounded-lg grid place-items-center bg-sky-100 text-sky-600 dark:bg-sky-950/70 dark:text-sky-300 shadow-inner text-sm font-bold">
                     🌐
@@ -327,7 +327,7 @@
             </a>
 
             {{-- 4. Customer Receivables AR Card --}}
-            <a href="{{ url('/store/' . $store->slug . '/pos/credit-sales') }}"
+            <a href="{{ route('store.admin.receivables.index', ['store_slug' => $store->slug]) }}"
                class="stat-card-3d flex items-center justify-center gap-2.5 sm:gap-3 group">
                 <div class="shrink-0 w-8 h-8 rounded-lg grid place-items-center bg-rose-100 text-rose-600 dark:bg-rose-950/70 dark:text-rose-300 shadow-inner text-sm font-bold">
                     👥
@@ -357,7 +357,7 @@
                     <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 text-xs font-bold">{{ $overdueData['overdue_count'] }}</span>
                     {{ __('messages.overdue_payables_title') }}
                 </h2>
-                <a href="{{ url('/store/' . $store->slug . '/admin/suppliers/aging') }}" class="text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1">
+                <a href="{{ route('store.admin.suppliers.aging', ['store_slug' => $store->slug]) }}" class="text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1">
                     <span>{{ __('messages.aging_report_title') }}</span>
                     <span>→</span>
                 </a>
@@ -391,7 +391,7 @@
                                         <span class="font-mono font-bold text-rose-600 dark:text-rose-400">{{ $row['age_days'] }} {{ __('messages.aging_days') }}</span>
                                     </td>
                                     <td class="px-4 py-3 text-right">
-                                        <a href="{{ url('/store/' . $store->slug . '/pos/purchases/payables/' . $row['id']) }}"
+                                        <a href="{{ route('pos.purchases.payables.show', ['store_slug' => $store->slug, 'supplier' => $row['id']]) }}"
                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 transition shadow-sm">
                                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                                             <span>{{ __('messages.overdue_pay_now') }}</span>
@@ -522,7 +522,7 @@
                 </div>
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
                     <span>{{ __('messages.this_month_outflow') }}</span>
-                    <a href="{{ url('/store/' . $store->slug . '/admin/expenses') }}" class="text-fuchsia-600 dark:text-fuchsia-400 font-semibold hover:underline">Detail →</a>
+                    <a href="{{ route('store.admin.expenses.index', ['store_slug' => $store->slug]) }}" class="text-fuchsia-600 dark:text-fuchsia-400 font-semibold hover:underline">Detail →</a>
                 </div>
             </div>
 
@@ -559,9 +559,9 @@
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
                     <span class="truncate">{{ __('messages.dashboard_chart_service_sub') }}</span>
                     @if (store_can('service.repair_jobs', $store))
-                        <a href="{{ url('/store/' . $store->slug . '/admin/repairs') }}" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline shrink-0">Jobs →</a>
+                        <a href="{{ route('store.admin.repairs.index', ['store_slug' => $store->slug]) }}" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline shrink-0">Jobs →</a>
                     @else
-                        <a href="{{ url('/store/' . $store->slug . '/admin/orders') }}" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline shrink-0">Orders →</a>
+                        <a href="{{ route('store.admin.orders.index', ['store_slug' => $store->slug]) }}" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline shrink-0">Orders →</a>
                     @endif
                 </div>
             </div>
@@ -821,7 +821,7 @@
                 <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100 font-mono">
                     📦 {{ __('messages.dashboard_recent_products_title') }}
                 </h3>
-                <a href="{{ url('/store/' . $store->slug . '/admin/products') }}" class="text-[11px] font-bold text-violet-600 dark:text-violet-400 hover:underline">
+                <a href="{{ route('store.admin.products.index', ['store_slug' => $store->slug]) }}" class="text-[11px] font-bold text-violet-600 dark:text-violet-400 hover:underline">
                     {{ __('messages.view_all') }} →
                 </a>
             </div>
