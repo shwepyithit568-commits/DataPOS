@@ -11,7 +11,7 @@
 ## 1. Executive Summary & Problem Statement
 
 Prior to this audit, DataPOS documentation and configuration contained path and runtime discrepancies:
-1. **Database Path Mismatch:** Root `README.md` referenced `database/database.sqlite` (Laravel framework default), while `windows_offline_installer_plan_v1.md` referenced `storage/database/datapos.sqlite`.
+1. **Historical Database Path Mismatch:** Root `README.md` referenced `database/database.sqlite` (Laravel framework default), while archived `archive/superseded-plans/windows_offline_installer_plan_v1.md` referenced `storage/database/datapos.sqlite`.
 2. **Read-Only vs. Writable Data Collision:** In standard Windows deployments, putting writable files in `C:\Program Files\DataPOS` causes `Access Denied` (`EACCES`) errors for standard non-administrator users, blocking SQLite writes, session storage, and log appending.
 3. **SQLite Concurrency & Locking:** Default SQLite configuration without Write-Ahead Logging (WAL) and busy timeout leads to intermittent `Database is locked` crashes when a cashier executes a POS checkout while background tasks or reports are running.
 4. **Launcher Lifecycle Ambiguity:** The built-in server launcher lacked an evidence-based specification for loopback binding, duplicate process prevention, and health checks.
@@ -161,7 +161,7 @@ The Windows desktop launcher (`DataPOS.exe` or launcher script) must adhere to t
 
 All requirements specified in Prompt 3 have been implemented and verified via automated tests:
 
-- **Test Suite:** [`tests/Feature/Runtime/WindowsStorageCanonicalizationTest.php`](file:///d:/xmapp/htdocs/DataPOS/tests/Feature/Runtime/WindowsStorageCanonicalizationTest.php)
+- **Test Suite:** [`tests/Feature/Runtime/WindowsStorageCanonicalizationTest.php`](../tests/Feature/Runtime/WindowsStorageCanonicalizationTest.php)
 - **Verified Tests:**
   1. `test_sqlite_configuration_resolves_canonical_path_or_custom_env` — **PASS**
   2. `test_wal_and_foreign_key_configuration_settings` — **PASS**

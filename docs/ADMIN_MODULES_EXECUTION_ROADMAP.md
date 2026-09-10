@@ -103,7 +103,7 @@ For every module, confirm:
 
 ### Priority 4 - UI Consistency
 
-Use [ADMIN_UI_UX_STANDARD_GUIDE.md](D:/xmapp/htdocs/DataPOS/docs/ADMIN_UI_UX_STANDARD_GUIDE.md) as the standard for pages touched during new work. Avoid full-site redesign until pilot workflow is stable.
+Use [Admin UI/UX Standard Guide](prompts/ADMIN_UI_UX_STANDARD_GUIDE_v4_1.md) as the standard for pages touched during new work. Avoid full-site redesign until pilot workflow is stable.
 
 ## Definition of Done for a Module
 

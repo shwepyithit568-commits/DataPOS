@@ -6,10 +6,10 @@ DataPOS သည် မြန်မာနိုင်ငံရှိ မိုဘ�
 
 ## 1. Current Release & Readiness Status
 
-- **Status:** `Release Candidate (RC) — Pre-Installer Automated Verification Baseline`
-- **Current Git HEAD:** `d9c4aeac275e7682e4f4b6b72f3b909967a3a29e` (`main` branch)
-- **Automated Verification:** **1,743 Passed, 1 Skipped, 0 Failed (7,966 Assertions)**
-- **Continuous Integration:** Automated GitHub Actions CI workflow active via [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+- **Status:** `Active development — release readiness must be verified on the target commit`
+- **Current Git HEAD:** Run `git rev-parse HEAD`; this document intentionally does not cache a changing SHA.
+- **Automated Verification:** Run `php artisan test` on the target commit and retain its exact output; historical counts are not current evidence.
+- **Continuous Integration:** Workflow configuration is stored in [`.github/workflows/ci.yml`](.github/workflows/ci.yml); confirm that a successful run exists for the exact release SHA.
 - **Physical Hardware Verification:** `PENDING — Human Verification` (Thermal printers, barcode scanners, cash drawers, clean PC restores)
 
 ---
@@ -268,7 +268,7 @@ DataPOS features a zero-configuration, self-contained disaster recovery engine (
 
 - **Zero Secrets in Repository:** Real `.env` files, APP_KEYs, database passwords, and API credentials must **never** be committed to Git.
 - **Database Dumps Protected:** All database dumps (`*.sql`, `*.sqlite`) are gitignored.
-- **Public Git Exposure Notice:** If sensitive legacy dump files are present in historical commits, refer to [Security and Release Archive Audit](docs/security_and_release_archive_audit.md) for credential rotation procedures.
+- **Public Git Exposure Notice:** If sensitive legacy dump files are present in historical commits, refer to the historical [Security and Release Archive Audit](docs/archive/audits/security_and_release_archive_audit.md) for credential rotation procedures.
 
 ---
 
@@ -293,10 +293,10 @@ All project documentation uses repository-relative markdown links:
 
 - [Project Commands Cheatsheet](docs/PROJECT_COMMANDS_CHEATSHEET.md) — Daily development and operational commands.
 - [Myanmar Business Commercial Readiness Plan](docs/myanmar_business_commercial_readiness_plan_v1.md) — 20-point enterprise readiness specification.
-- [Pre-Installer Automated Baseline Report](docs/pre_installer_automated_baseline_report.md) — Prompt 1 baseline verification report.
-- [Security and Release Archive Audit](docs/security_and_release_archive_audit.md) — Prompt 2 secret audit, dependency scan, and license manifest.
+- [Pre-Installer Automated Baseline Report](docs/archive/audits/pre_installer_automated_baseline_report.md) — Historical baseline verification report.
+- [Security and Release Archive Audit](docs/archive/audits/security_and_release_archive_audit.md) — Historical secret audit, dependency scan, and license manifest.
 - [Windows Runtime and Storage Architecture](docs/windows_runtime_and_storage_architecture.md) — Prompt 3 canonical storage and runtime specification.
-- [Phase F Completion Report](docs/phase_f_completion_report.md) — Automated audit report and evidence matrix.
+- [Phase F Completion Report](docs/archive/completed-phases/phase_f_completion_report.md) — Historical automated audit report and evidence matrix.
 - [AI Agents Pre-Installer Prompts v1](docs/datapos_ai_agents_pre_installer_prompts_v1.md) — 8-step pre-installer governance roadmap.
 - [Production Deployment Guide](docs/ops/DEPLOYMENT.md) — Infrastructure setup and deployment instructions.
 - [Storefront UI/UX Standard Guide v1.0](docs/STOREFRONT_UI_UX_STANDARD_GUIDE_v1_0.md) — Comprehensive storefront component guide.
