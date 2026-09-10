@@ -35,7 +35,7 @@ Read and obey the current versions of:
 
 - `AGENTS.md`
 - `README.md`
-- `Source_of_Truth_MM.md`
+- [`../Source_of_Truth_Master_MM.md`](../Source_of_Truth_Master_MM.md)
 - relevant POS source-of-truth if admin changes touch POS
 - `CHANGELOG.md`
 - test/QA notes
