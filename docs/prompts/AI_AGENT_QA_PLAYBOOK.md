@@ -32,7 +32,7 @@ Test direct URLs, manipulated IDs and requests across Staff, Products, Inventory
 
 ## 4. UI/UX and spacing
 
-Follow [`ADMIN_UI_UX_STANDARD_GUIDE_v4_1.md`](ADMIN_UI_UX_STANDARD_GUIDE_v4_1.md) and [`../STOREFRONT_UI_UX_STANDARD_GUIDE_v1_0.md`](../STOREFRONT_UI_UX_STANDARD_GUIDE_v1_0.md).
+Follow [`ADMIN_UI_UX_STANDARD_GUIDE_v4_1.md`](../guides/ADMIN_UI_UX_STANDARD_GUIDE_v4_1.md) and [`../STOREFRONT_UI_UX_STANDARD_GUIDE_v1_0.md`](../guides/STOREFRONT_UI_UX_STANDARD_GUIDE_v1_0.md).
 
 - Use clean, full-width, restrained surfaces without unnecessary nested containers, margins, rounded corners or shadows.
 - Page-level sibling sections should normally use the project’s compact approximately 4px rhythm; internal controls must retain readable spacing and usable touch targets.

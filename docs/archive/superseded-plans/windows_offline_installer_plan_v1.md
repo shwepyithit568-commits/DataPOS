@@ -1,13 +1,13 @@
 # DataPOS — Windows Offline Installer Plan v1
 
-**Document Reference:** `docs/windows_offline_installer_plan_v1.md`  
-**Parent Document:** [myanmar_business_commercial_readiness_plan_v1.md](file:///d:/xmapp/htdocs/DataPOS/docs/myanmar_business_commercial_readiness_plan_v1.md)  
-**Completion Report:** [phase_f_completion_report.md](file:///d:/xmapp/htdocs/DataPOS/docs/phase_f_completion_report.md)  
-**Created:** 2026-09-09  
-**Prepared By:** Tech Buddy (Senior Software Architect & Pair Programmer)  
+**Document Reference:** `docs/windows_offline_installer_plan_v1.md`
+**Parent Document:** [myanmar_business_commercial_readiness_plan_v1.md](../../plans/myanmar_business_commercial_readiness_plan_v1.md)
+**Completion Report:** [phase_f_completion_report.md](../completed-phases/phase_f_completion_report.md)
+**Created:** 2026-09-09
+**Prepared By:** Tech Buddy (Senior Software Architect & Pair Programmer)
 **Status:** 🟡 Awaiting Project Owner Approval Before Implementation
 
-> **Rule (from master plan, Section 23):** ဤ plan ကို implement မစမီ Project Owner ၏ explicit approval ရရှိရမည်။  
+> **Rule (from master plan, Section 23):** ဤ plan ကို implement မစမီ Project Owner ၏ explicit approval ရရှိရမည်။
 > Phase F completion report ပါ UAT sign-off မပြည့်မနေ installer build မစရ။
 
 ---
@@ -106,7 +106,7 @@ The launcher (`DataPOS.exe`) will:
 | Laravel Vendor | All composer deps | Mixed MIT/BSD | ✅ |
 | Inno Setup Runtime | 6.x | ISL | ✅ (installer only) |
 
-**Total estimated bundle size:** ~90–120 MB (before UPX compression)  
+**Total estimated bundle size:** ~90–120 MB (before UPX compression)
 **After UPX compression:** ~55–75 MB
 
 ---
@@ -169,7 +169,7 @@ DataPOS-Setup.exe /VERYSILENT /SUPPRESSMSGBOXES /DIR="D:\DataPOS"
 ```
 Step 1: Store Information
   ├── Store Name (Myanmar)
-  ├── Store Name (English)  
+  ├── Store Name (English)
   ├── Phone / Viber / Telegram
   ├── Address
   └── [Next]
@@ -591,5 +591,5 @@ Q-1 to Q-8 Answers / Notes:
 
 ---
 
-*Prepared by Tech Buddy per `myanmar_business_commercial_readiness_plan_v1.md` Section 20 (Phase F → Phase G handoff).*  
+*Prepared by Tech Buddy per `myanmar_business_commercial_readiness_plan_v1.md` Section 20 (Phase F → Phase G handoff).*
 *Next document: `windows_offline_installer_phase_g_implementation.md` (after approval).*

@@ -6,9 +6,9 @@
 > **Verified Branch / Target:** `feature/reports-daily-closing-xz` @ `31d0ca92b7e35ce08881b2a944869d59f68d5f5f`
 > **Project Path:** `D:\xmapp\htdocs\DataPOS`
 > **Predecessor References (Archived):**
-> - [`archive/source-of-truth-history/Source_of_Truth_MM_v2.md`](archive/source-of-truth-history/Source_of_Truth_MM_v2.md)
-> - [`archive/source-of-truth-history/DataPOS_Mobile_Offline_POS_Project_Source_of_Truth_v1_EN.md`](archive/source-of-truth-history/DataPOS_Mobile_Offline_POS_Project_Source_of_Truth_v1_EN.md)
-> - [`archive/source-of-truth-history/AlinnThit_Mobile_Offline_POS_Project_Source_of_Truth_20260731.md`](archive/source-of-truth-history/AlinnThit_Mobile_Offline_POS_Project_Source_of_Truth_20260731.md)
+> - [`archive/source-of-truth-history/Source_of_Truth_MM_v2.md`](../archive/source-of-truth-history/Source_of_Truth_MM_v2.md)
+> - [`archive/source-of-truth-history/DataPOS_Mobile_Offline_POS_Project_Source_of_Truth_v1_EN.md`](../archive/source-of-truth-history/DataPOS_Mobile_Offline_POS_Project_Source_of_Truth_v1_EN.md)
+> - [`archive/source-of-truth-history/AlinnThit_Mobile_Offline_POS_Project_Source_of_Truth_20260731.md`](../archive/source-of-truth-history/AlinnThit_Mobile_Offline_POS_Project_Source_of_Truth_20260731.md)
 
 ---
 
@@ -32,15 +32,15 @@
 2. **လက်ရှိ Target Branch ရှိ Executable Code၊ Migrations၊ Routes နှင့် Configs:** လက်ရှိ run နေသော ကုဒ်သည် အမှန်တရားဖြစ်သည်။
 3. **Automated Test Suites (196 test files) နှင့် CI Results:** အောင်မြင်ပြီးသော tests များသည် verified facts များဖြစ်သည်။
 4. **Active Architecture & Standards Documents (`docs/` အောက်ရှိ ဖိုင်များ):**
-   - [`docs/README.md`](README.md) — Documentation index
-   - [`docs/DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md`](DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md) — Growth strategy
+   - [`docs/README.md`](../README.md) — Documentation index
+   - [`docs/DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md`](../plans/DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md) — Growth strategy
    - [`docs/SMART_PRODUCT_AND_STORE_ARCHITECTURE_SPEC.md`](SMART_PRODUCT_AND_STORE_ARCHITECTURE_SPEC.md) — Domain design
-   - [`docs/reports_implementation_plan_v2.md`](reports_implementation_plan_v2.md) — Reports suite master plan
-   - [`docs/windows_offline_installer_plan_v2.md`](windows_offline_installer_plan_v2.md) — Installer roadmap
+   - [`docs/reports_implementation_plan_v2.md`](../plans/reports_implementation_plan_v2.md) — Reports suite master plan
+   - [`docs/windows_offline_installer_plan_v2.md`](../plans/windows_offline_installer_plan_v2.md) — Installer roadmap
    - [`docs/windows_runtime_and_storage_architecture.md`](windows_runtime_and_storage_architecture.md) — Storage spec
-   - [`docs/prompts/ADMIN_UI_UX_STANDARD_GUIDE_v4_1.md`](prompts/ADMIN_UI_UX_STANDARD_GUIDE_v4_1.md) — Admin UI standard
-   - [`docs/STOREFRONT_UI_UX_STANDARD_GUIDE_v1_0.md`](STOREFRONT_UI_UX_STANDARD_GUIDE_v1_0.md) — Storefront UI standard
-   - [`docs/prompts/AI_AGENT_QA_PLAYBOOK.md`](prompts/AI_AGENT_QA_PLAYBOOK.md) — QA playbook
+   - [`docs/prompts/ADMIN_UI_UX_STANDARD_GUIDE_v4_1.md`](../guides/ADMIN_UI_UX_STANDARD_GUIDE_v4_1.md) — Admin UI standard
+   - [`docs/STOREFRONT_UI_UX_STANDARD_GUIDE_v1_0.md`](../guides/STOREFRONT_UI_UX_STANDARD_GUIDE_v1_0.md) — Storefront UI standard
+   - [`docs/prompts/AI_AGENT_QA_PLAYBOOK.md`](../prompts/AI_AGENT_QA_PLAYBOOK.md) — QA playbook
 5. **ဤ Master Source of Truth ဖိုင် (`docs/Source_of_Truth_Master_MM.md`)**
 6. **`docs/archive/` ရှိ သမိုင်းဝင် အထောက်အထားများ:** Snapshot သာဖြစ်ပြီး implementation ညွှန်ကြားချက်အဖြစ် မသုံးရ။
 
@@ -144,11 +144,11 @@ AND ၇။ Record သည် အခြား Store မှ Manipulated ID မဟ�
 
 ## ၉။ ဆက်စပ်အသုံးပြုရမည့် Active Documents
 
-- **Documentation Master Index:** [`README.md`](README.md)
-- **Growth & Product Strategy:** [`DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md`](DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md)
+- **Documentation Master Index:** [`docs/README.md`](../README.md)
+- **Growth & Product Strategy:** [`DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md`](../plans/DATAPOS_SINGLE_CODEBASE_GROWTH_PLAN_MM.md)
 - **Product Domain & Architecture:** [`SMART_PRODUCT_AND_STORE_ARCHITECTURE_SPEC.md`](SMART_PRODUCT_AND_STORE_ARCHITECTURE_SPEC.md)
-- **AlinnThit Mobile SKU Logic Guide:** [`guides/ALINN_THIT_MOBILE_SKU_LOGIC_MM.md`](guides/ALINN_THIT_MOBILE_SKU_LOGIC_MM.md)
-- **Reporting Suite Architecture:** [`reports_implementation_plan_v2.md`](reports_implementation_plan_v2.md)
-- **Windows Offline Installer Plan v2:** [`windows_offline_installer_plan_v2.md`](windows_offline_installer_plan_v2.md)
+- **AlinnThit Mobile SKU Logic Guide:** [`guides/ALINN_THIT_MOBILE_SKU_LOGIC_MM.md`](../guides/ALINN_THIT_MOBILE_SKU_LOGIC_MM.md)
+- **Reporting Suite Architecture:** [`reports_implementation_plan_v2.md`](../plans/reports_implementation_plan_v2.md)
+- **Windows Offline Installer Plan v2:** [`windows_offline_installer_plan_v2.md`](../plans/windows_offline_installer_plan_v2.md)
 - **Runtime & Storage Architecture:** [`windows_runtime_and_storage_architecture.md`](windows_runtime_and_storage_architecture.md)
-- **Quality Assurance & Fix Playbook:** [`prompts/AI_AGENT_QA_PLAYBOOK.md`](prompts/AI_AGENT_QA_PLAYBOOK.md)
+- **Quality Assurance & Fix Playbook:** [`prompts/AI_AGENT_QA_PLAYBOOK.md`](../prompts/AI_AGENT_QA_PLAYBOOK.md)

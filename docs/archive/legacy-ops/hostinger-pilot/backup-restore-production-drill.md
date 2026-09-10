@@ -1,5 +1,9 @@
 # Phase 2.5 — Production Backup & Restore Drill (Execution Runbook)
 
+> [!NOTE]
+> **Archived Historical Runbook:** ဤ runbook သည် ၂၀၂၆ ခုနှစ် သြဂုတ်လ Phase 2.5 Hostinger pilot deployment/cutover ကာလမှ သမိုင်းဝင် runbook ဖြစ်သည်။
+> လက်ရှိ Production Deployment အတွက် [`../../../operations/DEPLOYMENT.md`](../../../operations/DEPLOYMENT.md) နှင့် Backup/Restore အတွက် [`../../../operations/release_snapshot_and_backup_guide.md`](../../../operations/release_snapshot_and_backup_guide.md) ကို ကြည့်ရှုအသုံးပြုပါ။
+
 > **ရည်ရွယ်ချက်:** Hostinger ပေါ် deploy ပြီးမှ **production MySQL** နဲ့ `backup → restore to test DB → verify → flow test → cleanup` round-trip ကို လက်တွေ့ run ဖို့ — ဒီဖိုင်က တစ်ခါတည်း run လို့ရတဲ့ drill ဖြစ်တယ်။ ဒီ command တွေက **local machine ကနေ SSH** ဖြင့် run ရတယ်။
 >
 > **ရင်းမြစ်:** `docs/ops/pilot-recovery-cutover-runbook.md` §2.4 (checklist) + §2.5 (Drill #2 step-by-step) — ဒီဖိုင်က အဲဒါတွေကို အတည်ပြုပြီး **execution order** နဲ့ ပြန်စုထားတာ။ Drill #1 (SQLite) ✅ + Drill #2 localhost rehearsal (MySQL round-trip) ✅ 2026-08-13 — **production run က ဒီဖိုင်အတိုင်း ကျန်။**
