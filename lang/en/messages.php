@@ -2303,6 +2303,7 @@ return array (
   'primary_imei_label' => 'Primary IMEI:',
   'primary_imei_optional' => 'Primary IMEI (Optional)',
   'print' => 'Print',
+  'printed' => 'Printed At',
   'print_certificate' => 'Print Certificate',
   'print_invoice' => 'Print Invoice',
   'print_receipt' => 'Receipt',

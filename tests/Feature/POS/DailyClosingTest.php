@@ -707,6 +707,10 @@ class DailyClosingTest extends TestCase
             $resp->assertSee($expectedPageCss, false);
             $resp->assertSee('X-REPORT', false);
             $resp->assertSee('READING ONLY', false);
+            $resp->assertSee('id="btnPrint"', false);
+            $resp->assertSee('id="btnSavePdf"', false);
+            $resp->assertSee('html2pdf.bundle.min.js', false);
+            $resp->assertSee('id="reportDocument"', false);
         }
     }
 

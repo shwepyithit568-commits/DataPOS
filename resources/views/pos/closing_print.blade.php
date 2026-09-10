@@ -33,11 +33,21 @@
     $diffMap = $totals['differences'] ?? [];
     $totalDiff = $totals['total_difference'] ?? '0.00';
 
+    $myanmarFontUrl = null;
+    try {
+        $myanmarFontUrl = \Illuminate\Support\Facades\Vite::asset('resources/assets/fonts/NotoSansMyanmar/NotoSansMyanmar-Regular.ttf');
+    } catch (\Throwable $e) {
+        $myanmarFontUrl = null;
+    }
+
     $storeRouteParams = ['store_slug' => $store->slug];
     $printUrlParams = array_merge($storeRouteParams, [
         'type' => $type,
         'date' => $date->toDateString(),
     ]);
+    if ($closing) {
+        $printUrlParams['closing'] = $closing->id;
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -47,15 +57,34 @@
     <meta name="robots" content="noindex,nofollow">
     <title>{{ $isX ? 'X-Report' : 'Z-Report' }}_{{ $date->toDateString() }} — {{ $store->name }}</title>
 
+    <script nonce="{{ $cspNonce ?? '' }}" src="{{ asset('vendor/html2pdf/html2pdf.bundle.min.js') }}"></script>
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @if ($myanmarFontUrl)
+        @font-face {
+            font-family: 'Noto Sans Myanmar';
+            src: url('{{ $myanmarFontUrl }}') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+        @endif
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            letter-spacing: normal !important;
+        }
 
         body {
-            font-family: 'Noto Sans Myanmar', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Noto Sans Myanmar', 'Pyidaungsu', 'Myanmar Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: #0f172a;
             background: #f8fafc;
             line-height: 1.4;
             padding: 24px 16px;
+            letter-spacing: normal !important;
+            -webkit-font-smoothing: antialiased;
         }
 
         /* ── Action Toolbar (Screen Only) ── */
@@ -104,6 +133,15 @@
             color: #fff;
         }
         .tool-btn-print:hover { background: #0369a1; }
+        .tool-btn-pdf {
+            background: #059669;
+            color: #fff;
+        }
+        .tool-btn-pdf:hover { background: #047857; }
+        .tool-btn-pdf:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
 
         .layout-pills {
             display: inline-flex;
@@ -134,7 +172,7 @@
             border-radius: 6px;
             font-size: 11px;
             font-weight: 800;
-            letter-spacing: 0.5px;
+            letter-spacing: normal;
             text-transform: uppercase;
         }
         .type-badge-x { background: #fef3c7; color: #92400e; }
@@ -207,7 +245,7 @@
             border: 1px dashed #64748b;
             border-radius: 4px;
             background: #f8fafc;
-            letter-spacing: 0.3px;
+            letter-spacing: normal;
         }
 
         /* Tables & Typography */
@@ -220,8 +258,8 @@
             font-size: inherit;
         }
         .meta-table td { padding: 3px 0; vertical-align: top; }
-        .meta-label { color: #64748b; font-weight: 600; width: 42%; }
-        .meta-val { color: #0f172a; font-weight: 700; text-align: right; }
+        .meta-label { color: #64748b; font-weight: 600; width: 44%; letter-spacing: normal; }
+        .meta-val { color: #0f172a; font-weight: 700; text-align: right; width: 56%; letter-spacing: normal; }
 
         .data-table th {
             background: #f1f5f9;
@@ -229,7 +267,7 @@
             font-weight: 800;
             font-size: 10.5px;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
+            letter-spacing: normal;
             padding: 6px 8px;
             border-top: 1px solid #cbd5e1;
             border-bottom: 1px solid #cbd5e1;
@@ -353,7 +391,10 @@
         </div>
 
         <div class="toolbar-right">
-            <button type="button" class="tool-btn tool-btn-print" onclick="window.print()">
+            <button type="button" id="btnSavePdf" class="tool-btn tool-btn-pdf" data-save-pdf title="{{ __('messages.export_pdf') ?? 'Save PDF' }}">
+                📥 <span id="btnSavePdfText">{{ __('messages.export_pdf') ?? 'Save PDF' }}</span>
+            </button>
+            <button type="button" id="btnPrint" class="tool-btn tool-btn-print" data-print title="{{ __('messages.print') ?? 'Print' }}">
                 🖨️ <span>{{ __('messages.print') ?? 'Print' }}</span>
             </button>
         </div>
@@ -361,7 +402,7 @@
 
     {{-- ── SECTION 2: Report Document Container ── --}}
     <div class="report-page-container">
-        <div class="{{ $isThermal ? 'report-card-thermal report-card-' . $layout : 'report-card-fullsheet report-card-' . $layout }}">
+        <div id="reportDocument" class="{{ $isThermal ? 'report-card-thermal report-card-' . $layout : 'report-card-fullsheet report-card-' . $layout }}">
 
             {{-- Header Branding --}}
             <div class="store-header">
@@ -591,5 +632,203 @@
         </div>
     </div>
 
+    <script nonce="{{ $cspNonce ?? '' }}">
+        (function () {
+            var currentLayout = @js($layout);
+            var isThermal = @js($isThermal);
+            var filename = @js(($isX ? 'X-Report' : 'Z-Report') . '_' . $date->toDateString() . '_' . $store->slug . '_' . $layout . '.pdf');
+
+            var pdfDimensions = {
+                '58mm': { unit: 'mm', format: [58, 260], orientation: 'portrait' },
+                '80mm': { unit: 'mm', format: [80, 300], orientation: 'portrait' },
+                'a5_portrait': { unit: 'mm', format: 'a5', orientation: 'portrait' },
+                'a5_landscape': { unit: 'mm', format: 'a5', orientation: 'landscape' },
+                'a4_portrait': { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                'a4_landscape': { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            function doPrint() {
+                window.print();
+            }
+
+            // Render DOM element via SVG foreignObject to preserve native browser HarfBuzz Myanmar font shaping
+            function renderViaSvgForeignObject(element, scale) {
+                return new Promise(function (resolve, reject) {
+                    var width = element.offsetWidth || element.clientWidth || 340;
+                    var height = element.offsetHeight || element.scrollHeight || 600;
+
+                    var clone = element.cloneNode(true);
+                    clone.style.boxShadow = 'none';
+                    clone.style.margin = '0';
+
+                    // Convert any images inside to Base64 to prevent canvas tainting
+                    var images = clone.querySelectorAll('img');
+                    var origImages = element.querySelectorAll('img');
+                    for (var i = 0; i < images.length; i++) {
+                        var orig = origImages[i];
+                        if (orig && orig.complete && orig.naturalWidth > 0) {
+                            try {
+                                var ic = document.createElement('canvas');
+                                ic.width = orig.naturalWidth;
+                                ic.height = orig.naturalHeight;
+                                var ictx = ic.getContext('2d');
+                                ictx.drawImage(orig, 0, 0);
+                                images[i].src = ic.toDataURL('image/png');
+                            } catch (e) {
+                                // Ignore if tainted
+                            }
+                        }
+                    }
+
+                    // Extract all page styles for typographic parity
+                    var styles = '';
+                    var styleElements = document.querySelectorAll('style');
+                    for (var s = 0; s < styleElements.length; s++) {
+                        styles += styleElements[s].textContent + '\n';
+                    }
+
+                    var serializedHtml = new XMLSerializer().serializeToString(clone);
+
+                    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (width * scale) + '" height="' + (height * scale) + '" viewBox="0 0 ' + width + ' ' + height + '">'
+                        + '<foreignObject width="100%" height="100%">'
+                        + '<div xmlns="http://www.w3.org/1999/xhtml">'
+                        + '<style>'
+                        + styles
+                        + '* { letter-spacing: normal !important; }'
+                        + 'body, html { margin: 0; padding: 0; background: #ffffff !important; font-family: "Noto Sans Myanmar", "Pyidaungsu", "Myanmar Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }'
+                        + '</style>'
+                        + serializedHtml
+                        + '</div>'
+                        + '</foreignObject>'
+                        + '</svg>';
+
+                    var blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+                    var url = URL.createObjectURL(blob);
+                    var img = new Image();
+
+                    img.onload = function () {
+                        try {
+                            var canvas = document.createElement('canvas');
+                            canvas.width = width * scale;
+                            canvas.height = height * scale;
+                            var ctx = canvas.getContext('2d');
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0);
+                            URL.revokeObjectURL(url);
+                            resolve(canvas);
+                        } catch (err) {
+                            URL.revokeObjectURL(url);
+                            reject(err);
+                        }
+                    };
+
+                    img.onerror = function (err) {
+                        URL.revokeObjectURL(url);
+                        reject(err);
+                    };
+
+                    img.src = url;
+                });
+            }
+
+            async function downloadPdf() {
+                var reportEl = document.getElementById('reportDocument');
+                var btn = document.getElementById('btnSavePdf');
+                var btnText = document.getElementById('btnSavePdfText');
+                var originalText = btnText ? btnText.textContent : 'Save PDF';
+
+                if (!reportEl) {
+                    doPrint();
+                    return;
+                }
+
+                if (!window.html2pdf) {
+                    doPrint();
+                    return;
+                }
+
+                if (btn) btn.disabled = true;
+                if (btnText) btnText.textContent = '⏳ {{ __("messages.track_service_generating_pdf") ?? "Generating PDF..." }}';
+
+                try {
+                    if (document.fonts && document.fonts.ready) {
+                        await document.fonts.ready;
+                    }
+
+                    var jsPdfSetting = pdfDimensions[currentLayout] || { unit: 'mm', format: 'a4', orientation: 'portrait' };
+                    if (isThermal) {
+                        var elHeightPx = reportEl.scrollHeight || reportEl.offsetHeight;
+                        var heightMm = Math.max(140, Math.ceil((elHeightPx * 0.264583) + 12));
+                        var widthMm = currentLayout === '58mm' ? 58 : 80;
+                        jsPdfSetting = { unit: 'mm', format: [widthMm, heightMm], orientation: 'portrait' };
+                    }
+
+                    var opt = {
+                        margin: isThermal ? [4, 2, 4, 2] : [8, 8, 8, 8],
+                        filename: filename,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        jsPDF: jsPdfSetting,
+                        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                    };
+
+                    // Render through SVG foreignObject to preserve Myanmar font shaping
+                    var customCanvas = null;
+                    try {
+                        customCanvas = await renderViaSvgForeignObject(reportEl, 2);
+                    } catch (svgErr) {
+                        console.warn('SVG foreignObject render fallback:', svgErr);
+                    }
+
+                    var worker = html2pdf().set(opt);
+                    if (customCanvas) {
+                        worker.prop.canvas = customCanvas;
+                        await worker.toPdf().save();
+                    } else {
+                        // Fallback to standard html2pdf
+                        await worker.from(reportEl).save();
+                    }
+                } catch (err) {
+                    console.error('PDF export failed:', err);
+                    doPrint();
+                } finally {
+                    if (btn) btn.disabled = false;
+                    if (btnText) btnText.textContent = originalText;
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var printBtn = document.getElementById('btnPrint');
+                if (printBtn) {
+                    printBtn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        doPrint();
+                    });
+                }
+
+                var pdfBtn = document.getElementById('btnSavePdf');
+                if (pdfBtn) {
+                    pdfBtn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        downloadPdf();
+                    });
+                }
+
+                document.addEventListener('click', function (e) {
+                    var printTarget = e.target.closest('[data-print]');
+                    if (printTarget) {
+                        e.preventDefault();
+                        doPrint();
+                        return;
+                    }
+                    var savePdfTarget = e.target.closest('[data-save-pdf]');
+                    if (savePdfTarget) {
+                        e.preventDefault();
+                        downloadPdf();
+                    }
+                }, true);
+            });
+        })();
+    </script>
 </body>
 </html>

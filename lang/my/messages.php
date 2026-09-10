@@ -2303,6 +2303,7 @@ return array(
   'primary_imei_label' => 'အဓိက IMEI:',
   'primary_imei_optional' => 'အဓိက IMEI (စိတ်ကြိုက်)',
   'print' => 'ပုံနှိပ်ရန်',
+  'printed' => 'ထုတ်ယူသည့်အချိန်',
   'print_certificate' => 'အာမခံ လက်မှတ် Print ထုတ်မည်',
   'print_invoice' => 'ဘောက်ချာ ပုံနှိပ်မည်',
   'print_receipt' => 'ပြေစာ / ဘောက်ချာ ထုတ်ရန်',

@@ -2321,6 +2321,7 @@ return array (
   'primary_imei_label' => '主要 IMEI:',
   'primary_imei_optional' => '主卡 IMEI (可选)',
   'print' => '打印',
+  'printed' => '打印时间',
   'print_certificate' => 'Print Certificate',
   'print_invoice' => '打印发票',
   'print_receipt' => '收据',
