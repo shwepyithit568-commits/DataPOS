@@ -1,4 +1,13 @@
 @php
+    $tmpl = $voucherTemplate ?? null;
+    $storeName = data_get($tmpl, 'header_title') ?: $store->name;
+    $storeSubtitle = data_get($tmpl, 'header_subtitle') ?: __('messages.wholesale_slip_sub');
+    $storePhone = data_get($tmpl, 'phone') ?: ($setting?->phone ?? $store->phone);
+    $storeAddress = data_get($tmpl, 'address') ?: ($setting?->address ?? $store->address);
+    $showLogo = (bool) data_get($tmpl, 'show_logo', true);
+    $templateLogo = ($tmpl instanceof \App\Models\VoucherTemplate) ? $tmpl->logoUrl() : null;
+    $logoUrl = $showLogo ? ($templateLogo ?? ($setting?->storefrontLogo() ? asset('storage/' . $setting->storefrontLogo()) : null)) : null;
+
     $myanmarFontUrl = null;
     try {
         $myanmarFontUrl = \Illuminate\Support\Facades\Vite::asset('resources/assets/fonts/NotoSansMyanmar/NotoSansMyanmar-Regular.ttf');
@@ -11,7 +20,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="robots" content="noindex,nofollow">
-    <title>{{ __('messages.wholesale_app_title') }} #{{ $application->id }} — {{ $store->name }}</title>
+    <title>{{ __('messages.wholesale_app_title') }} #{{ $application->id }} — {{ $storeName }}</title>
     <style>
         @if ($myanmarFontUrl)
         @font-face {
@@ -126,13 +135,18 @@
         {{-- Header --}}
         <div class="header">
             <div class="brand">
-                <div class="store-name">{{ $store->name }}</div>
-                <div class="store-sub">{{ __('messages.wholesale_slip_sub') }}</div>
-                @if ($setting && $setting->phone)
-                    <div style="font-size: 10px; color: #64748b; margin-top: 4px;">{{ __('messages.wholesale_phone') }} {{ $setting->phone }}</div>
+                @if ($logoUrl)
+                    <div style="margin-bottom: 6px;">
+                        <img src="{{ $logoUrl }}" alt="{{ $storeName }}" style="max-height: 48px; max-width: 160px; object-fit: contain;">
+                    </div>
                 @endif
-                @if ($setting && $setting->address)
-                    <div style="font-size: 10px; color: #64748b;">{{ __('messages.wholesale_address') }} {{ $setting->address }}</div>
+                <div class="store-name">{{ $storeName }}</div>
+                <div class="store-sub">{{ $storeSubtitle }}</div>
+                @if ($storePhone)
+                    <div style="font-size: 10px; color: #64748b; margin-top: 4px;">{{ __('messages.wholesale_phone') }} {{ $storePhone }}</div>
+                @endif
+                @if ($storeAddress)
+                    <div style="font-size: 10px; color: #64748b;">{{ __('messages.wholesale_address') }} {{ $storeAddress }}</div>
                 @endif
             </div>
             <div class="doc-title">

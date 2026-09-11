@@ -1,8 +1,10 @@
 import './bootstrap';
 import './csp-helpers';
 import Alpine from 'alpinejs';
+import { Html5Qrcode } from 'html5-qrcode';
 
 window.Alpine = Alpine;
+window.Html5Qrcode = Html5Qrcode;
 
 /* ---- brandAssetUploader: isolated state for the three Storefront brand
    asset uploaders (Storefront logo / Admin logo / Favicon). Every card owns
@@ -114,6 +116,7 @@ Alpine.data('posApp', (opts = {}) => ({
 
     // Product grid
     q: '',
+    mobileSearchOpen: opts.mobileSearchOpen || false,
     categoryId: 0,
     brandId: 0,
     products: [],
@@ -122,15 +125,36 @@ Alpine.data('posApp', (opts = {}) => ({
     gridLoading: false,
     gridTimer: null,
 
+    // Camera Barcode Scanner
+    barcodeScannerOpen: false,
+    barcodeContinuous: true,
+    barcodeTorchOn: false,
+    barcodeFacingMode: 'environment',
+    barcodeLoading: false,
+    barcodeCameraError: '',
+    barcodeLastScanned: '',
+    barcodeLastScannedName: '',
+    barcodeScannerInstance: null,
+    barcodeCooldown: false,
+
     // Cart + payments
     cart: { shift_open: false, lines: [], totals: { subtotal: '0', total: '0' }, held_count: 0, held: [], expiry: { threshold_hours: 24, oldest_held_at: null, soon_count: 0 } },
     cartBusy: false,
     variantProduct: null,
     showPayment: false,
-    // Reporting tabs below the cashier panels (today / registers / debt)
+    // Reporting modal (today / registers / debt / repairs)
     activeTab: 'today',
+    reportingModalOpen: false,
+    openReportingModal(tab = 'today') {
+        this.activeTab = tab;
+        this.reportingModalOpen = true;
+    },
+    closeReportingModal() {
+        this.reportingModalOpen = false;
+    },
     switchTab(name) {
         this.activeTab = name;
+        this.reportingModalOpen = true;
     },
     // Web order import (fulfil an online order at the counter)
     webOrdersOpen: false,
@@ -178,8 +202,8 @@ Alpine.data('posApp', (opts = {}) => ({
     pricePinIndex: null,   // line whose override needs a manager PIN
     pricePinValue: '',
     customer: null,
-    cash: '0',
-    kpay: 0, wavepay: 0, cbpay: 0, mmqr: 0, credit: 0,
+    cash: 0, kpay: 0, wavepay: 0, cbpay: 0, mmqr: 0, credit: 0,
+    activeMethod: 'cash',   // which payment tile is focused in the modal
     cq: '', cresults: [], copen: false,
     quickAddOpen: false, quickBusy: false, qname: '', qphone: '', qtype: 'retail_customer',
     // Shop Expense Modal (quick cash-out / daily store expense)
@@ -187,6 +211,7 @@ Alpine.data('posApp', (opts = {}) => ({
     expenseCategoryId: '', expensePaymentMethod: 'cash', expensePaidTo: '', expenseNotes: '',
     // Discount Modal
     discountModalOpen: false, discountBusy: false, discountType: 'fixed', discountValue: '',
+    barcodeCameraInsecure: false,
     notice: '', noticeType: '', noticeTimer: null,
 
     /* ---- init ---- */
@@ -343,14 +368,14 @@ Alpine.data('posApp', (opts = {}) => ({
     /* ---- cart mutations (AJAX) ---- */
     async addProduct(p) {
         if (p.variants && p.variants.length > 0) { this.variantProduct = p; return; }
-        await this.mutate('/cart', { product_id: p.id, quantity: '1' });
+        await this.mutate('/cart', { product_id: p.id, quantity: '1' }, {}, this.labels.added || 'ဈေးခြင်းထဲသို့ ထည့်သွင်းပြီးပါပြီ။');
     },
 
     async addVariant(v) {
         const p = this.variantProduct;
         this.variantProduct = null;
         if (!p) return;
-        await this.mutate('/cart', { product_id: p.id, product_variant_id: v.id, quantity: '1' });
+        await this.mutate('/cart', { product_id: p.id, product_variant_id: v.id, quantity: '1' }, {}, this.labels.added || 'ဈေးခြင်းထဲသို့ ထည့်သွင်းပြီးပါပြီ။');
     },
 
     async changeQty(line, delta) {
@@ -366,13 +391,13 @@ Alpine.data('posApp', (opts = {}) => ({
     },
 
     async removeLine(line) {
-        await this.mutate('/cart/' + line.index, {}, { method: 'DELETE' });
+        await this.mutate('/cart/' + line.index, {}, { method: 'DELETE' }, this.labels.pos_item_removed || 'ဈေးခြင်းထဲမှ ပစ္စည်းကို ဖယ်ရှားပြီးပါပြီ။');
     },
 
     async clearCart() {
         if (!this.cart.lines.length) return;
         this.pendingWebOrderId = null; // a cleared cart is no longer fulfilling an order
-        await this.mutate('/cart/clear', {});
+        await this.mutate('/cart/clear', {}, {}, this.labels.cleared || 'ဈေးခြင်းထဲရှိ ပစ္စည်းများကို ရှင်းပြီးပါပြီ။');
     },
 
     // Per-line price override (negotiation): empty value clears the override
@@ -476,12 +501,12 @@ Alpine.data('posApp', (opts = {}) => ({
 
     async voidHeld(id) {
         if (this.cartBusy) return;
-        if (!confirm('Void this held sale?')) return;
+        if (!confirm(this.labels.confirm_void_sale || 'ဆိုင်းငံ့ထားသော ဤအရောင်းစာရင်းကို ပယ်ဖျက်ရန် သေချာပါသလား?')) return;
         this.cartBusy = true;
         try {
             const data = await this.fetchJson('/void/' + id, { method: 'POST', body: new URLSearchParams({}) });
             const expired = this.applyCart(data);
-            this.flash(expired > 0 ? this.expiredNotice(expired) : (this.labels.voided || 'Sale voided'), expired > 0 ? 'error' : 'success');
+            this.flash(expired > 0 ? this.expiredNotice(expired) : (data.success || this.labels.voided || 'Sale voided'), expired > 0 ? 'error' : 'success');
         } catch (e) {
             this.flash(e.message, 'error');
         } finally {
@@ -489,13 +514,22 @@ Alpine.data('posApp', (opts = {}) => ({
         }
     },
 
-    async mutate(path, body, options = {}) {
+    async mutate(path, body, options = {}, defaultSuccessMsg = null) {
         if (this.cartBusy) return;
         this.cartBusy = true;
         try {
             const data = await this.fetchJson(path, { method: options.method || 'POST', body: new URLSearchParams(body) });
             const expired = this.applyCart(data);
-            this.flash(expired > 0 ? this.expiredNotice(expired) : (this.labels.added || 'OK'), expired > 0 ? 'error' : 'success');
+            if (expired > 0) {
+                this.flash(this.expiredNotice(expired), 'error');
+            } else {
+                const msg = (typeof data.success === 'string' && data.success.trim())
+                    ? data.success
+                    : defaultSuccessMsg;
+                if (msg) {
+                    this.flash(msg, 'success');
+                }
+            }
         } catch (e) {
             this.flash(e.message, 'error');
         } finally {
@@ -515,17 +549,25 @@ Alpine.data('posApp', (opts = {}) => ({
         if (this.shiftsEnabled && !this.shiftOpen) { this.flash(this.labels.shift_required || 'Open a shift first', 'error'); return; }
         if (!this.cart.lines.length) { this.flash(this.labels.pos_cart_empty || 'ဈေးခြင်းထဲတွင် ပစ္စည်းမရှိသေးပါ', 'error'); return; }
         this.mobileCartOpen = false;
-        // Pre-fill cash with the exact total unless the cashier already typed one.
-        if (!this.cash || parseFloat(this.cash) === 0) this.cash = parseFloat(this.cart.totals.total || 0);
+
+        // Reset all payment fields — fresh slate each time the modal opens.
+        // Cash = full total; all digital methods and credit start at 0.
+        this.activeMethod = 'cash';
+        this.cash    = parseFloat(this.cart.totals.total || 0);
+        this.kpay    = 0;
+        this.wavepay = 0;
+        this.cbpay   = 0;
+        this.mmqr    = 0;
+        this.credit  = 0;
+
         this.showPayment = true;
+
         this.$nextTick(() => {
-            const cashInput = document.getElementById('pos-cash-input') || (this.$refs && this.$refs.cashInput);
-            if (cashInput) {
-                cashInput.focus();
-                cashInput.select();
-            }
+            const input = document.getElementById('pos-active-method-input');
+            if (input) { input.focus(); input.select(); }
         });
     },
+
 
     /* ---- customer attach (credit/debt) ---- */
     async csearch(forceOpen = false) {
@@ -560,7 +602,6 @@ Alpine.data('posApp', (opts = {}) => ({
             const data = await this.fetchJson('/customers/' + c.id + '/attach', { method: 'POST', body: new URLSearchParams({}) });
             this.applyCart(data);
             this.cq = '';
-            if (this.remaining > 0 && this.credit === 0) this.credit = Math.max(0, Math.round(this.remaining / 100) * 100);
             this.loadGrid(); // grid prices follow the attached tier
             this.flash(data.success || this.labels.pos_customer_attached || 'Customer attached', 'success');
         } catch (e) {
@@ -740,7 +781,7 @@ Alpine.data('posApp', (opts = {}) => ({
         const subtotal = parseFloat(this.cart.totals.subtotal || 0);
         if (this.discountType === 'percent') {
             if (raw > 100) {
-                this.flash('Discount percentage cannot exceed 100%', 'error');
+                this.flash(this.labels.pos_discount_pct_exceeded || 'လျှော့ဈေး ရာခိုင်နှုန်းသည် 100% ထက် မကျော်လွန်ရပါ။', 'error');
                 return;
             }
             discountAmt = Math.round((subtotal * (raw / 100)) * 100) / 100;
@@ -799,12 +840,370 @@ Alpine.data('posApp', (opts = {}) => ({
         return this.remaining <= 0.005;
     },
 
+    /* ---- payment modal UI helpers (live in posApp scope to avoid child-scope shadowing) ---- */
+    get activeKey() {
+        // Map tile id → Alpine state key
+        const map = { cash: 'cash', kpay: 'kpay', wavepay: 'wavepay', cb_pay: 'cbpay', mmqr: 'mmqr', credit: 'credit' };
+        return map[this.activeMethod] || this.activeMethod;
+    },
+
+    getActiveAmount() {
+        const k = this.activeKey;
+        return parseFloat(this[k]) || 0;
+    },
+
+    setActiveAmount(val) {
+        const k = this.activeKey;
+        this[k] = Math.max(0, parseFloat(val) || 0);
+    },
+
+    // Numpad digit append for the currently active payment method
+    padActive(val) {
+        const k = this.activeKey;
+        let s = String(Math.round(parseFloat(this[k]) || 0));
+        if (val === 'C')   { this[k] = 0; return; }
+        if (val === '←' || val === '\u2190') { s = s.slice(0, -1) || '0'; this[k] = parseInt(s, 10); return; }
+        if (val === '00')  { this[k] = parseInt(s + '00', 10); return; }
+        if (val === '000') { this[k] = parseInt(s + '000', 10); return; }
+        this[k] = parseInt(s === '0' ? val : s + val, 10);
+    },
+
+    // Set the active method's amount to whatever is still owed
+    setPaymentRemaining() {
+        const k = this.activeKey;
+        const others = ['cash', 'kpay', 'wavepay', 'cbpay', 'mmqr', 'credit'].filter(x => x !== k);
+        const otherSum = others.reduce((s, x) => s + (parseFloat(this[x]) || 0), 0);
+        const rem = Math.max(0, parseFloat(this.cart.totals.total || 0) - otherSum);
+        this[k] = Math.round(rem);
+    },
+
+    // Zero out one payment method
+    clearPaymentMethod(key) {
+        const map = { cash: 'cash', kpay: 'kpay', wavepay: 'wavepay', cb_pay: 'cbpay', cbpay: 'cbpay', mmqr: 'mmqr', credit: 'credit' };
+        const k = map[key] || key;
+        this[k] = 0;
+    },
+
+    // Switch active payment tile
+    switchPaymentMethod(mid) {
+        if (mid === 'credit' && !this.customer) {
+            this.flash(this.labels.credit_requires_customer || 'Customer required for credit', 'error');
+            return;
+        }
+        const total = parseFloat(this.cart.totals.total || 0);
+        const map = { cash: 'cash', kpay: 'kpay', wavepay: 'wavepay', cb_pay: 'cbpay', mmqr: 'mmqr', credit: 'credit' };
+        const newKey = map[mid] || mid;
+
+        // If currently only cash is filled with the full total (untouched default single-payment):
+        // Automatically transfer the full amount to the newly selected method for 1-click single payment.
+        const others = ['kpay', 'wavepay', 'cbpay', 'mmqr', 'credit'];
+        const otherSum = others.reduce((s, x) => s + (parseFloat(this[x]) || 0), 0);
+        if (this.activeMethod === 'cash' && parseFloat(this.cash) === total && otherSum === 0 && mid !== 'cash') {
+            this.cash = 0;
+            this[newKey] = total;
+        }
+
+        this.activeMethod = mid;
+        this.$nextTick(() => {
+            const input = document.getElementById('pos-active-method-input');
+            if (input) { input.focus(); input.select(); }
+        });
+    },
+
+    // Amount already entered for a given method key (for tile badges)
+    amtFor(key) {
+        const map = { cash: 'cash', kpay: 'kpay', wavepay: 'wavepay', cb_pay: 'cbpay', cbpay: 'cbpay', mmqr: 'mmqr', credit: 'credit' };
+        const k = map[key] || key;
+        return parseFloat(this[k]) || 0;
+    },
+
+    /* ---- Camera Barcode Scanner ---- */
+    playBeep() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1800, ctx.currentTime);
+            gain.gain.setValueAtTime(0.2, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.12);
+        } catch (e) {}
+        if (navigator.vibrate) {
+            try { navigator.vibrate(100); } catch (e) {}
+        }
+    },
+
+    async openBarcodeScanner() {
+        this.barcodeScannerOpen = true;
+        this.barcodeCameraError = '';
+        this.barcodeCameraInsecure = false;
+        this.barcodeLoading = true;
+        this.$nextTick(async () => {
+            await this.startCameraScanner();
+        });
+    },
+
+    async closeBarcodeScanner() {
+        this.barcodeScannerOpen = false;
+        await this.stopCameraScanner();
+    },
+
+    async startCameraScanner() {
+        this.barcodeCameraError = '';
+        this.barcodeCameraInsecure = false;
+        this.barcodeLoading = true;
+
+        // Stop any existing stream first
+        await this.stopCameraScanner();
+
+        const videoEl = document.getElementById('pos-barcode-video');
+        if (!videoEl) {
+            this.barcodeLoading = false;
+            return;
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            this.barcodeLoading = false;
+            this.barcodeCameraInsecure = true;
+            this.barcodeCameraError = this.labels.pos_camera_insecure_http || 'ကင်မရာ API မရှိပါ (HTTPS လိုအပ်ပါသည်)';
+            return;
+        }
+
+        try {
+            // Request the camera stream directly — no third-party lib
+            const constraints = {
+                video: {
+                    facingMode: { ideal: this.barcodeFacingMode },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            };
+
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            this._cameraStream = stream;
+            videoEl.srcObject = stream;
+            await videoEl.play();
+
+            this.barcodeLoading = false;
+
+            // Start decoding loop
+            this._scanLoop = true;
+            this._decodingLoop(videoEl);
+        } catch (err) {
+            console.warn('[POS Camera] getUserMedia error:', err.name, err.message);
+            this.barcodeLoading = false;
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                this.barcodeCameraError = this.labels.pos_camera_permission_denied || 'ကင်မရာ ခွင့်ပြုချက် မရရှိပါ — Browser Site Settings တွင် Camera ကို Allow ပြောင်းပေးပါ';
+            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                this.barcodeCameraError = 'ကင်မရာ ရှာမတွေ့ပါ (Camera မပါသည့် Device ဖြစ်နိုင်သည်)';
+            } else if (err.name === 'OverconstrainedError') {
+                // Retry without facingMode constraint
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    this._cameraStream = stream;
+                    videoEl.srcObject = stream;
+                    await videoEl.play();
+                    this.barcodeLoading = false;
+                    this._scanLoop = true;
+                    this._decodingLoop(videoEl);
+                } catch (e2) {
+                    this.barcodeCameraError = e2.message || 'ကင်မရာ ဖွင့်မရပါ';
+                }
+            } else {
+                this.barcodeCameraError = err.message || 'ကင်မရာ ဖွင့်မရပါ';
+            }
+        }
+    },
+
+    async _decodingLoop(videoEl) {
+        // Use BarcodeDetector (Android Chrome 83+, Chrome Desktop) if available
+        // Fallback: Html5Qrcode scanFile on a canvas frame
+        const hasBarcodeDetector = typeof BarcodeDetector !== 'undefined';
+        let detector = null;
+
+        if (hasBarcodeDetector) {
+            const supported = await BarcodeDetector.getSupportedFormats().catch(() => []);
+            const formats = supported.length > 0 ? supported : [
+                'code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e',
+                'qr_code', 'data_matrix', 'itf', 'codabar', 'code_93'
+            ];
+            detector = new BarcodeDetector({ formats });
+        }
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const loop = async () => {
+            if (!this._scanLoop) return;
+            if (videoEl.readyState < 2 || videoEl.paused) {
+                requestAnimationFrame(loop);
+                return;
+            }
+
+            if (hasBarcodeDetector && detector) {
+                // Path A: Native BarcodeDetector — fastest
+                try {
+                    const barcodes = await detector.detect(videoEl);
+                    if (barcodes && barcodes.length > 0) {
+                        const raw = barcodes[0].rawValue;
+                        if (raw) {
+                            await this.onBarcodeDetected(raw);
+                            if (!this.barcodeContinuous) return; // stop loop in single-scan mode
+                        }
+                    }
+                } catch (e) { /* frame error, skip */ }
+            } else if (typeof window.Html5Qrcode !== 'undefined') {
+                // Path B: Html5Qrcode canvas scan (fallback for older browsers)
+                try {
+                    canvas.width = videoEl.videoWidth;
+                    canvas.height = videoEl.videoHeight;
+                    ctx.drawImage(videoEl, 0, 0);
+                    canvas.toBlob(async (blob) => {
+                        if (!blob || !this._scanLoop) return;
+                        try {
+                            const file = new File([blob], 'frame.jpg', { type: 'image/jpeg' });
+                            let scanner = this._fallbackScanner;
+                            if (!scanner) {
+                                // Use a hidden off-screen reader element
+                                let offEl = document.getElementById('pos-barcode-offscreen');
+                                if (!offEl) {
+                                    offEl = document.createElement('div');
+                                    offEl.id = 'pos-barcode-offscreen';
+                                    offEl.style.cssText = 'width:1px;height:1px;overflow:hidden;position:fixed;top:-9999px;left:-9999px;';
+                                    document.body.appendChild(offEl);
+                                }
+                                scanner = new window.Html5Qrcode('pos-barcode-offscreen', { verbose: false });
+                                this._fallbackScanner = scanner;
+                            }
+                            const code = await scanner.scanFile(file, false);
+                            if (code) await this.onBarcodeDetected(code);
+                        } catch (e) { /* no barcode in frame */ }
+                    }, 'image/jpeg', 0.8);
+                } catch (e) { /* canvas error */ }
+            }
+
+            if (this._scanLoop) {
+                setTimeout(loop, hasBarcodeDetector ? 150 : 500);
+            }
+        };
+
+        requestAnimationFrame(loop);
+    },
+
+    async stopCameraScanner() {
+        this._scanLoop = false;
+
+        if (this._cameraStream) {
+            try {
+                this._cameraStream.getTracks().forEach(t => t.stop());
+            } catch (e) {}
+            this._cameraStream = null;
+        }
+
+        const videoEl = document.getElementById('pos-barcode-video');
+        if (videoEl) {
+            videoEl.srcObject = null;
+        }
+
+        if (this._fallbackScanner) {
+            try { this._fallbackScanner.clear(); } catch (e) {}
+            this._fallbackScanner = null;
+        }
+
+        // Also clean up old Html5Qrcode instance if present
+        if (this.barcodeScannerInstance) {
+            try {
+                if (this.barcodeScannerInstance.isScanning) {
+                    await this.barcodeScannerInstance.stop();
+                }
+                this.barcodeScannerInstance.clear();
+            } catch (e) {}
+            this.barcodeScannerInstance = null;
+        }
+
+        this.barcodeTorchOn = false;
+        this.barcodeLoading = false;
+    },
+
+    async toggleCameraFacing() {
+        this.barcodeFacingMode = this.barcodeFacingMode === 'environment' ? 'user' : 'environment';
+        this.barcodeLoading = true;
+        await this.startCameraScanner();
+    },
+
+    async toggleTorch() {
+        if (!this._cameraStream) return;
+        try {
+            const [track] = this._cameraStream.getVideoTracks();
+            if (!track) return;
+            this.barcodeTorchOn = !this.barcodeTorchOn;
+            await track.applyConstraints({ advanced: [{ torch: this.barcodeTorchOn }] });
+        } catch (e) {
+            console.warn('[POS Torch] Not supported:', e);
+            this.barcodeTorchOn = false;
+        }
+    },
+
+    async onBarcodeDetected(code) {
+        if (!code || this.barcodeCooldown) return;
+        const cleanCode = String(code).trim();
+        if (!cleanCode) return;
+
+        this.barcodeCooldown = true;
+        setTimeout(() => { this.barcodeCooldown = false; }, 1800);
+
+        this.playBeep();
+        this.barcodeLastScanned = cleanCode;
+
+        try {
+            const data = await this.fetchJson('/products-grid?q=' + encodeURIComponent(cleanCode));
+            const products = data.products || [];
+
+            if (products.length === 0) {
+                this.flash((this.labels.pos_barcode_not_found || 'No product found for barcode') + ': ' + cleanCode, 'warning');
+                return;
+            }
+
+            const matched = products[0];
+            if (matched.variants && matched.variants.length > 0) {
+                const exactVariant = matched.variants.find(v => v.sku === cleanCode || (v.barcode && v.barcode === cleanCode));
+                if (exactVariant) {
+                    await this.addVariant(exactVariant);
+                    this.barcodeLastScannedName = matched.name + ' (' + exactVariant.name + ')';
+                } else {
+                    if (!this.barcodeContinuous) {
+                        await this.closeBarcodeScanner();
+                    }
+                    this.variantProduct = matched;
+                    return;
+                }
+            } else {
+                await this.addProduct(matched);
+                this.barcodeLastScannedName = matched.name;
+            }
+
+            this.flash(matched.name + ' ' + (this.labels.added || 'ဈေးခြင်းထဲသို့ ထည့်ပြီးပါပြီ'), 'success');
+
+            if (!this.barcodeContinuous) {
+                await this.closeBarcodeScanner();
+            }
+        } catch (err) {
+            this.flash(err.message, 'error');
+        }
+    },
+
     /* ---- feedback ---- */
     flash(msg, type) {
         this.notice = msg;
         this.noticeType = type;
         clearTimeout(this.noticeTimer);
         this.noticeTimer = setTimeout(() => { this.notice = ''; }, 3500);
+        window.dispatchEvent(new CustomEvent('toast', { detail: { type: type || 'info', message: msg } }));
     },
 
     /* ---- keyboard shortcuts ---- */
@@ -813,6 +1212,7 @@ Alpine.data('posApp', (opts = {}) => ({
 
         // Global Escape handling
         if (k === 'ESCAPE') {
+            if (this.barcodeScannerOpen) { this.closeBarcodeScanner(); e.preventDefault(); return; }
             if (this.discountModalOpen) { this.discountModalOpen = false; e.preventDefault(); return; }
             if (this.showPayment) { this.showPayment = false; e.preventDefault(); return; }
             if (this.variantProduct) { this.variantProduct = null; e.preventDefault(); return; }
@@ -821,9 +1221,15 @@ Alpine.data('posApp', (opts = {}) => ({
             if (this.expenseModalOpen) { this.expenseModalOpen = false; e.preventDefault(); return; }
             if (this.webOrdersOpen) { this.webOrdersOpen = false; e.preventDefault(); return; }
             if (this.mobileCartOpen) { this.mobileCartOpen = false; e.preventDefault(); return; }
+            if (this.mobileSearchOpen && !this.q) {
+                this.mobileSearchOpen = false;
+                e.preventDefault();
+                return;
+            }
             const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
             if (this.q && activeTag !== 'input' && activeTag !== 'textarea') {
                 this.q = '';
+                this.mobileSearchOpen = false;
                 this.loadGrid();
                 e.preventDefault();
                 return;
@@ -839,15 +1245,18 @@ Alpine.data('posApp', (opts = {}) => ({
                 e.preventDefault();
                 if (this.showPayment) this.showPayment = false;
                 if (this.variantProduct) this.variantProduct = null;
-                const desktopInput = document.getElementById('pos-search-input');
-                const mobileInput = document.getElementById('pos-mobile-search-input');
-                const input = (window.innerWidth >= 1024 && desktopInput && desktopInput.offsetParent !== null)
-                    ? desktopInput
-                    : (mobileInput && mobileInput.offsetParent !== null ? mobileInput : desktopInput);
-                if (input) {
-                    input.focus();
-                    input.select();
-                }
+                this.mobileSearchOpen = true;
+                this.$nextTick(() => {
+                    const desktopInput = document.getElementById('pos-search-input');
+                    const mobileInput = document.getElementById('pos-mobile-search-input');
+                    const input = (window.innerWidth >= 1024 && desktopInput && desktopInput.offsetParent !== null)
+                        ? desktopInput
+                        : (mobileInput && mobileInput.offsetParent !== null ? mobileInput : desktopInput);
+                    if (input) {
+                        input.focus();
+                        input.select();
+                    }
+                });
             },
             F2: () => {
                 e.preventDefault();

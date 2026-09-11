@@ -245,18 +245,7 @@ class ServiceJobController extends Controller
 
     public function printTicket(StoreContext $context, string $store_slug, ServiceJob $job): View
     {
-        $store = $context->getStore();
-        if ($job->store_id !== $store->id) {
-            abort(404);
-        }
-
-        $job->load(['customer', 'technician', 'payments', 'items']);
-
-        return view('admin.service_jobs.print', [
-            'store'           => $store,
-            'storeRouteParams' => $context->getRouteParams(),
-            'job'             => $job,
-        ]);
+        return app(RepairController::class)->printTicket($context, $store_slug, $job, request());
     }
 
     // ── Edit & Update ──────────────────────────────────────────────────────

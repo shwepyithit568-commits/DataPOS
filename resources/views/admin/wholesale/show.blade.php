@@ -154,7 +154,7 @@
                 <div class="bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-200 dark:border-blue-900/60 p-3 sm:p-4 shadow-2xs space-y-1.5">
                     <h3 class="text-xs font-black uppercase tracking-wider text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
                         <span>💬</span>
-                        <span>လျှောက်ထားသူ၏ မှတ်ချက် (Applicant Note)</span>
+                        <span>{{ __('messages.wholesale_applicant_note') }}</span>
                     </h3>
                     <p class="text-xs text-blue-900 dark:text-blue-100 leading-relaxed">{{ $application->notes }}</p>
                 </div>

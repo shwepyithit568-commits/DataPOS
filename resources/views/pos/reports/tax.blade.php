@@ -167,7 +167,7 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
                 <thead>
-                    <tr class="border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850 text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">
+                    <tr class="border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800 text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">
                         <th class="py-2 px-2.5">{{ __('messages.receipt') }}</th>
                         <th class="py-2 px-2.5">{{ __('messages.reports_date') }}</th>
                         <th class="py-2 px-2.5">{{ __('messages.cashier') }}</th>
@@ -247,7 +247,7 @@
                 </tbody>
                 @if(count($report['sales']) > 0)
                     <tfoot>
-                        <tr class="border-t-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-850 font-bold text-xs">
+                        <tr class="border-t-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-xs">
                             <td colspan="5" class="py-2 px-2.5 text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">
                                 {{ __('messages.total') }}
                             </td>

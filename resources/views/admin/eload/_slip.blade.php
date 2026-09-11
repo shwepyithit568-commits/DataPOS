@@ -1,8 +1,20 @@
+@php
+    $tmpl = $voucherTemplate ?? null;
+    $storeName = data_get($tmpl, 'header_title') ?: $store->name;
+    $storeSubtitle = data_get($tmpl, 'header_subtitle');
+    $storePhone = data_get($tmpl, 'phone') ?: ($store->setting?->phone ?? $store->phone);
+    $storeAddress = data_get($tmpl, 'address') ?: ($store->setting?->address ?? $store->address);
+    $showLogo = (bool) data_get($tmpl, 'show_logo', true);
+    $templateLogo = ($tmpl instanceof \App\Models\VoucherTemplate) ? $tmpl->logoUrl() : null;
+    $logoUrl = $showLogo ? ($templateLogo ?? ($store->setting?->adminLogo() ? asset('storage/' . $store->setting->adminLogo()) : null)) : null;
+    $footerGreeting = data_get($tmpl, 'footer_greeting') ?: __('messages.thank_you_come_again');
+    $footerPolicy = data_get($tmpl, 'footer_policy');
+@endphp
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="utf-8">
-    <title>E-Load Voucher #{{ $transaction->ref_no }}</title>
+    <title>E-Load Voucher #{{ $transaction->ref_no }} - {{ $storeName }}</title>
     <style>
         @page {
             size: 80mm auto;
@@ -52,8 +64,22 @@
 </head>
 <body onload="window.print()">
     <div class="text-center">
-        <h2 style="margin: 0 0 2px 0; font-size: 16px;">{{ $store->name }}</h2>
-        <div style="font-size: 11px;">{{ __('messages.eload_voucher_title') }}</div>
+        @if ($logoUrl)
+            <div style="margin-bottom: 4px;">
+                <img src="{{ $logoUrl }}" alt="{{ $storeName }}" style="max-height: 40px; max-width: 140px; object-fit: contain; margin: 0 auto; display: block;">
+            </div>
+        @endif
+        <h2 style="margin: 0 0 2px 0; font-size: 16px;">{{ $storeName }}</h2>
+        @if ($storeSubtitle)
+            <div style="font-size: 10px; color: #555;">{{ $storeSubtitle }}</div>
+        @endif
+        @if ($storePhone || $storeAddress)
+            <div style="font-size: 9.5px; color: #666; margin-top: 1px;">
+                @if ($storePhone) {{ $storePhone }} @endif
+                @if ($storeAddress) | {{ $storeAddress }} @endif
+            </div>
+        @endif
+        <div style="font-size: 11px; margin-top: 2px;">{{ __('messages.eload_voucher_title') }}</div>
     </div>
 
     <div class="divider"></div>
@@ -120,7 +146,10 @@
     <div class="divider"></div>
 
     <div class="text-center" style="font-size: 11px; margin-top: 8px;">
-        <div>{{ __('messages.thank_you_come_again') }}</div>
+        <div>{{ $footerGreeting }}</div>
+        @if ($footerPolicy)
+            <div style="font-size: 9px; color: #666; margin-top: 3px; white-space: pre-line;">{{ $footerPolicy }}</div>
+        @endif
         <div style="font-size: 9px; color: #555; margin-top: 4px;">{{ config('app.name', 'DataPOS') }} System</div>
     </div>
 </body>

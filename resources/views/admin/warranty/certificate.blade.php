@@ -1,3 +1,14 @@
+@php
+    $tmpl = $voucherTemplate ?? null;
+    $storeName = data_get($tmpl, 'header_title') ?: $store->name;
+    $storeSubtitle = data_get($tmpl, 'header_subtitle');
+    $storePhone = data_get($tmpl, 'phone') ?: ($store->setting?->phone ?? $store->phone);
+    $storeAddress = data_get($tmpl, 'address') ?: ($store->setting?->address ?? $store->address);
+    $showLogo = (bool) data_get($tmpl, 'show_logo', true);
+    $templateLogo = ($tmpl instanceof \App\Models\VoucherTemplate) ? $tmpl->logoUrl() : null;
+    $logoUrl = $showLogo ? ($templateLogo ?? ($store->setting?->adminLogo() ? asset('storage/' . $store->setting->adminLogo()) : null)) : null;
+    $termsConditions = data_get($tmpl, 'footer_policy') ?: ($warranty->terms_conditions ?: '၁။ ရေဝင်ခြင်း၊ ပြုတ်ကျခြင်း၊ မျက်နှာပြင်ကွဲအက်ခြင်းနှင့် တရားမဝင် ဆော့ဝဲလ်သွင်းထားခြင်းများအတွက် အာမခံ အကျုံးမဝင်ပါ။ ၂။ အာမခံရယူရန် ဤလက်မှတ်နှင့် စက်၏ Serial/IMEI တူညီရမည် ဖြစ်ပါသည်။');
+@endphp
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
 <head>
@@ -214,11 +225,19 @@
     <div class="cert-card">
         {{-- Header --}}
         <div class="cert-header">
-            <div class="store-name">{{ $store->name }}</div>
-            @if($store->setting?->phone || $store->setting?->address)
+            @if ($logoUrl)
+                <div style="margin-bottom: 12px;">
+                    <img src="{{ $logoUrl }}" alt="{{ $storeName }}" style="max-height: 55px; max-width: 180px; object-fit: contain; margin: 0 auto; display: block;">
+                </div>
+            @endif
+            <div class="store-name">{{ $storeName }}</div>
+            @if ($storeSubtitle)
+                <div style="font-size: 13px; font-weight: 600; color: #4338ca; margin-top: 2px;">{{ $storeSubtitle }}</div>
+            @endif
+            @if($storePhone || $storeAddress)
                 <div class="store-info">
-                    @if($store->setting?->phone) 📞 {{ $store->setting->phone }} @endif
-                    @if($store->setting?->address) | 📍 {{ $store->setting->address }} @endif
+                    @if($storePhone) 📞 {{ $storePhone }} @endif
+                    @if($storeAddress) | 📍 {{ $storeAddress }} @endif
                 </div>
             @endif
             <div class="cert-title">{{ __('messages.warranty_certificate_title') }}</div>
@@ -293,8 +312,8 @@
         {{-- Terms & Conditions --}}
         <div class="terms-box">
             <strong>{{ __('messages.warranty_terms_conditions') }}:</strong>
-            <p style="margin-top: 4px;">
-                {{ $warranty->terms_conditions ?: '၁။ ရေဝင်ခြင်း၊ ပြုတ်ကျခြင်း၊ မျက်နှာပြင်ကွဲအက်ခြင်းနှင့် တရားမဝင် ဆော့ဝဲလ်သွင်းထားခြင်းများအတွက် အာမခံ အကျုံးမဝင်ပါ။ ၂။ အာမခံရယူရန် ဤလက်မှတ်နှင့် စက်၏ Serial/IMEI တူညီရမည် ဖြစ်ပါသည်။' }}
+            <p style="margin-top: 4px; white-space: pre-line;">
+                {{ $termsConditions }}
             </p>
         </div>
 

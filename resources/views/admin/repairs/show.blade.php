@@ -713,7 +713,7 @@
                 {{-- Dispatch Channels Grid --}}
                 <div class="space-y-1.5 pt-1">
                     <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
-                        ပေးပို့လိုသည့် လမ်းကြောင်း (Channels)
+                        {{ __('messages.repair_share_channels') }}
                     </span>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">

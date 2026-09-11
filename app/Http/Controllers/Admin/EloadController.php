@@ -458,6 +458,8 @@ class EloadController extends Controller
             ->with(['account', 'cashier'])
             ->findOrFail($id);
 
-        return view('admin.eload._slip', compact('store', 'transaction'));
+        $voucherTemplate = app(\App\POS\Services\VoucherTemplateService::class)->getActiveTemplate($store, '80mm');
+
+        return view('admin.eload._slip', compact('store', 'transaction', 'voucherTemplate'));
     }
 }

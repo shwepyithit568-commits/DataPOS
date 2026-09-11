@@ -37,7 +37,7 @@
 
     $sectionDescs = [
         'general'      => $store->name . ' ၏ storefront header, ဆိုင်အမည်၊ Logo နှင့် အဓိကဘာသာစကား သတ်မှတ်ချက်များ။',
-        'currency'     => 'စနစ်တစ်ခုလုံးရှိ ငွေကြေးသင်္ကေတ (Ks, $), သင်္ကေတနေရာ, ဒသမ (.00), စတော့အရေအတွက် Precision (Auto/0/2/3) နှင့် စာရင်းကိုင် format သတ်မှတ်ချက်များ။',
+        'currency'     => 'စနစ်တစ်ခုလုံးရှိ ငွေကြေးသင်္ကေတ၊ ဒသမနေရာ၊ စတော့အရေအတွက် တိကျမှုနှင့် စာရင်းကိုင် ဖော်မက် သတ်မှတ်ချက်များ။',
         'pos'          => 'POS ဆိုင် cashier အတွေ့အကြုံ — thermal voucher, shift, held sale, pin control ဆက်တင်များ။',
         'appearance'   => 'Storefront ၏ Brand Color, Button Color, Header Background တို့ကို ထိန်းချုပ်ပါ — preset palette ဒါမှမဟုတ် custom HEX color ရွေးချယ်နိုင်ပါသည်။',
         'contact'      => 'Storefront footer နှင့် order confirmation တွင်ပြမည့် phone, Viber, Telegram, social media data များ။',

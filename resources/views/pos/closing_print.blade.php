@@ -19,10 +19,13 @@
         $marker = '*** PENDING Z-REPORT — SUBMITTED (UNAPPROVED) / ဆိုင်းငံ့ နေ့စဉ်စာရင်းချုပ် ***';
     }
 
-    $logoPath = $store->setting?->adminLogo();
-    $logoUrl = $logoPath ? asset('storage/' . $logoPath) : null;
-    $address = $store->address ?? null;
-    $phone = $store->viber_number ? 'Viber: ' . $store->viber_number : ($store->phone ?? null);
+    $showLogo = (bool) data_get($tmpl, 'show_logo', true);
+    $templateLogo = ($tmpl instanceof \App\Models\VoucherTemplate) ? $tmpl->logoUrl() : null;
+    $logoUrl = $showLogo ? ($templateLogo ?? ($store->setting?->adminLogo() ? asset('storage/' . $store->setting->adminLogo()) : null)) : null;
+    $address = data_get($tmpl, 'address') ?: ($store->address ?? null);
+    $phone = data_get($tmpl, 'phone') ?: ($store->viber_number ? 'Viber: ' . $store->viber_number : ($store->phone ?? null));
+    $headerTitle = data_get($tmpl, 'header_title') ?: $store->name;
+    $headerSubtitle = data_get($tmpl, 'header_subtitle');
 
     $methods = \App\POS\Models\DailyClosing::expectedMethods();
     $countedMethods = \App\POS\Models\DailyClosing::countedMethods();

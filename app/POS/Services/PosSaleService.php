@@ -56,7 +56,7 @@ class PosSaleService
 
         $products = Product::query()
             ->where('store_id', $store->id)
-            ->where(fn ($w) => $w->where('sku', 'like', "%{$q}%")->orWhere('name', 'like', "%{$q}%"))
+            ->where(fn ($w) => $w->where('sku', 'like', "%{$q}%")->orWhere('barcode', 'like', "%{$q}%")->orWhere('name', 'like', "%{$q}%"))
             ->limit($limit)
             ->get();
 
@@ -125,7 +125,12 @@ class PosSaleService
             ->where('store_id', $store->id)
             ->when($categoryId, fn ($w) => $w->where('category_id', $categoryId))
             ->when($brandId, fn ($w) => $w->where('brand_id', $brandId))
-            ->when($q !== '', fn ($w) => $w->where(fn ($w2) => $w2->where('sku', 'like', "%{$q}%")->orWhere('name', 'like', "%{$q}%")))
+            ->when($q !== '', fn ($w) => $w->where(fn ($w2) => $w2
+                ->where('sku', 'like', "%{$q}%")
+                ->orWhere('barcode', 'like', "%{$q}%")
+                ->orWhere('name', 'like', "%{$q}%")
+                ->orWhereHas('variants', fn ($vq) => $vq->where('sku', 'like', "%{$q}%"))
+            ))
             ->with(['category:id,name', 'brand:id,name', 'variants:id,product_id,name,sku,retail_price,wholesale_price,is_default,quantity_on_hand'])
             ->orderBy('name')
             ->orderBy('id')

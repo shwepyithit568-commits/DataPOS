@@ -54,7 +54,7 @@
             <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-sm space-y-4">
                 <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-2">
                     <span>⚡</span>
-                    <span>လုပ်ဆောင်ချက် အသေးစိတ် (Event Description)</span>
+                    <span>{{ __('messages.event_description') }}</span>
                 </h3>
 
                 <div>
@@ -64,11 +64,11 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <div>
-                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">အမျိုးအစား (Category)</div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">{{ __('messages.category') }}</div>
                         <div class="font-bold text-slate-900 dark:text-slate-100 text-sm">{{ $categoryLabel }}</div>
                     </div>
                     <div>
-                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">ပစ်မှတ် (Target Entity)</div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">{{ __('messages.target_entity') }}</div>
                         <div class="font-mono font-bold text-slate-900 dark:text-slate-100 text-sm">
                             {{ $log->entity_type ? ($log->entity_type . ' #' . $log->entity_id) : 'System / Global' }}
                         </div>
@@ -80,7 +80,7 @@
             <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-sm space-y-4">
                 <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-2">
                     <span>📝</span>
-                    <span>အပြောင်းအလဲနှင့် အချက်အလက်များ (Payload & Changes)</span>
+                    <span>{{ __('messages.payload_and_changes') }}</span>
                 </h3>
 
                 @if (!empty($metaArray))
@@ -104,7 +104,7 @@
                     </div>
                 @else
                     <div class="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-6 text-center text-xs text-slate-400">
-                        ဤမှတ်တမ်းတွင် အပိုဆောင်း Metadata အချက်အလက် မပါဝင်ပါ။
+                        {{ __('messages.no_metadata_recorded') ?? 'ဤမှတ်တမ်းတွင် အပိုဆောင်း Metadata အချက်အလက် မပါဝင်ပါ။' }}
                     </div>
                 @endif
             </div>
@@ -116,7 +116,7 @@
             <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 shadow-sm space-y-3">
                 <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-2">
                     <span>👤</span>
-                    <span>လုပ်ဆောင်သူ (Actor)</span>
+                    <span>{{ __('messages.actor') }}</span>
                 </h3>
 
                 <div class="space-y-2 text-xs">
@@ -143,7 +143,7 @@
             <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 shadow-sm space-y-3">
                 <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-2">
                     <span>ℹ️</span>
-                    <span>မှတ်တမ်းအချက်အလက် (Metadata)</span>
+                    <span>{{ __('messages.metadata') }}</span>
                 </h3>
 
                 <div class="space-y-2 text-xs">

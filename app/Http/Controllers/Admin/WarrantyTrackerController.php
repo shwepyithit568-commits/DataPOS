@@ -411,7 +411,9 @@ class WarrantyTrackerController extends Controller
         $warranty = $this->resolveWarranty($store, $request->route('warranty'));
         $warranty->load(['product', 'customer', 'creator']);
 
-        return view('admin.warranty.certificate', compact('store', 'warranty'));
+        $voucherTemplate = app(\App\POS\Services\VoucherTemplateService::class)->getActiveTemplate($store, 'a4');
+
+        return view('admin.warranty.certificate', compact('store', 'warranty', 'voucherTemplate'));
     }
 
     /**

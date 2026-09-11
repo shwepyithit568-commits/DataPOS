@@ -393,13 +393,13 @@
                             @endforeach
 
                             <div class="space-y-1">
-                                <label class="text-[11px] font-bold text-slate-600 dark:text-slate-300">စတင်သည့်ရက် (From):</label>
+                                <label class="text-[11px] font-bold text-slate-600 dark:text-slate-300">{{ __('messages.date_from') }}:</label>
                                 <input type="date" name="expense_date_from" value="{{ request('expense_date_from', $fromDate?->format('Y-m-d')) }}"
                                        class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500 [color-scheme:light] dark:[color-scheme:dark]" />
                             </div>
 
                             <div class="space-y-1">
-                                <label class="text-[11px] font-bold text-slate-600 dark:text-slate-300">ပြီးဆုံးသည့်ရက် (To):</label>
+                                <label class="text-[11px] font-bold text-slate-600 dark:text-slate-300">{{ __('messages.date_to') }}:</label>
                                 <input type="date" name="expense_date_to" value="{{ request('expense_date_to', $toDate?->format('Y-m-d')) }}"
                                        class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500 [color-scheme:light] dark:[color-scheme:dark]" />
                             </div>
@@ -1027,7 +1027,7 @@
                     <button type="button" @click="receiptModalOpen = false" class="w-6 h-6 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center text-sm font-bold transition">✕</button>
                 </div>
 
-                <div class="flex items-center justify-center bg-slate-50 dark:bg-slate-950 rounded-lg overflow-hidden min-h-[260px] max-h-[70vh] border border-slate-100 dark:border-slate-850">
+                <div class="flex items-center justify-center bg-slate-50 dark:bg-slate-950 rounded-lg overflow-hidden min-h-[260px] max-h-[70vh] border border-slate-100 dark:border-slate-800">
                     <template x-if="activeReceiptUrl && activeReceiptUrl.endsWith('.pdf')">
                         <iframe :src="activeReceiptUrl" class="w-full h-[450px] border-0"></iframe>
                     </template>

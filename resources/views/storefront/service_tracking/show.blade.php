@@ -279,14 +279,14 @@
 
                     @if ($job->intake_condition)
                         <div class="p-2 rounded-md bg-slate-50 dark:bg-slate-800/60 space-y-0.5 border border-slate-100 dark:border-slate-700/60 sm:col-span-2">
-                            <span class="text-slate-400 text-[11px] block">စက်အခြေအနေ (Intake Condition):</span>
+                            <span class="text-slate-400 text-[11px] block">{{ __('messages.repair_intake_condition') }}:</span>
                             <span class="font-medium text-slate-700 dark:text-slate-300">{{ $job->intake_condition }}</span>
                         </div>
                     @endif
 
                     @if ($job->accessories)
                         <div class="p-2 rounded-md bg-slate-50 dark:bg-slate-800/60 space-y-0.5 border border-slate-100 dark:border-slate-700/60 sm:col-span-2">
-                            <span class="text-slate-400 text-[11px] block">တွဲဖက်ပစ္စည်းများ (Accessories):</span>
+                            <span class="text-slate-400 text-[11px] block">{{ __('messages.repair_accessories') }}:</span>
                             <span class="font-medium text-slate-700 dark:text-slate-300">{{ $job->accessories }}</span>
                         </div>
                     @endif
@@ -308,7 +308,7 @@
                     <div class="space-y-2 text-xs">
                         @if ($job->diagnosis)
                             <div class="p-2.5 rounded-md bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 space-y-0.5">
-                                <span class="font-bold text-indigo-900 dark:text-indigo-300 block">စစ်ဆေးတွေ့ရှိချက် (Diagnosis):</span>
+                                <span class="font-bold text-indigo-900 dark:text-indigo-300 block">{{ __('messages.repair_diagnosis') }}:</span>
                                 <p class="text-slate-700 dark:text-slate-300 leading-relaxed font-myanmar whitespace-pre-line">{{ $job->diagnosis }}</p>
                             </div>
                         @endif
@@ -611,11 +611,11 @@
                         <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $job->contact_phone ?: '—' }}</span>
                     </div>
                     <div>
-                        <span class="text-[10px] text-slate-400 block font-myanmar">ရက်စွဲ (Date):</span>
+                        <span class="text-[10px] text-slate-400 block font-myanmar">{{ __('messages.date') }}:</span>
                         <span class="font-mono text-slate-700 dark:text-slate-300">{{ $job->created_at->format('d/m/Y h:i A') }}</span>
                     </div>
                     <div class="text-right">
-                        <span class="text-[10px] text-slate-400 block font-myanmar">လက်ရှိအခြေအနေ:</span>
+                        <span class="text-[10px] text-slate-400 block font-myanmar">{{ __('messages.status') }}:</span>
                         <span class="font-bold text-teal-700 dark:text-teal-300 font-myanmar">{{ __('messages.repair_status_' . $job->status) }}</span>
                     </div>
                 </div>
@@ -623,7 +623,7 @@
                 {{-- Device Specs --}}
                 <div class="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-md border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-1">
                     <div class="flex justify-between items-center">
-                        <span class="text-slate-400">စက်အမျိုးအစား (Device):</span>
+                        <span class="text-slate-400">{{ __('messages.repair_device') }}:</span>
                         <span class="font-bold text-slate-800 dark:text-slate-200 text-right">{{ $deviceLabel }}</span>
                     </div>
                     @if ($job->imei_serial)

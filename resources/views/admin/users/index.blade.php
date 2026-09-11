@@ -134,7 +134,7 @@
         <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">
                 <span>💡</span>
-                <span>ဖောက်သည် (Customer) များ စာရင်းသွင်းရန်နှင့် စီမံခန့်ခွဲရန် ဖောက်သည်စာမျက်နှာကို အသုံးပြုပါ။</span>
+                <span>ဖောက်သည်များ စာရင်းသွင်းရန်နှင့် စီမံရန် ဖောက်သည် စာမျက်နှာကို အသုံးပြုပါ။</span>
             </div>
             <a href="{{ route('store.admin.customers.index', $storeRouteParams) }}" class="underline font-black text-emerald-700 dark:text-emerald-400 shrink-0">
                 {{ __('messages.users_customer_directory_link') }} →
@@ -146,28 +146,28 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">အမည် (Full Name) *</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.full_name') }} *</label>
                     <input type="text" name="name" value="{{ old('name') }}" required
                            placeholder="e.g. Ko Aung"
                            class="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">ဖုန်းနံပါတ် (Phone) *</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.phone_number') }} *</label>
                     <input type="text" name="phone" value="{{ old('phone') }}" required
                            placeholder="09xxxxxxxxx"
                            class="w-full px-3.5 py-2.5 rounded-xl text-xs font-mono font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">အီးမေးလ် (Email - Optional)</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.email_optional') }}</label>
                     <input type="email" name="email" value="{{ old('email') }}"
                            placeholder="optional@example.com"
                            class="w-full px-3.5 py-2.5 rounded-xl text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">အကောင့်အဆင့် (System Role) *</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.system_role') }} *</label>
                     <select name="role" x-model="selectedRole" required
                             class="w-full px-3.5 py-2.5 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500">
                         @foreach ($roles as $role)
@@ -181,7 +181,7 @@
                 {{-- Granular Staff Role Template dropdown (Shown dynamically when role is staff or store_manager) --}}
                 <div x-show="isStaffRole(selectedRole)" x-transition>
                     <label class="block text-xs font-bold text-blue-700 dark:text-blue-300 mb-1">
-                        <span>🛡️ ဝန်ထမ်းရာထူးပုံစံ (Staff Role Template)</span>
+                        <span>🛡️ {{ __('messages.staff_role_template') }}</span>
                     </label>
                     <select name="staff_role_id"
                             class="w-full px-3.5 py-2.5 rounded-xl text-xs font-bold bg-blue-50/50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -195,7 +195,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">အခြေအနေ (Store Status) *</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.store_status') }} *</label>
                     <select name="status"
                             class="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500">
                         @foreach ($statuses as $status)
@@ -205,14 +205,14 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">လျှို့ဝှက်နံပါတ် (Password) *</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.password') }} *</label>
                     <input type="password" name="password" required autocomplete="new-password"
                            placeholder="At least 6 characters"
                            class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">အတည်ပြုနံပါတ် (Confirm Password) *</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.confirm_password') }} *</label>
                     <input type="password" name="password_confirmation" required autocomplete="new-password"
                            placeholder="Re-enter password"
                            class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
@@ -294,11 +294,11 @@
             <table class="w-full text-left text-xs">
                 <thead>
                     <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                        <th class="py-3.5 px-4">အမည်နှင့် အဆက်အသွယ် (Staff Info)</th>
-                        <th class="py-3.5 px-4">စနစ်အဆင့် (System Role)</th>
-                        <th class="py-3.5 px-4">ရာထူးအခွင့်အရေးပုံစံ (Assigned Role)</th>
-                        <th class="py-3.5 px-4 text-center">အခြေအနေ (Status)</th>
-                        <th class="py-3.5 px-4 text-right">လုပ်ဆောင်ချက် (Actions)</th>
+                        <th class="py-3.5 px-4">{{ __('messages.staff_info') }}</th>
+                        <th class="py-3.5 px-4">{{ __('messages.system_role') }}</th>
+                        <th class="py-3.5 px-4">{{ __('messages.assigned_role') }}</th>
+                        <th class="py-3.5 px-4 text-center">{{ __('messages.status') }}</th>
+                        <th class="py-3.5 px-4 text-right">{{ __('messages.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">

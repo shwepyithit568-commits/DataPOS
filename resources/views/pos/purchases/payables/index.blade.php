@@ -1,6 +1,6 @@
 @extends('layouts.admin.app')
 
-@section('title', __('messages.sidebar_payables') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('title', __('messages.payables_title') . ' - ' . ($store->name ?? 'DataPOS'))
 @section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
@@ -156,7 +156,7 @@
             </span>
             <div class="min-w-0">
                 <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
-                    <span>{{ __('messages.sidebar_payables') }}</span>
+                    <span>{{ __('messages.payables_title') }}</span>
                     <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 hidden sm:inline">({{ $store->name }})</span>
                 </h1>
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">

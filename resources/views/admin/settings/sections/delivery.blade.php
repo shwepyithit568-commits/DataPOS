@@ -413,12 +413,12 @@
 
         <div class="md:col-span-2">
             <h4 class="text-xs font-black text-gray-900 dark:text-slate-100">{{ __('messages.settings_delivery_footer_promo') }}</h4>
-            <p class="{{ $helpClass }}">Clean, borderless footer ရဲ့ အောက်ဆုံး bar မှာ store name နဲ့အတူ ပြမည့် အတိုချုပ် ကြော်ညာ စာသား (max 255)။</p>
+            <p class="{{ $helpClass }}">Footer အောက်ဆုံးဘားတွင် ဆိုင်အမည်နှင့်အတူ ပြသမည့် အတိုချုပ် ကြော်ငြာစာသား (အများဆုံး စာလုံး ၂၅၅ လုံး)။</p>
             <div class="mt-2">
                 <label class="{{ $labelClass }}">{{ __('messages.settings_delivery_footer_ad') }}</label>
                 <textarea name="footer_ad_text" rows="2" maxlength="255" x-model="footerAd" class="{{ $inputClass }}" placeholder="ဥပမာ — ဆော့ဖ်ဝဲ မှာယူလိုပါက 09xxxxxxxxx ကို ဆက်သွယ်ပါ"></textarea>
                 <div class="mt-1 flex items-center justify-between">
-                    <p class="{{ $helpClass }}">မထည့်ထားပါက \"© {{ date('Y') }} DataPOS\" ပြပါမည်။</p>
+                    <p class="{{ $helpClass }}">မထည့်ထားပါက "© {{ date('Y') }} DataPOS" ဟု ပြသပါမည်။</p>
                     <span class="text-[10px] font-bold text-slate-400" x-text="footerAd.length + ' / 255'"></span>
                 </div>
                 @error('footer_ad_text')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror

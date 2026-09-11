@@ -162,7 +162,7 @@
                                  decoding="async"
                                  class="w-full h-full object-cover transition duration-300 group-hover:scale-105" />
                         @else
-                            <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-sky-100 via-indigo-50 to-slate-100 dark:from-slate-800 dark:via-slate-850 dark:to-slate-900 text-slate-700 dark:text-slate-200">
+                            <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-sky-100 via-indigo-50 to-slate-100 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950 text-slate-700 dark:text-slate-200">
                                 <span class="text-4xl sm:text-5xl drop-shadow-sm">📝</span>
                                 <span class="text-xs font-black mt-2 text-slate-500 uppercase tracking-wider">Storefront Blog</span>
                             </div>

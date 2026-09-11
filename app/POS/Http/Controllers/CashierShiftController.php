@@ -2,12 +2,14 @@
 
 namespace App\POS\Http\Controllers;
 
+use App\Capabilities\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\Store;
 use App\POS\Exceptions\InventoryException;
 use App\POS\Models\CashierShift;
 use App\POS\Models\Expense;
 use App\POS\Models\ExpenseCategory;
+use App\POS\Models\ServiceJob;
 use App\POS\Services\CashierShiftService;
 use App\POS\Services\CustomerDebtService;
 use App\POS\Services\PosSaleService;
@@ -106,7 +108,31 @@ class CashierShiftController extends Controller
                 ->get(['id', 'name', 'code']);
         }
 
-        return view('pos.index', compact('store', 'openShift', 'occupiedRegisters', 'summary', 'cart', 'cartTotals', 'todaySales', 'outstanding', 'outstandingTotal', 'expenseCategories'));
+        $serviceEnabled = $store->hasCapability(Capability::SERVICE_REPAIR_JOBS);
+        $recentRepairs = $serviceEnabled
+            ? ServiceJob::query()
+                ->where('store_id', $store->id)
+                ->with(['customer', 'technician', 'payments'])
+                ->latest('id')
+                ->take(25)
+                ->get()
+            : collect();
+        $activeRepairsCount = $serviceEnabled
+            ? ServiceJob::where('store_id', $store->id)
+                ->whereNotIn('status', ['delivered', 'cancelled', 'unrepairable'])
+                ->count()
+            : 0;
+        $readyRepairsCount = $serviceEnabled
+            ? ServiceJob::where('store_id', $store->id)
+                ->where('status', 'ready')
+                ->count()
+            : 0;
+
+        return view('pos.index', compact(
+            'store', 'openShift', 'occupiedRegisters', 'summary', 'cart', 'cartTotals',
+            'todaySales', 'outstanding', 'outstandingTotal', 'expenseCategories',
+            'recentRepairs', 'activeRepairsCount', 'readyRepairsCount'
+        ));
     }
 
     public function recordExpense(Request $request, StoreContext $context): JsonResponse|RedirectResponse
@@ -134,7 +160,7 @@ class CashierShiftController extends Controller
         if ($paymentMethod === 'cash' && $shiftsEnabled) {
             $openShift = $this->shifts->openShiftFor($store, auth()->user());
             if (! $openShift) {
-                $errorMsg = 'An open cashier shift is required to record cash expenses.';
+                $errorMsg = __('messages.pos_expense_shift_required');
                 if ($request->expectsJson()) {
                     return response()->json(['error' => $errorMsg], 422);
                 }

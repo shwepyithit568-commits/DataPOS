@@ -451,8 +451,8 @@ class CashBankTransactionController extends Controller
             abort(404);
         }
 
-        $transaction->load(['fromAccount', 'toAccount', 'recorder']);
+        $voucherTemplate = app(\App\POS\Services\VoucherTemplateService::class)->getActiveTemplate($store, 'a5');
 
-        return view('admin.transactions.voucher', compact('store', 'transaction'));
+        return view('admin.transactions.voucher', compact('store', 'transaction', 'voucherTemplate'));
     }
 }

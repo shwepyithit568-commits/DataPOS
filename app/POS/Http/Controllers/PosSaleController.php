@@ -370,7 +370,7 @@ class PosSaleController extends Controller
             return $this->jsonOrRedirect($request, $store, null, $e->getMessage());
         }
 
-        return $this->jsonOrRedirect($request, $store);
+        return $this->jsonOrRedirect($request, $store, __('messages.pos_item_removed'));
     }
 
     /**

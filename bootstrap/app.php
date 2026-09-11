@@ -22,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'finance_access' => \App\Http\Middleware\EnsureFinanceAccess::class,
         ]);
 
+        $middleware->trustProxies(at: '*');
+
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         // Clear the request-scoped ThemeContext preview override after every
         // response so it can never leak across requests in long-running

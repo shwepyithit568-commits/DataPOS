@@ -766,7 +766,7 @@
             {{-- Native Share with File (if supported) --}}
             <button type="button" class="share-channel-btn" data-repair-share-channel="native" style="background:#7c3aed; color:#fff; border-color:#6d28d9;">
                 <span>📄</span>
-                <span>PDF ဖိုင် တိုက်ရိုက် Share မည် (Viber / WhatsApp / AirDrop)</span>
+                <span>{{ __('messages.share_pdf') }}</span>
             </button>
 
             {{-- Viber Channel --}}

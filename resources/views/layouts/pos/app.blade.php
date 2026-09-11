@@ -215,6 +215,31 @@
                     </svg>
                 </button>
 
+                {{-- Reload POS button (3D Teal with Hard Reload cache-bust like Ctrl+Shift+R) --}}
+                <button type="button"
+                        x-data="{ reloading: false }"
+                        @click="reloading = true; (async () => {
+                            if ('caches' in window) {
+                                try {
+                                    const keys = await caches.keys();
+                                    await Promise.all(keys.map(k => caches.delete(k)));
+                                } catch (e) {}
+                            }
+                            const u = new URL(window.location.href);
+                            u.searchParams.set('_r', Date.now().toString());
+                            window.location.replace(u.toString());
+                        })()"
+                        class="sf-btn-3d-teal shrink-0 w-10 h-10 rounded-xl grid place-items-center cursor-pointer text-white shadow-xs"
+                        aria-label="{{ __('messages.pos_reload') }}"
+                        title="{{ __('messages.pos_reload') }} 🔄 (Ctrl+Shift+R)">
+                    <svg class="w-4 h-4 text-white" :class="reloading ? 'animate-spin' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                        <path d="M3 3v5h5"/>
+                        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                        <path d="M16 16h5v5"/>
+                    </svg>
+                </button>
+
                 @yield('header_extra')
 
                 {{-- Admin Panel button (3D Accent Purple) --}}
@@ -234,7 +259,7 @@
         </div>
     </header>
 
-    <main class="flex-1 w-full px-2 sm:px-4 py-1.5 sm:py-2">
+    <main class="flex-1 w-full @yield('main_padding', 'px-2 sm:px-4 py-1.5 sm:py-2')">
         @if (session('success'))
             <div class="mb-4 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-sm font-semibold" role="alert">
                 {{ session('success') }}
@@ -256,7 +281,7 @@
 
     {{-- ── POS Calculator Modal ──────────────────────────────────────────── --}}
     <div x-cloak x-show="calculatorOpen" x-transition.opacity
-         class="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-sm sm:items-center sm:p-3"
+         class="fixed inset-0 z-50 flex items-end justify-center bg-black/25 dark:bg-black/35 p-0 sm:items-center sm:p-3"
          role="dialog" aria-modal="true" aria-labelledby="pos-calculator-title"
          @click.self="closeCalculator()">
         <div x-show="calculatorOpen" x-transition

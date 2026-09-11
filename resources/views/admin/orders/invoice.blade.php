@@ -7,6 +7,17 @@
     } catch (\Throwable $e) {
         $myanmarFontUrl = null;
     }
+
+    $tmpl = $voucherTemplate ?? null;
+    $headerTitle = data_get($tmpl, 'header_title') ?: ($setting?->store_name ?? $store->name);
+    $headerSubtitle = data_get($tmpl, 'header_subtitle');
+    $address = data_get($tmpl, 'address') ?: ($setting?->address ?? $store->address ?? null);
+    $phone = data_get($tmpl, 'phone') ?: ($setting?->phone ?? $store->phone ?? null);
+    $showLogo = (bool) data_get($tmpl, 'show_logo', true);
+    $templateLogo = ($tmpl instanceof \App\Models\VoucherTemplate) ? $tmpl->logoUrl() : null;
+    $logoUrl = $showLogo ? ($templateLogo ?? (!empty($setting?->storefrontLogo()) ? asset('storage/' . $setting->storefrontLogo()) : null)) : null;
+    $footerGreeting = data_get($tmpl, 'footer_greeting') ?: __('messages.thank_you_purchase');
+    $footerPolicy = data_get($tmpl, 'footer_policy');
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -163,18 +174,21 @@
     <div class="sheet">
         <div class="invoice-header">
             <div class="invoice-brand">
-                @if (!empty($setting?->storefrontLogo()))
-                    <img class="logo" src="{{ asset('storage/' . $setting->storefrontLogo()) }}" alt="{{ $store->name }}">
+                @if ($logoUrl)
+                    <img class="logo" src="{{ $logoUrl }}" alt="{{ $store->name }}">
                 @else
-                    <div class="store-name">{{ $setting?->store_name ?? $store->name }}</div>
+                    <div class="store-name">{{ $headerTitle }}</div>
+                @endif
+                @if ($headerSubtitle)
+                    <div class="store-sub">{{ $headerSubtitle }}</div>
                 @endif
 
                 <div class="invoice-contact">
-                    @if ($setting?->address)
-                        <div class="row"><span class="k">{{ __('messages.invoice_address') }}</span><span class="v">{{ $setting->address }}</span></div>
+                    @if ($address)
+                        <div class="row"><span class="k">{{ __('messages.invoice_address') }}</span><span class="v">{{ $address }}</span></div>
                     @endif
-                    @if ($setting?->phone)
-                        <div class="row"><span class="k">{{ __('messages.invoice_phone') }}</span><span class="v">{{ $setting->phone }}</span></div>
+                    @if ($phone)
+                        <div class="row"><span class="k">{{ __('messages.invoice_phone') }}</span><span class="v">{{ $phone }}</span></div>
                     @endif
                     @if ($setting?->viber_number)
                         <div class="row"><span class="k">{{ __('messages.invoice_viber') }}</span><span class="v">{{ $setting->viber_number }}</span></div>
@@ -275,9 +289,16 @@
         </div>
 
         <div class="invoice-foot">
-            ဝယ်ယူအားပေးမှုအတွက် ကျေးဇူးတင်ပါတယ် — ပစ္စည်းအသေးစိတ် မေးရန်
-            @if ($setting?->phone) {{ $setting->phone }} @endif
-            @if ($setting?->telegram_username) · t.me/{{ ltrim($setting->telegram_username, '@') }} @endif
+            <p>{{ $footerGreeting }}</p>
+            @if ($footerPolicy)
+                <p style="font-size:9.5px;color:#94a3b8;margin-top:2px;">{{ $footerPolicy }}</p>
+            @endif
+            @if ($phone || $setting?->telegram_username)
+                <p style="margin-top:2px;">
+                    @if ($phone) 📞 {{ $phone }} @endif
+                    @if ($setting?->telegram_username) · t.me/{{ ltrim($setting->telegram_username, '@') }} @endif
+                </p>
+            @endif
         </div>
     </div>
 

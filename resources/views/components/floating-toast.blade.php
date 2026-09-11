@@ -4,7 +4,7 @@
         $initialToasts[] = [
             'id' => 'toast_' . uniqid(),
             'type' => 'success',
-            'title' => 'Success',
+            'title' => __('messages.success'),
             'message' => session('success'),
             'autoClose' => 6000,
         ];
@@ -13,7 +13,7 @@
         $initialToasts[] = [
             'id' => 'toast_' . uniqid(),
             'type' => 'error',
-            'title' => 'Error',
+            'title' => __('messages.error'),
             'message' => session('error'),
             'autoClose' => 8000,
         ];
@@ -22,7 +22,7 @@
         $initialToasts[] = [
             'id' => 'toast_' . uniqid(),
             'type' => 'warning',
-            'title' => 'Warning',
+            'title' => __('messages.warning'),
             'message' => session('warning'),
             'autoClose' => 7000,
         ];
@@ -31,7 +31,7 @@
         $initialToasts[] = [
             'id' => 'toast_' . uniqid(),
             'type' => 'info',
-            'title' => 'Info',
+            'title' => __('messages.info'),
             'message' => session('info'),
             'autoClose' => 6000,
         ];
@@ -41,7 +41,7 @@
         $initialToasts[] = [
             'id' => 'toast_' . uniqid(),
             'type' => 'error',
-            'title' => count($errorList) > 1 ? count($errorList) . ' Errors' : 'Error',
+            'title' => count($errorList) > 1 ? count($errorList) . ' ' . __('messages.errors') : __('messages.error'),
             'message' => count($errorList) === 1 ? $errorList[0] : null,
             'messages' => count($errorList) > 1 ? $errorList : null,
             'autoClose' => 9000,
@@ -57,7 +57,7 @@
         const item = {
             id: id,
             type: toast.type || 'info',
-            title: toast.title || (toast.type === 'success' ? 'Success' : (toast.type === 'error' ? 'Error' : 'Notification')),
+            title: toast.title || (toast.type === 'success' ? '{{ __('messages.success') }}' : (toast.type === 'error' ? '{{ __('messages.error') }}' : (toast.type === 'warning' ? '{{ __('messages.warning') }}' : '{{ __('messages.notification') }}'))),
             message: toast.message || null,
             messages: toast.messages || null,
             autoClose: typeof toast.autoClose === 'number' ? toast.autoClose : 6000,
@@ -98,7 +98,8 @@
 }"
 @notify.window="add($event.detail)"
 @toast.window="add($event.detail)"
-class="fixed top-[calc(3.75rem+env(safe-area-inset-top))] right-2.5 sm:top-[calc(4rem+env(safe-area-inset-top))] sm:right-4 z-[110] flex flex-col gap-2 max-w-sm sm:max-w-md w-[calc(100vw-1.25rem)] pointer-events-none select-none"
+class="floating-toast-container fixed top-16 right-2.5 sm:top-16 sm:right-4 z-[99999] flex flex-col gap-2 max-w-sm sm:max-w-md w-[calc(100vw-1.25rem)] pointer-events-none select-none"
+style="z-index: 99999 !important; top: max(4rem, calc(3.5rem + env(safe-area-inset-top))) !important;"
 aria-live="polite">
 
     <template x-for="toast in toasts" :key="toast.id">

@@ -144,7 +144,9 @@ class OrderAdminController extends Controller
         $order->load(['items', 'items.product', 'user']);
         $setting = $store->setting;
 
-        return view('admin.orders.invoice', compact('store', 'storeRouteParams', 'order', 'setting'));
+        $voucherTemplate = app(\App\POS\Services\VoucherTemplateService::class)->getActiveTemplate($store, 'a4');
+
+        return view('admin.orders.invoice', compact('store', 'storeRouteParams', 'order', 'setting', 'voucherTemplate'));
     }
 
     public function updateStatus(Request $request, string $store_slug, Order $order, StoreContext $context): RedirectResponse

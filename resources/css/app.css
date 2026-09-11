@@ -286,7 +286,9 @@ h1, h2, h3, h4 {
 .sf-btn-3d-accent,
 .sf-btn-3d-success,
 .sf-btn-3d-danger,
-.sf-btn-3d-gold {
+.sf-btn-3d-gold,
+.sf-btn-3d-pink,
+.sf-btn-3d-darkred {
     position: relative;
     display: inline-flex;
     flex-direction: row;
@@ -428,6 +430,46 @@ h1, h2, h3, h4 {
     box-shadow: 0 1px 2px rgba(217, 119, 6, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
+/* Pink 3D Button (Mobile Search) */
+.sf-btn-3d-pink {
+    background: linear-gradient(180deg, #ec4899 0%, #db2777 100%);
+    color: #ffffff !important;
+    border: 1px solid #f472b6;
+    border-bottom: 3px solid #be185d;
+    box-shadow: 0 2px 6px -1px rgba(219, 39, 119, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.sf-btn-3d-pink:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #f472b6 0%, #ec4899 100%);
+    border-bottom: 4px solid #9d174d;
+    box-shadow: 0 4px 12px -2px rgba(219, 39, 119, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    color: #ffffff !important;
+}
+.sf-btn-3d-pink:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #be185d;
+}
+
+/* Dark Red 3D Button (Close / Cancel) */
+.sf-btn-3d-darkred {
+    background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%);
+    color: #ffffff !important;
+    border: 1px solid #ef4444;
+    border-bottom: 3px solid #7f1d1d;
+    box-shadow: 0 2px 6px -1px rgba(153, 27, 27, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.sf-btn-3d-darkred:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+    border-bottom: 4px solid #450a0a;
+    box-shadow: 0 4px 12px -2px rgba(153, 27, 27, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    color: #ffffff !important;
+}
+.sf-btn-3d-darkred:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #7f1d1d;
+}
+
 .dark .sf-btn-3d {
     background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
     border: 1px solid rgba(51, 65, 85, 0.9);
@@ -498,6 +540,46 @@ h1, h2, h3, h4 {
 .dark .sf-btn-3d-gold:active {
     transform: translateY(1.5px);
     border-bottom: 1.5px solid #78350f;
+}
+
+/* Dark Pink (Mobile Search) */
+.dark .sf-btn-3d-pink {
+    background: linear-gradient(180deg, #db2777 0%, #9d174d 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(244, 114, 182, 0.6);
+    border-bottom: 3px solid #700c35;
+    box-shadow: 0 2px 8px -1px rgba(219, 39, 119, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dark .sf-btn-3d-pink:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #ec4899 0%, #be185d 100%);
+    border-bottom: 4px solid #500724;
+    box-shadow: 0 4px 14px -2px rgba(219, 39, 119, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-pink:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #700c35;
+}
+
+/* Dark Deep Red (Close) */
+.dark .sf-btn-3d-darkred {
+    background: linear-gradient(180deg, #991b1b 0%, #450a0a 100%);
+    color: #ffffff !important;
+    border: 1px solid rgba(239, 68, 68, 0.6);
+    border-bottom: 3px solid #280204;
+    box-shadow: 0 2px 8px -1px rgba(153, 27, 27, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.dark .sf-btn-3d-darkred:hover {
+    transform: translateY(-1.5px);
+    background: linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%);
+    border-bottom: 4px solid #1a0102;
+    box-shadow: 0 4px 14px -2px rgba(153, 27, 27, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    color: #ffffff !important;
+}
+.dark .sf-btn-3d-darkred:active {
+    transform: translateY(1.5px);
+    border-bottom: 1.5px solid #280204;
 }
 
 /* Orange 3D Button (Lazada Signature Buy Now CTA) */

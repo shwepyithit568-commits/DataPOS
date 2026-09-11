@@ -264,4 +264,146 @@ class VoucherCustomizerTest extends TestCase
             );
         }
     }
+
+    public function test_voucher_template_update_dynamically_reflects_in_printable_documents(): void
+    {
+        $service = app(VoucherTemplateService::class);
+        $service->ensureDefaultTemplates($this->store);
+
+        // 1. Customize 80mm template
+        $tmpl80 = VoucherTemplate::where('store_id', $this->store->id)->where('paper_size', '80mm')->first();
+        $tmpl80->update([
+            'header_title' => 'Custom 80mm Dynamic Title',
+            'footer_greeting' => 'Custom 80mm Dynamic Greeting',
+        ]);
+
+        // 2. Customize A4 template
+        $tmplA4 = VoucherTemplate::where('store_id', $this->store->id)->where('paper_size', 'a4')->first();
+        $tmplA4->update([
+            'header_title' => 'Custom A4 Dynamic Corporate Title',
+            'footer_policy' => 'Custom A4 Dynamic Warranty Policy',
+        ]);
+
+        // 3. Customize A5 template
+        $tmplA5 = VoucherTemplate::where('store_id', $this->store->id)->where('paper_size', 'a5')->first();
+        $tmplA5->update([
+            'header_title' => 'Custom A5 Dynamic Finance Title',
+            'footer_greeting' => 'Custom A5 Dynamic Finance Greeting',
+        ]);
+
+        // Test A4 Warranty Certificate reflects VoucherTemplate
+        $warranty = \App\POS\Models\DeviceWarranty::create([
+            'store_id' => $this->store->id,
+            'product_name' => 'Dell Laptop Inspiron',
+            'serial_number' => 'DELL-DYN-001',
+            'purchase_date' => now(),
+            'warranty_duration_months' => 12,
+            'warranty_expiry_date' => now()->addYear(),
+            'warranty_type' => 'official_brand',
+            'status' => 'active',
+        ]);
+
+        $certResponse = $this->actingAs($this->manager)->get(route('store.admin.warranty.certificate', [
+            'store_slug' => $this->store->slug,
+            'warranty' => $warranty->id,
+        ]));
+        $certResponse->assertOk();
+        $certResponse->assertSee('Custom A4 Dynamic Corporate Title');
+        $certResponse->assertSee('Custom A4 Dynamic Warranty Policy');
+
+        // Test A5 Financial Voucher reflects VoucherTemplate
+        $finService = app(\App\POS\Services\FinancialTransactionService::class);
+        $finService->ensureDefaultAccounts($this->store);
+        $cashAcc = \App\Models\FinancialAccount::where('store_id', $this->store->id)->first();
+        $tx = $finService->recordDeposit($this->store, [
+            'to_account_id' => $cashAcc->id,
+            'amount' => 50000,
+            'category' => 'capital_injection',
+            'payer_or_payee' => 'Ko Aung',
+        ], $this->manager);
+
+        $voucherResponse = $this->actingAs($this->manager)->get(route('store.admin.transactions.voucher', [
+            'store_slug' => $this->store->slug,
+            'transaction' => $tx->id,
+        ]));
+        $voucherResponse->assertOk();
+        $voucherResponse->assertSee('Custom A5 Dynamic Finance Title');
+        $voucherResponse->assertSee('Custom A5 Dynamic Finance Greeting');
+
+        // Test 80mm E-Load Slip reflects VoucherTemplate
+        $opAccount = \App\Models\EloadAccount::create([
+            'store_id' => $this->store->id,
+            'operator' => 'mytel',
+            'name' => 'Mytel Float Account',
+            'phone_number' => '09690000000',
+            'balance' => 100000,
+            'discount_percent' => 5.0,
+        ]);
+        $eload = \App\Models\EloadTransaction::create([
+            'store_id' => $this->store->id,
+            'eload_account_id' => $opAccount->id,
+            'cashier_id' => $this->staff->id,
+            'operator' => 'mytel',
+            'phone_number' => '09691112223',
+            'type' => 'topup',
+            'amount' => 5000,
+            'cost' => 4750,
+            'profit' => 250,
+            'discount_percent' => 5.0,
+            'payment_method' => 'cash',
+            'ref_no' => 'EL-DYN-001',
+            'status' => 'completed',
+            'occurred_at' => now(),
+        ]);
+
+        $slipResponse = $this->actingAs($this->manager)->get(route('store.admin.eload.slip', [
+            'store_slug' => $this->store->slug,
+            'id' => $eload->id,
+        ]));
+        $slipResponse->assertOk();
+        $slipResponse->assertSee('Custom 80mm Dynamic Title');
+        $slipResponse->assertSee('Custom 80mm Dynamic Greeting');
+
+        // Test POS Sale Receipt reflects 80mm VoucherTemplate
+        $sale = \App\POS\Models\PosSale::create([
+            'store_id' => $this->store->id,
+            'cashier_id' => $this->staff->id,
+            'receipt_number' => 'RCP-2026-001',
+            'status' => 'posted',
+            'subtotal' => 10000,
+            'discount' => 0,
+            'tax' => 0,
+            'total' => 10000,
+            'posted_at' => now(),
+        ]);
+        $receiptResponse = $this->actingAs($this->staff)->get(route('pos.receipt', [
+            'store_slug' => $this->store->slug,
+            'sale' => $sale->id,
+            'paper_size' => '80mm',
+        ]));
+        $receiptResponse->assertOk();
+        $receiptResponse->assertSee('Custom 80mm Dynamic Title');
+        $receiptResponse->assertSee('Custom 80mm Dynamic Greeting');
+
+        // Test Online Order Invoice reflects A4 VoucherTemplate
+        $order = \App\Models\Order::create([
+            'store_id' => $this->store->id,
+            'order_number' => 'ORD-2026-001',
+            'status' => 'confirmed',
+            'payment_status' => 'paid',
+            'customer_name' => 'Ko Kyaw',
+            'customer_phone' => '0912345678',
+            'subtotal' => 20000,
+            'tax_amount' => 0,
+            'shipping_fee' => 0,
+            'total_amount' => 20000,
+        ]);
+        $orderResponse = $this->actingAs($this->manager)->get(route('store.admin.orders.invoice', [
+            'store_slug' => $this->store->slug,
+            'order' => $order->id,
+        ]));
+        $orderResponse->assertOk();
+        $orderResponse->assertSee('Custom A4 Dynamic Corporate Title');
+        $orderResponse->assertSee('Custom A4 Dynamic Warranty Policy');
+    }
 }

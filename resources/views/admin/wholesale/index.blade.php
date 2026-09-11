@@ -115,22 +115,22 @@
          ============================================================ --}}
     <x-admin.toolbar
         :search="request('search', '')"
-        searchPlaceholder="လုပ်ငန်းအမည်၊ ဖုန်းနံပါတ် သို့မဟုတ် လျှောက်ထားသူ ရှာဖွေပါ..."
+        :searchPlaceholder="__('messages.wholesale_search_placeholder')"
         :sort="request('sort', $sort)"
         :sortOptions="[
-            'newest'   => 'အသစ်ဆုံး (Newest First)',
-            'oldest'   => 'အဟောင်းဆုံး (Oldest First)',
-            'business' => 'လုပ်ငန်းအမည်: A → Z',
+            'newest'   => __('messages.sort_newest'),
+            'oldest'   => __('messages.sort_oldest'),
+            'business' => __('messages.sort_business_name'),
         ]"
         :filters="[
             'tab' => [
-                'label'   => 'Status',
+                'label'   => __('messages.orders_table_status'),
                 'options' => [
-                    'all'       => 'အားလုံး (All Applications)',
-                    'pending'   => 'Pending (စစ်ဆေးဆဲ)',
-                    'approved'  => 'Approved (ခွင့်ပြုပြီး)',
-                    'rejected'  => 'Rejected (ငြင်းပယ်)',
-                    'suspended' => 'Suspended (ဆိုင်းငံ့)',
+                    'all'       => __('messages.orders_filter_all'),
+                    'pending'   => __('messages.wholesale_status_pending'),
+                    'approved'  => __('messages.wholesale_status_approved'),
+                    'rejected'  => __('messages.wholesale_status_rejected'),
+                    'suspended' => __('messages.wholesale_status_suspended'),
                 ],
             ],
         ]"
@@ -341,7 +341,7 @@
                         @empty
                             <tr>
                                 <td colspan="7" class="p-8 text-center text-slate-400 dark:text-slate-500 text-xs font-bold">
-                                    လျှောက်လွှာမှတ်တမ်း မရှိသေးပါ။ (No wholesale applications found.)
+                                    {{ __('messages.wholesale_no_records') }}
                                 </td>
                             </tr>
                         @endforelse

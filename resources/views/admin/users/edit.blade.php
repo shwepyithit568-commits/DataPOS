@@ -71,24 +71,24 @@
         <div>
             <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
                 <span>👤</span>
-                <span>အခြေခံ အချက်အလက်များ (Basic Profile)</span>
+                <span>{{ __('messages.basic_profile') }}</span>
             </h3>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">အမည် (Full Name) *</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.full_name') }} *</label>
                     <input type="text" name="name" value="{{ old('name', $managedUser->name) }}" required
                            class="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">ဖုန်းနံပါတ် (Phone) *</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.phone_number') }} *</label>
                     <input type="text" name="phone" value="{{ old('phone', $managedUser->phone) }}" required
                            class="w-full px-3.5 py-2.5 rounded-xl text-xs font-mono font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 </div>
 
                 <div class="sm:col-span-2">
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">အီးမေးလ် (Email - Optional)</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.email_optional') }}</label>
                     <input type="email" name="email" value="{{ old('email', $managedUser->email) }}"
                            placeholder="optional@example.com"
                            class="w-full px-3.5 py-2.5 rounded-xl text-xs font-medium bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
@@ -100,12 +100,12 @@
         <div class="pt-4 border-t border-slate-100 dark:border-slate-800">
             <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
                 <span>🛡️</span>
-                <span>ရာထူးနှင့် အခွင့်အရေးများ (Role & Permissions)</span>
+                <span>{{ __('messages.role_and_permissions') }}</span>
             </h3>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">စနစ်အဆင့် (System Role) *</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.system_role') }} *</label>
                     <select name="role" x-model="selectedRole" required
                             class="w-full px-3.5 py-2.5 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500">
                         @foreach ($roles as $role)
@@ -119,7 +119,7 @@
                 {{-- Granular Staff Role Template --}}
                 <div x-show="isStaffRole(selectedRole)" x-transition>
                     <label class="block text-xs font-bold text-blue-700 dark:text-blue-300 mb-1">
-                        <span>🛡️ ဝန်ထမ်း ရာထူးပုံစံ (Staff Role Template)</span>
+                        <span>🛡️ {{ __('messages.staff_role_template') }}</span>
                     </label>
                     <select name="staff_role_id"
                             class="w-full px-3.5 py-2.5 rounded-xl text-xs font-bold bg-blue-50/50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -133,7 +133,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">အခြေအနေ (Store Status) *</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.store_status') }} *</label>
                     <select name="status"
                             class="w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500">
                         @foreach ($statuses as $status)
@@ -160,19 +160,19 @@
         <div class="pt-4 border-t border-slate-100 dark:border-slate-800">
             <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1.5">
                 <span>🔑</span>
-                <span>စကားဝှက် အသစ်လဲလှယ်ခြင်း (Reset Password - Optional)</span>
+                <span>{{ __('messages.reset_password_optional') }}</span>
             </h3>
             <p class="text-[11px] text-slate-400 mb-3">စကားဝှက် အဟောင်းအတိုင်း ထားလိုပါက အလွတ်ထားခဲ့နိုင်ပါသည်</p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">စကားဝှက် အသစ် (New Password)</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.new_password') }}</label>
                     <input type="password" name="password" autocomplete="new-password"
                            placeholder="Leave blank to keep current"
                            class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">စကားဝှက် အတည်ပြုခြင်း (Confirm Password)</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.confirm_password') }}</label>
                     <input type="password" name="password_confirmation" autocomplete="new-password"
                            placeholder="Confirm new password"
                            class="w-full px-3.5 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
@@ -191,20 +191,20 @@
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <a href="{{ $returnTo ?? route('store.admin.users.index', $storeRouteParams) }}"
                class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition">
-                Cancel
+                {{ __('messages.cancel') }}
             </a>
             <button type="submit" class="px-6 py-2.5 rounded-xl text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-md shadow-violet-500/20 transition">
-                Save Changes (သိမ်းဆည်းမည်)
+                {{ __('messages.save') }}
             </button>
         </div>
     </form>
 
     @if ($managedUser->id !== auth()->id() && (! $managedUser->isPlatformOwner() || auth()->user()?->isPlatformOwner()))
-        <div class="rounded-3xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="rounded-3xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:rose-900 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h4 class="text-sm font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2">
                     <span>🗑️</span>
-                    <span>ဆိုင်စာရင်းမှ ဖယ်ရှားမည် (Remove Staff from Store)</span>
+                    <span>{{ __('messages.remove_staff_from_store') }}</span>
                 </h4>
                 <p class="text-xs text-rose-600/80 dark:text-rose-400/70 mt-0.5">
                     ဤဝန်ထမ်းအား {{ $store->name }} ၏ ဝန်ထမ်းစာရင်းမှ အပြီးတိုင် ဖယ်ရှားပါမည်။
@@ -216,7 +216,7 @@
                 @method('DELETE')
                 <button type="submit"
                         class="px-4 py-2.5 rounded-xl text-xs font-black bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition flex-shrink-0">
-                    Remove Staff Member (ဆိုင်မှ ဖယ်ရှားမည်)
+                    {{ __('messages.remove_staff_from_store') }}
                 </button>
             </form>
         </div>

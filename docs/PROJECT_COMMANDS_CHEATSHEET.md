@@ -62,6 +62,36 @@ http://192.168.1.233:8501/store/datapos-mobile/admin/dashboard
 >
 > 💡 **IP ပြောင်းနိုင်သည်** — WiFi reconnect တိုင်း IP ပြောင်းနိုင်သောကြောင့် `ipconfig` ဖြင့် စစ်ပြီး ဖုန်း URL ကို update လုပ်ပါ။
 
+### 🌍 Cloudflare Tunnel ဖြင့် အပြင်ကနေ ဝင်သုံးနည်း (Internet လိုအပ်သည်)
+
+ကွန်ပျူတာပိတ်ပြီး ပြန်ဖွင့်တိုင်း အောက်ပါ Command (၂) ခုစလုံးကို အစဉ်လိုက် Run ပေးရပါမည်။
+
+**Step 1** — Server ကို ဖွင့်ထားပါ (Terminal အသစ်တစ်ခုတွင်):
+
+```powershell
+$env:PHP_CLI_SERVER_WORKERS=4; php artisan serve --host=0.0.0.0 --port=8501
+```
+
+**Step 2** — Cloudflare Tunnel ဖွင့်ပါ (နောက်ထပ် Terminal အသစ်တစ်ခုတွင်):
+
+```powershell
+cloudflared tunnel --url http://127.0.0.1:8501
+```
+
+> **မှတ်ချက်:** Run ပြီးပါက `trycloudflare.com` ဖြင့် ဆုံးသော Link တစ်ခု ထွက်လာပါမည်။ ထို Link ကို ဖုန်း/Browser တွင် ရိုက်ထည့်၍ အသုံးပြုနိုင်ပါသည်။ Terminal နှစ်ခုစလုံးကို မပိတ်ဘဲ ထားရပါမည်။
+>
+> **`cloudflared` command မရှိဘူးဆိုလျှင်** — အောက်ပါ command ဖြင့် install လုပ်ပါ (Terminal အသစ်တစ်ခုဖွင့်ပြီး):
+> ```powershell
+> # Download & Install
+> New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\cloudflared" | Out-Null
+> Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile "$env:LOCALAPPDATA\cloudflared\cloudflared.exe" -UseBasicParsing
+> # PATH ထဲထည့်ပါ
+> $p = [Environment]::GetEnvironmentVariable("Path","User") -split ";" | Where-Object { $_ }
+> [Environment]::SetEnvironmentVariable("Path", (($p + "$env:LOCALAPPDATA\cloudflared") -join ";"), "User")
+> # Terminal အသစ်ဖွင့်ပြီး cloudflared --version စစ်ပါ
+> ```
+
+
 Vite CSS/JS watcher ဖွင့်ရန်:
 
 ```powershell

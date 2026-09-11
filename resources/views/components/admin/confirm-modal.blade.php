@@ -45,7 +45,7 @@
 @open-confirm.window="show($event.detail)"
 @keydown.escape.window="if (open) close()"
 x-cloak>
-    <div x-show="open" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+    <div x-show="open" class="fixed inset-0 z-[9990] overflow-y-auto" style="z-index: 9990 !important;" role="dialog" aria-modal="true">
         {{-- Backdrop --}}
         <div x-show="open"
              x-transition:enter="ease-out duration-200"
@@ -54,7 +54,7 @@ x-cloak>
              x-transition:leave="ease-in duration-150"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             class="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-xs transition-opacity"
+             class="fixed inset-0 bg-black/25 dark:bg-black/35 transition-opacity"
              @click="close()"></div>
 
         {{-- Modal Dialog --}}
@@ -66,7 +66,7 @@ x-cloak>
                  x-transition:leave="ease-in duration-150"
                  x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                  x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-                 class="relative w-full max-w-sm sm:max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-6 text-left overflow-hidden space-y-4"
+                 class="relative w-full max-w-sm sm:max-w-md bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-600 shadow-2xl dark:shadow-black/80 ring-1 ring-transparent dark:ring-slate-500/30 p-5 sm:p-6 text-left overflow-hidden space-y-4"
                  @click.stop>
                  
                 <div class="flex items-start gap-3.5">
@@ -76,13 +76,13 @@ x-cloak>
                     </div>
                     <div class="space-y-1 min-w-0 flex-1">
                         <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 leading-tight" x-text="title"></h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed break-words" x-text="message"></p>
+                        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed break-words" x-text="message"></p>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
                     <button type="button" x-ref="cancelBtn" @click="close()" :disabled="submitting"
-                            class="btn-3d px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 disabled:opacity-50">
+                            class="btn-3d px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-xs font-bold text-slate-700 dark:text-slate-200 disabled:opacity-50">
                         <span x-text="cancelText"></span>
                     </button>
                     <button type="button" @click="confirm()" :disabled="submitting"

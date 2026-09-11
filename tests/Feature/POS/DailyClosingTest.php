@@ -1303,4 +1303,63 @@ class DailyClosingTest extends TestCase
         $day2Totals = $this->closings->expectedTotals($store, $day2);
         $this->assertSame('30000.00', $day2Totals['opening_amount']);
     }
+
+    public function test_export_daily_closing_excel_and_csv(): void
+    {
+        $store = $this->makeStore('closing-export-shop');
+        \App\Models\StaffRole::bootstrapDefaultRoles($store);
+        $staff = $this->user($store, 'staff', 'Export Staff');
+        $date = Carbon::parse('2026-09-08');
+
+        // Staff can export CSV
+        $csvResponse = $this->actingAs($staff)
+            ->get("/store/{$store->slug}/pos/closing/export?date={$date->toDateString()}&format=csv");
+        $csvResponse->assertOk();
+        $this->assertStringContainsString('text/csv', (string) $csvResponse->headers->get('content-type'));
+
+        // Staff can export XLSX
+        $xlsxResponse = $this->actingAs($staff)
+            ->get("/store/{$store->slug}/pos/closing/export?date={$date->toDateString()}&format=xlsx");
+        $xlsxResponse->assertOk();
+        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', (string) $xlsxResponse->headers->get('content-type'));
+
+        // Non-staff blocked
+        $customer = User::create([
+            'name' => 'Stranger',
+            'phone' => '09' . rand(10000000, 99999999),
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $this->actingAs($customer)
+            ->get("/store/{$store->slug}/pos/closing/export?date={$date->toDateString()}&format=xlsx")
+            ->assertForbidden();
+
+        // Cross-store blocked
+        $otherStore = $this->makeStore('other-export-shop');
+        $this->actingAs($staff)
+            ->get("/store/{$otherStore->slug}/pos/closing/export?date={$date->toDateString()}&format=xlsx")
+            ->assertForbidden();
+    }
+
+    public function test_closing_page_standard_v4_elements(): void
+    {
+        $store = $this->makeStore('v4-standard-shop');
+        \App\Models\StaffRole::bootstrapDefaultRoles($store);
+        $staff = $this->user($store, 'staff', 'V4 Staff');
+        $date = Carbon::parse('2026-09-08');
+
+        $response = $this->actingAs($staff)
+            ->get("/store/{$store->slug}/pos/closing?date={$date->toDateString()}");
+        $response->assertOk();
+
+        // Verify standard v4.1 interactive toolbar and view switcher elements
+        $response->assertSee('viewMode', false);
+        $response->assertSee('localStorage.setItem(\'pos_closing_view\'', false);
+        $response->assertSee('format=xlsx');
+        $response->assertSee('format=csv');
+        $response->assertSee('x-report');
+        $response->assertSee('showPrintModal');
+        $response->assertSee('space-y-0.5');
+    }
 }
+

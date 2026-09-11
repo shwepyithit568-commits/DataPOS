@@ -253,7 +253,7 @@
                     @if ($address)
                         <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
                             <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 block uppercase">{{ __('messages.vouchers_address') }}</span>
-                            <p class="text-slate-850 dark:text-slate-200 leading-relaxed text-xs font-medium pt-0.5">
+                            <p class="text-slate-800 dark:text-slate-200 leading-relaxed text-xs font-medium pt-0.5">
                                 📍 {{ $address }}
                             </p>
                         </div>

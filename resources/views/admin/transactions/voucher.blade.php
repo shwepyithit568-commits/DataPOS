@@ -1,9 +1,20 @@
+@php
+    $tmpl = $voucherTemplate ?? null;
+    $storeName = data_get($tmpl, 'header_title') ?: $store->name;
+    $storeSubtitle = data_get($tmpl, 'header_subtitle');
+    $storePhone = data_get($tmpl, 'phone') ?: ($store->setting?->phone ?? $store->phone);
+    $storeAddress = data_get($tmpl, 'address') ?: ($store->setting?->address ?? $store->address);
+    $showLogo = (bool) data_get($tmpl, 'show_logo', true);
+    $templateLogo = ($tmpl instanceof \App\Models\VoucherTemplate) ? $tmpl->logoUrl() : null;
+    $logoUrl = $showLogo ? ($templateLogo ?? ($store->setting?->adminLogo() ? asset('storage/' . $store->setting->adminLogo()) : null)) : null;
+    $footerGreeting = data_get($tmpl, 'footer_greeting');
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voucher - {{ $transaction->transaction_number }} - {{ $store->name }}</title>
+    <title>Voucher - {{ $transaction->transaction_number }} - {{ $storeName }}</title>
     <style>
         @page {
             size: A5 portrait;
@@ -122,7 +133,21 @@
 
 <div class="voucher-box">
     <div class="header">
-        <h1 class="store-name">{{ $store->name }}</h1>
+        @if ($logoUrl)
+            <div style="margin-bottom: 8px;">
+                <img src="{{ $logoUrl }}" alt="{{ $storeName }}" style="max-height: 48px; max-width: 160px; object-fit: contain; margin: 0 auto; display: block;">
+            </div>
+        @endif
+        <h1 class="store-name">{{ $storeName }}</h1>
+        @if ($storeSubtitle)
+            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 4px;">{{ $storeSubtitle }}</div>
+        @endif
+        @if ($storePhone || $storeAddress)
+            <div style="font-size: 10.5px; color: #64748b; margin-bottom: 6px;">
+                @if ($storePhone) 📞 {{ $storePhone }} @endif
+                @if ($storeAddress) | 📍 {{ $storeAddress }} @endif
+            </div>
+        @endif
         <p class="voucher-title">
             @if($transaction->type === 'deposit')
                 RECEIPT VOUCHER (ငွေရပြေစာ)
@@ -207,6 +232,12 @@
             Authorized / Received By
         </div>
     </div>
+
+    @if($footerGreeting)
+        <div style="text-align: center; font-size: 11px; color: #64748b; margin-top: 24px;">
+            {{ $footerGreeting }}
+        </div>
+    @endif
 </div>
 
 <button type="button" class="btn-print" onclick="window.print()">
