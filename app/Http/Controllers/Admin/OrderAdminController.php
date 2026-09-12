@@ -144,9 +144,30 @@ class OrderAdminController extends Controller
         $order->load(['items', 'items.product', 'user']);
         $setting = $store->setting;
 
-        $voucherTemplate = app(\App\POS\Services\VoucherTemplateService::class)->getActiveTemplate($store, 'a4');
+        $templateService = app(\App\POS\Services\VoucherTemplateService::class);
+        $requestedPaperSize = request('paper_size');
+        $paperSize = in_array($requestedPaperSize, ['58mm', '80mm', 'a5', 'a4'], true)
+            ? $requestedPaperSize
+            : $templateService->getDocumentPaperSize($store, 'invoice');
+        $voucherTemplate = $templateService->getTemplateForDocument($store, 'invoice', $paperSize);
+        $templates = $templateService->getTemplates($store);
 
-        return view('admin.orders.invoice', compact('store', 'storeRouteParams', 'order', 'setting', 'voucherTemplate'));
+        $barcodeSvg = null;
+        try {
+            $barcodeSvg = app(\App\Services\BarcodeGeneratorService::class)->generateCode128Svg($order->order_number, 32, 1.4, false);
+        } catch (\Throwable $e) {
+            $barcodeSvg = null;
+        }
+
+        $trackingUrl = route('store.admin.orders.invoice', ['store_slug' => $store->slug, 'order' => $order->id]);
+        $orderQrDataUri = null;
+        try {
+            $orderQrDataUri = \App\Services\QrCodeEncoder::generatePngDataUri($trackingUrl, 4);
+        } catch (\Throwable $e) {
+            $orderQrDataUri = null;
+        }
+
+        return view('admin.orders.invoice', compact('store', 'storeRouteParams', 'order', 'setting', 'voucherTemplate', 'paperSize', 'templates', 'barcodeSvg', 'orderQrDataUri'));
     }
 
     public function updateStatus(Request $request, string $store_slug, Order $order, StoreContext $context): RedirectResponse

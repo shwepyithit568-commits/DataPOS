@@ -72,14 +72,14 @@
                     </p>
 
                     {{-- Split payment info strip --}}
-                    <div x-show="['cash','kpay','wavepay','cbpay','mmqr','credit'].filter(k => (parseFloat(this[k])||0) > 0).length > 1"
+                    <div x-show="['cash','kpay','wavepay','cbpay','mmqr','credit'].filter(k => amtFor(k) > 0).length > 1"
                          class="mt-2 flex flex-wrap gap-1" x-cloak>
                         <template x-for="[mk, mlabel] in [['cash','{{ __('messages.payment_cash') }}'],['kpay','{{ __('messages.payment_kpay') }}'],['wavepay','{{ __('messages.payment_wavepay') }}'],['cbpay','{{ __('messages.payment_cb_pay') }}'],['mmqr','{{ __('messages.payment_mmqr') }}'],['credit','{{ __('messages.payment_credit') }}']]" :key="mk">
-                            <span x-show="(parseFloat(this[mk])||0) > 0"
+                            <span x-show="amtFor(mk) > 0"
                                   class="inline-flex items-center gap-1 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300 cursor-pointer"
                                   @click="clearPaymentMethod(mk)" title="ဖယ်ရှားရန် click">
                                 <span x-text="mlabel"></span>
-                                <span class="font-black" x-text="formatCurrency(this[mk])"></span>
+                                <span class="font-black" x-text="formatCurrency(amtFor(mk))"></span>
                                 <span class="opacity-60">✕</span>
                             </span>
                         </template>
@@ -212,13 +212,13 @@
                         <span class="text-blue-600 dark:text-blue-400 font-black text-base" x-text="formatCurrency(cart.totals.total)"></span>
                     </p>
                     {{-- Breakdown of each active payment method --}}
-                    <template x-for="[mk, mlabel] in [['cash','{{ __('messages.payment_cash') }}'],['kpay','{{ __('messages.payment_kpay') }}'],['wavepay','{{ __('messages.payment_wavepay') }}'],['cbpay','{{ __('messages.payment_cb_pay') }}'],['mmqr','{{ __('messages.payment_mmqr') }}'],['credit','{{ __('messages.payment_credit') }}']]" :key="mk">
-                        <p class="flex justify-between text-slate-600 dark:text-slate-300" x-show="(parseFloat(this[mk])||0) > 0">
+                    <template x-for="[mk, mlabel] in [['cash','{{ __('messages.payment_cash') }}'],['kpay','{{ __('messages.payment_kpay') }}'],['wavepay','{{ __('messages.payment_wavepay') }}'],['cbpay','{{ __('messages.payment_cb_pay') }}'],['mmqr','{{ __('messages.payment_mmqr') }}']]" :key="mk">
+                        <p class="flex justify-between text-slate-600 dark:text-slate-300" x-show="amtFor(mk) > 0">
                             <span class="flex items-center gap-1">
                                 <svg class="w-3 h-3 opacity-60 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                                 <span x-text="mlabel"></span>
                             </span>
-                            <span class="font-bold tabular-nums text-slate-900 dark:text-white" x-text="formatCurrency(this[mk])"></span>
+                            <span class="font-bold tabular-nums text-slate-900 dark:text-white" x-text="formatCurrency(amtFor(mk))"></span>
                         </p>
                     </template>
                     <div class="border-t border-dashed border-slate-200 dark:border-slate-700 my-1"></div>
@@ -226,7 +226,7 @@
                     <p class="flex justify-between font-bold">
                         <span class="text-slate-700 dark:text-slate-300">{{ __('messages.pos_paid_total') ?? 'ပေးငွေ စုစုပေါင်း' }}</span>
                         <span class="font-black tabular-nums"
-                              :class="paid >= Number(cart.totals.total) ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'"
+                              :class="paid > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'"
                               x-text="formatCurrency(paid)"></span>
                     </p>
                     <p class="flex justify-between" x-show="remaining > 0.005">
@@ -239,8 +239,8 @@
                     </p>
                     <p class="flex justify-between" x-show="credit > 0">
                         <span class="text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1ZM16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/></svg>
-                            {{ __('messages.balance_due') }}
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1ZM16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/></svg>
+                            {{ __('messages.payment_credit') }}
                         </span>
                         <span class="font-black text-amber-600 dark:text-amber-400" x-text="formatCurrency(credit)"></span>
                     </p>
@@ -258,14 +258,28 @@
                        class="text-center text-xs font-bold text-rose-600 dark:text-rose-400">
                         {{ __('messages.credit_requires_customer') }}
                     </p>
-                    <button type="submit" :disabled="!exact"
-                            :class="exact ? 'sf-btn-3d-success text-white shadow-lg cursor-pointer' : 'sf-btn-3d opacity-45 cursor-not-allowed pointer-events-none'"
-                            class="w-full rounded-xl px-4 py-4 text-base font-black transition flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                        <span x-text="credit > 0
-                            ? '{{ __('messages.post_sale') }} ({{ __('messages.balance_due') }}: ' + formatCurrency(credit) + ')'
-                            : '{{ __('messages.post_sale') }}'"></span>
-                    </button>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        {{-- 1. Post sale only --}}
+                        <button type="submit" name="print_receipt" value="0" :disabled="!exact"
+                                :class="exact ? 'sf-btn-3d text-slate-800 dark:text-slate-100 shadow-md cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800' : 'sf-btn-3d opacity-45 cursor-not-allowed pointer-events-none'"
+                                class="w-full rounded-xl px-3 py-3.5 sm:py-4 text-xs sm:text-sm font-black transition flex items-center justify-center gap-1.5 sm:gap-2">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 dark:text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                            <span class="truncate" x-text="credit > 0
+                                ? '{{ __('messages.post_sale') }} (' + formatCurrency(credit) + ')'
+                                : '{{ __('messages.post_sale') }}'"></span>
+                        </button>
+
+                        {{-- 2. Post sale and print receipt --}}
+                        <button type="submit" name="print_receipt" value="1" :disabled="!exact"
+                                :class="exact ? 'sf-btn-3d-success text-white shadow-lg cursor-pointer' : 'sf-btn-3d opacity-45 cursor-not-allowed pointer-events-none'"
+                                class="w-full rounded-xl px-3 py-3.5 sm:py-4 text-xs sm:text-sm font-black transition flex items-center justify-center gap-1.5 sm:gap-2">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                                <path d="M6 14h12v8H6z"/>
+                            </svg>
+                            <span class="truncate">{{ __('messages.post_and_print') }}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </form>

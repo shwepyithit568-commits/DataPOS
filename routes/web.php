@@ -697,6 +697,7 @@ Route::prefix('store/{store_slug}')
         Route::delete('/admin/vouchers/{voucher}', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'destroy'])->name('store.admin.vouchers.destroy')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:settings.delete']);
         Route::post('/admin/vouchers/{voucher}/set-default', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'setDefault'])->name('store.admin.vouchers.set_default')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:settings.update']);
         Route::get('/admin/vouchers/{voucher}/preview', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'preview'])->name('store.admin.vouchers.preview')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.view']);
+        Route::post('/admin/vouchers/document-defaults', [\App\Http\Controllers\Admin\VoucherCustomizerController::class, 'updateDocumentDefaults'])->name('store.admin.vouchers.document_defaults')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:settings.update']);
         Route::get('/admin/settings/documents', fn ($store_slug) => redirect()->route('store.admin.vouchers.index', ['store_slug' => $store_slug]))->name('store.admin.settings.documents')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.view']);
 
         // Multi-Branch Management (sidebar_branches)

@@ -76,6 +76,37 @@ class StorefrontSetting extends Model
         'pos_override_pin_threshold' => 'integer',
     ];
 
+    public const DEFAULT_DOCUMENT_VOUCHER_SIZES = [
+        'pos_sale' => '80mm',
+        'closing' => '80mm',
+        'repair' => 'a5',
+        'invoice' => 'a4',
+        'transaction' => 'a5',
+        'eload' => '80mm',
+        'warranty' => 'a4',
+        'wholesale' => 'a4',
+    ];
+
+    /**
+     * Get default paper sizes for all printable documents.
+     *
+     * @return array<string, string>
+     */
+    public function documentVoucherDefaults(): array
+    {
+        $saved = $this->getPosSetting('document_voucher_defaults', []);
+        return array_merge(self::DEFAULT_DOCUMENT_VOUCHER_SIZES, is_array($saved) ? $saved : []);
+    }
+
+    /**
+     * Get default paper size for a specific printable document type.
+     */
+    public function documentVoucherSize(string $docType): string
+    {
+        $defaults = $this->documentVoucherDefaults();
+        return $defaults[$docType] ?? (self::DEFAULT_DOCUMENT_VOUCHER_SIZES[$docType] ?? '80mm');
+    }
+
     /**
      * Get a granular POS configuration setting with default fallback.
      */

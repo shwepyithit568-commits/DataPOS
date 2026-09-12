@@ -145,6 +145,75 @@
             opacity: 0.65;
             cursor: not-allowed;
         }
+        .tool-btn-share-jpg {
+            background: #0d9488;
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(13, 148, 136, .3);
+        }
+        .tool-btn-share-jpg:hover { background: #0f766e; }
+
+        /* Compact Paper Size Selector */
+        .size-select-wrapper {
+            display: inline-flex;
+            align-items: center;
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 2px 6px 2px 8px;
+            gap: 6px;
+            border: 1px solid #334155;
+        }
+        .size-select-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            white-space: nowrap;
+        }
+        .size-select {
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 11.5px;
+            font-weight: 700;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.15s ease;
+        }
+        .size-select:focus {
+            border-color: #0284c7;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.25);
+        }
+
+        /* Toast notification */
+        .print-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(15, 23, 42, 0.95);
+            color: #f8fafc;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 10px 20px;
+            border-radius: 9999px;
+            font-size: 12.5px;
+            font-weight: 700;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 9999;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .print-toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
 
         .layout-pills {
             display: inline-flex;
@@ -364,41 +433,29 @@
                 {{ $isX ? 'X-REPORT' : 'Z-REPORT' }}
             </span>
 
-            {{-- Layout Selector Pills --}}
-            <div class="layout-pills">
-                <a href="{{ route('pos.closing.print', array_merge($printUrlParams, ['layout' => '58mm'])) }}"
-                   class="layout-pill {{ $layout === '58mm' ? 'active' : '' }}" title="58mm Thermal">
-                    58mm
-                </a>
-                <a href="{{ route('pos.closing.print', array_merge($printUrlParams, ['layout' => '80mm'])) }}"
-                   class="layout-pill {{ $layout === '80mm' ? 'active' : '' }}" title="80mm Thermal">
-                    80mm
-                </a>
-                <a href="{{ route('pos.closing.print', array_merge($printUrlParams, ['layout' => 'a5_portrait'])) }}"
-                   class="layout-pill {{ $layout === 'a5_portrait' ? 'active' : '' }}" title="A5 Portrait">
-                    A5 P
-                </a>
-                <a href="{{ route('pos.closing.print', array_merge($printUrlParams, ['layout' => 'a5_landscape'])) }}"
-                   class="layout-pill {{ $layout === 'a5_landscape' ? 'active' : '' }}" title="A5 Landscape">
-                    A5 L
-                </a>
-                <a href="{{ route('pos.closing.print', array_merge($printUrlParams, ['layout' => 'a4_portrait'])) }}"
-                   class="layout-pill {{ $layout === 'a4_portrait' ? 'active' : '' }}" title="A4 Portrait">
-                    A4 P
-                </a>
-                <a href="{{ route('pos.closing.print', array_merge($printUrlParams, ['layout' => 'a4_landscape'])) }}"
-                   class="layout-pill {{ $layout === 'a4_landscape' ? 'active' : '' }}" title="A4 Landscape">
-                    A4 L
-                </a>
+            {{-- Compact Paper Size Dropdown --}}
+            <div class="size-select-wrapper">
+                <label for="layoutSelect" class="size-select-label">📄 {{ __('messages.paper_size') }}:</label>
+                <select id="layoutSelect" class="size-select">
+                    <option value="{{ route('pos.closing.print', array_merge($printUrlParams, ['layout' => '58mm'])) }}" {{ $layout === '58mm' ? 'selected' : '' }}>58mm (Thermal)</option>
+                    <option value="{{ route('pos.closing.print', array_merge($printUrlParams, ['layout' => '80mm'])) }}" {{ $layout === '80mm' ? 'selected' : '' }}>80mm (Thermal)</option>
+                    <option value="{{ route('pos.closing.print', array_merge($printUrlParams, ['layout' => 'a5_portrait'])) }}" {{ $layout === 'a5_portrait' ? 'selected' : '' }}>A5 Portrait</option>
+                    <option value="{{ route('pos.closing.print', array_merge($printUrlParams, ['layout' => 'a5_landscape'])) }}" {{ $layout === 'a5_landscape' ? 'selected' : '' }}>A5 Landscape</option>
+                    <option value="{{ route('pos.closing.print', array_merge($printUrlParams, ['layout' => 'a4_portrait'])) }}" {{ $layout === 'a4_portrait' ? 'selected' : '' }}>A4 Portrait</option>
+                    <option value="{{ route('pos.closing.print', array_merge($printUrlParams, ['layout' => 'a4_landscape'])) }}" {{ $layout === 'a4_landscape' ? 'selected' : '' }}>A4 Landscape</option>
+                </select>
             </div>
         </div>
 
         <div class="toolbar-right">
-            <button type="button" id="btnSavePdf" class="tool-btn tool-btn-pdf" data-save-pdf title="{{ __('messages.export_pdf') ?? 'Save PDF' }}">
-                📥 <span id="btnSavePdfText">{{ __('messages.export_pdf') ?? 'Save PDF' }}</span>
-            </button>
             <button type="button" id="btnPrint" class="tool-btn tool-btn-print" data-print title="{{ __('messages.print') ?? 'Print' }}">
                 🖨️ <span>{{ __('messages.print') ?? 'Print' }}</span>
+            </button>
+            <button type="button" id="btnSavePdf" class="tool-btn tool-btn-pdf" data-save-pdf title="{{ __('messages.vouchers_save_pdf') }}">
+                📥 <span id="btnSavePdfText">{{ __('messages.vouchers_save_pdf') }}</span>
+            </button>
+            <button type="button" id="btnShareJpg" class="tool-btn tool-btn-share-jpg" onclick="shareJpgDirectly()" title="{{ __('messages.vouchers_copy_jpg') }}">
+                🖼️ <span>{{ __('messages.vouchers_share_jpg') }}</span>
             </button>
         </div>
     </div>
@@ -800,7 +857,165 @@
                 }
             }
 
+            function showToast(message) {
+                var toast = document.getElementById('printToast');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.id = 'printToast';
+                    toast.className = 'print-toast no-print';
+                    document.body.appendChild(toast);
+                }
+                toast.innerHTML = '📋 ' + message;
+                toast.classList.add('show');
+                clearTimeout(window._toastTimer);
+                window._toastTimer = setTimeout(function () {
+                    toast.classList.remove('show');
+                }, 3500);
+            }
+
+            function downloadBlob(blob, fileName) {
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function () {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+            }
+
+            function dataUriToBlob(dataUri) {
+                var parts = dataUri.split(',');
+                var byteString = atob(parts[1]);
+                var mimeString = parts[0].split(':')[1].split(';')[0];
+                var ab = new ArrayBuffer(byteString.length);
+                var ia = new Uint8Array(ab);
+                for (var i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                return new Blob([ab], { type: mimeString });
+            }
+
+            async function shareJpgDirectly() {
+                var reportEl = document.getElementById('reportDocument');
+                var btn = document.getElementById('btnShareJpg');
+                var originalText = btn ? btn.innerHTML : '';
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '⏳ <span>Generating...</span>';
+                }
+
+                try {
+                    if (document.fonts && document.fonts.ready) {
+                        await document.fonts.ready;
+                    }
+
+                    var blob = null;
+                    var imageFilename = filename.replace(/\.pdf$/i, '.png');
+
+                    // Try high-fidelity SVG render first
+                    try {
+                        var customCanvas = await renderViaSvgForeignObject(reportEl, 2);
+                        if (customCanvas) {
+                            blob = await new Promise(function (resolve) {
+                                customCanvas.toBlob(resolve, 'image/png');
+                            });
+                        }
+                    } catch (svgErr) {
+                        console.warn('SVG foreignObject fallback for image:', svgErr);
+                    }
+
+                    // Fallback to html2pdf outputImg
+                    if (!blob && window.html2pdf && reportEl) {
+                        var worker = html2pdf().set({
+                            margin: 0,
+                            image: { type: 'png', quality: 1.0 },
+                            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false }
+                        }).from(reportEl);
+                        await worker.toContainer();
+                        var exactWidthPx = reportEl.offsetWidth;
+                        if (worker.prop && worker.prop.container) {
+                            worker.prop.container.style.width = exactWidthPx + 'px';
+                            if (worker.prop.container.firstChild) {
+                                worker.prop.container.firstChild.style.width = exactWidthPx + 'px';
+                            }
+                        }
+                        await worker.toCanvas();
+                        await worker.toImg();
+                        var dataUri = await worker.outputImg('datauristring');
+                        blob = dataUriToBlob(dataUri);
+                    }
+
+                    if (!blob) {
+                        doPrint();
+                        return;
+                    }
+
+                    var file = new File([blob], imageFilename, { type: 'image/png' });
+
+                    // 1. Prioritize Direct Clipboard Copy (Paste directly Ctrl+V into WeChat / Viber / Telegram)
+                    var copied = false;
+                    if (navigator.clipboard && navigator.clipboard.write) {
+                        try {
+                            await navigator.clipboard.write([
+                                new ClipboardItem({ 'image/png': blob })
+                            ]);
+                            copied = true;
+                            showToast("{{ __('messages.vouchers_jpg_copied') }}");
+                        } catch (clipErr) {
+                            console.warn('Clipboard image write failed:', clipErr);
+                            copied = false;
+                        }
+                    }
+
+                    if (!copied) {
+                        // 2. Mobile WebShare API fallback (only on mobile devices when clipboard write is unsupported)
+                        var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                        if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+                            try {
+                                await navigator.share({
+                                    title: document.title,
+                                    files: [file]
+                                });
+                                return;
+                            } catch (shareErr) {
+                                if (shareErr.name === 'AbortError') return;
+                            }
+                        }
+
+                        // 3. Fallback direct download
+                        downloadBlob(blob, imageFilename);
+                        showToast("{{ __('messages.vouchers_jpg_copied') }}");
+                    }
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('Share JPG error:', err);
+                        showToast('Failed to generate image');
+                    }
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                    }
+                }
+            }
+
+            window.shareJpgDirectly = shareJpgDirectly;
+            window.showToast = showToast;
+            window.downloadBlob = downloadBlob;
+
             document.addEventListener('DOMContentLoaded', function () {
+                var layoutSelect = document.getElementById('layoutSelect');
+                if (layoutSelect) {
+                    layoutSelect.addEventListener('change', function () {
+                        if (this.value) {
+                            window.location.href = this.value;
+                        }
+                    });
+                }
+
                 var printBtn = document.getElementById('btnPrint');
                 if (printBtn) {
                     printBtn.addEventListener('click', function (e) {
@@ -817,6 +1032,14 @@
                     });
                 }
 
+                var shareJpgBtn = document.getElementById('btnShareJpg');
+                if (shareJpgBtn) {
+                    shareJpgBtn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        shareJpgDirectly();
+                    });
+                }
+
                 document.addEventListener('click', function (e) {
                     var printTarget = e.target.closest('[data-print]');
                     if (printTarget) {
@@ -828,6 +1051,12 @@
                     if (savePdfTarget) {
                         e.preventDefault();
                         downloadPdf();
+                        return;
+                    }
+                    var shareJpgTarget = e.target.closest('#btnShareJpg');
+                    if (shareJpgTarget) {
+                        e.preventDefault();
+                        shareJpgDirectly();
                     }
                 }, true);
             });

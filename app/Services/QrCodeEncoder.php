@@ -57,15 +57,59 @@ class QrCodeEncoder
             }
         }
 
+        $widthAttr = $size > 0 ? (string)$size : '100%';
+        $heightAttr = $size > 0 ? (string)$size : '100%';
+
         return sprintf(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="100%%" height="100%%" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges">
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%s" height="%s" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges">
     <rect width="100%%" height="100%%" fill="#ffffff"/>
     <path d="%s" fill="#000000"/>
 </svg>',
             $totalSize,
             $totalSize,
+            $widthAttr,
+            $heightAttr,
             trim($pathD)
         );
+    }
+
+    /**
+     * Generate standalone PNG Data URI for 100% universal canvas, PDF, and print compatibility.
+     * Uses GD when available, with automatic quiet zone and crisp pixel scaling.
+     */
+    public static function generatePngDataUri(string $text, int $scale = 4, int $quietZone = 2): string
+    {
+        if (! function_exists('imagecreatetruecolor')) {
+            $svg = self::generateSvg($text, 96, $quietZone);
+            return 'data:image/svg+xml;base64,' . base64_encode($svg);
+        }
+
+        $matrix = self::encodeToMatrix($text);
+        $moduleCount = count($matrix);
+        $totalModules = $moduleCount + ($quietZone * 2);
+        $imgSize = $totalModules * $scale;
+
+        $im = imagecreatetruecolor($imgSize, $imgSize);
+        $white = imagecolorallocate($im, 255, 255, 255);
+        $black = imagecolorallocate($im, 0, 0, 0);
+        imagefilledrectangle($im, 0, 0, $imgSize - 1, $imgSize - 1, $white);
+
+        for ($r = 0; $r < $moduleCount; $r++) {
+            for ($c = 0; $c < $moduleCount; $c++) {
+                if ($matrix[$r][$c] === 1) {
+                    $x1 = ($c + $quietZone) * $scale;
+                    $y1 = ($r + $quietZone) * $scale;
+                    imagefilledrectangle($im, $x1, $y1, $x1 + $scale - 1, $y1 + $scale - 1, $black);
+                }
+            }
+        }
+
+        ob_start();
+        imagepng($im);
+        $pngData = ob_get_clean();
+        imagedestroy($im);
+
+        return 'data:image/png;base64,' . base64_encode($pngData);
     }
 
     /**

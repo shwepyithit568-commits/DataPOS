@@ -826,9 +826,13 @@ Alpine.data('posApp', (opts = {}) => ({
 
     /* ---- payment math ---- */
     get paid() {
-        return ['cash', 'kpay', 'wavepay', 'cbpay', 'mmqr', 'credit'].reduce((s, k) => s + (parseFloat(this[k]) || 0), 0);
+        // Only actual payment methods received (cash + digital wallets); credit is debt / receivable
+        return ['cash', 'kpay', 'wavepay', 'cbpay', 'mmqr'].reduce((s, k) => s + (parseFloat(this[k]) || 0), 0);
     },
-    get remaining() { return parseFloat(this.cart.totals.total || 0) - this.paid; },
+    get totalSettled() {
+        return this.paid + (parseFloat(this.credit) || 0);
+    },
+    get remaining() { return parseFloat(this.cart.totals.total || 0) - this.totalSettled; },
     get change() { return this.remaining < 0 ? -this.remaining : 0; },
     get shiftOpen() {
         if (!this.shiftsEnabled) return true;

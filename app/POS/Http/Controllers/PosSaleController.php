@@ -719,6 +719,14 @@ class PosSaleController extends Controller
         $change = $posted->payments->firstWhere('method', 'cash')?->change_given ?? '0';
         $debt = $posted->payments->firstWhere('method', 'credit')?->amount ?? '0';
 
+        if ($request->boolean('print_receipt') || $request->input('action') === 'print') {
+            return redirect()->route('pos.receipt', [
+                'store_slug' => $store->slug,
+                'sale' => $posted->id,
+            ])->with('success', __('messages.sale_posted') . " {$posted->receipt_number}")
+              ->with('auto_print', true);
+        }
+
         $response = back()->with('success', __('messages.sale_posted') . " {$posted->receipt_number}")
             ->with('posted_receipt', $posted->receipt_number)
             ->with('posted_sale_id', $posted->id)
@@ -748,7 +756,7 @@ class PosSaleController extends Controller
             abort(404);
         }
 
-        $sale->load(['items', 'payments', 'cashier']);
+        $sale->load(['items', 'payments', 'cashier', 'customer']);
 
         $printed = AuditLog::countFor('pos_receipt_printed', 'pos_sale', $sale->id);
         $reprinted = AuditLog::countFor('pos_receipt_reprinted', 'pos_sale', $sale->id);
@@ -766,11 +774,11 @@ class PosSaleController extends Controller
 
         $printCount = $printed + $reprinted + 1;
 
-        $voucherTemplate = app(\App\POS\Services\VoucherTemplateService::class)->getActiveTemplate(
-            $store,
-            $request->input('paper_size', '80mm')
-        );
+        $templateService = app(\App\POS\Services\VoucherTemplateService::class);
+        $paperSize = $request->input('paper_size') ?: $templateService->getDocumentPaperSize($store, 'pos_sale');
+        $voucherTemplate = $templateService->getTemplateForDocument($store, 'pos_sale', $paperSize);
+        $customerPhone = $sale->customer?->phone ? preg_replace('/[^0-9]/', '', (string) $sale->customer->phone) : null;
 
-        return view('pos.receipt', compact('store', 'sale', 'printCount', 'isReprint', 'voucherTemplate'));
+        return view('pos.receipt', compact('store', 'sale', 'printCount', 'isReprint', 'voucherTemplate', 'paperSize', 'customerPhone'));
     }
 }

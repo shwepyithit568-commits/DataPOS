@@ -356,29 +356,33 @@ class RepairController extends Controller
         $selectedTemplateId = $request->query('template_id');
         $requestedPaperSize = $request->query('paper_size');
 
+        $templateService = app(\App\POS\Services\VoucherTemplateService::class);
+        $paperSize = $requestedPaperSize ?: $templateService->getDocumentPaperSize($store, 'repair');
+
         $template = null;
         if ($selectedTemplateId) {
             $template = $templates->firstWhere('id', (int) $selectedTemplateId);
-        } elseif ($requestedPaperSize) {
-            $template = $templates->firstWhere('paper_size', $requestedPaperSize);
+        } else {
+            $template = $templateService->getTemplateForDocument($store, 'repair', $paperSize);
         }
 
         if (! $template) {
-            $template = $templates->firstWhere('is_default', true) ?? $templates->first();
+            $template = $templates->firstWhere('paper_size', $paperSize) ?? $templates->firstWhere('is_default', true) ?? $templates->first();
         }
-
-        $paperSize = $requestedPaperSize ?: ($template?->paper_size ?? '80mm');
 
         $trackingUrl = $repair->tracking_token
             ? route('storefront.service.track.token', ['store_slug' => $store->slug, 'token' => $repair->tracking_token])
             : null;
 
         $trackingQrSvg = null;
+        $trackingQrDataUri = null;
         if ($trackingUrl) {
             try {
                 $trackingQrSvg = \App\Services\QrCodeEncoder::generateSvg($trackingUrl, 96);
+                $trackingQrDataUri = \App\Services\QrCodeEncoder::generatePngDataUri($trackingUrl, 4);
             } catch (\Throwable $e) {
                 $trackingQrSvg = null;
+                $trackingQrDataUri = null;
             }
         }
 
@@ -391,6 +395,7 @@ class RepairController extends Controller
             'paperSize' => $paperSize,
             'trackingUrl' => $trackingUrl,
             'trackingQrSvg' => $trackingQrSvg,
+            'trackingQrDataUri' => $trackingQrDataUri,
         ]);
     }
 

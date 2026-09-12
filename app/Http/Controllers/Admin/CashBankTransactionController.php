@@ -451,8 +451,10 @@ class CashBankTransactionController extends Controller
             abort(404);
         }
 
-        $voucherTemplate = app(\App\POS\Services\VoucherTemplateService::class)->getActiveTemplate($store, 'a5');
+        $templateService = app(\App\POS\Services\VoucherTemplateService::class);
+        $paperSize = request('paper_size') ?: $templateService->getDocumentPaperSize($store, 'transaction');
+        $voucherTemplate = $templateService->getTemplateForDocument($store, 'transaction', $paperSize);
 
-        return view('admin.transactions.voucher', compact('store', 'transaction', 'voucherTemplate'));
+        return view('admin.transactions.voucher', compact('store', 'transaction', 'voucherTemplate', 'paperSize'));
     }
 }

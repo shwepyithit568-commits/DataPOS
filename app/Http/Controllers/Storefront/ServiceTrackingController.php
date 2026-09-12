@@ -140,27 +140,21 @@ class ServiceTrackingController extends Controller
             ->with(['customer', 'technician', 'statusHistory.changer', 'payments.creator', 'items.product', 'store.setting'])
             ->firstOrFail();
 
-        $templates = \App\Models\VoucherTemplate::where('store_id', $store->id)
-            ->where('is_active', true)
-            ->get();
-
-        if ($templates->isEmpty()) {
-            app(\App\POS\Services\VoucherTemplateService::class)->ensureDefaultTemplates($store);
-            $templates = \App\Models\VoucherTemplate::where('store_id', $store->id)
-                ->where('is_active', true)
-                ->get();
-        }
-
         $requestedPaperSize = $request->query('paper_size', 'a5');
-        $template = $templates->firstWhere('paper_size', $requestedPaperSize) ?? $templates->first();
-        $paperSize = in_array($requestedPaperSize, ['58mm', '80mm', 'a5', 'a4'], true) ? $requestedPaperSize : 'a5';
+        $templateService = app(\App\POS\Services\VoucherTemplateService::class);
+        $templates = $templateService->getTemplates($store);
+        $template = $templateService->getTemplateForDocument($store, 'repair', $requestedPaperSize);
+        $paperSize = in_array($requestedPaperSize, ['58mm', '80mm', 'a5', 'a4'], true) ? $requestedPaperSize : ($template->paper_size ?? 'a5');
 
         $trackingUrl = route('storefront.service.track.token', ['store_slug' => $store->slug, 'token' => $repair->tracking_token]);
         $trackingQrSvg = null;
+        $trackingQrDataUri = null;
         try {
             $trackingQrSvg = \App\Services\QrCodeEncoder::generateSvg($trackingUrl, 96);
+            $trackingQrDataUri = \App\Services\QrCodeEncoder::generatePngDataUri($trackingUrl, 4);
         } catch (\Throwable $e) {
             $trackingQrSvg = null;
+            $trackingQrDataUri = null;
         }
 
         return view('storefront.service_tracking.print', [
@@ -171,6 +165,7 @@ class ServiceTrackingController extends Controller
             'paperSize' => $paperSize,
             'trackingUrl' => $trackingUrl,
             'trackingQrSvg' => $trackingQrSvg,
+            'trackingQrDataUri' => $trackingQrDataUri,
         ]);
     }
 }

@@ -244,5 +244,167 @@ class BarcodeLabelTest extends TestCase
         $this->assertStringContainsString('Remax 20000mAh Powerbank', $content);
         $this->assertStringContainsString('885912345678', $content);
     }
+
+    public function test_admin_can_print_2up_twin_roll_thermal_labels(): void
+    {
+        $items = [
+            [
+                'id' => "p-{$this->product->id}",
+                'product_id' => $this->product->id,
+                'name' => $this->product->name,
+                'code' => $this->product->sku,
+                'price' => $this->product->retail_price,
+                'quantity' => 4,
+            ]
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('store.admin.barcode.print', [
+            'store_slug' => $this->store->slug,
+        ]), [
+            'preset' => 'thermal_2up_35x25',
+            'code_type' => 'barcode_128',
+            'show_store_name' => '1',
+            'show_product_name' => '1',
+            'show_price' => '1',
+            'show_code_text' => '1',
+            'items_json' => json_encode($items),
+        ]);
+
+        $response->assertStatus(200);
+        // 35mm * 2 + 2mm gap = 72mm width
+        $response->assertSee('72mm 25mm');
+        $response->assertSee('thermal-row');
+    }
+
+    public function test_admin_can_test_print_single_sticker(): void
+    {
+        $items = [
+            [
+                'id' => "p-{$this->product->id}",
+                'product_id' => $this->product->id,
+                'name' => $this->product->name,
+                'code' => $this->product->sku,
+                'price' => $this->product->retail_price,
+                'quantity' => 10,
+            ]
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('store.admin.barcode.print', [
+            'store_slug' => $this->store->slug,
+        ]), [
+            'preset' => 'thermal_40x30',
+            'code_type' => 'barcode_128',
+            'show_store_name' => '1',
+            'show_product_name' => '1',
+            'show_price' => '1',
+            'show_code_text' => '1',
+            'is_test_single' => '1',
+            'items_json' => json_encode($items),
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertSee('TEST 1 STICKER');
+        // In single test mode, total rendered sticker divs is exactly 1
+        $this->assertEquals(1, substr_count($response->getContent(), '<div class="label-item">'));
+    }
+
+    public function test_admin_can_skip_labels_on_sheet_print(): void
+    {
+        $items = [
+            [
+                'id' => "p-{$this->product->id}",
+                'product_id' => $this->product->id,
+                'name' => $this->product->name,
+                'code' => $this->product->sku,
+                'price' => $this->product->retail_price,
+                'quantity' => 2,
+            ]
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('store.admin.barcode.print', [
+            'store_slug' => $this->store->slug,
+        ]), [
+            'preset' => 'a4_30',
+            'code_type' => 'barcode_128',
+            'show_store_name' => '1',
+            'show_product_name' => '1',
+            'show_price' => '1',
+            'show_code_text' => '1',
+            'skip_labels' => '3',
+            'items_json' => json_encode($items),
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertSee('blank-label');
+        $this->assertEquals(3, substr_count($response->getContent(), '<div class="label-item blank-label">'));
+    }
+
+    public function test_admin_can_print_with_custom_text(): void
+    {
+        $items = [
+            [
+                'id' => "p-{$this->product->id}",
+                'product_id' => $this->product->id,
+                'name' => $this->product->name,
+                'code' => $this->product->sku,
+                'price' => $this->product->retail_price,
+                'quantity' => 1,
+            ]
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('store.admin.barcode.print', [
+            'store_slug' => $this->store->slug,
+        ]), [
+            'preset' => 'thermal_50x30',
+            'code_type' => 'barcode_128',
+            'show_store_name' => '1',
+            'show_product_name' => '1',
+            'show_price' => '1',
+            'show_code_text' => '1',
+            'show_custom_text' => '1',
+            'custom_text' => 'Warranty 6 Months',
+            'items_json' => json_encode($items),
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertSee('Warranty 6 Months');
+    }
+
+    public function test_a4_sheet_printing_paginates_labels_accurately_per_sheet(): void
+    {
+        // 40 labels on A4 24-Up (3x8) must produce exactly 2 sheets: 24 labels on Page 1 and 16 labels on Page 2
+        $items = [
+            [
+                'id' => "p-{$this->product->id}",
+                'product_id' => $this->product->id,
+                'name' => $this->product->name,
+                'code' => $this->product->sku,
+                'price' => $this->product->retail_price,
+                'quantity' => 40,
+            ]
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('store.admin.barcode.print', [
+            'store_slug' => $this->store->slug,
+        ]), [
+            'preset' => 'a4_24',
+            'code_type' => 'barcode_128',
+            'show_store_name' => '1',
+            'show_product_name' => '1',
+            'show_price' => '1',
+            'show_code_text' => '1',
+            'items_json' => json_encode($items),
+        ]);
+
+        $response->assertStatus(200);
+        $content = $response->getContent();
+        // 2 distinct physical sheet wrappers
+        $this->assertEquals(2, substr_count($content, 'class="sheet-page-wrapper"'));
+        // Page 1 of 2 and Page 2 of 2
+        $response->assertSee('1 / 2');
+        $response->assertSee('2 / 2');
+        // Total 40 label items across both sheets
+        $this->assertEquals(40, substr_count($content, '<div class="label-item">'));
+    }
 }
 

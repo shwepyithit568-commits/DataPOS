@@ -458,8 +458,10 @@ class EloadController extends Controller
             ->with(['account', 'cashier'])
             ->findOrFail($id);
 
-        $voucherTemplate = app(\App\POS\Services\VoucherTemplateService::class)->getActiveTemplate($store, '80mm');
+        $templateService = app(\App\POS\Services\VoucherTemplateService::class);
+        $paperSize = $request->query('paper_size') ?: $templateService->getDocumentPaperSize($store, 'eload');
+        $voucherTemplate = $templateService->getTemplateForDocument($store, 'eload', $paperSize);
 
-        return view('admin.eload._slip', compact('store', 'transaction', 'voucherTemplate'));
+        return view('admin.eload._slip', compact('store', 'transaction', 'voucherTemplate', 'paperSize'));
     }
 }

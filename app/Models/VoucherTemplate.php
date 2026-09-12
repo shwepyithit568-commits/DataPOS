@@ -14,6 +14,7 @@ class VoucherTemplate extends Model
     protected $fillable = [
         'store_id',
         'name',
+        'document_type',
         'paper_size',
         'style_preset',
         'header_title',
@@ -99,5 +100,35 @@ class VoucherTemplate extends Model
             return Storage::url($this->qr_image_path);
         }
         return null;
+    }
+
+    public function documentTypeLabel(): string
+    {
+        return match ($this->document_type) {
+            'pos_sale' => __('messages.vouchers_doc_pos_sale'),
+            'repair' => __('messages.vouchers_doc_repair'),
+            'invoice' => __('messages.vouchers_doc_invoice'),
+            'mini_slip' => __('messages.vouchers_doc_mini_slip'),
+            'closing' => __('messages.vouchers_doc_closing'),
+            'transaction' => __('messages.vouchers_doc_transaction'),
+            'warranty' => __('messages.vouchers_doc_warranty'),
+            'wholesale' => __('messages.vouchers_doc_wholesale'),
+            default => $this->name,
+        };
+    }
+
+    public function documentTypeIcon(): string
+    {
+        return match ($this->document_type) {
+            'pos_sale' => '🛒',
+            'repair' => '🔧',
+            'invoice' => '🏢',
+            'mini_slip' => '📱',
+            'closing' => '📊',
+            'transaction' => '💳',
+            'warranty' => '🛡️',
+            'wholesale' => '📦',
+            default => '📄',
+        };
     }
 }

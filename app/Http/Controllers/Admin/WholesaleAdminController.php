@@ -90,9 +90,13 @@ class WholesaleAdminController extends Controller
 
         $storeRouteParams = ['store_slug' => $store->slug];
         $application->load('user');
-        $voucherTemplate = app(\App\POS\Services\VoucherTemplateService::class)->getActiveTemplate($store, 'a4');
+        $setting = $store->setting;
 
-        return view('admin.wholesale.print', compact('store', 'storeRouteParams', 'application', 'setting', 'voucherTemplate'));
+        $templateService = app(\App\POS\Services\VoucherTemplateService::class);
+        $paperSize = request('paper_size') ?: $templateService->getDocumentPaperSize($store, 'wholesale');
+        $voucherTemplate = $templateService->getTemplateForDocument($store, 'wholesale', $paperSize);
+
+        return view('admin.wholesale.print', compact('store', 'storeRouteParams', 'application', 'setting', 'voucherTemplate', 'paperSize'));
     }
 
     public function updateStatus(Request $request, string $store_slug, WholesaleApplication $application, StoreContext $context): RedirectResponse

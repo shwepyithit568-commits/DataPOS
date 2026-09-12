@@ -261,8 +261,17 @@
 
     <main class="flex-1 w-full @yield('main_padding', 'px-2 sm:px-4 py-1.5 sm:py-2')">
         @if (session('success'))
-            <div class="mb-4 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-sm font-semibold" role="alert">
-                {{ session('success') }}
+            <div class="mb-4 px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-sm font-semibold flex items-center justify-between gap-3 shadow-xs" role="alert">
+                <div class="flex items-center gap-2 min-w-0">
+                    <svg class="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    <span class="truncate">{{ session('success') }}</span>
+                </div>
+                @if (session('posted_sale_id') && isset($store))
+                    <a href="{{ route('pos.receipt', ['store_slug' => $store->slug, 'sale' => session('posted_sale_id')]) }}"
+                       class="sf-btn-3d-success shrink-0 !inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black text-white cursor-pointer shadow-xs transition">
+                        🖨️ <span>{{ __('messages.view_receipt') }}</span>
+                    </a>
+                @endif
             </div>
         @endif
 

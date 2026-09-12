@@ -380,14 +380,23 @@
             border: 1px solid #e2e8f0;
             border-radius: 6px;
         }
-        .qr-svg-wrap svg {
+        .qr-svg-wrap svg,
+        .qr-svg-wrap img,
+        .qr-svg-wrap canvas {
             display: block;
+            margin: 0 auto;
             width: 72px;
             height: 72px;
         }
-        .size-58mm .qr-svg-wrap svg { width: 56px; height: 56px; }
-        .size-a5 .qr-svg-wrap svg { width: 84px; height: 84px; }
-        .size-a4 .qr-svg-wrap svg { width: 96px; height: 96px; }
+        .size-58mm .qr-svg-wrap svg,
+        .size-58mm .qr-svg-wrap img,
+        .size-58mm .qr-svg-wrap canvas { width: 56px; height: 56px; }
+        .size-a5 .qr-svg-wrap svg,
+        .size-a5 .qr-svg-wrap img,
+        .size-a5 .qr-svg-wrap canvas { width: 84px; height: 84px; }
+        .size-a4 .qr-svg-wrap svg,
+        .size-a4 .qr-svg-wrap img,
+        .size-a4 .qr-svg-wrap canvas { width: 96px; height: 96px; }
         .qr-hint {
             font-size: 0.78em;
             color: #64748b;
@@ -465,6 +474,36 @@
         }
         .share-channel-btn:hover {
             background: #f1f5f9;
+        }
+
+        /* Toast notification */
+        .print-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(15, 23, 42, 0.95);
+            color: #f8fafc;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 10px 20px;
+            border-radius: 9999px;
+            font-size: 12.5px;
+            font-weight: 700;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 9999;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .print-toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
         }
 
         /* ── Media Print Overrides ── */
@@ -744,10 +783,15 @@
             @endif
 
             {{-- Customer Live Status QR Code --}}
-            @if ($trackingQrSvg)
+            @if (!empty($trackingQrDataUri) || !empty($trackingQrSvg))
                 <div class="qr-section">
                     <div class="qr-svg-wrap">
-                        {!! $trackingQrSvg !!}
+                        @if (!empty($trackingQrDataUri))
+                            <img src="{{ $trackingQrDataUri }}" width="72" height="72" alt="QR Code" style="display:block; margin:0 auto; width:72px; height:72px;" />
+                            <canvas class="qr-code-canvas" width="180" height="180" style="display:none; margin:0 auto; width:72px; height:72px;"></canvas>
+                        @else
+                            {!! $trackingQrSvg !!}
+                        @endif
                     </div>
                     <div class="qr-hint">
                         📱 {{ __('messages.repair_scan_to_track') }}
@@ -795,33 +839,39 @@
                 {{ __('messages.repair_share_modal_desc') }}
             </p>
 
-            {{-- Native Share with File (if supported) --}}
-            <button type="button" class="share-channel-btn" data-repair-share-channel="native" style="background:#7c3aed; color:#fff; border-color:#6d28d9;">
-                <span>📄</span>
-                <span>{{ __('messages.share_pdf') }}</span>
+            {{-- 1. Copy Full Voucher Text (Social Apps ready) --}}
+            <button type="button" class="share-channel-btn" data-repair-share-channel="copy-text" style="background:#0284c7; color:#fff; border-color:#0369a1;">
+                <span>📋</span>
+                <span id="copyVoucherTextLabel">{{ __('messages.repair_copy_voucher_text') }}</span>
             </button>
 
-            {{-- Viber Channel --}}
+            {{-- 2. Viber Channel --}}
             <button type="button" class="share-channel-btn" data-repair-share-channel="viber">
                 <span style="color:#7360f2; font-size:16px;">💬</span>
                 <span>{{ __('messages.repair_share_viber') }}</span>
             </button>
 
-            {{-- Telegram Channel --}}
+            {{-- 3. Telegram Channel --}}
             <button type="button" class="share-channel-btn" data-repair-share-channel="telegram">
                 <span style="color:#229ed9; font-size:16px;">✈️</span>
                 <span>{{ __('messages.repair_share_telegram') }}</span>
             </button>
 
-            {{-- WhatsApp Channel --}}
+            {{-- 4. WhatsApp Channel --}}
             <button type="button" class="share-channel-btn" data-repair-share-channel="whatsapp">
                 <span style="color:#25d366; font-size:16px;">🟢</span>
                 <span>{{ __('messages.repair_share_whatsapp') }}</span>
             </button>
 
-            {{-- Copy Link --}}
+            {{-- 5. Native Share with File (if supported) --}}
+            <button type="button" class="share-channel-btn" data-repair-share-channel="native" style="background:#7c3aed; color:#fff; border-color:#6d28d9;">
+                <span>📄</span>
+                <span>{{ __('messages.share_pdf') }}</span>
+            </button>
+
+            {{-- 6. Copy Link Only --}}
             <button type="button" class="share-channel-btn" data-repair-share-channel="copy">
-                <span>📋</span>
+                <span>🔗</span>
                 <span id="copyLinkText">{{ __('messages.repair_copy_track_link') }}</span>
             </button>
         </div>
@@ -851,6 +901,34 @@
             'a4': { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
+        function initQrCanvas() {
+            var wraps = document.querySelectorAll('.qr-svg-wrap');
+            wraps.forEach(function(wrap) {
+                var img = wrap.querySelector('img');
+                var canvas = wrap.querySelector('canvas.qr-code-canvas');
+                if (img && canvas) {
+                    var render = function() {
+                        var w = img.naturalWidth || 180;
+                        var h = img.naturalHeight || 180;
+                        canvas.width = w;
+                        canvas.height = h;
+                        var ctx = canvas.getContext('2d');
+                        ctx.imageSmoothingEnabled = false;
+                        ctx.drawImage(img, 0, 0, w, h);
+                        canvas.style.display = 'block';
+                        img.style.display = 'none';
+                    };
+                    if (img.complete && img.naturalWidth > 0) {
+                        render();
+                    } else {
+                        img.onload = render;
+                    }
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', initQrCanvas);
+        initQrCanvas();
+
         var pdfConfig = {
             margin: [8, 8, 8, 8],
             filename: 'Service_Slip_' + jobNumber + '_A5.pdf',
@@ -858,32 +936,61 @@
             html2canvas: {
                 scale: 2,
                 useCORS: true,
-                logging: false,
-                onclone: function(clonedDocument) {
-                    var clonedTicket = clonedDocument.getElementById('ticketDocument');
-                    if (!clonedTicket) return;
-
-                    clonedTicket.classList.remove('size-58mm', 'size-80mm', 'size-a5', 'size-a4');
-                    clonedTicket.classList.add('size-a5');
-                }
+                logging: false
             },
             jsPDF: pdfDimensions[pdfPaperSize]
         };
 
-        function downloadPdf() {
+        function stampQrOnPdfCanvas(worker, ticket, rootRect, cwRect) {
+            var canvas = worker.prop ? worker.prop.canvas : null;
+            var qrSource = ticket.querySelector('.qr-svg-wrap img') || ticket.querySelector('.qr-svg-wrap canvas');
+
+            if (canvas && rootRect && cwRect && qrSource) {
+                var scale = canvas.width / rootRect.width;
+                var boxX = (cwRect.left - rootRect.left) * scale;
+                var boxY = (cwRect.top - rootRect.top) * scale;
+                var boxW = cwRect.width * scale;
+                var boxH = cwRect.height * scale;
+
+                var pad = 4 * scale;
+                var drawW = boxW - pad * 2;
+                var drawH = boxH - pad * 2;
+                var drawX = boxX + pad;
+                var drawY = boxY + pad;
+
+                var ctx = canvas.getContext('2d');
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(qrSource, drawX, drawY, drawW, drawH);
+            }
+        }
+
+        async function downloadPdf() {
             var btn = document.getElementById('btnDownloadPdf');
             var originalText = btn ? btn.innerHTML : '';
             var ticket = document.getElementById('ticketDocument');
 
             if (window.html2pdf && ticket) {
                 if (btn) { btn.disabled = true; btn.innerHTML = '⏳ {{ __("messages.track_service_generating_pdf") }}'; }
-                html2pdf().set(pdfConfig).from(ticket).save().then(function() {
-                    if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
-                }).catch(function(err) {
+                try {
+                    initQrCanvas();
+                    var worker = html2pdf().set(pdfConfig).from(ticket);
+                    await worker.toContainer();
+                    var container = worker.prop.container;
+                    var containerWrap = container ? container.querySelector('.qr-svg-wrap') : null;
+                    var rootRect = container ? container.getBoundingClientRect() : null;
+                    var cwRect = containerWrap ? containerWrap.getBoundingClientRect() : null;
+
+                    await worker.toCanvas();
+                    stampQrOnPdfCanvas(worker, ticket, rootRect, cwRect);
+                    await worker.toPdf();
+                    await worker.save();
+                } catch (err) {
                     console.error('PDF error:', err);
-                    if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
                     window.print();
-                });
+                } finally {
+                    if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
+                }
             } else {
                 window.print();
             }
@@ -898,7 +1005,17 @@
             if (window.html2pdf && ticket) {
                 if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Preparing PDF...'; }
                 try {
-                    var worker = html2pdf().set(pdfConfig).from(ticket).toPdf();
+                    initQrCanvas();
+                    var worker = html2pdf().set(pdfConfig).from(ticket);
+                    await worker.toContainer();
+                    var container = worker.prop.container;
+                    var containerWrap = container ? container.querySelector('.qr-svg-wrap') : null;
+                    var rootRect = container ? container.getBoundingClientRect() : null;
+                    var cwRect = containerWrap ? containerWrap.getBoundingClientRect() : null;
+
+                    await worker.toCanvas();
+                    stampQrOnPdfCanvas(worker, ticket, rootRect, cwRect);
+                    await worker.toPdf();
                     var pdfBlob = await worker.output('blob');
                     var pdfFile = new File([pdfBlob], pdfConfig.filename, { type: 'application/pdf' });
 
@@ -910,6 +1027,7 @@
                         });
                         return;
                     }
+                    downloadBlob(pdfBlob, pdfConfig.filename);
                 } catch (e) {
                     if (e.name !== 'AbortError') {
                         console.error('Share error:', e);
@@ -970,16 +1088,103 @@
             window.open(url, '_blank');
         }
 
-        function copyTrackingLink() {
-            navigator.clipboard.writeText(trackingUrl).then(function() {
-                var lbl = document.getElementById('copyLinkText');
-                if (lbl) {
-                    var orig = lbl.textContent;
-                    lbl.textContent = '✓ {{ __("messages.copied") }}!';
-                    setTimeout(function() { lbl.textContent = orig; }, 2000);
-                }
-            });
+        function showToast(message) {
+            var toast = document.getElementById('printToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'printToast';
+                toast.className = 'print-toast no-print';
+                document.body.appendChild(toast);
+            }
+            toast.innerHTML = '📋 ' + message;
+            toast.classList.add('show');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(function() {
+                toast.classList.remove('show');
+            }, 3500);
         }
+
+        function fallbackCopyText(text, successMsg) {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.top = '0';
+            ta.style.left = '0';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            var success = false;
+            try {
+                success = document.execCommand('copy');
+            } catch (err) {
+                success = false;
+            }
+            document.body.removeChild(ta);
+            if (success) {
+                if (successMsg) showToast(successMsg);
+            } else {
+                prompt('Copy text:', text);
+            }
+            return success;
+        }
+
+        function copyVoucherText() {
+            var text = buildShareText();
+            var msg = '📋 ' + '{{ __('messages.repair_voucher_text_copied') }}';
+            var lbl = document.getElementById('copyVoucherTextLabel');
+            if (lbl) lbl.innerText = '✓ ' + '{{ __('messages.vouchers_copied') }}';
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                    showToast(msg);
+                    setTimeout(function() {
+                        if (lbl) lbl.innerText = '{{ __('messages.repair_copy_voucher_text') }}';
+                    }, 2500);
+                }).catch(function() {
+                    fallbackCopyText(text, msg);
+                    setTimeout(function() {
+                        if (lbl) lbl.innerText = '{{ __('messages.repair_copy_voucher_text') }}';
+                    }, 2500);
+                });
+            } else {
+                fallbackCopyText(text, msg);
+                setTimeout(function() {
+                    if (lbl) lbl.innerText = '{{ __('messages.repair_copy_voucher_text') }}';
+                }, 2500);
+            }
+        }
+
+        function copyTrackingLink() {
+            var msg = '🔗 ' + '{{ __('messages.repair_copy_track_link') }}' + ' ✓';
+            var lbl = document.getElementById('copyLinkText');
+            if (lbl) lbl.innerText = '✓ ' + '{{ __('messages.vouchers_copied') }}';
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(trackingUrl).then(function() {
+                    showToast(msg);
+                    setTimeout(function() {
+                        if (lbl) lbl.innerText = '{{ __('messages.repair_copy_track_link') }}';
+                    }, 2000);
+                }).catch(function() {
+                    fallbackCopyText(trackingUrl, msg);
+                    setTimeout(function() {
+                        if (lbl) lbl.innerText = '{{ __('messages.repair_copy_track_link') }}';
+                    }, 2000);
+                });
+            } else {
+                fallbackCopyText(trackingUrl, msg);
+                setTimeout(function() {
+                    if (lbl) lbl.innerText = '{{ __('messages.repair_copy_track_link') }}';
+                }, 2000);
+            }
+        }
+
+        window.showToast = showToast;
+        window.copyVoucherText = copyVoucherText;
+        window.copyTrackingLink = copyTrackingLink;
+        window.fallbackCopyText = fallbackCopyText;
 
         document.addEventListener('DOMContentLoaded', function() {
             var printBtn = document.getElementById('btnPrint');
@@ -1014,6 +1219,7 @@
             document.querySelectorAll('[data-repair-share-channel]').forEach(function(button) {
                 button.addEventListener('click', function() {
                     var handlers = {
+                        'copy-text': copyVoucherText,
                         native: shareNativePdf,
                         viber: shareToViber,
                         telegram: shareToTelegram,

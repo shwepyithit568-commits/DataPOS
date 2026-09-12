@@ -163,10 +163,14 @@ class DailyClosingController extends Controller
             abort(404);
         }
 
+        $templateService = app(\App\POS\Services\VoucherTemplateService::class);
+        $defaultPaper = $templateService->getDocumentPaperSize($store, 'closing');
+        $defaultLayout = ($defaultPaper === 'a4') ? 'a4_portrait' : (($defaultPaper === 'a5') ? 'a5_portrait' : $defaultPaper);
+
         $allowedLayouts = ['58mm', '80mm', 'a5_portrait', 'a5_landscape', 'a4_portrait', 'a4_landscape'];
-        $layout = (string) $request->query('layout', '80mm');
+        $layout = (string) $request->query('layout', $defaultLayout);
         if (! in_array($layout, $allowedLayouts, true)) {
-            $layout = '80mm';
+            $layout = $defaultLayout;
         }
 
         $dateString = $closing ? $closing->business_date->toDateString() : $request->query('date');
@@ -212,11 +216,11 @@ class DailyClosingController extends Controller
 
         $paperSize = in_array($layout, ['58mm', '80mm', 'a5_portrait', 'a5_landscape', 'a4_portrait', 'a4_landscape'], true)
             ? (str_starts_with((string) $layout, 'a5') ? 'a5' : (str_starts_with((string) $layout, 'a4') ? 'a4' : $layout))
-            : '80mm';
+            : $defaultPaper;
 
-        $voucherTemplate = app(\App\POS\Services\VoucherTemplateService::class)->getActiveTemplate($store, $paperSize);
+        $voucherTemplate = $templateService->getTemplateForDocument($store, 'closing', $paperSize);
 
-        return view('pos.closing_print', compact('store', 'date', 'type', 'layout', 'closing', 'totals', 'xData', 'voucherTemplate'));
+        return view('pos.closing_print', compact('store', 'date', 'type', 'layout', 'closing', 'totals', 'xData', 'voucherTemplate', 'paperSize'));
     }
 
     public function export(Request $request, StoreContext $context): BinaryFileResponse|StreamedResponse

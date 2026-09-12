@@ -34,7 +34,68 @@ class VoucherCustomizerController extends Controller
             ? $templates->firstWhere('id', (int) $selectedId)
             : $templates->firstWhere('is_default', true) ?? $templates->first();
 
-        return view('admin.vouchers.index', compact('store', 'templates', 'selectedTemplate'));
+        $documentDefaults = $this->templateService->getDocumentDefaults($store);
+        $activeTab = $request->query('tab', 'studio');
+
+        $documentTypes = [
+            [
+                'key' => 'pos_sale',
+                'title' => __('messages.vouchers_doc_pos_sale'),
+                'desc' => __('messages.vouchers_doc_pos_sale_desc'),
+                'icon' => 'pos_sale',
+            ],
+            [
+                'key' => 'closing',
+                'title' => __('messages.vouchers_doc_closing'),
+                'desc' => __('messages.vouchers_doc_closing_desc'),
+                'icon' => 'closing',
+            ],
+            [
+                'key' => 'repair',
+                'title' => __('messages.vouchers_doc_repair'),
+                'desc' => __('messages.vouchers_doc_repair_desc'),
+                'icon' => 'repair',
+            ],
+            [
+                'key' => 'invoice',
+                'title' => __('messages.vouchers_doc_invoice'),
+                'desc' => __('messages.vouchers_doc_invoice_desc'),
+                'icon' => 'invoice',
+            ],
+            [
+                'key' => 'transaction',
+                'title' => __('messages.vouchers_doc_transaction'),
+                'desc' => __('messages.vouchers_doc_transaction_desc'),
+                'icon' => 'transaction',
+            ],
+            [
+                'key' => 'eload',
+                'title' => __('messages.vouchers_doc_eload'),
+                'desc' => __('messages.vouchers_doc_eload_desc'),
+                'icon' => 'eload',
+            ],
+            [
+                'key' => 'warranty',
+                'title' => __('messages.vouchers_doc_warranty'),
+                'desc' => __('messages.vouchers_doc_warranty_desc'),
+                'icon' => 'warranty',
+            ],
+            [
+                'key' => 'wholesale',
+                'title' => __('messages.vouchers_doc_wholesale'),
+                'desc' => __('messages.vouchers_doc_wholesale_desc'),
+                'icon' => 'wholesale',
+            ],
+        ];
+
+        return view('admin.vouchers.index', compact(
+            'store',
+            'templates',
+            'selectedTemplate',
+            'documentDefaults',
+            'activeTab',
+            'documentTypes'
+        ));
     }
 
     /**
@@ -49,6 +110,7 @@ class VoucherCustomizerController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:120',
+            'document_type' => 'nullable|string|max:50',
             'paper_size' => 'required|in:80mm,58mm,a4,a5',
             'style_preset' => 'required|in:clean_minimal,modern_tech,classic_border',
             'header_title' => 'nullable|string|max:150',
@@ -95,6 +157,7 @@ class VoucherCustomizerController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:120',
+            'document_type' => 'nullable|string|max:50',
             'paper_size' => 'required|in:80mm,58mm,a4,a5',
             'style_preset' => 'required|in:clean_minimal,modern_tech,classic_border',
             'header_title' => 'nullable|string|max:150',
@@ -176,5 +239,35 @@ class VoucherCustomizerController extends Controller
         $template = VoucherTemplate::where('store_id', $store->id)->findOrFail($voucher);
 
         return view('admin.vouchers.preview', compact('store', 'template'));
+    }
+
+    /**
+     * Update default voucher paper sizes for document types.
+     */
+    public function updateDocumentDefaults(StoreContext $context, Request $request): RedirectResponse
+    {
+        $store = $context->getStore();
+        if (!$store) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'defaults' => 'required|array',
+            'defaults.pos_sale' => 'required|in:80mm,58mm,a4,a5',
+            'defaults.closing' => 'required|in:80mm,58mm,a4,a5',
+            'defaults.repair' => 'required|in:80mm,58mm,a4,a5',
+            'defaults.invoice' => 'required|in:80mm,58mm,a4,a5',
+            'defaults.transaction' => 'required|in:80mm,58mm,a4,a5',
+            'defaults.eload' => 'required|in:80mm,58mm,a4,a5',
+            'defaults.warranty' => 'required|in:80mm,58mm,a4,a5',
+            'defaults.wholesale' => 'required|in:80mm,58mm,a4,a5',
+        ]);
+
+        $this->templateService->saveDocumentDefaults($store, $validated['defaults'], $request->user());
+
+        return redirect()->route('store.admin.vouchers.index', [
+            'store_slug' => $store->slug,
+            'tab' => 'defaults',
+        ])->with('success', __('messages.vouchers_document_defaults_saved'));
     }
 }

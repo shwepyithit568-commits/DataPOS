@@ -25,7 +25,8 @@ class VoucherTemplateService
 
         $defaults = [
             [
-                'name' => 'Default 80mm Thermal Receipt (စံပြု 80mm)',
+                'name' => 'POS Invoice (POS အရောင်းပြေစာ)',
+                'document_type' => 'pos_sale',
                 'paper_size' => '80mm',
                 'style_preset' => 'clean_minimal',
                 'header_title' => $store->name,
@@ -48,30 +49,32 @@ class VoucherTemplateService
                 'is_active' => true,
             ],
             [
-                'name' => '58mm Compact Mini Slip (လက်ကိုင် 58mm)',
-                'paper_size' => '58mm',
-                'style_preset' => 'clean_minimal',
+                'name' => 'Service Invoice (ဖုန်းပြင်/ဝန်ဆောင်မှု ဘောက်ချာ)',
+                'document_type' => 'repair',
+                'paper_size' => 'a5',
+                'style_preset' => 'modern_tech',
                 'header_title' => $store->name,
-                'header_subtitle' => null,
-                'show_logo' => false,
-                'address' => $store->address ?? 'Yangon',
+                'header_subtitle' => 'Service Job & Parts Delivery Voucher',
+                'show_logo' => true,
+                'address' => $store->address ?? 'Yangon, Myanmar',
                 'phone' => $store->phone ?? '09-123456789',
                 'show_qr' => true,
                 'qr_type' => 'kpay',
-                'qr_label' => 'Scan to Pay',
+                'qr_label' => 'KPay / Wave QR',
                 'show_customer_info' => true,
                 'show_cashier_name' => true,
-                'show_tax_breakdown' => false,
+                'show_tax_breakdown' => true,
                 'show_discount_line' => true,
                 'show_barcode' => true,
-                'footer_greeting' => 'Thank you! ကျေးဇူးတင်ပါသည်',
-                'footer_policy' => 'No return without slip.',
-                'font_size' => 'small',
+                'footer_greeting' => 'We appreciate your trust in our service!',
+                'footer_policy' => '30-day warranty on replaced parts and service labor.',
+                'font_size' => 'medium',
                 'is_default' => true,
                 'is_active' => true,
             ],
             [
-                'name' => 'A4 Commercial Tax Invoice (ကုမ္ပဏီသုံး A4)',
+                'name' => 'Commercial Tax Invoice (ကုမ္ပဏီသုံး အခွန်ပြေစာ)',
+                'document_type' => 'invoice',
                 'paper_size' => 'a4',
                 'style_preset' => 'classic_border',
                 'header_title' => $store->name,
@@ -94,25 +97,26 @@ class VoucherTemplateService
                 'is_active' => true,
             ],
             [
-                'name' => 'A5 Service & Delivery Note (ဖုန်းပြင်/ပစ္စည်းပို့ A5)',
-                'paper_size' => 'a5',
-                'style_preset' => 'modern_tech',
+                'name' => 'Mini Slip (လက်ကိုင်ပြေစာအကျဉ်း)',
+                'document_type' => 'mini_slip',
+                'paper_size' => '58mm',
+                'style_preset' => 'clean_minimal',
                 'header_title' => $store->name,
-                'header_subtitle' => 'Service Job & Parts Delivery Voucher',
-                'show_logo' => true,
-                'address' => $store->address ?? 'Yangon, Myanmar',
+                'header_subtitle' => null,
+                'show_logo' => false,
+                'address' => $store->address ?? 'Yangon',
                 'phone' => $store->phone ?? '09-123456789',
                 'show_qr' => true,
                 'qr_type' => 'kpay',
-                'qr_label' => 'KPay / Wave QR',
+                'qr_label' => 'Scan to Pay',
                 'show_customer_info' => true,
                 'show_cashier_name' => true,
-                'show_tax_breakdown' => true,
+                'show_tax_breakdown' => false,
                 'show_discount_line' => true,
                 'show_barcode' => true,
-                'footer_greeting' => 'We appreciate your trust in our service!',
-                'footer_policy' => '30-day warranty on replaced parts and service labor.',
-                'font_size' => 'medium',
+                'footer_greeting' => 'Thank you! ကျေးဇူးတင်ပါသည်',
+                'footer_policy' => 'No return without slip.',
+                'font_size' => 'small',
                 'is_default' => true,
                 'is_active' => true,
             ],
@@ -163,6 +167,86 @@ class VoucherTemplateService
     }
 
     /**
+     * Get default paper sizes for all printable documents.
+     *
+     * @return array<string, string>
+     */
+    public function getDocumentDefaults(Store $store): array
+    {
+        return $store->setting?->documentVoucherDefaults() ?? \App\Models\StorefrontSetting::DEFAULT_DOCUMENT_VOUCHER_SIZES;
+    }
+
+    /**
+     * Get configured default paper size for a specific document type.
+     */
+    public function getDocumentPaperSize(Store $store, string $documentType, string $fallback = '80mm'): string
+    {
+        return $store->setting?->documentVoucherSize($documentType) ?? (\App\Models\StorefrontSetting::DEFAULT_DOCUMENT_VOUCHER_SIZES[$documentType] ?? $fallback);
+    }
+
+    /**
+     * Get active template for a document type (automatically resolving its default paper size).
+     */
+    public function getTemplateForDocument(Store $store, string $documentType, ?string $paperSizeOverride = null): ?VoucherTemplate
+    {
+        $this->ensureDefaultTemplates($store);
+
+        // 1. Direct document_type match
+        $query = VoucherTemplate::where('store_id', $store->id)
+            ->where('document_type', $documentType)
+            ->where('is_active', true);
+
+        if ($paperSizeOverride) {
+            $template = (clone $query)->where('paper_size', $paperSizeOverride)->first()
+                ?? $query->first();
+        } else {
+            $template = $query->first();
+        }
+
+        // 2. Fallback to active template for document type's default paper size
+        if (!$template) {
+            $paperSize = $paperSizeOverride ?: $this->getDocumentPaperSize($store, $documentType);
+            $template = $this->getActiveTemplate($store, $paperSize);
+        }
+
+        return $template ?? VoucherTemplate::where('store_id', $store->id)->first();
+    }
+
+    /**
+     * Save document voucher default mappings.
+     *
+     * @param array<string, string> $defaults
+     */
+    public function saveDocumentDefaults(Store $store, array $defaults, ?User $user = null): void
+    {
+        $allowedSizes = ['58mm', '80mm', 'a4', 'a5'];
+        $clean = [];
+        foreach (\App\Models\StorefrontSetting::DEFAULT_DOCUMENT_VOUCHER_SIZES as $docType => $defSize) {
+            $val = $defaults[$docType] ?? $defSize;
+            $clean[$docType] = in_array($val, $allowedSizes, true) ? $val : $defSize;
+        }
+
+        $setting = $store->setting ?? \App\Models\StorefrontSetting::create([
+            'store_id' => $store->id,
+            'store_name' => $store->name,
+        ]);
+
+        $posSettings = $setting->pos_settings ?? [];
+        $posSettings['document_voucher_defaults'] = $clean;
+        $setting->pos_settings = $posSettings;
+        $setting->save();
+
+        AuditLog::write(
+            storeId: $store->id,
+            action: 'document_voucher_defaults_updated',
+            entityType: 'storefront_setting',
+            entityId: $setting->id,
+            metadata: ['defaults' => $clean],
+            actorId: $user?->id,
+        );
+    }
+
+    /**
      * Save (create or update) a voucher template.
      */
     public function saveTemplate(Store $store, array $data, ?VoucherTemplate $template = null, ?User $user = null): VoucherTemplate
@@ -185,6 +269,12 @@ class VoucherTemplateService
                 VoucherTemplate::where('store_id', $store->id)
                     ->where('paper_size', $paperSize)
                     ->update(['is_default' => false]);
+
+                if (!empty($data['document_type'])) {
+                    VoucherTemplate::where('store_id', $store->id)
+                        ->where('document_type', $data['document_type'])
+                        ->update(['is_default' => false]);
+                }
             }
 
             // Handle logo file upload
@@ -201,6 +291,7 @@ class VoucherTemplateService
 
             $attributes = [
                 'name' => $data['name'],
+                'document_type' => $data['document_type'] ?? $template?->document_type ?? null,
                 'paper_size' => $paperSize,
                 'style_preset' => $data['style_preset'] ?? 'clean_minimal',
                 'header_title' => $data['header_title'] ?? $store->name,
