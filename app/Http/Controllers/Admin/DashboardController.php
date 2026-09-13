@@ -13,6 +13,7 @@ use App\POS\Services\CashierShiftService;
 use App\Services\StoreContext;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -64,7 +65,7 @@ class DashboardController extends Controller
         $storeId = $store->id;
 
         // ── Cached aggregation stats (60-second TTL) ──────────────────────
-        $stats = Cache::remember('dashboard.stats.' . $storeId, self::STATS_CACHE_TTL, function () use ($storeId) {
+        $stats = Cache::remember('dashboard.stats.v2.' . $storeId, self::STATS_CACHE_TTL, function () use ($storeId) {
             $todayStart = now()->startOfDay();
             $weekStart = now()->startOfWeek(Carbon::MONDAY);
             $monthStart = now()->startOfMonth();
@@ -80,11 +81,11 @@ class DashboardController extends Controller
                 'cancelledOrders'    => Order::where('store_id', $storeId)->where('status', 'cancelled')->count(),
                 'pendingWholesale'   => WholesaleApplication::where('store_id', $storeId)->where('status', 'pending')->count(),
                 'glassFinderItems'   => GlassFinderItem::where('store_id', $storeId)->count(),
-                'todayOrders'        => Order::where('store_id', $storeId)->where('created_at', '>=', $todayStart)->count(),
+                'todayOrders'        => $this->ordersSince($storeId, $todayStart),
                 'todayRevenue'       => $this->revenueSumSince($storeId, $todayStart),
-                'weekOrders'         => Order::where('store_id', $storeId)->where('created_at', '>=', $weekStart)->count(),
+                'weekOrders'         => $this->ordersSince($storeId, $weekStart),
                 'weekRevenue'        => $this->revenueSumSince($storeId, $weekStart),
-                'monthOrders'        => Order::where('store_id', $storeId)->where('created_at', '>=', $monthStart)->count(),
+                'monthOrders'        => $this->ordersSince($storeId, $monthStart),
                 'monthRevenue'       => $this->revenueSumSince($storeId, $monthStart),
                 'yearRevenue'        => $this->revenueSumSince($storeId, $yearStart),
                 // Expenses (Outflow)
@@ -97,23 +98,26 @@ class DashboardController extends Controller
                 'ecommerceProducts'  => Product::where('store_id', $storeId)->where('is_ecommerce', true)->count(),
                 // Customer Receivables (AR)
                 'totalCustomerDebt'  => max(0, (float) \App\POS\Models\CustomerLedgerEntry::where('store_id', $storeId)->sum('amount')),
-                // Top 5 products by total quantity sold (from order line items).
-                'topProducts'        => \App\Models\OrderItem::query()
-                    ->join('orders', 'orders.id', '=', 'order_items.order_id')
-                    ->where('orders.store_id', $storeId)
-                    ->selectRaw('order_items.product_name as name, SUM(order_items.quantity) as qty, SUM(order_items.subtotal) as sales')
-                    ->groupBy('order_items.product_name')
-                    ->orderByDesc('qty')
-                    ->take(5)
-                    ->get(),
-                // Last 12 months revenue series (for the bar chart).
+                // Top 5 products by quantity sold - online order line items
+                // merged with posted POS counter sales, so the ranking shares
+                // the same revenue scope as the stat cards and the 7-day chart.
+                'topProducts'        => DB::select(
+                    'SELECT name, SUM(qty) AS qty, SUM(amount) AS sales FROM ('
+                    . ' SELECT oi.product_name AS name, SUM(oi.quantity) AS qty, SUM(oi.subtotal) AS amount'
+                    . '   FROM order_items oi JOIN orders o ON o.id = oi.order_id'
+                    . '  WHERE o.store_id = ? AND o.status != ? GROUP BY oi.product_name'
+                    . ' UNION ALL'
+                    . ' SELECT psi.product_name AS name, SUM(psi.quantity) AS qty, SUM(psi.line_total) AS amount'
+                    . "   FROM pos_sale_items psi JOIN pos_sales ps ON ps.id = psi.pos_sale_id"
+                    . "  WHERE ps.store_id = ? AND ps.status = 'posted' GROUP BY psi.product_name"
+                    . ') GROUP BY name ORDER BY qty DESC LIMIT 5',
+                    [$storeId, 'cancelled', $storeId]
+                ),
+                // Last 12 months revenue series (online orders + posted POS
+                // sales), same scope as the stat cards and the 7-day chart.
                 'monthlySeries'      => collect(range(11, 0))->map(function ($i) use ($storeId) {
                     $month = now()->subMonths($i);
-                    $revenue = (float) Order::where('store_id', $storeId)
-                        ->where('status', '!=', 'cancelled')
-                        ->whereBetween('created_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
-                        ->selectRaw('COALESCE(SUM(COALESCE(agreed_amount, total_amount)), 0) as revenue')
-                        ->value('revenue');
+                    $revenue = $this->revenueSumBetween($storeId, $month->copy()->startOfMonth(), $month->copy()->endOfMonth());
 
                     return ['label' => $month->format('M y'), 'revenue' => $revenue];
                 })->all(),
@@ -235,7 +239,7 @@ class DashboardController extends Controller
             'ecommerceProducts' => 0,
             'totalCustomerDebt' => 0,
             'deliveredOrders' => 0,
-            'topProducts' => collect(),
+            'topProducts' => [],
             'monthlySeries' => collect(range(11, 0))->map(fn ($i) => ['label' => now()->subMonths($i)->format('M y'), 'revenue' => 0])->all(),
             'last7DaysSeries' => collect(range(6, 0))->map(fn ($i) => ['day' => now()->subDays($i)->format('D'), 'date' => now()->subDays($i)->format('d M'), 'revenue' => 0, 'orders' => 0])->all(),
             'paymentBreakdown' => [],
@@ -272,18 +276,50 @@ class DashboardController extends Controller
     }
 
     /**
-     * Revenue (SUM of agreed amount when set, else the original total)
-     * for orders created since a given timestamp — mirrors the order
-     * export's revenue calculation so dashboard numbers match.
-     * Cancelled orders are excluded (they are not revenue).
+     * Total store revenue since a timestamp: online orders (agreed amount
+     * when set, else the original total; cancelled excluded) plus posted
+     * POS counter sales. Same scope as the 7-day chart so the stat cards,
+     * monthly chart and top products never disagree.
      */
     private function revenueSumSince(int $storeId, Carbon $since): float
     {
-        return (float) Order::where('store_id', $storeId)
-            ->where('status', '!=', 'cancelled')
-            ->where('created_at', '>=', $since)
+        return $this->revenueSumBetween($storeId, $since, null);
+    }
+
+    /**
+     * Revenue inside a window (or since a point when $until is null):
+     * online orders + posted POS counter sales.
+     */
+    private function revenueSumBetween(int $storeId, Carbon $start, ?Carbon $until): float
+    {
+        $webQuery = Order::where('store_id', $storeId)->where('status', '!=', 'cancelled');
+        $posQuery = \App\POS\Models\PosSale::where('store_id', $storeId)->where('status', 'posted');
+
+        if ($until) {
+            $webQuery->whereBetween('created_at', [$start, $until]);
+            $posQuery->whereBetween('posted_at', [$start, $until]);
+        } else {
+            $webQuery->where('created_at', '>=', $start);
+            $posQuery->where('posted_at', '>=', $start);
+        }
+
+        $web = (float) $webQuery
             ->selectRaw('COALESCE(SUM(COALESCE(agreed_amount, total_amount)), 0) as revenue')
             ->value('revenue');
+        $pos = (float) $posQuery->sum('total');
+
+        return $web + $pos;
+    }
+
+    /**
+     * Bill count since a timestamp: online orders + posted POS sales,
+     * matching the revenue scope above.
+     */
+    private function ordersSince(int $storeId, Carbon $since): int
+    {
+        return Order::where('store_id', $storeId)->where('created_at', '>=', $since)->count()
+            + \App\POS\Models\PosSale::where('store_id', $storeId)
+                ->where('status', 'posted')->where('posted_at', '>=', $since)->count();
     }
 
     /**
