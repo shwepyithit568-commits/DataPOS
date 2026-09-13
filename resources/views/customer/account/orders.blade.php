@@ -307,6 +307,11 @@
                             <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-mono">
                                 {{ format_currency($orderEffectiveTotal, $store) }}
                             </div>
+                            @if ((float)($order->tax ?? 0) > 0)
+                                <div class="text-[9.5px] text-amber-600 dark:text-amber-400 font-bold">
+                                    +{{ __('messages.commercial_tax') }}
+                                </div>
+                            @endif
                             @if ($order->agreed_amount !== null && (float) $order->agreed_amount !== (float) $order->total_amount)
                                 <div class="text-[10px] text-slate-400 line-through font-mono">
                                     {{ format_currency($order->total_amount, $store) }}
@@ -396,7 +401,12 @@
                                     </div>
                                 </td>
                                 <td class="p-2.5 sm:p-3 font-mono font-black text-slate-900 dark:text-white whitespace-nowrap">
-                                    {{ format_currency($orderEffectiveTotal, $store) }}
+                                    <div>{{ format_currency($orderEffectiveTotal, $store) }}</div>
+                                    @if ((float)($order->tax ?? 0) > 0)
+                                        <div class="text-[9.5px] text-amber-600 dark:text-amber-400 font-bold">
+                                            +{{ __('messages.commercial_tax') }}
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="p-2.5 sm:p-3 whitespace-nowrap">
                                     @if ($order->status === 'pending_contact')

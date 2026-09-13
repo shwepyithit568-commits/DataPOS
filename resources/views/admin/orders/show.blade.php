@@ -8,6 +8,12 @@
     $amount = $order->agreed_amount !== null ? (float) $order->agreed_amount : (float) $order->total_amount;
     $isWholesale = $order->pricing_type === 'wholesale';
     $channel = strtolower($order->contact_channel);
+    $orderTax = (float) ($order->tax ?? 0);
+    $orderSubtotal = (float) ($order->taxable_amount ?? $order->items->sum('subtotal'));
+    if ($orderSubtotal <= 0) {
+        $orderSubtotal = (float) $order->items->sum('subtotal');
+    }
+    $taxPct = ($orderSubtotal > 0 && $orderTax > 0) ? round(($orderTax / $orderSubtotal) * 100) : null;
 @endphp
 
 @section('content')
@@ -217,8 +223,17 @@
                     </div>
                 </form>
 
-                <div class="text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between tabular-nums">
-                    <span>{{ __('messages.order_original_total') }}: <strong class="text-slate-700 dark:text-slate-300 font-mono">{{ format_currency($order->total_amount, $store) }}</strong></span>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 tabular-nums">
+                    <div class="flex flex-wrap items-center gap-3">
+                        @if ($orderTax > 0)
+                            <span>{{ __('messages.subtotal') }}: <strong class="text-slate-700 dark:text-slate-300 font-mono">{{ format_currency($orderSubtotal, $store) }}</strong></span>
+                            <span class="text-amber-600 dark:text-amber-400 font-bold inline-flex items-center gap-1">
+                                <span>🏛️ {{ __('messages.commercial_tax') }}@if($taxPct) ({{ $taxPct }}%)@endif:</span>
+                                <strong class="font-mono">+{{ format_currency($orderTax, $store) }}</strong>
+                            </span>
+                        @endif
+                        <span>{{ __('messages.order_original_total') }}: <strong class="text-slate-700 dark:text-slate-300 font-mono">{{ format_currency($order->total_amount, $store) }}</strong></span>
+                    </div>
                     @if ($order->agreed_amount !== null)
                         <span>{{ __('messages.order_agreed_total') }}: <strong class="text-violet-600 dark:text-violet-400 font-mono">{{ format_currency($order->agreed_amount, $store) }}</strong></span>
                     @endif
@@ -265,12 +280,19 @@
                                 @if ($item->product && $item->product->product_type === 'digital' && trim((string) $item->product->digital_delivery_method))
                                     <div class="text-[11px] text-sky-600 dark:text-sky-400 font-bold mt-0.5">📲 {{ __('messages.product_form_digital_delivery_method') }}: {{ $item->product->digital_delivery_method }}</div>
                                 @endif
+                                @if ($item->is_taxable && (float)($item->tax_amount ?? 0) > 0)
+                                    <div class="text-[10px] text-amber-600 dark:text-amber-400 font-medium mt-0.5 flex items-center gap-1">
+                                        <span>🏛️ {{ __('messages.commercial_tax') }}:</span>
+                                        <span class="font-mono font-bold">+{{ format_currency($item->tax_amount, $store) }}</span>
+                                        <span class="text-[9px] text-slate-400">({{ (float)$item->tax_rate }}%)</span>
+                                    </div>
+                                @endif
                             </td>
                             <td class="py-2.5 px-3 text-right font-mono text-slate-700 dark:text-slate-300 tabular-nums">
                                 {{ format_currency($item->unit_price, $store) }}
                             </td>
                             <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
-                                {{ $item->quantity }}
+                                {{ format_quantity($item->quantity, $store) }}
                             </td>
                             <td class="py-2.5 px-3 text-right font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">
                                 {{ format_currency($item->subtotal, $store) }}
@@ -278,10 +300,38 @@
                         </tr>
                     @endforeach
                 </tbody>
-                <tfoot class="border-t-2 border-slate-300 dark:border-slate-600 bg-slate-50/80 dark:bg-slate-800/40">
+                <tfoot class="border-t-2 border-slate-300 dark:border-slate-600 bg-slate-50/80 dark:bg-slate-800/40 divide-y divide-slate-200/80 dark:divide-slate-800">
+                    @if ($orderTax > 0)
+                        <tr class="divide-x divide-slate-200/80 dark:divide-slate-800">
+                            <td colspan="3" class="py-2 px-4 text-right font-bold text-slate-600 dark:text-slate-400 text-xs uppercase">
+                                {{ __('messages.subtotal') }}:
+                            </td>
+                            <td class="py-2 px-4 text-right font-mono font-bold text-xs text-slate-800 dark:text-slate-200 tabular-nums">
+                                {{ format_currency($orderSubtotal, $store) }}
+                            </td>
+                        </tr>
+                        <tr class="divide-x divide-slate-200/80 dark:divide-slate-800 bg-amber-50/50 dark:bg-amber-950/20">
+                            <td colspan="3" class="py-2 px-4 text-right font-bold text-amber-700 dark:text-amber-300 text-xs uppercase">
+                                🏛️ {{ __('messages.commercial_tax') }}@if($taxPct) <span class="font-mono font-black">({{ $taxPct }}%)</span>@endif @if($order->tax_type) <span class="text-[10px] font-normal lowercase text-slate-400">({{ $order->tax_type }})</span>@endif:
+                            </td>
+                            <td class="py-2 px-4 text-right font-mono font-bold text-xs text-amber-700 dark:text-amber-300 tabular-nums">
+                                + {{ format_currency($orderTax, $store) }}
+                            </td>
+                        </tr>
+                    @endif
+                    @if ($order->agreed_amount !== null && (float) $order->agreed_amount !== (float) $order->total_amount)
+                        <tr class="divide-x divide-slate-200/80 dark:divide-slate-800">
+                            <td colspan="3" class="py-2 px-4 text-right font-bold text-slate-600 dark:text-slate-400 text-xs uppercase">
+                                {{ __('messages.order_original_total') }}:
+                            </td>
+                            <td class="py-2 px-4 text-right font-mono font-bold text-xs text-slate-700 dark:text-slate-300 tabular-nums">
+                                {{ format_currency($order->total_amount, $store) }}
+                            </td>
+                        </tr>
+                    @endif
                     <tr class="divide-x divide-slate-200/80 dark:divide-slate-800">
                         <td colspan="3" class="py-3 px-4 text-right font-black text-slate-700 dark:text-slate-300 text-xs uppercase">
-                            {{ __('messages.total_amount') }}:
+                            {{ $order->agreed_amount !== null ? __('messages.order_agreed_total') : __('messages.total_amount') }}:
                         </td>
                         <td class="py-3 px-4 text-right font-mono font-black text-sm text-violet-600 dark:text-violet-400 tabular-nums">
                             {{ format_currency($amount, $store) }}

@@ -44,7 +44,21 @@
             font-display: swap;
         }
         @endif
-
+    </style>
+    <style id="dynamicPageStyle">
+        @if ($paperSize === '58mm')
+            @page { size: 58mm auto; margin: 0; }
+        @elseif ($paperSize === '80mm')
+            @page { size: 80mm auto; margin: 0; }
+        @elseif ($paperSize === 'a5')
+            @page { size: 148mm 210mm; margin: 0; }
+        @elseif ($paperSize === 'a4')
+            @page { size: 210mm 297mm; margin: 0; }
+        @else
+            @page { size: 148mm 210mm; margin: 0; }
+        @endif
+    </style>
+    <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
@@ -157,6 +171,10 @@
             padding: 16px 8px 40px;
             display: flex;
             justify-content: center;
+            align-items: flex-start;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
         }
         .ticket-card {
             background: #ffffff;
@@ -165,29 +183,35 @@
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
             position: relative;
             margin: 0 auto;
+            box-sizing: border-box;
+            transform-origin: top center;
         }
 
         /* Paper Size Dimensions */
         .size-58mm {
             width: 58mm;
-            padding: 10px 8px;
+            max-width: 58mm;
+            padding: 3mm 2mm;
             font-size: 10.5px;
         }
         .size-80mm {
             width: 80mm;
-            padding: 16px 14px;
+            max-width: 80mm;
+            padding: 4mm 3mm;
             font-size: 11.5px;
         }
         .size-a5 {
             width: 148mm;
+            max-width: 148mm;
             min-height: 210mm;
-            padding: 24px 22px;
-            font-size: 12px;
+            padding: 8mm 10mm;
+            font-size: 11.5px;
         }
         .size-a4 {
             width: 210mm;
+            max-width: 210mm;
             min-height: 297mm;
-            padding: 32px 30px;
+            padding: 14mm 16mm;
             font-size: 13px;
         }
 
@@ -511,26 +535,43 @@
             body {
                 background: #ffffff !important;
                 color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
             .no-print { display: none !important; }
-            .ticket-wrapper { padding: 0 !important; }
+            .ticket-wrapper {
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
             .ticket-card {
                 box-shadow: none !important;
                 border-radius: 0 !important;
-                margin: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
+                margin: 0 auto !important;
+                transform: none !important;
             }
-
-            @if ($paperSize === '58mm')
-                @page { size: 58mm auto; margin: 2mm; }
-            @elseif ($paperSize === '80mm')
-                @page { size: 80mm auto; margin: 3mm; }
-            @elseif ($paperSize === 'a5')
-                @page { size: A5 portrait; margin: 8mm; }
-            @elseif ($paperSize === 'a4')
-                @page { size: A4 portrait; margin: 10mm; }
-            @endif
+            .ticket-card.size-58mm {
+                width: 58mm !important;
+                max-width: 58mm !important;
+                padding: 2mm 2mm !important;
+            }
+            .ticket-card.size-80mm {
+                width: 80mm !important;
+                max-width: 80mm !important;
+                padding: 3mm 3mm !important;
+            }
+            .ticket-card.size-a5 {
+                width: 148mm !important;
+                max-width: 148mm !important;
+                min-height: 210mm !important;
+                padding: 8mm 10mm !important;
+            }
+            .ticket-card.size-a4 {
+                width: 210mm !important;
+                max-width: 210mm !important;
+                min-height: 297mm !important;
+                padding: 12mm 15mm !important;
+            }
         }
     </style>
 </head>
@@ -581,7 +622,7 @@
     </div>
 
     {{-- ── SECTION 2: Ticket Document Container ── --}}
-    <div class="ticket-wrapper">
+    <div class="ticket-wrapper" id="previewStage">
         <div class="ticket-card size-{{ $paperSize }}" id="ticketDocument">
 
             {{-- Store Branding Header --}}
@@ -897,8 +938,8 @@
         var pdfDimensions = {
             '58mm': { unit: 'mm', format: [58, 200], orientation: 'portrait' },
             '80mm': { unit: 'mm', format: [80, 240], orientation: 'portrait' },
-            'a5': { unit: 'mm', format: 'a5', orientation: 'portrait' },
-            'a4': { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            'a5': { unit: 'mm', format: [148, 210], orientation: 'portrait' },
+            'a4': { unit: 'mm', format: [210, 297], orientation: 'portrait' }
         };
 
         function initQrCanvas() {
@@ -965,10 +1006,34 @@
             }
         }
 
+        function updatePreviewScale() {
+            var stage = document.getElementById('previewStage');
+            var sheet = document.getElementById('ticketDocument');
+            if (!stage || !sheet) return;
+
+            sheet.style.transform = 'none';
+            stage.style.height = 'auto';
+
+            var stageWidth = stage.clientWidth - 20;
+            var sheetWidth = sheet.offsetWidth;
+
+            if (stageWidth > 0 && sheetWidth > 0 && stageWidth < sheetWidth) {
+                var scale = stageWidth / sheetWidth;
+                sheet.style.transform = 'scale(' + scale.toFixed(4) + ')';
+                sheet.style.transformOrigin = 'top center';
+                var scaledHeight = sheet.offsetHeight * scale;
+                stage.style.height = (scaledHeight + 36) + 'px';
+            }
+        }
+
         async function downloadPdf() {
             var btn = document.getElementById('btnDownloadPdf');
             var originalText = btn ? btn.innerHTML : '';
             var ticket = document.getElementById('ticketDocument');
+            var stage = document.getElementById('previewStage');
+
+            if (ticket) ticket.style.transform = 'none';
+            if (stage) stage.style.height = 'auto';
 
             if (window.html2pdf && ticket) {
                 if (btn) { btn.disabled = true; btn.innerHTML = '⏳ {{ __("messages.track_service_generating_pdf") }}'; }
@@ -989,9 +1054,11 @@
                     console.error('PDF error:', err);
                     window.print();
                 } finally {
+                    updatePreviewScale();
                     if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
                 }
             } else {
+                updatePreviewScale();
                 window.print();
             }
         }
@@ -1001,6 +1068,10 @@
             var btn = document.getElementById('btnShare');
             var originalText = btn ? btn.innerHTML : '';
             var ticket = document.getElementById('ticketDocument');
+            var stage = document.getElementById('previewStage');
+
+            if (ticket) ticket.style.transform = 'none';
+            if (stage) stage.style.height = 'auto';
 
             if (window.html2pdf && ticket) {
                 if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Preparing PDF...'; }
@@ -1033,6 +1104,7 @@
                         console.error('Share error:', e);
                     }
                 } finally {
+                    updatePreviewScale();
                     if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
                 }
             }
@@ -1229,6 +1301,18 @@
                     var handler = handlers[button.dataset.repairShareChannel];
                     if (handler) handler();
                 });
+            });
+
+            // Initialize responsive preview scale and window resize listener
+            updatePreviewScale();
+            window.addEventListener('resize', updatePreviewScale);
+
+            window.addEventListener('beforeprint', function() {
+                var sheet = document.getElementById('ticketDocument');
+                if (sheet) sheet.style.transform = 'none';
+            });
+            window.addEventListener('afterprint', function() {
+                updatePreviewScale();
             });
 
             @if(request('download'))

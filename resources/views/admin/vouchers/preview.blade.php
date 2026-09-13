@@ -13,36 +13,57 @@
                 size: 80mm auto;
                 margin: 0;
             @elseif($template->isA4())
-                size: A4 portrait;
-                margin: 15mm;
+                size: 210mm 297mm;
+                margin: 0;
             @elseif($template->isA5())
-                size: A5 landscape;
-                margin: 10mm;
+                size: 148mm 210mm;
+                margin: 0;
             @endif
         }
+        * { box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             color: #0f172a;
             background: #f8fafc;
             margin: 0;
-            padding: 20px;
+            padding: 16px;
             font-size: {{ $template->font_size === 'small' ? '11px' : ($template->font_size === 'large' ? '14px' : '12px') }};
             line-height: 1.4;
+        }
+        .preview-stage {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 10px 4px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .voucher-container {
             background: #fff;
             margin: 0 auto;
-            padding: 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             border-radius: 8px;
+            box-sizing: border-box;
+            transform-origin: top center;
             @if($template->is58mm())
-                max-width: 54mm;
+                width: 58mm;
+                max-width: 58mm;
+                padding: 3mm 2mm;
             @elseif($template->is80mm())
-                max-width: 76mm;
+                width: 80mm;
+                max-width: 80mm;
+                padding: 4mm 3mm;
             @elseif($template->isA4())
+                width: 210mm;
                 max-width: 210mm;
+                min-height: 297mm;
+                padding: 14mm 16mm;
             @elseif($template->isA5())
+                width: 148mm;
                 max-width: 148mm;
+                min-height: 210mm;
+                padding: 8mm 10mm;
             @endif
         }
         .header {
@@ -173,14 +194,39 @@
         }
         @media print {
             body {
-                background: #fff;
-                padding: 0;
+                background: #fff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .preview-stage {
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
             }
             .voucher-container {
-                box-shadow: none;
-                padding: 0;
-                margin: 0;
-                max-width: 100%;
+                box-shadow: none !important;
+                margin: 0 auto !important;
+                border-radius: 0 !important;
+                transform: none !important;
+                @if($template->is58mm())
+                    width: 58mm !important;
+                    max-width: 58mm !important;
+                    padding: 2mm 2mm !important;
+                @elseif($template->is80mm())
+                    width: 80mm !important;
+                    max-width: 80mm !important;
+                    padding: 3mm 3mm !important;
+                @elseif($template->isA4())
+                    width: 210mm !important;
+                    max-width: 210mm !important;
+                    min-height: 297mm !important;
+                    padding: 12mm 15mm !important;
+                @elseif($template->isA5())
+                    width: 148mm !important;
+                    max-width: 148mm !important;
+                    min-height: 210mm !important;
+                    padding: 8mm 10mm !important;
+                @endif
             }
             .btn-print-box {
                 display: none !important;
@@ -190,7 +236,8 @@
 </head>
 <body>
 
-<div class="voucher-container">
+<div class="preview-stage" id="previewStage">
+<div class="voucher-container" id="voucherContainer">
 
 @if($template->document_type === 'invoice')
     {{-- Commercial Tax Invoice Sample Preview --}}
@@ -270,8 +317,8 @@
                     <div style="font-size: 10px; color: #64748b;">256GB Midnight Black</div>
                 </td>
                 <td style="text-align: center; font-family: monospace;">2</td>
-                <td style="text-align: right; font-family: monospace;">350,000</td>
-                <td style="text-align: right; font-family: monospace; font-weight: bold;">700,000</td>
+                <td style="text-align: right; font-family: monospace;">{{ format_currency(350000, $store) }}</td>
+                <td style="text-align: right; font-family: monospace; font-weight: bold;">{{ format_currency(700000, $store) }}</td>
             </tr>
         </tbody>
     </table>
@@ -296,23 +343,23 @@
         <div style="font-size: 11px;">
             <div style="display: flex; justify-content: space-between; padding: 2px 0; color: #475569;">
                 <span>{{ __('messages.subtotal') }}:</span>
-                <span style="font-weight: bold; font-family: monospace;">700,000 Ks</span>
+                <span style="font-weight: bold; font-family: monospace;">{{ format_currency(700000, $store) }}</span>
             </div>
             @if($template->show_discount_line)
                 <div style="display: flex; justify-content: space-between; padding: 2px 0; color: #dc2626;">
                     <span>{{ __('messages.discount') }}:</span>
-                    <span style="font-weight: bold; font-family: monospace;">-0 Ks</span>
+                    <span style="font-weight: bold; font-family: monospace;">- {{ format_currency(0, $store) }}</span>
                 </div>
             @endif
             @if($template->show_tax_breakdown)
                 <div style="display: flex; justify-content: space-between; padding: 2px 0; color: #475569;">
                     <span>{{ __('messages.commercial_tax') }} (5%):</span>
-                    <span style="font-weight: bold; font-family: monospace;">+ 35,000 Ks</span>
+                    <span style="font-weight: bold; font-family: monospace;">+ {{ format_currency(35000, $store) }}</span>
                 </div>
             @endif
             <div style="display: flex; justify-content: space-between; padding: 8px 10px; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 6px; font-size: 13px; font-weight: 900; color: #7c3aed; margin-top: 6px;">
                 <span>{{ __('messages.invoice_total_due') }}:</span>
-                <span style="font-family: monospace;">735,000 Ks</span>
+                <span style="font-family: monospace;">{{ format_currency(735000, $store) }}</span>
             </div>
         </div>
     </div>
@@ -405,18 +452,18 @@
             <tr>
                 <td>
                     <strong>Anker 65W GaN Fast Charger</strong>
-                    <div style="font-size: 10px; color: #64748b;">@ 65,000 MMK</div>
+                    <div style="font-size: 10px; color: #64748b;">@ {{ format_currency(65000, $store) }}</div>
                 </td>
                 <td style="text-align: center;">1</td>
-                <td class="text-right font-mono">65,000</td>
+                <td class="text-right font-mono">{{ format_currency(65000, $store) }}</td>
             </tr>
             <tr>
                 <td>
                     <strong>Kingston 64GB USB 3.2 Drive</strong>
-                    <div style="font-size: 10px; color: #64748b;">@ 14,000 MMK</div>
+                    <div style="font-size: 10px; color: #64748b;">@ {{ format_currency(14000, $store) }}</div>
                 </td>
                 <td style="text-align: center;">2</td>
-                <td class="text-right font-mono">28,000</td>
+                <td class="text-right font-mono">{{ format_currency(28000, $store) }}</td>
             </tr>
         </tbody>
     </table>
@@ -427,23 +474,23 @@
     <div>
         <div class="totals-row">
             <span style="color: #64748b;">{{ __('messages.subtotal') }}:</span>
-            <span class="font-mono">93,000 MMK</span>
+            <span class="font-mono">{{ format_currency(93000, $store) }}</span>
         </div>
         @if($template->show_discount_line)
             <div class="totals-row" style="color: #e11d48;">
                 <span>{{ __('messages.store_discount_pct') }}:</span>
-                <span class="font-mono">-4,650 MMK</span>
+                <span class="font-mono">-{{ format_currency(4650, $store) }}</span>
             </div>
         @endif
         @if($template->show_tax_breakdown)
             <div class="totals-row" style="color: #64748b;">
                 <span>{{ __('messages.commercial_tax_pct') }}:</span>
-                <span class="font-mono">4,418 MMK</span>
+                <span class="font-mono">{{ format_currency(4418, $store) }}</span>
             </div>
         @endif
         <div class="totals-row grand">
             <span>{{ __('messages.net_total') }}:</span>
-            <span class="font-mono">92,768 MMK</span>
+            <span class="font-mono">{{ format_currency(92768, $store) }}</span>
         </div>
     </div>
 
@@ -499,6 +546,7 @@
 @endif
 
 </div>
+</div>
 
 <div class="btn-print-box">
     <button type="button" class="btn-print" onclick="window.print()">
@@ -521,6 +569,34 @@
             document.title = oldTitle;
         }, 1000);
     }
+
+    function updatePreviewScale() {
+        var stage = document.getElementById('previewStage');
+        var container = document.getElementById('voucherContainer');
+        if (!stage || !container) return;
+
+        container.style.transform = 'none';
+        stage.style.height = 'auto';
+
+        var stageWidth = stage.clientWidth - 20;
+        var sheetWidth = container.offsetWidth;
+
+        if (stageWidth > 0 && sheetWidth > 0 && stageWidth < sheetWidth) {
+            var scale = stageWidth / sheetWidth;
+            container.style.transform = 'scale(' + scale.toFixed(4) + ')';
+            container.style.transformOrigin = 'top center';
+            var scaledHeight = container.offsetHeight * scale;
+            stage.style.height = (scaledHeight + 30) + 'px';
+        }
+    }
+
+    window.addEventListener('resize', updatePreviewScale);
+    window.addEventListener('DOMContentLoaded', updatePreviewScale);
+    window.addEventListener('beforeprint', function() {
+        var container = document.getElementById('voucherContainer');
+        if (container) container.style.transform = 'none';
+    });
+    window.addEventListener('afterprint', updatePreviewScale);
 </script>
 
 </body>

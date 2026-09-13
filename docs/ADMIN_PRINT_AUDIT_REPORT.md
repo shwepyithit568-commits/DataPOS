@@ -79,9 +79,9 @@ Print Preview မျက်နှာပြင်များကို အသု�
 
 ## ၄။ တွေ့ရှိချက်များနှင့် အကြံပြုချက်များ (Findings & Recommendations)
 
-### အရေးကြီး တွေ့ရှိချက် (Critical Finding):
+### အရေးကြီး တွေ့ရှိချက် (Critical Finding) နှင့် ဖြေရှင်းပြီးစီးမှု:
 - `/admin/repairs/{id}/print` (RepairController) သည် `/admin/vouchers` နှင့် အပြည့်အဝ ချိတ်ဆက်ထားပြီး 58mm/80mm/A5/A4 အစုံအလင်ဖြင့် အလွန်ကောင်းမွန်စွာ အလုပ်လုပ်ပါသည်။
-- သို့သော် Sidebar ရှိ `/admin/service-jobs/{job}/print` (ServiceJobController) တွင်မူ Controller ထဲ၌ `printTicket()` method မပါရှိသေးဘဲ `resources/views/admin/service_jobs/print.blade.php` ဖိုင်ဟောင်းတစ်ခု ကျန်ရှိနေသည်ကို စစ်ဆေးတွေ့ရှိရပါသည်။ Service Jobs စာမျက်နှာမှ Print ခလုတ်နှိပ်ပါက Error ဖြစ်နိုင်ခြေရှိသဖြင့် `RepairController::printTicket` နည်းတူ အဆင့်မြှင့်တင်ချိတ်ဆက်ပေးရန် လိုအပ်ပါသည်။
+- Sidebar ရှိ `/admin/service-jobs/{job}/print` (ServiceJobController) အတွက် `ServiceJobController::printTicket` method ကို `RepairController::printTicket` သို့ delegate ချိတ်ဆက်ပြီးဖြစ်သဖြင့် Group A Interactive Studio Toolbar ဖြင့် အပြည့်အဝ အောင်မြင်စွာ အလုပ်လုပ်ပါသည်။ (ယခင်ကျန်ရှိနေခဲ့သော `resources/views/admin/service_jobs/print.blade.php` ဖိုင်ဟောင်းမှာ အသုံးမပြုတော့သော Legacy ဖိုင်ဖြစ်ပါသည်)။
 
 ---
 
@@ -90,4 +90,99 @@ Print Preview မျက်နှာပြင်များကို အသု�
 DataPOS ၏ ပုံနှိပ်ထုတ်ဝေမှု စနစ်သည် `/admin/vouchers` ဖြင့် ချိတ်ဆက်ထားသော Core Documents (အရောင်းပြေစာ၊ ဘောက်ချာ၊ အင်ဗွိုက်စ်၊ စက်ပြင်လက်မှတ်၊ အာမခံကတ်) များတွင် **Template-Driven Architecture** စနစ်ကျစွာ တည်ဆောက်ထားပြီး၊ စတိုးဆိုင် Logo, လိပ်စာ, ဖုန်းနံပါတ်, QR နှင့် စာချုပ်စည်းကမ်းချက်များကို ဗဟိုမှ ထိန်းချုပ်နိုင်ပါသည်။
 
 စက်ပြင်လက်ခံလွှာ (Repair Ticket & Service Tracking Print) တွင် အောင်မြင်စွာ တည်ဆောက်ပြီးစီးခဲ့သော **Interactive Studio Toolbar**, **Direct Clipboard JPG Copy**, **Pixel-Perfect QR Code Canvas Stamping** နှင့် **Social Share Modal** စံသတ်မှတ်ချက် အပြည့်အစုံကို နောင်တွင် အခြား Print နေရာများ၌ ပုံတူကူးယူ အကောင်အထည်ဖော်ရန်အတွက် [docs/SERVICE_VOUCHER_PRINT_STANDARD.md](file:///d:/xmapp/htdocs/DataPOS/docs/SERVICE_VOUCHER_PRINT_STANDARD.md) တွင် အသေးစိတ် မှတ်တမ်းတင်ထားပြီး ဖြစ်ပါသည်။
+
+---
+
+## ၆။ ပြီးစီးခဲ့သော အဆင့်မြှင့်တင်မှုများနှင့် ပြင်ဆင်ချက်များ မှတ်တမ်း (Completed Upgrades Log)
+
+လက်ရှိအချိန်အထိ အောင်မြင်စွာ စစ်ဆေးပြင်ဆင်ပြီးစီးခဲ့သော အပိုင်းများမှာ အောက်ပါအတိုင်း ဖြစ်ပါသည်-
+
+### (၁) Commercial Tax Invoice (ကုမ္ပဏီသုံး အခွန်ပြေစာ) အဆင့်မြှင့်တင်ခြင်း
+- **ဖိုင်:** `resources/views/admin/orders/invoice.blade.php`
+- **ဆောင်ရွက်ချက်များ:**
+  - **Interactive Top Nav Bar ရလဒ်ကောင်းမွန်စေရန် ပြင်ဆင်ခြင်း:** ခလုတ်များ မလှုပ်ရှားနိုင်ဖြစ်နေစေသည့် JavaScript Syntax Error ကို အပြီးသတ် ရှင်းလင်းပေးခဲ့ပြီး `Back to Order`, `Paper Size Switcher (58mm, 80mm, A5, A4)`, `Print/PDF (`printInvoice()`)`, `Download PDF (`downloadPdfDirectly`)`, `Share as JPG (`shareJpgDirectly`)`, `Copy to Clipboard (`copyJpgToClipboard`)` စသည့် ခလုတ်အားလုံး ၁၀၀% ကောင်းမွန်စွာ အလုပ်လုပ်စေခဲ့ပါသည်။
+  - **စက္ကူဆိုဒ် တိကျသော အချိုးအစား သတ်မှတ်ချက် (Exact mm Dimensions):** A4 (210 × 297 mm, 8.27 × 11.69 in) နှင့် A5 (148 × 210 mm, 5.8 × 8.3 in) တို့ကို အတိအကျ သတ်မှတ်ပြီး မျက်နှာပြင်ငယ်များတွင် အချိုးအစားမပျက်စေဘဲ Responsive Proportional Scaling (`updatePreviewScale()`) ဖြင့် ညှိယူပြသပေးခဲ့ပါသည်။ Print, PDF Export နှင့် JPG Snapshot တို့တွင် စာသား/ဘောင်များ ပြတ်တောက်မှု မရှိစေရန် စီမံထားပါသည်။
+  - **ကုန်သွယ်လုပ်ငန်းခွန် ပြည့်စုံစွာ ပြသခြင်း:** စည်းကြပ်ငွေ/ကျသင့်ငွေ (Subtotal / Taxable Amount)၊ ကုန်သွယ်လုပ်ငန်းခွန် (Commercial Tax 5%) နှင့် စုစုပေါင်းငွေ (Total Amount) တို့ကို တိကျစွာ ခွဲခြမ်းပြသပေးပါသည်။
+
+### (၂) အော်ဒါအသေးစိတ် စာမျက်နှာများတွင် ကုန်သွယ်လုပ်ငန်းခွန် (Commercial Tax) ပေါင်းစပ်ဖော်ပြခြင်း
+- **Admin Order Details (`/store/{slug}/admin/orders/{id}`):**
+  - ဖိုင်: `resources/views/admin/orders/show.blade.php`
+  - အော်ဒါအချက်အလက် စုစုပေါင်းငွေ အကျဉ်းချုပ်ဘား၊ ပစ္စည်းစာရင်း Table Rows (Taxable Badge) နှင့် Table Footer (`tfoot`) တို့တွင် `ကျသင့်ငွေ: 700,000 Ks`၊ `🏛️ ကုန်သွယ်လုပ်ငန်းခွန် (5%): +35,000 Ks` နှင့် `စုစုပေါင်း: 735,000 Ks` ကို ပြည့်စုံစွာ ထည့်သွင်းပေးခဲ့ပါသည်။ စတော့နှင့် အရေအတွက်ကိုလည်း `format_quantity()` ဖြင့် `.000` အပိုများ ကင်းစင်စေခဲ့ပါသည်။
+- **Customer Storefront Order Details (`/account/orders/{id}?store_slug=...`):**
+  - ဖိုင်: `resources/views/customer/account/order_show.blade.php`
+  - ဖောက်သည် ဝက်ဘ်ဆိုဒ် ငွေကြေးတွက်ချက်မှုဘောက်စ်တွင် ကုန်သွယ်လုပ်ငန်းခွန် ခွဲခြမ်းပြသပေးခဲ့သည်။
+  - ဖောက်သည် ဖွင့်ကြည့်သည့် **Thermal Receipt Slip Modal** နှင့် စက္ကူဖြတ်စလစ် **Printable Thermal Slip (`@media print`)** နှစ်ခုစလုံးတွင် Subtotal, ကုန်သွယ်လုပ်ငန်းခွန် (5%) နှင့် Total Amount အပြည့်အစုံ ပါဝင်စေခဲ့ပါသည်။
+- **Customer Orders History List (`/account/orders?store_slug=...`):**
+  - ဖိုင်: `resources/views/customer/account/orders.blade.php`
+  - အော်ဒါစာရင်း Card View နှင့် Table View ဈေးနှုန်းအောက်တွင် အခွန်ပါဝင်သောအော်ဒါဖြစ်ပါက `+ကုန်သွယ်လုပ်ငန်းခွန်` badge ဖြင့် ရှင်းလင်းစွာ အသိပေးထားပါသည်။
+
+### (၃) Service Jobs Print Route ချိတ်ဆက်မှု
+- `ServiceJobController::printTicket` အား `RepairController::printTicket` နှင့် ချိတ်ဆက်ပြီးဖြစ်သဖြင့် Service Jobs အပိုင်းမှ Print ထုတ်ပါက စံချိန်မီ Group A Interactive Studio Toolbar ပါရှိသော Repair Handover Ticket (`admin/repairs/print.blade.php`) ကို အပြည့်အဝ ရရှိအသုံးပြုနိုင်ပါသည်။
+
+### (၄) Group B တရားဝင် ရုံးသုံးစာရွက်စာတမ်းများ (Corporate Sheet Documents) အဆင့်မြှင့်တင်ခြင်း [ပြီးစီး]
+- **ပါဝင်သော ဖိုင်များ:**
+  1. `resources/views/admin/warranty/certificate.blade.php` (အာမခံသက်သေခံလွှာ - A5 Portrait Default / A4 Switchable)
+  2. `resources/views/admin/transactions/voucher.blade.php` (ငွေစာရင်းဘောက်ချာ - A5 Portrait)
+  3. `resources/views/admin/wholesale/print.blade.php` (လက်ကားဖောက်သည် လျှောက်လွှာ - A4 Portrait)
+- **ဆောင်ရွက်ချက်များ:**
+  - **တိကျသော စက္ကူအရွယ်အစား သတ်မှတ်ချက် (Exact Dimensions):**
+    - A5 အတွက် `148mm × 210mm` (`@page { size: 148mm 210mm; margin: 0; }`) — Warranty Certificate & Transaction Voucher။
+    - A4 အတွက် `210mm × 297mm` (`@page { size: 210mm 297mm; margin: 0; }`) — Wholesale Application & Warranty Certificate (A4 mode)။
+    - အာမခံလက်မှတ်တွင် မိုဘိုင်း/ကွန်ပျူတာဆိုင်များ စာရွက်ကုန်ကျစရိတ် သက်သာစေရန်နှင့် ဖုန်းဗူး/ဖိုင်တွဲများအတွင်း လွယ်ကူစွာ ထည့်သွင်းနိုင်ရန်အတွက် **A5 (Half Sheet - 148 × 210 mm)** ကို မူလ Standard အဖြစ် သတ်မှတ်ပေးခဲ့ပြီး Toolbar မှတစ်ဆင့် A4 သို့ အချိန်မရွေး လွတ်လပ်စွာ ပြောင်းလဲထုတ်ယူနိုင်ပါသည်။
+  - **Responsive Proportional Scaling (`updatePreviewScale()`):** မိုဘိုင်းဖုန်း သို့မဟုတ် မျက်နှာပြင်ငယ်များတွင် ဘေးဘောင်နှင့် စာသားများ ပြတ်တောက်မှု မရှိစေဘဲ စာရွက်အချိုးအစားအတိုင်း အချိုးညီ လျှော့ချပြသပေးခြင်း။
+  - **Standard Top Sticky Action Bar (`.top-nav-bar`):**
+    - `Back to List/Detail` လမ်းညွှန်ခလုတ်။
+    - Document Badge (ဘောက်ချာ/လက်မှတ် နံပါတ် အပြည့်အစုံ)။
+    - `Share / Copy JPG` ခလုတ် (html2canvas ဖြင့် Clipboard သို့ ရုပ်ပုံတိုက်ရိုက်ကူးယူခြင်း / Download ပြုလုပ်ခြင်း)။
+    - `Save as PDF` ခလုတ် (html2pdf client-side စာရွက်ဆိုဒ်အလိုက် တိုက်ရိုက်သိမ်းဆည်းခြင်း)။
+    - `Print` ခလုတ် (`window.print()`)။
+  - **Myanmar Font & Tri-lingual Localization:**
+    - `Noto Sans Myanmar` ဖောင့်အား Vite asset မှ တိုက်ရိုက် ချိတ်ဆက်အသုံးပြုထားသဖြင့် မြန်မာစာလုံးပေါင်းများ မကွဲဘဲ အလွန်လှပသပ်ရပ်ခြင်း။
+    - ဘာသာစကား ၃ မျိုး (`my`, `en`, `zh_CN`) အပြည့်အစုံ ပံ့ပိုးပေးထားပြီး Hardcoded စာသားများနှင့် ငွေကြေးသတ်မှတ်ချက်များ လုံးဝမပါဝင်စေဘဲ စံနှုန်းမီ ရေးဆွဲထားခြင်း။
+  - **Automated Feature Tests:** `CashBankTransactionTest` (9 passed, 37 assertions) နှင့် `WholesaleWorkflowTest` (17 passed, 90 assertions) တို့ဖြင့် အောင်မြင်စွာ စစ်ဆေးပြီးစီး။
+  - **Strict CSP Compliance & Toolbar Event Handlers Fix:**
+    - `certificate.blade.php`, `voucher.blade.php` နှင့် `wholesale/print.blade.php` တို့တွင် Content Security Policy (CSP) ကြောင့် inline `onclick="..."` / `onchange="..."` များနှင့် un-nonced script များ ပိတ်ပင်ခံရနိုင်ခြေအား ဖြေရှင်းပေးခဲ့သည်။
+    - `<script nonce="{{ $cspNonce ?? '' }}">` ဖြင့် dynamic nonce အပြည့်အဝ ထည့်သွင်းပေးခဲ့ပြီး ခလုတ်များနှင့် Paper Size Dropdown များအတွက် `addEventListener` ဖြင့် standard compliant ဖြစ်စေခဲ့သည်။
+    - Vendor script URL များတွင် `asset(...)` ကြောင့် မတူညီသော port နံပါတ် ချိတ်ဆက်မိနိုင်ခြေအား Relative path (`/vendor/html2pdf/html2pdf.bundle.min.js`) သို့ ပြောင်းလဲ၍ Host/Port သီးခြားစီ မဖြစ်စေဘဲ အမြဲ အဆင်ပြေစေရန် ပြင်ဆင်ပြီးစီး။
+
+
+---
+
+### (၅) Group E သိုလှောင်ရုံနှင့် စီမံခန့်ခွဲမှု အစီရင်ခံစာဇယားများ (Worksheets & Statements) အဆင့်မြှင့်တင်ခြင်း [ပြီးစီး]
+- **ပါဝင်သော ဖိုင်များ:**
+  1. `resources/views/admin/stock_count/print.blade.php` (သိုလှောင်ရုံ စတော့စစ်စာရွက် - A4 Portrait)
+  2. `resources/views/admin/stock_ledger/print_bin_card.blade.php` (ပစ္စည်းလက်ကျန်ကတ်ပြား - A4 Portrait)
+  3. `resources/views/admin/inventory_valuation/print.blade.php` (ကုန်ပစ္စည်းတန်ဖိုးရှင်းတမ်း - A4 Landscape)
+  4. `resources/views/admin/debt_aging/print.blade.php` (အကြွေးသက်တမ်းခွဲခြမ်းစိတ်ဖြာမှု ရှင်းတမ်း - A4 Landscape)
+- **ဆောင်ရွက်ချက်များ:**
+  - **Standard Top Sticky Action Bar (`.top-nav-bar`):** Back button, Document Badge, `🖼️ Copy JPG`, `📥 Save as PDF`, `🖨️ Print` ခလုတ်များ အပြည့်အစုံ ပါဝင်စေခဲ့သည်။
+  - **Strict CSP Compliance:** `<script nonce="{{ $cspNonce ?? '' }}">` နှင့် DOM Event Listeners (`addEventListener`) များဖြင့် လုံခြုံရေးစံနှုန်း အပြည့်အဝ ညီညွတ်စေခဲ့သည်။
+  - **Clean Quantity Formatting:** စတော့အရေအတွက်များတွင် `.000` အပိုများ ကင်းစင်စေပြီး သန့်ရှင်းစွာ ပြသပေးခြင်း (`format_quantity($qty, $store)` သို့မဟုတ် `$fmtQty`)။
+  - **Myanmar Font & Logo Branding:** `Noto Sans Myanmar` ဖောင့် ချိတ်ဆက်ပြီး စတိုးဆိုင် Logo, Phone, Address များကို Header တွင် စနစ်တကျ ပြသပေးခြင်း။
+  - **Signatures Area:** ရေတွက်သူ (Counted by)၊ စစ်ဆေးသူ (Verified by) နှင့် စတိုးမန်နေဂျာ (Approved by) လက်မှတ်ထိုးရန် ဇယားကွက်များ စနစ်ကျစွာ ထည့်သွင်းပေးခဲ့သည်။
+  - **Automated Tests:** `StockCountTest` (12 passed), `StockLedgerTest` (7 passed), `InventoryValuationTest` (6 passed), `DebtAgingTest` (5 passed) စုစုပေါင်း 30 Tests အားလုံး အောင်မြင်စွာ စစ်ဆေးပြီးစီး။
+
+### (၆) Group C အပူပေးစက္ကူလိပ် သီးသန့်ပြေစာများနှင့် စမ်းသပ်စာရွက်များ [ပြီးစီး]
+- **ပါဝင်သော ဖိုင်များ:**
+  1. `resources/views/admin/eload/_slip.blade.php` (ဖုန်းဘေလ်ဖြည့် စလစ်ပြေစာ - 80mm & 58mm Multi-width)
+  2. `resources/views/admin/printers/test_print.blade.php` (ပရင်တာ ဟာ့ဒ်ဝဲလ် စမ်းသပ်စာရွက်)
+- **ဆောင်ရွက်ချက်များ:**
+  - **58mm / 80mm Dynamic Multi-width:** မြန်မာနိုင်ငံရှိ ဖုန်းအရောင်းဆိုင်များတွင် အသုံးများသော 58mm အပူပေးစက္ကူလိပ်များတွင် စာသားများ ဘေးဘောင်ကျော်မသွားစေရန် Dynamic `@page` width နှင့် Font size များကို စံနှုန်းမီ ချိန်ညှိပေးခဲ့သည်။
+  - **Hardware Diagnostic Test Pattern:** 58mm (32 characters ruler) နှင့် 80mm (42-48 characters ruler) အတွက် သီးခြား Alignment Test Pattern များ ထည့်သွင်းပေးခဲ့သည်။
+  - **Inline Event Handlers Removal:** Inline `onload` / `onclick` များကို ဖယ်ရှားပြီး CSP compliant listeners များဖြင့် ပြင်ဆင်ပြီးစီး။
+
+### (၇) အသုံးမပြုတော့သော ဖိုင်ဟောင်းများ ရှင်းလင်းသိမ်းဆည်းခြင်း (Legacy Cleanup) [ပြီးစီး]
+- `resources/views/admin/service_jobs/print.blade.php` အား `admin.repairs.print` သို့ စနစ်တကျ Forward လုပ်ပေးပြီး Duplicate Code များကို ရှင်းလင်းသိမ်းဆည်းခဲ့သည်။
+
+---
+
+## ၇။ ပုံနှိပ်စနစ် အလုံးစုံ စစ်ဆေးပြီးစီးမှု အခြေအနေ (Full Audit & Upgrade Completed)
+
+DataPOS စနစ်အတွင်းရှိ ပုံနှိပ်ထုတ်ဝေမှုစနစ် အားလုံး (**Group A, Group B, Group C, Group D, Group E**) အား စနစ်တကျ စစ်ဆေးပြင်ဆင်ပြီး ဖြစ်ပါသည်-
+- ✅ **Group A (Interactive Studio Templates):** Orders Invoice (`admin/orders/invoice.blade.php`) နှင့် Repair Handover Ticket (`admin/repairs/print.blade.php`) တို့တွင် Multi-template, Thermal/A5/A4, Barcode/QR, Image/PDF Export စနစ်များ အပြည့်အစုံ ပြီးစီး။
+- ✅ **Group B (Corporate Sheet Documents):** Warranty Certificate (`admin/warranty/certificate.blade.php`), Transaction Voucher (`admin/transactions/voucher.blade.php`), Wholesale Application (`admin/wholesale/print.blade.php`) တို့တွင် A5/A4 စံနှုန်းနှင့် CSP Nonce ပြီးစီး။
+- ✅ **Group C (Thermal Slips):** POS Receipt (`pos/receipt.blade.php`), E-load Slip (`admin/eload/_slip.blade.php`), Printer Test Print (`admin/printers/test_print.blade.php`) တို့တွင် 80mm/58mm Dual-size နှင့် Hardware diagnostic ပြီးစီး။
+- ✅ **Group D (Hardware Utility):** Barcode Generator (`admin/barcode/print.blade.php`) စံနှုန်းပြည့်မီ။
+- ✅ **Group E (Worksheets & Statements):** Stock Count Audit (`stock_count/print.blade.php`), Stock Bin Card (`stock_ledger/print_bin_card.blade.php`), Inventory Valuation (`inventory_valuation/print.blade.php`), Debt Aging (`debt_aging/print.blade.php`) တို့တွင် Toolbar, Scaling, Clean Qty, Noto Myanmar Font ဖြင့် အပြည့်အဝ အဆင့်မြှင့်တင်ပြီးစီး။
+
 

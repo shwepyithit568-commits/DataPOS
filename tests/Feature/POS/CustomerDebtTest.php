@@ -524,7 +524,7 @@ class CustomerDebtTest extends TestCase
         $this->actingAs($cashier)
             ->get("/store/{$store->slug}/pos/sales/{$sale->id}/receipt")
             ->assertOk()
-            ->assertSee('Balance due')
+            ->assertSee(__('messages.balance_due'))
             ->assertSee('Ma Balance')
             ->assertSee('15,000');
     }

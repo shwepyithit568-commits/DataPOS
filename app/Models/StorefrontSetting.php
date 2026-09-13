@@ -83,7 +83,7 @@ class StorefrontSetting extends Model
         'invoice' => 'a4',
         'transaction' => 'a5',
         'eload' => '80mm',
-        'warranty' => 'a4',
+        'warranty' => 'a5',
         'wholesale' => 'a4',
     ];
 

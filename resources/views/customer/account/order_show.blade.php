@@ -13,6 +13,12 @@
     $accountUrl = $storeSlug ? url('/account?store_slug=' . $storeSlug) : url('/account');
 
     $orderEffectiveTotal = $order->agreed_amount ?? $order->total_amount;
+    $orderTax = (float) ($order->tax ?? 0);
+    $orderSubtotal = (float) ($order->taxable_amount ?? $order->items->sum('subtotal'));
+    if ($orderSubtotal <= 0) {
+        $orderSubtotal = (float) $order->items->sum('subtotal');
+    }
+    $taxPct = ($orderSubtotal > 0 && $orderTax > 0) ? round(($orderTax / $orderSubtotal) * 100) : null;
     $activePayments = $store?->paymentMethods()->active()->get() ?? collect();
 
     // Reorder payload for Alpine OrderBuilder
@@ -342,6 +348,11 @@
                                 <span class="font-bold text-slate-800 dark:text-slate-200">
                                     {{ format_currency($item->unit_price, $store) }} × {{ format_quantity($item->quantity, $store) }}
                                 </span>
+                                @if ($item->is_taxable && (float)($item->tax_amount ?? 0) > 0)
+                                    <span class="px-1 py-0.2 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 text-[9.5px] font-bold">
+                                        🏛️ {{ __('messages.commercial_tax') }} ({{ (float)$item->tax_rate }}%)
+                                    </span>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -358,6 +369,20 @@
 
         {{-- Financial Calculation Box --}}
         <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5 text-xs">
+            @if ($orderTax > 0)
+                <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                    <span>{{ __('messages.subtotal') }}:</span>
+                    <span class="font-mono font-bold text-slate-700 dark:text-slate-300">{{ format_currency($orderSubtotal, $store) }}</span>
+                </div>
+                <div class="flex items-center justify-between text-amber-600 dark:text-amber-400 font-bold">
+                    <span class="flex items-center gap-1">
+                        <span>🏛️</span>
+                        <span>{{ __('messages.commercial_tax') }}@if($taxPct) ({{ $taxPct }}%)@endif:</span>
+                    </span>
+                    <span class="font-mono">+ {{ format_currency($orderTax, $store) }}</span>
+                </div>
+            @endif
+
             <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
                 <span>{{ __('messages.order_original_total') }}:</span>
                 <span class="font-mono font-bold text-slate-700 dark:text-slate-300">{{ format_currency($order->total_amount, $store) }}</span>
@@ -552,17 +577,23 @@
                     {{-- Totals --}}
                     <div class="space-y-0.5 text-[10px] border-b border-dashed border-slate-400 pb-1.5">
                         <div class="flex justify-between">
-                            <span>Subtotal:</span>
-                            <span>{{ format_currency($order->total_amount, $store) }}</span>
+                            <span>{{ __('messages.subtotal') }}:</span>
+                            <span>{{ format_currency($orderTax > 0 ? $orderSubtotal : $order->total_amount, $store) }}</span>
                         </div>
+                        @if ($orderTax > 0)
+                            <div class="flex justify-between text-amber-700 font-bold">
+                                <span>{{ __('messages.commercial_tax') }}@if($taxPct) ({{ $taxPct }}%)@endif:</span>
+                                <span>+ {{ format_currency($orderTax, $store) }}</span>
+                            </div>
+                        @endif
                         @if ($order->agreed_amount !== null && (float) $order->agreed_amount !== (float) $order->total_amount)
                             <div class="flex justify-between font-bold">
-                                <span>Agreed Total:</span>
+                                <span>{{ __('messages.order_agreed_total') }}:</span>
                                 <span>{{ format_currency($order->agreed_amount, $store) }}</span>
                             </div>
                         @endif
                         <div class="flex justify-between font-black text-xs pt-1 border-t border-slate-300">
-                            <span>TOTAL:</span>
+                            <span>{{ __('messages.total_amount') }}:</span>
                             <span>{{ format_currency($orderEffectiveTotal, $store) }}</span>
                         </div>
                         <div class="flex justify-between pt-0.5 text-[9.5px]">
@@ -634,7 +665,10 @@
         </div>
 
         <div style="border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px; font-size: 10px;">
-            <div style="display: flex; justify-content: space-between;"><span>Subtotal:</span><span>{{ format_currency($order->total_amount, $store) }}</span></div>
+            <div style="display: flex; justify-content: space-between;"><span>{{ __('messages.subtotal') }}:</span><span>{{ format_currency($orderTax > 0 ? $orderSubtotal : $order->total_amount, $store) }}</span></div>
+            @if ($orderTax > 0)
+                <div style="display: flex; justify-content: space-between; font-weight: bold;"><span>{{ __('messages.commercial_tax') }}@if($taxPct) ({{ $taxPct }}%)@endif:</span><span>+ {{ format_currency($orderTax, $store) }}</span></div>
+            @endif
             @if ($order->agreed_amount !== null && (float) $order->agreed_amount !== (float) $order->total_amount)
                 <div style="display: flex; justify-content: space-between; font-weight: bold;"><span>Agreed Price:</span><span>{{ format_currency($order->agreed_amount, $store) }}</span></div>
             @endif

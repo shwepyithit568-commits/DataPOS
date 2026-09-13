@@ -22,6 +22,7 @@
     $qrLabel = data_get($tmpl, 'qr_label') ?: 'Scan to pay with KPay / Wave / Bank';
     $templateQr = ($tmpl instanceof \App\Models\VoucherTemplate) ? $tmpl->qrUrl() : null;
     $paymentQrDataUri = $templateQr ?? ($orderQrDataUri ?? null);
+    $cspNonce = $cspNonce ?? \Illuminate\Support\Facades\View::getShared()['cspNonce'] ?? request()->attributes->get('csp_nonce') ?? '';
 
     $showCustomer = (bool) data_get($tmpl, 'show_customer_info', true);
     $showCashier = (bool) data_get($tmpl, 'show_cashier_name', true);
@@ -875,7 +876,7 @@
                 {{-- Compact Paper Size Dropdown --}}
                 <div class="size-select-wrapper">
                     <label for="paperSizeSelect" class="size-select-label">📄 {{ __('messages.paper_size') }}:</label>
-                    <select class="size-select" id="paperSizeSelect">
+                    <select class="size-select" id="paperSizeSelect" onchange="setPaperSize(this.value)">
                         <option value="58mm" {{ $paperSize === '58mm' ? 'selected' : '' }}>58mm (POS)</option>
                         <option value="80mm" {{ $paperSize === '80mm' ? 'selected' : '' }}>80mm (POS)</option>
                         <option value="a5" {{ $paperSize === 'a5' ? 'selected' : '' }}>A5 (Half)</option>
@@ -887,16 +888,16 @@
             <div class="top-nav-divider"></div>
 
             <div class="top-nav-right">
-                <button type="button" class="tool-btn tool-btn-print" id="btnPrint" data-print>
+                <button type="button" class="tool-btn tool-btn-print" id="btnPrint" data-print onclick="window.print()">
                     🖨️ <span>{{ __('messages.invoice_print') }}</span>
                 </button>
-                <button type="button" class="tool-btn tool-btn-pdf" id="btnDownloadPdf">
+                <button type="button" class="tool-btn tool-btn-pdf" id="btnDownloadPdf" onclick="downloadPdf()">
                     📥 <span>{{ __('messages.vouchers_save_pdf') }}</span>
                 </button>
-                <button type="button" class="tool-btn tool-btn-share-jpg" id="btnShareJpg" title="{{ __('messages.vouchers_copy_jpg') }}">
+                <button type="button" class="tool-btn tool-btn-share-jpg" id="btnShareJpg" onclick="shareJpgDirectly()" title="{{ __('messages.vouchers_copy_jpg') }}">
                     🖼️ <span>{{ __('messages.vouchers_copy_jpg') }}</span>
                 </button>
-                <button type="button" class="tool-btn tool-btn-share" id="btnOpenShareModal">
+                <button type="button" class="tool-btn tool-btn-share" id="btnOpenShareModal" onclick="openShareModal()">
                     📲 <span>{{ __('messages.vouchers_share_jpg') }}</span>
                 </button>
             </div>
@@ -1417,6 +1418,8 @@
                 if (btn) {
                     btn.disabled = false;
                     btn.innerHTML = originalText;
+                }
+            }
         }
 
         function openShareModal() {

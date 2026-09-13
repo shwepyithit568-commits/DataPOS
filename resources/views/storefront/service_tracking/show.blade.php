@@ -10,8 +10,8 @@
             display: none !important;
         }
         @page {
-            size: A5 portrait;
-            margin: 8mm;
+            size: 148mm 210mm;
+            margin: 0;
         }
         body {
             background: #fff !important;

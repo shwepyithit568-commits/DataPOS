@@ -72,7 +72,25 @@
             font-display: swap;
         }
         @endif
-
+    </style>
+    <style id="dynamicPageStyle">
+        @if ($layout === '58mm')
+            @page { size: 58mm auto; margin: 0; }
+        @elseif ($layout === '80mm')
+            @page { size: 80mm auto; margin: 0; }
+        @elseif ($layout === 'a5_portrait')
+            @page { size: 148mm 210mm; margin: 0; }
+        @elseif ($layout === 'a5_landscape')
+            @page { size: 210mm 148mm; margin: 0; }
+        @elseif ($layout === 'a4_portrait')
+            @page { size: 210mm 297mm; margin: 0; }
+        @elseif ($layout === 'a4_landscape')
+            @page { size: 297mm 210mm; margin: 0; }
+        @else
+            @page { size: 80mm auto; margin: 0; }
+        @endif
+    </style>
+    <style>
         * {
             margin: 0;
             padding: 0;
@@ -253,53 +271,64 @@
         /* ── Report Document Wrapper ── */
         .report-page-container {
             margin: 54px auto 0 auto;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         /* ── Thermal Containers (58mm / 80mm) ── */
-        .report-card-thermal {
+        .report-card-thermal, .report-card-fullsheet {
             background: #fff;
             margin: 0 auto;
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.06);
             border: 1px solid #e2e8f0;
+            box-sizing: border-box;
+            transform-origin: top center;
         }
         .report-card-58mm {
-            width: 260px;
-            padding: 12px 8px;
-            font-size: 11px;
+            width: 58mm;
+            max-width: 58mm;
+            padding: 3mm 2mm;
+            font-size: 10.5px;
         }
         .report-card-80mm {
-            width: 340px;
-            padding: 18px 14px;
-            font-size: 12px;
+            width: 80mm;
+            max-width: 80mm;
+            padding: 4mm 3mm;
+            font-size: 11.5px;
         }
 
         /* ── Full Sheet Containers (A5 / A4) ── */
-        .report-card-fullsheet {
-            background: #fff;
-            margin: 0 auto;
-            border-radius: 10px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-            border: 1px solid #e2e8f0;
-        }
         .report-card-a5_portrait {
-            width: 560px;
-            padding: 24px;
-            font-size: 12px;
+            width: 148mm;
+            max-width: 148mm;
+            min-height: 210mm;
+            padding: 8mm 10mm;
+            font-size: 11.5px;
         }
         .report-card-a5_landscape {
-            width: 780px;
-            padding: 24px 30px;
-            font-size: 12px;
+            width: 210mm;
+            max-width: 210mm;
+            min-height: 148mm;
+            padding: 8mm 10mm;
+            font-size: 11.5px;
         }
         .report-card-a4_portrait {
-            width: 794px;
-            padding: 36px 40px;
+            width: 210mm;
+            max-width: 210mm;
+            min-height: 297mm;
+            padding: 14mm 16mm;
             font-size: 12.5px;
         }
         .report-card-a4_landscape {
-            width: 1080px;
-            padding: 36px 44px;
+            width: 297mm;
+            max-width: 297mm;
+            min-height: 210mm;
+            padding: 12mm 14mm;
             font-size: 12.5px;
         }
 
@@ -381,6 +410,7 @@
             body {
                 background: #ffffff !important;
                 padding: 0 !important;
+                margin: 0 !important;
                 color: #000000 !important;
             }
             .no-print {
@@ -389,34 +419,54 @@
             .report-page-container {
                 margin: 0 !important;
                 padding: 0 !important;
+                display: block !important;
             }
             .report-card-thermal, .report-card-fullsheet {
                 box-shadow: none !important;
                 border: none !important;
                 border-radius: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                padding: 0 !important;
+                margin: 0 auto !important;
+                transform: none !important;
+            }
+            .report-card-58mm {
+                width: 58mm !important;
+                max-width: 58mm !important;
+                padding: 2mm 2mm !important;
+            }
+            .report-card-80mm {
+                width: 80mm !important;
+                max-width: 80mm !important;
+                padding: 3mm 3mm !important;
+            }
+            .report-card-a5_portrait {
+                width: 148mm !important;
+                max-width: 148mm !important;
+                min-height: 210mm !important;
+                padding: 8mm 10mm !important;
+            }
+            .report-card-a5_landscape {
+                width: 210mm !important;
+                max-width: 210mm !important;
+                min-height: 148mm !important;
+                padding: 8mm 10mm !important;
+            }
+            .report-card-a4_portrait {
+                width: 210mm !important;
+                max-width: 210mm !important;
+                min-height: 297mm !important;
+                padding: 12mm 15mm !important;
+            }
+            .report-card-a4_landscape {
+                width: 297mm !important;
+                max-width: 297mm !important;
+                min-height: 210mm !important;
+                padding: 10mm 12mm !important;
             }
 
             table, tr, td, th, .signature-grid {
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
             }
-
-            @if ($layout === '58mm')
-                @page { size: 58mm auto; margin: 2mm; }
-            @elseif ($layout === '80mm')
-                @page { size: 80mm auto; margin: 3mm; }
-            @elseif ($layout === 'a5_portrait')
-                @page { size: A5 portrait; margin: 8mm; }
-            @elseif ($layout === 'a5_landscape')
-                @page { size: A5 landscape; margin: 8mm; }
-            @elseif ($layout === 'a4_portrait')
-                @page { size: A4 portrait; margin: 12mm; }
-            @elseif ($layout === 'a4_landscape')
-                @page { size: A4 landscape; margin: 12mm; }
-            @endif
         }
     </style>
 </head>
@@ -460,9 +510,9 @@
         </div>
     </div>
 
-    {{-- ── SECTION 2: Report Document Container ── --}}
-    <div class="report-page-container">
-        <div id="reportDocument" class="{{ $isThermal ? 'report-card-thermal report-card-' . $layout : 'report-card-fullsheet report-card-' . $layout }}">
+    {{-- ── SECTION 2: Printable Document Card ── --}}
+    <div class="report-page-container" id="previewStage">
+        <div id="reportDocument" class="{{ $isThermal ? 'report-card-thermal' : 'report-card-fullsheet' }} report-card-{{ $layout }}">
 
             {{-- Header Branding --}}
             <div class="store-header">
@@ -701,10 +751,10 @@
             var pdfDimensions = {
                 '58mm': { unit: 'mm', format: [58, 260], orientation: 'portrait' },
                 '80mm': { unit: 'mm', format: [80, 300], orientation: 'portrait' },
-                'a5_portrait': { unit: 'mm', format: 'a5', orientation: 'portrait' },
-                'a5_landscape': { unit: 'mm', format: 'a5', orientation: 'landscape' },
-                'a4_portrait': { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                'a4_landscape': { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                'a5_portrait': { unit: 'mm', format: [148, 210], orientation: 'portrait' },
+                'a5_landscape': { unit: 'mm', format: [210, 148], orientation: 'landscape' },
+                'a4_portrait': { unit: 'mm', format: [210, 297], orientation: 'portrait' },
+                'a4_landscape': { unit: 'mm', format: [297, 210], orientation: 'landscape' }
             };
 
             function doPrint() {
@@ -792,11 +842,35 @@
                 });
             }
 
+            function updatePreviewScale() {
+                var stage = document.getElementById('previewStage');
+                var sheet = document.getElementById('reportDocument');
+                if (!stage || !sheet) return;
+
+                sheet.style.transform = 'none';
+                stage.style.height = 'auto';
+
+                var stageWidth = stage.clientWidth - 20;
+                var sheetWidth = sheet.offsetWidth;
+
+                if (stageWidth > 0 && sheetWidth > 0 && stageWidth < sheetWidth) {
+                    var scale = stageWidth / sheetWidth;
+                    sheet.style.transform = 'scale(' + scale.toFixed(4) + ')';
+                    sheet.style.transformOrigin = 'top center';
+                    var scaledHeight = sheet.offsetHeight * scale;
+                    stage.style.height = (scaledHeight + 36) + 'px';
+                }
+            }
+
             async function downloadPdf() {
                 var reportEl = document.getElementById('reportDocument');
+                var stage = document.getElementById('previewStage');
                 var btn = document.getElementById('btnSavePdf');
                 var btnText = document.getElementById('btnSavePdfText');
                 var originalText = btnText ? btnText.textContent : 'Save PDF';
+
+                if (reportEl) reportEl.style.transform = 'none';
+                if (stage) stage.style.height = 'auto';
 
                 if (!reportEl) {
                     doPrint();
@@ -852,6 +926,7 @@
                     console.error('PDF export failed:', err);
                     doPrint();
                 } finally {
+                    updatePreviewScale();
                     if (btn) btn.disabled = false;
                     if (btnText) btnText.textContent = originalText;
                 }
@@ -900,12 +975,16 @@
 
             async function shareJpgDirectly() {
                 var reportEl = document.getElementById('reportDocument');
+                var stage = document.getElementById('previewStage');
                 var btn = document.getElementById('btnShareJpg');
                 var originalText = btn ? btn.innerHTML : '';
                 if (btn) {
                     btn.disabled = true;
                     btn.innerHTML = '⏳ <span>Generating...</span>';
                 }
+
+                if (reportEl) reportEl.style.transform = 'none';
+                if (stage) stage.style.height = 'auto';
 
                 try {
                     if (document.fonts && document.fonts.ready) {
@@ -995,6 +1074,7 @@
                         showToast('Failed to generate image');
                     }
                 } finally {
+                    updatePreviewScale();
                     if (btn) {
                         btn.disabled = false;
                         btn.innerHTML = originalText;
@@ -1059,6 +1139,18 @@
                         shareJpgDirectly();
                     }
                 }, true);
+
+                // Initialize responsive preview scale and window resize listener
+                updatePreviewScale();
+                window.addEventListener('resize', updatePreviewScale);
+
+                window.addEventListener('beforeprint', function() {
+                    var sheet = document.getElementById('reportDocument');
+                    if (sheet) sheet.style.transform = 'none';
+                });
+                window.addEventListener('afterprint', function() {
+                    updatePreviewScale();
+                });
             });
         })();
     </script>

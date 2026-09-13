@@ -1001,12 +1001,17 @@
         async function shareJpgDirectly() {
             if (typeof closeShareModal === 'function') closeShareModal();
             var element = document.getElementById('receiptContent');
+            var stage = document.getElementById('previewStage');
             var btn = document.getElementById('btnShareJpg');
             var originalText = btn ? btn.innerHTML : '';
             if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = '⏳ <span>Generating...</span>';
             }
+
+            // Temporarily reset transform for unscaled capture
+            if (element) element.style.transform = 'none';
+            if (stage) stage.style.height = 'auto';
 
             try {
                 if (!window.html2pdf || !element) {
@@ -1104,6 +1109,7 @@
                     showToast('Failed to generate image');
                 }
             } finally {
+                updatePreviewScale();
                 if (btn) {
                     btn.disabled = false;
                     btn.innerHTML = originalText;
@@ -1120,6 +1126,10 @@
             var btn = document.getElementById('btnShare');
             var originalText = btn ? btn.innerHTML : '';
             var element = document.getElementById('receiptContent');
+            var stage = document.getElementById('previewStage');
+
+            if (element) element.style.transform = 'none';
+            if (stage) stage.style.height = 'auto';
 
             if (window.html2pdf && element) {
                 if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Preparing PDF...'; }
@@ -1152,6 +1162,7 @@
                         console.error('Share error:', e);
                     }
                 } finally {
+                    updatePreviewScale();
                     if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
                 }
             }
@@ -1297,6 +1308,7 @@
         }
 
         // Expose functions globally
+        window.updatePreviewScale = updatePreviewScale;
         window.setPaperSize = setPaperSize;
         window.downloadPdf = downloadPdf;
         window.shareJpgDirectly = shareJpgDirectly;
@@ -1351,6 +1363,18 @@
                     openShareModal();
                 });
             }
+
+            // Initialize responsive preview scale and window resize listener
+            updatePreviewScale();
+            window.addEventListener('resize', updatePreviewScale);
+
+            window.addEventListener('beforeprint', function() {
+                var sheet = document.getElementById('receiptContent');
+                if (sheet) sheet.style.transform = 'none';
+            });
+            window.addEventListener('afterprint', function() {
+                updatePreviewScale();
+            });
 
             @if (session('auto_print') || request('auto_print'))
             setTimeout(function() {
