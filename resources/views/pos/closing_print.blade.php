@@ -79,13 +79,13 @@
         @elseif ($layout === '80mm')
             @page { size: 80mm auto; margin: 0; }
         @elseif ($layout === 'a5_portrait')
-            @page { size: 148mm 210mm; margin: 0; }
+            @page { size: A5 portrait; margin: 0; }
         @elseif ($layout === 'a5_landscape')
-            @page { size: 210mm 148mm; margin: 0; }
+            @page { size: A5 landscape; margin: 0; }
         @elseif ($layout === 'a4_portrait')
-            @page { size: 210mm 297mm; margin: 0; }
+            @page { size: A4 portrait; margin: 0; }
         @elseif ($layout === 'a4_landscape')
-            @page { size: 297mm 210mm; margin: 0; }
+            @page { size: A4 landscape; margin: 0; }
         @else
             @page { size: 80mm auto; margin: 0; }
         @endif

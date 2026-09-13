@@ -9,9 +9,9 @@
     $logoUrl = $showLogo ? ($templateLogo ?? ($store->setting?->adminLogo() ? asset('storage/' . $store->setting->adminLogo()) : null)) : null;
     $termsConditions = data_get($tmpl, 'footer_policy') ?: ($warranty->terms_conditions ?: '၁။ ရေဝင်ခြင်း၊ ပြုတ်ကျခြင်း၊ မျက်နှာပြင်ကွဲအက်ခြင်းနှင့် တရားမဝင် ဆော့ဝဲလ်သွင်းထားခြင်းများအတွက် အာမခံ အကျုံးမဝင်ပါ။ ၂။ အာမခံရယူရန် ဤလက်မှတ်နှင့် စက်၏ Serial/IMEI တူညီရမည် ဖြစ်ပါသည်။');
 
-    $paperSize = request('paper_size') ?: ($paperSize ?? 'a5');
+    $paperSize = request('paper_size') ?: ($paperSize ?? 'a4');
     if (!in_array($paperSize, ['a5', 'a4'], true)) {
-        $paperSize = 'a5';
+        $paperSize = 'a4';
     }
 
     $myanmarFontUrl = null;

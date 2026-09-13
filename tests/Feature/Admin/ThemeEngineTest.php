@@ -61,6 +61,12 @@ class ThemeEngineTest extends TestCase
 
     public function test_store_manager_can_access_theme_customizer_page(): void
     {
+        app()->setLocale('en');
+        $this->store->setting()->updateOrCreate(
+            ['store_id' => $this->store->id],
+            ['store_name' => $this->store->name, 'default_language' => 'en']
+        );
+
         $response = $this->actingAs($this->manager)
             ->get(route('store.admin.theme.index', ['store_slug' => $this->store->slug]));
 

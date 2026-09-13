@@ -93,7 +93,7 @@ class ReleaseSnapshotAutomationTest extends TestCase
      */
     public function test_release_documentation_defines_four_distinct_artifacts(): void
     {
-        $docPath = base_path('docs/release_snapshot_and_backup_guide.md');
+        $docPath = base_path('docs/05_OPERATIONS_AND_DEPLOYMENT.md');
         $this->assertFileExists($docPath);
 
         $content = File::get($docPath);

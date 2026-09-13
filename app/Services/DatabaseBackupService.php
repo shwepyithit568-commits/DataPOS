@@ -53,7 +53,7 @@ class DatabaseBackupService
             }
 
             $zip = new ZipArchive();
-            if ($zip->open($zipFullPath, ZipArchive::CREATE) === true) {
+            if ($zip->open($zipFullPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
                 // Add Database SQL Dump
                 $sql = $this->dump($pdo, $driver);
                 $zip->addFromString('database.sql', $sql);

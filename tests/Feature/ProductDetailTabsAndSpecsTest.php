@@ -402,7 +402,7 @@ class ProductDetailTabsAndSpecsTest extends TestCase
 
         $response->assertOk();
         $response->assertSee(__('messages.tab_description'));
-        $response->assertSee(__('messages.tab_specifications'));
+        $response->assertSee(__('messages.tab_overview'));
         // Sanitized rich text: injected script payload dropped entirely, safe tags kept.
         $response->assertSee('<h2>Editor</h2>', false);
         $response->assertSee('<p>Safe <strong>content</strong></p>', false);
