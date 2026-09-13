@@ -44,6 +44,9 @@
     $customerName = $sale->customer?->name ?? 'Walk-in Customer';
     $customerPhone = $customerPhone ?? ($sale->customer?->phone ? preg_replace('/[^0-9]/', '', (string)$sale->customer->phone) : null);
     $storePhone = $store->phone ? preg_replace('/[^0-9]/', '', (string)$store->phone) : null;
+    $receiptBarcodeSvg = $showBarcode
+        ? app(\App\Services\BarcodeGeneratorService::class)->generateCode128Svg($sale->receipt_number, 32, 1.4, false)
+        : null;
     $receiptUrl = route('pos.receipt', ['store_slug' => $store->slug, 'sale' => $sale->id]);
 
     $receiptQrDataUri = null;
@@ -67,12 +70,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Receipt_{{ $sale->receipt_number }} — {{ $store->name }}</title>
     <style>
         @if ($myanmarFontUrl)
         @font-face {
             font-family: 'Noto Sans Myanmar';
-            src: url('{{ $myanmarFontUrl }}') format('woff2');
+            src: url('{{ $myanmarFontUrl }}') format('truetype');
             font-weight: 400;
             font-style: normal;
             font-display: swap;
@@ -449,12 +453,8 @@
         .qr-label { font-size: 10.5px; font-weight: 700; color: #334155; margin-top: 2px; line-height: 1.3; }
 
         .barcode-section { text-align: center; margin: 8px 0; }
-        .barcode-bars {
-            height: 24px;
-            background: repeating-linear-gradient(90deg, #000 0px, #000 2px, #fff 2px, #fff 4px, #000 4px, #000 6px);
-            width: 70%;
-            margin: 3px auto;
-        }
+        .receipt-barcode { height: 32px; max-width: 100%; margin: 0 auto; }
+        .receipt-barcode svg { display: block; width: 100%; height: 100%; }
         .barcode-text { font-family: monospace; font-size: 10px; font-weight: 700; color: #475569; }
 
         .footer { text-align: center; font-size: 10.5px; color: #64748b; margin-top: 10px; line-height: 1.4; }
@@ -689,14 +689,12 @@
 
         @if ($showBarcode)
             <div class="barcode-section">
-                <div class="barcode-bars"></div>
-                <div class="barcode-text">*{{ $sale->receipt_number }}*</div>
+                <div class="receipt-barcode">{!! $receiptBarcodeSvg !!}</div>
+                <div class="barcode-text">{{ $sale->receipt_number }}</div>
             </div>
         @endif
 
-        @if ($isReprint)
-            <p class="reprint-note">*** {{ __('messages.voucher_watermark_reprint') ?? 'COPY — REPRINT' }} (REPRINT #{{ $printCount }}) — {{ now()->format('d/m/Y H:i') }} ***</p>
-        @endif
+        <p id="reprintNote" class="reprint-note" @if (!$isReprint) hidden @endif>*** {{ __('messages.voucher_watermark_reprint') }} (REPRINT #<span id="receiptPrintCount">{{ $printCount }}</span>) ***</p>
 
         <div class="footer">
             <p>{{ $footerGreeting }}</p>
@@ -709,56 +707,56 @@
     </div>
 
     {{-- ── SECTION 3: Social Sharing Modal Dialog ── --}}
-    <div id="shareModal" class="share-modal no-print" onclick="if(event.target===this)closeShareModal()">
+    <div id="shareModal" class="share-modal no-print">
         <div class="share-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <h3 style="font-size:15px; font-weight:800; color:#0f172a;">
                     📲 {{ __('messages.receipt_share_modal_title') }}
                 </h3>
-                <button type="button" onclick="closeShareModal()" style="border:none; background:transparent; font-size:18px; cursor:pointer; color:#64748b;">✕</button>
+                <button type="button" data-receipt-action="closeShareModal" style="border:none; background:transparent; font-size:18px; cursor:pointer; color:#64748b;">✕</button>
             </div>
             <p style="font-size:12px; color:#64748b; margin-bottom:14px;">
                 {{ __('messages.receipt_share_modal_desc') }}
             </p>
 
             {{-- 1. Copy Receipt Summary Text --}}
-            <button type="button" class="share-channel-btn" onclick="copyReceiptText()" style="background:#0284c7; color:#fff; border-color:#0369a1;">
+            <button type="button" class="share-channel-btn" data-receipt-action="copyReceiptText" style="background:#0284c7; color:#fff; border-color:#0369a1;">
                 <span>📋</span>
                 <span id="copyReceiptTextLabel">{{ __('messages.receipt_copy_text') }}</span>
             </button>
 
             {{-- 2. Share / Copy JPG Image --}}
-            <button type="button" class="share-channel-btn" id="modalBtnShareJpg" onclick="shareJpgDirectly()" style="background:#0d9488; color:#fff; border-color:#0f766e;">
+            <button type="button" class="share-channel-btn" id="modalBtnShareJpg" data-receipt-action="shareJpgDirectly" style="background:#0d9488; color:#fff; border-color:#0f766e;">
                 <span>🖼️</span>
                 <span>{{ __('messages.vouchers_share_jpg') }} ({{ __('messages.vouchers_copy_jpg') }})</span>
             </button>
 
             {{-- 3. Viber Channel --}}
-            <button type="button" class="share-channel-btn" onclick="shareToViber()">
+            <button type="button" class="share-channel-btn" data-receipt-action="shareToViber">
                 <span style="color:#7360f2; font-size:16px;">💬</span>
                 <span>{{ __('messages.repair_share_viber') }}</span>
             </button>
 
             {{-- 4. Telegram Channel --}}
-            <button type="button" class="share-channel-btn" onclick="shareToTelegram()">
+            <button type="button" class="share-channel-btn" data-receipt-action="shareToTelegram">
                 <span style="color:#229ed9; font-size:16px;">✈️</span>
                 <span>{{ __('messages.repair_share_telegram') }}</span>
             </button>
 
             {{-- 5. WhatsApp Channel --}}
-            <button type="button" class="share-channel-btn" onclick="shareToWhatsApp()">
+            <button type="button" class="share-channel-btn" data-receipt-action="shareToWhatsApp">
                 <span style="color:#25d366; font-size:16px;">🟢</span>
                 <span>{{ __('messages.repair_share_whatsapp') }}</span>
             </button>
 
             {{-- 6. Native Share PDF --}}
-            <button type="button" class="share-channel-btn" onclick="shareNativePdf()" style="background:#7c3aed; color:#fff; border-color:#6d28d9;">
+            <button type="button" class="share-channel-btn" data-receipt-action="shareNativePdf" style="background:#7c3aed; color:#fff; border-color:#6d28d9;">
                 <span>📄</span>
                 <span>{{ __('messages.share_pdf') }}</span>
             </button>
 
             {{-- 7. Copy Link Only --}}
-            <button type="button" class="share-channel-btn" onclick="copyReceiptLink()">
+            <button type="button" class="share-channel-btn" data-receipt-action="copyReceiptLink">
                 <span>🔗</span>
                 <span id="copyReceiptLinkLabel">{{ __('messages.receipt_copy_link') }}</span>
             </button>
@@ -975,14 +973,14 @@
                     await worker.save();
                 } catch (err) {
                     console.error('PDF error:', err);
-                    window.print();
+                    printReceipt();
                 } finally {
                     updatePreviewScale();
                     if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
                 }
             } else {
                 updatePreviewScale();
-                window.print();
+                printReceipt();
             }
         }
 
@@ -1015,7 +1013,7 @@
 
             try {
                 if (!window.html2pdf || !element) {
-                    window.print();
+                    printReceipt();
                     return;
                 }
 
@@ -1307,6 +1305,52 @@
             if (m) m.classList.remove('show');
         }
 
+        var printRequestUrl = @js(route('pos.receipt.print_request', ['store_slug' => $store->slug, 'sale' => $sale->id]));
+        var printRequestPending = null;
+        var printDialogActive = false;
+        var printButtonBusy = false;
+
+        function recordPrintRequest() {
+            if (printRequestPending) return printRequestPending;
+            printRequestPending = fetch(printRequestUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                keepalive: true
+            }).then(function(response) {
+                if (!response.ok) throw new Error('Print audit request failed: ' + response.status);
+                return response.json();
+            }).then(function(data) {
+                var note = document.getElementById('reprintNote');
+                var count = document.getElementById('receiptPrintCount');
+                if (note) note.hidden = !data.is_reprint;
+                if (count) count.textContent = data.print_count;
+            }).finally(function() {
+                printRequestPending = null;
+            });
+            return printRequestPending;
+        }
+
+        async function printReceipt() {
+            if (printButtonBusy || printDialogActive) return;
+            printButtonBusy = true;
+            try {
+                await recordPrintRequest();
+                if (printDialogActive) return;
+                printDialogActive = true;
+                window.print();
+            } catch (error) {
+                console.error(error);
+                printDialogActive = false;
+                showToast(@js(__('messages.receipt_print_request_failed')));
+            } finally {
+                printButtonBusy = false;
+            }
+        }
+
         // Expose functions globally
         window.updatePreviewScale = updatePreviewScale;
         window.setPaperSize = setPaperSize;
@@ -1336,7 +1380,7 @@
             if (printBtn) {
                 printBtn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    window.print();
+                    printReceipt();
                 });
             }
 
@@ -1364,21 +1408,47 @@
                 });
             }
 
+            var receiptActions = {
+                closeShareModal: closeShareModal,
+                copyReceiptText: copyReceiptText,
+                shareJpgDirectly: shareJpgDirectly,
+                shareToViber: shareToViber,
+                shareToTelegram: shareToTelegram,
+                shareToWhatsApp: shareToWhatsApp,
+                shareNativePdf: shareNativePdf,
+                copyReceiptLink: copyReceiptLink
+            };
+            document.querySelectorAll('[data-receipt-action]').forEach(function(button) {
+                button.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    receiptActions[button.dataset.receiptAction]();
+                });
+            });
+            var shareModal = document.getElementById('shareModal');
+            if (shareModal) shareModal.addEventListener('click', function(event) {
+                if (event.target === shareModal) closeShareModal();
+            });
+
             // Initialize responsive preview scale and window resize listener
             updatePreviewScale();
             window.addEventListener('resize', updatePreviewScale);
 
             window.addEventListener('beforeprint', function() {
+                if (!printDialogActive) {
+                    printDialogActive = true;
+                    recordPrintRequest().catch(function(error) { console.error(error); });
+                }
                 var sheet = document.getElementById('receiptContent');
                 if (sheet) sheet.style.transform = 'none';
             });
             window.addEventListener('afterprint', function() {
+                printDialogActive = false;
                 updatePreviewScale();
             });
 
             @if (session('auto_print') || request('auto_print'))
             setTimeout(function() {
-                window.print();
+                printReceipt();
             }, 500);
             @endif
         });

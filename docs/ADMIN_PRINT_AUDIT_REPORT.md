@@ -1,6 +1,8 @@
 # DataPOS — Admin & Counter Printing Systems Audit Report
 **ဘောက်ချာ၊ ပြေစာနှင့် ပုံနှိပ်ထုတ်ဝေမှု စနစ်များ စစ်ဆေးချက် အစီရင်ခံစာ**
 
+> **2026-09-13 code review correction:** Earlier “100% verified” statements below are historical claims, not current browser/hardware certification. Print/Close controls in Barcode, P&L and Receivables now use nonce-authorized scripts; Invoice has one print handler and shares `effectiveAmount()`; POS receipt uses the existing Code 128 generator. Receipt GET is read-only. The authenticated, CSRF-protected POST `pos.receipt.print_request` logs print **requests**, including canceled dialogs, not confirmed physical output. PDF/image export does not count unless it falls back to the print dialog. Native Ctrl+P logs asynchronously because browser events cannot await a server response. Existing historical audit entries remain unchanged. Printer, PDF pagination and live browser verification must be reported separately.
+
 ---
 
 ## ၁။ အကျဉ်းချုပ် (Executive Summary)

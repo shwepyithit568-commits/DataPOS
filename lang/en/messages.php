@@ -5420,4 +5420,5 @@ return [
     'z_report_closing' => 'Z-Report (Daily Closing)',
     'z_report_not_closed_note' => 'Daily closing has not been submitted yet. A Z-Report can only be printed after closing. Please print an X-Report to read current totals.',
     'z_report_requires_closing' => 'Available after closing',
+    'receipt_print_request_failed' => 'Could not record the print request. Reload the receipt and try again.',
 ];
