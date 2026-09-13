@@ -52,7 +52,7 @@
         @if ($myanmarFontUrl)
         @font-face {
             font-family: 'Noto Sans Myanmar';
-            src: url('{{ $myanmarFontUrl }}') format('woff2');
+            src: url('{{ $myanmarFontUrl }}') format('truetype');
             font-weight: 400;
             font-style: normal;
             font-display: swap;
@@ -1150,7 +1150,7 @@
 
             <div class="share-grid">
                 @php
-                    $shareText = rawurlencode($headerTitle . ' — ' . __('messages.invoice_commercial_title') . ' #' . $order->order_number . "\n" . __('messages.invoice_total_due') . ': ' . format_currency((float)$order->total_amount, $store) . "\n" . $shareUrl);
+                    $shareText = rawurlencode($headerTitle . ' — ' . __('messages.invoice_commercial_title') . ' #' . $order->order_number . "\n" . __('messages.invoice_total_due') . ': ' . format_currency((float)$order->effectiveAmount(), $store) . "\n" . $shareUrl);
                 @endphp
                 <a href="viber://forward?text={{ $shareText }}" class="share-option-btn share-viber" target="_blank">
                     <span>🟣 Viber</span>
@@ -1548,8 +1548,11 @@
                 });
             }
 
-            // [data-print] click handling is delegated globally by csp-helpers.js
-            // (binding it here as well opened the print dialog twice).
+            // This page is standalone (it loads no admin bundle, so csp-helpers.js
+            // is not here): printing goes through the #btnPrint listener above,
+            // and no element on this page uses [data-print]. Do not add a global
+            // [data-print] listener here — the invoice's own button is bound by id
+            // and a second binding opens the print dialog twice.
 
             // Initialize responsive preview scale and window resize listener
             updatePreviewScale();

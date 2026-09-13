@@ -6005,5 +6005,5 @@ return [
     'pos_points_cleared' => 'Points removed from the cart.',
     'pos_points_unavailable' => 'Those points cannot be used on this bill.',
     'loyalty_points_spent' => 'Points spent',
-
+    'receipt_print_request_failed' => 'Could not record the print request. Reload the receipt and try again.',
 ];

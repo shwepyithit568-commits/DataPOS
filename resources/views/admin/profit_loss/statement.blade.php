@@ -204,7 +204,7 @@
 
     {{-- Top Action Toolbar --}}
     <div class="no-print-bar">
-        <button type="button" class="btn" data-close-window>{{ __('messages.close') }}</button>
+        <button type="button" class="btn" data-close>{{ __('messages.close') }}</button>
         <button type="button" class="btn btn-primary" data-print>🖨️ {{ __('messages.print') }}</button>
     </div>
 
@@ -375,6 +375,15 @@
         </div>
     </div>
 
+    <script nonce="{{ $cspNonce }}">
+        document.addEventListener('click', function (event) {
+            var button = event.target.closest('[data-print], [data-close]');
+            if (!button) return;
+            event.preventDefault();
+            if (button.hasAttribute('data-print')) window.print();
+            else window.close();
+        });
+    </script>
 </body>
 </html>
 

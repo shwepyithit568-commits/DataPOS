@@ -925,16 +925,7 @@ class PosSaleController extends Controller
         $reprinted = AuditLog::countFor('pos_receipt_reprinted', 'pos_sale', $sale->id);
         $isReprint = ($printed + $reprinted) > 0;
 
-        AuditLog::write(
-            storeId: $store->id,
-            action: $isReprint ? 'pos_receipt_reprinted' : 'pos_receipt_printed',
-            entityType: 'pos_sale',
-            entityId: $sale->id,
-            metadata: ['receipt_number' => $sale->receipt_number, 'total' => (string) $sale->total],
-            actorId: $request->user()?->id,
-            ipAddress: $request->ip(),
-        );
-
+        // Preview is read-only. This is the next print number, not a completed print.
         $printCount = $printed + $reprinted + 1;
 
         $templateService = app(\App\POS\Services\VoucherTemplateService::class);
@@ -943,5 +934,38 @@ class PosSaleController extends Controller
         $customerPhone = $sale->customer?->phone ? preg_replace('/[^0-9]/', '', (string) $sale->customer->phone) : null;
 
         return view('pos.receipt', compact('store', 'sale', 'printCount', 'isReprint', 'voucherTemplate', 'paperSize', 'customerPhone'));
+    }
+
+    public function requestReceiptPrint(Request $request, string $store_slug, PosSale $sale, StoreContext $context): JsonResponse
+    {
+        $store = $context->getStore();
+        if ((int) $sale->store_id !== (int) $store->id || ! ($sale->isPosted() || $sale->isVoided())) {
+            abort(404);
+        }
+
+        $result = DB::transaction(function () use ($request, $store, $sale) {
+            // Serialize requests for this sale so two terminals cannot both log an original.
+            $sale = PosSale::whereKey($sale->id)->lockForUpdate()->firstOrFail();
+            if (! ($sale->isPosted() || $sale->isVoided())) {
+                abort(404);
+            }
+            $count = AuditLog::countFor('pos_receipt_printed', 'pos_sale', $sale->id)
+                + AuditLog::countFor('pos_receipt_reprinted', 'pos_sale', $sale->id);
+
+            AuditLog::write(
+                storeId: $store->id,
+                action: $count > 0 ? 'pos_receipt_reprinted' : 'pos_receipt_printed',
+                entityType: 'pos_sale',
+                entityId: $sale->id,
+                // Browser print dialogs cannot confirm physical printer success or cancellation.
+                metadata: ['receipt_number' => $sale->receipt_number, 'total' => (string) $sale->total, 'event' => 'print_requested', 'print_count' => $count + 1],
+                actorId: $request->user()?->id,
+                ipAddress: $request->ip(),
+            );
+
+            return ['print_count' => $count + 1, 'is_reprint' => $count > 0];
+        });
+
+        return response()->json($result);
     }
 }

@@ -6005,5 +6005,5 @@ return [
     'pos_points_cleared' => '已从购物车移除积分。',
     'pos_points_unavailable' => '这些积分无法用于此订单。',
     'loyalty_points_spent' => '已使用积分',
-
+    'receipt_print_request_failed' => '无法记录打印请求。请重新加载收据后重试。',
 ];

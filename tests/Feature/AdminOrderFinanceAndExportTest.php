@@ -47,6 +47,22 @@ class AdminOrderFinanceAndExportTest extends TestCase
         ], $overrides));
     }
 
+    public function test_invoice_share_uses_agreed_amount_including_zero(): void
+    {
+        foreach ([90000, 0, null] as $agreedAmount) {
+            $order = $this->makeOrder(['total_amount' => 100000, 'agreed_amount' => $agreedAmount]);
+            $response = $this->actingAs($this->admin)->get(route('store.admin.orders.invoice', [
+                'store_slug' => $this->store->slug, 'order' => $order->id,
+            ]))->assertOk();
+
+            preg_match('/href="viber:\/\/forward\?text=([^"]+)"/', $response->getContent(), $match);
+            $this->assertNotEmpty($match);
+            $shareText = rawurldecode(html_entity_decode($match[1]));
+            $expected = format_currency((float) $order->effectiveAmount(), $this->store);
+            $this->assertStringContainsString(__('messages.invoice_total_due') . ': ' . $expected, $shareText);
+        }
+    }
+
     /** Admin records the final agreed price (glass orders have no price). */
     public function test_admin_can_record_agreed_amount_and_payment_status(): void
     {

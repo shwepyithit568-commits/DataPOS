@@ -95,7 +95,7 @@ class DocumentPrintingAndWatermarkTest extends TestCase
         return $sale;
     }
 
-    public function test_first_receipt_print_has_no_reprint_watermark_and_increments_count(): void
+    public function test_receipt_preview_does_not_increment_print_count(): void
     {
         $store = $this->makeStore();
         $cashier = $this->makeUser($store, 'staff');
@@ -109,15 +109,17 @@ class DocumentPrintingAndWatermarkTest extends TestCase
         $response->assertSee($sale->receipt_number);
         $response->assertSee('Diamond Tech POS');
         $response->assertSee('Remax USB Cable');
-        // Does not show reprint note on original print
-        $response->assertDontSee('<p class="reprint-note">', false);
+        // Original preview keeps the reprint note hidden
+        $response->assertViewHas('isReprint', false);
 
-        // Check AuditLog written for print
+        // Opening or refreshing a preview must not be recorded as a print.
         $audit = AuditLog::where('store_id', $store->id)
             ->where('action', 'pos_receipt_printed')
             ->where('entity_id', $sale->id)
             ->first();
-        $this->assertNotNull($audit);
+        $this->assertNull($audit);
+        $this->get(route('pos.receipt', ['store_slug' => $store->slug, 'sale' => $sale->id]))->assertOk();
+        $this->assertSame(0, AuditLog::whereIn('action', ['pos_receipt_printed', 'pos_receipt_reprinted'])->count());
     }
 
     public function test_subsequent_receipt_print_renders_reprint_watermark_and_logs_audit(): void
@@ -126,10 +128,10 @@ class DocumentPrintingAndWatermarkTest extends TestCase
         $cashier = $this->makeUser($store, 'staff');
         $sale = $this->makeSale($store, $cashier);
 
-        // 1st print
-        $this->actingAs($cashier)->get(
-            route('pos.receipt', ['store_slug' => $store->slug, 'sale' => $sale->id])
-        );
+        // Explicit first print request, then a read-only preview of the next copy.
+        $this->actingAs($cashier)->postJson(
+            route('pos.receipt.print_request', ['store_slug' => $store->slug, 'sale' => $sale->id])
+        )->assertOk()->assertJson(['print_count' => 1, 'is_reprint' => false]);
 
         // 2nd print
         $response = $this->actingAs($cashier)->get(
@@ -139,8 +141,11 @@ class DocumentPrintingAndWatermarkTest extends TestCase
         $response->assertStatus(200);
 
         // Shows reprint watermark element and count
-        $response->assertSee('<p class="reprint-note">', false);
-        $response->assertSee('#2');
+        $response->assertViewHas('isReprint', true);
+        $response->assertSee('id="receiptPrintCount">2</span>', false);
+
+        $this->postJson(route('pos.receipt.print_request', ['store_slug' => $store->slug, 'sale' => $sale->id]))
+            ->assertOk()->assertJson(['print_count' => 2, 'is_reprint' => true]);
 
         // Verify AuditLog entry for reprint
         $audit = AuditLog::where('store_id', $store->id)
@@ -149,6 +154,53 @@ class DocumentPrintingAndWatermarkTest extends TestCase
             ->first();
 
         $this->assertNotNull($audit);
+        $this->assertSame('print_requested', $audit->metadata['event']);
+    }
+
+    public function test_print_request_rejects_cross_store_and_unposted_sales(): void
+    {
+        $store = $this->makeStore();
+        $otherStore = $this->makeStore('other-doc-store');
+        $cashier = $this->makeUser($store, 'staff');
+        $otherCashier = $this->makeUser($otherStore, 'staff');
+        $sale = $this->makeSale($store, $cashier);
+
+        $this->actingAs($otherCashier)->postJson(route('pos.receipt.print_request', [
+            'store_slug' => $otherStore->slug, 'sale' => $sale->id,
+        ]))->assertNotFound();
+        $sale->update(['status' => 'draft']);
+        $this->actingAs($cashier)->postJson(route('pos.receipt.print_request', [
+            'store_slug' => $store->slug, 'sale' => $sale->id,
+        ]))->assertNotFound();
+        $this->assertSame(0, AuditLog::whereIn('action', ['pos_receipt_printed', 'pos_receipt_reprinted'])->count());
+    }
+
+    public function test_print_request_requires_staff_access(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->makeUser($store, 'staff');
+        $customer = $this->makeUser($store, 'retail_customer');
+        $sale = $this->makeSale($store, $cashier);
+        $url = route('pos.receipt.print_request', ['store_slug' => $store->slug, 'sale' => $sale->id]);
+
+        $this->postJson($url)->assertUnauthorized();
+        $this->actingAs($customer)->postJson($url)->assertForbidden();
+        $this->assertSame(0, AuditLog::whereIn('action', ['pos_receipt_printed', 'pos_receipt_reprinted'])->count());
+    }
+
+    public function test_print_request_requires_csrf_token(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->makeUser($store, 'staff');
+        $sale = $this->makeSale($store, $cashier);
+        $url = route('pos.receipt.print_request', ['store_slug' => $store->slug, 'sale' => $sale->id]);
+        // Laravel normally bypasses CSRF in tests; enable the real middleware check.
+        $this->app->instance('env', 'local');
+        $this->actingAs($cashier)->postJson($url)->assertStatus(419);
+        $this->assertSame(0, AuditLog::whereIn('action', ['pos_receipt_printed', 'pos_receipt_reprinted'])->count());
+        $this->withSession(['_token' => 'receipt-csrf'])->postJson($url, [], [
+            'X-CSRF-TOKEN' => 'receipt-csrf',
+        ])->assertOk()->assertJson(['print_count' => 1]);
     }
 
     public function test_voided_or_cancelled_sale_receipt_renders_prominent_void_watermark(): void

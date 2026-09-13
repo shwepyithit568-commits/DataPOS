@@ -932,6 +932,7 @@ Route::prefix('store/{store_slug}')
             Route::post('/void/{sale}', [\App\POS\Http\Controllers\PosSaleController::class, 'void'])->name('pos.void')->middleware('store.permission:pos_sales.update');
             Route::post('/post/{sale?}', [\App\POS\Http\Controllers\PosSaleController::class, 'post'])->name('pos.post')->middleware('store.permission:pos_sales.create');
             Route::get('/sales/{sale}/receipt', [\App\POS\Http\Controllers\PosSaleController::class, 'receipt'])->name('pos.receipt')->middleware('store.permission:pos_sales.view');
+            Route::post('/sales/{sale}/receipt/print-request', [\App\POS\Http\Controllers\PosSaleController::class, 'requestReceiptPrint'])->name('pos.receipt.print_request')->middleware('store.permission:pos_sales.view');
             Route::get('/web-orders', [\App\POS\Http\Controllers\PosSaleController::class, 'webOrders'])->name('pos.web-orders')->middleware('store.permission:pos_sales.view');
             // Loading an order into the cart writes the cart (its discount slot),
             // so it needs the same right as any other cart mutation.

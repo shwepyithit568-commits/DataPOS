@@ -847,7 +847,7 @@ class PosSaleTest extends TestCase
         );
     }
 
-    public function test_receipt_renders_sale_data_and_logs_first_print(): void
+    public function test_receipt_renders_sale_data_without_logging_preview(): void
     {
         $store = $this->makeStore();
         $cashier = $this->staff($store);
@@ -861,7 +861,7 @@ class PosSaleTest extends TestCase
             ->assertSee('Cash')
             ->assertSee('5,000'); // change
 
-        $this->assertDatabaseHas('audit_logs', [
+        $this->assertDatabaseMissing('audit_logs', [
             'store_id' => $store->id,
             'action' => 'pos_receipt_printed',
             'entity_type' => 'pos_sale',
@@ -875,10 +875,14 @@ class PosSaleTest extends TestCase
         $cashier = $this->staff($store);
         $sale = $this->postedSale($store, $cashier);
 
-        $this->actingAs($cashier)->get("/store/{$store->slug}/pos/sales/{$sale->id}/receipt")->assertOk();
+        $this->actingAs($cashier)->postJson("/store/{$store->slug}/pos/sales/{$sale->id}/receipt/print-request")
+            ->assertOk()->assertJson(['print_count' => 1, 'is_reprint' => false]);
         $this->actingAs($cashier)->get("/store/{$store->slug}/pos/sales/{$sale->id}/receipt")
             ->assertOk()
             ->assertSee('REPRINT');
+
+        $this->postJson("/store/{$store->slug}/pos/sales/{$sale->id}/receipt/print-request")
+            ->assertOk()->assertJson(['print_count' => 2, 'is_reprint' => true]);
 
         $this->assertSame(1, \App\Models\AuditLog::countFor('pos_receipt_printed', 'pos_sale', $sale->id));
         $this->assertSame(1, \App\Models\AuditLog::countFor('pos_receipt_reprinted', 'pos_sale', $sale->id));

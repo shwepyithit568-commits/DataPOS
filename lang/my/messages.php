@@ -6005,5 +6005,5 @@ return [
     'pos_points_cleared' => 'Points ကို ဈေးခြင်းမှ ဖျက်လိုက်ပါပြီ။',
     'pos_points_unavailable' => 'ဤ Points များကို ဤဘောက်ချာအတွက် သုံး၍ မရပါ။',
     'loyalty_points_spent' => 'သုံးလိုက်သည့် Points',
-
+    'receipt_print_request_failed' => 'ပရင့်တောင်းဆိုမှုကို မှတ်တမ်းမတင်နိုင်ပါ။ ပြေစာကို ပြန်ဖွင့်ပြီး ထပ်ကြိုးစားပါ။',
 ];
