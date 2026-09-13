@@ -117,7 +117,7 @@ class PosSaleService
      *
      * @return array<int, array{id:int, name:string, sku:?string, price:string, balance:string, category_id:?int, category:?string, brand:?string, variants:array<int, array{id:int, name:string, sku:?string, price:string, balance:string}>}>
      */
-    public function gridProducts(Store $store, ?int $categoryId = null, ?int $brandId = null, string $query = '', ?User $customer = null, int $limit = 120): array
+    public function gridProducts(Store $store, ?int $categoryId = null, ?int $brandId = null, string $query = '', ?User $customer = null, int $limit = 120, bool $exactCode = false): array
     {
         $q = trim($query);
 
@@ -125,7 +125,12 @@ class PosSaleService
             ->where('store_id', $store->id)
             ->when($categoryId, fn ($w) => $w->where('category_id', $categoryId))
             ->when($brandId, fn ($w) => $w->where('brand_id', $brandId))
-            ->when($q !== '', fn ($w) => $w->where(fn ($w2) => $w2
+            ->when($exactCode && $q === '', fn ($w) => $w->whereRaw('1 = 0'))
+            ->when($q !== '' && $exactCode, fn ($w) => $w->where(fn ($w2) => $w2
+                ->where('sku', $q)->orWhere('barcode', $q)
+                ->orWhereHas('variants', fn ($vq) => $vq->where('sku', $q))
+            ))
+            ->when($q !== '' && !$exactCode, fn ($w) => $w->where(fn ($w2) => $w2
                 ->where('sku', 'like', "%{$q}%")
                 ->orWhere('barcode', 'like', "%{$q}%")
                 ->orWhere('name', 'like', "%{$q}%")
@@ -175,6 +180,7 @@ class PosSaleService
                 'id' => $p->id,
                 'name' => $p->name,
                 'sku' => $p->sku,
+                'barcode' => $p->barcode,
                 'price' => $this->priceFor($customer, $p),
                 'retail_price' => (string) $p->retail_price,
                 'tier' => $isWholesale ? 'wholesale' : 'retail',

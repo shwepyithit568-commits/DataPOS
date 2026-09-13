@@ -71,6 +71,7 @@ class PosSaleController extends Controller
 
         $data = $request->validate([
             'q' => ['nullable', 'string', 'max:120'],
+            'exact_code' => ['sometimes', 'boolean'],
             'category_id' => ['nullable', 'integer'],
             'brand_id' => ['nullable', 'integer'],
         ]);
@@ -82,6 +83,8 @@ class PosSaleController extends Controller
                 isset($data['brand_id']) ? (int) $data['brand_id'] : null,
                 $data['q'] ?? '',
                 $this->sales->cartCustomer($store),
+                120,
+                (bool) ($data['exact_code'] ?? false),
             ),
             'categories' => Category::query()->where('store_id', $store->id)->orderBy('name')->get(['id', 'name']),
             'brands' => Brand::query()->where('store_id', $store->id)->orderBy('name')->get(['id', 'name']),

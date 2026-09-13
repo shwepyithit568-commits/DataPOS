@@ -2557,7 +2557,7 @@ return [
     'pos_align_barcode_hint' => '将条形码或二维码对准框内',
     'pos_all' => '全部',
     'pos_barcode_not_found' => '未找到该条码的商品',
-    'pos_camera_insecure_http' => '手机浏览器在不安全的 HTTP 协议下会禁用摄像头。请在 Chrome Flags 中启用或使用 HTTPS。',
+    'pos_camera_insecure_http' => '请通过 HTTPS 打开收银台，并在浏览器网站设置中允许摄像头。',
     'pos_camera_insecure_title' => '需要 HTTPS 或安全设置',
     'pos_camera_permission_denied' => '相机权限被拒绝或无法打开。请在浏览器设置中开启相机权限。',
     'pos_camera_retry' => '重试相机',

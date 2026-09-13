@@ -2557,7 +2557,7 @@ return [
     'pos_align_barcode_hint' => 'Align barcode or QR code within the frame',
     'pos_all' => 'All',
     'pos_barcode_not_found' => 'No product found for barcode',
-    'pos_camera_insecure_http' => 'Mobile browsers block live camera access over insecure HTTP. Please enable it in Chrome flags or use HTTPS.',
+    'pos_camera_insecure_http' => 'Open this POS over HTTPS to use the phone camera, then allow Camera in browser site settings.',
     'pos_camera_insecure_title' => 'HTTPS or Security Setting Required',
     'pos_camera_permission_denied' => 'Camera access was denied or unavailable. Please enable camera permission in your browser settings.',
     'pos_camera_retry' => 'Retry Camera',

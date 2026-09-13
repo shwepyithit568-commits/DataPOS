@@ -2557,7 +2557,7 @@ return [
     'pos_align_barcode_hint' => 'ဘားကုဒ် သို့မဟုတ် QR ကုဒ်ကို အကွက်အလယ်သို့ ချိန်ပါ',
     'pos_all' => 'အားလုံး',
     'pos_barcode_not_found' => 'ဘားကုဒ်ဖြင့် ပစ္စည်း ရှာမတွေ့ပါ',
-    'pos_camera_insecure_http' => 'ဖုန်း Browser (Chrome/Safari) လုံခြုံရေးအရ HTTP တွင် Live ကင်မရာဖွင့်ခွင့် ပိတ်ထားပါသည်။ အောက်ပါအတိုင်း Chrome Flag တွင် ခွင့်ပြုပေးပါက ချက်ချင်း တန်းသုံးနိုင်ပါမည်။',
+    'pos_camera_insecure_http' => 'ဖုန်းကင်မရာသုံးရန် HTTPS လိပ်စာဖြင့် ဝင်ပါ။ Browser Site Settings တွင် Camera ခွင့်ပြုချက် ပေးပါ။',
     'pos_camera_insecure_title' => 'HTTPS သို့မဟုတ် လုံခြုံရေး Setting လိုအပ်ပါသည်',
     'pos_camera_permission_denied' => 'ကင်မရာ အသုံးပြုခွင့် မရရှိပါ သို့မဟုတ် မဖွင့်နိုင်ပါ။ ကျေးဇူးပြု၍ Browser Settings တွင် ကင်မရာ ဖွင့်ပေးပါ။',
     'pos_camera_retry' => 'ကင်မရာ ပြန်ဖွင့်ရန်',

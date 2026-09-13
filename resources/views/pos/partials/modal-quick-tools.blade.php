@@ -28,7 +28,7 @@
                         title="{{ __('messages.pos_torch_toggle') }}">
                     💡
                 </button>
-                <button type="button" @click="toggleCameraFacing()"
+                <button type="button" @click="toggleCameraFacing()" :disabled="barcodeLoading"
                         class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 grid place-items-center text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
                         title="{{ __('messages.pos_camera_switch') }}">
                     🔄
@@ -67,17 +67,6 @@
                 <span class="text-2xl" x-text="barcodeCameraInsecure ? '🔒⚠️' : '📷⚠️'"></span>
                 <h4 x-show="barcodeCameraInsecure" class="text-xs font-black text-amber-300">{{ __('messages.pos_camera_insecure_title') }}</h4>
                 <p class="text-xs text-rose-300 font-semibold max-w-xs leading-relaxed" x-text="barcodeCameraError"></p>
-
-                {{-- Actionable guidance when accessing over Insecure HTTP on phone --}}
-                <div x-show="barcodeCameraInsecure" class="w-full max-w-xs bg-slate-800/90 border border-slate-700/80 rounded-xl p-2 text-left text-[11px] text-slate-300 space-y-1">
-                    <div class="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Chrome Flag ဖွင့်နည်း (၁ မိနစ်)</div>
-                    <ol class="list-decimal list-inside space-y-0.5 text-[10px] text-slate-300">
-                        <li>Chrome address bar တွင် <code class="text-emerald-400 bg-slate-900 px-1 py-0.5 rounded select-all font-mono">chrome://flags</code> ဖွင့်ပါ</li>
-                        <li><code class="text-emerald-400 bg-slate-900 px-1 py-0.5 rounded select-all font-mono">unsafely-treat-insecure-origin-as-secure</code> ဟု ရှာပါ</li>
-                        <li><code class="text-emerald-400 bg-slate-900 px-1 py-0.5 rounded select-all font-mono" x-text="window.location.origin"></code> ထည့်ပြီး Enabled ပြုလုပ်ပါ</li>
-                        <li>Relaunch နှိပ်ပြီး ချက်ချင်း တန်းသုံးနိုင်ပါပြီ</li>
-                    </ol>
-                </div>
 
                 <button type="button" @click="startCameraScanner()"
                         class="sf-btn-3d-primary px-4 py-1.5 rounded-xl text-xs font-black cursor-pointer inline-flex items-center gap-1.5 mt-1">

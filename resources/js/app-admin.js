@@ -216,6 +216,8 @@ Alpine.data('posApp', (opts = {}) => ({
 
     /* ---- init ---- */
     async init() {
+        this._barcodeVisibility = () => { if (document.hidden && this.barcodeScannerOpen) this.closeBarcodeScanner(); };
+        document.addEventListener('visibilitychange', this._barcodeVisibility);
         await this.loadGrid();
         await this.refreshCart();
         window.addEventListener('keydown', (e) => this.shortcut(e));
@@ -486,14 +488,16 @@ Alpine.data('posApp', (opts = {}) => ({
     },
 
     async resumeHeld(id) {
-        if (this.cartBusy) return;
+        if (this.cartBusy) return false;
         this.cartBusy = true;
         try {
             const data = await this.fetchJson('/resume/' + id, { method: 'POST', body: new URLSearchParams({}) });
             const expired = this.applyCart(data);
             this.flash(expired > 0 ? this.expiredNotice(expired) : (this.labels.resumed || 'Sale resumed'), expired > 0 ? 'error' : 'success');
+            return expired === 0;
         } catch (e) {
             this.flash(e.message, 'error');
+            return false;
         } finally {
             this.cartBusy = false;
         }
@@ -921,6 +925,12 @@ Alpine.data('posApp', (opts = {}) => ({
         return parseFloat(this[k]) || 0;
     },
 
+    destroy() {
+        document.removeEventListener('visibilitychange', this._barcodeVisibility);
+        this.barcodeScannerOpen = false;
+        this.stopCameraScanner();
+    },
+
     /* ---- Camera Barcode Scanner ---- */
     playBeep() {
         try {
@@ -934,6 +944,7 @@ Alpine.data('posApp', (opts = {}) => ({
             osc.connect(gain);
             gain.connect(ctx.destination);
             osc.start();
+            osc.onended = () => { ctx.close().catch(() => {}); };
             osc.stop(ctx.currentTime + 0.12);
         } catch (e) {}
         if (navigator.vibrate) {
@@ -962,7 +973,12 @@ Alpine.data('posApp', (opts = {}) => ({
         this.barcodeLoading = true;
 
         // Stop any existing stream first
-        await this.stopCameraScanner();
+        const stopping = this.stopCameraScanner();
+        const session = this._barcodeSession;
+        await stopping;
+        const active = () => this.barcodeScannerOpen && session === this._barcodeSession;
+        if (!active()) return;
+        this.barcodeLoading = true;
 
         const videoEl = document.getElementById('pos-barcode-video');
         if (!videoEl) {
@@ -989,16 +1005,22 @@ Alpine.data('posApp', (opts = {}) => ({
             };
 
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            if (!active()) { stream.getTracks().forEach(t => t.stop()); return; }
             this._cameraStream = stream;
             videoEl.srcObject = stream;
             await videoEl.play();
+            if (!active()) return;
 
             this.barcodeLoading = false;
 
             // Start decoding loop
             this._scanLoop = true;
-            this._decodingLoop(videoEl);
+            this._decodingLoop(videoEl, session).catch(err => {
+                if (active()) { this.barcodeCameraError = err.message; this.stopCameraScanner(); }
+            });
         } catch (err) {
+            if (!active()) return;
+            if (this._cameraStream) { this._cameraStream.getTracks().forEach(t => t.stop()); this._cameraStream = null; videoEl.srcObject = null; }
             console.warn('[POS Camera] getUserMedia error:', err.name, err.message);
             this.barcodeLoading = false;
             if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
@@ -1006,17 +1028,23 @@ Alpine.data('posApp', (opts = {}) => ({
             } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
                 this.barcodeCameraError = 'ကင်မရာ ရှာမတွေ့ပါ (Camera မပါသည့် Device ဖြစ်နိုင်သည်)';
             } else if (err.name === 'OverconstrainedError') {
-                // Retry without facingMode constraint
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    if (!active()) { stream.getTracks().forEach(t => t.stop()); return; }
                     this._cameraStream = stream;
                     videoEl.srcObject = stream;
                     await videoEl.play();
+                    if (!active()) return;
                     this.barcodeLoading = false;
                     this._scanLoop = true;
-                    this._decodingLoop(videoEl);
-                } catch (e2) {
-                    this.barcodeCameraError = e2.message || 'ကင်မရာ ဖွင့်မရပါ';
+                    this._decodingLoop(videoEl, session).catch(error => {
+                        if (active()) { this.barcodeCameraError = error.message; this.stopCameraScanner(); }
+                    });
+                } catch (error) {
+                    if (active()) {
+                        await this.stopCameraScanner();
+                        this.barcodeCameraError = error.message;
+                    }
                 }
             } else {
                 this.barcodeCameraError = err.message || 'ကင်မရာ ဖွင့်မရပါ';
@@ -1024,82 +1052,60 @@ Alpine.data('posApp', (opts = {}) => ({
         }
     },
 
-    async _decodingLoop(videoEl) {
-        // Use BarcodeDetector (Android Chrome 83+, Chrome Desktop) if available
-        // Fallback: Html5Qrcode scanFile on a canvas frame
-        const hasBarcodeDetector = typeof BarcodeDetector !== 'undefined';
+    async _decodingLoop(videoEl, session) {
+        const active = () => this._scanLoop && this.barcodeScannerOpen && session === this._barcodeSession;
         let detector = null;
-
-        if (hasBarcodeDetector) {
-            const supported = await BarcodeDetector.getSupportedFormats().catch(() => []);
-            const formats = supported.length > 0 ? supported : [
-                'code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e',
-                'qr_code', 'data_matrix', 'itf', 'codabar', 'code_93'
-            ];
-            detector = new BarcodeDetector({ formats });
-        }
-
+        try {
+            if (typeof BarcodeDetector !== 'undefined') {
+                const formats = await BarcodeDetector.getSupportedFormats();
+                // Native implementations may support QR only; use ZXing for retail barcodes.
+                if (formats.includes('code_128') && formats.includes('ean_13')) {
+                    detector = new BarcodeDetector({ formats });
+                }
+            }
+        } catch (_) { /* Use the bundled decoder when native initialization fails. */ }
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-
-        const loop = async () => {
-            if (!this._scanLoop) return;
-            if (videoEl.readyState < 2 || videoEl.paused) {
-                requestAnimationFrame(loop);
-                return;
-            }
-
-            if (hasBarcodeDetector && detector) {
-                // Path A: Native BarcodeDetector — fastest
-                try {
-                    const barcodes = await detector.detect(videoEl);
-                    if (barcodes && barcodes.length > 0) {
-                        const raw = barcodes[0].rawValue;
-                        if (raw) {
-                            await this.onBarcodeDetected(raw);
-                            if (!this.barcodeContinuous) return; // stop loop in single-scan mode
+        let scanner = null;
+        let offEl = null;
+        try {
+            while (active()) {
+                if (videoEl.readyState >= 2 && !videoEl.paused) {
+                    let code = null;
+                    if (detector) {
+                        try { code = (await detector.detect(videoEl))[0]?.rawValue; }
+                        catch (_) { detector = null; }
+                    }
+                    if (!detector && active() && ctx && videoEl.videoWidth && videoEl.videoHeight) {
+                        if (!scanner) {
+                            offEl = document.createElement('div');
+                            offEl.id = 'pos-barcode-offscreen-' + session;
+                            offEl.style.cssText = 'position:fixed;left:-9999px;width:1280px;height:720px;';
+                            document.body.appendChild(offEl);
+                            scanner = new window.Html5Qrcode(offEl.id, { verbose: false });
+                        }
+                        canvas.width = videoEl.videoWidth;
+                        canvas.height = videoEl.videoHeight;
+                        ctx.drawImage(videoEl, 0, 0);
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+                        if (blob && active()) {
+                            try { code = await scanner.scanFile(new File([blob], 'frame.jpg', { type: 'image/jpeg' }), false); }
+                            catch (_) { /* No barcode in this frame. */ }
                         }
                     }
-                } catch (e) { /* frame error, skip */ }
-            } else if (typeof window.Html5Qrcode !== 'undefined') {
-                // Path B: Html5Qrcode canvas scan (fallback for older browsers)
-                try {
-                    canvas.width = videoEl.videoWidth;
-                    canvas.height = videoEl.videoHeight;
-                    ctx.drawImage(videoEl, 0, 0);
-                    canvas.toBlob(async (blob) => {
-                        if (!blob || !this._scanLoop) return;
-                        try {
-                            const file = new File([blob], 'frame.jpg', { type: 'image/jpeg' });
-                            let scanner = this._fallbackScanner;
-                            if (!scanner) {
-                                // Use a hidden off-screen reader element
-                                let offEl = document.getElementById('pos-barcode-offscreen');
-                                if (!offEl) {
-                                    offEl = document.createElement('div');
-                                    offEl.id = 'pos-barcode-offscreen';
-                                    offEl.style.cssText = 'width:1px;height:1px;overflow:hidden;position:fixed;top:-9999px;left:-9999px;';
-                                    document.body.appendChild(offEl);
-                                }
-                                scanner = new window.Html5Qrcode('pos-barcode-offscreen', { verbose: false });
-                                this._fallbackScanner = scanner;
-                            }
-                            const code = await scanner.scanFile(file, false);
-                            if (code) await this.onBarcodeDetected(code);
-                        } catch (e) { /* no barcode in frame */ }
-                    }, 'image/jpeg', 0.8);
-                } catch (e) { /* canvas error */ }
+                    if (active() && code) await this.onBarcodeDetected(code, session);
+                }
+                // Await every decode and lookup; frames and cart requests cannot overlap.
+                if (active()) await new Promise(resolve => setTimeout(resolve, detector ? 150 : 500));
             }
-
-            if (this._scanLoop) {
-                setTimeout(loop, hasBarcodeDetector ? 150 : 500);
-            }
-        };
-
-        requestAnimationFrame(loop);
+        } finally {
+            try { scanner?.clear(); } catch (_) {}
+            offEl?.remove();
+        }
     },
 
     async stopCameraScanner() {
+        this._barcodeSession = (this._barcodeSession || 0) + 1;
         this._scanLoop = false;
 
         if (this._cameraStream) {
@@ -1145,59 +1151,55 @@ Alpine.data('posApp', (opts = {}) => ({
         try {
             const [track] = this._cameraStream.getVideoTracks();
             if (!track) return;
-            this.barcodeTorchOn = !this.barcodeTorchOn;
-            await track.applyConstraints({ advanced: [{ torch: this.barcodeTorchOn }] });
+            if (!track.getCapabilities?.().torch) return;
+            const enabled = !this.barcodeTorchOn;
+            await track.applyConstraints({ advanced: [{ torch: enabled }] });
+            this.barcodeTorchOn = enabled;
         } catch (e) {
             console.warn('[POS Torch] Not supported:', e);
             this.barcodeTorchOn = false;
         }
     },
 
-    async onBarcodeDetected(code) {
-        if (!code || this.barcodeCooldown) return;
-        const cleanCode = String(code).trim();
-        if (!cleanCode) return;
-
+    async onBarcodeDetected(code, session = this._barcodeSession) {
+        const cleanCode = String(code || '').trim();
+        if (!cleanCode || cleanCode.length > 120 || this.barcodeCooldown || this.cartBusy) return;
+        const active = () => this.barcodeScannerOpen && session === this._barcodeSession;
+        if (!active()) return;
         this.barcodeCooldown = true;
-        setTimeout(() => { this.barcodeCooldown = false; }, 1800);
-
-        this.playBeep();
-        this.barcodeLastScanned = cleanCode;
-
         try {
-            const data = await this.fetchJson('/products-grid?q=' + encodeURIComponent(cleanCode));
+            const data = await this.fetchJson('/products-grid?exact_code=1&q=' + encodeURIComponent(cleanCode));
+            if (!active()) return;
             const products = data.products || [];
-
-            if (products.length === 0) {
-                this.flash((this.labels.pos_barcode_not_found || 'No product found for barcode') + ': ' + cleanCode, 'warning');
+            if (products.length !== 1) {
+                this.flash((this.labels.pos_barcode_not_found || 'No unique product found for barcode') + ': ' + cleanCode, 'warning');
                 return;
             }
-
             const matched = products[0];
-            if (matched.variants && matched.variants.length > 0) {
-                const exactVariant = matched.variants.find(v => v.sku === cleanCode || (v.barcode && v.barcode === cleanCode));
-                if (exactVariant) {
-                    await this.addVariant(exactVariant);
-                    this.barcodeLastScannedName = matched.name + ' (' + exactVariant.name + ')';
-                } else {
-                    if (!this.barcodeContinuous) {
-                        await this.closeBarcodeScanner();
-                    }
-                    this.variantProduct = matched;
-                    return;
-                }
-            } else {
-                await this.addProduct(matched);
-                this.barcodeLastScannedName = matched.name;
-            }
-
-            this.flash(matched.name + ' ' + (this.labels.added || 'ဈေးခြင်းထဲသို့ ထည့်ပြီးပါပြီ'), 'success');
-
-            if (!this.barcodeContinuous) {
+            const variants = matched.variants || [];
+            const exactVariant = variants.find(v => v.sku === cleanCode);
+            if (variants.length && !exactVariant) {
                 await this.closeBarcodeScanner();
+                this.variantProduct = matched;
+                return;
             }
+            // addVariant depends on a modal selection; scanned variants have their own product context.
+            const added = await this.mutate('/cart', {
+                product_id: matched.id,
+                ...(exactVariant ? { product_variant_id: exactVariant.id } : {}),
+                quantity: '1',
+            }, {}, this.labels.added);
+            if (!added || !active()) return;
+            this.barcodeLastScanned = cleanCode;
+            this.barcodeLastScannedName = matched.name + (exactVariant ? ' (' + exactVariant.name + ')' : '');
+            this.playBeep();
+            if (!this.barcodeContinuous) await this.closeBarcodeScanner();
         } catch (err) {
-            this.flash(err.message, 'error');
+            if (active()) this.flash(err.message, 'error');
+        } finally {
+            // Keep the lock throughout slow network requests, then debounce the next frame.
+            await new Promise(resolve => setTimeout(resolve, 1800));
+            this.barcodeCooldown = false;
         }
     },
 

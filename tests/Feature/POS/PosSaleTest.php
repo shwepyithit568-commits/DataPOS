@@ -33,6 +33,24 @@ class PosSaleTest extends TestCase
         $this->shifts = app(CashierShiftService::class);
     }
 
+    public function test_camera_lookup_matches_exact_codes_and_stays_inside_the_store(): void
+    {
+        $store = $this->makeStore();
+        $exact = $this->makeProduct($store, ['sku' => 'EXACT', 'barcode' => '001234']);
+        $this->makeProduct($store, ['sku' => '001234-extra', 'name' => '001234']);
+        $this->makeProduct($this->makeStore('other'), ['barcode' => '001234']);
+        $hits = $this->sales->gridProducts($store, query: '001234', exactCode: true);
+        $this->assertCount(1, $hits);
+        $this->assertSame($exact->id, $hits[0]['id']);
+        $this->assertSame('001234', $hits[0]['barcode']);
+        $this->assertSame([], $this->sales->gridProducts($store, query: '1234', exactCode: true));
+        $this->assertSame([], $this->sales->gridProducts($store, exactCode: true));
+        $variant = $exact->variants()->create(['name' => 'Blue', 'sku' => 'BLUE-001', 'retail_price' => 10000]);
+        $hits = $this->sales->gridProducts($store, query: 'BLUE-001', exactCode: true);
+        $this->assertCount(1, $hits);
+        $this->assertSame($variant->id, $hits[0]['variants'][0]['id']);
+    }
+
     private function makeStore(string $slug = 'shop-a'): Store
     {
         return Store::create(['name' => ucfirst($slug), 'slug' => $slug, 'is_active' => true]);
