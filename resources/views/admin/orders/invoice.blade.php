@@ -52,7 +52,7 @@
         @if ($myanmarFontUrl)
         @font-face {
             font-family: 'Noto Sans Myanmar';
-            src: url('{{ $myanmarFontUrl }}') format('woff2');
+            src: url('{{ $myanmarFontUrl }}') format('truetype');
             font-weight: 400;
             font-style: normal;
             font-display: swap;
@@ -888,16 +888,16 @@
             <div class="top-nav-divider"></div>
 
             <div class="top-nav-right">
-                <button type="button" class="tool-btn tool-btn-print" id="btnPrint" data-print onclick="window.print()">
+                <button type="button" class="tool-btn tool-btn-print" id="btnPrint">
                     🖨️ <span>{{ __('messages.invoice_print') }}</span>
                 </button>
-                <button type="button" class="tool-btn tool-btn-pdf" id="btnDownloadPdf" onclick="downloadPdf()">
+                <button type="button" class="tool-btn tool-btn-pdf" id="btnDownloadPdf">
                     📥 <span>{{ __('messages.vouchers_save_pdf') }}</span>
                 </button>
-                <button type="button" class="tool-btn tool-btn-share-jpg" id="btnShareJpg" onclick="shareJpgDirectly()" title="{{ __('messages.vouchers_copy_jpg') }}">
+                <button type="button" class="tool-btn tool-btn-share-jpg" id="btnShareJpg" title="{{ __('messages.vouchers_copy_jpg') }}">
                     🖼️ <span>{{ __('messages.vouchers_copy_jpg') }}</span>
                 </button>
-                <button type="button" class="tool-btn tool-btn-share" id="btnOpenShareModal" onclick="openShareModal()">
+                <button type="button" class="tool-btn tool-btn-share" id="btnOpenShareModal">
                     📲 <span>{{ __('messages.vouchers_share_jpg') }}</span>
                 </button>
             </div>
@@ -1147,7 +1147,7 @@
 
             <div class="share-grid">
                 @php
-                    $shareText = rawurlencode($headerTitle . ' — ' . __('messages.invoice_commercial_title') . ' #' . $order->order_number . "\n" . __('messages.invoice_total_due') . ': ' . format_currency((float)$order->total_amount, $store) . "\n" . $shareUrl);
+                    $shareText = rawurlencode($headerTitle . ' — ' . __('messages.invoice_commercial_title') . ' #' . $order->order_number . "\n" . __('messages.invoice_total_due') . ': ' . format_currency((float)$order->effectiveAmount(), $store) . "\n" . $shareUrl);
                 @endphp
                 <a href="viber://forward?text={{ $shareText }}" class="share-option-btn share-viber" target="_blank">
                     <span>🟣 Viber</span>
@@ -1544,15 +1544,6 @@
                     copyInvoiceLink();
                 });
             }
-
-            // Delegated click support for any data-print or data-paper-size elements
-            document.addEventListener('click', function(e) {
-                var printEl = e.target.closest('[data-print]');
-                if (printEl) {
-                    e.preventDefault();
-                    window.print();
-                }
-            }, true);
 
             // Initialize responsive preview scale and window resize listener
             updatePreviewScale();

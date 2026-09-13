@@ -5420,4 +5420,5 @@ return [
     'z_report_closing' => 'Z报表 (每日结账)',
     'z_report_not_closed_note' => '尚未提交每日结账。Z报表只能在结账后打印。请打印X报表以查看当前统计。',
     'z_report_requires_closing' => '结账后可用',
+    'receipt_print_request_failed' => '无法记录打印请求。请重新加载收据后重试。',
 ];
