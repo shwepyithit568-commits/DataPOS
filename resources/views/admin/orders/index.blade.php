@@ -241,54 +241,74 @@
         </div>
 
         {{-- Search Input, Filters & Sorters Form --}}
-        <form method="GET" action="{{ route('store.admin.orders.index', $storeRouteParams) }}"
+        <form method="GET" action="{{ route('store.admin.orders.index', $storeRouteParams) }}" data-auto-submit
               class="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
             <input type="hidden" name="tab" value="{{ $tab }}">
 
             {{-- Search input --}}
-            <div class="relative flex-1 min-w-[200px]">
+            <div class="relative flex-1 min-w-[180px]">
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="{{ __('messages.orders_search_placeholder') }}"
-                       class="w-full h-7 pl-7 pr-3 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500 transition">
-                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                       class="w-full h-8 sm:h-7 pl-7 pr-3 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500 transition">
+                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
                 </svg>
             </div>
 
-            {{-- Filter: Pricing Type --}}
-            <select name="pricing_type" onchange="this.form.submit()"
-                    class="h-7 px-2 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500">
-                <option value="">{{ __('messages.orders_filter_pricing') }}: {{ __('messages.orders_filter_all') }}</option>
-                <option value="retail" {{ request('pricing_type') === 'retail' ? 'selected' : '' }}>{{ __('messages.retail') }}</option>
-                <option value="wholesale" {{ request('pricing_type') === 'wholesale' ? 'selected' : '' }}>{{ __('messages.wholesale') }}</option>
-            </select>
+            {{-- Filter Group: Pricing & Channel (2-cols on mobile, inline on sm+) --}}
+            <div class="grid grid-cols-2 sm:flex sm:items-center gap-1.5">
+                {{-- Filter: Pricing Type --}}
+                <div class="relative">
+                    <select name="pricing_type" data-auto-submit onchange="this.form.submit()"
+                            class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
+                        <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{{ __('messages.orders_filter_pricing') }}: {{ __('messages.orders_filter_all') }}</option>
+                        <option value="retail" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('pricing_type') === 'retail' ? 'selected' : '' }}>{{ __('messages.retail') }}</option>
+                        <option value="wholesale" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('pricing_type') === 'wholesale' ? 'selected' : '' }}>{{ __('messages.wholesale') }}</option>
+                    </select>
+                    <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
 
-            {{-- Filter: Channel --}}
-            <select name="contact_channel" onchange="this.form.submit()"
-                    class="h-7 px-2 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500">
-                <option value="">{{ __('messages.orders_filter_channel') }}: {{ __('messages.orders_filter_all') }}</option>
-                <option value="viber" {{ request('contact_channel') === 'viber' ? 'selected' : '' }}>Viber</option>
-                <option value="telegram" {{ request('contact_channel') === 'telegram' ? 'selected' : '' }}>Telegram</option>
-                <option value="phone" {{ request('contact_channel') === 'phone' ? 'selected' : '' }}>Phone</option>
-            </select>
+                {{-- Filter: Channel --}}
+                <div class="relative">
+                    <select name="contact_channel" data-auto-submit onchange="this.form.submit()"
+                            class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
+                        <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{{ __('messages.orders_filter_channel') }}: {{ __('messages.orders_filter_all') }}</option>
+                        <option value="viber" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('contact_channel') === 'viber' ? 'selected' : '' }}>Viber</option>
+                        <option value="telegram" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('contact_channel') === 'telegram' ? 'selected' : '' }}>Telegram</option>
+                        <option value="phone" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('contact_channel') === 'phone' ? 'selected' : '' }}>Phone</option>
+                    </select>
+                    <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
 
-            {{-- Sort By --}}
-            <select name="sort" onchange="this.form.submit()"
-                    class="h-7 px-2 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500">
-                <option value="newest" {{ $sort === 'newest' ? 'selected' : '' }}>{{ __('messages.sort_newest') }}</option>
-                <option value="oldest" {{ $sort === 'oldest' ? 'selected' : '' }}>{{ __('messages.sort_oldest') }}</option>
-                <option value="amount_high" {{ $sort === 'amount_high' ? 'selected' : '' }}>{{ __('messages.sort_highest') }}</option>
-                <option value="amount_low" {{ $sort === 'amount_low' ? 'selected' : '' }}>{{ __('messages.sort_lowest') }}</option>
-            </select>
+            {{-- Sort By & Reset Controls --}}
+            <div class="flex items-center gap-1.5">
+                <div class="relative flex-1 sm:flex-none">
+                    <select name="sort" data-auto-submit onchange="this.form.submit()"
+                            class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
+                        <option value="newest" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ $sort === 'newest' ? 'selected' : '' }}>{{ __('messages.sort_newest') }}</option>
+                        <option value="oldest" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ $sort === 'oldest' ? 'selected' : '' }}>{{ __('messages.sort_oldest') }}</option>
+                        <option value="amount_high" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ $sort === 'amount_high' ? 'selected' : '' }}>{{ __('messages.sort_highest') }}</option>
+                        <option value="amount_low" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ $sort === 'amount_low' ? 'selected' : '' }}>{{ __('messages.sort_lowest') }}</option>
+                    </select>
+                    <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
 
-            @if (request()->hasAny(['search', 'pricing_type', 'contact_channel']) && (request('search') || request('pricing_type') || request('contact_channel')))
-                <a href="{{ route('store.admin.orders.index', array_merge($storeRouteParams, ['tab' => $tab])) }}"
-                   class="h-7 px-2 rounded bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 hover:bg-rose-100 text-xs font-bold transition flex items-center gap-1 cursor-pointer">
-                    <span>✕</span>
-                    <span>{{ __('messages.reset') }}</span>
-                </a>
-            @endif
+                @if (request()->hasAny(['search', 'pricing_type', 'contact_channel', 'sort']) && (request('search') || request('pricing_type') || request('contact_channel') || (request('sort') && request('sort') !== 'newest')))
+                    <a href="{{ route('store.admin.orders.index', array_merge($storeRouteParams, ['tab' => $tab])) }}"
+                       class="h-8 sm:h-7 px-2.5 rounded-lg sm:rounded bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 hover:bg-rose-100 text-xs font-bold transition flex items-center gap-1 cursor-pointer shrink-0">
+                        <span>✕</span>
+                        <span>{{ __('messages.reset') }}</span>
+                    </a>
+                @endif
+            </div>
         </form>
     </div>
 

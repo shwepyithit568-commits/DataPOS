@@ -145,7 +145,7 @@ class DemoBusinessScenarioService
             if ($masterDataType !== null) {
                 app(\Database\Seeders\MasterDataSeedImporter::class)->importForStore(
                     $store,
-                    ['brands', 'categories', 'connectors', 'colors', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
+                    ['brands', 'categories', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
                     $masterDataType
                 );
             }
@@ -391,7 +391,7 @@ class DemoBusinessScenarioService
             if ($masterDataType !== null) {
                 app(\Database\Seeders\MasterDataSeedImporter::class)->importForStore(
                     $store,
-                    ['brands', 'categories', 'connectors', 'colors', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
+                    ['brands', 'categories', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
                     $masterDataType
                 );
             }

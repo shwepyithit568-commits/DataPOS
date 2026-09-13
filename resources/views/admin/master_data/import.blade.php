@@ -10,7 +10,7 @@
             <span class="text-sm font-normal text-slate-500">({{ ucfirst(str_replace('_', ' ', $type ?? 'Preset')) }})</span>
         </h1>
         <div class="w-full sm:w-auto flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0">
-            <a href="{{ route('store.admin.product-master-presets.import.template', ['store_slug' => $store->slug, 'type' => $type ?? 'connector_spec']) }}" class="shrink-0 px-3 py-2 bg-green-600 text-white rounded-md text-xs font-semibold hover:bg-green-700 whitespace-nowrap">{{ __('messages.download_template_csv') }}</a>
+            <a href="{{ route('store.admin.product-master-presets.import.template', ['store_slug' => $store->slug, 'type' => $type ?? 'shelf_location']) }}" class="shrink-0 px-3 py-2 bg-green-600 text-white rounded-md text-xs font-semibold hover:bg-green-700 whitespace-nowrap">{{ __('messages.download_template_csv') }}</a>
             <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug]) }}" class="shrink-0 text-xs text-violet-600 dark:text-violet-400 font-semibold hover:underline whitespace-nowrap">&larr; {{ __('messages.back_to_master_data') }}</a>
         </div>
     </div>
@@ -111,7 +111,7 @@
         <h2 class="font-bold text-gray-900 dark:text-slate-100">{{ __('messages.upload_file') }}</h2>
         <form method="POST" action="{{ route('store.admin.product-master-presets.import', ['store_slug' => $store->slug]) }}" enctype="multipart/form-data" class="space-y-4">
             @csrf
-            <input type="hidden" name="type" value="{{ $type ?? 'connector_spec' }}">
+            <input type="hidden" name="type" value="{{ $type ?? 'shelf_location' }}">
 
             <div>
                 <label class="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1">{{ __('messages.select_file_xlsx_csv') }}</label>

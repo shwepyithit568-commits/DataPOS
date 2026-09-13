@@ -397,9 +397,13 @@
                 <div>
                     <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">{{ __('messages.bulk_price_apply_to') }}</label>
                     <select name="apply_to" class="text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 px-3 py-2 min-h-[38px] font-medium">
-                        <option value="both">{{ __('messages.bulk_price_retail_wholesale') }}</option>
-                        <option value="retail">{{ __('messages.bulk_price_retail_only') }}</option>
-                        <option value="wholesale">{{ __('messages.bulk_price_wholesale_only') }}</option>
+                        @if (store_can('products.view_cost', $store))
+                            <option value="both">{{ __('messages.bulk_price_retail_wholesale') }}</option>
+                            <option value="retail">{{ __('messages.bulk_price_retail_only') }}</option>
+                            <option value="wholesale">{{ __('messages.bulk_price_wholesale_only') }}</option>
+                        @else
+                            <option value="retail">{{ __('messages.bulk_price_retail_only') }}</option>
+                        @endif
                     </select>
                 </div>
                 <div>
@@ -449,7 +453,9 @@
                         <th class="py-2.5 px-3 min-w-[200px]">{{ __('messages.table_name_sku') }}</th>
                         <th class="py-2.5 px-3 min-w-[140px] hidden md:table-cell">{{ __('messages.table_category_brand') }}</th>
                         <th class="py-2.5 px-3 text-right min-w-[110px]">{{ __('messages.retail_price') ?? __('messages.table_prices') }}</th>
-                        <th class="py-2.5 px-3 text-right min-w-[110px] hidden sm:table-cell">{{ __('messages.wholesale_price') ?? 'Wholesale' }}</th>
+                        @if (store_can('products.view_cost', $store))
+                            <th class="py-2.5 px-3 text-right min-w-[110px] hidden sm:table-cell">{{ __('messages.wholesale_price') ?? 'Wholesale' }}</th>
+                        @endif
                         <th class="py-2.5 px-3 text-center min-w-[100px]">{{ __('messages.stock_status') }}</th>
                         <th class="py-2.5 px-2 text-center w-14 hidden lg:table-cell">{{ __('messages.filter_online_visibility') }}</th>
                         <th class="py-2.5 px-2 text-center w-12 hidden lg:table-cell">{{ __('messages.featured') }}</th>
@@ -533,7 +539,8 @@
                                 </div>
                             </td>
 
-                            {{-- Col 7: Wholesale Price --}}
+                            {{-- Col 7: Wholesale Price (cost-price permission only) --}}
+                            @if (store_can('products.view_cost', $store))
                             <td class="py-2 px-3 text-right hidden sm:table-cell">
                                 @if ($product->wholesale_price > 0)
                                     <div class="font-mono text-emerald-600 dark:text-emerald-400 tabular-nums font-bold text-xs">
@@ -543,6 +550,7 @@
                                     <span class="text-slate-300 dark:text-slate-600">—</span>
                                 @endif
                             </td>
+                            @endif
 
                             {{-- Col 8: Stock Status (services & digital items are non-inventory) --}}
                             <td class="py-2 px-3 text-center whitespace-nowrap">
@@ -762,7 +770,7 @@
                             <span class="text-[9px] font-bold uppercase text-slate-400 block leading-none">{{ __('messages.retail') }}</span>
                             <span class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 tabular-nums font-mono">{{ format_currency($product->retail_price, $store) }}</span>
                         </div>
-                        @if ($product->wholesale_price > 0)
+                        @if (store_can('products.view_cost', $store) && $product->wholesale_price > 0)
                             <div class="text-right">
                                 <span class="text-[9px] font-bold uppercase text-emerald-500 block leading-none">{{ __('messages.wholesale') }}</span>
                                 <span class="text-[11px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums font-mono">{{ format_currency($product->wholesale_price, $store) }}</span>

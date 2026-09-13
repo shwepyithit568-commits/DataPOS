@@ -30,7 +30,7 @@ class ProductMasterPresetController extends Controller
         $store = $context->getStore();
 
         $validated = $request->validate([
-            'type' => ['required', 'string', Rule::in(['connector_spec', 'color', 'shelf_location', 'warranty', 'return_policy'])],
+            'type' => ['required', 'string', Rule::in(['shelf_location', 'warranty', 'return_policy'])],
             'code' => ['nullable', 'string', 'max:50'],
             'name' => ['required', 'string', 'max:255'],
             'content' => ['nullable', 'string', 'max:5000'],
@@ -70,11 +70,11 @@ class ProductMasterPresetController extends Controller
         }
 
         $tab = match ($preset->type) {
-            'connector_spec' => 'connectors',
-            'color' => 'colors',
             'shelf_location' => 'shelves',
             'warranty' => 'warranties',
             'return_policy' => 'return-policies',
+            // connector_spec / color have no Master Data tab any more — land on
+            // the hub's own default tab instead of a tab that no longer exists.
             default => 'categories',
         };
 
@@ -91,7 +91,7 @@ class ProductMasterPresetController extends Controller
         }
 
         $validated = $request->validate([
-            'type' => ['required', 'string', Rule::in(['connector_spec', 'color', 'shelf_location', 'warranty', 'return_policy'])],
+            'type' => ['required', 'string', Rule::in(['shelf_location', 'warranty', 'return_policy'])],
             'code' => ['nullable', 'string', 'max:50'],
             'name' => ['required', 'string', 'max:255'],
             'content' => ['nullable', 'string', 'max:5000'],
@@ -130,8 +130,6 @@ class ProductMasterPresetController extends Controller
         }
 
         $tab = match ($masterPreset->type) {
-            'connector_spec' => 'connectors',
-            'color' => 'colors',
             'shelf_location' => 'shelves',
             'warranty' => 'warranties',
             'return_policy' => 'return-policies',
@@ -161,8 +159,6 @@ class ProductMasterPresetController extends Controller
         }
 
         $tab = match ($type) {
-            'connector_spec' => 'connectors',
-            'color' => 'colors',
             'shelf_location' => 'shelves',
             'warranty' => 'warranties',
             'return_policy' => 'return-policies',
@@ -312,7 +308,7 @@ class ProductMasterPresetController extends Controller
     public function importForm(Request $request, string $store_slug, StoreContext $context): View
     {
         $store = $context->getStore();
-        $type = $request->query('type', 'connector_spec');
+        $type = $request->query('type', 'shelf_location');
 
         $histories = ImportHistory::where('store_id', $store->id)
             ->where('type', 'master_presets')
@@ -398,12 +394,10 @@ class ProductMasterPresetController extends Controller
 
             $msg = "Import complete: {$result['imported']} created, {$result['updated']} updated, {$result['skipped_duplicate']} skipped, {$result['failed']} failed.";
             $tab = match ($data['type'] ?? '') {
-                'connector_spec' => 'connectors',
-                'color' => 'colors',
                 'shelf_location' => 'shelves',
                 'warranty' => 'warranties',
                 'return_policy' => 'return-policies',
-                default => 'connectors',
+                default => 'categories',
             };
 
             return redirect()->to(route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => $tab]))
@@ -418,7 +412,7 @@ class ProductMasterPresetController extends Controller
      */
     public function downloadImportTemplate(Request $request, string $store_slug, StoreContext $context): StreamedResponse
     {
-        $type = $request->query('type', 'connector_spec');
+        $type = $request->query('type', 'shelf_location');
         $filename = "preset_template_{$type}.csv";
 
         $headers = [
@@ -431,18 +425,12 @@ class ProductMasterPresetController extends Controller
             fwrite($stream, "\xEF\xBB\xBF");
             fputcsv($stream, ['type', 'code', 'name', 'color_hex', 'content', 'sort_order', 'is_active']);
 
-            if ($type === 'color') {
-                fputcsv($stream, ['color', 'BLK', 'Black', '#000000', 'Standard black color', '1', '1']);
-                fputcsv($stream, ['color', 'WHT', 'White', '#FFFFFF', 'Standard white color', '2', '1']);
-            } elseif ($type === 'shelf_location') {
-                fputcsv($stream, ['shelf_location', 'A1', 'Shelf A - Row 1', '', 'Front shelf left side', '1', '1']);
-            } elseif ($type === 'warranty') {
+            if ($type === 'warranty') {
                 fputcsv($stream, ['warranty', '1Y', '1 Year Official Warranty', '', 'Parts & Service covered', '1', '1']);
             } elseif ($type === 'return_policy') {
                 fputcsv($stream, ['return_policy', '7D', '7 Days Replacement', '', 'Return within 7 days with receipt', '1', '1']);
             } else {
-                fputcsv($stream, ['connector_spec', 'TYPEC', 'USB Type-C', '', 'Fast charging USB-C spec', '1', '1']);
-                fputcsv($stream, ['connector_spec', 'LTN', 'Lightning', '', 'Apple 8-pin lightning', '2', '1']);
+                fputcsv($stream, ['shelf_location', 'A1', 'Shelf A - Row 1', '', 'Front shelf left side', '1', '1']);
             }
 
             fclose($stream);

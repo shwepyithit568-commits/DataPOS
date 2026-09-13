@@ -1,10 +1,10 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.register_new_warranty') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full space-y-2 sm:space-y-2.5" x-data="{
+<div class="w-full space-y-1 sm:space-y-1.5 pb-6" x-data="{
     selectedProductId: '',
     productName: '{{ old('product_name', '') }}',
     customerId: '{{ old('customer_id', '') }}',
@@ -59,13 +59,13 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('store.admin.warranty.store', ['store_slug' => $store->slug]) }}" class="space-y-2 sm:space-y-2.5">
+    <form method="POST" action="{{ route('store.admin.warranty.store', ['store_slug' => $store->slug]) }}" class="space-y-1.5 sm:space-y-2">
         @csrf
 
         {{-- ============================================================
              SECTION 1: DEVICE & PRODUCT INFORMATION
              ============================================================ --}}
-        <section class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 sm:p-4 shadow-2xs space-y-3">
+        <section class="w-full rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-2.5 sm:p-3.5 shadow-2xs space-y-2.5">
             <div class="border-b border-slate-100 dark:border-slate-800 pb-2.5 flex items-center gap-2">
                 <span class="w-7 h-7 rounded-lg bg-violet-600 text-white grid place-items-center text-xs font-black shadow-xs">
                     1
@@ -311,19 +311,19 @@
         {{-- ============================================================
              STICKY BOTTOM ACTION BAR (SECTION 11 STANDARD)
              ============================================================ --}}
-        <div class="sticky bottom-0 z-20 w-full border border-slate-200/90 bg-white/95 px-3 py-2.5 sm:px-4 backdrop-blur-md shadow-[0_-4px_16px_rgba(15,23,42,0.06)] dark:border-slate-800/90 dark:bg-slate-900/95 rounded-lg flex items-center justify-between gap-3">
+        <div class="sticky bottom-0 z-20 w-full border border-slate-200/90 bg-white/95 px-3 py-2 sm:px-4 backdrop-blur-md shadow-[0_-4px_16px_rgba(15,23,42,0.06)] dark:border-slate-800/90 dark:bg-slate-900/95 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
                 <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>{{ __('messages.warranty_terms_validity') }}</span>
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 w-full sm:w-auto justify-end">
                 <a href="{{ route('store.admin.warranty.index', ['store_slug' => $store->slug]) }}"
-                   class="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition">
+                   class="h-8 px-3.5 flex-1 sm:flex-none justify-center rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition flex items-center cursor-pointer">
                     {{ __('messages.cancel') }}
                 </a>
                 <button type="submit"
-                        class="px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-black text-xs shadow-md shadow-violet-500/20 transition flex items-center gap-1.5">
+                        class="h-8 px-5 flex-1 sm:flex-none justify-center rounded-md bg-violet-600 hover:bg-violet-700 text-white font-black text-xs shadow-md shadow-violet-500/20 transition flex items-center gap-1.5 cursor-pointer active:scale-95">
                     <span>💾</span>
                     <span>{{ __('messages.save_warranty_record') }}</span>
                 </button>

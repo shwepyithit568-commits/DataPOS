@@ -385,75 +385,101 @@
             </div>
         </div>
 
-        {{-- Search Input, Category, Brand, Stock & Sorters Form --}}
-        <form method="GET" action="{{ route('store.admin.web_products.index', $storeRouteParams) }}"
-              class="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+        {{-- Search Input, Filters & Sorters Form --}}
+        <form method="GET" action="{{ route('store.admin.web_products.index', $storeRouteParams) }}" data-auto-submit
+              class="flex flex-col lg:flex-row items-stretch lg:items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
             @if(request('visibility')) <input type="hidden" name="visibility" value="{{ request('visibility') }}"> @endif
             @if(request('featured')) <input type="hidden" name="featured" value="{{ request('featured') }}"> @endif
             @if(request('sale_status')) <input type="hidden" name="sale_status" value="{{ request('sale_status') }}"> @endif
 
             {{-- Search input --}}
-            <div class="relative flex-1 min-w-[200px]">
+            <div class="relative flex-1 min-w-[180px]">
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="{{ __('messages.search_by_name_sku_brand_category') }}"
-                       class="w-full h-7 pl-7 pr-3 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500 transition">
-                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                       class="w-full h-8 sm:h-7 pl-7 pr-3 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500 transition">
+                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
                 </svg>
             </div>
 
-            {{-- Filter: Category --}}
-            <select name="category_id" onchange="this.form.submit()"
-                    class="h-7 px-2 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500">
-                <option value="">{{ __('messages.categories') }}: {{ __('messages.all') }}</option>
-                @foreach($categoryGroups as $groupId => $grp)
-                    <optgroup label="{{ $grp['label'] }}">
-                        @foreach($grp['options'] as $catId => $catLabel)
-                            <option value="{{ $catId }}" {{ request('category_id') == $catId ? 'selected' : '' }}>{{ $catLabel }}</option>
+            {{-- Filter Group 1: Category & Brand (2-cols on mobile, inline on lg+) --}}
+            <div class="grid grid-cols-2 sm:flex sm:items-center gap-1.5">
+                {{-- Filter: Category --}}
+                <div class="relative">
+                    <select name="category_id" data-auto-submit onchange="this.form.submit()"
+                            class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
+                        <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{{ __('messages.categories') }}: {{ __('messages.all') }}</option>
+                        @foreach($categoryGroups as $groupId => $grp)
+                            <optgroup label="{{ $grp['label'] }}" class="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold">
+                                @foreach($grp['options'] as $catId => $catLabel)
+                                    <option value="{{ $catId }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-normal" {{ request('category_id') == $catId ? 'selected' : '' }}>{{ $catLabel }}</option>
+                                @endforeach
+                            </optgroup>
                         @endforeach
-                    </optgroup>
-                @endforeach
-            </select>
+                    </select>
+                    <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
 
-            {{-- Filter: Brand --}}
-            <select name="brand_id" onchange="this.form.submit()"
-                    class="h-7 px-2 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500">
-                <option value="">{{ __('messages.brands') }}: {{ __('messages.all') }}</option>
-                @foreach($brands as $bId => $bName)
-                    <option value="{{ $bId }}" {{ request('brand_id') == $bId ? 'selected' : '' }}>{{ $bName }}</option>
-                @endforeach
-            </select>
+                {{-- Filter: Brand --}}
+                <div class="relative">
+                    <select name="brand_id" data-auto-submit onchange="this.form.submit()"
+                            class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
+                        <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{{ __('messages.brands') }}: {{ __('messages.all') }}</option>
+                        @foreach($brands as $bId => $bName)
+                            <option value="{{ $bId }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('brand_id') == $bId ? 'selected' : '' }}>{{ $bName }}</option>
+                        @endforeach
+                    </select>
+                    <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
 
-            {{-- Filter: Stock Status --}}
-            <select name="stock_status" onchange="this.form.submit()"
-                    class="h-7 px-2 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500">
-                <option value="">{{ __('messages.stock_status') }}: {{ __('messages.all') }}</option>
-                <option value="in_stock" {{ request('stock_status') === 'in_stock' ? 'selected' : '' }}>{{ __('messages.in_stock') }}</option>
-                <option value="low_stock" {{ request('stock_status') === 'low_stock' ? 'selected' : '' }}>{{ __('messages.web_catalog_filter_low_stock') }}</option>
-                <option value="out_of_stock" {{ request('stock_status') === 'out_of_stock' ? 'selected' : '' }}>{{ __('messages.out_of_stock') }}</option>
-            </select>
+            {{-- Filter Group 2: Stock Status & Sort & Reset --}}
+            <div class="grid grid-cols-2 sm:flex sm:items-center gap-1.5">
+                {{-- Filter: Stock Status --}}
+                <div class="relative">
+                    <select name="stock_status" data-auto-submit onchange="this.form.submit()"
+                            class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
+                        <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{{ __('messages.stock_status') }}: {{ __('messages.all') }}</option>
+                        <option value="in_stock" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('stock_status') === 'in_stock' ? 'selected' : '' }}>{{ __('messages.in_stock') }}</option>
+                        <option value="low_stock" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('stock_status') === 'low_stock' ? 'selected' : '' }}>{{ __('messages.web_catalog_filter_low_stock') }}</option>
+                        <option value="out_of_stock" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('stock_status') === 'out_of_stock' ? 'selected' : '' }}>{{ __('messages.out_of_stock') }}</option>
+                    </select>
+                    <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
 
-            {{-- Sort By --}}
-            <select name="sort" onchange="this.form.submit()"
-                    class="h-7 px-2 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500">
-                <option value="newest" {{ request('sort', 'newest') === 'newest' ? 'selected' : '' }}>{{ __('messages.sort_newest') }}</option>
-                <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>{{ __('messages.sort_oldest') }}</option>
-                <option value="online_first" {{ request('sort') === 'online_first' ? 'selected' : '' }}>{{ __('messages.web_catalog_sort_online_first') }}</option>
-                <option value="counter_first" {{ request('sort') === 'counter_first' ? 'selected' : '' }}>{{ __('messages.web_catalog_sort_counter_first') }}</option>
-                <option value="featured_first" {{ request('sort') === 'featured_first' ? 'selected' : '' }}>{{ __('messages.web_catalog_sort_featured_first') }}</option>
-                <option value="name_asc" {{ request('sort') === 'name_asc' ? 'selected' : '' }}>{{ __('messages.sort_name_asc') }}</option>
-                <option value="price_asc" {{ request('sort') === 'price_asc' ? 'selected' : '' }}>{{ __('messages.sort_price_low_high') }}</option>
-                <option value="price_desc" {{ request('sort') === 'price_desc' ? 'selected' : '' }}>{{ __('messages.sort_price_high_low') }}</option>
-            </select>
+                {{-- Sort By --}}
+                <div class="relative">
+                    <select name="sort" data-auto-submit onchange="this.form.submit()"
+                            class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
+                        <option value="newest" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort', 'newest') === 'newest' ? 'selected' : '' }}>{{ __('messages.sort_newest') }}</option>
+                        <option value="oldest" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort') === 'oldest' ? 'selected' : '' }}>{{ __('messages.sort_oldest') }}</option>
+                        <option value="online_first" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort') === 'online_first' ? 'selected' : '' }}>{{ __('messages.web_catalog_sort_online_first') }}</option>
+                        <option value="counter_first" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort') === 'counter_first' ? 'selected' : '' }}>{{ __('messages.web_catalog_sort_counter_first') }}</option>
+                        <option value="featured_first" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort') === 'featured_first' ? 'selected' : '' }}>{{ __('messages.web_catalog_sort_featured_first') }}</option>
+                        <option value="name_asc" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort') === 'name_asc' ? 'selected' : '' }}>{{ __('messages.sort_name_asc') }}</option>
+                        <option value="price_asc" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort') === 'price_asc' ? 'selected' : '' }}>{{ __('messages.sort_price_low_high') }}</option>
+                        <option value="price_desc" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort') === 'price_desc' ? 'selected' : '' }}>{{ __('messages.sort_price_high_low') }}</option>
+                    </select>
+                    <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
 
-            @if(request()->hasAny(['search', 'category_id', 'brand_id', 'stock_status', 'visibility', 'featured', 'sale_status']))
-                <a href="{{ $clearFiltersUrl }}"
-                   class="h-7 px-2 rounded bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 hover:bg-rose-100 text-xs font-bold transition flex items-center gap-1 cursor-pointer">
-                    <span>✕</span>
-                    <span>{{ __('messages.reset') }}</span>
-                </a>
-            @endif
+                @if(request()->hasAny(['search', 'category_id', 'brand_id', 'stock_status', 'visibility', 'featured', 'sale_status', 'sort']) && (request('search') || request('category_id') || request('brand_id') || request('stock_status') || (request('sort') && request('sort') !== 'newest')))
+                    <a href="{{ $clearFiltersUrl }}"
+                       class="h-8 sm:h-7 px-2.5 rounded-lg sm:rounded bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 hover:bg-rose-100 text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer col-span-2 sm:col-span-1">
+                        <span>✕</span>
+                        <span>{{ __('messages.reset') }}</span>
+                    </a>
+                @endif
+            </div>
         </form>
     </div>
 

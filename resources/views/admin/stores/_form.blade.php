@@ -211,9 +211,9 @@
     </div>
 
     {{-- Actions --}}
-    <div class="flex items-center gap-2 pt-1">
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
         <button type="submit" :disabled="saving"
-            class="inline-flex items-center justify-center gap-2 min-h-11 px-5 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed font-semibold text-sm shadow transition">
+            class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 min-h-11 px-5 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed font-semibold text-sm shadow transition">
             <span x-show="!saving" class="inline-flex items-center gap-1.5">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 {{ $isEdit ? __('messages.store_update') : __('messages.store_create_title') }}
@@ -224,7 +224,7 @@
             </span>
         </button>
         <a href="{{ route('admin.stores.index') }}"
-            class="inline-flex items-center min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition">
+            class="flex-1 sm:flex-none inline-flex items-center justify-center min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition text-center">
             {{ __('messages.cancel') }}
         </a>
     </div>

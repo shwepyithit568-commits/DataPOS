@@ -20,16 +20,6 @@
                 'count' => $summary['brands'],
                 'icon' => '🏷️',
             ],
-            'connectors' => [
-                'label' => __('messages.master_data_tab_connectors'),
-                'count' => $summary['connectors'] ?? 0,
-                'icon' => '⚙️',
-            ],
-            'colors' => [
-                'label' => __('messages.master_data_tab_colors'),
-                'count' => $summary['colors'] ?? 0,
-                'icon' => '🎨',
-            ],
             'shelves' => [
                 'label' => __('messages.master_data_tab_shelves'),
                 'count' => $summary['shelves'] ?? 0,
@@ -58,7 +48,6 @@
         ];
 
         $totalMasterItems = array_sum(array_map(function($t) { return is_numeric($t['count']) ? $t['count'] : 0; }, $tabs));
-        $totalHardwarePresets = ($summary['connectors'] ?? 0) + ($summary['colors'] ?? 0) + ($summary['shelves'] ?? 0) + ($summary['warranties'] ?? 0) + ($summary['return_policies'] ?? 0);
     @endphp
 
     {{-- ============================================================
@@ -99,18 +88,6 @@
                         class="h-7 px-2.5 rounded-md text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-2xs hover:shadow-violet-500/20 transition flex items-center gap-1 active:scale-95 cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
                     <span>{{ __('messages.master_data_btn_variant_preset') }}</span>
-                </button>
-            @elseif ($activeTab === 'connectors')
-                <button type="button" @click="$dispatch('open-preset-create')"
-                        class="h-7 px-2.5 rounded-md text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-2xs hover:shadow-violet-500/20 transition flex items-center gap-1 active:scale-95 cursor-pointer">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
-                    <span>{{ __('messages.master_data_btn_connector') }}</span>
-                </button>
-            @elseif ($activeTab === 'colors')
-                <button type="button" @click="$dispatch('open-preset-create')"
-                        class="h-7 px-2.5 rounded-md text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-2xs hover:shadow-violet-500/20 transition flex items-center gap-1 active:scale-95 cursor-pointer">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
-                    <span>{{ __('messages.master_data_btn_color') }}</span>
                 </button>
             @elseif ($activeTab === 'shelves')
                 <button type="button" @click="$dispatch('open-preset-create')"
@@ -191,41 +168,7 @@
             </div>
         </a>
 
-        {{-- 3. Specs / Attributes --}}
-        <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'connectors']) }}"
-           role="listitem"
-           class="group flex-1 min-w-[110px] lg:min-w-0 shrink-0 lg:shrink bg-white dark:bg-slate-900 px-1.5 sm:px-2 py-1 rounded-lg border shadow-2xs flex items-center justify-center gap-1.5 transition hover:border-indigo-300 dark:hover:border-indigo-600 {{ $activeTab === 'connectors' ? 'border-indigo-500 ring-1.5 ring-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-950/40' : 'border-slate-200/80 dark:border-slate-800' }}">
-            <div class="shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-md grid place-items-center bg-indigo-100 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-300 text-[11px] sm:text-xs font-bold">
-                ⚙️
-            </div>
-            <div class="min-w-0 text-left">
-                <div class="text-xs font-black text-indigo-600 dark:text-indigo-400 leading-none tabular-nums font-outfit">
-                    {{ number_format($summary['connectors'] ?? 0) }}
-                </div>
-                <p class="text-[8.5px] sm:text-[9px] text-indigo-600/80 dark:text-indigo-400/80 mt-0.5 truncate font-bold uppercase tracking-wider">
-                    {{ __('messages.master_data_tab_connectors') }}
-                </p>
-            </div>
-        </a>
-
-        {{-- 4. Colors --}}
-        <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'colors']) }}"
-           role="listitem"
-           class="group flex-1 min-w-[110px] lg:min-w-0 shrink-0 lg:shrink bg-white dark:bg-slate-900 px-1.5 sm:px-2 py-1 rounded-lg border shadow-2xs flex items-center justify-center gap-1.5 transition hover:border-pink-300 dark:hover:border-pink-600 {{ $activeTab === 'colors' ? 'border-pink-500 ring-1.5 ring-pink-500/30 bg-pink-50/50 dark:bg-pink-950/40' : 'border-slate-200/80 dark:border-slate-800' }}">
-            <div class="shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-md grid place-items-center bg-pink-100 text-pink-600 dark:bg-pink-950/70 dark:text-pink-300 text-[11px] sm:text-xs font-bold">
-                🎨
-            </div>
-            <div class="min-w-0 text-left">
-                <div class="text-xs font-black text-pink-600 dark:text-pink-400 leading-none tabular-nums font-outfit">
-                    {{ number_format($summary['colors'] ?? 0) }}
-                </div>
-                <p class="text-[8.5px] sm:text-[9px] text-pink-600/80 dark:text-pink-400/80 mt-0.5 truncate font-bold uppercase tracking-wider">
-                    {{ __('messages.master_data_tab_colors') }}
-                </p>
-            </div>
-        </a>
-
-        {{-- 5. Shelves / Locations --}}
+        {{-- 3. Shelves / Locations --}}
         <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'shelves']) }}"
            role="listitem"
            class="group flex-1 min-w-[110px] lg:min-w-0 shrink-0 lg:shrink bg-white dark:bg-slate-900 px-1.5 sm:px-2 py-1 rounded-lg border shadow-2xs flex items-center justify-center gap-1.5 transition hover:border-teal-300 dark:hover:border-teal-600 {{ $activeTab === 'shelves' ? 'border-teal-500 ring-1.5 ring-teal-500/30 bg-teal-50/50 dark:bg-teal-950/40' : 'border-slate-200/80 dark:border-slate-800' }}">
@@ -242,7 +185,7 @@
             </div>
         </a>
 
-        {{-- 6. Warranties --}}
+        {{-- 4. Warranties --}}
         <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'warranties']) }}"
            role="listitem"
            class="group flex-1 min-w-[110px] lg:min-w-0 shrink-0 lg:shrink bg-white dark:bg-slate-900 px-1.5 sm:px-2 py-1 rounded-lg border shadow-2xs flex items-center justify-center gap-1.5 transition hover:border-blue-300 dark:hover:border-blue-600 {{ $activeTab === 'warranties' ? 'border-blue-500 ring-1.5 ring-blue-500/30 bg-blue-50/50 dark:bg-blue-950/40' : 'border-slate-200/80 dark:border-slate-800' }}">
@@ -259,7 +202,7 @@
             </div>
         </a>
 
-        {{-- 7. Return Policies --}}
+        {{-- 5. Return Policies --}}
         <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'return-policies']) }}"
            role="listitem"
            class="group flex-1 min-w-[110px] lg:min-w-0 shrink-0 lg:shrink bg-white dark:bg-slate-900 px-1.5 sm:px-2 py-1 rounded-lg border shadow-2xs flex items-center justify-center gap-1.5 transition hover:border-rose-300 dark:hover:border-rose-600 {{ $activeTab === 'return-policies' ? 'border-rose-500 ring-1.5 ring-rose-500/30 bg-rose-50/50 dark:bg-rose-950/40' : 'border-slate-200/80 dark:border-slate-800' }}">
@@ -276,7 +219,7 @@
             </div>
         </a>
 
-        {{-- 8. Variant Settings --}}
+        {{-- 6. Variant Settings --}}
         <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'variant-presets']) }}"
            role="listitem"
            class="group flex-1 min-w-[110px] lg:min-w-0 shrink-0 lg:shrink bg-white dark:bg-slate-900 px-1.5 sm:px-2 py-1 rounded-lg border shadow-2xs flex items-center justify-center gap-1.5 transition hover:border-amber-300 dark:hover:border-amber-600 {{ $activeTab === 'variant-presets' ? 'border-amber-500 ring-1.5 ring-amber-500/30 bg-amber-50/50 dark:bg-amber-950/40' : 'border-slate-200/80 dark:border-slate-800' }}">
@@ -334,7 +277,7 @@
             @include('admin.brands._content', ['embedded' => true])
         @elseif ($activeTab === 'variant-presets')
             @include('admin.variant_presets._content', ['embedded' => true])
-        @elseif (in_array($activeTab, ['connectors', 'colors', 'shelves', 'warranties', 'return-policies'], true))
+        @elseif (in_array($activeTab, ['shelves', 'warranties', 'return-policies'], true))
             @include('admin.master_data._preset_content', ['embedded' => true])
         @elseif ($activeTab === 'seed-data')
             @include('admin.master_data._seed_data', ['embedded' => true])

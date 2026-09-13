@@ -16,6 +16,7 @@ use App\POS\Enums\InventoryMovementType;
 use App\POS\Services\InventoryService;
 use App\Services\ProductImportService;
 use App\Services\StoreContext;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -138,7 +139,7 @@ class ProductController extends Controller
         $categoryGroups = [];
         foreach ($categoryTree as $row) {
             $categories[$row->category->id] = $row->category->name;
-            $groupOptions = [$row->category->id => 'All in ' . $row->category->name];
+            $groupOptions = [$row->category->id => __('messages.all_in') . ' ' . $row->category->name];
             foreach ($row->children as $child) {
                 $categories[$child->id] = $child->name;
                 $groupOptions[$child->id] = $child->name;
@@ -556,7 +557,7 @@ class ProductController extends Controller
         ]);
     }
 
-    public function create(StoreContext $context): View
+    public function create(Request $request, StoreContext $context): View
     {
         $store = $context->getStore();
         $categories = Category::where('store_id', $store->id)->with('parent')->get();
@@ -567,7 +568,15 @@ class ProductController extends Controller
         $masterPresets = \App\Models\ProductMasterPreset::where('store_id', $store->id)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
 
         $imageMaxMb = self::IMAGE_MAX_KB / 1024;
-        $product = new Product(['store_id' => $store->id, 'stock_status' => 'in_stock', 'product_type' => 'standard']);
+        $product = new Product([
+            'store_id' => $store->id,
+            'stock_status' => 'in_stock',
+            'product_type' => $request->query('product_type', 'standard'),
+            'category_id' => $request->query('category_id'),
+            'brand_id' => $request->query('brand_id'),
+            'warehouse_id' => $request->query('warehouse_id'),
+            'supplier_id' => $request->query('supplier_id'),
+        ]);
 
         $returnTo = AdminListReturn::peek('admin_products_return', '/store/' . $store->slug . '/admin/products');
 
@@ -592,7 +601,9 @@ class ProductController extends Controller
             'old_price'       => ['nullable', 'numeric', 'min:0'],
             'sale_starts_at'  => ['nullable', 'date'],
             'sale_ends_at'    => ['nullable', 'date', 'after_or_equal:sale_starts_at'],
-            'wholesale_price' => ['required', 'numeric', 'min:0'],
+            // Optional: small shops that sell retail-only leave it blank and
+            // the retail price is stored instead (see the form hint).
+            'wholesale_price' => ['nullable', 'numeric', 'min:0'],
             'stock_status'    => ['nullable', 'in:in_stock,out_of_stock'],
             'auto_sku'        => ['nullable', 'boolean'],
             'reorder_level'   => ['nullable', 'numeric', 'min:0'],
@@ -629,15 +640,31 @@ class ProductController extends Controller
             'variants.*.remove_image'   => ['nullable', 'boolean'],
         ]);
 
+        // Purchase cost / wholesale price / reorder level are behind
+        // `products.view_cost`; drop them for anyone without it so a crafted
+        // request cannot set what the form did not show.
+        $canSetCost = store_can('products.view_cost', $store);
+        if (! $canSetCost) {
+            unset($validated['purchase_cost'], $validated['wholesale_price'], $validated['reorder_level']);
+        }
+
         // Auto-SKU: generate a store-unique code when the toggle is on or no
-        // SKU was typed (the create form disables the field in auto mode).
+        // SKU was typed. If client sent a smart SKU, preserve it and resolve collisions.
         $sku = trim((string) ($validated['sku'] ?? ''));
-        if ($request->boolean('auto_sku') || $sku === '') {
+        if ($sku === '') {
             do {
                 $sku = 'SKU-' . strtoupper(Str::random(8));
             } while (Product::where('store_id', $store->id)
                 ->whereRaw('LOWER(sku) = ?', [mb_strtolower($sku)])
                 ->exists());
+        } elseif ($request->boolean('auto_sku')) {
+            $baseSku = $sku;
+            $counter = 1;
+            while (Product::where('store_id', $store->id)
+                ->whereRaw('LOWER(sku) = ?', [mb_strtolower($sku)])
+                ->exists()) {
+                $sku = $baseSku . '-' . $counter++;
+            }
         }
 
         // Duplicate SKU check within store (case-insensitive)
@@ -683,7 +710,7 @@ class ProductController extends Controller
             'old_price'       => $validated['old_price'] ?? null,
             'sale_starts_at'  => $validated['sale_starts_at'] ?? null,
             'sale_ends_at'    => $validated['sale_ends_at'] ?? null,
-            'wholesale_price' => $validated['wholesale_price'],
+            'wholesale_price' => $validated['wholesale_price'] ?? $validated['retail_price'],
             'stock_status'    => $stockStatus,
             'image_path'      => $imagePath,
             'warranty'        => $validated['warranty'] ?? null,
@@ -712,7 +739,9 @@ class ProductController extends Controller
 
         // Initial stock on create → one opening_balance ledger movement so the
         // product starts with real stock (valued at the purchase cost when set).
-        if ($initialStock > 0) {
+        // Services and digital goods hold no stock, so they never open a balance
+        // even if a value was typed before the product type was switched.
+        if ($initialStock > 0 && !$isServiceOrDigital) {
             app(InventoryService::class)->postMovement([
                 'store_id' => $store->id,
                 'product_id' => $product->id,
@@ -728,8 +757,55 @@ class ProductController extends Controller
             ]);
         }
 
+        if ($request->input('action') === 'save_and_new') {
+            return redirect()->route('store.admin.products.create', [
+                'store_slug'   => $store->slug,
+                'category_id'  => $validated['category_id'] ?? null,
+                'brand_id'     => $validated['brand_id'] ?? null,
+                'warehouse_id' => $validated['warehouse_id'] ?? null,
+                'supplier_id'  => $validated['supplier_id'] ?? null,
+                'product_type' => $validated['product_type'] ?? 'standard',
+            ])->with('success', __('messages.product_created') . ' — ' . __('messages.product_form_save_and_new_next_ready'));
+        }
+
         return redirect(AdminListReturn::resolve('admin_products_return', '/store/' . $store->slug . '/admin/products'))
             ->with('success', __('messages.product_created'));
+    }
+
+    /**
+     * Live duplicate-code lookup used by the product form while the operator
+     * types a SKU or barcode, so a clash surfaces before Save instead of after.
+     */
+    public function checkCode(Request $request, StoreContext $context): JsonResponse
+    {
+        $store = $context->getStore();
+        $field = (string) $request->query('field');
+        $value = trim((string) $request->query('value', ''));
+
+        if (! in_array($field, ['sku', 'barcode'], true) || $value === '') {
+            return response()->json(['exists' => false]);
+        }
+
+        $query = Product::where('store_id', $store->id);
+
+        if ($field === 'sku') {
+            $query->whereRaw('LOWER(sku) = ?', [mb_strtolower($value)]);
+        } else {
+            $query->where('barcode', $value);
+        }
+
+        // Editing a product must not flag its own code as a duplicate.
+        $excludeId = (int) $request->query('exclude', 0);
+        if ($excludeId > 0) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        $match = $query->first(['id', 'name', 'sku']);
+
+        return response()->json([
+            'exists' => $match !== null,
+            'name'   => $match?->name,
+        ]);
     }
 
     public function edit(string $store_slug, Product $product, StoreContext $context): View
@@ -778,7 +854,9 @@ class ProductController extends Controller
             'old_price'       => ['nullable', 'numeric', 'min:0'],
             'sale_starts_at'  => ['nullable', 'date'],
             'sale_ends_at'    => ['nullable', 'date', 'after_or_equal:sale_starts_at'],
-            'wholesale_price' => ['required', 'numeric', 'min:0'],
+            // Optional: small shops that sell retail-only leave it blank and
+            // the retail price is stored instead (see the form hint).
+            'wholesale_price' => ['nullable', 'numeric', 'min:0'],
             'stock_status'    => ['nullable', 'in:in_stock,out_of_stock'],
             'reorder_level'   => ['nullable', 'numeric', 'min:0'],
             'supplier_id'     => ['nullable', \Illuminate\Validation\Rule::exists('suppliers', 'id')->where('store_id', $store->id)],
@@ -812,6 +890,12 @@ class ProductController extends Controller
             'variants.*.attributes.*.value' => ['required', 'string', 'max:100'],
             'variants.*.remove_image'   => ['nullable', 'boolean'],
         ]);
+        // Same gate as store(): without `products.view_cost` these three values
+        // are neither editable nor clearable from a crafted request.
+        $canSetCost = store_can('products.view_cost', $store);
+        if (! $canSetCost) {
+            unset($validated['purchase_cost'], $validated['wholesale_price'], $validated['reorder_level']);
+        }
 
         // Duplicate SKU check within store ignoring self (case-insensitive)
         if (Product::where('store_id', $store->id)
@@ -881,7 +965,11 @@ class ProductController extends Controller
             'old_price'       => $validated['old_price'] ?? null,
             'sale_starts_at'  => $validated['sale_starts_at'] ?? null,
             'sale_ends_at'    => $validated['sale_ends_at'] ?? null,
-            'wholesale_price' => $validated['wholesale_price'],
+            // Blank means the same as retail; an ABSENT field (no permission)
+            // keeps whatever the manager already saved.
+            'wholesale_price' => ($canSetCost && $request->has('wholesale_price'))
+                ? ($validated['wholesale_price'] ?? $validated['retail_price'])
+                : $product->wholesale_price,
             'stock_status'    => $stockStatus,
             'image_path'      => $imagePath,
             'warranty'        => $request->has('warranty') ? ($validated['warranty'] ?? null) : $product->warranty,

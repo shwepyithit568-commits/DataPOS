@@ -112,6 +112,9 @@ class StaffRole extends Model
                         'update' => 'products.update',
                         'delete' => 'products.delete',
                         'export' => 'products.export',
+                        // Purchase cost, wholesale price and reorder level. The owner
+                        // always has it; it is separately grantable per staff role.
+                        'cost'   => 'products.view_cost',
                     ]
                 ],
                 'barcode' => [
@@ -728,6 +731,7 @@ class StaffRole extends Model
                     'master_data.update',
                     'master_data.edit',
                     'products.view',
+                    'products.view_cost',
                     'products.create',
                     'products.update',
                     'products.edit',

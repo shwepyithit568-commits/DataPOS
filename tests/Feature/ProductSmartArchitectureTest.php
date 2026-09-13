@@ -197,47 +197,39 @@ class ProductSmartArchitectureTest extends TestCase
         // 1. Create Preset via Controller
         $createResponse = $this->actingAs($this->manager)
             ->post("/store/{$this->store->slug}/admin/product-master-presets", [
-                'type' => 'connector_spec',
-                'code' => 'tc',
-                'name' => 'Type-C Cable Connector',
-                'content' => 'High speed reversible Type-C',
+                'type' => 'shelf_location',
+                'code' => 'z-99',
+                'name' => 'Shelf Z99 Storage',
+                'content' => 'Back storage row',
             ]);
 
         $createResponse->assertRedirect();
         $this->assertDatabaseHas('product_master_presets', [
             'store_id' => $this->store->id,
-            'type' => 'connector_spec',
-            'code' => 'TC',
-            'name' => 'Type-C Cable Connector',
+            'type' => 'shelf_location',
+            'code' => 'Z-99',
+            'name' => 'Shelf Z99 Storage',
         ]);
 
-        $preset = \App\Models\ProductMasterPreset::where('store_id', $this->store->id)->where('code', 'TC')->first();
+        $preset = \App\Models\ProductMasterPreset::where('store_id', $this->store->id)->where('code', 'Z-99')->first();
 
-        // 2. View Master Data Hub with tab=connectors
-        $hubResponse = $this->actingAs($this->manager)
-            ->get("/store/{$this->store->slug}/admin/products/master-data?tab=connectors");
-
-        $hubResponse->assertOk();
-        $hubResponse->assertSee('TC');
-        $hubResponse->assertSee('Type-C Cable Connector');
-
-        // 3. Update Preset
+        // 2. Update Preset
         $updateResponse = $this->actingAs($this->manager)
             ->put("/store/{$this->store->slug}/admin/product-master-presets/{$preset->id}", [
-                'type' => 'connector_spec',
-                'code' => 'TC-PRO',
-                'name' => 'Type-C Pro 100W',
-                'content' => 'Updated 100W Spec',
+                'type' => 'shelf_location',
+                'code' => 'Z-98',
+                'name' => 'Shelf Z98 Storage Updated',
+                'content' => 'Updated back storage row',
             ]);
 
         $updateResponse->assertRedirect();
         $this->assertDatabaseHas('product_master_presets', [
             'id' => $preset->id,
-            'code' => 'TC-PRO',
-            'name' => 'Type-C Pro 100W',
+            'code' => 'Z-98',
+            'name' => 'Shelf Z98 Storage Updated',
         ]);
 
-        // 4. Create Shelf Location and Warranty Preset
+        // 3. Create a second shelf preset + a warranty preset
         $shelfResponse = $this->actingAs($this->manager)
             ->post("/store/{$this->store->slug}/admin/product-master-presets", [
                 'type' => 'shelf_location',
@@ -255,6 +247,16 @@ class ProductSmartArchitectureTest extends TestCase
             ]);
         $warrantyResponse->assertRedirect();
 
+        // 4. The Master Data Hub lists shelf presets on its shelves tab, including the edited one
+        $hubResponse = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/products/master-data?tab=shelves");
+
+        $hubResponse->assertOk();
+        $hubResponse->assertSee('A-01');
+        $hubResponse->assertSee('Shelf A1 Front');
+        $hubResponse->assertSee('Z-98');
+        $hubResponse->assertSee('Shelf Z98 Storage Updated');
+
         // 5. Delete Preset
         $deleteResponse = $this->actingAs($this->manager)
             ->delete("/store/{$this->store->slug}/admin/product-master-presets/{$preset->id}");
@@ -264,4 +266,109 @@ class ProductSmartArchitectureTest extends TestCase
             'id' => $preset->id,
         ]);
     }
+
+    public function test_save_and_add_another_redirects_to_create_with_preserved_category_and_brand(): void
+    {
+        $category = Category::create(['store_id' => $this->store->id, 'name' => 'Chargers', 'slug' => 'chargers', 'code' => 'CHG']);
+        $brand = Brand::create(['store_id' => $this->store->id, 'name' => 'Remax', 'slug' => 'remax', 'code' => 'RMX']);
+
+        $response = $this->actingAs($this->manager)
+            ->post("/store/{$this->store->slug}/admin/products", [
+                'name' => 'Remax 20W Fast Charger',
+                'sku' => 'RMX-20W-WHT',
+                'category_id' => $category->id,
+                'brand_id' => $brand->id,
+                'retail_price' => 25000,
+                'wholesale_price' => 18000,
+                'action' => 'save_and_new',
+            ]);
+
+        $response->assertRedirect(route('store.admin.products.create', [
+            'store_slug' => $this->store->slug,
+            'category_id' => $category->id,
+            'brand_id' => $brand->id,
+            'warehouse_id' => null,
+            'supplier_id' => null,
+            'product_type' => 'standard',
+        ]));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('products', [
+            'store_id' => $this->store->id,
+            'sku' => 'RMX-20W-WHT',
+            'category_id' => $category->id,
+            'brand_id' => $brand->id,
+        ]);
+
+        // Follow redirect to create page to ensure it pre-fills cleanly
+        $createResponse = $this->actingAs($this->manager)
+            ->get(route('store.admin.products.create', [
+                'store_slug' => $this->store->slug,
+                'category_id' => $category->id,
+                'brand_id' => $brand->id,
+            ]));
+        $createResponse->assertOk();
+        $createResponse->assertSee('Remax');
+        $createResponse->assertSee('Chargers');
+    }
+
+    public function test_smart_auto_sku_preserves_client_generated_sku_with_formula(): void
+    {
+        $brand = Brand::create([
+            'store_id' => $this->store->id,
+            'name' => 'Samsung',
+            'code' => 'SAM',
+            'slug' => 'samsung',
+        ]);
+
+        $mainCategory = Category::create([
+            'store_id' => $this->store->id,
+            'name' => 'Accessories',
+            'code' => 'ACC',
+            'slug' => 'accessories',
+        ]);
+
+        $subCategory = Category::create([
+            'store_id' => $this->store->id,
+            'parent_id' => $mainCategory->id,
+            'name' => 'Back Case',
+            'code' => 'CASE',
+            'slug' => 'back-case',
+        ]);
+
+        // 1. Create first product with smart auto sku (Brand Code + Model + Sub Category Code: SAM-A15-CASE)
+        $response1 = $this->actingAs($this->manager)->post("/store/{$this->store->slug}/admin/products", [
+            'name' => 'SAM A15 (A15 5G) CASE',
+            'sku' => 'SAM-A15-CASE',
+            'auto_sku' => 1,
+            'brand_id' => $brand->id,
+            'category_id' => $subCategory->id,
+            'compatible_models' => 'A15 5G',
+            'retail_price' => 12000,
+            'wholesale_price' => 8000,
+            'stock_status' => 'in_stock',
+        ]);
+        $response1->assertSessionHasNoErrors();
+
+        $product1 = Product::where('store_id', $this->store->id)->where('name', 'SAM A15 (A15 5G) CASE')->firstOrFail();
+        $this->assertSame('SAM-A15-CASE', $product1->sku);
+
+        // 2. Create second product with identical smart formula - should resolve collision cleanly
+        $response2 = $this->actingAs($this->manager)->post("/store/{$this->store->slug}/admin/products", [
+            'name' => 'SAM A15 (A15 4G) CASE',
+            'sku' => 'SAM-A15-CASE',
+            'auto_sku' => 1,
+            'brand_id' => $brand->id,
+            'category_id' => $subCategory->id,
+            'compatible_models' => 'A15 4G',
+            'retail_price' => 12000,
+            'wholesale_price' => 8000,
+            'stock_status' => 'in_stock',
+        ]);
+        $response2->assertSessionHasNoErrors();
+
+        $product2 = Product::where('store_id', $this->store->id)->where('name', 'SAM A15 (A15 4G) CASE')->firstOrFail();
+        $this->assertSame('SAM-A15-CASE-1', $product2->sku);
+    }
 }
+

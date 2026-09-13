@@ -1,4 +1,5 @@
 @extends('layouts.admin.app')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
 @php
@@ -17,10 +18,10 @@
         'remove_selected' => __('messages.category_image_remove_selected'),
     ];
 @endphp
-<div class="w-full">
+<div class="w-full space-y-1 sm:space-y-1.5 pb-6">
     {{-- Header --}}
-    <div class="flex items-center justify-between gap-3 mb-6">
-        <h1 class="text-lg sm:text-2xl font-bold text-gray-900 dark:text-slate-100 font-outfit truncate">{{ __('messages.category_edit_title', ['name' => $category->name]) }}</h1>
+    <div class="flex items-center justify-between gap-3 mb-2 bg-white dark:bg-slate-900 p-2.5 sm:p-3 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+        <h1 class="text-base sm:text-xl font-bold text-gray-900 dark:text-slate-100 font-outfit truncate">{{ __('messages.category_edit_title', ['name' => $category->name]) }}</h1>
         <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/categories') }}" class="shrink-0 text-xs text-violet-600 dark:text-violet-400 font-semibold hover:underline">&larr; {{ __('messages.category_back') }}</a>
     </div>
 
@@ -171,9 +172,9 @@
                 class="w-full border dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition">{{ old('description', $category->description) }}</textarea>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 pt-1">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
             <button type="submit" :disabled="saving"
-                class="inline-flex items-center justify-center gap-2 min-h-11 px-5 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed font-semibold text-sm shadow transition">
+                class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 min-h-11 px-5 py-2.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed font-semibold text-sm shadow transition">
                 <span x-show="!saving" class="inline-flex items-center gap-1.5">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     {{ __('messages.category_update') }}
@@ -184,7 +185,7 @@
                 </span>
             </button>
             <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/categories') }}"
-                class="inline-flex items-center min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition">
+                class="flex-1 sm:flex-none inline-flex items-center justify-center min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-700 dark:text-slate-200 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition text-center">
                 {{ __('messages.cancel') }}
             </a>
         </div>

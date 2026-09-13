@@ -1,10 +1,10 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.edit_warranty') . ' - ' . $warranty->serial_number)
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full space-y-2 sm:space-y-2.5" x-data="{
+<div class="w-full space-y-1 sm:space-y-1.5 pb-6" x-data="{
     selectedProductId: '{{ old('product_id', $warranty->product_id) }}',
     productName: '{{ addslashes(old('product_name', $warranty->product_name)) }}',
     customerId: '{{ old('customer_id', $warranty->customer_id) }}',
@@ -309,19 +309,19 @@
         {{-- ============================================================
              STICKY BOTTOM ACTION BAR (SECTION 11 STANDARD)
              ============================================================ --}}
-        <div class="sticky bottom-0 z-20 w-full border border-slate-200/90 bg-white/95 px-3 py-2.5 sm:px-4 backdrop-blur-md shadow-[0_-4px_16px_rgba(15,23,42,0.06)] dark:border-slate-800/90 dark:bg-slate-900/95 rounded-lg flex items-center justify-between gap-3">
+        <div class="sticky bottom-0 z-20 w-full border border-slate-200/90 bg-white/95 px-3 py-2 sm:px-4 backdrop-blur-md shadow-[0_-4px_16px_rgba(15,23,42,0.06)] dark:border-slate-800/90 dark:bg-slate-900/95 rounded-lg flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3">
             <div class="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
                 <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>{{ __('messages.warranty_terms_validity') }}</span>
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="w-full sm:w-auto flex items-center gap-2">
                 <a href="{{ route('store.admin.warranty.show', ['store_slug' => $store->slug, 'warranty' => $warranty->id]) }}"
-                   class="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition">
+                   class="flex-1 sm:flex-none justify-center px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition text-center">
                     {{ __('messages.cancel') }}
                 </a>
                 <button type="submit"
-                        class="px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-black text-xs shadow-md shadow-violet-500/20 transition flex items-center gap-1.5">
+                        class="flex-1 sm:flex-none justify-center px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-black text-xs shadow-md shadow-violet-500/20 transition flex items-center gap-1.5">
                     <span>💾</span>
                     <span>{{ __('messages.update_warranty_record') }}</span>
                 </button>

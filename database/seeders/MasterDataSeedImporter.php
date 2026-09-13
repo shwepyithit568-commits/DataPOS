@@ -60,8 +60,6 @@ class MasterDataSeedImporter
                 'icon'   => '📂',
                 'sample' => $categories,
             ],
-            'connectors'      => ['count' => count($this->connectors($businessType)),     'label' => 'ကြိုးပေါက်/Spec Presets',           'icon' => '🔌'],
-            'colors'          => ['count' => count($this->colors($businessType)),          'label' => 'အရောင် Presets (Colors)',            'icon' => '🎨'],
             'shelves'         => ['count' => count($this->shelves($businessType)),         'label' => 'ကုန်ပစ္စည်း ထားရှိရာ စင် (Shelves)', 'icon' => '🗄️'],
             'warranties'      => ['count' => count($this->warranties($businessType)),      'label' => 'အာမခံ Template များ (Warranties)',  'icon' => '🛡️'],
             'return_policies' => ['count' => count($this->returnPolicies($businessType)),  'label' => 'ပြန်လဲမူဝါဒ (Return Policies)',     'icon' => '🔄'],
@@ -101,12 +99,6 @@ class MasterDataSeedImporter
             if (in_array('categories', $groups, true)) {
                 $result['categories'] = $this->importCategories($store, $businessType);
             }
-            if (in_array('connectors', $groups, true)) {
-                $result['connectors'] = $this->importPresets($store, 'connector_spec', $this->connectors($businessType));
-            }
-            if (in_array('colors', $groups, true)) {
-                $result['colors'] = $this->importPresets($store, 'color', $this->colors($businessType));
-            }
             if (in_array('shelves', $groups, true)) {
                 $result['shelves'] = $this->importPresets($store, 'shelf_location', $this->shelves($businessType));
             }
@@ -135,12 +127,6 @@ class MasterDataSeedImporter
         }
         if ($all || in_array('categories', $groups, true)) {
             Category::where('store_id', $store->id)->delete();
-        }
-        if ($all || in_array('connectors', $groups, true)) {
-            ProductMasterPreset::where('store_id', $store->id)->where('type', 'connector_spec')->delete();
-        }
-        if ($all || in_array('colors', $groups, true)) {
-            ProductMasterPreset::where('store_id', $store->id)->where('type', 'color')->delete();
         }
         if ($all || in_array('shelves', $groups, true)) {
             ProductMasterPreset::where('store_id', $store->id)->where('type', 'shelf_location')->delete();
@@ -276,23 +262,6 @@ class MasterDataSeedImporter
             'fashion' => $this->fashionCategoryTree(),
             'general' => $this->generalCategoryTree(),
             default   => $this->techCategoryTree(),
-        };
-    }
-
-    private function connectors(string $t = 'tech'): array
-    {
-        return match ($t) {
-            'fashion' => $this->fashionConnectors(),
-            'general' => $this->generalConnectors(),
-            default   => $this->techConnectors(),
-        };
-    }
-
-    private function colors(string $t = 'tech'): array
-    {
-        return match ($t) {
-            'fashion' => $this->fashionColors(),
-            default   => $this->techColors(),
         };
     }
 
@@ -620,62 +589,6 @@ class MasterDataSeedImporter
                     ['name' => 'VPN / Software License',       'code' => 'DIG_VPN', 'icon' => '🔐'],
                 ],
             ],
-        ];
-    }
-
-    private function techConnectors(): array
-    {
-        return [
-            ['code' => 'TC',      'name' => 'Type-C',                    'content' => 'USB Type-C interface'],
-            ['code' => 'MC',      'name' => 'Micro USB',                 'content' => 'Micro USB standard interface'],
-            ['code' => 'IP',      'name' => 'Lightning / iPhone',        'content' => 'Apple 8-pin lightning connector'],
-            ['code' => '3.5MM',   'name' => '3.5mm Aux Jack',            'content' => 'Standard audio headphone jack'],
-            ['code' => '3IN1',    'name' => '3-in-1 Combo',              'content' => 'Multi-head Type-C + Micro + Lightning'],
-            ['code' => 'OTG',     'name' => 'OTG Adapter',               'content' => 'On-The-Go USB converter'],
-            ['code' => '20W',     'name' => '20W Fast Charge',           'content' => '20 Watt fast power delivery'],
-            ['code' => '33W',     'name' => '33W Super Charge',          'content' => '33 Watt super flash charge (Xiaomi/OPPO)'],
-            ['code' => '65W',     'name' => '65W GaN Fast Charge',       'content' => '65 Watt gallium nitride charger'],
-            ['code' => '100W',    'name' => '100W PD Ultra Fast',        'content' => '100 Watt ultra fast power delivery'],
-            ['code' => '120W',    'name' => '120W Hyper Charge',         'content' => '120 Watt hyper fast charging (Xiaomi)'],
-            ['code' => '10K',     'name' => '10000mAh Capacity',         'content' => 'Power bank 10000mAh capacity'],
-            ['code' => '20K',     'name' => '20000mAh Capacity',         'content' => 'Power bank 20000mAh capacity'],
-            ['code' => '30K',     'name' => '30000mAh Capacity',         'content' => 'Power bank 30000mAh capacity'],
-            ['code' => 'ORG',     'name' => 'Original (မူရင်းအစစ်)',     'content' => 'Genuine manufacturer original quality'],
-            ['code' => 'AAA',     'name' => 'AAA Quality (အဆင့်မြင့်)', 'content' => 'High quality grade AAA replacement'],
-            ['code' => 'MA',      'name' => 'MA Quality (သာမန်)',        'content' => 'Standard replacement grade'],
-            ['code' => 'OCA',     'name' => 'OCA Glass',                 'content' => 'Optically clear adhesive glass panel'],
-            ['code' => 'SIL',     'name' => 'Silicone Material',         'content' => 'Soft silicone material case/cover'],
-            ['code' => 'CLR',     'name' => 'Clear / Transparent',       'content' => 'Transparent clear material'],
-            ['code' => 'HDMI',    'name' => 'HDMI Cable',                'content' => 'High-definition multimedia interface'],
-            ['code' => 'DP',      'name' => 'DisplayPort',               'content' => 'DisplayPort video interface'],
-            ['code' => 'VGA',     'name' => 'VGA Cable',                 'content' => 'VGA analog display connector'],
-            ['code' => 'RJ45',    'name' => 'RJ45 / LAN',               'content' => 'Cat5e / Cat6 network cable RJ45'],
-            ['code' => 'BNC',     'name' => 'BNC Coaxial (CCTV)',        'content' => 'BNC analog CCTV video connector'],
-        ];
-    }
-
-    private function techColors(): array
-    {
-        return [
-            ['code' => 'BLK', 'name' => 'Black (အနက်)',           'color_hex' => '#0A0A0A', 'content' => 'Jet Black'],
-            ['code' => 'WHT', 'name' => 'White (အဖြူ)',            'color_hex' => '#FAFAFA', 'content' => 'Pearl White'],
-            ['code' => 'BLU', 'name' => 'Blue (အပြာ)',             'color_hex' => '#2563EB', 'content' => 'Ocean Blue'],
-            ['code' => 'RED', 'name' => 'Red (အနီ)',               'color_hex' => '#DC2626', 'content' => 'Ruby Red'],
-            ['code' => 'GLD', 'name' => 'Gold (ရွှေရောင်)',         'color_hex' => '#D97706', 'content' => 'Metallic Gold'],
-            ['code' => 'SLV', 'name' => 'Silver (ငွေရောင်)',        'color_hex' => '#94A3B8', 'content' => 'Metallic Silver'],
-            ['code' => 'GRY', 'name' => 'Gray (မီးခိုးရောင်)',      'color_hex' => '#64748B', 'content' => 'Space Gray'],
-            ['code' => 'PUR', 'name' => 'Purple (ခရမ်းရောင်)',      'color_hex' => '#9333EA', 'content' => 'Deep Purple'],
-            ['code' => 'GRN', 'name' => 'Green (အစိမ်းရောင်)',      'color_hex' => '#16A34A', 'content' => 'Emerald Green'],
-            ['code' => 'PNK', 'name' => 'Pink (ပန်းရောင်)',          'color_hex' => '#F472B6', 'content' => 'Rose Pink'],
-            ['code' => 'YLW', 'name' => 'Yellow (အဝါရောင်)',        'color_hex' => '#EAB308', 'content' => 'Sunlight Yellow'],
-            ['code' => 'ORG', 'name' => 'Orange (လိမ္မော်ရောင်)',   'color_hex' => '#EA580C', 'content' => 'Tangerine Orange'],
-            ['code' => 'CYN', 'name' => 'Cyan / Teal (ပင်လယ်ပြာ)', 'color_hex' => '#0891B2', 'content' => 'Teal Blue'],
-            ['code' => 'BRN', 'name' => 'Brown (ညိုရောင်)',          'color_hex' => '#92400E', 'content' => 'Coffee Brown'],
-            ['code' => 'RGD', 'name' => 'Rose Gold (နှင်းဆီ-ရွှေ)', 'color_hex' => '#FBBF8A', 'content' => 'Rose Gold gradient'],
-            ['code' => 'DBL', 'name' => 'Dark Blue (ရေပြာ-တိမ်)',   'color_hex' => '#1E3A5F', 'content' => 'Navy / Deep Blue'],
-            ['code' => 'LBL', 'name' => 'Light Blue (မှုန်ပြာ)',    'color_hex' => '#BAE6FD', 'content' => 'Sky Blue'],
-            ['code' => 'GRD', 'name' => 'Gradient / Rainbow',       'color_hex' => '#A855F7', 'content' => 'Rainbow gradient finish'],
-            ['code' => 'TRN', 'name' => 'Transparent (ပွင့်)',       'color_hex' => '#CCCCCC', 'content' => 'Clear transparent'],
         ];
     }
 
@@ -1074,66 +987,6 @@ class MasterDataSeedImporter
         ];
     }
 
-    private function fashionConnectors(): array
-    {
-        return [
-            ['code' => 'REG',  'name' => 'Regular Fit (သာမန်ဆစ်)',      'content' => 'Standard regular fit clothing'],
-            ['code' => 'SLM',  'name' => 'Slim Fit (ပါးပါးဆစ်)',         'content' => 'Slim/fitted cut clothing'],
-            ['code' => 'OVR',  'name' => 'Oversized (ကြီးကြီးကျယ်)',     'content' => 'Loose oversized style clothing'],
-            ['code' => 'RLX',  'name' => 'Relaxed Fit (ပြေပြေညာညာ)',    'content' => 'Comfort relaxed cut'],
-            ['code' => 'CTN',  'name' => 'Cotton (ကော်တွန်)',             'content' => '100% cotton fabric'],
-            ['code' => 'PLY',  'name' => 'Polyester (ပိုလီ)',             'content' => 'Polyester fabric'],
-            ['code' => 'SLK',  'name' => 'Silk (ပိုးထည်)',               'content' => 'Silk fabric'],
-            ['code' => 'LNN',  'name' => 'Linen (နုနွောင်းစ)',            'content' => 'Linen fabric'],
-            ['code' => 'DNM',  'name' => 'Denim (ဂျင်းပစ္စည်း)',          'content' => 'Denim/jeans material'],
-            ['code' => 'CFN',  'name' => 'Chiffon (ရွဲ့ပတ်)',             'content' => 'Light chiffon fabric'],
-            ['code' => 'ZPR',  'name' => 'Zipper Closure (ဇစ်)',          'content' => 'Zipper fastening'],
-            ['code' => 'BTN',  'name' => 'Button Closure (ခလုပ်)',        'content' => 'Button fastening'],
-            ['code' => 'PULL', 'name' => 'Pull-On / Elastic',             'content' => 'Elastic pull-on waistband'],
-            ['code' => 'ORG',  'name' => 'Original Brand Label (မူရင်း)', 'content' => 'Genuine brand label product'],
-        ];
-    }
-
-    private function fashionColors(): array
-    {
-        return [
-            ['code' => 'BLK',  'name' => 'Black (အနက်)',              'color_hex' => '#0A0A0A', 'content' => 'Jet Black'],
-            ['code' => 'WHT',  'name' => 'White (အဖြူ)',               'color_hex' => '#FAFAFA', 'content' => 'Pure White'],
-            ['code' => 'OWHT', 'name' => 'Off-White / Ivory (နွေး)',   'color_hex' => '#F8F4E8', 'content' => 'Cream / Ivory'],
-            ['code' => 'BGE',  'name' => 'Beige (ကြေ)',                'color_hex' => '#E8D5B7', 'content' => 'Warm Beige'],
-            ['code' => 'CML',  'name' => 'Camel (ကြကျော်)',            'color_hex' => '#C19A6B', 'content' => 'Camel Tan'],
-            ['code' => 'KHK',  'name' => 'Khaki (ကာကီ)',               'color_hex' => '#BDB76B', 'content' => 'Khaki Green-Tan'],
-            ['code' => 'GRY',  'name' => 'Grey (မီးခိုး)',              'color_hex' => '#9E9E9E', 'content' => 'Mid Grey'],
-            ['code' => 'LGRY', 'name' => 'Light Grey (မှုန်မီးခိုး)',   'color_hex' => '#D3D3D3', 'content' => 'Light Grey'],
-            ['code' => 'DGRY', 'name' => 'Charcoal (မဲ့မီးခိုး)',       'color_hex' => '#36454F', 'content' => 'Charcoal Grey'],
-            ['code' => 'BRN',  'name' => 'Brown (ညို)',                 'color_hex' => '#795548', 'content' => 'Warm Brown'],
-            ['code' => 'CHOC', 'name' => 'Chocolate (ချောကလက်)',        'color_hex' => '#3D1C0B', 'content' => 'Deep Chocolate'],
-            ['code' => 'RST',  'name' => 'Rust (သံချေးရောင်)',          'color_hex' => '#B7410E', 'content' => 'Rust Orange'],
-            ['code' => 'NVY',  'name' => 'Navy (ရေပြာ)',                'color_hex' => '#1B2A4A', 'content' => 'Deep Navy Blue'],
-            ['code' => 'RBL',  'name' => 'Royal Blue (ကြက်ကျ)',         'color_hex' => '#2563EB', 'content' => 'Royal Blue'],
-            ['code' => 'SKY',  'name' => 'Sky Blue (မိုးကောင်းကင်)',    'color_hex' => '#87CEEB', 'content' => 'Sky Blue'],
-            ['code' => 'DNM',  'name' => 'Denim Blue (ဂျင်းပြာ)',       'color_hex' => '#5B73A3', 'content' => 'Denim Wash Blue'],
-            ['code' => 'RED',  'name' => 'Red (အနီ)',                   'color_hex' => '#E53935', 'content' => 'Bright Red'],
-            ['code' => 'BRG',  'name' => 'Burgundy (စပျစ်ရင့်)',        'color_hex' => '#800020', 'content' => 'Deep Burgundy'],
-            ['code' => 'PNK',  'name' => 'Pink (ပန်း)',                 'color_hex' => '#F48FB1', 'content' => 'Soft Pink'],
-            ['code' => 'HPK',  'name' => 'Hot Pink (တောက်ပန်း)',        'color_hex' => '#FF69B4', 'content' => 'Hot Pink'],
-            ['code' => 'BSH',  'name' => 'Blush / Rose (ပန်းညို)',      'color_hex' => '#E8B4B8', 'content' => 'Blush Rose'],
-            ['code' => 'MVE',  'name' => 'Mauve (ခရမ်းပန်း)',           'color_hex' => '#C8A2C8', 'content' => 'Dusty Mauve'],
-            ['code' => 'GRN',  'name' => 'Green (အစိမ်း)',              'color_hex' => '#4CAF50', 'content' => 'Bright Green'],
-            ['code' => 'OLV',  'name' => 'Olive (သံပြာဝါ)',             'color_hex' => '#808000', 'content' => 'Olive Green'],
-            ['code' => 'SGE',  'name' => 'Sage (မြက်ခင်း)',             'color_hex' => '#BCB88A', 'content' => 'Sage Green'],
-            ['code' => 'MIN',  'name' => 'Mint (မန်ကျည်းစိမ်း)',         'color_hex' => '#98FF98', 'content' => 'Mint Green'],
-            ['code' => 'PUR',  'name' => 'Purple / Violet (ခရမ်း)',     'color_hex' => '#7B1FA2', 'content' => 'Deep Purple'],
-            ['code' => 'LVD',  'name' => 'Lavender (ဆိပ်ညို)',          'color_hex' => '#E6E6FA', 'content' => 'Soft Lavender'],
-            ['code' => 'YLW',  'name' => 'Yellow (ဝါ)',                 'color_hex' => '#FFC107', 'content' => 'Golden Yellow'],
-            ['code' => 'MST',  'name' => 'Mustard (မုတ်ဆိတ်ဝါ)',        'color_hex' => '#FFDB58', 'content' => 'Mustard Yellow'],
-            ['code' => 'ORG',  'name' => 'Orange (လိမ္မော်)',            'color_hex' => '#FF6F00', 'content' => 'Burnt Orange'],
-            ['code' => 'CRL',  'name' => 'Coral (ကျောက်ပန်း)',          'color_hex' => '#FF7F7F', 'content' => 'Coral Pink'],
-            ['code' => 'EML',  'name' => 'Emerald (နက်ဖြိုးစိမ်း)',     'color_hex' => '#50C878', 'content' => 'Emerald Green'],
-            ['code' => 'MLT',  'name' => 'Multicolor / Print',           'color_hex' => '#A78BFA', 'content' => 'Printed or Multicolor pattern'],
-        ];
-    }
-
     private function fashionShelves(): array
     {
         return [
@@ -1322,15 +1175,6 @@ class MasterDataSeedImporter
             ['name' => 'Household (အိမ်သုံးပစ္စည်း)',          'code' => 'HH',   'icon' => '🏠', 'subs' => []],
             ['name' => 'Electronics (လျှပ်စစ်)',               'code' => 'ELEC', 'icon' => '🔌', 'subs' => []],
             ['name' => 'Service (ဝန်ဆောင်မှု)',                'code' => 'SVC',  'icon' => '🛠️', 'subs' => []],
-        ];
-    }
-
-    private function generalConnectors(): array
-    {
-        return [
-            ['code' => 'STD', 'name' => 'Standard',          'content' => 'Standard item'],
-            ['code' => 'PRE', 'name' => 'Premium',            'content' => 'Premium quality'],
-            ['code' => 'IMP', 'name' => 'Imported (တင်)',     'content' => 'Imported product'],
         ];
     }
 }

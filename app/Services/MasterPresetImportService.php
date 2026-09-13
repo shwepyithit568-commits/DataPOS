@@ -121,9 +121,11 @@ class MasterPresetImportService
             $type = $defaultType;
         }
 
+        // connector_spec / color are kept so legacy exports re-import with their
+        // original type, even though neither is managed in the UI any more.
         $validTypes = ['connector_spec', 'color', 'shelf_location', 'warranty', 'return_policy'];
         if (!in_array($type, $validTypes, true)) {
-            $type = 'connector_spec';
+            $type = 'shelf_location';
         }
 
         $code = !empty($row['code']) ? strtoupper(trim((string) $row['code'])) : null;

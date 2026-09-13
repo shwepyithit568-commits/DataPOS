@@ -1,7 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.repair_new_job') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
 @php
@@ -31,7 +31,7 @@
     $statuses = $serviceSettings['status'] ?? collect();
 @endphp
 
-<div class="w-full space-y-2.5 sm:space-y-3 pb-8" x-data="repairTicketForm({
+<div class="w-full space-y-1 sm:space-y-1.5 pb-6" x-data="repairTicketForm({
     baseUrl: '{{ url('/store/' . $store->slug . '/admin') }}',
     csrf: '{{ csrf_token() }}',
     products: {{ $productOptions->toJson() }},
@@ -39,7 +39,7 @@
 })" x-init="init()">
 
     {{-- Top Header --}}
-    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
         <div class="flex items-center gap-2.5 min-w-0">
             <a href="{{ route('store.admin.service_jobs.index', $storeRouteParams) }}"
                class="w-8 h-8 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition grid place-items-center shrink-0">
@@ -52,16 +52,16 @@
                     <span class="text-slate-400 dark:text-slate-500">·</span>
                     <span class="font-normal normal-case text-slate-500 dark:text-slate-400">{{ __('messages.new_service_job_intake') }}</span>
                 </div>
-                <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                     <span>{{ __('messages.repair_new_job') }}</span>
                 </h1>
-                <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                     {{ $store->name }} · {{ __('messages.sidebar_service_jobs') }}
                 </p>
             </div>
         </div>
 
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-2 shrink-0 self-start sm:self-auto">
             <a href="{{ route('store.admin.service_settings.index', $storeRouteParams) }}"
                class="px-2.5 py-1.5 rounded-md text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition flex items-center gap-1.5 shadow-2xs">
                 <span>⚙️</span>
@@ -71,7 +71,7 @@
     </header>
 
     @if ($errors->any())
-        <div class="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-lg text-xs font-bold text-rose-700 dark:text-rose-300 space-y-1">
+        <div class="p-2.5 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-lg text-xs font-bold text-rose-700 dark:text-rose-300 space-y-0.5 shadow-2xs">
             @foreach ($errors->all() as $error)
                 <p>• {{ $error }}</p>
             @endforeach
@@ -79,15 +79,15 @@
     @endif
 
     {{-- Main Ticket Form --}}
-    <form method="POST" action="{{ route('store.admin.service_jobs.store', $storeRouteParams) }}" id="repairForm" class="space-y-4">
+    <form method="POST" action="{{ route('store.admin.service_jobs.store', $storeRouteParams) }}" id="repairForm" class="space-y-1.5 sm:space-y-2">
         @csrf
         <input type="hidden" name="print_after_save" :value="printAfterSave ? '1' : '0'">
 
         {{-- Row 1: Balanced Two Column Layout (Customer Info & Status/Payment) --}}
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-1.5 sm:gap-2">
 
             {{-- 1. Customer Information Card --}}
-            <div class="rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-2xs flex flex-col justify-between space-y-3">
+            <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 sm:p-4 shadow-2xs flex flex-col justify-between space-y-3">
                 <div>
                     <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-3">
                         <div class="flex items-center gap-2">
@@ -627,21 +627,21 @@
             </template>
         </div>
 
-        {{-- Action Buttons Row --}}
-        <div class="flex flex-wrap items-center justify-end gap-2.5 pt-1">
+        {{-- Sticky Action Buttons Bar --}}
+        <div class="sticky bottom-0 z-20 w-full rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-2 sm:px-4 border border-slate-200/90 dark:border-slate-800/90 shadow-[0_-4px_16px_rgba(15,23,42,0.06)] flex flex-col sm:flex-row sm:items-center sm:justify-end gap-1.5 sm:gap-2">
             <a href="{{ route('store.admin.service_jobs.index', $storeRouteParams) }}"
-               class="px-4 py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition">
+               class="h-8 px-4 flex-1 sm:flex-none justify-center rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition flex items-center cursor-pointer">
                 ✕ {{ __('messages.cancel') }}
             </a>
 
             <button type="button" @click="saveAndPrint()"
-                    class="px-4 py-2 rounded-lg text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-2xs transition flex items-center gap-1.5 cursor-pointer">
+                    class="h-8 px-4 flex-1 sm:flex-none justify-center rounded-md text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-sm shadow-sky-500/20 transition flex items-center gap-1.5 cursor-pointer">
                 <span>🖨️</span>
                 <span>{{ __('messages.print') }}</span>
             </button>
 
             <button type="submit"
-                    class="px-5 py-2 rounded-lg text-xs font-black bg-teal-600 hover:bg-teal-700 text-white shadow-2xs transition flex items-center gap-1.5 cursor-pointer active:scale-95">
+                    class="h-8 px-5 flex-1 sm:flex-none justify-center rounded-md text-xs font-black bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-500/20 transition flex items-center gap-1.5 cursor-pointer active:scale-95">
                 <span>💾</span>
                 <span>{{ __('messages.save') }}</span>
             </button>

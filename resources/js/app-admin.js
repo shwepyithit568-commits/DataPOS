@@ -380,16 +380,31 @@ Alpine.data('posApp', (opts = {}) => ({
         await this.mutate('/cart', { product_id: p.id, product_variant_id: v.id, quantity: '1' }, {}, this.labels.added || 'ဈေးခြင်းထဲသို့ ထည့်သွင်းပြီးပါပြီ။');
     },
 
+    // Weight / length / volume products sell in fractions (2.5 kg, 1.2 m); every
+    // other product stays whole-unit so a mistyped 0.5 cannot sell half a phone.
+    isLooseWeight(line) {
+        return !!(line && line.product && line.product.product_type === 'weight_based');
+    },
+
+    minQty(line) {
+        return this.isLooseWeight(line) ? 0.001 : 1;
+    },
+
     async changeQty(line, delta) {
-        const qty = (parseFloat(line.quantity) || 0) + delta;
+        const current = parseFloat(line.quantity) || 0;
+        // Sub-unit weights step in tenths so the buttons stay useful.
+        const step = this.isLooseWeight(line) && current < 1 ? delta * 0.1 : delta;
+        const qty = current + step;
         if (qty <= 0) { await this.removeLine(line); return; }
-        await this.mutate('/cart/' + line.index, { quantity: String(qty) });
+        await this.mutate('/cart/' + line.index, { quantity: String(Math.round(qty * 1000) / 1000) });
     },
 
     async setQty(line, qty) {
         const q = parseFloat(qty);
         if (isNaN(q) || q <= 0) { await this.removeLine(line); return; }
-        await this.mutate('/cart/' + line.index, { quantity: String(Math.round(q)) });
+        const value = this.isLooseWeight(line) ? Math.round(q * 1000) / 1000 : Math.round(q);
+        if (value <= 0) { await this.removeLine(line); return; }
+        await this.mutate('/cart/' + line.index, { quantity: String(value) });
     },
 
     async removeLine(line) {

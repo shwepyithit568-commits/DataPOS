@@ -7,8 +7,6 @@
     $groups = [
         'brands'          => ['label' => 'Brand များ',              'icon' => '🏷️', 'current_key' => 'brands',          'color' => 'sky'],
         'categories'      => ['label' => 'ကုန်ပစ္စည်း အမျိုးအစား',  'icon' => '📂', 'current_key' => 'categories',      'color' => 'violet'],
-        'connectors'      => ['label' => 'သတ်မှတ်ချက် Presets (Specs)', 'icon' => '⚙️', 'current_key' => 'connectors',      'color' => 'emerald'],
-        'colors'          => ['label' => 'Color Presets',             'icon' => '🎨', 'current_key' => 'colors',          'color' => 'pink'],
         'shelves'         => ['label' => 'Shelf Locations',           'icon' => '🗄️', 'current_key' => 'shelves',         'color' => 'amber'],
         'warranties'      => ['label' => 'Warranty Templates',        'icon' => '🛡️', 'current_key' => 'warranties',      'color' => 'blue'],
         'return_policies' => ['label' => 'Return Policy Templates',   'icon' => '🔄', 'current_key' => 'return_policies', 'color' => 'orange'],
@@ -18,8 +16,6 @@
     $colorMap = [
         'sky'    => ['bg' => 'bg-sky-50/60 dark:bg-slate-900',       'border' => 'border-sky-200/80 dark:border-slate-800',       'icon' => 'bg-sky-100 text-sky-600 dark:bg-slate-800 dark:text-sky-400 dark:border dark:border-sky-900/40',       'badge' => 'bg-sky-100 text-sky-700 dark:bg-sky-950/70 dark:text-sky-300 dark:border dark:border-sky-800/50',       'new' => 'text-sky-600 dark:text-sky-400'],
         'violet' => ['bg' => 'bg-violet-50/60 dark:bg-slate-900', 'border' => 'border-violet-200/80 dark:border-slate-800', 'icon' => 'bg-violet-100 text-violet-600 dark:bg-slate-800 dark:text-violet-400 dark:border dark:border-violet-900/40','badge' => 'bg-violet-100 text-violet-700 dark:bg-violet-950/70 dark:text-violet-300 dark:border dark:border-violet-800/50','new' => 'text-violet-600 dark:text-violet-400'],
-        'emerald'=> ['bg' => 'bg-emerald-50/60 dark:bg-slate-900','border'=> 'border-emerald-200/80 dark:border-slate-800','icon' => 'bg-emerald-100 text-emerald-600 dark:bg-slate-800 dark:text-emerald-400 dark:border dark:border-emerald-900/40','badge'=>'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border dark:border-emerald-800/50','new'=>'text-emerald-600 dark:text-emerald-400'],
-        'pink'   => ['bg' => 'bg-pink-50/60 dark:bg-slate-900',     'border' => 'border-pink-200/80 dark:border-slate-800',     'icon' => 'bg-pink-100 text-pink-600 dark:bg-slate-800 dark:text-pink-400 dark:border dark:border-pink-900/40',     'badge' => 'bg-pink-100 text-pink-700 dark:bg-pink-950/70 dark:text-pink-300 dark:border dark:border-pink-800/50',     'new' => 'text-pink-600 dark:text-pink-400'],
         'amber'  => ['bg' => 'bg-amber-50/60 dark:bg-slate-900',   'border' => 'border-amber-200/80 dark:border-slate-800',   'icon' => 'bg-amber-100 text-amber-600 dark:bg-slate-800 dark:text-amber-400 dark:border dark:border-amber-900/40',   'badge' => 'bg-amber-100 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300 dark:border dark:border-amber-800/50',   'new' => 'text-amber-600 dark:text-amber-400'],
         'blue'   => ['bg' => 'bg-blue-50/60 dark:bg-slate-900',     'border' => 'border-blue-200/80 dark:border-slate-800',     'icon' => 'bg-blue-100 text-blue-600 dark:bg-slate-800 dark:text-blue-400 dark:border dark:border-blue-900/40',     'badge' => 'bg-blue-100 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 dark:border dark:border-blue-800/50',     'new' => 'text-blue-600 dark:text-blue-400'],
         'orange' => ['bg' => 'bg-orange-50/60 dark:bg-slate-900', 'border' => 'border-orange-200/80 dark:border-slate-800', 'icon' => 'bg-orange-100 text-orange-600 dark:bg-slate-800 dark:text-orange-400 dark:border dark:border-orange-900/40','badge'=>'bg-orange-100 text-orange-700 dark:bg-orange-950/70 dark:text-orange-300 dark:border dark:border-orange-800/50','new'=>'text-orange-600 dark:text-orange-400'],
@@ -31,12 +27,12 @@
 
 <div x-data="{
     confirmOpen: false,
-    selectedGroups: ['brands', 'categories', 'connectors', 'colors', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
+    selectedGroups: ['brands', 'categories', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
     allChecked: true,
-    allGroupKeys: ['brands', 'categories', 'connectors', 'colors', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
+    allGroupKeys: ['brands', 'categories', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
     toggleAll() {
         this.allChecked = !this.allChecked;
-        this.selectedGroups = this.allChecked ? ['brands', 'categories', 'connectors', 'colors', 'shelves', 'warranties', 'return_policies', 'variant_presets'] : [];
+        this.selectedGroups = this.allChecked ? ['brands', 'categories', 'shelves', 'warranties', 'return_policies', 'variant_presets'] : [];
     },
     toggleGroup(key) {
         var idx = this.selectedGroups.indexOf(key);
@@ -45,7 +41,7 @@
         } else {
             this.selectedGroups.push(key);
         }
-        this.allChecked = this.selectedGroups.length === 8;
+        this.allChecked = this.selectedGroups.length === 6;
     },
     isSelected(key) {
         return this.selectedGroups.indexOf(key) !== -1;
@@ -256,10 +252,8 @@
         </details>
 
         {{-- Mini stat cards --}}
-        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
+        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-1.5">
             @foreach ([
-                ['connectors',      '⚙️', 'Specs / Presets', 'emerald', 'connectors'],
-                ['colors',          '🎨', 'Colors',     'pink',    'colors'],
                 ['shelves',         '🗄️', 'Shelves',    'amber',   'shelves'],
                 ['warranties',      '🛡️', 'Warranties', 'blue',    'warranties'],
                 ['return_policies', '🔄', 'Returns',    'orange',  'return_policies'],

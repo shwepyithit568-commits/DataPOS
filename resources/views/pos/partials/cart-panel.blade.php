@@ -370,13 +370,14 @@
                                 </span>
                             </template>
                             <template x-if="editing">
-                                <input type="number" min="1" step="1"
+                                <input type="number"
+                                       :min="minQty(line)" :step="minQty(line)"
                                        :x-ref="'qtyInput_' + line.index"
                                        x-model.number="editVal"
                                        class="w-10 sm:w-12 text-center text-xs sm:text-sm font-black border-x border-blue-400 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 outline-none py-0.5 tabular-nums rounded"
-                                       @keydown.enter.prevent="if (editVal >= 1) { setQty(line, editVal); } editing = false"
+                                       @keydown.enter.prevent="if (editVal >= minQty(line)) { setQty(line, editVal); } editing = false"
                                        @keydown.escape.prevent="editing = false"
-                                       @blur="if (editVal >= 1) { setQty(line, editVal); } editing = false"
+                                       @blur="if (editVal >= minQty(line)) { setQty(line, editVal); } editing = false"
                                        x-init="$nextTick(() => $el.focus())">
                             </template>
                             <button type="button" @click="changeQty(line, 1)" class="sf-btn-3d w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-blue-600 dark:text-blue-400 font-black flex items-center justify-center cursor-pointer transition text-xs sm:text-sm">+</button>

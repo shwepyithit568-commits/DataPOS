@@ -1,7 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.settings_storefront_settings') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2 sm:p-3')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
 @php
@@ -47,7 +47,7 @@
     ];
 @endphp
 
-<div class="w-full space-y-3 sm:space-y-4">
+<div class="w-full space-y-1 sm:space-y-1.5 pb-6">
     {{-- 1. Modern Page Header (Preserves admin-page-title for testing compatibility) --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-sm">
         <div class="flex items-center gap-3">

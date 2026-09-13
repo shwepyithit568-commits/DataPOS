@@ -1,10 +1,10 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.brand_edit_title', ['name' => $brand->name]) . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2.5 sm:p-3.5')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full space-y-2.5 max-w-2xl">
+<div class="w-full space-y-1 sm:space-y-1.5 pb-6 max-w-2xl">
     {{-- Header --}}
     <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex items-center justify-between gap-3 transition">
         <div class="min-w-0">
@@ -73,13 +73,13 @@
             @enderror
         </div>
 
-        <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
             <button type="button" @click="dirty = false; window.location.href = '{{ $returnTo ?? url('/store/' . $store->slug . '/admin/products/master-data?tab=brands') }}'"
-                class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition">
+                class="flex-1 sm:flex-none justify-center px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition text-center">
                 {{ __('messages.cancel') }}
             </button>
             <button type="submit" :disabled="saving"
-                class="px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-black shadow-md shadow-violet-500/20 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
+                class="flex-1 sm:flex-none justify-center px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-black shadow-md shadow-violet-500/20 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
                 <span x-show="!saving" class="inline-flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     {{ __('messages.brand_update') }}

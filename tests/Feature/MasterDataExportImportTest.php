@@ -39,11 +39,11 @@ class MasterDataExportImportTest extends TestCase
     public function test_master_data_tab_renders_toolbar_with_export_import(): void
     {
         $response = $this->actingAs($this->user)
-            ->get("/store/{$this->store->slug}/admin/products/master-data?tab=connectors");
+            ->get("/store/{$this->store->slug}/admin/products/master-data?tab=shelves");
 
         $response->assertStatus(200);
-        $response->assertSee('/admin/product-master-presets/export?type=connector_spec', false);
-        $response->assertSee('/admin/product-master-presets/import?type=connector_spec', false);
+        $response->assertSee('/admin/product-master-presets/export?type=shelf_location', false);
+        $response->assertSee('/admin/product-master-presets/import?type=shelf_location', false);
 
         $responseVariants = $this->actingAs($this->user)
             ->get("/store/{$this->store->slug}/admin/products/master-data?tab=variant-presets");
@@ -118,7 +118,9 @@ class MasterDataExportImportTest extends TestCase
                 'duplicate_strategy' => 'skip',
             ]);
 
-        $confirmResponse->assertRedirect("/store/{$this->store->slug}/admin/products/master-data?tab=colors");
+        // color presets have no Master Data tab any more, so the hub falls back
+        // to its default (categories) tab.
+        $confirmResponse->assertRedirect("/store/{$this->store->slug}/admin/products/master-data?tab=categories");
 
         $this->assertDatabaseHas('product_master_presets', [
             'store_id' => $this->store->id,

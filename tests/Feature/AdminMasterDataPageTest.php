@@ -213,7 +213,7 @@ class AdminMasterDataPageTest extends TestCase
         $response = $this->actingAs($this->manager)
             ->post("/store/{$this->store->slug}/admin/products/master-data/seed", [
                 'business_type' => 'fashion',
-                'groups' => ['brands', 'categories', 'colors', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
+                'groups' => ['brands', 'categories', 'shelves', 'warranties', 'return_policies', 'variant_presets'],
             ]);
 
         $response->assertRedirect("/store/{$this->store->slug}/admin/products/master-data?tab=seed-data&biz=fashion");

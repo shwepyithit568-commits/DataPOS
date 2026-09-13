@@ -1050,7 +1050,7 @@
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-amber-600 dark:hover:text-amber-400'"
                                                             class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
                                                         <span>⚙️</span>
-                                                        <span>{{ strtoupper($extraAction) }}</span>
+                                                        <span title="{{ $extraAction === 'cost' ? __('messages.perm_cost_help') : '' }}">{{ $extraAction === 'cost' ? __('messages.perm_cost_label') : strtoupper($extraAction) }}</span>
                                                     </button>
                                                 @endforeach
                                             </div>
@@ -1310,7 +1310,7 @@
                                                                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-amber-600 dark:hover:text-amber-400'"
                                                             class="px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase border transition flex items-center gap-1 active:scale-95">
                                                         <span>⚙️</span>
-                                                        <span>{{ strtoupper($extraAction) }}</span>
+                                                        <span title="{{ $extraAction === 'cost' ? __('messages.perm_cost_help') : '' }}">{{ $extraAction === 'cost' ? __('messages.perm_cost_label') : strtoupper($extraAction) }}</span>
                                                     </button>
                                                 @endforeach
                                             </div>
@@ -1646,7 +1646,7 @@
                                                                     ? 'bg-amber-600 text-white border-amber-600 shadow-xs' 
                                                                     : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-amber-600 dark:hover:text-amber-400'"
                                                                 class="px-2 py-0.5 rounded-md text-[9px] font-black tracking-wider uppercase border transition flex items-center gap-0.5 active:scale-95">
-                                                            <span>⚙️</span><span>{{ strtoupper($extraAction) }}</span>
+                                                            <span>⚙️</span><span title="{{ $extraAction === 'cost' ? __('messages.perm_cost_help') : '' }}">{{ $extraAction === 'cost' ? __('messages.perm_cost_label') : strtoupper($extraAction) }}</span>
                                                         </button>
                                                     @endforeach
                                                 </div>

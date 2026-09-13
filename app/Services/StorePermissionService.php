@@ -14,6 +14,14 @@ class StorePermissionService
     /**
      * Protected permissions that regular managers cannot grant or alter.
      */
+    /**
+     * Permissions the legacy per-role fallback must NOT grant automatically.
+     * Store managers get these (they do the purchasing); plain staff do not.
+     */
+    protected const MANAGER_ONLY_PERMISSIONS = [
+        'products.view_cost',
+    ];
+
     protected const PROTECTED_PERMISSIONS = [
         'staff_roles.manage',
         'staff.manage',
@@ -185,6 +193,9 @@ class StorePermissionService
                         return false;
                     }
                     if (str_ends_with($perm, '.delete') || str_ends_with($perm, '.approve')) {
+                        return false;
+                    }
+                    if (in_array($perm, self::MANAGER_ONLY_PERMISSIONS, true)) {
                         return false;
                     }
                     if (str_starts_with($perm, 'settings.') || str_starts_with($perm, 'backups.') || str_starts_with($perm, 'database.') || str_starts_with($perm, 'roles.') || str_starts_with($perm, 'staff.')) {

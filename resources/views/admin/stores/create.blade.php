@@ -1,7 +1,8 @@
 @extends('layouts.admin.app')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full space-y-6">
+<div class="w-full space-y-1 sm:space-y-1.5 pb-6">
     <div class="admin-page-header">
         <div>
             <h1 class="admin-page-title">{{ __('messages.store_create_title') }}</h1>

@@ -558,11 +558,11 @@
 
     {{-- Advanced Filter Drawer (Grid layout with smooth slide-down) --}}
     @if (count($filters) > 0 || count($sortOptions) > 0)
-        <div x-show="showAdvanced" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" class="pt-3.5 mt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-lg sm:rounded-xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
+        <div x-show="showAdvanced" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" class="pt-2.5 mt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg sm:rounded-xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
             {{-- Mobile-only: Sort --}}
             @if (count($sortOptions) > 0)
                 <div class="sm:hidden">
-                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center gap-1">
                         <span>⇅</span>
                         <span>{{ __('messages.sort_by') }}</span>
                     </label>
@@ -576,13 +576,18 @@
                                 <input type="hidden" name="{{ $key }}" value="{{ $val }}" />
                             @endif
                         @endforeach
-                        <select name="sort" class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-3 py-2 text-xs sm:text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-violet-500 shadow-xs">
-                            @foreach ($sortOptions as $key => $label)
-                                <option value="{{ $key }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort', $sort) === $key ? 'selected' : '' }}>
-                                    {{ $label }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <div class="relative">
+                            <select name="sort" data-auto-submit onchange="this.form.submit()" class="w-full h-9 border border-slate-200 dark:border-slate-700 rounded-lg pl-3 pr-8 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-violet-500/40 appearance-none cursor-pointer shadow-2xs">
+                                @foreach ($sortOptions as $key => $label)
+                                    <option value="{{ $key }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort', $sort) === $key ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
                     </form>
                 </div>
             @endif
@@ -590,11 +595,11 @@
             @foreach ($filters as $filterKey => $filterConfig)
                 @if (in_array(($filterConfig['type'] ?? 'select'), ['date', 'date_range'], true))
                     <div>
-                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center gap-1">
                             <span>📅</span>
                             <span>{{ $filterConfig['label'] }}</span>
                         </label>
-                        <form method="GET" class="flex items-center gap-1.5">
+                        <form method="GET" class="flex flex-wrap sm:flex-nowrap items-center gap-1.5">
                             @foreach (request()->except([$filterKey . '_from', $filterKey . '_to', 'page']) as $key => $val)
                                 @if (is_array($val))
                                     @foreach ($val as $subVal)
@@ -605,18 +610,18 @@
                                 @endif
                             @endforeach
                             <input type="date" name="{{ $filterKey }}_from" value="{{ request($filterKey . '_from') }}"
-                                   class="flex-1 min-w-0 border border-slate-200 dark:border-slate-700 rounded-2xl px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 shadow-xs [color-scheme:light] dark:[color-scheme:dark]" />
+                                   class="flex-1 min-w-[120px] h-9 sm:h-8 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/40 shadow-2xs [color-scheme:light] dark:[color-scheme:dark]" />
                             <span class="text-xs text-slate-400 dark:text-slate-500 shrink-0 font-bold">→</span>
                             <input type="date" name="{{ $filterKey }}_to" value="{{ request($filterKey . '_to') }}"
-                                   class="flex-1 min-w-0 border border-slate-200 dark:border-slate-700 rounded-2xl px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 shadow-xs [color-scheme:light] dark:[color-scheme:dark]" />
-                            <button type="submit" class="h-8 px-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold shrink-0 shadow-xs active:scale-95 transition" title="{{ __('messages.apply') ?? 'Apply' }}">
+                                   class="flex-1 min-w-[120px] h-9 sm:h-8 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/40 shadow-2xs [color-scheme:light] dark:[color-scheme:dark]" />
+                            <button type="submit" class="h-9 sm:h-8 px-3 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold shrink-0 shadow-2xs active:scale-95 transition" title="{{ __('messages.apply') ?? 'Apply' }}">
                                 ✓
                             </button>
                         </form>
                     </div>
                 @else
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center gap-1">
                         <span>⚙️</span>
                         <span>{{ $filterConfig['label'] }}</span>
                     </label>
@@ -630,22 +635,29 @@
                                 <input type="hidden" name="{{ $key }}" value="{{ $val }}" />
                             @endif
                         @endforeach
-                        <select name="{{ $filterKey }}" class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-3 py-2 text-xs sm:text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-violet-500 shadow-xs">
-                            <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{{ __('messages.all') }} {{ $filterConfig['label'] }}</option>
-                            @if (! empty($filterConfig['groups']))
-                                @foreach ($filterConfig['groups'] as $groupConfig)
-                                    <optgroup label="{{ $groupConfig['label'] }}" class="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold">
-                                        @foreach (($groupConfig['options'] ?? []) as $val => $optLabel)
-                                            <option value="{{ $val }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-normal" {{ request($filterKey) == $val ? 'selected' : '' }}>{{ $optLabel }}</option>
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            @else
-                                @foreach (($filterConfig['options'] ?? []) as $val => $optLabel)
-                                    <option value="{{ $val }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request($filterKey) == $val ? 'selected' : '' }}>{{ $optLabel }}</option>
-                                @endforeach
-                            @endif
-                        </select>
+                        <div class="relative">
+                            <select name="{{ $filterKey }}" data-auto-submit onchange="this.form.submit()" class="w-full h-9 sm:h-8 border border-slate-200 dark:border-slate-700 rounded-lg pl-3 pr-8 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-violet-500/40 appearance-none cursor-pointer shadow-2xs">
+                                <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+                                    {{ $filterConfig['placeholder'] ?? ($filterConfig['all_label'] ?? (__('messages.all') . ' ' . $filterConfig['label'])) }}
+                                </option>
+                                @if (! empty($filterConfig['groups']))
+                                    @foreach ($filterConfig['groups'] as $groupConfig)
+                                        <optgroup label="{{ $groupConfig['label'] }}" class="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold">
+                                            @foreach (($groupConfig['options'] ?? []) as $val => $optLabel)
+                                                <option value="{{ $val }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-normal" {{ request($filterKey) == $val ? 'selected' : '' }}>{{ $optLabel }}</option>
+                                            @endforeach
+                                        </optgroup>
+                                    @endforeach
+                                @else
+                                    @foreach (($filterConfig['options'] ?? []) as $val => $optLabel)
+                                        <option value="{{ $val }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request($filterKey) == $val ? 'selected' : '' }}>{{ $optLabel }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
                     </form>
                 </div>
                 @endif

@@ -583,6 +583,8 @@ Route::prefix('store/{store_slug}')
             ->name('store.admin.suppliers.quick-store')
             ->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:suppliers.create', 'throttle:60,1']);
         Route::get('/admin/products/create', [ProductController::class, 'create'])->name('store.admin.products.create')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:products.create']);
+        // Live duplicate-code lookup for the form (SKU / barcode while typing).
+        Route::get('/admin/products/check-code', [ProductController::class, 'checkCode'])->name('store.admin.products.check-code')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:products.view', 'throttle:60,1']);
         Route::post('/admin/products', [ProductController::class, 'store'])->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:products.create']);
         Route::post('/admin/products/bulk-stock', [ProductController::class, 'bulkStock'])->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:products.update']);
         Route::post('/admin/products/bulk-prices', [ProductController::class, 'bulkAdjustPrices'])->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:products.update']);

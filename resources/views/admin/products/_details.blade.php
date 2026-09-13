@@ -125,7 +125,7 @@
                     <span class="text-xs font-bold text-slate-500 uppercase">{{ __('messages.retail') }}:</span>
                     <span class="text-lg sm:text-xl font-black text-slate-900 dark:text-white tabular-nums font-outfit">{{ format_currency($product->retail_price, $store ?? null) }}</span>
                 </div>
-                @if ($product->wholesale_price > 0)
+                @if (store_can('products.view_cost', $store ?? null) && $product->wholesale_price > 0)
                     <div class="flex items-baseline gap-1.5 text-emerald-600 dark:text-emerald-400">
                         <span class="text-xs font-bold uppercase">{{ __('messages.wholesale') }}:</span>
                         <span class="text-sm sm:text-base font-black tabular-nums font-outfit">{{ format_currency($product->wholesale_price, $store ?? null) }}</span>
@@ -234,7 +234,7 @@
                     </div>
                 @endif
 
-                @if ($product->purchase_cost > 0)
+                @if (store_can('products.view_cost', $store ?? null) && $product->purchase_cost > 0)
                     <div class="p-3 rounded-2xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('messages.details_purchase_cost') }}</span>
                         <span class="text-xs font-black text-slate-900 dark:text-slate-100">{{ format_currency($product->purchase_cost, $store ?? null) }}</span>

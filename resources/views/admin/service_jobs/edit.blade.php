@@ -1,8 +1,10 @@
-﻿@extends('layouts.admin.app')
+@extends('layouts.admin.app')
+
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
 @php
-    // Consumed parts are preserved server-side (they already moved stock) â€”
+    // Consumed parts are preserved server-side (they already moved stock)
     // only editable lines go back into the form payload.
     $editableItems = $job->items->where('is_deducted', false)->values();
     $productOptions = $products->map(function ($p) {
@@ -17,11 +19,11 @@
             'price' => (float) $p->retail_price,
             'category_id' => $p->category_id,
             'category_name' => $categoryPath,
-            'display_label' => '[' . $catName . '] ' . $p->name . ($p->sku ? " ({$p->sku})" : '') . ' Â· ' . number_format($p->retail_price) . ' MMK',
+            'display_label' => '[' . $catName . '] ' . $p->name . ($p->sku ? " ({$p->sku})" : '') . ' · ' . number_format($p->retail_price) . ' MMK',
         ];
     })->values();
 @endphp
-<div class="max-w-4xl mx-auto space-y-5 sm:space-y-6">
+<div class="w-full max-w-4xl mx-auto space-y-1 sm:space-y-1.5 pb-6">
     {{-- Header --}}
     <div class="admin-page-header">
         <div class="flex items-center gap-3">
@@ -312,13 +314,14 @@
             </div>
         </fieldset>
 
-        <div class="flex items-center justify-end gap-3 pt-2">
+        <div class="sticky bottom-0 z-20 w-full rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-2 sm:px-4 border border-slate-200/90 dark:border-slate-800/90 shadow-[0_-4px_16px_rgba(15,23,42,0.06)] flex flex-col sm:flex-row sm:items-center sm:justify-end gap-1.5 sm:gap-2">
             <a href="{{ route('store.admin.service_jobs.show', [...$storeRouteParams, 'job' => $job->id]) }}"
-               class="px-4 py-2.5 text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-gray-800 dark:hover:text-white transition">
-                {{ __('messages.cancel') }}
+               class="h-8 px-4 flex-1 sm:flex-none justify-center rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition flex items-center cursor-pointer">
+                ✕ {{ __('messages.cancel') }}
             </a>
-            <button type="submit" class="px-5 py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-lg shadow transition cursor-pointer">
-                {{ __('messages.repair_save') }}
+            <button type="submit" class="h-8 px-5 flex-1 sm:flex-none justify-center rounded-md text-xs font-black text-white bg-violet-600 hover:bg-violet-700 shadow-md shadow-violet-500/20 transition flex items-center gap-1.5 cursor-pointer active:scale-95">
+                <span>💾</span>
+                <span>{{ __('messages.repair_save') }}</span>
             </button>
         </div>
     </form>

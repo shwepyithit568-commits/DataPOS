@@ -30,8 +30,6 @@ class ProductMasterDataController extends Controller
     protected const TABS = [
         'categories',
         'brands',
-        'connectors',
-        'colors',
         'shelves',
         'warranties',
         'return-policies',
@@ -54,8 +52,6 @@ class ProductMasterDataController extends Controller
         $data = match ($activeTab) {
             'brands' => $this->brandsData($request, $storeId),
             'variant-presets' => $this->presetsData($request, $storeId),
-            'connectors' => $this->masterPresetData($request, $storeId, 'connector_spec', 'connectors'),
-            'colors' => $this->masterPresetData($request, $storeId, 'color', 'colors'),
             'shelves' => $this->masterPresetData($request, $storeId, 'shelf_location', 'shelves'),
             'warranties' => $this->masterPresetData($request, $storeId, 'warranty', 'warranties'),
             'return-policies' => $this->masterPresetData($request, $storeId, 'return_policy', 'return-policies'),
@@ -80,8 +76,6 @@ class ProductMasterDataController extends Controller
         $brandsCount = Brand::where('store_id', $storeId)->count();
         $productsCount = Product::where('store_id', $storeId)->count();
         
-        $connectorsCount = \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'connector_spec')->count();
-        $colorsCount = \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'color')->count();
         $shelvesCount = \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'shelf_location')->count();
         $warrantiesCount = \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'warranty')->count();
         $returnPoliciesCount = \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'return_policy')->count();
@@ -97,8 +91,6 @@ class ProductMasterDataController extends Controller
         return [
             'categories' => $categoriesCount,
             'brands' => $brandsCount,
-            'connectors' => $connectorsCount,
-            'colors' => $colorsCount,
             'shelves' => $shelvesCount,
             'warranties' => $warrantiesCount,
             'return_policies' => $returnPoliciesCount,
@@ -313,8 +305,6 @@ class ProductMasterDataController extends Controller
         $currentCounts = [
             'brands'          => \App\Models\Brand::where('store_id', $storeId)->count(),
             'categories'      => \App\Models\Category::where('store_id', $storeId)->count(),
-            'connectors'      => \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'connector_spec')->count(),
-            'colors'          => \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'color')->count(),
             'shelves'         => \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'shelf_location')->count(),
             'warranties'      => \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'warranty')->count(),
             'return_policies' => \App\Models\ProductMasterPreset::where('store_id', $storeId)->where('type', 'return_policy')->count(),
@@ -351,7 +341,7 @@ class ProductMasterDataController extends Controller
 
         $groups = $request->input('groups', []);
         if (empty($groups)) {
-            $groups = ['brands', 'categories', 'connectors', 'colors', 'shelves', 'warranties', 'return_policies', 'variant_presets'];
+            $groups = ['brands', 'categories', 'shelves', 'warranties', 'return_policies', 'variant_presets'];
         }
 
         $seeder = new \Database\Seeders\MasterDataSeedImporter();

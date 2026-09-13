@@ -1,26 +1,20 @@
 {{-- Master Data Hub — Generic Preset Manager Partial --}}
 @php
-    $currentType = (string) ($presetType ?? 'connector_spec');
+    $currentType = (string) ($presetType ?? 'shelf_location');
 
     $typeTitles = [
-        'connector_spec' => __('messages.preset_type_connector'),
-        'color' => __('messages.preset_type_color'),
         'shelf_location' => __('messages.preset_type_shelf'),
         'warranty' => __('messages.preset_type_warranty'),
         'return_policy' => __('messages.preset_type_return'),
     ];
 
     $addItemTitles = [
-        'connector_spec' => __('messages.master_data_add_connector'),
-        'color' => __('messages.master_data_add_color'),
         'shelf_location' => __('messages.master_data_add_shelf'),
         'warranty' => __('messages.master_data_add_warranty'),
         'return_policy' => __('messages.master_data_add_return_policy'),
     ];
 
     $typeIcons = [
-        'connector_spec' => '⚙️',
-        'color' => '🎨',
         'shelf_location' => '🗄️',
         'warranty' => '🛡️',
         'return_policy' => '🔄',
@@ -38,7 +32,6 @@
     formType: '{{ $presetType }}',
     formCode: '',
     formName: '',
-    formColorHex: '#000000',
     formContent: '',
     formSortOrder: 0,
     confirmDeleteOpen: false,
@@ -50,7 +43,6 @@
         this.formType = '{{ $presetType }}';
         this.formCode = '';
         this.formName = '';
-        this.formColorHex = '#000000';
         this.formContent = '';
         this.formSortOrder = 0;
         this.modalOpen = true;
@@ -62,7 +54,6 @@
         this.formType = item.type;
         this.formCode = item.code || '';
         this.formName = item.name;
-        this.formColorHex = item.color_hex || '#000000';
         this.formContent = item.content || '';
         this.formSortOrder = item.sort_order || 0;
         this.modalOpen = true;
@@ -129,9 +120,6 @@ class="space-y-0.5">
                             <th class="py-2.5 px-3 min-w-[120px]">{{ __('messages.preset_col_code') }}</th>
                         @endif
                         <th class="py-2.5 px-3 min-w-[200px]">{{ __('messages.preset_col_name') }}</th>
-                        @if ($presetType === 'color')
-                            <th class="py-2.5 px-3 min-w-[140px]">{{ __('messages.preset_col_color') }}</th>
-                        @endif
                         @if ($presetType === 'warranty' || $presetType === 'return_policy' || $presetType === 'shelf_location')
                             <th class="py-2.5 px-3 min-w-[220px]">{{ __('messages.preset_col_desc') }}</th>
                         @endif
@@ -152,21 +140,9 @@ class="space-y-0.5">
 
                             <td class="py-2 px-3">
                                 <div class="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100">
-                                    @if ($item->type === 'color' && $item->color_hex)
-                                        <span class="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-2xs shrink-0" style="background-color: {{ $item->color_hex }}"></span>
-                                    @endif
                                     <span>{{ $item->name }}</span>
                                 </div>
                             </td>
-
-                            @if ($presetType === 'color')
-                                <td class="py-2 px-3 whitespace-nowrap">
-                                    <div class="inline-flex items-center gap-1.5 font-mono text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                                        <span class="w-3 h-3 rounded-full border border-slate-300" style="background-color: {{ $item->color_hex ?? '#000' }}"></span>
-                                        <span>{{ $item->color_hex ?? '#000000' }}</span>
-                                    </div>
-                                </td>
-                            @endif
 
                             @if ($presetType === 'warranty' || $presetType === 'return_policy' || $presetType === 'shelf_location')
                                 <td class="py-2 px-3">
@@ -235,14 +211,8 @@ class="space-y-0.5">
                     {{-- Item Name --}}
                     <div>
                         <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                            @if ($item->type === 'color' && $item->color_hex)
-                                <span class="w-4 h-4 rounded-full border border-slate-300 shadow-2xs shrink-0" style="background-color: {{ $item->color_hex }}"></span>
-                            @endif
                             <span class="line-clamp-1">{{ $item->name }}</span>
                         </h4>
-                        @if ($item->type === 'color' && $item->color_hex)
-                            <div class="text-[10px] font-mono text-slate-400 mt-0.5">HEX: {{ $item->color_hex }}</div>
-                        @endif
                     </div>
 
                     {{-- Description / Terms preview box --}}
@@ -315,16 +285,6 @@ class="space-y-0.5">
                         <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.preset_display_name') }} *</label>
                         <input type="text" name="name" x-model="formName" required placeholder="e.g. Type-C, Black, Shelf A1, 1 Month Warranty" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500" />
                     </div>
-
-                    @if ($presetType === 'color')
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.preset_color_picker') }}</label>
-                            <div class="flex items-center gap-2">
-                                <input type="color" name="color_hex" x-model="formColorHex" class="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer p-0.5 bg-white dark:bg-slate-800" />
-                                <input type="text" x-model="formColorHex" placeholder="#000000" class="flex-1 font-mono rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                        </div>
-                    @endif
 
                     @if ($presetType === 'warranty' || $presetType === 'return_policy' || $presetType === 'shelf_location')
                         <div>

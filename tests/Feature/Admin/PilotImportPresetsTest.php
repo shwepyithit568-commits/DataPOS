@@ -211,9 +211,14 @@ class PilotImportPresetsTest extends TestCase
         $this->assertTrue($products->contains(fn ($p) => str_starts_with($p->sku, 'KL-CLO-')));
         $this->assertTrue($products->contains(fn ($p) => str_starts_with($p->sku, 'KL-SEW-')));
 
-        // Check automatic Master Data presets seeding
+        // Check automatic Master Data presets seeding. Connector / colour presets
+        // were retired in favour of Variants, so shelves, warranties and return
+        // policies are what the seeder writes now.
+        $preview = (new \Database\Seeders\MasterDataSeedImporter())->getPreviewData('fashion');
+        $expectedPresets = $preview['shelves']['count'] + $preview['warranties']['count'] + $preview['return_policies']['count'];
         $presetsCount = \App\Models\ProductMasterPreset::where('store_id', $klStore->id)->count();
-        $this->assertGreaterThan(50, $presetsCount);
+        $this->assertSame($expectedPresets, $presetsCount);
+        $this->assertGreaterThan(0, \App\Models\ProductMasterPreset::where('store_id', $klStore->id)->where('type', 'shelf_location')->count());
         $this->assertSame(7, \App\Models\VariantPreset::where('store_id', $klStore->id)->count());
     }
 

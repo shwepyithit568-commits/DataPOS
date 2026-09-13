@@ -4,7 +4,8 @@
 
 @section('content')
 @php
-    $initialCategory = collect($categories)->first(fn ($c) => (string) $c->id === (string) old('category_id'));
+    $initialCategoryId = old('category_id', request('category_id'));
+    $initialCategory = collect($categories)->first(fn ($c) => (string) $c->id === (string) $initialCategoryId);
     $initialMainCategory = $initialCategory ? ($initialCategory->parent_id ?? $initialCategory->id) : '';
     $initialSubCategory = $initialCategory?->parent_id ? $initialCategory->id : '';
 @endphp
@@ -20,30 +21,31 @@
         newBrandCode: '',
         newSupplierName: '',
         newSupplierPhone: '',
-        autoSku: {{ old('auto_sku', '1') ? 'true' : 'false' }},
-        productType: '{{ old('product_type', 'standard') }}',
+        // Variants are a deliberate choice: collapsed until asked for.
+        existingProductId: null,
+        variantsOpen: {{ (old('variants') || $errors->has('variants') || request('product_type') === 'variant') ? 'true' : 'false' }},
+        autoSku: {{ old('auto_sku') ? 'true' : 'false' }},
+        productType: '{{ old('product_type', request('product_type', 'standard')) }}',
         productBarcode: '{{ old('barcode', '') }}',
         productShelfLocation: '{{ old('shelf_location', '') }}',
-        productWarehouseId: '{{ old('warehouse_id', '') }}',
+        productWarehouseId: '{{ old('warehouse_id', request('warehouse_id', '')) }}',
         productCompatibleModels: '{{ old('compatible_models', '') }}',
         productModelCode: '',
-        productExtraCode: '',
-        productColorCode: '',
-        productNameInput: @js(old('name', '')),
+        productNameInput: {{ json_encode(old('name', '')) }},
         // Once the user types a name manually, the Smart Name builder stops
         // overwriting it (SKU auto-generation keeps working).
-        nameTouched: @js(old('name') !== null && old('name') !== ''),
+        nameTouched: {{ old('name') !== null && old('name') !== '' ? 'true' : 'false' }},
         categories: {{ json_encode($categories->map(fn($c) => ['id' => $c->id, 'name' => $c->name, 'code' => $c->code, 'parent' => $c->parent?->name, 'parent_id' => $c->parent_id])) }},
         brands: {{ json_encode($brands->map(fn($b) => ['id' => $b->id, 'name' => $b->name, 'code' => $b->code])) }},
         suppliers: {{ json_encode($suppliers->map(fn($s) => ['id' => $s->id, 'name' => $s->name])) }},
         warehouses: {{ json_encode($warehouses->map(fn($w) => ['id' => $w->id, 'name' => $w->name])) }},
-        selectedSupplier: '{{ old('supplier_id') }}',
-        variantPresets: @js($variantPresets),
+        selectedSupplier: '{{ old('supplier_id', request('supplier_id', '')) }}',
+        variantPresets: {{ json_encode($variantPresets) }},
         selectedVariantPresetId: '',
         selectedVariantPresetIdTwo: '',
         selectedMainCategory: '{{ $initialMainCategory }}',
         selectedSubCategory: '{{ $initialSubCategory }}',
-        selectedBrand: '{{ old('brand_id') }}',
+        selectedBrand: '{{ old('brand_id', request('brand_id', '')) }}',
         variants: {{ json_encode(collect(old('variants', []))->map(fn($v) => [
             'id' => $v['id'] ?? null,
             'name' => $v['name'] ?? '',
@@ -72,43 +74,39 @@
             // rebuild it from brand/category parts.
             if (this.productType === 'service' || this.productType === 'digital') return;
             const brandObj = this.brands.find(b => String(b.id) === String(this.selectedBrand));
-            const catObj = this.categories.find(c => String(c.id) === String(this.selectedSubCategory || this.selectedMainCategory));
+            const subCatObj = this.categories.find(c => String(c.id) === String(this.selectedSubCategory));
+            const mainCatObj = this.categories.find(c => String(c.id) === String(this.selectedMainCategory));
+            const activeCatObj = subCatObj || mainCatObj;
             
+            // Brand Code & Sub Category Code from Master Data
             const brandCode = (brandObj ? (brandObj.code || brandObj.name || '') : '').toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
             const model = (this.productModelCode || '').toUpperCase().trim().replace(/[^A-Z0-9\-_]/g, '');
-            const catCode = (catObj ? (catObj.code || catObj.name || '') : '').toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
-            const extra = (this.productExtraCode || '').toUpperCase().trim().replace(/[^A-Z0-9\-_]/g, '');
-            const color = (this.productColorCode || '').toUpperCase().trim().replace(/[^A-Z0-9\-_]/g, '');
+            const subCatCode = (activeCatObj ? (activeCatObj.code || activeCatObj.name || '') : '').toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
             
+            // 1. Auto SKU: Brand Code + Model + Sub Category Code
             const parts = [];
             if (brandCode) parts.push(brandCode);
             if (model) parts.push(model);
-            if (catCode) parts.push(catCode);
-            if (extra) parts.push(extra);
-            if (color) parts.push(color);
+            if (subCatCode) parts.push(subCatCode);
             
             if (parts.length > 0) {
                 this.productSku = parts.join('-');
             }
             
+            // 2. Auto Name: Brand Code + Model + Compatible Models + Sub Category Code
+            const brandNamePart = (brandObj ? (brandObj.code || brandObj.name || '') : '').trim();
+            const subCatNamePart = (activeCatObj ? (activeCatObj.code || activeCatObj.name.split('(')[0] || '') : '').trim();
+            
             const nameParts = [];
-            if (brandObj && brandObj.name) {
-                nameParts.push(brandObj.name.trim());
-            }
-            if (model) nameParts.push(this.productModelCode.trim());
-            if (catObj && catObj.name) {
-                let cleanCat = catObj.name.split('(')[0].trim();
-                nameParts.push(cleanCat);
+            if (brandNamePart) nameParts.push(brandNamePart);
+            if (this.productModelCode && this.productModelCode.trim()) {
+                nameParts.push(this.productModelCode.trim());
             }
             if (this.productCompatibleModels && this.productCompatibleModels.trim()) {
-                nameParts.push('(' + this.productCompatibleModels.trim() + ')');
+                let comp = this.productCompatibleModels.trim();
+                nameParts.push(comp.startsWith('(') && comp.endsWith(')') ? comp : '(' + comp + ')');
             }
-            if (this.productExtraCode && this.productExtraCode.trim()) {
-                nameParts.push(this.productExtraCode.trim());
-            }
-            if (this.productColorCode && this.productColorCode.trim()) {
-                nameParts.push(this.productColorCode.trim());
-            }
+            if (subCatNamePart) nameParts.push(subCatNamePart);
             
             if (nameParts.length > 0 && !this.nameTouched) {
                 this.productNameInput = nameParts.join(' ');
@@ -122,7 +120,7 @@
             const ta = document.querySelector('textarea[name=return_policy]');
             this.returnPolicyPreview = ta && ta.value.trim() ? ta.value.trim() : null;
         },
-        descriptionPreviewHtml: @js(\App\Support\SafeHtml::sanitize(old('description', $product->description))),
+        descriptionPreviewHtml: {{ json_encode(\App\Support\SafeHtml::sanitize(old('description', $product->description))) }},
         refreshDescriptionPreview() {
             // No double-quote chars allowed in this x-data attribute (it is
             // delimited by double quotes, so one would truncate the HTML).
@@ -159,8 +157,12 @@
             return rows;
         },
         get marginPercent() {
-            const r = parseFloat(this.marginRetail), w = parseFloat(this.marginWhole);
+            const r = parseFloat(this.marginRetail);
             if (!r || r <= 0) return 0;
+            // Blank wholesale means the same as retail (see the field hint) → 0%.
+            const raw = this.marginWhole === null || this.marginWhole === undefined ? '' : String(this.marginWhole).trim();
+            const w = raw === '' ? r : parseFloat(raw);
+            if (!isFinite(w)) return 0;
             return Math.round(((r - w) / r) * 100);
         },
         get mainCategories() {
@@ -168,6 +170,153 @@
         },
         get subCategories() {
             return this.categories.filter((c) => String(c.parent_id) === String(this.selectedMainCategory));
+        },
+        // The Smart panel drives the same two fields as the Core card, so the
+        // Sub Category Code dropdown reads/writes through this one value
+        // instead of keeping a second copy of the selection.
+        get smartCategoryPick() {
+            return String(this.selectedSubCategory || this.selectedMainCategory || '');
+        },
+        get smartCategoryOptions() {
+            const rows = [];
+            this.mainCategories.forEach((main) => {
+                rows.push({ id: String(main.id), label: (main.code ? '[' + main.code + '] ' : '') + main.name, depth: 0 });
+                this.categories
+                    .filter((c) => String(c.parent_id) === String(main.id))
+                    .forEach((sub) => rows.push({ id: String(sub.id), label: (sub.code ? '[' + sub.code + '] ' : '') + sub.name, depth: 1 }));
+            });
+            return rows;
+        },
+        onSmartCategoryPick(value) {
+            const cat = this.categories.find((c) => String(c.id) === String(value));
+            if (!cat) {
+                this.selectedMainCategory = '';
+                this.selectedSubCategory = '';
+            } else if (cat.parent_id) {
+                this.selectedMainCategory = String(cat.parent_id);
+                this.selectedSubCategory = String(cat.id);
+            } else {
+                this.selectedMainCategory = String(cat.id);
+                this.selectedSubCategory = '';
+            }
+            this.normalizeVariantPresetSelection();
+            this.recomputeSmartSkuAndName();
+        },
+        // Phone camera barcode scan: the captured photo is decoded locally by
+        // html5-qrcode (already bundled for the POS). Nothing is uploaded.
+        scanningBarcode: false,
+        barcodeScanError: '',
+        async scanBarcodeFromCamera(event) {
+            const input = event.target;
+            const file = input.files && input.files[0];
+            input.value = '';
+            if (!file) return;
+            this.barcodeScanError = '';
+            if (!window.Html5Qrcode) {
+                this.barcodeScanError = '{{ __('messages.product_form_barcode_scan_failed') }}';
+                return;
+            }
+            this.scanningBarcode = true;
+            try {
+                const scanner = new window.Html5Qrcode('admin-barcode-scan-region', { verbose: false });
+                const code = await scanner.scanFile(file, false);
+                if (code && String(code).trim() !== '') {
+                    this.productBarcode = String(code).trim();
+                } else {
+                    this.barcodeScanError = '{{ __('messages.product_form_barcode_scan_failed') }}';
+                }
+                try { scanner.clear(); } catch (_) {}
+            } catch (e) {
+                this.barcodeScanError = '{{ __('messages.product_form_barcode_scan_failed') }}';
+            } finally {
+                this.scanningBarcode = false;
+            }
+        },
+        // Server field names (variants.0.name) map to DOM names (variants[0][name]).
+        jumpToError(field) {
+            const name = String(field || '');
+            const domName = name.replace(/\.(\d+)\./g, '[$1][').replace(/\./g, '][') + (name.includes('.') ? ']' : '');
+            // Built without quote characters: this JS lives inside a double-quoted
+            // x-data attribute, so a literal double quote would truncate all state.
+            const all = Array.from(document.querySelectorAll('[name]'));
+            const root = name.split('.')[0];
+            const el = all.find((e) => e.getAttribute('name') === domName)
+                || all.find((e) => e.getAttribute('name') === name)
+                || all.find((e) => (e.getAttribute('name') || '').indexOf(root) === 0);
+            if (!el) return;
+            el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            try { el.focus({ preventScroll: true }); } catch (_) { try { el.focus(); } catch (__) {} }
+            el.classList.add('ring-2', 'ring-rose-400');
+            setTimeout(() => el.classList.remove('ring-2', 'ring-rose-400'), 2600);
+        },
+        // Product type: labels/icons/descriptions drive the compact indicator strip
+        // and the selector that now lives inside the More Details accordion.
+        productTypeLabels: {
+            standard: '{{ __('messages.product_type_standard') }}',
+            serialized: '{{ __('messages.product_type_serialized') }}',
+            variant: '{{ __('messages.product_type_variant') }}',
+            service: '{{ __('messages.product_type_service') }}',
+            digital: '{{ __('messages.product_type_digital') }}',
+            weight_based: '{{ __('messages.product_type_weight_based') }}',
+        },
+        productTypeIcons: { standard: '📦', serialized: '📱', variant: '🔀', service: '🛠️', digital: '💻', weight_based: '⚖️' },
+        productTypeDescriptions: {
+            standard: '{{ __('messages.product_type_standard_desc') }}',
+            serialized: '{{ __('messages.product_type_serialized_desc') }}',
+            variant: '{{ __('messages.product_type_variant_desc') }}',
+            service: '{{ __('messages.product_type_service_desc') }}',
+            digital: '{{ __('messages.product_type_digital_desc') }}',
+            weight_based: '{{ __('messages.product_type_weight_based_desc') }}',
+        },
+        get productTypeLabel() { return this.productTypeLabels[this.productType] || this.productType; },
+        get productTypeIcon() { return this.productTypeIcons[this.productType] || '📦'; },
+        get productTypeDescription() { return this.productTypeDescriptions[this.productType] || ''; },
+        // Services and digital goods hold no stock, so their stock fields are
+        // DISABLED (not merely hidden) — a disabled input never submits.
+        get isStockless() { return this.productType === 'service' || this.productType === 'digital'; },
+        setProductType(type) {
+            this.productType = type;
+            if (this.isStockless) {
+                this.productWarehouseId = '';
+                this.productShelfLocation = '';
+                const stock = document.querySelector('input[name=initial_stock]');
+                if (stock) stock.value = '';
+            }
+            if (type === 'variant') this.variantsOpen = true;
+            this.recomputeSmartSkuAndName();
+        },
+        openProductTypeSelector() {
+            window.dispatchEvent(new CustomEvent('expand-advanced'));
+            setTimeout(() => {
+                const el = document.getElementById('product-type-selector');
+                if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }, 160);
+        },
+        // Live duplicate-code lookup while typing, so a clash is visible before Save.
+        codeChecks: { sku: null, barcode: null },
+        _codeTimers: {},
+        scheduleCodeCheck(field) {
+            clearTimeout(this._codeTimers[field]);
+            this._codeTimers[field] = setTimeout(() => this.checkCode(field), 600);
+        },
+        async checkCode(field) {
+            const value = String((field === 'sku' ? this.productSku : this.productBarcode) || '').trim();
+            if (value === '') {
+                this.codeChecks[field] = null;
+                return;
+            }
+            const params = new URLSearchParams({ field: field, value: value });
+            if (this.existingProductId) params.set('exclude', String(this.existingProductId));
+            try {
+                const res = await fetch('{{ route('store.admin.products.check-code', ['store_slug' => $store->slug]) }}?' + params.toString(), {
+                    headers: { 'Accept': 'application/json' },
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                this.codeChecks[field] = data.exists ? (data.name || true) : false;
+            } catch (_) {
+                // Best-effort helper: a failed lookup must never block saving.
+            }
         },
         previewMain(evt) { this.mainPreview = evt.target.files[0] ? URL.createObjectURL(evt.target.files[0]) : null; },
         previewGallery(evt) { this.galleryPreviews = [...evt.target.files].map(f => URL.createObjectURL(f)); },
@@ -350,8 +499,30 @@
                 this.newSupplierPhone = '';
                 this.supplierModalOpen = false;
             }
+        },
+        handleKeydown(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                const form = document.querySelector('form[action*=products]');
+                if (form) {
+                    const saveBtn = form.querySelector('button[value=save]') || form.querySelector('button[type=submit]');
+                    if (saveBtn) saveBtn.click();
+                }
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                const form = document.querySelector('form[action*=products]');
+                if (form) {
+                    const saveNewBtn = form.querySelector('button[value=save_and_new]');
+                    if (saveNewBtn) {
+                        saveNewBtn.click();
+                    } else {
+                        const saveBtn = form.querySelector('button[type=submit]');
+                        if (saveBtn) saveBtn.click();
+                    }
+                }
+            }
         }
-    }" @richtext-sync.window="onRichTextSync($event)">
+    }" @keydown.window="handleKeydown($event)" @richtext-sync.window="onRichTextSync($event)">
 
     {{-- Compact Page Header (34px - 38px) --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
@@ -389,14 +560,28 @@
         </div>
     </div>
 
+    @if (session('success'))
+        <div class="p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 shadow-2xs">
+            <span>✅</span>
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+
     @if ($errors->any())
         <div class="p-2.5 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-lg text-xs font-bold text-rose-700 dark:text-rose-300 space-y-0.5 shadow-2xs">
             <div class="flex items-center gap-1.5">
                 <span>⚠️</span>
                 <span class="font-black">{{ __('messages.product_form_check_fields') }}</span>
             </div>
-            @foreach ($errors->all() as $error)
-                <p class="pl-5 text-[11px]">• {{ $error }}</p>
+            {{-- Each message jumps to (and highlights) the field it belongs to. --}}
+            @foreach ($errors->getBag('default')->getMessages() as $field => $messages)
+                @foreach ($messages as $error)
+                    <button type="button" @click="jumpToError('{{ $field }}')"
+                            title="{{ __('messages.product_form_error_jump') }}"
+                            class="pl-5 block w-full text-left text-[11px] hover:underline cursor-pointer">
+                        • {{ $error }}
+                    </button>
+                @endforeach
             @endforeach
         </div>
     @endif
