@@ -194,7 +194,7 @@ class BrandController extends Controller
 
         $brands = Brand::where('store_id', $store->id)
             ->orderBy('name')
-            ->get(['name', 'slug']);
+            ->get(['name', 'code', 'slug']);
 
         if ($format === 'csv') {
             $headers = [
@@ -205,11 +205,12 @@ class BrandController extends Controller
             return response()->streamDownload(function () use ($brands) {
                 $stream = fopen('php://output', 'w');
                 fwrite($stream, "\xEF\xBB\xBF");
-                fputcsv($stream, ['Name', 'Slug']);
+                fputcsv($stream, ['Name', 'Short Code (for Auto-SKU)', 'Slug']);
 
                 foreach ($brands as $brand) {
                     fputcsv($stream, [
                         $this->csvCell($brand->name),
+                        $this->csvCell($brand->code ?? ''),
                         $this->csvCell($brand->slug),
                     ]);
                 }
@@ -231,23 +232,41 @@ class BrandController extends Controller
         $sheet->getStyle('A2')->getFont()->setSize(10)->getColor()->setRGB('64748B');
 
         $row = 4;
-        $headers = ['A' => 'Name', 'B' => 'Slug'];
+        $headers = [
+            'A' => 'Name',
+            'B' => 'Short Code (for Auto-SKU)',
+            'C' => 'Slug',
+        ];
         foreach ($headers as $col => $title) {
             $sheet->setCellValue("{$col}{$row}", $title);
         }
-        $sheet->getStyle("A{$row}:B{$row}")->applyFromArray([
+        $sheet->getStyle("A{$row}:C{$row}")->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
             'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '6D28D9']],
+            'alignment' => ['vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER],
         ]);
+        $sheet->getRowDimension($row)->setRowHeight(24);
 
         $row++;
         foreach ($brands as $brand) {
             $sheet->setCellValue("A{$row}", $brand->name);
-            $sheet->setCellValue("B{$row}", $brand->slug);
+            $sheet->setCellValue("B{$row}", $brand->code ?? '');
+            $sheet->setCellValue("C{$row}", $brand->slug);
+
+            if ($row % 2 === 0) {
+                $sheet->getStyle("A{$row}:C{$row}")->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F8FAFC']],
+                ]);
+            }
             $row++;
         }
 
-        foreach (range('A', 'B') as $col) {
+        $lastRow = max(4, $row - 1);
+        $sheet->getStyle("A4:C{$lastRow}")->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => 'E2E8F0']]],
+        ]);
+
+        foreach (range('A', 'C') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -361,8 +380,10 @@ class BrandController extends Controller
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->setTitle('Brands');
             $sheet->fromArray([
-                ['name', 'slug'],
-                ['Xiaomi', 'xiaomi'],
+                ['name', 'code', 'slug'],
+                ['Xiaomi', 'MI', 'xiaomi'],
+                ['Apple', 'APPL', 'apple'],
+                ['Samsung', 'SAMS', 'samsung'],
             ]);
 
             $instructionSheet = $spreadsheet->createSheet();
@@ -370,7 +391,8 @@ class BrandController extends Controller
             $instructionSheet->fromArray([
                 ['Instruction', 'Value'],
                 ['Required columns', 'name'],
-                ['Optional columns', 'slug'],
+                ['Optional columns', 'code, slug'],
+                ['code column', 'Short Code for Auto-SKU generation (e.g. APPL, SAMS, ANKER). Optional.'],
                 ['Duplicate rule', 'Brands are matched by slug, then by name (case-insensitive). Existing brands are skipped or updated depending on the chosen strategy.'],
                 ['Slug format', 'Lowercase letters, numbers and dashes only. Leave blank to auto-generate from name.'],
                 ['Store assignment', 'The system always uses the current admin store. Do not add store_id.'],

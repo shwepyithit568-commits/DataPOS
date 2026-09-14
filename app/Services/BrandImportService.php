@@ -14,7 +14,7 @@ class BrandImportService
 {
     private const REQUIRED_HEADERS = ['name'];
 
-    private const SUPPORTED_HEADERS = ['name', 'slug'];
+    private const SUPPORTED_HEADERS = ['name', 'slug', 'code', 'short_code', 'short_code_for_auto_sku'];
 
     public function __construct(private SpreadsheetImportReader $reader)
     {
@@ -104,6 +104,8 @@ class BrandImportService
 
         $name = trim((string) ($row['name'] ?? ''));
         $slugInput = trim((string) ($row['slug'] ?? ''));
+        $codeInput = trim((string) ($row['short_code_for_auto_sku'] ?? $row['short_code'] ?? $row['code'] ?? ''));
+        $code = $codeInput !== '' ? strtoupper($codeInput) : null;
 
         if ($name === '') {
             $result['failed']++;
@@ -164,7 +166,11 @@ class BrandImportService
                 $seen['slugs'][$finalSlug] = true;
 
                 if ($persist) {
-                    $existingBrand->update(['name' => $name, 'slug' => $finalSlug]);
+                    $updateData = ['name' => $name, 'slug' => $finalSlug];
+                    if ($code !== null) {
+                        $updateData['code'] = $code;
+                    }
+                    $existingBrand->update($updateData);
                     $existing['names'][$this->normalizeName($name)] = $existingBrand;
                     $existing['slugs'][$finalSlug] = $existingBrand;
                     $result['updated']++;
@@ -189,6 +195,7 @@ class BrandImportService
             $brand = Brand::create([
                 'store_id' => $store->id,
                 'name' => $name,
+                'code' => $code,
                 'slug' => $slug,
             ]);
             $existing['names'][$this->normalizeName($name)] = $brand;
@@ -260,6 +267,7 @@ class BrandImportService
         $result['preview_rows'][] = [
             'row' => $row['_row'] ?? null,
             'name' => $name,
+            'code' => trim((string) ($row['short_code_for_auto_sku'] ?? $row['short_code'] ?? $row['code'] ?? '')),
             'slug' => trim((string) ($row['slug'] ?? '')),
             'action' => $action,
         ];

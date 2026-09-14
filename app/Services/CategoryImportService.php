@@ -14,7 +14,7 @@ class CategoryImportService
 {
     private const REQUIRED_HEADERS = ['name'];
 
-    private const SUPPORTED_HEADERS = ['name', 'slug', 'parent', 'description', 'icon'];
+    private const SUPPORTED_HEADERS = ['name', 'slug', 'parent', 'description', 'icon', 'code', 'short_code', 'short_code_for_auto_sku'];
 
     public function __construct(private SpreadsheetImportReader $reader)
     {
@@ -129,6 +129,8 @@ class CategoryImportService
         $parentInput = trim((string) ($row['parent'] ?? ''));
         $icon = trim((string) ($row['icon'] ?? ''));
         $description = trim((string) ($row['description'] ?? ''));
+        $codeInput = trim((string) ($row['short_code_for_auto_sku'] ?? $row['short_code'] ?? $row['code'] ?? ''));
+        $code = $codeInput !== '' ? strtoupper($codeInput) : null;
 
         if ($name === '') {
             $result['failed']++;
@@ -216,13 +218,17 @@ class CategoryImportService
 
                 if ($persist) {
                     $category = Category::find($existing['id']);
-                    $category->update([
+                    $updateData = [
                         'name' => $name,
                         'slug' => $finalSlug,
                         'parent_id' => $plannedParent,
                         'description' => $description !== '' ? $description : $category->description,
                         'icon' => $icon !== '' ? $icon : $category->icon,
-                    ]);
+                    ];
+                    if ($code !== null) {
+                        $updateData['code'] = $code;
+                    }
+                    $category->update($updateData);
                     $this->refreshRegistry($registry, $category);
                     $result['updated']++;
                 }
@@ -252,6 +258,7 @@ class CategoryImportService
                 'store_id' => $store->id,
                 'parent_id' => $parent ? $parent['id'] : null,
                 'name' => $name,
+                'code' => $code,
                 'slug' => $slug,
                 'description' => $description !== '' ? $description : null,
                 'icon' => $icon !== '' ? $icon : null,
@@ -399,6 +406,7 @@ class CategoryImportService
         $result['preview_rows'][] = [
             'row' => $row['_row'] ?? null,
             'name' => $name,
+            'code' => trim((string) ($row['short_code_for_auto_sku'] ?? $row['short_code'] ?? $row['code'] ?? '')),
             'parent' => trim((string) ($row['parent'] ?? '')),
             'action' => $action,
         ];

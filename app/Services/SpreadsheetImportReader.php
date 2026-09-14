@@ -83,18 +83,30 @@ class SpreadsheetImportReader
             $spreadsheet->disconnectWorksheets();
         }
 
-        if (empty($rawRows)) {
-            throw new \InvalidArgumentException('Import file is empty or missing a header row.');
+        $rawHeader = null;
+        $headerRowIndex = 0;
+        while (!empty($rawRows)) {
+            $headerRowIndex++;
+            $candidate = array_shift($rawRows);
+            if ($this->isBlankRow($candidate)) {
+                continue;
+            }
+            $nonEmptyCount = count(array_filter($candidate, fn($c) => trim((string)$c) !== ''));
+            // If candidate has only 1 column filled or starts with "export date", it's a title/metadata banner
+            if ($nonEmptyCount === 1 || str_starts_with(strtolower(trim((string)($candidate[0] ?? ''))), 'export date')) {
+                continue;
+            }
+            $rawHeader = $candidate;
+            break;
         }
 
-        $rawHeader = array_shift($rawRows);
-        if (!$rawHeader || $this->isBlankRow($rawHeader)) {
+        if (!$rawHeader) {
             throw new \InvalidArgumentException('Import file is empty or missing a header row.');
         }
 
         $headers = $this->normalizeHeaders($rawHeader);
         $rows = [];
-        $rowNumber = 1;
+        $rowNumber = $headerRowIndex;
 
         foreach ($rawRows as $row) {
             $rowNumber++;

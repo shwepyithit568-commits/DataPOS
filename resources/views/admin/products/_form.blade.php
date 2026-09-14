@@ -45,6 +45,28 @@
         ]);
 @endphp
 
+<style>
+    @media (max-width: 1023.98px) {
+        .product-form-layout {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 0.375rem !important;
+        }
+        .product-form-right-col {
+            display: contents !important;
+        }
+        .product-form-smart-sku {
+            order: -1 !important;
+        }
+        .product-form-left-col {
+            order: 1 !important;
+        }
+        .product-form-other-cards {
+            order: 2 !important;
+        }
+    }
+</style>
+
 <div class="space-y-1 sm:space-y-1.5">
     {{-- Product Type on the counter path is awareness-only: staff see which type
          they are creating and carry on. The real 6-way selector lives in
@@ -64,10 +86,10 @@
     </div>
 
     {{-- Main 2-Column Responsive Layout --}}
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-1.5 sm:gap-2 items-start">
+    <div class="product-form-layout grid grid-cols-1 lg:grid-cols-12 gap-1.5 sm:gap-2 items-start">
 
         {{-- LEFT COLUMN (lg:col-span-8): Primary Product & POS Data --}}
-        <div class="lg:col-span-8 space-y-1.5 sm:space-y-2">
+        <div class="product-form-left-col lg:col-span-8 space-y-1.5 sm:space-y-2">
 
             {{-- 1. Core Information Card --}}
             <section class="{{ $section }}">
@@ -154,13 +176,92 @@
                     {{-- Brand Selection --}}
                     <div>
                         <label class="{{ $label }}">{{ __('messages.product_form_brand') }}</label>
-                        <div class="flex items-stretch gap-1.5">
-                            <select name="brand_id" x-model="selectedBrand" @change="recomputeSmartSkuAndName()" x-init="$nextTick(() => $el.value = selectedBrand)" class="{{ $input }} flex-1 min-w-0 cursor-pointer">
-                                <option value="">{{ __('messages.product_form_none') }}</option>
-                                <template x-for="b in brands" :key="b.id">
-                                    <option :value="b.id" x-text="b.name + (b.code ? ' [' + b.code + ']' : '')"></option>
-                                </template>
-                            </select>
+                        <div class="flex items-stretch gap-1.5" x-data="{
+                            open: false,
+                            search: '',
+                            get filteredBrands() {
+                                if (!this.search.trim()) return this.brands;
+                                const q = this.search.toLowerCase().trim();
+                                return this.brands.filter(b => 
+                                    (b.name && b.name.toLowerCase().includes(q)) || 
+                                    (b.code && b.code.toLowerCase().includes(q))
+                                );
+                            },
+                            get selectedBrandObj() {
+                                return this.brands.find(b => String(b.id) === String(selectedBrand));
+                            },
+                            select(id) {
+                                selectedBrand = id;
+                                this.open = false;
+                                this.search = '';
+                                recomputeSmartSkuAndName();
+                            }
+                        }" @click.outside="open = false" @keydown.escape="open = false">
+                            <div class="relative flex-1 min-w-0">
+                                <input type="hidden" name="brand_id" :value="selectedBrand" x-init="$nextTick(() => $el.value = selectedBrand)" />
+                                
+                                <button type="button" 
+                                        @click="open = !open; if (open) $nextTick(() => $refs.brandSearch?.focus())"
+                                        class="{{ $input }} flex items-center justify-between gap-1 text-left cursor-pointer select-none font-normal"
+                                        :class="selectedBrand ? 'text-slate-900 dark:text-slate-100 font-semibold' : 'text-slate-400 dark:text-slate-500'">
+                                    <span class="truncate" x-text="selectedBrandObj ? selectedBrandObj.name + (selectedBrandObj.code ? ' [' + selectedBrandObj.code + ']' : '') : '{{ __('messages.product_form_none') }}'"></span>
+                                    <div class="flex items-center gap-1 shrink-0 ml-1">
+                                        <template x-if="selectedBrand">
+                                            <span @click.stop="select('')" class="text-slate-400 hover:text-rose-500 p-0.5 rounded cursor-pointer transition text-xs leading-none" title="Clear">✕</span>
+                                        </template>
+                                        <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </div>
+                                </button>
+
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl overflow-hidden"
+                                     x-cloak>
+                                    <div class="p-1.5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90">
+                                        <div class="relative">
+                                            <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-slate-400 text-xs">🔍</span>
+                                            <input type="text"
+                                                   x-ref="brandSearch"
+                                                   x-model="search"
+                                                   placeholder="{{ __('messages.search') }}..."
+                                                   class="w-full pl-7 pr-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                                   @keydown.enter.prevent="if (filteredBrands.length > 0) select(filteredBrands[0].id)" />
+                                        </div>
+                                    </div>
+                                    <div class="max-h-52 overflow-y-auto p-1 space-y-0.5 text-xs">
+                                        <button type="button" 
+                                                @click="select('')"
+                                                class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                :class="!selectedBrand ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-500 dark:text-slate-400'">
+                                            <span>-- {{ __('messages.product_form_none') }} --</span>
+                                            <span x-show="!selectedBrand">✓</span>
+                                        </button>
+                                        <template x-for="b in filteredBrands" :key="b.id">
+                                            <button type="button"
+                                                    @click="select(b.id)"
+                                                    class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                    :class="String(selectedBrand) === String(b.id) ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-800 dark:text-slate-200'">
+                                                <span class="truncate" x-text="b.name"></span>
+                                                <span class="flex items-center gap-1 shrink-0 ml-2">
+                                                    <span x-show="b.code" class="text-[10px] font-mono px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300" x-text="b.code"></span>
+                                                    <span x-show="String(selectedBrand) === String(b.id)" class="text-violet-600 dark:text-violet-400">✓</span>
+                                                </span>
+                                            </button>
+                                        </template>
+                                        <div x-show="filteredBrands.length === 0" class="py-3 text-center text-xs text-slate-400">
+                                            {{ __('messages.no_results') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button type="button" @click="brandModalOpen = true" title="{{ __('messages.product_form_quick_brand') }}" aria-label="{{ __('messages.product_form_quick_brand') }}" class="{{ $btn3dPlus }}">
                                 <svg class="w-4 h-4 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                             
@@ -173,13 +274,91 @@
                     {{-- Main Category --}}
                     <div>
                         <label class="{{ $label }}">{{ __('messages.product_form_main_category') }}</label>
-                        <div class="flex items-stretch gap-1.5">
-                            <select x-model="selectedMainCategory" @change="onMainCategoryChange(); recomputeSmartSkuAndName()" x-init="$nextTick(() => $el.value = selectedMainCategory)" class="{{ $input }} flex-1 min-w-0 cursor-pointer">
-                                <option value="">{{ __('messages.product_form_main_category_none') }}</option>
-                                <template x-for="cat in mainCategories" :key="cat.id">
-                                    <option :value="cat.id" x-text="cat.name + (cat.code ? ' [' + cat.code + ']' : '')"></option>
-                                </template>
-                            </select>
+                        <div class="flex items-stretch gap-1.5" x-data="{
+                            open: false,
+                            search: '',
+                            get filteredMainCategories() {
+                                if (!this.search.trim()) return this.mainCategories;
+                                const q = this.search.toLowerCase().trim();
+                                return this.mainCategories.filter(c => 
+                                    (c.name && c.name.toLowerCase().includes(q)) || 
+                                    (c.code && c.code.toLowerCase().includes(q))
+                                );
+                            },
+                            get selectedMainCatObj() {
+                                return this.mainCategories.find(c => String(c.id) === String(selectedMainCategory));
+                            },
+                            select(id) {
+                                selectedMainCategory = id;
+                                onMainCategoryChange();
+                                recomputeSmartSkuAndName();
+                                this.open = false;
+                                this.search = '';
+                            }
+                        }" @click.outside="open = false" @keydown.escape="open = false">
+                            <div class="relative flex-1 min-w-0">
+                                <button type="button" 
+                                        @click="open = !open; if (open) $nextTick(() => $refs.mainCatSearch?.focus())"
+                                        class="{{ $input }} flex items-center justify-between gap-1 text-left cursor-pointer select-none font-normal"
+                                        :class="selectedMainCategory ? 'text-slate-900 dark:text-slate-100 font-semibold' : 'text-slate-400 dark:text-slate-500'">
+                                    <span class="truncate" x-text="selectedMainCatObj ? selectedMainCatObj.name + (selectedMainCatObj.code ? ' [' + selectedMainCatObj.code + ']' : '') : '{{ __('messages.product_form_main_category_none') }}'"></span>
+                                    <div class="flex items-center gap-1 shrink-0 ml-1">
+                                        <template x-if="selectedMainCategory">
+                                            <span @click.stop="select('')" class="text-slate-400 hover:text-rose-500 p-0.5 rounded cursor-pointer transition text-xs leading-none" title="Clear">✕</span>
+                                        </template>
+                                        <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </div>
+                                </button>
+
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl overflow-hidden"
+                                     x-cloak>
+                                    <div class="p-1.5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90">
+                                        <div class="relative">
+                                            <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-slate-400 text-xs">🔍</span>
+                                            <input type="text"
+                                                   x-ref="mainCatSearch"
+                                                   x-model="search"
+                                                   placeholder="{{ __('messages.search') }}..."
+                                                   class="w-full pl-7 pr-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                                   @keydown.enter.prevent="if (filteredMainCategories.length > 0) select(filteredMainCategories[0].id)" />
+                                        </div>
+                                    </div>
+                                    <div class="max-h-52 overflow-y-auto p-1 space-y-0.5 text-xs">
+                                        <button type="button" 
+                                                @click="select('')"
+                                                class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                :class="!selectedMainCategory ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-500 dark:text-slate-400'">
+                                            <span>-- {{ __('messages.product_form_main_category_none') }} --</span>
+                                            <span x-show="!selectedMainCategory">✓</span>
+                                        </button>
+                                        <template x-for="cat in filteredMainCategories" :key="cat.id">
+                                            <button type="button"
+                                                    @click="select(cat.id)"
+                                                    class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                    :class="String(selectedMainCategory) === String(cat.id) ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-800 dark:text-slate-200'">
+                                                <span class="truncate" x-text="cat.name"></span>
+                                                <span class="flex items-center gap-1 shrink-0 ml-2">
+                                                    <span x-show="cat.code" class="text-[10px] font-mono px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300" x-text="cat.code"></span>
+                                                    <span x-show="String(selectedMainCategory) === String(cat.id)" class="text-violet-600 dark:text-violet-400">✓</span>
+                                                </span>
+                                            </button>
+                                        </template>
+                                        <div x-show="filteredMainCategories.length === 0" class="py-3 text-center text-xs text-slate-400">
+                                            {{ __('messages.no_results') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button type="button" @click="newCategoryParent = ''; categoryModalOpen = true" title="{{ __('messages.product_form_quick_category') }}" aria-label="{{ __('messages.product_form_quick_category') }}" class="{{ $btn3dPlus }}">
                                 <svg class="w-4 h-4 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                             
@@ -191,13 +370,91 @@
                     {{-- Sub Category --}}
                     <div>
                         <label class="{{ $label }}">{{ __('messages.product_form_sub_category') }}</label>
-                        <div class="flex items-stretch gap-1.5">
-                            <select x-model="selectedSubCategory" @change="recomputeSmartSkuAndName()" :disabled="!selectedMainCategory" x-init="$nextTick(() => $el.value = selectedSubCategory)" class="{{ $input }} flex-1 min-w-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60">
-                                <option value="" x-text="!selectedMainCategory ? '{{ __('messages.product_form_sub_category_choose_first') }}' : (subCategories.length ? '{{ __('messages.product_form_sub_category_none') }}' : '{{ __('messages.product_form_no_sub_categories') }}')"></option>
-                                <template x-for="cat in subCategories" :key="cat.id">
-                                    <option :value="cat.id" x-text="cat.name + (cat.code ? ' [' + cat.code + ']' : '')"></option>
-                                </template>
-                            </select>
+                        <div class="flex items-stretch gap-1.5" x-data="{
+                            open: false,
+                            search: '',
+                            get filteredSubCategories() {
+                                if (!this.search.trim()) return this.subCategories;
+                                const q = this.search.toLowerCase().trim();
+                                return this.subCategories.filter(c => 
+                                    (c.name && c.name.toLowerCase().includes(q)) || 
+                                    (c.code && c.code.toLowerCase().includes(q))
+                                );
+                            },
+                            get selectedSubCatObj() {
+                                return this.subCategories.find(c => String(c.id) === String(selectedSubCategory));
+                            },
+                            select(id) {
+                                selectedSubCategory = id;
+                                recomputeSmartSkuAndName();
+                                this.open = false;
+                                this.search = '';
+                            }
+                        }" @click.outside="open = false" @keydown.escape="open = false">
+                            <div class="relative flex-1 min-w-0">
+                                <button type="button" 
+                                        :disabled="!selectedMainCategory"
+                                        @click="if (selectedMainCategory) { open = !open; if (open) $nextTick(() => $refs.subCatSearch?.focus()); }"
+                                        class="{{ $input }} flex items-center justify-between gap-1 text-left cursor-pointer select-none font-normal disabled:cursor-not-allowed disabled:opacity-60"
+                                        :class="selectedSubCategory ? 'text-slate-900 dark:text-slate-100 font-semibold' : 'text-slate-400 dark:text-slate-500'">
+                                    <span class="truncate" x-text="!selectedMainCategory ? '{{ __('messages.product_form_sub_category_choose_first') }}' : (selectedSubCatObj ? selectedSubCatObj.name + (selectedSubCatObj.code ? ' [' + selectedSubCatObj.code + ']' : '') : (subCategories.length ? '{{ __('messages.product_form_sub_category_none') }}' : '{{ __('messages.product_form_no_sub_categories') }}'))"></span>
+                                    <div class="flex items-center gap-1 shrink-0 ml-1">
+                                        <template x-if="selectedSubCategory">
+                                            <span @click.stop="select('')" class="text-slate-400 hover:text-rose-500 p-0.5 rounded cursor-pointer transition text-xs leading-none" title="Clear">✕</span>
+                                        </template>
+                                        <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </div>
+                                </button>
+
+                                <div x-show="open && selectedMainCategory" 
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl overflow-hidden"
+                                     x-cloak>
+                                    <div class="p-1.5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90">
+                                        <div class="relative">
+                                            <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-slate-400 text-xs">🔍</span>
+                                            <input type="text"
+                                                   x-ref="subCatSearch"
+                                                   x-model="search"
+                                                   placeholder="{{ __('messages.search') }}..."
+                                                   class="w-full pl-7 pr-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                                   @keydown.enter.prevent="if (filteredSubCategories.length > 0) select(filteredSubCategories[0].id)" />
+                                        </div>
+                                    </div>
+                                    <div class="max-h-52 overflow-y-auto p-1 space-y-0.5 text-xs">
+                                        <button type="button" 
+                                                @click="select('')"
+                                                class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                :class="!selectedSubCategory ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-500 dark:text-slate-400'">
+                                            <span>-- {{ __('messages.product_form_sub_category_none') }} --</span>
+                                            <span x-show="!selectedSubCategory">✓</span>
+                                        </button>
+                                        <template x-for="cat in filteredSubCategories" :key="cat.id">
+                                            <button type="button"
+                                                    @click="select(cat.id)"
+                                                    class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                    :class="String(selectedSubCategory) === String(cat.id) ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-800 dark:text-slate-200'">
+                                                <span class="truncate" x-text="cat.name"></span>
+                                                <span class="flex items-center gap-1 shrink-0 ml-2">
+                                                    <span x-show="cat.code" class="text-[10px] font-mono px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300" x-text="cat.code"></span>
+                                                    <span x-show="String(selectedSubCategory) === String(cat.id)" class="text-violet-600 dark:text-violet-400">✓</span>
+                                                </span>
+                                            </button>
+                                        </template>
+                                        <div x-show="filteredSubCategories.length === 0" class="py-3 text-center text-xs text-slate-400">
+                                            {{ __('messages.no_results') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button type="button" @click="newCategoryParent = selectedMainCategory; categoryModalOpen = true" :disabled="!selectedMainCategory" title="{{ __('messages.product_form_quick_category') }}" aria-label="{{ __('messages.product_form_quick_category') }}" class="{{ $btn3dPlus }}">
                                 <svg class="w-4 h-4 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                             
@@ -240,52 +497,129 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-2 sm:gap-2.5 md:grid-cols-3">
-                    {{-- Retail Price --}}
-                    <div>
-                        <label class="{{ $label }}">
-                            <span x-text="productType === 'service' ? '{{ __('messages.product_form_service_price_label') }}' : (productType === 'weight_based' ? '{{ __('messages.product_form_weight_price_label') }}' : '{{ __('messages.product_form_retail_price') }}')"></span>
-                            <span class="text-rose-500">*</span>
-                        </label>
-                        <div class="relative flex rounded-lg">
-                            <span class="inline-flex items-center px-2.5 rounded-l-lg border border-r-0 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 select-none">
-                                {{ $currencySymbol }}
-                            </span>
-                            <input type="number" step="0.01" min="0" name="retail_price" x-model="marginRetail" value="{{ old('retail_price', $product->retail_price) }}" required class="{{ $inputCurrency }}" placeholder="1990000" />
-                        </div>
-                        @error('retail_price')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
-                    </div>
-
-                    {{-- Wholesale Price — optional: blank is saved as the retail price.
-                         Hidden from staff without `products.view_cost`. --}}
+                    {{-- 1. Purchase Cost --}}
                     @if (store_can('products.view_cost', $store))
-                    <div>
-                        <label class="{{ $label }}">
-                            <span x-show="productType === 'service'" x-cloak>{{ __('messages.product_form_wholesale_service_label') }}</span>
-                            <span x-show="productType === 'weight_based'" x-cloak>{{ __('messages.product_form_wholesale_weight_label') }}</span>
-                            <span x-show="productType !== 'service' && productType !== 'weight_based'">{{ __('messages.product_form_wholesale_price') }}</span>
-                        </label>
-                        <div class="relative flex rounded-lg">
-                            <span class="inline-flex items-center px-2.5 rounded-l-lg border border-r-0 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 select-none">
-                                {{ $currencySymbol }}
-                            </span>
-                            <input type="number" step="0.01" min="0" name="wholesale_price" x-model="marginWhole" value="{{ old('wholesale_price', $product->wholesale_price) }}" class="{{ $inputCurrency }}" placeholder="{{ __('messages.product_form_wholesale_placeholder') }}" />
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between">
+                            <label class="{{ $label }}">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-black grid place-items-center">1</span>
+                                    <span>{{ __('messages.product_form_purchase_cost') }}</span>
+                                </span>
+                            </label>
                         </div>
-                        <p class="{{ $hint }}">{{ __('messages.product_form_wholesale_optional_hint') }}</p>
-                        @error('wholesale_price')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+                        <input type="number" step="0.01" min="0" name="purchase_cost" x-model="purchaseCost" @input="onPurchaseCostInput()" value="{{ old('purchase_cost', $product->purchase_cost) }}"
+                               class="{{ $input }} font-bold" placeholder="10000" />
+                        <p class="{{ $hint }}">{{ __('messages.purchase_cost_calc_hint') }}</p>
+                        @error('purchase_cost')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     @endif
 
-                    {{-- Purchase Cost (Directly alongside pricing for immediate profit calculation) --}}
-                    @if (store_can('products.view_cost', $store))
-                    <div>
-                        <label class="{{ $label }}">{{ __('messages.product_form_purchase_cost') }}</label>
-                        <div class="relative flex rounded-lg">
-                            <span class="inline-flex items-center px-2.5 rounded-l-lg border border-r-0 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 select-none">
-                                {{ $currencySymbol }}
-                            </span>
-                            <input type="number" step="0.01" min="0" name="purchase_cost" value="{{ old('purchase_cost', $product->purchase_cost) }}" class="{{ $inputCurrency }}" placeholder="1500000" />
+                    {{-- 2. Retail Price --}}
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between">
+                            <label class="{{ $label }}">
+                                <span class="inline-flex items-center gap-1.5">
+                                    @if (store_can('products.view_cost', $store))
+                                    <span class="w-4 h-4 rounded-full bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300 text-[10px] font-black grid place-items-center">2</span>
+                                    @endif
+                                    <span x-text="productType === 'service' ? '{{ __('messages.product_form_service_price_label') }}' : (productType === 'weight_based' ? '{{ __('messages.product_form_weight_price_label') }}' : '{{ __('messages.product_form_retail_price') }}')"></span>
+                                    <span class="text-rose-500">*</span>
+                                </span>
+                            </label>
                         </div>
-                        @error('purchase_cost')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+                        <div class="relative flex rounded-lg">
+                            <input type="number" step="0.01" min="0" name="retail_price" x-model="marginRetail" @input="onRetailInput()" value="{{ old('retail_price', $product->retail_price) }}" required
+                                   class="flex-1 min-w-0 rounded-l-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition font-bold {{ store_can('products.view_cost', $store) ? 'border-r-0 rounded-r-none' : 'rounded-r-lg' }}"
+                                   placeholder="13000" />
+                            @if (store_can('products.view_cost', $store))
+                            {{-- Preset Mode: Clean Dropdown in right-side slot --}}
+                            <div x-show="!retailCustom" class="relative flex items-center">
+                                <select @change="onRetailMarkupSelect($event.target.value)"
+                                        class="h-full rounded-r-lg border border-l-0 border-slate-200 dark:border-slate-700 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-bold text-xs px-2 sm:px-2.5 py-1.5 cursor-pointer outline-none focus:ring-2 focus:ring-emerald-500 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition"
+                                        title="{{ __('messages.markup_percentage_hint') }}">
+                                    <option value="" disabled :selected="!retailMarkup">-- % --</option>
+                                    @foreach (['5','10','15','20','25','30','35','40','50','60','70','80','100'] as $pct)
+                                    <option value="{{ $pct }}" :selected="retailMarkup == '{{ $pct }}'">+{{ $pct }}%</option>
+                                    @endforeach
+                                    <option value="custom">✏️ {{ __('messages.custom_markup_input') }}</option>
+                                </select>
+                            </div>
+
+                            {{-- Custom Mode: Editable Input Box right in that dropdown position --}}
+                            <div x-show="retailCustom" x-cloak class="relative flex items-center bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-r-lg px-1.5 py-0.5 gap-1">
+                                <span class="text-emerald-600 dark:text-emerald-400 font-bold text-xs select-none">+</span>
+                                <input type="number" step="0.1" x-model="retailMarkup" @input="onRetailMarkupInput($event.target.value)"
+                                       x-ref="retailMarkupInput"
+                                       class="w-12 h-7 text-xs font-black text-center rounded bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 border border-slate-200 dark:border-slate-700 focus:ring-1 focus:ring-violet-500 outline-none px-0.5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                       placeholder="%" title="Type custom markup %" />
+                                <span class="text-slate-500 dark:text-slate-400 font-bold text-xs select-none">%</span>
+                                <select @change="if($event.target.value !== '') { onRetailMarkupSelect($event.target.value); $event.target.value = ''; }"
+                                        class="h-6 px-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-slate-200/70 dark:bg-slate-700/70 rounded border-0 outline-none cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600"
+                                        title="Quick markup presets">
+                                    <option value="">▾</option>
+                                    @foreach (['5','10','15','20','25','30','35','40','50','60','70','80','100'] as $pct)
+                                    <option value="{{ $pct }}">+{{ $pct }}%</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @endif
+                        </div>
+                        <p class="{{ $hint }}">{{ __('messages.product_retail_direct_hint') }}</p>
+                        @error('retail_price')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+                    </div>
+
+                    {{-- 3. Wholesale Price — optional: blank is saved as the retail price.
+                         Hidden from staff without `products.view_cost`. --}}
+                    @if (store_can('products.view_cost', $store))
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between">
+                            <label class="{{ $label }}">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <span class="w-4 h-4 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-[10px] font-black grid place-items-center">3</span>
+                                    <span x-show="productType === 'service'" x-cloak>{{ __('messages.product_form_wholesale_service_label') }}</span>
+                                    <span x-show="productType === 'weight_based'" x-cloak>{{ __('messages.product_form_wholesale_weight_label') }}</span>
+                                    <span x-show="productType !== 'service' && productType !== 'weight_based'">{{ __('messages.product_form_wholesale_price') }}</span>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="relative flex rounded-lg">
+                            <input type="number" step="0.01" min="0" name="wholesale_price" x-model="marginWhole" @input="onWholesaleInput()" value="{{ old('wholesale_price', $product->wholesale_price) }}"
+                                   class="flex-1 min-w-0 rounded-l-lg border border-r-0 border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition font-bold rounded-r-none"
+                                   placeholder="{{ __('messages.product_form_wholesale_placeholder') }}" />
+                            {{-- Preset Mode: Clean Dropdown in right-side slot --}}
+                            <div x-show="!wholesaleCustom" class="relative flex items-center">
+                                <select @change="onWholesaleMarkupSelect($event.target.value)"
+                                        class="h-full rounded-r-lg border border-l-0 border-slate-200 dark:border-slate-700 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold text-xs px-2 sm:px-2.5 py-1.5 cursor-pointer outline-none focus:ring-2 focus:ring-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition"
+                                        title="{{ __('messages.markup_percentage_hint') }}">
+                                    <option value="" disabled :selected="!wholesaleMarkup">-- % --</option>
+                                    @foreach (['3','5','8','10','12','15','20','25','30'] as $pct)
+                                    <option value="{{ $pct }}" :selected="wholesaleMarkup == '{{ $pct }}'">+{{ $pct }}%</option>
+                                    @endforeach
+                                    <option value="custom">✏️ {{ __('messages.custom_markup_input') }}</option>
+                                </select>
+                            </div>
+
+                            {{-- Custom Mode: Editable Input Box right in that dropdown position --}}
+                            <div x-show="wholesaleCustom" x-cloak class="relative flex items-center bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-r-lg px-1.5 py-0.5 gap-1">
+                                <span class="text-blue-600 dark:text-blue-400 font-bold text-xs select-none">+</span>
+                                <input type="number" step="0.1" x-model="wholesaleMarkup" @input="onWholesaleMarkupInput($event.target.value)"
+                                       x-ref="wholesaleMarkupInput"
+                                       class="w-12 h-7 text-xs font-black text-center rounded bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-400 border border-slate-200 dark:border-slate-700 focus:ring-1 focus:ring-violet-500 outline-none px-0.5 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                       placeholder="%" title="Type custom wholesale markup %" />
+                                <span class="text-slate-500 dark:text-slate-400 font-bold text-xs select-none">%</span>
+                                <select @change="if($event.target.value !== '') { onWholesaleMarkupSelect($event.target.value); $event.target.value = ''; }"
+                                        class="h-6 px-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-slate-200/70 dark:bg-slate-700/70 rounded border-0 outline-none cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600"
+                                        title="Quick wholesale presets">
+                                    <option value="">▾</option>
+                                    @foreach (['3','5','8','10','12','15','20','25','30'] as $pct)
+                                    <option value="{{ $pct }}">+{{ $pct }}%</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <p class="{{ $hint }}">{{ __('messages.product_form_wholesale_optional_hint') }}</p>
+                        @error('wholesale_price')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     @endif
 
@@ -298,12 +632,7 @@
                     {{-- Comparison Price (Old Price) --}}
                     <div>
                         <label class="{{ $label }}">{{ __('messages.product_form_old_price') }}</label>
-                        <div class="relative flex rounded-lg">
-                            <span class="inline-flex items-center px-2.5 rounded-l-lg border border-r-0 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 select-none">
-                                {{ $currencySymbol }}
-                            </span>
-                            <input type="number" step="0.01" min="0" name="old_price" value="{{ old('old_price', $product->old_price) }}" class="{{ $inputCurrency }}" placeholder="{{ __('messages.product_form_old_price_placeholder') }}" />
-                        </div>
+                        <input type="number" step="0.01" min="0" name="old_price" value="{{ old('old_price', $product->old_price) }}" class="{{ $input }}" placeholder="{{ __('messages.product_form_old_price_placeholder') }}" />
                         @error('old_price')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                     </div>
 
@@ -587,12 +916,12 @@
         </div>
 
         {{-- RIGHT COLUMN (lg:col-span-4): Inventory, Storage, Media & Smart Tools --}}
-        <div class="lg:col-span-4 space-y-1.5 sm:space-y-2">
+        <div class="product-form-right-col contents lg:block lg:col-span-4 lg:space-y-1.5 sm:space-y-2">
 
             {{-- Smart Auto-SKU & Name Generator Card.
-                 Stays collapsed to a single row until "Auto-generate SKU" is
-                 checked, so it costs no vertical space for hand-typed SKUs. --}}
-            <div class="w-full rounded-lg border border-indigo-200/80 dark:border-indigo-800/80 bg-indigo-50/40 dark:bg-slate-900 shadow-2xs overflow-hidden">
+                 On mobile (<lg), order: -1 brings this card to the very top of the page.
+                 On desktop (lg), it sits at the top of the right column. --}}
+            <div class="product-form-smart-sku w-full rounded-lg border border-indigo-200/80 dark:border-indigo-800/80 bg-indigo-50/40 dark:bg-slate-900 shadow-2xs overflow-hidden">
                 <div class="flex items-center justify-between gap-2 p-2.5 select-none"
                      :class="autoSku ? 'border-b border-indigo-100 dark:border-indigo-900/60' : ''">
                     <div class="flex items-center gap-1.5 min-w-0">
@@ -610,46 +939,191 @@
                 {{-- Generator Body (Only expands when auto_sku is checked) --}}
                 <div x-show="autoSku" x-transition class="space-y-2 p-2.5" x-cloak>
                     {{-- 1. Brand Code — dropdown fed by Master Data → Brands tab --}}
-                    <div class="space-y-1 rounded-md bg-white dark:bg-slate-800/80 p-2 border border-slate-200/80 dark:border-slate-700/80">
+                    <div class="space-y-1 rounded-md bg-white dark:bg-slate-800/80 p-2 border border-slate-200/80 dark:border-slate-700/80"
+                         x-data="{
+                            open: false,
+                            search: '',
+                            get filteredBrands() {
+                                if (!this.search.trim()) return this.brands;
+                                const q = this.search.toLowerCase().trim();
+                                return this.brands.filter(b => 
+                                    (b.name && b.name.toLowerCase().includes(q)) || 
+                                    (b.code && b.code.toLowerCase().includes(q))
+                                );
+                            },
+                            select(id) {
+                                selectedBrand = id;
+                                recomputeSmartSkuAndName();
+                                this.open = false;
+                                this.search = '';
+                            }
+                         }" @click.outside="open = false" @keydown.escape="open = false">
                         <div class="flex items-center justify-between text-[11px]">
                             <span class="font-bold text-slate-700 dark:text-slate-300">{{ __('messages.product_form_smart_brand_code') }}</span>
                             <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'brands']) }}" target="_blank" class="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline font-bold inline-flex items-center gap-0.5">
                                 {{ __('messages.product_form_smart_open_master_data') }} ↗
                             </a>
                         </div>
-                        <select x-model="selectedBrand" @change="recomputeSmartSkuAndName()" x-init="$nextTick(() => $el.value = selectedBrand)" data-test-label="Smart Brand Code" class="{{ $input }} cursor-pointer">
-                            <option value="">{{ __('messages.product_form_smart_brand_code_pick') }}</option>
-                            <template x-for="b in brands" :key="b.id">
-                                <option :value="b.id" x-text="(b.code ? b.code + ' — ' : '') + b.name"></option>
-                            </template>
-                        </select>
-                        <div class="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-900/60 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
-                            <span class="font-mono font-black text-indigo-600 dark:text-indigo-400" x-text="brands.find(b => String(b.id) === String(selectedBrand))?.code || (selectedBrand ? '{{ __('messages.product_form_smart_no_code') }}' : '{{ __('messages.product_form_smart_select_brand_first') }}')"></span>
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[120px]" x-text="brands.find(b => String(b.id) === String(selectedBrand))?.name || ''"></span>
+
+                        <div class="relative">
+                            <button type="button"
+                                    @click="open = !open; if (open) $nextTick(() => $refs.smartBrandSearch?.focus())"
+                                    class="{{ $input }} flex items-center justify-between gap-1 text-left cursor-pointer select-none font-normal"
+                                    :class="selectedBrand ? 'text-slate-900 dark:text-slate-100 font-semibold' : 'text-slate-400 dark:text-slate-500'">
+                                <span class="truncate" x-text="brands.find(b => String(b.id) === String(selectedBrand)) ? (brands.find(b => String(b.id) === String(selectedBrand)).code ? brands.find(b => String(b.id) === String(selectedBrand)).code + ' — ' : '') + brands.find(b => String(b.id) === String(selectedBrand)).name : '{{ __('messages.product_form_smart_brand_code_pick') }}'"></span>
+                                <div class="flex items-center gap-1 shrink-0 ml-1">
+                                    <template x-if="selectedBrand">
+                                        <span @click.stop="select('')" class="text-slate-400 hover:text-rose-500 p-0.5 rounded cursor-pointer transition text-xs leading-none" title="Clear">✕</span>
+                                    </template>
+                                    <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </div>
+                            </button>
+
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl overflow-hidden"
+                                 x-cloak>
+                                <div class="p-1.5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90">
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-slate-400 text-xs">🔍</span>
+                                        <input type="text"
+                                               x-ref="smartBrandSearch"
+                                               x-model="search"
+                                               placeholder="{{ __('messages.search') }}..."
+                                               class="w-full pl-7 pr-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                               @keydown.enter.prevent="if (filteredBrands.length > 0) select(filteredBrands[0].id)" />
+                                    </div>
+                                </div>
+                                <div class="max-h-48 overflow-y-auto p-1 space-y-0.5 text-xs">
+                                    <button type="button" 
+                                            @click="select('')"
+                                            class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                            :class="!selectedBrand ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-500 dark:text-slate-400'">
+                                        <span>-- {{ __('messages.product_form_smart_brand_code_pick') }} --</span>
+                                        <span x-show="!selectedBrand">✓</span>
+                                    </button>
+                                    <template x-for="b in filteredBrands" :key="b.id">
+                                        <button type="button"
+                                                @click="select(b.id)"
+                                                class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                :class="String(selectedBrand) === String(b.id) ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-800 dark:text-slate-200'">
+                                            <span class="truncate" x-text="b.name"></span>
+                                            <span class="flex items-center gap-1 shrink-0 ml-2">
+                                                <span x-show="b.code" class="text-[10px] font-mono font-bold px-1 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800" x-text="b.code"></span>
+                                                <span x-show="String(selectedBrand) === String(b.id)" class="text-violet-600 dark:text-violet-400">✓</span>
+                                            </span>
+                                        </button>
+                                    </template>
+                                    <div x-show="filteredBrands.length === 0" class="py-3 text-center text-xs text-slate-400">
+                                        {{ __('messages.no_results') }}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
+
                     </div>
 
                     {{-- 2. Sub Category Code — dropdown fed by Master Data → Categories tab.
                          Main categories are listed first with their sub-categories beneath. --}}
-                    <div class="space-y-1 rounded-md bg-white dark:bg-slate-800/80 p-2 border border-slate-200/80 dark:border-slate-700/80">
+                    <div class="space-y-1 rounded-md bg-white dark:bg-slate-800/80 p-2 border border-slate-200/80 dark:border-slate-700/80"
+                         x-data="{
+                            open: false,
+                            search: '',
+                            get filteredOptions() {
+                                if (!this.search.trim()) return this.smartCategoryOptions;
+                                const q = this.search.toLowerCase().trim();
+                                return this.smartCategoryOptions.filter(opt => 
+                                    opt.label && opt.label.toLowerCase().includes(q)
+                                );
+                            },
+                            get selectedOptionObj() {
+                                return this.smartCategoryOptions.find(opt => String(opt.id) === String(smartCategoryPick));
+                            },
+                            select(id) {
+                                onSmartCategoryPick(id);
+                                this.open = false;
+                                this.search = '';
+                            }
+                         }" @click.outside="open = false" @keydown.escape="open = false">
                         <div class="flex items-center justify-between text-[11px]">
                             <span class="font-bold text-slate-700 dark:text-slate-300">{{ __('messages.product_form_smart_subcat_code') }}</span>
                             <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'categories']) }}" target="_blank" class="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline font-bold inline-flex items-center gap-0.5">
                                 {{ __('messages.product_form_smart_open_master_data') }} ↗
                             </a>
                         </div>
-                        <select :value="smartCategoryPick" @change="onSmartCategoryPick($event.target.value)" data-test-label="Smart Sub Category Code"
-                                x-init="$nextTick(() => $el.value = smartCategoryPick)"
-                                class="{{ $input }} cursor-pointer">
-                            <option value="">{{ __('messages.product_form_smart_subcat_code_pick') }}</option>
-                            <template x-for="opt in smartCategoryOptions" :key="opt.id">
-                                <option :value="opt.id" x-text="(opt.depth ? '↳ ' : '') + opt.label"></option>
-                            </template>
-                        </select>
-                        <div class="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-900/60 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
-                            <span class="font-mono font-black text-indigo-600 dark:text-indigo-400" x-text="smartCategoryPick ? (categories.find(c => String(c.id) === String(smartCategoryPick))?.code || '{{ __('messages.product_form_smart_no_code') }}') : '{{ __('messages.product_form_smart_select_category_first') }}'"></span>
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[120px]" x-text="categories.find(c => String(c.id) === String(smartCategoryPick))?.name || ''"></span>
+
+                        <div class="relative">
+                            <button type="button"
+                                    @click="open = !open; if (open) $nextTick(() => $refs.smartCatSearch?.focus())"
+                                    class="{{ $input }} flex items-center justify-between gap-1 text-left cursor-pointer select-none font-normal"
+                                    :class="smartCategoryPick ? 'text-slate-900 dark:text-slate-100 font-semibold' : 'text-slate-400 dark:text-slate-500'">
+                                <span class="truncate" x-text="selectedOptionObj ? (selectedOptionObj.depth ? '↳ ' : '') + selectedOptionObj.label : '{{ __('messages.product_form_smart_subcat_code_pick') }}'"></span>
+                                <div class="flex items-center gap-1 shrink-0 ml-1">
+                                    <template x-if="smartCategoryPick">
+                                        <span @click.stop="select('')" class="text-slate-400 hover:text-rose-500 p-0.5 rounded cursor-pointer transition text-xs leading-none" title="Clear">✕</span>
+                                    </template>
+                                    <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </div>
+                            </button>
+
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl overflow-hidden"
+                                 x-cloak>
+                                <div class="p-1.5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90">
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-slate-400 text-xs">🔍</span>
+                                        <input type="text"
+                                               x-ref="smartCatSearch"
+                                               x-model="search"
+                                               placeholder="{{ __('messages.search') }}..."
+                                               class="w-full pl-7 pr-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                               @keydown.enter.prevent="if (filteredOptions.length > 0) select(filteredOptions[0].id)" />
+                                    </div>
+                                </div>
+                                <div class="max-h-52 overflow-y-auto p-1 space-y-0.5 text-xs">
+                                    <button type="button" 
+                                            @click="select('')"
+                                            class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                            :class="!smartCategoryPick ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-500 dark:text-slate-400'">
+                                        <span>-- {{ __('messages.product_form_smart_subcat_code_pick') }} --</span>
+                                        <span x-show="!smartCategoryPick">✓</span>
+                                    </button>
+                                    <template x-for="opt in filteredOptions" :key="opt.id">
+                                        <button type="button"
+                                                @click="select(opt.id)"
+                                                class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                :class="[
+                                                    String(smartCategoryPick) === String(opt.id) ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-800 dark:text-slate-200',
+                                                    opt.depth ? 'pl-5 text-slate-600 dark:text-slate-300 font-normal' : 'font-bold text-slate-900 dark:text-slate-100'
+                                                ]">
+                                            <span class="truncate" x-text="(opt.depth ? '↳ ' : '') + opt.label"></span>
+                                            <span x-show="String(smartCategoryPick) === String(opt.id)" class="text-violet-600 dark:text-violet-400 shrink-0 ml-2">✓</span>
+                                        </button>
+                                    </template>
+                                    <div x-show="filteredOptions.length === 0" class="py-3 text-center text-xs text-slate-400">
+                                        {{ __('messages.no_results') }}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
+
                     </div>
 
                     {{-- 3. Model Code Input --}}
@@ -659,6 +1133,23 @@
                             <span class="text-[9px] text-slate-400 font-medium">{{ __('messages.product_form_type_from_device') }}</span>
                         </div>
                         <input type="text" x-model="productModelCode" @input="recomputeSmartSkuAndName()" data-test-label="Smart Model Code" class="{{ $input }} uppercase text-xs font-mono font-bold" placeholder="{{ __('messages.product_form_smart_model_code_placeholder') }}" />
+                    </div>
+
+                    {{-- 4. Compatible Models Input (Auto-added to Product Name) --}}
+                    <div class="space-y-0.5">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300">{{ __('messages.product_form_compatible_models') }}</label>
+                            <span class="text-[9px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">Auto Name</span>
+                        </div>
+                        <input type="text"
+                               x-model="productCompatibleModels"
+                               @input="recomputeSmartSkuAndName()"
+                               data-test-label="Smart Compatible Models"
+                               class="{{ $input }} text-xs"
+                               placeholder="{{ __('messages.product_form_compatible_models_placeholder') }}" />
+                        <p class="text-[9.5px] text-slate-400 leading-tight">
+                            {{ __('messages.product_form_compatible_models_auto_name_note') }}
+                        </p>
                     </div>
 
                     {{-- 4. Generated SKU & Name Previews --}}
@@ -686,8 +1177,10 @@
                 </div>
             </div>
 
-            {{-- 3. Warehouse, Storage & Stock Card --}}
-            <section class="{{ $section }}">
+            {{-- Lower Right-Column Cards (Warehouse, Media, Warranty, Specs) --}}
+            <div class="product-form-other-cards space-y-1.5 sm:space-y-2">
+                {{-- 3. Warehouse, Storage & Stock Card --}}
+                <section class="{{ $section }}">
                 <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-1">
                     <div class="flex items-center gap-2">
                         <span class="w-6 h-6 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 grid place-items-center text-xs font-bold">
@@ -720,14 +1213,92 @@
                             <label class="{{ $label }} mb-0">{{ __('messages.product_form_shelf_location') }}</label>
                             <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'shelves']) }}" target="_blank" class="text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:underline">Presets</a>
                         </div>
-                        <div class="space-y-1">
-                            <select x-model="productShelfLocation" class="{{ $input }} cursor-pointer text-xs">
-                                <option value="">-- {{ __('messages.product_form_shelf_location_placeholder') }} --</option>
-                                @foreach ($shelfList as $sh)
-                                    <option value="{{ $sh->name }}">{{ $sh->code ? '[' . $sh->code . '] ' : '' }}{{ $sh->name }}</option>
-                                @endforeach
-                            </select>
-                            <input type="text" name="shelf_location" x-model="productShelfLocation" :disabled="isStockless" class="{{ $input }} disabled:cursor-not-allowed disabled:opacity-60" placeholder="{{ __('messages.product_form_shelf_location_placeholder') }}" title="Custom shelf location" />
+                        <div class="space-y-1" x-data="{
+                            open: false,
+                            search: '',
+                            shelves: {{ json_encode($shelfList->map(fn($sh) => ['name' => $sh->name, 'code' => $sh->code ?? ''])->values()) }},
+                            get filteredShelves() {
+                                if (!this.search.trim()) return this.shelves;
+                                const q = this.search.toLowerCase().trim();
+                                return this.shelves.filter(s => 
+                                    (s.name && s.name.toLowerCase().includes(q)) || 
+                                    (s.code && s.code.toLowerCase().includes(q))
+                                );
+                            },
+                            select(name) {
+                                productShelfLocation = name;
+                                this.open = false;
+                                this.search = '';
+                            }
+                        }" @click.outside="open = false" @keydown.escape="open = false">
+                            <input type="hidden" name="shelf_location" :value="productShelfLocation" :disabled="isStockless" />
+                            <div class="relative">
+                                <button type="button" 
+                                        @click="open = !open; if (open) $nextTick(() => $refs.shelfSearch?.focus())"
+                                        class="{{ $input }} flex items-center justify-between gap-1 text-left cursor-pointer select-none font-normal text-xs"
+                                        :class="productShelfLocation ? 'text-slate-900 dark:text-slate-100 font-semibold' : 'text-slate-400 dark:text-slate-500'">
+                                    <span class="truncate" x-text="productShelfLocation || '-- {{ __('messages.product_form_shelf_location_placeholder') }} --'"></span>
+                                    <div class="flex items-center gap-1 shrink-0 ml-1">
+                                        <template x-if="productShelfLocation">
+                                            <span @click.stop="select('')" class="text-slate-400 hover:text-rose-500 p-0.5 rounded cursor-pointer transition text-xs leading-none" title="Clear">✕</span>
+                                        </template>
+                                        <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </div>
+                                </button>
+
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl overflow-hidden"
+                                     x-cloak>
+                                    <div class="p-1.5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90">
+                                        <div class="relative">
+                                            <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-slate-400 text-xs">🔍</span>
+                                            <input type="text"
+                                                   x-ref="shelfSearch"
+                                                   x-model="search"
+                                                   placeholder="{{ __('messages.search') }}..."
+                                                   class="w-full pl-7 pr-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                                   @keydown.enter.prevent="if (filteredShelves.length > 0) { select(filteredShelves[0].name) } else if (search.trim()) { select(search.trim()) }" />
+                                        </div>
+                                    </div>
+                                    <div class="max-h-48 overflow-y-auto p-1 space-y-0.5 text-xs">
+                                        <button type="button" 
+                                                @click="select('')"
+                                                class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                :class="!productShelfLocation ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-500 dark:text-slate-400'">
+                                            <span>-- {{ __('messages.product_form_shelf_location_placeholder') }} --</span>
+                                            <span x-show="!productShelfLocation">✓</span>
+                                        </button>
+                                        <template x-for="sh in filteredShelves" :key="sh.name">
+                                            <button type="button"
+                                                    @click="select(sh.name)"
+                                                    class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                    :class="productShelfLocation === sh.name ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-800 dark:text-slate-200'">
+                                                <span class="truncate" x-text="(sh.code ? '[' + sh.code + '] ' : '') + sh.name"></span>
+                                                <span x-show="productShelfLocation === sh.name" class="text-violet-600 dark:text-violet-400 shrink-0 ml-2">✓</span>
+                                            </button>
+                                        </template>
+                                        <template x-if="search.trim() && !filteredShelves.some(sh => sh.name.toLowerCase() === search.toLowerCase().trim())">
+                                            <button type="button"
+                                                    @click="select(search.trim())"
+                                                    class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100/80 transition cursor-pointer font-semibold">
+                                                <span class="truncate">Use custom: "<span x-text="search.trim()"></span>"</span>
+                                                <span class="text-[10px] bg-blue-200 dark:bg-blue-800 px-1 py-0.5 rounded">↵ Enter</span>
+                                            </button>
+                                        </template>
+                                        <div x-show="filteredShelves.length === 0 && !search.trim()" class="py-3 text-center text-xs text-slate-400">
+                                            {{ __('messages.no_results') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         @error('shelf_location')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                     </div>
@@ -761,13 +1332,85 @@
                     {{-- Supplier --}}
                     <div>
                         <label class="{{ $label }}">{{ __('messages.product_form_supplier') }}</label>
-                        <div class="flex items-stretch gap-1.5">
-                            <select name="supplier_id" x-model="selectedSupplier" x-init="$nextTick(() => $el.value = selectedSupplier)" class="{{ $input }} flex-1 min-w-0 cursor-pointer">
-                                <option value="">{{ __('messages.product_form_none') }}</option>
-                                <template x-for="s in suppliers" :key="s.id">
-                                    <option :value="s.id" x-text="s.name"></option>
-                                </template>
-                            </select>
+                        <div class="flex items-stretch gap-1.5" x-data="{
+                            open: false,
+                            search: '',
+                            get filteredSuppliers() {
+                                if (!this.search.trim()) return this.suppliers;
+                                const q = this.search.toLowerCase().trim();
+                                return this.suppliers.filter(s => s.name && s.name.toLowerCase().includes(q));
+                            },
+                            get selectedSupplierObj() {
+                                return this.suppliers.find(s => String(s.id) === String(selectedSupplier));
+                            },
+                            select(id) {
+                                selectedSupplier = id;
+                                this.open = false;
+                                this.search = '';
+                            }
+                        }" @click.outside="open = false" @keydown.escape="open = false">
+                            <div class="relative flex-1 min-w-0">
+                                <input type="hidden" name="supplier_id" :value="selectedSupplier" />
+
+                                <button type="button" 
+                                        @click="open = !open; if (open) $nextTick(() => $refs.supplierSearch?.focus())"
+                                        class="{{ $input }} flex items-center justify-between gap-1 text-left cursor-pointer select-none font-normal"
+                                        :class="selectedSupplier ? 'text-slate-900 dark:text-slate-100 font-semibold' : 'text-slate-400 dark:text-slate-500'">
+                                    <span class="truncate" x-text="selectedSupplierObj ? selectedSupplierObj.name : '{{ __('messages.product_form_none') }}'"></span>
+                                    <div class="flex items-center gap-1 shrink-0 ml-1">
+                                        <template x-if="selectedSupplier">
+                                            <span @click.stop="select('')" class="text-slate-400 hover:text-rose-500 p-0.5 rounded cursor-pointer transition text-xs leading-none" title="Clear">✕</span>
+                                        </template>
+                                        <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </div>
+                                </button>
+
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl overflow-hidden"
+                                     x-cloak>
+                                    <div class="p-1.5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90">
+                                        <div class="relative">
+                                            <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-slate-400 text-xs">🔍</span>
+                                            <input type="text"
+                                                   x-ref="supplierSearch"
+                                                   x-model="search"
+                                                   placeholder="{{ __('messages.search') }}..."
+                                                   class="w-full pl-7 pr-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                                   @keydown.enter.prevent="if (filteredSuppliers.length > 0) select(filteredSuppliers[0].id)" />
+                                        </div>
+                                    </div>
+                                    <div class="max-h-52 overflow-y-auto p-1 space-y-0.5 text-xs">
+                                        <button type="button" 
+                                                @click="select('')"
+                                                class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                :class="!selectedSupplier ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-500 dark:text-slate-400'">
+                                            <span>-- {{ __('messages.product_form_none') }} --</span>
+                                            <span x-show="!selectedSupplier">✓</span>
+                                        </button>
+                                        <template x-for="s in filteredSuppliers" :key="s.id">
+                                            <button type="button"
+                                                    @click="select(s.id)"
+                                                    class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                    :class="String(selectedSupplier) === String(s.id) ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-800 dark:text-slate-200'">
+                                                <span class="truncate" x-text="s.name"></span>
+                                                <span x-show="String(selectedSupplier) === String(s.id)" class="text-violet-600 dark:text-violet-400 shrink-0 ml-2">✓</span>
+                                            </button>
+                                        </template>
+                                        <div x-show="filteredSuppliers.length === 0" class="py-3 text-center text-xs text-slate-400">
+                                            {{ __('messages.no_results') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <button type="button" @click="supplierModalOpen = true" title="{{ __('messages.product_form_quick_supplier') }}" aria-label="{{ __('messages.product_form_quick_supplier') }}" class="{{ $btn3dPlus }}">
                                 <svg class="w-4 h-4 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                             
@@ -793,20 +1436,20 @@
                     </div>
                 </div>
 
-                <div class="space-y-2">
+                <div class="grid grid-cols-2 gap-1.5 sm:gap-2 items-start">
                     {{-- Main Image --}}
-                    <div>
-                        <label class="{{ $label }}">{{ __('messages.product_form_product_image') }}</label>
-                        <input type="file" name="image" accept="image/*" @change="previewMain($event)" class="{{ $fileInput }}" />
+                    <div class="min-w-0">
+                        <label class="{{ $label }} truncate">{{ __('messages.product_form_product_image') }}</label>
+                        <input type="file" name="image" accept="image/*" @change="previewMain($event)" class="{{ $fileInput }} text-[11px] file:mr-1.5 file:px-2 file:py-1 truncate" />
                         @error('image')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            <img x-show="mainPreview" :src="mainPreview" class="h-20 w-20 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shadow-2xs" />
+                        <div class="mt-1.5 flex flex-wrap gap-1.5">
+                            <img x-show="mainPreview" :src="mainPreview" class="h-16 w-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shadow-2xs" />
                             @if (!$isEdit && !empty($product->image_path))
-                                <img src="{{ asset('storage/' . $product->image_path) }}" class="h-20 w-20 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shadow-2xs" />
+                                <img src="{{ asset('storage/' . $product->image_path) }}" class="h-16 w-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shadow-2xs" />
                             @endif
                             @if ($isEdit && !empty($product->image_path))
-                                <div class="relative h-20 w-20 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
-                                    <img src="{{ asset('storage/' . $product->image_path) }}" class="h-20 w-20 object-cover" />
+                                <div class="relative h-16 w-16 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+                                    <img src="{{ asset('storage/' . $product->image_path) }}" class="h-16 w-16 object-cover" />
                                     <span class="absolute inset-x-0 bottom-0 bg-slate-900/80 py-0.5 text-center text-[9px] font-bold text-white">{{ __('messages.product_form_current_image') }}</span>
                                 </div>
                             @endif
@@ -814,10 +1457,10 @@
                     </div>
 
                     {{-- Gallery Images --}}
-                    <div>
-                        <label class="{{ $label }}">{{ __('messages.product_form_gallery_images') }}</label>
-                        <input type="file" name="gallery_images[]" multiple accept="image/*" @change="previewGallery($event)" class="{{ $fileInput }}" />
-                        <div class="mt-2 flex flex-wrap gap-1.5">
+                    <div class="min-w-0">
+                        <label class="{{ $label }} truncate">{{ __('messages.product_form_gallery_images') }}</label>
+                        <input type="file" name="gallery_images[]" multiple accept="image/*" @change="previewGallery($event)" class="{{ $fileInput }} text-[11px] file:mr-1.5 file:px-2 file:py-1 truncate" />
+                        <div class="mt-1.5 flex flex-wrap gap-1.5">
                             <template x-for="(g, gi) in galleryPreviews" :key="gi">
                                 <img :src="g" class="h-14 w-14 rounded-md object-cover border border-slate-200 dark:border-slate-700 shadow-2xs" />
                             </template>
@@ -841,27 +1484,27 @@
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <label class="flex items-center justify-between p-2 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/70 transition">
-                        <div class="flex items-center gap-2">
-                            <span>⭐</span>
-                            <div>
-                                <div class="text-xs font-black text-slate-900 dark:text-white">{{ __('messages.product_form_featured') }}</div>
-                                <div class="text-[10px] text-slate-400">Show on homepage featured deals</div>
+                <div class="grid grid-cols-2 gap-1.5 sm:gap-2">
+                    <label class="flex items-center justify-between p-2 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/70 transition min-w-0">
+                        <div class="flex items-center gap-1.5 min-w-0 pr-1">
+                            <span class="shrink-0 text-sm">⭐</span>
+                            <div class="min-w-0">
+                                <div class="text-xs font-black text-slate-900 dark:text-white truncate">{{ __('messages.product_form_featured') }}</div>
+                                <div class="text-[9.5px] text-slate-400 truncate leading-tight">Show on homepage</div>
                             </div>
                         </div>
-                        <input type="checkbox" name="is_featured" value="1" id="is_featured" {{ old('is_featured', $product->is_featured) ? 'checked' : '' }} class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer" />
+                        <input type="checkbox" name="is_featured" value="1" id="is_featured" {{ old('is_featured', $product->is_featured) ? 'checked' : '' }} class="h-4 w-4 shrink-0 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer" />
                     </label>
 
-                    <label class="flex items-center justify-between p-2 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/70 transition">
-                        <div class="flex items-center gap-2">
-                            <span>🌐</span>
-                            <div>
-                                <div class="text-xs font-black text-slate-900 dark:text-white">{{ __('messages.product_form_sell_online') }}</div>
-                                <div class="text-[10px] text-slate-400">{{ __('messages.product_form_sell_online_hint') }}</div>
+                    <label class="flex items-center justify-between p-2 rounded-lg border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/70 transition min-w-0">
+                        <div class="flex items-center gap-1.5 min-w-0 pr-1">
+                            <span class="shrink-0 text-sm">🌐</span>
+                            <div class="min-w-0">
+                                <div class="text-xs font-black text-slate-900 dark:text-white truncate">{{ __('messages.product_form_sell_online') }}</div>
+                                <div class="text-[9.5px] text-slate-400 truncate leading-tight">{{ __('messages.product_form_sell_online_hint') }}</div>
                             </div>
                         </div>
-                        <div>
+                        <div class="shrink-0">
                             <input type="hidden" name="is_ecommerce" value="0" />
                             <input type="checkbox" name="is_ecommerce" value="1" id="is_ecommerce" {{ old('is_ecommerce', $product->is_ecommerce ?? true) ? 'checked' : '' }} class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" />
                         </div>
@@ -870,6 +1513,7 @@
             </section>
         </div>
     </div>
+</div>
 
     {{-- Progressive Disclosure Accordion: Advanced Details (Description, Warranty, Policy, SEO, Previews) --}}
     <div x-data="{ expandedAdvanced: {{ ($isEdit && (!empty($product->description) || !empty($product->meta_description) || !empty($product->warranty) || !empty($product->return_policy))) || $errors->has('description') || $errors->has('warranty') || $errors->has('return_policy') || $errors->has('meta_description') ? 'true' : 'false' }} }"
@@ -948,15 +1592,97 @@
                         <label class="{{ $label }} mb-0">{{ __('messages.product_form_warranty') }}</label>
                         <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'warranties']) }}" target="_blank" class="text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline">Presets</a>
                     </div>
-                    <div class="space-y-1">
-                        <select x-model="productWarranty" class="{{ $input }} cursor-pointer text-xs">
-                            <option value="">-- {{ __('messages.product_form_warranty_placeholder') }} --</option>
-                            @foreach ($warrantyList as $w)
-                                <option value="{{ $w->name }}">{{ $w->name }}</option>
-                            @endforeach
-                        </select>
-                        <input type="text" name="warranty" x-model="productWarranty" class="{{ $input }}" placeholder="{{ __('messages.product_form_warranty_placeholder') }}" title="Custom warranty" />
+                    <div class="space-y-1" x-data="{
+                        open: false,
+                        search: '',
+                        warranties: {{ json_encode($warrantyList->map(fn($w) => ['name' => $w->name, 'content' => $w->content ?? ''])->values()) }},
+                        get filteredWarranties() {
+                            if (!this.search.trim()) return this.warranties;
+                            const q = this.search.toLowerCase().trim();
+                            return this.warranties.filter(w => 
+                                (w.name && w.name.toLowerCase().includes(q)) || 
+                                (w.content && w.content.toLowerCase().includes(q))
+                            );
+                        },
+                        select(name) {
+                            productWarranty = name;
+                            this.open = false;
+                            this.search = '';
+                        }
+                    }" @click.outside="open = false" @keydown.escape="open = false">
+                        <input type="hidden" name="warranty" :value="productWarranty" />
+                        <div class="relative">
+                            <button type="button" 
+                                    @click="open = !open; if (open) $nextTick(() => $refs.warrantySearch?.focus())"
+                                    class="{{ $input }} flex items-center justify-between gap-1 text-left cursor-pointer select-none font-normal text-xs"
+                                    :class="productWarranty ? 'text-slate-900 dark:text-slate-100 font-semibold' : 'text-slate-400 dark:text-slate-500'">
+                                <span class="truncate" x-text="productWarranty || '-- {{ __('messages.product_form_warranty_placeholder') }} --'"></span>
+                                <div class="flex items-center gap-1 shrink-0 ml-1">
+                                    <template x-if="productWarranty">
+                                        <span @click.stop="select('')" class="text-slate-400 hover:text-rose-500 p-0.5 rounded cursor-pointer transition text-xs leading-none" title="Clear">✕</span>
+                                    </template>
+                                    <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </div>
+                            </button>
+
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl overflow-hidden"
+                                 x-cloak>
+                                <div class="p-1.5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90">
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-slate-400 text-xs">🔍</span>
+                                        <input type="text"
+                                               x-ref="warrantySearch"
+                                               x-model="search"
+                                               placeholder="{{ __('messages.search') }}..."
+                                               class="w-full pl-7 pr-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                               @keydown.enter.prevent="if (filteredWarranties.length > 0) { select(filteredWarranties[0].name) } else if (search.trim()) { select(search.trim()) }" />
+                                    </div>
+                                </div>
+                                <div class="max-h-52 overflow-y-auto p-1 space-y-0.5 text-xs">
+                                    <button type="button" 
+                                            @click="select('')"
+                                            class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                            :class="!productWarranty ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-500 dark:text-slate-400'">
+                                        <span>-- {{ __('messages.product_form_warranty_placeholder') }} --</span>
+                                        <span x-show="!productWarranty">✓</span>
+                                    </button>
+                                    <template x-for="w in filteredWarranties" :key="w.name">
+                                        <button type="button"
+                                                @click="select(w.name)"
+                                                class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                :class="productWarranty === w.name ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-800 dark:text-slate-200'">
+                                            <div class="min-w-0 pr-1">
+                                                <div class="truncate font-semibold" x-text="w.name"></div>
+                                                <div x-show="w.content" class="text-[10px] text-slate-400 truncate" x-text="w.content"></div>
+                                            </div>
+                                            <span x-show="productWarranty === w.name" class="text-violet-600 dark:text-violet-400 shrink-0 ml-2">✓</span>
+                                        </button>
+                                    </template>
+                                    <template x-if="search.trim() && !filteredWarranties.some(w => w.name.toLowerCase() === search.toLowerCase().trim())">
+                                        <button type="button"
+                                                @click="select(search.trim())"
+                                                class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100/80 transition cursor-pointer font-semibold">
+                                            <span class="truncate">Use custom: "<span x-text="search.trim()"></span>"</span>
+                                            <span class="text-[10px] bg-blue-200 dark:bg-blue-800 px-1 py-0.5 rounded">↵ Enter</span>
+                                        </button>
+                                    </template>
+                                    <div x-show="filteredWarranties.length === 0 && !search.trim()" class="py-3 text-center text-xs text-slate-400">
+                                        {{ __('messages.no_results') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                    @error('warranty')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                 </div>
 
                 {{-- Return Policy --}}
@@ -965,13 +1691,98 @@
                         <label class="{{ $label }} mb-0">{{ __('messages.product_form_return_policy') }}</label>
                         <a href="{{ route('store.admin.products.master-data', ['store_slug' => $store->slug, 'tab' => 'return-policies']) }}" target="_blank" class="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline">Presets</a>
                     </div>
-                    <select @change="if($event.target.value){ let el = document.getElementById('product_return_policy_input'); if(el){ el.value = $event.target.value; el.dispatchEvent(new Event('input')); } }" class="{{ $input }} cursor-pointer text-xs mb-1">
-                        <option value="">-- {{ __('messages.product_form_fill_template') }} --</option>
-                        @foreach ($returnPolicyList as $rp)
-                            <option value="{{ addslashes($rp->content) }}">📋 {{ $rp->name }}</option>
-                        @endforeach
-                    </select>
-                    <textarea name="return_policy" id="product_return_policy_input" rows="2" @input="refreshReturnPolicyPreview()" class="{{ $input }}" placeholder="{{ __('messages.product_form_return_policy_placeholder') }}">{{ old('return_policy', $product->return_policy) }}</textarea>
+                    <div class="space-y-1" x-data="{
+                        open: false,
+                        search: '',
+                        policies: {{ json_encode($returnPolicyList->map(fn($rp) => ['name' => $rp->name, 'content' => $rp->content ?? ''])->values()) }},
+                        get filteredPolicies() {
+                            if (!this.search.trim()) return this.policies;
+                            const q = this.search.toLowerCase().trim();
+                            return this.policies.filter(p => 
+                                (p.name && p.name.toLowerCase().includes(q)) || 
+                                (p.content && p.content.toLowerCase().includes(q))
+                            );
+                        },
+                        select(name) {
+                            productReturnPolicy = name;
+                            returnPolicyPreview = name;
+                            this.open = false;
+                            this.search = '';
+                        }
+                    }" @click.outside="open = false" @keydown.escape="open = false">
+                        <input type="hidden" name="return_policy" :value="productReturnPolicy" />
+                        <div class="relative">
+                            <button type="button" 
+                                    @click="open = !open; if (open) $nextTick(() => $refs.policySearch?.focus())"
+                                    class="{{ $input }} flex items-center justify-between gap-1 text-left cursor-pointer select-none font-normal text-xs"
+                                    :class="productReturnPolicy ? 'text-slate-900 dark:text-slate-100 font-semibold' : 'text-slate-400 dark:text-slate-500'">
+                                <span class="truncate" x-text="productReturnPolicy || '-- {{ __('messages.product_form_return_policy_placeholder') }} --'"></span>
+                                <div class="flex items-center gap-1 shrink-0 ml-1">
+                                    <template x-if="productReturnPolicy">
+                                        <span @click.stop="select('')" class="text-slate-400 hover:text-rose-500 p-0.5 rounded cursor-pointer transition text-xs leading-none" title="Clear">✕</span>
+                                    </template>
+                                    <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </div>
+                            </button>
+
+                            <div x-show="open" 
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl overflow-hidden"
+                                 x-cloak>
+                                <div class="p-1.5 border-b border-slate-100 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/90">
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-slate-400 text-xs">🔍</span>
+                                        <input type="text"
+                                               x-ref="policySearch"
+                                               x-model="search"
+                                               placeholder="{{ __('messages.search') }}..."
+                                               class="w-full pl-7 pr-2 py-1 text-xs rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                                               @keydown.enter.prevent="if (filteredPolicies.length > 0) { select(filteredPolicies[0].name) } else if (search.trim()) { select(search.trim()) }" />
+                                    </div>
+                                </div>
+                                <div class="max-h-52 overflow-y-auto p-1 space-y-0.5 text-xs">
+                                    <button type="button" 
+                                            @click="select('')"
+                                            class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                            :class="!productReturnPolicy ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-500 dark:text-slate-400'">
+                                        <span>-- {{ __('messages.product_form_return_policy_placeholder') }} --</span>
+                                        <span x-show="!productReturnPolicy">✓</span>
+                                    </button>
+                                    <template x-for="p in filteredPolicies" :key="p.name">
+                                        <button type="button"
+                                                @click="select(p.name)"
+                                                class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/50 transition cursor-pointer"
+                                                :class="productReturnPolicy === p.name ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-bold' : 'text-slate-800 dark:text-slate-200'">
+                                            <div class="min-w-0 pr-1">
+                                                <div class="truncate font-semibold" x-text="p.name"></div>
+                                                <div x-show="p.content" class="text-[10px] text-slate-400 truncate" x-text="p.content"></div>
+                                            </div>
+                                            <span x-show="productReturnPolicy === p.name" class="text-violet-600 dark:text-violet-400 shrink-0 ml-2">✓</span>
+                                        </button>
+                                    </template>
+                                    <template x-if="search.trim() && !filteredPolicies.some(p => p.name.toLowerCase() === search.toLowerCase().trim())">
+                                        <button type="button"
+                                                @click="select(search.trim())"
+                                                class="w-full text-left px-2 py-1.5 rounded-sm flex items-center justify-between border-b border-blue-200/80 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100/80 transition cursor-pointer font-semibold">
+                                            <span class="truncate">Use custom: "<span x-text="search.trim()"></span>"</span>
+                                            <span class="text-[10px] bg-blue-200 dark:bg-blue-800 px-1 py-0.5 rounded">↵ Enter</span>
+                                        </button>
+                                    </template>
+                                    <div x-show="filteredPolicies.length === 0 && !search.trim()" class="py-3 text-center text-xs text-slate-400">
+                                        {{ __('messages.no_results') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @error('return_policy')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                 </div>
 
                 {{-- Long Description with Rich Text Editor --}}

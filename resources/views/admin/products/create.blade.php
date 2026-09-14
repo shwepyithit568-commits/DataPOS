@@ -60,13 +60,23 @@
             'image_preview' => null,
             'remove_image' => false,
         ])->values()) }},
+        purchaseCost: '{{ old('purchase_cost', $product->purchase_cost ?? '') }}',
         marginRetail: '{{ old('retail_price') }}',
-        marginWhole: '{{ old('wholesale_price') }}',
+        retailMarkup: '',
+        retailCustom: false,
+        wholesaleMarkup: '',
+        wholesaleCustom: false,
+        retailPresets: ['5','10','15','20','25','30','35','40','50','60','70','80','100'],
+        wholesalePresets: ['3','5','8','10','12','15','20','25','30'],
+        init() {
+            this.initPricing();
+        },
         mainPreview: null,
         galleryPreviews: [],
         // Storefront preview bindings (mirror app/Support/ProductSpecifications.php)
         productSku: '{{ old('sku', $product->sku) }}',
         productWarranty: '{{ old('warranty', $product->warranty) }}',
+        productReturnPolicy: {{ json_encode(old('return_policy', $product->return_policy ?? '')) }},
         productStock: '{{ old('stock_status', $product->stock_status) }}',
         recomputeSmartSkuAndName() {
             if (!this.autoSku) return;
@@ -79,9 +89,9 @@
             const activeCatObj = subCatObj || mainCatObj;
             
             // Brand Code & Sub Category Code from Master Data
-            const brandCode = (brandObj ? (brandObj.code || brandObj.name || '') : '').toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
-            const model = (this.productModelCode || '').toUpperCase().trim().replace(/[^A-Z0-9\-_]/g, '');
-            const subCatCode = (activeCatObj ? (activeCatObj.code || activeCatObj.name || '') : '').toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
+            const brandCode = (brandObj ? (brandObj.code || brandObj.name || '') : '').trim().replace(/[^A-Za-z0-9 _\-\/]/g, '');
+            const model = (this.productModelCode || '').trim().replace(/[^A-Za-z0-9 _\-\/]/g, '');
+            const subCatCode = (activeCatObj ? (activeCatObj.code || activeCatObj.name || '') : '').trim().replace(/[^A-Za-z0-9 _\-\/]/g, '');
             
             // 1. Auto SKU: Brand Code + Model + Sub Category Code
             const parts = [];
@@ -104,7 +114,11 @@
             }
             if (this.productCompatibleModels && this.productCompatibleModels.trim()) {
                 let comp = this.productCompatibleModels.trim();
-                nameParts.push(comp.startsWith('(') && comp.endsWith(')') ? comp : '(' + comp + ')');
+                if (comp.startsWith('-') || comp.startsWith('(')) {
+                    nameParts.push(comp);
+                } else {
+                    nameParts.push('- ' + comp);
+                }
             }
             if (subCatNamePart) nameParts.push(subCatNamePart);
             
@@ -114,11 +128,10 @@
         },
         // Return-policy preview + meta-length counter read the DOM (no string
         // embedding in this double-quoted x-data attribute).
-        returnPolicyPreview: null,
+        returnPolicyPreview: {{ json_encode(old('return_policy', $product->return_policy ?? '')) }},
         metaDescLen: {{ mb_strlen(old('meta_description', $product->meta_description ?? '')) }},
         refreshReturnPolicyPreview() {
-            const ta = document.querySelector('textarea[name=return_policy]');
-            this.returnPolicyPreview = ta && ta.value.trim() ? ta.value.trim() : null;
+            this.returnPolicyPreview = this.productReturnPolicy && this.productReturnPolicy.trim() ? this.productReturnPolicy.trim() : null;
         },
         descriptionPreviewHtml: {{ json_encode(\App\Support\SafeHtml::sanitize(old('description', $product->description))) }},
         refreshDescriptionPreview() {
@@ -156,9 +169,160 @@
             if (skus.length) rows.push({ label: '{{ __('messages.spec_variant_sku') }}', value: skus.join(', ') });
             return rows;
         },
+        initPricing() {
+            const cost = parseFloat(this.purchaseCost);
+            const retail = parseFloat(this.marginRetail);
+            const whole = parseFloat(this.marginWhole);
+
+            // Read remembered default markup from localStorage
+            try {
+                const savedRetail = localStorage.getItem('datapos_default_retail_markup');
+                if (savedRetail && !this.retailMarkup) {
+                    this.retailMarkup = savedRetail;
+                }
+                const savedWholesale = localStorage.getItem('datapos_default_wholesale_markup');
+                if (savedWholesale && !this.wholesaleMarkup) {
+                    this.wholesaleMarkup = savedWholesale;
+                }
+            } catch (e) {}
+
+            if (cost > 0 && retail > 0) {
+                this.retailMarkup = (Math.round(((retail - cost) / cost) * 100 * 10) / 10).toString();
+            } else if (cost > 0 && this.retailMarkup) {
+                this.applyRetailMarkup();
+            }
+
+            if (cost > 0 && whole > 0) {
+                this.wholesaleMarkup = (Math.round(((whole - cost) / cost) * 100 * 10) / 10).toString();
+            } else if (cost > 0 && this.wholesaleMarkup) {
+                this.applyWholesaleMarkup();
+            }
+
+            if (this.retailMarkup) {
+                this.retailCustom = !this.retailPresets.includes(this.retailMarkup);
+            }
+            if (this.wholesaleMarkup) {
+                this.wholesaleCustom = !this.wholesalePresets.includes(this.wholesaleMarkup);
+            }
+        },
+        onRetailMarkupSelect(val) {
+            if (val === 'custom') {
+                this.retailCustom = true;
+                this.$nextTick(() => {
+                    this.$refs.retailMarkupInput?.focus();
+                    this.$refs.retailMarkupInput?.select();
+                });
+                return;
+            }
+            if (val !== '') {
+                this.retailMarkup = val;
+                this.retailCustom = false;
+                try {
+                    localStorage.setItem('datapos_default_retail_markup', val);
+                } catch (e) {}
+                this.applyRetailMarkup();
+            }
+        },
+        onRetailMarkupInput(val) {
+            this.retailMarkup = val;
+            if (val !== '' && !isNaN(parseFloat(val))) {
+                try {
+                    localStorage.setItem('datapos_default_retail_markup', val);
+                } catch (e) {}
+                this.applyRetailMarkup();
+            }
+        },
+        onWholesaleMarkupSelect(val) {
+            if (val === 'custom') {
+                this.wholesaleCustom = true;
+                this.$nextTick(() => {
+                    this.$refs.wholesaleMarkupInput?.focus();
+                    this.$refs.wholesaleMarkupInput?.select();
+                });
+                return;
+            }
+            if (val !== '') {
+                this.wholesaleMarkup = val;
+                this.wholesaleCustom = false;
+                try {
+                    localStorage.setItem('datapos_default_wholesale_markup', val);
+                } catch (e) {}
+                this.applyWholesaleMarkup();
+            }
+        },
+        onWholesaleMarkupInput(val) {
+            this.wholesaleMarkup = val;
+            if (val !== '' && !isNaN(parseFloat(val))) {
+                try {
+                    localStorage.setItem('datapos_default_wholesale_markup', val);
+                } catch (e) {}
+                this.applyWholesaleMarkup();
+            }
+        },
+        onPurchaseCostInput() {
+            const cost = parseFloat(this.purchaseCost);
+            if (cost > 0) {
+                if (this.retailMarkup !== '' && !isNaN(parseFloat(this.retailMarkup))) {
+                    this.applyRetailMarkup();
+                } else if (parseFloat(this.marginRetail) > 0) {
+                    const calculated = (Math.round(((parseFloat(this.marginRetail) - cost) / cost) * 100 * 10) / 10).toString();
+                    this.retailMarkup = calculated;
+                    this.retailCustom = !this.retailPresets.includes(calculated);
+                }
+                if (this.wholesaleMarkup !== '' && !isNaN(parseFloat(this.wholesaleMarkup))) {
+                    this.applyWholesaleMarkup();
+                } else if (parseFloat(this.marginWhole) > 0) {
+                    const calculated = (Math.round(((parseFloat(this.marginWhole) - cost) / cost) * 100 * 10) / 10).toString();
+                    this.wholesaleMarkup = calculated;
+                    this.wholesaleCustom = !this.wholesalePresets.includes(calculated);
+                }
+            }
+        },
+        onRetailInput() {
+            const cost = parseFloat(this.purchaseCost);
+            const retail = parseFloat(this.marginRetail);
+            if (cost > 0 && retail > 0) {
+                const calculated = (Math.round(((retail - cost) / cost) * 100 * 10) / 10).toString();
+                this.retailMarkup = calculated;
+                this.retailCustom = !this.retailPresets.includes(calculated);
+            }
+        },
+        applyRetailMarkup() {
+            const cost = parseFloat(this.purchaseCost);
+            const markup = parseFloat(this.retailMarkup);
+            if (cost > 0 && !isNaN(markup)) {
+                this.marginRetail = Math.round(cost * (1 + (markup / 100))).toString();
+            }
+        },
+        setRetailMarkupPct(pct) {
+            this.onRetailMarkupSelect(pct.toString());
+        },
+        onWholesaleInput() {
+            const cost = parseFloat(this.purchaseCost);
+            const whole = parseFloat(this.marginWhole);
+            if (cost > 0 && whole > 0) {
+                const calculated = (Math.round(((whole - cost) / cost) * 100 * 10) / 10).toString();
+                this.wholesaleMarkup = calculated;
+                this.wholesaleCustom = !this.wholesalePresets.includes(calculated);
+            }
+        },
+        applyWholesaleMarkup() {
+            const cost = parseFloat(this.purchaseCost);
+            const markup = parseFloat(this.wholesaleMarkup);
+            if (cost > 0 && !isNaN(markup)) {
+                this.marginWhole = Math.round(cost * (1 + (markup / 100))).toString();
+            }
+        },
+        setWholesaleMarkupPct(pct) {
+            this.onWholesaleMarkupSelect(pct.toString());
+        },
         get marginPercent() {
             const r = parseFloat(this.marginRetail);
             if (!r || r <= 0) return 0;
+            const c = parseFloat(this.purchaseCost);
+            if (c > 0) {
+                return Math.round(((r - c) / r) * 100);
+            }
             // Blank wholesale means the same as retail (see the field hint) → 0%.
             const raw = this.marginWhole === null || this.marginWhole === undefined ? '' : String(this.marginWhole).trim();
             const w = raw === '' ? r : parseFloat(raw);

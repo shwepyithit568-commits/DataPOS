@@ -152,13 +152,14 @@ class CategoryController extends Controller
             return response()->streamDownload(function () use ($categories) {
                 $stream = fopen('php://output', 'w');
                 fwrite($stream, "\xEF\xBB\xBF");
-                fputcsv($stream, ['Name', 'Slug', 'Parent', 'Description', 'Icon']);
+                fputcsv($stream, ['Name', 'Short Code (for Auto-SKU)', 'Parent', 'Slug', 'Description', 'Icon']);
 
                 foreach ($categories as $category) {
                     fputcsv($stream, [
                         $this->csvCell($category->name),
-                        $this->csvCell($category->slug),
+                        $this->csvCell($category->code ?? ''),
                         $this->csvCell($category->parent?->name ?? ''),
+                        $this->csvCell($category->slug),
                         $this->csvCell($category->description ?? ''),
                         $this->csvCell($category->icon ?? ''),
                     ]);
@@ -181,26 +182,47 @@ class CategoryController extends Controller
         $sheet->getStyle('A2')->getFont()->setSize(10)->getColor()->setRGB('64748B');
 
         $row = 4;
-        $headers = ['A' => 'Name', 'B' => 'Slug', 'C' => 'Parent', 'D' => 'Description', 'E' => 'Icon'];
+        $headers = [
+            'A' => 'Name',
+            'B' => 'Short Code (for Auto-SKU)',
+            'C' => 'Parent',
+            'D' => 'Slug',
+            'E' => 'Description',
+            'F' => 'Icon',
+        ];
         foreach ($headers as $col => $title) {
             $sheet->setCellValue("{$col}{$row}", $title);
         }
-        $sheet->getStyle("A{$row}:E{$row}")->applyFromArray([
+        $sheet->getStyle("A{$row}:F{$row}")->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 10],
             'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '6D28D9']],
+            'alignment' => ['vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER],
         ]);
+        $sheet->getRowDimension($row)->setRowHeight(24);
 
         $row++;
         foreach ($categories as $cat) {
             $sheet->setCellValue("A{$row}", $cat->name);
-            $sheet->setCellValue("B{$row}", $cat->slug);
+            $sheet->setCellValue("B{$row}", $cat->code ?? '');
             $sheet->setCellValue("C{$row}", $cat->parent?->name ?? '');
-            $sheet->setCellValue("D{$row}", $cat->description ?? '');
-            $sheet->setCellValue("E{$row}", $cat->icon ?? '');
+            $sheet->setCellValue("D{$row}", $cat->slug);
+            $sheet->setCellValue("E{$row}", $cat->description ?? '');
+            $sheet->setCellValue("F{$row}", $cat->icon ?? '');
+
+            if ($row % 2 === 0) {
+                $sheet->getStyle("A{$row}:F{$row}")->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F8FAFC']],
+                ]);
+            }
             $row++;
         }
 
-        foreach (range('A', 'E') as $col) {
+        $lastRow = max(4, $row - 1);
+        $sheet->getStyle("A4:F{$lastRow}")->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['rgb' => 'E2E8F0']]],
+        ]);
+
+        foreach (range('A', 'F') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -314,9 +336,9 @@ class CategoryController extends Controller
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->setTitle('Categories');
             $sheet->fromArray([
-                ['name', 'slug', 'parent', 'description', 'icon'],
-                ['Mobile Phones', 'mobile-phones', '', 'Smartphones and accessories', '📱'],
-                ['iPhone Cases', 'iphone-cases', 'Mobile Phones', 'Cases for iPhone models', ''],
+                ['name', 'code', 'parent', 'slug', 'description', 'icon'],
+                ['Mobile Phones', 'PHN', '', 'mobile-phones', 'Smartphones and accessories', '📱'],
+                ['iPhone Cases', 'CAS', 'Mobile Phones', 'iphone-cases', 'Cases for iPhone models', ''],
             ]);
 
             $instructionSheet = $spreadsheet->createSheet();
@@ -324,7 +346,8 @@ class CategoryController extends Controller
             $instructionSheet->fromArray([
                 ['Instruction', 'Value'],
                 ['Required columns', 'name'],
-                ['Optional columns', 'slug, parent, description, icon'],
+                ['Optional columns', 'code, slug, parent, description, icon'],
+                ['code column', 'Short Code for Auto-SKU generation (e.g. PHN, CAS, AUD). Optional.'],
                 ['parent column', 'Name or slug of an existing (or same-file) Main category. Leave blank for a Main category.'],
                 ['Tree depth', 'Only two levels: Main categories and their Sub-categories.'],
                 ['Duplicate rule', 'Categories are matched by slug, then by name (case-insensitive). Existing categories are skipped or updated depending on the chosen strategy.'],
