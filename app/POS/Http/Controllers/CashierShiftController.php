@@ -43,7 +43,7 @@ class CashierShiftController extends Controller
         $store = $context->getStore();
         $user = auth()->user();
 
-        $shiftsEnabled = $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS);
+        $shiftsEnabled = $store->hasCapability(Capability::OPERATIONS_CASHIER_SHIFTS);
 
         // Only the cashier's OWN open shift is shown when shift tracking is enabled.
         $openShift = $shiftsEnabled ? $this->shifts->openShiftFor($store, $user) : null;
@@ -155,7 +155,7 @@ class CashierShiftController extends Controller
         $amount = (float) $data['amount'];
         $paymentMethod = $data['payment_method'];
 
-        $shiftsEnabled = $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS);
+        $shiftsEnabled = $store->hasCapability(Capability::OPERATIONS_CASHIER_SHIFTS);
         $openShift = null;
         if ($paymentMethod === 'cash' && $shiftsEnabled) {
             $openShift = $this->shifts->openShiftFor($store, auth()->user());

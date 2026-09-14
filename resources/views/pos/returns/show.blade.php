@@ -28,6 +28,13 @@
         </div>
 
         <div class="flex items-center gap-1.5 self-start sm:self-auto shrink-0">
+            <a href="{{ route('pos.returns.print', [...$storeRouteParams, 'return' => $return->id]) }}"
+               target="_blank"
+               rel="noopener"
+               class="h-7 px-3 rounded-md bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition inline-flex items-center gap-1.5 shadow-2xs hover:shadow-sky-500/20 active:scale-95 cursor-pointer">
+                <span>🖨️</span>
+                <span>{{ __('messages.print') }}</span>
+            </a>
             <a href="{{ route('pos.returns.index', $storeRouteParams) }}"
                class="h-7 px-2.5 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition inline-flex items-center gap-1 border border-slate-200/60 dark:border-slate-700 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>

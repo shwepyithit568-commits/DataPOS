@@ -962,6 +962,8 @@ Route::prefix('store/{store_slug}')
             Route::post('/purchases', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'store'])->name('pos.purchases.store')->middleware('store.permission:purchases.create');
             Route::get('/purchases/returns', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'returnsIndex'])->name('pos.purchases.returns')->middleware('store.permission:purchase_returns.view');
             Route::get('/purchases/returns/export', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'returnsExport'])->name('pos.purchases.returns.export')->middleware('store.permission:purchase_returns.view');
+            Route::get('/purchases/returns/{purchaseReturn}', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'returnsShow'])->name('pos.purchases.returns.show')->middleware('store.permission:purchase_returns.view');
+            Route::get('/purchases/returns/{purchaseReturn}/print', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'returnsPrint'])->name('pos.purchases.returns.print')->middleware('store.permission:purchase_returns.view');
             Route::get('/purchases/{purchaseOrder}', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'show'])->name('pos.purchases.show')->middleware('store.permission:purchases.view');
             Route::get('/purchases/{purchaseOrder}/edit', [\App\POS\Http\Controllers\PurchaseOrderController::class, 'edit'])
                 ->name('pos.purchases.edit')
@@ -1003,6 +1005,7 @@ Route::prefix('store/{store_slug}')
             Route::get('/returns/export', [\App\Http\Controllers\POS\ReturnsController::class, 'export'])->name('pos.returns.export')->middleware('store.permission:pos_returns.view');
             Route::get('/returns/new', [\App\Http\Controllers\POS\ReturnsController::class, 'create'])->name('pos.returns.create')->middleware('store.permission:pos_returns.create');
             Route::get('/returns/{return}', [\App\Http\Controllers\POS\ReturnsController::class, 'show'])->name('pos.returns.show')->middleware('store.permission:pos_returns.view');
+            Route::get('/returns/{return}/print', [\App\Http\Controllers\POS\ReturnsController::class, 'print'])->name('pos.returns.print')->middleware('store.permission:pos_returns.view');
 
             // Opening stock (MVP Phase 2) — staff submits, manager approves → opening_balance ledger.
             Route::get('/opening-stock', [\App\POS\Http\Controllers\OpeningStockController::class, 'index'])->name('pos.opening-stock.index')->middleware('store.permission:opening_stock.view');

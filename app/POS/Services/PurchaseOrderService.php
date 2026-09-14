@@ -45,7 +45,9 @@ class PurchaseOrderService
         protected InventoryService $inventory,
         protected StoreLocationService $storeLocations,
         protected GoodsReceiptService $receipts,
+        protected ?PurchasePriceAdjustmentService $priceAdjustments = null,
     ) {
+        $this->priceAdjustments ??= app(PurchasePriceAdjustmentService::class);
     }
 
     /* ------------------------------------------------------------------ */
@@ -67,6 +69,7 @@ class PurchaseOrderService
         User $actor = null,
         array $payment = [],
         array $adjustments = [],
+        array $priceUpdates = [],
     ): PurchaseOrder {
         if (empty($items)) {
             throw new InventoryException('A purchase order needs at least one line.');
@@ -145,7 +148,7 @@ class PurchaseOrderService
         }
         $remainingBalance = bcsub($totalCost, $paidAmount, 2);
 
-        return DB::transaction(function () use ($store, $normalized, $totalQuantity, $subtotal, $discountAmount, $deliveryFee, $voucherImages, $totalCost, $supplierId, $reference, $notes, $actor, $paymentStatus, $paidAmount, $remainingBalance) {
+        return DB::transaction(function () use ($store, $normalized, $totalQuantity, $subtotal, $discountAmount, $deliveryFee, $voucherImages, $totalCost, $supplierId, $reference, $notes, $actor, $paymentStatus, $paidAmount, $remainingBalance, $priceUpdates) {
             $po = PurchaseOrder::create([
                 'store_id' => $store->id,
                 'branch_id' => $this->storeLocations->defaultBranch($store)->id,
@@ -177,6 +180,10 @@ class PurchaseOrderService
                     'unit_cost' => $line['unit_cost'],
                     'line_total' => $line['line_total'],
                 ]);
+            }
+
+            if (! empty($priceUpdates)) {
+                $this->priceAdjustments->applyPriceUpdatesWithinTransaction($store, $po, $priceUpdates, $actor);
             }
 
             // Paid-up-front at creation: immediately credit the supplier.
@@ -642,6 +649,10 @@ class PurchaseOrderService
                     'unit_cost' => $line['unit_cost'],
                     'line_total' => $line['line_total'],
                 ]);
+            }
+
+            if (! empty($data['price_updates'])) {
+                $this->priceAdjustments->applyPriceUpdatesWithinTransaction($store, $po, $data['price_updates'], $actor);
             }
 
             AuditLog::write(

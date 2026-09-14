@@ -7,6 +7,7 @@ use App\Models\Store;
 use App\POS\Models\PosReturn;
 use App\POS\Models\PosSale;
 use App\Services\StoreContext;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -302,7 +303,7 @@ class ReturnsController extends Controller
         return view('pos.returns.select_sale', compact('store', 'storeRouteParams', 'sales', 'search'));
     }
 
-    public function show(StoreContext $context, string $store_slug, PosReturn $return): View
+    public function show(Request $request, StoreContext $context, string $store_slug, PosReturn $return): View|JsonResponse
     {
         $store = $context->getStore();
 
@@ -312,10 +313,95 @@ class ReturnsController extends Controller
 
         $return->load(['sale', 'items', 'payments', 'cashier', 'customer']);
 
+        if ($request->wantsJson() || $request->ajax() || $request->query('format') === 'json') {
+            $fmtQty = static function ($qty): string {
+                $f = (float) $qty;
+                if ($f == (int) $f) {
+                    return (string) (int) $f;
+                }
+                return rtrim(rtrim(number_format($f, 3, '.', ''), '0'), '.');
+            };
+
+            return response()->json([
+                'id' => $return->id,
+                'refund_number' => $return->refund_number,
+                'status' => $return->status,
+                'total' => (float) $return->total,
+                'total_formatted' => format_currency($return->total, $store),
+                'posted_at' => $return->posted_at?->format('d M Y, H:i') ?? '—',
+                'notes' => $return->notes ?: null,
+                'sale' => $return->sale ? [
+                    'id' => $return->sale->id,
+                    'receipt_number' => $return->sale->receipt_number,
+                    'url' => route('pos.receipt', ['store_slug' => $store->slug, 'sale' => $return->sale->id]),
+                ] : null,
+                'cashier' => $return->cashier ? [
+                    'id' => $return->cashier->id,
+                    'name' => $return->cashier->name,
+                ] : null,
+                'customer' => $return->customer ? [
+                    'id' => $return->customer->id,
+                    'name' => $return->customer->name,
+                    'phone' => $return->customer->phone,
+                ] : null,
+                'items' => $return->items->map(function ($item) use ($store, $fmtQty) {
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->product_name,
+                        'product_name' => $item->product_name,
+                        'sku' => $item->sku,
+                        'quantity' => (float) $item->quantity,
+                        'quantity_formatted' => $fmtQty($item->quantity),
+                        'unit_price' => (float) $item->unit_price,
+                        'unit_price_formatted' => format_currency($item->unit_price, $store),
+                        'refund_price' => (float) $item->unit_price,
+                        'refund_price_formatted' => format_currency($item->unit_price, $store),
+                        'line_total' => (float) $item->line_total,
+                        'line_total_formatted' => format_currency($item->line_total, $store),
+                    ];
+                }),
+                'payments' => $return->payments->map(function ($p) use ($store) {
+                    return [
+                        'id' => $p->id,
+                        'method' => $p->method,
+                        'method_label' => $p->method === 'cash' ? __('messages.cash_refund') : __('messages.credit_refund'),
+                        'amount' => (float) $p->amount,
+                        'amount_formatted' => format_currency($p->amount, $store),
+                    ];
+                }),
+                'print_url' => route('pos.returns.print', ['store_slug' => $store->slug, 'return' => $return->id]),
+                'detail_url' => route('pos.returns.show', ['store_slug' => $store->slug, 'return' => $return->id]),
+                'show_url' => route('pos.returns.show', ['store_slug' => $store->slug, 'return' => $return->id]),
+            ]);
+        }
+
         return view('pos.returns.show', [
             'store' => $store,
             'storeRouteParams' => $context->getRouteParams(),
             'return' => $return,
         ]);
+    }
+
+    /**
+     * Print Customer Sales Return / Refund Voucher (80mm / 58mm / A5 / A4).
+     */
+    public function print(Request $request, StoreContext $context, string $store_slug, PosReturn $return): View
+    {
+        $store = $context->getStore();
+
+        if ((int) $return->store_id !== (int) $store->id) {
+            abort(404);
+        }
+
+        $return->load(['sale', 'items', 'payments', 'cashier', 'customer']);
+
+        $templateService = app(\App\POS\Services\VoucherTemplateService::class);
+        $paperSize = (string) ($request->input('paper_size') ?: $templateService->getDocumentPaperSize($store, 'pos_sale'));
+        if (! in_array($paperSize, ['58mm', '80mm', 'a5', 'a4'], true)) {
+            $paperSize = '80mm';
+        }
+        $voucherTemplate = $templateService->getTemplateForDocument($store, 'pos_sale', $paperSize);
+
+        return view('pos.returns.print', compact('store', 'return', 'voucherTemplate', 'paperSize'));
     }
 }

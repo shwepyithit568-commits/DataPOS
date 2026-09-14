@@ -5,6 +5,8 @@
 
 @php
     $initialRows = $po->items->map(function ($item) {
+        $retail = $item->variant?->retail_price ?? $item->product?->retail_price ?? '0';
+        $wholesale = $item->variant?->wholesale_price ?? $item->product?->wholesale_price ?? '0';
         return [
             'product_id' => $item->product_id,
             'product_variant_id' => $item->product_variant_id,
@@ -13,112 +15,30 @@
             'balance' => 0,
             'quantity' => (string) (float) $item->quantity,
             'unit_cost' => (string) (float) $item->unit_cost,
+            'baseline_cost' => (string) (float) $item->unit_cost,
+            'cost' => (string) (float) $item->unit_cost,
+            'retail_price' => (string) (float) $retail,
+            'wholesale_price' => (string) (float) $wholesale,
         ];
     })->values();
     $isReceived = $po->isReceived();
 @endphp
 
 @section('content')
+@include('pos.purchases._price_adjustment_script')
 <div class="w-full space-y-0.5 pb-6"
-     x-data="{
-         rows: @js($initialRows),
+     x-data="poEditComponent({
+         defaultRetailMarkup: '{{ $defaultMarkups['retail_markup'] ?? 20 }}',
+         defaultWholesaleMarkup: '{{ $defaultMarkups['wholesale_markup'] ?? 10 }}',
+         productsSearchUrl: '{{ url('/store/' . $store->slug . '/pos/purchases/products') }}',
+         initialRows: @js($initialRows),
          isReceived: @js($isReceived),
-         q: '',
-         results: [],
-         open: false,
-         searching: false,
-         searched: false,
-         filterBrand: '',
-         filterCategory: '',
          supplierId: '{{ $po->supplier_id ?? '' }}',
          supplierName: '{{ $po->supplier?->name ?? '' }}',
          discountAmount: {{ (float) $po->discount_amount }},
-         deliveryFee: {{ (float) $po->delivery_fee }},
-         voucherPreviews: [],
-         get canSearch() { return !this.isReceived && (this.q.trim() !== '' || this.filterBrand !== '' || this.filterCategory !== ''); },
-         async search(open = true) {
-             if (!this.canSearch) { this.results = []; this.open = false; this.searched = false; return; }
-             this.searching = true;
-             try {
-                 const params = new URLSearchParams();
-                 if (this.q.trim() !== '') params.set('q', this.q.trim());
-                 if (this.filterBrand) params.set('brand_id', this.filterBrand);
-                 if (this.filterCategory) params.set('category_id', this.filterCategory);
-                 const res = await fetch('{{ url('/store/' . $store->slug . '/pos/purchases/products') }}?' + params.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                 const json = await res.json();
-                 this.results = (json.results || []).slice(0, 10);
-                 this.searched = true;
-                 this.open = open;
-             } finally {
-                 this.searching = false;
-             }
-         },
-         onFilterChange() { this.search(true); },
-         enterPick() {
-             if (this.open && this.results.length > 0) { this.addProduct(this.results[0]); }
-         },
-         addProduct(p) {
-             const variantId = p.type === 'variant' ? p.id : null;
-             const existing = this.rows.find(r => r.product_id === p.product_id && r.product_variant_id === variantId);
-             if (existing) {
-                 existing.quantity = String((parseFloat(existing.quantity) || 0) + 1);
-             } else {
-                 this.rows.push({
-                     product_id: p.product_id,
-                     product_variant_id: variantId,
-                     name: p.name,
-                     sku: p.sku,
-                     balance: p.balance || 0,
-                     quantity: '1',
-                     unit_cost: p.cost || ''
-                 });
-             }
-             this.q = '';
-             this.results = [];
-             this.open = false;
-             this.searched = false;
-             this.$nextTick(() => { this.$refs.searchInput && this.$refs.searchInput.focus(); });
-         },
-         removeRow(i) {
-             this.rows.splice(i, 1);
-         },
-         incQty(r) {
-             r.quantity = String((parseFloat(r.quantity) || 0) + 1);
-         },
-         decQty(r) {
-             r.quantity = String(Math.max(1, (parseFloat(r.quantity) || 0) - 1));
-         },
-         lineTotal(r) { return (parseFloat(r.quantity) || 0) * (parseFloat(r.unit_cost) || 0); },
-         fmt(n) { return typeof window.formatCurrency === 'function' ? window.formatCurrency(n) : Number(n).toLocaleString(); },
-         fmtQty(n) { return typeof window.formatQuantity === 'function' ? window.formatQuantity(n) : String(n); },
-         get totalQty() { return this.rows.reduce((s, r) => s + (parseFloat(r.quantity) || 0), 0); },
-         get subtotal() { return this.rows.reduce((s, r) => s + this.lineTotal(r), 0); },
-         get netTotal() {
-             const sub = this.subtotal;
-             const disc = parseFloat(this.discountAmount) || 0;
-             const deliv = parseFloat(this.deliveryFee) || 0;
-             return Math.max(0, sub - disc + deliv);
-         },
-         get valid() {
-             if (this.isReceived) return true;
-             return this.rows.length > 0 && this.rows.every(r => r.product_id && (parseFloat(r.quantity) || 0) > 0 && (parseFloat(r.unit_cost) || 0) >= 0);
-         },
-         handleFiles(event) {
-             const files = Array.from(event.target.files || []);
-             this.voucherPreviews = [];
-             files.forEach((file, idx) => {
-                 if (file.type.startsWith('image/')) {
-                     const reader = new FileReader();
-                     reader.onload = (e) => {
-                         this.voucherPreviews.push({ name: file.name, url: e.target.result, isPdf: false });
-                     };
-                     reader.readAsDataURL(file);
-                 } else if (file.type === 'application/pdf') {
-                     this.voucherPreviews.push({ name: file.name, url: '', isPdf: true });
-                 }
-             });
-         }
-     }">
+         deliveryFee: {{ (float) $po->delivery_fee }}
+     })">
+
 
     {{-- 1. Top Header Banner (Ultra-Dense 36px) --}}
     <div class="px-2 py-1.5 bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 select-none">
@@ -230,7 +150,8 @@
     </div>
 
     {{-- 3. Main Form Card --}}
-    <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}" enctype="multipart/form-data"
+    <form x-ref="poForm" method="POST" action="{{ url('/store/' . $store->slug . '/pos/purchases/' . $po->id) }}" enctype="multipart/form-data"
+          @submit="if (!handleFormSubmit($event, $refs.poForm, rows)) return false;"
           class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded shadow-2xs overflow-hidden space-y-0">
         @csrf
         @method('PUT')
@@ -272,12 +193,12 @@
                 </div>
             </div>
 
-            {{-- Row 2: Trade Discount, Delivery Fee & Voucher Image Uploads --}}
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
+            {{-- Row 2: Trade Discount, Delivery Fee, Voucher Total Check & Voucher Image Uploads --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
                 {{-- Wholesale Trade Discount --}}
                 <div>
                     <label for="po-discount" class="block text-xs font-bold text-rose-600 dark:text-rose-400 mb-0.5 flex items-center justify-between">
-                        <span>{{ __('messages.po_discount_amount') }} (Ks)</span>
+                        <span>{{ __('messages.po_discount_amount') }}</span>
                         <span class="text-[10px] font-normal text-slate-400">(-) နုတ်ပေးမည်</span>
                     </label>
                     <input id="po-discount" type="number" inputmode="decimal" name="discount_amount" min="0" step="any"
@@ -288,13 +209,37 @@
                 {{-- Delivery Fee / Shipping Cost --}}
                 <div>
                     <label for="po-delivery" class="block text-xs font-bold text-amber-600 dark:text-amber-400 mb-0.5 flex items-center justify-between">
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-0.5 flex items-center justify-between">
                         <span>{{ __('messages.po_delivery_fee') }}</span>
-                        <span class="text-[10px] text-amber-500 font-semibold uppercase">(+)</span>
+                        <span class="text-[10px] font-normal text-slate-400">(+) ပေါင်းမည်</span>
                     </label>
                     <input id="po-delivery" type="number" inputmode="decimal" name="delivery_fee" min="0" step="any"
                            x-model.number="deliveryFee" placeholder="0"
                            class="w-full h-7 rounded border border-amber-200 dark:border-amber-900/60 bg-white dark:bg-slate-800 px-2 py-1 text-xs font-mono font-bold text-amber-600 dark:text-amber-400 outline-none focus:ring-1 focus:ring-amber-500">
+                </div>
+
+                {{-- Voucher Total Cross-Check Box --}}
+                <div>
+                    <label for="po-voucher-check" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-0.5 flex items-center justify-between">
+                        <span>⚖️ {{ __('messages.po_voucher_check_label') }}</span>
+                        <span class="text-[10px] font-mono font-bold"
+                              :class="{
+                                  'text-emerald-600 dark:text-emerald-400': voucherMatchStatus === 'matched',
+                                  'text-rose-600 dark:text-rose-400': voucherMatchStatus === 'over',
+                                  'text-amber-600 dark:text-amber-400': voucherMatchStatus === 'short',
+                                  'text-slate-400': voucherMatchStatus === 'none'
+                              }"
+                              x-text="voucherMatchStatus === 'matched' ? '✓ Balanced' : (voucherMatchStatus === 'over' ? '+ ' + fmt(voucherDiff) : (voucherMatchStatus === 'short' ? '- ' + fmt(Math.abs(voucherDiff)) : 'Optional'))">
+                        </span>
+                    </label>
+                    <input id="po-voucher-check" type="number" inputmode="decimal" min="0" step="any"
+                           x-model="expectedVoucherTotal" placeholder="e.g. 450,000"
+                           class="w-full h-7 rounded border bg-white dark:bg-slate-800 px-2 py-1 text-xs font-mono font-bold outline-none focus:ring-1 transition"
+                           :class="{
+                               'border-emerald-400 dark:border-emerald-600 text-emerald-700 dark:text-emerald-300 focus:ring-emerald-500 bg-emerald-50/20': voucherMatchStatus === 'matched',
+                               'border-rose-400 dark:border-rose-600 text-rose-700 dark:text-rose-300 focus:ring-rose-500 bg-rose-50/20': voucherMatchStatus === 'over',
+                               'border-amber-400 dark:border-amber-600 text-amber-700 dark:text-amber-300 focus:ring-amber-500 bg-amber-50/20': voucherMatchStatus === 'short',
+                               'border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-sky-500': voucherMatchStatus === 'none'
+                           }">
                 </div>
 
                 {{-- Voucher Photos Upload Box --}}
@@ -380,46 +325,63 @@
             @endif
             <div class="flex flex-col sm:flex-row gap-1.5">
                 {{-- Live Search Autocomplete Box --}}
-                <div class="relative flex-1">
-                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8" stroke-width="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"/></svg>
-                    </span>
-                    <input x-ref="searchInput" type="text" x-model="q" @input.debounce.250ms="search(true)"
-                           @focus="open = results.length > 0"
-                           @keydown.enter.prevent="enterPick()"
-                           @keydown.escape.prevent="open = false"
-                           placeholder="{{ __('messages.receiving_product_placeholder') }}"
-                           autocomplete="off"
-                           class="w-full h-7 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-8 pr-7 py-1 text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-sky-500"/>
+                <div class="relative flex-1 flex items-center gap-1.5">
+                    <div class="relative flex-1">
+                        <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8" stroke-width="2"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"/></svg>
+                        </span>
+                        <input x-ref="searchInput" type="text" x-model="q" @input.debounce.250ms="search(true)"
+                               @focus="open = results.length > 0"
+                               @keydown.enter.prevent="enterPick()"
+                               @keydown.escape.prevent="open = false"
+                               placeholder="{{ __('messages.receiving_product_placeholder') }}"
+                               autocomplete="off"
+                               class="w-full h-7 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-8 pr-7 py-1 text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-sky-500"/>
 
-                    <button type="button" x-show="q && !searching" x-cloak
-                            @click="q = ''; results = []; open = false; searched = false; $refs.searchInput.focus()"
-                            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm cursor-pointer">
-                        &times;
-                    </button>
-                    <svg x-show="searching" x-cloak class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-sky-500 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                    </svg>
+                        <button type="button" x-show="q && !searching" x-cloak
+                                @click="q = ''; results = []; open = false; searched = false; $refs.searchInput.focus()"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm cursor-pointer">
+                            &times;
+                        </button>
+                        <svg x-show="searching" x-cloak class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-sky-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
 
-                    {{-- Autocomplete Results Dropdown --}}
-                    <div x-show="open" x-cloak @click.outside="open = false"
-                         class="absolute z-30 mt-1 w-full rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
-                        <div class="max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
-                            <template x-for="p in results" :key="p.id">
-                                <button type="button" @click="addProduct(p)"
-                                        class="w-full text-left px-2.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center justify-between gap-2 transition cursor-pointer">
-                                    <span class="min-w-0">
-                                        <span class="block font-bold text-xs text-slate-900 dark:text-slate-100 truncate" x-text="p.name"></span>
-                                        <span class="block text-[10px] font-mono text-slate-400 truncate" x-text="p.sku + ' · On Hand: ' + fmtQty(p.balance)"></span>
-                                    </span>
-                                    <span class="shrink-0 text-xs font-black text-sky-600 dark:text-sky-400 font-mono" x-text="fmt(p.price)"></span>
-                                </button>
-                            </template>
-                            <p x-show="searched && results.length === 0 && !searching" x-cloak
-                               class="px-2.5 py-2 text-center text-xs text-slate-400 font-bold">{{ __('messages.no_results') }}</p>
+                        {{-- Autocomplete Results Dropdown --}}
+                        <div x-show="open" x-cloak @click.outside="open = false"
+                             class="absolute z-30 mt-1 w-full rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
+                            <div class="max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                                <template x-for="p in results" :key="p.id">
+                                    <button type="button" @click="addProduct(p)"
+                                            class="w-full text-left px-2.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center justify-between gap-2 transition cursor-pointer">
+                                        <span class="min-w-0">
+                                            <span class="block font-bold text-xs text-slate-900 dark:text-slate-100 truncate" x-text="p.name"></span>
+                                            <span class="block text-[10px] font-mono text-slate-400 truncate" x-text="p.sku + ' · On Hand: ' + fmtQty(p.balance)"></span>
+                                        </span>
+                                        <span class="shrink-0 text-xs font-black text-sky-600 dark:text-sky-400 font-mono" x-text="fmt(p.price)"></span>
+                                    </button>
+                                </template>
+                                <p x-show="searched && results.length === 0 && !searching" x-cloak
+                                   class="px-2.5 py-2 text-center text-xs text-slate-400 font-bold">{{ __('messages.no_results') }}</p>
+                            </div>
                         </div>
                     </div>
+
+                    {{-- Camera Barcode Scanner Trigger Button --}}
+                    <button type="button"
+                            @click="openCameraScanner()"
+                            title="{{ __('messages.po_camera_scanner_title') }}"
+                            class="h-7 px-2 sm:px-2.5 rounded text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/50 hover:bg-sky-100 dark:hover:bg-sky-900/60 border border-sky-300 dark:border-sky-800 transition flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs">
+                        <span>📷</span>
+                        <span class="hidden sm:inline">{{ __('messages.po_camera_scanner_btn') }}</span>
+                    </button>
+
+                    {{-- Keyboard Shortcuts Tooltip --}}
+                    <span class="hidden lg:inline-flex items-center gap-1 text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 select-none shrink-0"
+                          title="{{ __('messages.po_keyboard_hints') }}">
+                        <span>⌨️ F2 / Ctrl+S</span>
+                    </span>
                 </div>
 
                 {{-- Brand & Category Filter Selects --}}
@@ -469,20 +431,36 @@
                                     <input type="hidden" :name="'items[' + i + '][product_variant_id]'" :value="r.product_variant_id || ''">
                                 </td>
 
-                                {{-- Quantity Stepper --}}
+                                {{-- Quantity Stepper with Zero-Mouse Focus Loop --}}
                                 <td class="py-1 px-2">
                                     <div class="flex items-center justify-center h-6 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 overflow-hidden max-w-[110px] mx-auto">
                                         <button type="button" @click="decQty(r)" class="w-6 h-full grid place-items-center text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 font-black text-xs cursor-pointer">-</button>
                                         <input type="number" inputmode="decimal" :name="'items[' + i + '][quantity]'" min="0.001" step="any" x-model="r.quantity"
+                                               @focus="$event.target.select()"
+                                               @keydown.enter.prevent="focusRowCost(i)"
                                                class="w-full text-center font-mono font-bold text-xs bg-transparent outline-none"/>
                                         <button type="button" @click="incQty(r)" class="w-6 h-full grid place-items-center text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 font-black text-xs cursor-pointer">+</button>
                                     </div>
                                 </td>
 
-                                {{-- Unit Cost --}}
+                                {{-- Unit Cost with Zero-Mouse Focus Loop --}}
                                 <td class="py-1 px-2 text-right">
-                                    <input type="number" inputmode="decimal" :name="'items[' + i + '][unit_cost]'" min="0" step="any" x-model="r.unit_cost"
-                                           class="w-full max-w-[110px] h-6 rounded border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 text-right font-mono font-bold text-xs bg-slate-50 dark:bg-slate-800 outline-none focus:ring-1 focus:ring-sky-500 inline-block"/>
+                                    <div class="flex items-center justify-end gap-1">
+                                        <input type="number" inputmode="decimal" :name="'items[' + i + '][unit_cost]'" min="0" step="any" x-model="r.unit_cost"
+                                               @focus="$event.target.select()"
+                                               @keydown.enter.prevent="focusSearch()"
+                                               class="w-full max-w-[95px] h-6 rounded border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 text-right font-mono font-bold text-xs bg-slate-50 dark:bg-slate-800 outline-none focus:ring-1 focus:ring-sky-500 inline-block"/>
+                                        <template x-if="hasCostChanged(r)">
+                                            <button type="button"
+                                                    @click="openSingleItemReview(r, rows)"
+                                                    :title="'{{ __('messages.po_price_adjustment_btn') }}: ' + costDiffPct(r) + '%'"
+                                                    class="h-6 px-1 rounded text-[10px] font-bold font-mono transition cursor-pointer flex items-center gap-0.5 shrink-0"
+                                                    :class="parseFloat(costDiffPct(r)) >= 0 ? 'bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-400' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-400'">
+                                                <span x-text="costDiffPct(r) + '%'"></span>
+                                                <span>⚙️</span>
+                                            </button>
+                                        </template>
+                                    </div>
                                 </td>
 
                                 {{-- Line Total --}}
@@ -527,6 +505,21 @@
                     <span class="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block leading-none">{{ __('messages.po_net_total') }}</span>
                     <span class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block" x-text="fmt(netTotal)"></span>
                 </div>
+
+                {{-- Live Voucher Cross-Check Balance Badge --}}
+                <template x-if="voucherMatchStatus !== 'none'">
+                    <div class="border-l border-slate-200 dark:border-slate-700 pl-2.5 flex items-center gap-1.5">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block leading-none">Voucher:</span>
+                        <span class="px-2 py-0.5 rounded text-xs font-mono font-bold flex items-center gap-1"
+                              :class="{
+                                  'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800': voucherMatchStatus === 'matched',
+                                  'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-300 dark:border-rose-800': voucherMatchStatus === 'over',
+                                  'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800': voucherMatchStatus === 'short'
+                              }">
+                            <span x-text="voucherMatchStatus === 'matched' ? '✅ {{ __('messages.po_voucher_matched') }}' : (voucherMatchStatus === 'over' ? '⚠️ Over +' + fmt(voucherDiff) : '⚠️ Short -' + fmt(Math.abs(voucherDiff)))"></span>
+                        </span>
+                    </div>
+                </template>
             </div>
 
             <div class="flex items-center gap-1.5 shrink-0">
@@ -542,6 +535,12 @@
             </div>
         </div>
     </form>
+
+    {{-- Price Adjustment Review Modal Dialog --}}
+    @include('pos.purchases._price_adjustment_modal')
+
+    {{-- Camera Barcode Scanner Modal Dialog --}}
+    @include('pos.purchases._camera_scanner_modal')
 </div>
 
 {{-- Hidden Delete Voucher Form Hooks --}}

@@ -67,8 +67,9 @@ class PurchaseOrderController extends Controller
         $suppliers = \App\Models\Supplier::where('store_id', $store->id)->orderBy('name')->get();
         $brands = \App\Models\Brand::where('store_id', $store->id)->orderBy('name')->get();
         $categories = \App\Models\Category::where('store_id', $store->id)->whereNull('parent_id')->orderBy('name')->get();
+        $defaultMarkups = app(\App\POS\Services\PurchasePriceAdjustmentService::class)->getStoreMarkups($store);
 
-        return view('pos.purchases.create', compact('store', 'suppliers', 'brands', 'categories'));
+        return view('pos.purchases.create', compact('store', 'suppliers', 'brands', 'categories', 'defaultMarkups'));
     }
 
     /** Product search for PO create form (brand/category filters). */
@@ -84,7 +85,8 @@ class PurchaseOrderController extends Controller
             ->when($query !== '', function ($q) use ($query) {
                 $q->where(function ($sub) use ($query) {
                     $sub->where('name', 'like', '%' . $query . '%')
-                        ->orWhere('sku', 'like', '%' . $query . '%');
+                        ->orWhere('sku', 'like', '%' . $query . '%')
+                        ->orWhere('barcode', 'like', '%' . $query . '%');
                 });
             })
             ->when($brandId, function ($q) use ($brandId) {
@@ -93,7 +95,7 @@ class PurchaseOrderController extends Controller
             ->when($categoryId, function ($q) use ($categoryId) {
                 $q->where('category_id', $categoryId);
             })
-            ->with(['brand', 'category'])
+            ->with(['brand', 'category', 'variants'])
             ->orderBy('name')
             ->limit(15)
             ->get();
@@ -105,17 +107,47 @@ class PurchaseOrderController extends Controller
             ->selectRaw('product_id, SUM(quantity_on_hand) as total')
             ->pluck('total', 'product_id');
 
-        return response()->json(['results' => $products->map(fn ($p) => [
-            'id' => $p->id,
-            'product_id' => $p->id,
-            'name' => $p->name,
-            'sku' => $p->sku,
-            'price' => (float) $p->price,
-            'cost' => (float) $p->cost,
-            'balance' => (float) ($balances[$p->id] ?? 0),
-            'brand' => $p->brand?->name,
-            'category' => $p->category?->name,
-        ])]);
+        $results = [];
+        foreach ($products as $p) {
+            $bal = (float) ($balances[$p->id] ?? 0);
+            if ($p->variants->isNotEmpty()) {
+                foreach ($p->variants as $v) {
+                    $results[] = [
+                        'id' => $v->id,
+                        'product_id' => $p->id,
+                        'product_variant_id' => $v->id,
+                        'type' => 'variant',
+                        'name' => $p->name . ' (' . $v->name . ')',
+                        'sku' => $v->sku ?: $p->sku,
+                        'price' => (float) $v->retail_price,
+                        'retail_price' => (float) $v->retail_price,
+                        'wholesale_price' => (float) ($v->wholesale_price ?? 0),
+                        'cost' => (float) $p->cost,
+                        'balance' => $bal,
+                        'brand' => $p->brand?->name,
+                        'category' => $p->category?->name,
+                    ];
+                }
+            } else {
+                $results[] = [
+                    'id' => $p->id,
+                    'product_id' => $p->id,
+                    'product_variant_id' => null,
+                    'type' => 'product',
+                    'name' => $p->name,
+                    'sku' => $p->sku,
+                    'price' => (float) $p->price,
+                    'retail_price' => (float) $p->retail_price,
+                    'wholesale_price' => (float) ($p->wholesale_price ?? 0),
+                    'cost' => (float) $p->cost,
+                    'balance' => $bal,
+                    'brand' => $p->brand?->name,
+                    'category' => $p->category?->name,
+                ];
+            }
+        }
+
+        return response()->json(['results' => $results]);
     }
 
     /** Save a new PO as pending. */
@@ -140,6 +172,14 @@ class PurchaseOrderController extends Controller
             'paid_amount' => ['nullable', 'decimal:0,2', 'min:0'],
             'voucher_images' => ['nullable', 'array'],
             'voucher_images.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf,heic', 'max:10240'],
+            'price_updates' => ['nullable', 'array'],
+            'price_updates.*.product_id' => ['required_with:price_updates', 'integer'],
+            'price_updates.*.product_variant_id' => ['nullable', 'integer'],
+            'price_updates.*.expected_retail_price' => ['nullable', 'numeric'],
+            'price_updates.*.expected_wholesale_price' => ['nullable', 'numeric'],
+            'price_updates.*.retail_price' => ['nullable', 'numeric'],
+            'price_updates.*.wholesale_price' => ['nullable', 'numeric'],
+            'price_updates.*.update_prices' => ['nullable'],
         ]);
 
         $payment = [];
@@ -167,6 +207,16 @@ class PurchaseOrderController extends Controller
             'voucher_images' => $uploadedVouchers,
         ];
 
+        $priceAdjustmentService = app(\App\POS\Services\PurchasePriceAdjustmentService::class);
+        $baselines = $priceAdjustmentService->calculateCostBaselines($store, $data['items'], null);
+        $validatedPriceUpdates = $priceAdjustmentService->validateAndNormalizePriceUpdates(
+            $store,
+            $request->input('price_updates', []),
+            $data['items'],
+            $request->user(),
+            $baselines
+        );
+
         try {
             $po = $this->purchaseOrders->create(
                 $store,
@@ -177,9 +227,11 @@ class PurchaseOrderController extends Controller
                 $request->user(),
                 $payment,
                 $adjustments,
+                $validatedPriceUpdates,
             );
         } catch (InventoryException $e) {
-            return back()->withInput()->with('error', $e->getMessage());
+            $status = $e->getCode() === 409 ? 409 : 422;
+            return back()->withInput()->with('error', $e->getMessage())->setStatusCode($status);
         }
 
         return redirect()->route('pos.purchases.show', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id])
@@ -267,7 +319,9 @@ class PurchaseOrderController extends Controller
         // Preload items with products and variants
         $po->load(['items.product', 'items.variant', 'supplier']);
 
-        return view('pos.purchases.edit', compact('store', 'po', 'suppliers', 'brands', 'categories'));
+        $defaultMarkups = app(\App\POS\Services\PurchasePriceAdjustmentService::class)->getStoreMarkups($store);
+
+        return view('pos.purchases.edit', compact('store', 'po', 'suppliers', 'brands', 'categories', 'defaultMarkups'));
     }
 
     /** Update an existing PO. */
@@ -298,6 +352,14 @@ class PurchaseOrderController extends Controller
             'delivery_fee' => ['nullable', 'decimal:0,2', 'min:0'],
             'voucher_images' => ['nullable', 'array'],
             'voucher_images.*' => ['file', 'mimes:jpg,jpeg,png,webp,pdf,heic', 'max:10240'],
+            'price_updates' => ['nullable', 'array'],
+            'price_updates.*.product_id' => ['required_with:price_updates', 'integer'],
+            'price_updates.*.product_variant_id' => ['nullable', 'integer'],
+            'price_updates.*.expected_retail_price' => ['nullable', 'numeric'],
+            'price_updates.*.expected_wholesale_price' => ['nullable', 'numeric'],
+            'price_updates.*.retail_price' => ['nullable', 'numeric'],
+            'price_updates.*.wholesale_price' => ['nullable', 'numeric'],
+            'price_updates.*.update_prices' => ['nullable'],
         ]);
 
         $vouchers = is_array($po->voucher_images) ? $po->voucher_images : [];
@@ -309,6 +371,16 @@ class PurchaseOrderController extends Controller
             }
         }
 
+        $priceAdjustmentService = app(\App\POS\Services\PurchasePriceAdjustmentService::class);
+        $baselines = $priceAdjustmentService->calculateCostBaselines($store, $data['items'], $po);
+        $validatedPriceUpdates = $priceAdjustmentService->validateAndNormalizePriceUpdates(
+            $store,
+            $request->input('price_updates', []),
+            $data['items'],
+            $request->user(),
+            $baselines
+        );
+
         try {
             $this->purchaseOrders->update($po, [
                 'items' => $data['items'],
@@ -318,9 +390,11 @@ class PurchaseOrderController extends Controller
                 'discount_amount' => $data['discount_amount'] ?? '0',
                 'delivery_fee' => $data['delivery_fee'] ?? '0',
                 'voucher_images' => array_values($vouchers),
+                'price_updates' => $validatedPriceUpdates,
             ], $request->user());
         } catch (InventoryException $e) {
-            return back()->withInput()->with('error', $e->getMessage());
+            $status = $e->getCode() === 409 ? 409 : 422;
+            return back()->withInput()->with('error', $e->getMessage())->setStatusCode($status);
         }
 
         return redirect()->route('pos.purchases.show', ['store_slug' => $store->slug, 'purchaseOrder' => $po->id])
@@ -638,6 +712,100 @@ class PurchaseOrderController extends Controller
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Cache-Control' => 'max-age=0',
         ]);
+    }
+
+    /** Show purchase return details (JSON for modal dialog). */
+    public function returnsShow(Request $request, StoreContext $context, string $store_slug, PurchaseReturn $purchaseReturn): \Illuminate\Http\JsonResponse
+    {
+        $store = $context->getStore();
+        if ($purchaseReturn->store_id !== $store->id) {
+            abort(404);
+        }
+
+        $purchaseReturn->load([
+            'purchaseOrder:id,po_number,created_at,received_at',
+            'supplier:id,name,phone,address',
+            'createdBy:id,name',
+            'items.product:id,name,sku,barcode',
+            'items.variant:id,name,sku,barcode',
+        ]);
+
+        $fmtQty = static function ($qty): string {
+            $f = (float) $qty;
+            if ($f == (int) $f) {
+                return (string) (int) $f;
+            }
+            return rtrim(rtrim(number_format($f, 3, '.', ''), '0'), '.');
+        };
+
+        $items = $purchaseReturn->items->map(function ($item) use ($fmtQty) {
+            $name = $item->product?->name ?? 'Unknown Product';
+            if ($item->variant?->name) {
+                $name .= ' (' . $item->variant->name . ')';
+            }
+            $sku = $item->variant?->sku ?: ($item->product?->sku ?: '—');
+            $barcode = $item->variant?->barcode ?: ($item->product?->barcode ?: '');
+
+            return [
+                'id' => $item->id,
+                'name' => $name,
+                'sku' => $sku,
+                'barcode' => $barcode,
+                'quantity' => (float) $item->quantity,
+                'quantity_formatted' => $fmtQty($item->quantity),
+                'unit_cost' => (float) $item->unit_cost,
+                'line_total' => (float) $item->line_total,
+            ];
+        });
+
+        return response()->json([
+            'id' => $purchaseReturn->id,
+            'return_number' => $purchaseReturn->return_number,
+            'returned_at' => $purchaseReturn->returned_at?->format('d M Y, H:i') ?? $purchaseReturn->created_at->format('d M Y, H:i'),
+            'reason' => $purchaseReturn->reason ?: '—',
+            'total_quantity' => (float) $purchaseReturn->total_quantity,
+            'total_quantity_formatted' => $fmtQty($purchaseReturn->total_quantity),
+            'total_cost' => (float) $purchaseReturn->total_cost,
+            'purchase_order' => $purchaseReturn->purchaseOrder ? [
+                'id' => $purchaseReturn->purchaseOrder->id,
+                'po_number' => $purchaseReturn->purchaseOrder->po_number,
+            ] : null,
+            'supplier' => $purchaseReturn->supplier ? [
+                'id' => $purchaseReturn->supplier->id,
+                'name' => $purchaseReturn->supplier->name,
+                'phone' => $purchaseReturn->supplier->phone,
+                'address' => $purchaseReturn->supplier->address,
+            ] : null,
+            'created_by' => $purchaseReturn->createdBy?->name ?? '—',
+            'items' => $items,
+            'print_url' => url('/store/' . $store->slug . '/pos/purchases/returns/' . $purchaseReturn->id . '/print'),
+        ]);
+    }
+
+    /** Print Purchase Return Voucher (80mm / 58mm / A4 / A5). */
+    public function returnsPrint(Request $request, StoreContext $context, string $store_slug, PurchaseReturn $purchaseReturn): View
+    {
+        $store = $context->getStore();
+        if ($purchaseReturn->store_id !== $store->id) {
+            abort(404);
+        }
+
+        $purchaseReturn->load([
+            'purchaseOrder',
+            'supplier',
+            'createdBy',
+            'items.product',
+            'items.variant',
+        ]);
+
+        $templateService = app(\App\POS\Services\VoucherTemplateService::class);
+        $paperSize = (string) ($request->input('paper_size') ?: $templateService->getDocumentPaperSize($store, 'purchase_order'));
+        if (! in_array($paperSize, ['58mm', '80mm', 'a5', 'a4'], true)) {
+            $paperSize = '80mm';
+        }
+        $voucherTemplate = $templateService->getTemplateForDocument($store, 'purchase_order', $paperSize);
+
+        return view('pos.purchases.return_print', compact('store', 'purchaseReturn', 'voucherTemplate', 'paperSize'));
     }
 
     /** Apply payment to a specific PO. */

@@ -28,6 +28,45 @@
         selectedPo: null,
         returnReason: '',
         isSubmitting: false,
+        itemFilterQuery: '',
+
+        // Return Detail Modal State
+        detailModalOpen: false,
+        activeReturn: null,
+        loadingDetail: false,
+        detailError: null,
+
+        openDetail(id) {
+            this.detailModalOpen = true;
+            this.loadingDetail = true;
+            this.detailError = null;
+            this.activeReturn = null;
+            fetch(`{{ url('/store/' . $store->slug . '/pos/purchases/returns') }}/${id}`, {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(r => {
+                if (!r.ok) throw new Error('Failed to load return details');
+                return r.json();
+            })
+            .then(data => {
+                this.activeReturn = data;
+                this.loadingDetail = false;
+            })
+            .catch(err => {
+                this.detailError = err.message;
+                this.loadingDetail = false;
+            });
+        },
+
+        get filteredReturnItems() {
+            if (!this.selectedPo) return [];
+            const q = this.itemFilterQuery.toLowerCase().trim();
+            if (!q) return this.selectedPo.items;
+            return this.selectedPo.items.filter(i => 
+                (i.name && i.name.toLowerCase().includes(q)) ||
+                (i.sku && i.sku.toLowerCase().includes(q))
+            );
+        },
 
         get filteredOrders() {
             const q = this.poSearch.toLowerCase().trim();
@@ -43,6 +82,7 @@
             this.poSearch = '';
             this.selectedPo = null;
             this.returnReason = '';
+            this.itemFilterQuery = '';
             this.isSubmitting = false;
         },
 
@@ -302,9 +342,10 @@
                         <tr class="divide-x divide-slate-200/80 dark:divide-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
                             {{-- Return Number & Date --}}
                             <td class="py-2 px-2.5">
-                                <span class="font-mono font-black text-orange-600 dark:text-orange-400 block text-xs">
+                                <button type="button" @click="openDetail({{ $return->id }})"
+                                        class="font-mono font-black text-orange-600 dark:text-orange-400 block text-xs hover:underline text-left cursor-pointer">
                                     {{ $return->return_number }}
-                                </span>
+                                </button>
                                 <span class="text-[10px] text-slate-400 block mt-0.5 font-mono">
                                     {{ $return->returned_at?->format('d M Y, H:i') ?? '—' }}
                                 </span>
@@ -358,15 +399,32 @@
 
                             {{-- Actions --}}
                             <td class="py-2 px-2.5 text-center whitespace-nowrap">
-                                @if ($return->purchaseOrder)
-                                    <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $return->purchaseOrder->id) }}"
-                                       class="h-6 px-2 rounded text-[11px] font-bold bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 transition inline-flex items-center gap-1 active:scale-95">
-                                        <span>{{ __('messages.po_return_view_po') }}</span>
-                                        <span>→</span>
+                                <div class="inline-flex items-center gap-1">
+                                    {{-- Detail Modal Button --}}
+                                    <button type="button" @click="openDetail({{ $return->id }})"
+                                            class="h-6 px-1.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-0.5 cursor-pointer"
+                                            title="{{ __('messages.po_return_detail_title') }}">
+                                        <span>👁️</span>
+                                        <span class="hidden xl:inline">{{ __('messages.details') }}</span>
+                                    </button>
+
+                                    {{-- Direct Print Button --}}
+                                    <a href="{{ url('/store/' . $store->slug . '/pos/purchases/returns/' . $return->id . '/print') }}" target="_blank"
+                                       class="h-6 px-1.5 rounded text-[11px] font-bold bg-orange-50 dark:bg-orange-950/60 hover:bg-orange-100 dark:hover:bg-orange-900/60 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 transition inline-flex items-center gap-0.5 cursor-pointer"
+                                       title="{{ __('messages.po_return_print_voucher') }}">
+                                        <span>🖨️</span>
+                                        <span class="hidden xl:inline">{{ __('messages.print') }}</span>
                                     </a>
-                                @else
-                                    <span class="text-slate-400">—</span>
-                                @endif
+
+                                    {{-- View PO --}}
+                                    @if ($return->purchaseOrder)
+                                        <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $return->purchaseOrder->id) }}"
+                                           class="h-6 px-1.5 rounded text-[11px] font-bold bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 transition inline-flex items-center gap-0.5"
+                                           title="{{ __('messages.po_return_view_po') }}">
+                                            <span>🛒</span>
+                                        </a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -460,15 +518,22 @@
                 </div>
 
                 {{-- Card Footer Action --}}
-                <div class="p-1.5 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
+                <div class="p-1.5 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
+                    <button type="button" @click="openDetail({{ $return->id }})"
+                            class="flex-1 h-6 px-2 rounded text-[11px] font-bold bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition inline-flex items-center justify-center gap-1 cursor-pointer">
+                        <span>👁️</span>
+                        <span>{{ __('messages.details') }}</span>
+                    </button>
+                    <a href="{{ url('/store/' . $store->slug . '/pos/purchases/returns/' . $return->id . '/print') }}" target="_blank"
+                       class="h-6 px-2 rounded text-[11px] font-bold bg-orange-50 dark:bg-orange-950/60 hover:bg-orange-100 dark:hover:bg-orange-900/60 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800 transition inline-flex items-center justify-center gap-1 cursor-pointer">
+                        <span>🖨️</span>
+                        <span>{{ __('messages.print') }}</span>
+                    </a>
                     @if ($return->purchaseOrder)
                         <a href="{{ url('/store/' . $store->slug . '/pos/purchases/' . $return->purchaseOrder->id) }}"
-                           class="w-full text-center px-2 py-1 rounded bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/60 dark:hover:bg-sky-900/60 text-sky-600 dark:text-sky-300 text-xs font-bold transition flex items-center justify-center gap-1">
-                            <span>{{ __('messages.po_return_view_po') }}</span>
-                            <span>→</span>
+                           class="h-6 px-2 rounded text-[11px] font-bold bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 transition inline-flex items-center justify-center gap-1">
+                            <span>🛒</span>
                         </a>
-                    @else
-                        <span class="text-xs text-slate-400">—</span>
                     @endif
                 </div>
             </div>
@@ -587,6 +652,19 @@
 
                     {{-- Scrollable Items List --}}
                     <div class="p-3 sm:p-4 space-y-2 overflow-y-auto flex-1 max-h-[52vh]">
+                        {{-- Live Item Search Filter --}}
+                        <div class="relative">
+                            <input type="text" x-model="itemFilterQuery"
+                                   placeholder="{{ __('messages.po_return_filter_items') }}"
+                                   class="w-full h-7 pl-7 pr-7 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-orange-500 transition" />
+                            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                            <button type="button" x-show="itemFilterQuery" @click="itemFilterQuery = ''"
+                                    class="absolute right-2 top-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold">&times;</button>
+                        </div>
+
                         {{-- Bulk Actions Bar --}}
                         <div class="flex items-center justify-between gap-2 pb-1 border-b border-slate-100 dark:border-slate-800">
                             <span class="text-xs font-bold text-slate-500 dark:text-slate-400"
@@ -603,7 +681,7 @@
                             </div>
                         </div>
 
-                        <template x-for="(item, idx) in selectedPo.items" :key="item.id">
+                        <template x-for="(item, idx) in filteredReturnItems" :key="item.id">
                             <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-2.5 transition"
                                  :class="(parseFloat(item.return_qty) || 0) > 0 ? 'ring-1.5 ring-orange-500 dark:ring-orange-400 bg-orange-50/20 dark:bg-orange-950/20' : ''">
                                 <div class="flex items-start justify-between gap-2">
@@ -680,6 +758,150 @@
                     </div>
                 </form>
             </template>
+        </div>
+    </div>
+
+    {{-- ── 7. Return Detail Modal Dialog ──────────────────────────────── --}}
+    <div x-show="detailModalOpen" x-cloak
+         @click.self="detailModalOpen = false"
+         class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-2.5 sm:p-4 bg-black/60 backdrop-blur-xs"
+         role="dialog" aria-modal="true" @keydown.escape.window="detailModalOpen = false">
+
+        <div class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
+            {{-- Modal Header --}}
+            <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/50 shrink-0">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-7 h-7 rounded-lg bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 grid place-items-center text-sm font-bold shrink-0">
+                        📄
+                    </span>
+                    <div class="min-w-0">
+                        <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                            <span>{{ __('messages.po_return_detail_title') }}</span>
+                            <span class="text-orange-600 dark:text-orange-400 font-mono text-xs" x-text="activeReturn ? ('#' + activeReturn.return_number) : ''"></span>
+                        </h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate" x-text="activeReturn ? (activeReturn.returned_at + (activeReturn.supplier ? ' · ' + activeReturn.supplier.name : '')) : ''"></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <template x-if="activeReturn && activeReturn.print_url">
+                        <a :href="activeReturn.print_url" target="_blank"
+                           class="h-7 px-2.5 rounded-md bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition inline-flex items-center gap-1 shadow-2xs">
+                            <span>🖨️</span>
+                            <span>{{ __('messages.print') }}</span>
+                        </a>
+                    </template>
+                    <button type="button" @click="detailModalOpen = false"
+                            class="w-7 h-7 rounded-md grid place-items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-black cursor-pointer">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            {{-- Loading State --}}
+            <div x-show="loadingDetail" class="p-8 text-center text-slate-400">
+                <svg class="w-6 h-6 animate-spin mx-auto text-orange-500 mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                <p class="text-xs font-bold">Loading return details...</p>
+            </div>
+
+            {{-- Error State --}}
+            <div x-show="detailError" class="p-6 text-center text-rose-500">
+                <p class="text-xs font-bold" x-text="detailError"></p>
+            </div>
+
+            {{-- Detail Content --}}
+            <div x-show="!loadingDetail && activeReturn" class="p-3 sm:p-4 space-y-3 overflow-y-auto flex-1">
+                {{-- Info Summary Grid --}}
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 text-xs">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('messages.po_col_po_number') }}</span>
+                        <template x-if="activeReturn && activeReturn.purchase_order">
+                            <a :href="`{{ url('/store/' . $store->slug . '/pos/purchases') }}/${activeReturn.purchase_order.id}`"
+                               class="font-mono font-bold text-sky-600 dark:text-sky-400 hover:underline inline-block mt-0.5"
+                               x-text="activeReturn.purchase_order.po_number"></a>
+                        </template>
+                        <template x-if="!activeReturn || !activeReturn.purchase_order">
+                            <span class="font-mono text-slate-400">—</span>
+                        </template>
+                    </div>
+
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('messages.supplier_col_name') }}</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200 block truncate mt-0.5" x-text="activeReturn && activeReturn.supplier ? activeReturn.supplier.name : '—'"></span>
+                    </div>
+
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('messages.po_returns_total_qty') }}</span>
+                        <span class="font-mono font-black text-slate-800 dark:text-slate-200 block mt-0.5" x-text="activeReturn ? (activeReturn.total_quantity_formatted + ' units') : '0'"></span>
+                    </div>
+
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('messages.po_returns_total_val') }}</span>
+                        <span class="font-mono font-black text-amber-600 dark:text-amber-400 block mt-0.5" x-text="activeReturn ? fmt(activeReturn.total_cost) : '0'"></span>
+                    </div>
+                </div>
+
+                {{-- Reason --}}
+                <template x-if="activeReturn && activeReturn.reason && activeReturn.reason !== '—'">
+                    <div class="bg-orange-50/60 dark:bg-orange-950/30 p-2 rounded-lg border border-orange-100 dark:border-orange-900/40 text-xs">
+                        <span class="font-bold text-orange-800 dark:text-orange-300">{{ __('messages.po_return_reason') }}:</span>
+                        <span class="text-orange-950 dark:text-orange-200 italic" x-text="activeReturn.reason"></span>
+                    </div>
+                </template>
+
+                {{-- Returned Items Breakdown Table --}}
+                <div>
+                    <h4 class="text-xs font-black uppercase text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                        <span>📦</span>
+                        <span>{{ __('messages.po_return_items_list') }}</span>
+                    </h4>
+                    <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+                        <table class="w-full text-left text-xs border-collapse font-sans">
+                            <thead class="bg-slate-100 dark:bg-slate-800/80 text-[11px] font-black uppercase text-slate-600 dark:text-slate-300">
+                                <tr class="divide-x divide-slate-200 dark:divide-slate-700">
+                                    <th class="py-1.5 px-2 text-center w-8">#</th>
+                                    <th class="py-1.5 px-2.5">{{ __('messages.products') }}</th>
+                                    <th class="py-1.5 px-2 text-right w-24">{{ __('messages.quantity') }}</th>
+                                    <th class="py-1.5 px-2 text-right w-28">{{ __('messages.cost') }}</th>
+                                    <th class="py-1.5 px-2.5 text-right w-28">{{ __('messages.receiving_total') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                                <template x-for="(item, idx) in (activeReturn ? activeReturn.items : [])" :key="item.id">
+                                    <tr class="divide-x divide-slate-100 dark:divide-slate-800 hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                                        <td class="py-1.5 px-2 text-center text-slate-400 font-mono text-[10px]" x-text="idx + 1"></td>
+                                        <td class="py-1.5 px-2.5">
+                                            <span class="font-bold text-slate-900 dark:text-slate-100 block truncate" x-text="item.name"></span>
+                                            <span class="font-mono text-[10px] text-slate-400 block" x-text="item.sku"></span>
+                                        </td>
+                                        <td class="py-1.5 px-2 text-right font-mono font-black text-slate-800 dark:text-slate-200" x-text="item.quantity_formatted"></td>
+                                        <td class="py-1.5 px-2 text-right font-mono text-slate-600 dark:text-slate-400" x-text="fmt(item.unit_cost)"></td>
+                                        <td class="py-1.5 px-2.5 text-right font-mono font-black text-amber-600 dark:text-amber-400" x-text="fmt(item.line_total)"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Modal Footer --}}
+            <div class="px-4 py-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40 shrink-0">
+                <span class="text-[11px] text-slate-400" x-text="activeReturn ? ('Processed by: ' + activeReturn.created_by) : ''"></span>
+                <div class="flex items-center gap-1.5">
+                    <template x-if="activeReturn && activeReturn.purchase_order">
+                        <a :href="`{{ url('/store/' . $store->slug . '/pos/purchases') }}/${activeReturn.purchase_order.id}`"
+                           class="h-7 px-3 rounded text-xs font-bold bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/60 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 transition inline-flex items-center gap-1">
+                            <span>🛒</span>
+                            <span>{{ __('messages.po_return_view_po') }}</span>
+                        </a>
+                    </template>
+                    <button type="button" @click="detailModalOpen = false"
+                            class="h-7 px-3 rounded text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition cursor-pointer">
+                        {{ __('messages.po_return_close') }}
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 

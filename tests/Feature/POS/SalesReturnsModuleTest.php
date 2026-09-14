@@ -365,4 +365,72 @@ class SalesReturnsModuleTest extends TestCase
         $xlsxResponse->assertOk();
         $this->assertStringContainsString('.xlsx', (string) $xlsxResponse->headers->get('content-disposition'));
     }
+
+    /* ------------------------------------------------------------------ */
+    /*  Print & Detail Modal                                               */
+    /* ------------------------------------------------------------------ */
+
+    public function test_print_page_renders_return_voucher_and_toolbar(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $sale = $this->postedSale($store, $cashier, 15000, '2');
+        $refund = $this->postedReturn($store, $sale, $cashier);
+
+        $response = $this->actingAs($cashier)->get("/store/{$store->slug}/pos/returns/{$refund->id}/print");
+
+        $response->assertOk();
+        $response->assertSee($refund->refund_number, false);
+        $response->assertSee($sale->receipt_number, false);
+        $response->assertSee('id="btnPrint"', false);
+        $response->assertSee('id="btnShareJpg"', false);
+        $response->assertSee('id="btnDownloadPdf"', false);
+        $response->assertSee('80mm', false);
+        $response->assertSee('58mm', false);
+    }
+
+    public function test_show_json_format_returns_modal_data(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $sale = $this->postedSale($store, $cashier, 15000, '2');
+        $refund = $this->postedReturn($store, $sale, $cashier);
+
+        $response = $this->actingAs($cashier)->getJson("/store/{$store->slug}/pos/returns/{$refund->id}");
+
+        $response->assertOk();
+        $response->assertJsonStructure([
+            'id',
+            'refund_number',
+            'total',
+            'total_formatted',
+            'posted_at',
+            'notes',
+            'sale' => ['id', 'receipt_number'],
+            'items' => [
+                '*' => ['id', 'name', 'sku', 'quantity', 'quantity_formatted', 'refund_price_formatted', 'line_total_formatted'],
+            ],
+            'payments' => [
+                '*' => ['id', 'method', 'amount', 'amount_formatted'],
+            ],
+            'print_url',
+            'show_url',
+        ]);
+        $this->assertEquals($refund->refund_number, $response->json('refund_number'));
+    }
+
+    public function test_index_page_contains_print_buttons_and_modal_triggers(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $sale = $this->postedSale($store, $cashier, 15000, '2');
+        $refund = $this->postedReturn($store, $sale, $cashier);
+
+        $response = $this->actingAs($cashier)->get("/store/{$store->slug}/pos/returns");
+
+        $response->assertOk();
+        $response->assertSee(route('pos.returns.print', ['store_slug' => $store->slug, 'return' => $refund->id]), false);
+        $response->assertSee("openDetail({$refund->id})", false);
+        $response->assertSee('detailModalOpen', false);
+    }
 }
