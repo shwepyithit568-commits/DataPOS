@@ -143,6 +143,9 @@ class StoreSettingController extends Controller
                 'pos_settings.allow_price_edit' => ['nullable', 'boolean'],
                 'pos_settings.max_item_discount_pct' => ['nullable', 'integer', 'min:0', 'max:100'],
                 'pos_settings.max_cart_discount_pct' => ['nullable', 'integer', 'min:0', 'max:100'],
+                // Default markups used to suggest new selling prices when a purchase cost changes.
+                'pos_settings.default_retail_markup' => ['nullable', 'numeric', 'min:0', 'max:1000'],
+                'pos_settings.default_wholesale_markup' => ['nullable', 'numeric', 'min:0', 'max:1000'],
                 'pos_settings.require_pin_to_void' => ['nullable', 'boolean'],
                 'pos_settings.require_pin_for_return' => ['nullable', 'boolean'],
                 'pos_settings.enable_tax'    => ['nullable', 'boolean'],
@@ -306,6 +309,9 @@ class StoreSettingController extends Controller
                 'allow_price_edit'      => ! empty($rawPos['allow_price_edit']),
                 'max_item_discount_pct' => ($rawPos['max_item_discount_pct'] ?? '') !== '' ? (int) $rawPos['max_item_discount_pct'] : null,
                 'max_cart_discount_pct' => ($rawPos['max_cart_discount_pct'] ?? '') !== '' ? (int) $rawPos['max_cart_discount_pct'] : null,
+                // Blank = not configured → the POS falls back to its built-in 20% / 10%.
+                'default_retail_markup' => ($rawPos['default_retail_markup'] ?? '') !== '' ? round((float) $rawPos['default_retail_markup'], 2) : null,
+                'default_wholesale_markup' => ($rawPos['default_wholesale_markup'] ?? '') !== '' ? round((float) $rawPos['default_wholesale_markup'], 2) : null,
                 'require_pin_to_void'   => ! empty($rawPos['require_pin_to_void']),
                 'require_pin_for_return'=> ! empty($rawPos['require_pin_for_return']),
                 'enable_tax'            => ! empty($rawPos['enable_tax']),

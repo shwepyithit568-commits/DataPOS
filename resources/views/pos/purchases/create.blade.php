@@ -3,13 +3,31 @@
 @section('title', __('messages.po_create_title') . ' - ' . ($store->name ?? 'DataPOS'))
 @section('main_padding', 'p-0.5 sm:p-1')
 
+@php
+    // Re-render after a validation / conflict bounce: restore what the cashier already filled in.
+    $oldSupplierId = (string) (old('supplier_id') ?? '');
+    $oldSupplierName = $oldSupplierId !== ''
+        ? (string) ($suppliers->firstWhere('id', (int) $oldSupplierId)?->name ?? '')
+        : '';
+    $oldPaymentMode = in_array(old('payment_status'), ['paid', 'partial'], true) ? 'cash' : 'credit';
+    $oldPaidAmount = (float) old('paid_amount', 0);
+@endphp
+
 @section('content')
 @include('pos.purchases._price_adjustment_script')
 <div class="w-full space-y-0.5 pb-6"
      x-data="poCreateComponent({
-         defaultRetailMarkup: '{{ $defaultMarkups['retail_markup'] ?? 20 }}',
-         defaultWholesaleMarkup: '{{ $defaultMarkups['wholesale_markup'] ?? 10 }}',
-         productsSearchUrl: '{{ url('/store/' . $store->slug . '/pos/purchases/products') }}'
+         defaultRetailMarkup: @js($defaultMarkups['retail_markup'] ?? '20'),
+         defaultWholesaleMarkup: @js($defaultMarkups['wholesale_markup'] ?? '10'),
+         storeHasMarkups: @js((bool) ($defaultMarkups['configured'] ?? false)),
+         productsSearchUrl: @js(url('/store/' . $store->slug . '/pos/purchases/products')),
+         initialRows: @js($initialRows ?? []),
+         supplierId: @js($oldSupplierId),
+         supplierName: @js($oldSupplierName),
+         discountAmount: {{ (float) old('discount_amount', 0) }},
+         deliveryFee: {{ (float) old('delivery_fee', 0) }},
+         paymentMode: @js($oldPaymentMode),
+         paidAmount: {{ $oldPaidAmount }}
      })">
 
 
@@ -102,7 +120,7 @@
                     {{ __('messages.po_supplier') }}
                 </p>
                 <div class="text-xs sm:text-sm font-black font-mono text-slate-800 dark:text-slate-200 tabular-nums mt-0.5 truncate"
-                     x-text="supplierName ? supplierName : '{{ __('messages.po_no_supplier') }}'">
+                     x-text="supplierName ? supplierName : @js(__('messages.po_no_supplier'))">
                 </div>
             </div>
         </div>
@@ -136,6 +154,7 @@
                         {{ __('messages.receiving_reference') }}
                     </label>
                     <input id="po-reference" type="text" name="reference" maxlength="100"
+                           value="{{ old('reference') }}"
                            placeholder="{{ __('messages.receiving_reference_placeholder') }}"
                            class="w-full h-7 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 text-xs font-mono text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-sky-500">
                 </div>
@@ -144,6 +163,7 @@
                         {{ __('messages.notes') }}
                     </label>
                     <input id="po-notes" type="text" name="notes" maxlength="1000"
+                           value="{{ old('notes') }}"
                            placeholder="{{ __('messages.notes_placeholder') }}"
                            class="w-full h-7 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 text-xs text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-sky-500">
                 </div>
@@ -256,8 +276,8 @@
             {{-- Voucher Previews Carousel / Grid (If files selected) --}}
             <div x-show="voucherPreviews.length > 0" x-cloak class="pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
                 <p class="text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center gap-1">
-                    <span>🖼️ Selected Vouchers / Invoices:</span>
-                    <span class="text-slate-400 font-normal" x-text="'(' + voucherPreviews.length + ' items)'"></span>
+                    <span>🖼️ {{ __('messages.po_voucher_selected') }}</span>
+                    <span class="text-slate-400 font-normal" x-text="'(' + voucherPreviews.length + ' ' + @js(__('messages.po_voucher_items_label')) + ')'"></span>
                 </p>
                 <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
                     <template x-for="(vp, idx) in voucherPreviews" :key="idx">
@@ -428,7 +448,7 @@
                                         <template x-if="hasCostChanged(r)">
                                             <button type="button"
                                                     @click="openSingleItemReview(r, rows)"
-                                                    :title="'{{ __('messages.po_price_adjustment_btn') }}: ' + costDiffPct(r) + '%'"
+                                                    :title="priceAdjustmentTitle(r)"
                                                     class="h-6 px-1 rounded text-[10px] font-bold font-mono transition cursor-pointer flex items-center gap-0.5 shrink-0"
                                                     :class="parseFloat(costDiffPct(r)) >= 0 ? 'bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-400' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-400'">
                                                 <span x-text="costDiffPct(r) + '%'"></span>
@@ -446,7 +466,7 @@
                                 <td class="py-1 px-2 text-center">
                                     <button type="button" @click="removeRow(i)"
                                             class="w-6 h-6 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 transition inline-grid place-items-center cursor-pointer text-xs"
-                                            title="Remove item">
+                                            title="{{ __('messages.po_remove_item') }}">
                                         🗑️
                                     </button>
                                 </td>
@@ -484,7 +504,7 @@
                 {{-- Live Voucher Cross-Check Balance Badge --}}
                 <template x-if="voucherMatchStatus !== 'none'">
                     <div class="border-l border-slate-200 dark:border-slate-700 pl-2.5 flex items-center gap-1.5">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block leading-none">Voucher:</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block leading-none">{{ __('messages.po_voucher_label') }}</span>
                         <span class="px-2 py-0.5 rounded text-xs font-mono font-bold flex items-center gap-1"
                               :class="{
                                   'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800': voucherMatchStatus === 'matched',

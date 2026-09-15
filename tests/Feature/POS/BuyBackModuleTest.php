@@ -70,6 +70,17 @@ class BuyBackModuleTest extends TestCase
         $resStaff->assertOk();
     }
 
+    public function test_manager_can_view_buyback_create_page(): void
+    {
+        $store = $this->makeStore();
+        $manager = $this->staff($store, 'store_manager');
+        $this->makeProduct($store, 60000);
+
+        $res = $this->actingAs($manager)->get("/store/{$store->slug}/pos/buy-back/create");
+        $res->assertOk();
+        $res->assertSee('buybackForm');
+    }
+
     public function test_buyback_creation_and_show(): void
     {
         $store = $this->makeStore();
@@ -204,5 +215,117 @@ class BuyBackModuleTest extends TestCase
 
         $response = $this->actingAs($managerB)->get("/store/{$storeB->slug}/pos/buy-back/{$buybackA->id}");
         $response->assertNotFound();
+    }
+
+    public function test_buyback_print_view_renders_voucher_and_toolbar(): void
+    {
+        $store = $this->makeStore();
+        $manager = $this->staff($store, 'store_manager');
+        $product = $this->makeProduct($store, 50000);
+
+        $buyback = BuyBack::create([
+            'store_id' => $store->id,
+            'buyback_number' => BuyBack::generateNumber($store->id),
+            'total_value' => 45000,
+            'refund_amount' => 45000,
+            'status' => 'completed',
+            'created_by' => $manager->id,
+        ]);
+        $buyback->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'unit_price' => 45000,
+        ]);
+
+        $res = $this->actingAs($manager)->get("/store/{$store->slug}/pos/buy-back/{$buyback->id}/print");
+        $res->assertOk();
+        $res->assertSee('btnPrint');
+        $res->assertSee('btnShareJpg');
+        $res->assertSee('btnDownloadPdf');
+        $res->assertSee('80mm');
+        $res->assertSee('58mm');
+        $res->assertSee($buyback->buyback_number);
+        $res->assertSee($store->name);
+    }
+
+    public function test_buyback_show_json_returns_modal_data(): void
+    {
+        $store = $this->makeStore();
+        $manager = $this->staff($store, 'store_manager');
+        $product = $this->makeProduct($store, 70000);
+
+        $buyback = BuyBack::create([
+            'store_id' => $store->id,
+            'buyback_number' => BuyBack::generateNumber($store->id),
+            'total_value' => 50000,
+            'refund_amount' => 50000,
+            'status' => 'pending',
+            'created_by' => $manager->id,
+            'reason' => 'Upgrade to newer model',
+        ]);
+        $buyback->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'unit_price' => 50000,
+        ]);
+
+        $res = $this->actingAs($manager)->get("/store/{$store->slug}/pos/buy-back/{$buyback->id}?format=json");
+        $res->assertOk();
+        $res->assertJsonStructure([
+            'id',
+            'buyback_number',
+            'status',
+            'reason',
+            'total_value',
+            'total_formatted',
+            'created_at_formatted',
+            'items' => [
+                '*' => [
+                    'id',
+                    'product_id',
+                    'name',
+                    'sku',
+                    'quantity',
+                    'quantity_formatted',
+                    'unit_price',
+                    'unit_price_formatted',
+                    'line_total',
+                    'line_total_formatted',
+                ],
+            ],
+            'show_url',
+            'print_url',
+        ]);
+        $res->assertJsonFragment([
+            'buyback_number' => $buyback->buyback_number,
+            'reason' => 'Upgrade to newer model',
+        ]);
+    }
+
+    public function test_buyback_index_contains_print_and_modal_actions(): void
+    {
+        $store = $this->makeStore();
+        $manager = $this->staff($store, 'store_manager');
+        $product = $this->makeProduct($store, 30000);
+
+        $buyback = BuyBack::create([
+            'store_id' => $store->id,
+            'buyback_number' => BuyBack::generateNumber($store->id),
+            'total_value' => 25000,
+            'refund_amount' => 25000,
+            'status' => 'completed',
+            'created_by' => $manager->id,
+        ]);
+        $buyback->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'unit_price' => 25000,
+        ]);
+
+        $res = $this->actingAs($manager)->get("/store/{$store->slug}/pos/buy-back");
+        $res->assertOk();
+        $res->assertSee('openDetail');
+        $res->assertSee("/store/{$store->slug}/pos/buy-back/{$buyback->id}/print");
+        $res->assertSee(__('messages.buyback_detail_title'));
     }
 }

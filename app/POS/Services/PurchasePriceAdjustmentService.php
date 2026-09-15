@@ -20,31 +20,168 @@ class PurchasePriceAdjustmentService
 
     /**
      * Resolve default markups with precedence:
-     * 1. Store Settings (StorefrontSetting pos_settings['default_retail_markup'] / ['default_wholesale_markup'])
+     * 1. Store Settings (StorefrontSetting pos_settings['default_retail_markup'] / ['default_wholesale_markup'],
+     *    editable at Admin → Settings → POS → Pricing)
      * 2. Fallback values: Retail 20.00%, Wholesale 10.00%
      *
-     * @return array{retail_markup: string, wholesale_markup: string, source: string}
+     * `configured` tells the UI whether the store owner actually set a markup, so the
+     * front-end can keep its legacy localStorage fallback only when nothing is configured.
+     *
+     * @return array{retail_markup: string, wholesale_markup: string, configured: bool, source: string}
      */
     public function getStoreMarkups(Store $store): array
     {
         $posSettings = $store->setting?->pos_settings ?? [];
 
-        $retail = isset($posSettings['default_retail_markup']) && is_numeric($posSettings['default_retail_markup'])
-            ? bcadd((string) $posSettings['default_retail_markup'], '0', 2)
-            : '20.00';
-
-        $wholesale = isset($posSettings['default_wholesale_markup']) && is_numeric($posSettings['default_wholesale_markup'])
-            ? bcadd((string) $posSettings['default_wholesale_markup'], '0', 2)
-            : '10.00';
-
-        $source = (isset($posSettings['default_retail_markup']) || isset($posSettings['default_wholesale_markup']))
-            ? 'store_settings'
-            : 'default_fallback';
+        $hasRetail = isset($posSettings['default_retail_markup']) && is_numeric($posSettings['default_retail_markup']);
+        $hasWholesale = isset($posSettings['default_wholesale_markup']) && is_numeric($posSettings['default_wholesale_markup']);
 
         return [
-            'retail_markup' => $retail,
-            'wholesale_markup' => $wholesale,
-            'source' => $source,
+            'retail_markup' => $hasRetail
+                ? bcadd((string) $posSettings['default_retail_markup'], '0', 2)
+                : '20.00',
+            'wholesale_markup' => $hasWholesale
+                ? bcadd((string) $posSettings['default_wholesale_markup'], '0', 2)
+                : '10.00',
+            'configured' => $hasRetail || $hasWholesale,
+            'source' => ($hasRetail || $hasWholesale) ? 'store_settings' : 'default_fallback',
+        ];
+    }
+
+    /**
+     * Build the Alpine row payload for an existing PO (edit form).
+     *
+     * A variant line must use the VARIANT's own prices — falling through to the parent
+     * product when the variant's wholesale_price is NULL would send an expected price the
+     * server does not have (it reads NULL as 0.00) and trip the 409 conflict guard on the
+     * very first save, for every variant that has no wholesale price.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function buildRowsForPo(PurchaseOrder $po): array
+    {
+        $po->loadMissing(['items.product', 'items.variant']);
+
+        $rows = [];
+        foreach ($po->items as $item) {
+            $unitCost = (string) (float) $item->unit_cost;
+            $row = $this->makeRow($item->product, $item->variant, $item->product_variant_id, $unitCost);
+            if ($row === null) {
+                continue;
+            }
+
+            $rows[] = array_merge($row, [
+                'quantity' => (string) (float) $item->quantity,
+                // For edit, the authoritative baseline is the original PO line cost.
+                'unit_cost' => $unitCost,
+                'baseline_cost' => $unitCost,
+                'cost' => $unitCost,
+            ]);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Build the Alpine row payload for a create form that is being re-rendered after a
+     * validation/conflict error, so the cashier does not lose the whole cart.
+     *
+     * The baseline is the product's CURRENT cost — the same baseline the server will use
+     * for a fresh create.
+     *
+     * @param  array<int, mixed>  $oldItems  Raw old('items') input
+     * @return array<int, array<string, mixed>>
+     */
+    public function buildRowsForDraft(Store $store, array $oldItems): array
+    {
+        $requested = [];
+        foreach (array_slice($oldItems, 0, 200) as $line) {
+            if (! is_array($line)) {
+                continue;
+            }
+            $productId = (int) ($line['product_id'] ?? 0);
+            if ($productId <= 0) {
+                continue;
+            }
+            $requested[] = $line;
+        }
+
+        if ($requested === []) {
+            return [];
+        }
+
+        $productIds = array_unique(array_map(fn ($line) => (int) $line['product_id'], $requested));
+        $products = Product::where('store_id', $store->id)->whereIn('id', $productIds)->get()->keyBy('id');
+
+        // Variants are only needed for the rows that name one.
+        $variantIds = array_values(array_filter(array_map(
+            fn ($line) => ! empty($line['product_variant_id']) ? (int) $line['product_variant_id'] : null,
+            $requested
+        )));
+        $variants = $variantIds === []
+            ? collect()
+            : ProductVariant::whereIn('id', $variantIds)->get()->keyBy('id');
+
+        $rows = [];
+        foreach ($requested as $line) {
+            $product = $products->get((int) $line['product_id']);
+            if (! $product) {
+                continue;
+            }
+
+            $variantId = ! empty($line['product_variant_id']) ? (int) $line['product_variant_id'] : null;
+            $variant = $variantId ? $variants->get($variantId) : null;
+            if ($variantId && (! $variant || (int) $variant->product_id !== (int) $product->id)) {
+                continue;
+            }
+
+            $row = $this->makeRow($product, $variant, $variantId, '');
+            if ($row === null) {
+                continue;
+            }
+
+            $rows[] = array_merge($row, [
+                'quantity' => (string) ($line['quantity'] ?? '1'),
+                'unit_cost' => (string) ($line['unit_cost'] ?? ''),
+            ]);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Shared row shape consumed by the Alpine components (must match the shape returned by
+     * PurchaseOrderController::productSearch so both entry points behave identically).
+     *
+     * @return array<string, mixed>|null  null when the product is missing (deleted line)
+     */
+    private function makeRow(?Product $product, ?ProductVariant $variant, ?int $variantId, string $unitCost): ?array
+    {
+        if (! $product) {
+            return null;
+        }
+
+        $cost = bcadd((string) ($product->purchase_cost ?? '0'), '0', 2);
+
+        $retail = $variant
+            ? $variant->retail_price
+            : $product->retail_price;
+        $wholesale = $variant
+            ? ($variant->wholesale_price ?? '0')
+            : ($product->wholesale_price ?? '0');
+
+        return [
+            'product_id' => $product->id,
+            'product_variant_id' => $variantId,
+            'name' => $variant ? ($product->name . ' (' . $variant->name . ')') : $product->name,
+            'sku' => $variant ? ($variant->sku ?: $product->sku) : $product->sku,
+            'balance' => 0,
+            'quantity' => '1',
+            'unit_cost' => $unitCost !== '' ? $unitCost : $cost,
+            'baseline_cost' => $cost,
+            'cost' => $cost,
+            'retail_price' => (string) (float) ($retail ?? '0'),
+            'wholesale_price' => (string) (float) ($wholesale ?? '0'),
         ];
     }
 
@@ -136,7 +273,12 @@ class PurchasePriceAdjustmentService
         $poLinesMap = [];
         foreach ($poLines as $line) {
             $k = ((int) $line['product_id']) . ':' . (! empty($line['product_variant_id']) ? (int) $line['product_variant_id'] : 0);
-            $poLinesMap[$k] = bcadd((string) $line['unit_cost'], '0', 2);
+            // Duplicate lines are merged by PurchaseOrderService (quantities summed, the FIRST
+            // unit_cost kept), so validation must price the line the PO will actually store —
+            // otherwise the audit log records a cost that never landed in the PO.
+            if (! isset($poLinesMap[$k])) {
+                $poLinesMap[$k] = bcadd((string) $line['unit_cost'], '0', 2);
+            }
         }
 
         $seenKeys = [];
@@ -278,7 +420,7 @@ class PurchasePriceAdjustmentService
         // 9. Permission check: if any selling prices are to be updated, actor MUST have products.update
         if ($hasAnyPriceUpdate && ! $this->permissionService->can($actor, $store, 'products.update')) {
             throw ValidationException::withMessages([
-                'price_updates' => ['You do not have permission to update product selling prices. Save with "Keep Current Prices" instead.'],
+                'price_updates' => [__('messages.po_price_update_permission_denied')],
             ]);
         }
 
@@ -336,7 +478,7 @@ class PurchasePriceAdjustmentService
                     bccomp($currentWholesale, $update['expected_wholesale_price'], 2) !== 0
                 ) {
                     throw new InventoryException(
-                        "Price conflict for variant #{$variant->name}: prices were modified by another user (Current Retail: {$currentRetail}, Wholesale: {$currentWholesale}). Please review again.",
+                        __('messages.po_price_conflict_alert') . ' (' . $variant->name . ')',
                         409
                     );
                 }
@@ -392,7 +534,7 @@ class PurchasePriceAdjustmentService
                     bccomp($currentWholesale, $update['expected_wholesale_price'], 2) !== 0
                 ) {
                     throw new InventoryException(
-                        "Price conflict for product #{$product->name}: prices were modified by another user (Current Retail: {$currentRetail}, Wholesale: {$currentWholesale}). Please review again.",
+                        __('messages.po_price_conflict_alert') . ' (' . $product->name . ')',
                         409
                     );
                 }

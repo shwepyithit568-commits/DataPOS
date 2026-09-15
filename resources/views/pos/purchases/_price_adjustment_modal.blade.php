@@ -119,11 +119,11 @@
                                     {{-- Retail Price Adjustment Input --}}
                                     <td class="py-1.5 px-2 text-right font-sans">
                                         <div class="flex items-center justify-between text-[10px] text-slate-400 mb-0.5">
-                                            <span>Current: <b class="font-mono text-slate-600 dark:text-slate-300" x-text="fmt(item.expected_retail_price)"></b></span>
+                                            <span>{{ __('messages.po_price_current_label') }}: <b class="font-mono text-slate-600 dark:text-slate-300" x-text="fmt(item.expected_retail_price)"></b></span>
                                             <span class="text-sky-600 dark:text-sky-400 cursor-pointer hover:underline"
                                                   @click="item.retail_price = item.suggested_retail"
-                                                  title="Use Suggested Price">
-                                                Sugg: <span class="font-mono" x-text="fmt(item.suggested_retail)"></span>
+                                                  title="{{ __('messages.po_price_use_suggested') }}">
+                                                {{ __('messages.po_price_suggested_label') }}: <span class="font-mono" x-text="fmt(item.suggested_retail)"></span>
                                             </span>
                                         </div>
                                         <input type="number"
@@ -138,11 +138,11 @@
                                     {{-- Wholesale Price Adjustment Input --}}
                                     <td class="py-1.5 px-2 text-right font-sans">
                                         <div class="flex items-center justify-between text-[10px] text-slate-400 mb-0.5">
-                                            <span>Current: <b class="font-mono text-slate-600 dark:text-slate-300" x-text="fmt(item.expected_wholesale_price)"></b></span>
+                                            <span>{{ __('messages.po_price_current_label') }}: <b class="font-mono text-slate-600 dark:text-slate-300" x-text="fmt(item.expected_wholesale_price)"></b></span>
                                             <span class="text-sky-600 dark:text-sky-400 cursor-pointer hover:underline"
                                                   @click="item.wholesale_price = item.suggested_wholesale"
-                                                  title="Use Suggested Price">
-                                                Sugg: <span class="font-mono" x-text="fmt(item.suggested_wholesale)"></span>
+                                                  title="{{ __('messages.po_price_use_suggested') }}">
+                                                {{ __('messages.po_price_suggested_label') }}: <span class="font-mono" x-text="fmt(item.suggested_wholesale)"></span>
                                             </span>
                                         </div>
                                         <input type="number"
@@ -194,9 +194,9 @@
                             <div class="space-y-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800">
                                 <div>
                                     <div class="flex items-center justify-between text-[10px] text-slate-500 mb-0.5">
-                                        <span>{{ __('messages.po_new_retail') }} (Curr: <span class="font-mono" x-text="fmt(item.expected_retail_price)"></span>)</span>
+                                        <span>{{ __('messages.po_new_retail') }} ({{ __('messages.po_price_current_label') }}: <span class="font-mono" x-text="fmt(item.expected_retail_price)"></span>)</span>
                                         <button type="button" @click="item.retail_price = item.suggested_retail" class="text-sky-600 font-bold">
-                                            Sugg: <span class="font-mono" x-text="fmt(item.suggested_retail)"></span>
+                                            {{ __('messages.po_price_suggested_label') }}: <span class="font-mono" x-text="fmt(item.suggested_retail)"></span>
                                         </button>
                                     </div>
                                     <input type="number"
@@ -208,9 +208,9 @@
 
                                 <div>
                                     <div class="flex items-center justify-between text-[10px] text-slate-500 mb-0.5">
-                                        <span>{{ __('messages.po_new_wholesale') }} (Curr: <span class="font-mono" x-text="fmt(item.expected_wholesale_price)"></span>)</span>
+                                        <span>{{ __('messages.po_new_wholesale') }} ({{ __('messages.po_price_current_label') }}: <span class="font-mono" x-text="fmt(item.expected_wholesale_price)"></span>)</span>
                                         <button type="button" @click="item.wholesale_price = item.suggested_wholesale" class="text-sky-600 font-bold">
-                                            Sugg: <span class="font-mono" x-text="fmt(item.suggested_wholesale)"></span>
+                                            {{ __('messages.po_price_suggested_label') }}: <span class="font-mono" x-text="fmt(item.suggested_wholesale)"></span>
                                         </button>
                                     </div>
                                     <input type="number"

@@ -67,9 +67,16 @@ class PurchaseOrderController extends Controller
         $suppliers = \App\Models\Supplier::where('store_id', $store->id)->orderBy('name')->get();
         $brands = \App\Models\Brand::where('store_id', $store->id)->orderBy('name')->get();
         $categories = \App\Models\Category::where('store_id', $store->id)->whereNull('parent_id')->orderBy('name')->get();
-        $defaultMarkups = app(\App\POS\Services\PurchasePriceAdjustmentService::class)->getStoreMarkups($store);
 
-        return view('pos.purchases.create', compact('store', 'suppliers', 'brands', 'categories', 'defaultMarkups'));
+        $priceAdjustments = app(\App\POS\Services\PurchasePriceAdjustmentService::class);
+        $defaultMarkups = $priceAdjustments->getStoreMarkups($store);
+
+        // Bounced back by a validation / conflict error? Rebuild the cart the cashier
+        // already typed instead of losing the whole purchase order.
+        $oldItems = old('items');
+        $initialRows = is_array($oldItems) ? $priceAdjustments->buildRowsForDraft($store, $oldItems) : [];
+
+        return view('pos.purchases.create', compact('store', 'suppliers', 'brands', 'categories', 'defaultMarkups', 'initialRows'));
     }
 
     /** Product search for PO create form (brand/category filters). */
@@ -319,9 +326,11 @@ class PurchaseOrderController extends Controller
         // Preload items with products and variants
         $po->load(['items.product', 'items.variant', 'supplier']);
 
-        $defaultMarkups = app(\App\POS\Services\PurchasePriceAdjustmentService::class)->getStoreMarkups($store);
+        $priceAdjustments = app(\App\POS\Services\PurchasePriceAdjustmentService::class);
+        $defaultMarkups = $priceAdjustments->getStoreMarkups($store);
+        $initialRows = $priceAdjustments->buildRowsForPo($po);
 
-        return view('pos.purchases.edit', compact('store', 'po', 'suppliers', 'brands', 'categories', 'defaultMarkups'));
+        return view('pos.purchases.edit', compact('store', 'po', 'suppliers', 'brands', 'categories', 'defaultMarkups', 'initialRows'));
     }
 
     /** Update an existing PO. */

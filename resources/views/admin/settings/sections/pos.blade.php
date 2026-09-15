@@ -21,6 +21,8 @@
     $allowPriceEdit = $pos['allow_price_edit'] ?? false;
     $maxItemDiscount = $pos['max_item_discount_pct'] ?? 10;
     $maxCartDiscount = $pos['max_cart_discount_pct'] ?? 15;
+    $retailMarkup = $pos['default_retail_markup'] ?? '';
+    $wholesaleMarkup = $pos['default_wholesale_markup'] ?? '';
     $pinThreshold = old('pos_override_pin_threshold', $setting->pos_override_pin_threshold ?? '');
     $requirePinVoid = $pos['require_pin_to_void'] ?? true;
     $requirePinReturn = $pos['require_pin_for_return'] ?? true;
@@ -225,6 +227,23 @@
                         <input type="number" name="pos_settings[max_item_discount_pct]" min="0" max="100"
                                value="{{ $maxItemDiscount }}" class="{{ $inputClass }}" />
                         <p class="{{ $helpClass }}">{{ __('messages.settings_pos_max_discount_help') }}</p>
+                    </div>
+
+                    <div>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_pos_retail_markup') }}</label>
+                        <input type="number" step="0.01" min="0" max="1000"
+                               name="pos_settings[default_retail_markup]" value="{{ $retailMarkup }}"
+                               placeholder="20" class="{{ $inputClass }}" />
+                        @error('pos_settings.default_retail_markup')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+                    </div>
+
+                    <div>
+                        <label class="{{ $labelClass }}">{{ __('messages.settings_pos_wholesale_markup') }}</label>
+                        <input type="number" step="0.01" min="0" max="1000"
+                               name="pos_settings[default_wholesale_markup]" value="{{ $wholesaleMarkup }}"
+                               placeholder="10" class="{{ $inputClass }}" />
+                        <p class="{{ $helpClass }}">{{ __('messages.settings_pos_markup_help') }}</p>
+                        @error('pos_settings.default_wholesale_markup')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                     </div>
 
                     <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">

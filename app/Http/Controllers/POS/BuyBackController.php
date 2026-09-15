@@ -270,9 +270,17 @@ class BuyBackController extends Controller
         $storeRouteParams = $context->getRouteParams();
         $customers = User::whereHas('stores', fn ($q) => $q->where('stores.id', $store->id))->orderBy('name')->get();
         $warehouse = Warehouse::where('store_id', $store->id)->where('is_default', true)->first();
-        $products = Product::where('store_id', $store->id)->orderBy('name')->get();
+        $products = Product::where('store_id', $store->id)->orderBy('name')->get(['id', 'name', 'sku', 'barcode', 'retail_price', 'wholesale_price', 'purchase_cost']);
+        $productArray = $products->map(fn ($p) => [
+            'id' => $p->id,
+            'name' => $p->name,
+            'sku' => $p->sku ?? '',
+            'barcode' => $p->barcode ?? '',
+            'cost' => (float) ($p->purchase_cost ?? 0),
+            'price' => (float) ($p->retail_price ?? 0),
+        ])->values()->all();
 
-        return view('pos.buybacks.create', compact('store', 'storeRouteParams', 'customers', 'products', 'warehouse'));
+        return view('pos.buybacks.create', compact('store', 'storeRouteParams', 'customers', 'products', 'productArray', 'warehouse'));
     }
 
     public function store(Request $request, StoreContext $context, string $store_slug): RedirectResponse
@@ -321,7 +329,7 @@ class BuyBackController extends Controller
             ->with('success', __('messages.buyback_created'));
     }
 
-    public function show(StoreContext $context, string $store_slug, BuyBack $buyback): View
+    public function show(Request $request, StoreContext $context, string $store_slug, BuyBack $buyback): View|\Illuminate\Http\JsonResponse
     {
         $store = $context->getStore();
 
@@ -331,11 +339,89 @@ class BuyBackController extends Controller
 
         $buyback->load(['creator', 'customer', 'items.product']);
 
+        if ($request->wantsJson() || $request->ajax() || $request->query('format') === 'json') {
+            $fmtQty = static function ($qty): string {
+                $f = (float) $qty;
+                if ($f == (int) $f) {
+                    return (string) (int) $f;
+                }
+                return rtrim(rtrim(number_format($f, 3, '.', ''), '0'), '.');
+            };
+
+            return response()->json([
+                'id' => $buyback->id,
+                'buyback_number' => $buyback->buyback_number,
+                'status' => $buyback->status,
+                'status_label' => __('messages.' . $buyback->status),
+                'total_value' => (float) $buyback->total_value,
+                'total_value_formatted' => format_currency($buyback->total_value, $store),
+                'total_formatted' => format_currency($buyback->total_value, $store),
+                'refund_amount' => (float) $buyback->refund_amount,
+                'refund_amount_formatted' => format_currency($buyback->refund_amount, $store),
+                'reason' => $buyback->reason ?: '—',
+                'notes' => $buyback->notes ?: null,
+                'created_at' => $buyback->created_at->format('d M Y, H:i'),
+                'created_at_formatted' => $buyback->created_at->format('d M Y, H:i'),
+                'creator' => $buyback->creator ? [
+                    'id' => $buyback->creator->id,
+                    'name' => $buyback->creator->name,
+                ] : null,
+                'creator_name' => $buyback->creator?->name ?? '—',
+                'customer' => $buyback->customer ? [
+                    'id' => $buyback->customer->id,
+                    'name' => $buyback->customer->name,
+                    'phone' => $buyback->customer->phone,
+                ] : null,
+                'items' => $buyback->items->map(function ($item) use ($store, $fmtQty) {
+                    $lineTotal = (float) $item->unit_price * (float) $item->quantity;
+                    return [
+                        'id' => $item->id,
+                        'product_id' => $item->product_id,
+                        'name' => $item->product?->name ?? '—',
+                        'product_name' => $item->product?->name ?? '—',
+                        'sku' => $item->product?->sku ?? '',
+                        'quantity' => (float) $item->quantity,
+                        'quantity_formatted' => $fmtQty($item->quantity),
+                        'unit_price' => (float) $item->unit_price,
+                        'unit_price_formatted' => format_currency($item->unit_price, $store),
+                        'line_total' => $lineTotal,
+                        'line_total_formatted' => format_currency($lineTotal, $store),
+                    ];
+                }),
+                'print_url' => route('pos.buybacks.print', ['store_slug' => $store->slug, 'buyback' => $buyback->id]),
+                'detail_url' => route('pos.buybacks.show', ['store_slug' => $store->slug, 'buyback' => $buyback->id]),
+                'show_url' => route('pos.buybacks.show', ['store_slug' => $store->slug, 'buyback' => $buyback->id]),
+            ]);
+        }
+
         return view('pos.buybacks.show', [
             'store' => $store,
             'storeRouteParams' => $context->getRouteParams(),
             'buyback' => $buyback,
         ]);
+    }
+
+    /**
+     * Print Customer Buy-Back & Trade-In Slip (80mm / 58mm / A5 / A4).
+     */
+    public function print(Request $request, StoreContext $context, string $store_slug, BuyBack $buyback): View
+    {
+        $store = $context->getStore();
+
+        if ((int) $buyback->store_id !== (int) $store->id) {
+            abort(404);
+        }
+
+        $buyback->load(['creator', 'customer', 'items.product']);
+
+        $templateService = app(\App\POS\Services\VoucherTemplateService::class);
+        $paperSize = (string) ($request->input('paper_size') ?: $templateService->getDocumentPaperSize($store, 'pos_sale'));
+        if (! in_array($paperSize, ['58mm', '80mm', 'a5', 'a4'], true)) {
+            $paperSize = '80mm';
+        }
+        $voucherTemplate = $templateService->getTemplateForDocument($store, 'pos_sale', $paperSize);
+
+        return view('pos.buybacks.print', compact('store', 'buyback', 'voucherTemplate', 'paperSize'));
     }
 
     public function complete(StoreContext $context, string $store_slug, BuyBack $buyback): RedirectResponse

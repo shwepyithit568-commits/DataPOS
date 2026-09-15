@@ -997,6 +997,7 @@ Route::prefix('store/{store_slug}')
             Route::get('/buy-back/create', [\App\Http\Controllers\POS\BuyBackController::class, 'create'])->name('pos.buybacks.create')->middleware('store.permission:pos_buyback.create');
             Route::post('/buy-back', [\App\Http\Controllers\POS\BuyBackController::class, 'store'])->name('pos.buybacks.store')->middleware('store.permission:pos_buyback.create');
             Route::get('/buy-back/{buyback}', [\App\Http\Controllers\POS\BuyBackController::class, 'show'])->name('pos.buybacks.show')->middleware('store.permission:pos_buyback.view');
+            Route::get('/buy-back/{buyback}/print', [\App\Http\Controllers\POS\BuyBackController::class, 'print'])->name('pos.buybacks.print')->middleware('store.permission:pos_buyback.view');
             Route::post('/buy-back/{buyback}/complete', [\App\Http\Controllers\POS\BuyBackController::class, 'complete'])->name('pos.buybacks.complete')->middleware('store.permission:pos_buyback.update');
             Route::post('/buy-back/{buyback}/cancel', [\App\Http\Controllers\POS\BuyBackController::class, 'cancel'])->name('pos.buybacks.cancel')->middleware('store.permission:pos_buyback.update');
 

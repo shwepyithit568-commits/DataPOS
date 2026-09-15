@@ -4,23 +4,6 @@
 @section('main_padding', 'p-0.5 sm:p-1')
 
 @php
-    $initialRows = $po->items->map(function ($item) {
-        $retail = $item->variant?->retail_price ?? $item->product?->retail_price ?? '0';
-        $wholesale = $item->variant?->wholesale_price ?? $item->product?->wholesale_price ?? '0';
-        return [
-            'product_id' => $item->product_id,
-            'product_variant_id' => $item->product_variant_id,
-            'name' => $item->product?->name ?? ('Product #' . $item->product_id),
-            'sku' => $item->variant?->sku ?? $item->product?->sku ?? '',
-            'balance' => 0,
-            'quantity' => (string) (float) $item->quantity,
-            'unit_cost' => (string) (float) $item->unit_cost,
-            'baseline_cost' => (string) (float) $item->unit_cost,
-            'cost' => (string) (float) $item->unit_cost,
-            'retail_price' => (string) (float) $retail,
-            'wholesale_price' => (string) (float) $wholesale,
-        ];
-    })->values();
     $isReceived = $po->isReceived();
 @endphp
 
@@ -28,13 +11,14 @@
 @include('pos.purchases._price_adjustment_script')
 <div class="w-full space-y-0.5 pb-6"
      x-data="poEditComponent({
-         defaultRetailMarkup: '{{ $defaultMarkups['retail_markup'] ?? 20 }}',
-         defaultWholesaleMarkup: '{{ $defaultMarkups['wholesale_markup'] ?? 10 }}',
-         productsSearchUrl: '{{ url('/store/' . $store->slug . '/pos/purchases/products') }}',
+         defaultRetailMarkup: @js($defaultMarkups['retail_markup'] ?? '20'),
+         defaultWholesaleMarkup: @js($defaultMarkups['wholesale_markup'] ?? '10'),
+         storeHasMarkups: @js((bool) ($defaultMarkups['configured'] ?? false)),
+         productsSearchUrl: @js(url('/store/' . $store->slug . '/pos/purchases/products')),
          initialRows: @js($initialRows),
          isReceived: @js($isReceived),
-         supplierId: '{{ $po->supplier_id ?? '' }}',
-         supplierName: '{{ $po->supplier?->name ?? '' }}',
+         supplierId: @js((string) ($po->supplier_id ?? '')),
+         supplierName: @js((string) ($po->supplier?->name ?? '')),
          discountAmount: {{ (float) $po->discount_amount }},
          deliveryFee: {{ (float) $po->delivery_fee }}
      })">
@@ -294,7 +278,7 @@
             <div x-show="voucherPreviews.length > 0" x-cloak class="pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
                 <p class="text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center gap-1">
                     <span>🖼️ New Vouchers to Upload:</span>
-                    <span class="text-slate-400 font-normal" x-text="'(' + voucherPreviews.length + ' items)'"></span>
+                    <span class="text-slate-400 font-normal" x-text="'(' + voucherPreviews.length + ' ' + @js(__('messages.po_voucher_items_label')) + ')'"></span>
                 </p>
                 <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
                     <template x-for="(vp, idx) in voucherPreviews" :key="idx">
@@ -453,7 +437,7 @@
                                         <template x-if="hasCostChanged(r)">
                                             <button type="button"
                                                     @click="openSingleItemReview(r, rows)"
-                                                    :title="'{{ __('messages.po_price_adjustment_btn') }}: ' + costDiffPct(r) + '%'"
+                                                    :title="priceAdjustmentTitle(r)"
                                                     class="h-6 px-1 rounded text-[10px] font-bold font-mono transition cursor-pointer flex items-center gap-0.5 shrink-0"
                                                     :class="parseFloat(costDiffPct(r)) >= 0 ? 'bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-400' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-400'">
                                                 <span x-text="costDiffPct(r) + '%'"></span>
@@ -471,7 +455,7 @@
                                 <td class="py-1 px-2 text-center">
                                     <button type="button" @click="removeRow(i)"
                                             class="w-6 h-6 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 transition inline-grid place-items-center cursor-pointer text-xs"
-                                            title="Remove item">
+                                            title="{{ __('messages.po_remove_item') }}">
                                         🗑️
                                     </button>
                                 </td>
@@ -509,7 +493,7 @@
                 {{-- Live Voucher Cross-Check Balance Badge --}}
                 <template x-if="voucherMatchStatus !== 'none'">
                     <div class="border-l border-slate-200 dark:border-slate-700 pl-2.5 flex items-center gap-1.5">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block leading-none">Voucher:</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block leading-none">{{ __('messages.po_voucher_label') }}</span>
                         <span class="px-2 py-0.5 rounded text-xs font-mono font-bold flex items-center gap-1"
                               :class="{
                                   'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800': voucherMatchStatus === 'matched',

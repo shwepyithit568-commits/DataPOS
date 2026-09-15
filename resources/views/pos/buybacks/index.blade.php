@@ -13,6 +13,31 @@
         setView(mode) {
             this.viewMode = mode;
             localStorage.setItem('pos_buybacks_view', mode);
+        },
+        detailModalOpen: false,
+        loadingDetail: false,
+        detailError: null,
+        activeBuyBack: null,
+        openDetail(id) {
+            this.detailModalOpen = true;
+            this.loadingDetail = true;
+            this.detailError = null;
+            this.activeBuyBack = null;
+            fetch(`{{ url('/store/' . $store->slug . '/pos/buy-back') }}/${id}?format=json`, {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(r => {
+                if (!r.ok) throw new Error('Failed to load buy-back details');
+                return r.json();
+            })
+            .then(data => {
+                this.activeBuyBack = data;
+                this.loadingDetail = false;
+            })
+            .catch(err => {
+                this.detailError = err.message;
+                this.loadingDetail = false;
+            });
         }
      }">
 
@@ -250,12 +275,21 @@
                                 </td>
                                 <td class="px-3 py-2 align-middle text-[11px] text-slate-500 dark:text-slate-400">{{ $buyback->created_at->format('d M Y H:i') }}</td>
                                 <td class="px-3 py-2 align-middle text-right">
-                                    <a href="{{ route('pos.buybacks.show', [...$storeRouteParams, 'buyback' => $buyback->id]) }}"
-                                       title="{{ __('messages.view') }}"
-                                       class="h-6 px-2 rounded text-[11px] font-bold text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/50 hover:bg-sky-100 dark:hover:bg-sky-900/50 border border-sky-200/60 dark:border-sky-800/60 transition inline-flex items-center gap-1 cursor-pointer">
-                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                        <span>{{ __('messages.view') }}</span>
-                                    </a>
+                                    <div class="inline-flex items-center gap-1">
+                                        <button type="button"
+                                                @click="openDetail({{ $buyback->id }})"
+                                                title="{{ __('messages.view') }}"
+                                                class="h-6 px-1.5 rounded text-[11px] font-bold text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/50 hover:bg-sky-100 dark:hover:bg-sky-900/50 border border-sky-200/60 dark:border-sky-800/60 transition inline-flex items-center gap-1 cursor-pointer">
+                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            <span>{{ __('messages.view') }}</span>
+                                        </button>
+                                        <a href="{{ route('pos.buybacks.print', [...$storeRouteParams, 'buyback' => $buyback->id]) }}"
+                                           target="_blank" rel="noopener"
+                                           title="{{ __('messages.print') }}"
+                                           class="h-6 px-1.5 rounded text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-1 cursor-pointer">
+                                            <span>🖨️</span>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
@@ -295,11 +329,20 @@
                     </div>
                     <div class="mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1.5">
                         <span class="text-[10px] text-slate-400">{{ $buyback->created_at->format('d M Y') }}</span>
-                        <a href="{{ route('pos.buybacks.show', [...$storeRouteParams, 'buyback' => $buyback->id]) }}"
-                           class="h-6 px-2 rounded text-[11px] font-bold text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/50 hover:bg-sky-100 dark:hover:bg-sky-900/50 border border-sky-200/60 dark:border-sky-800/60 transition inline-flex items-center gap-1 cursor-pointer">
-                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                            <span>{{ __('messages.view') }}</span>
-                        </a>
+                        <div class="inline-flex items-center gap-1">
+                            <button type="button"
+                                    @click="openDetail({{ $buyback->id }})"
+                                    class="h-6 px-2 rounded text-[11px] font-bold text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/50 hover:bg-sky-100 dark:hover:bg-sky-900/50 border border-sky-200/60 dark:border-sky-800/60 transition inline-flex items-center gap-1 cursor-pointer">
+                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <span>{{ __('messages.view') }}</span>
+                            </button>
+                            <a href="{{ route('pos.buybacks.print', [...$storeRouteParams, 'buyback' => $buyback->id]) }}"
+                               target="_blank" rel="noopener"
+                               title="{{ __('messages.print') }}"
+                               class="h-6 px-2 rounded text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-1 cursor-pointer">
+                                <span>🖨️</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             @endforeach
@@ -307,5 +350,154 @@
 
         <div class="mt-1">{{ $buybacks->withQueryString()->links() }}</div>
     @endif
+
+    {{-- ============================================================
+         6. BUY-BACK DETAIL MODAL DIALOG
+         ============================================================ --}}
+    <div x-show="detailModalOpen" x-cloak
+         @click.self="detailModalOpen = false"
+         class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-2.5 sm:p-4 bg-black/60 backdrop-blur-xs"
+         role="dialog" aria-modal="true" @keydown.escape.window="detailModalOpen = false">
+
+        <div class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
+            {{-- Modal Header --}}
+            <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/50 shrink-0">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-7 h-7 rounded-lg bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 grid place-items-center text-sm font-bold shrink-0">
+                        🔄
+                    </span>
+                    <div class="min-w-0">
+                        <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                            <span>{{ __('messages.buyback_detail_title') }}</span>
+                            <span class="text-sky-600 dark:text-sky-400 font-mono text-xs" x-text="activeBuyBack ? ('#' + activeBuyBack.buyback_number) : ''"></span>
+                        </h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate" x-text="activeBuyBack ? (activeBuyBack.created_at_formatted + (activeBuyBack.customer ? ' · ' + activeBuyBack.customer.name : '')) : ''"></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <template x-if="activeBuyBack && activeBuyBack.print_url">
+                        <a :href="activeBuyBack.print_url" target="_blank" rel="noopener"
+                           class="h-7 px-2.5 rounded-md bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition inline-flex items-center gap-1 shadow-2xs">
+                            <span>🖨️</span>
+                            <span>{{ __('messages.print') }}</span>
+                        </a>
+                    </template>
+                    <template x-if="activeBuyBack && activeBuyBack.show_url">
+                        <a :href="activeBuyBack.show_url"
+                           class="h-7 px-2.5 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition inline-flex items-center gap-1 shadow-2xs">
+                            <span>🔗</span>
+                            <span>{{ __('messages.view_details') ?? 'Full Page' }}</span>
+                        </a>
+                    </template>
+                    <button type="button" @click="detailModalOpen = false"
+                            class="w-7 h-7 rounded-md grid place-items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-black cursor-pointer">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            {{-- Loading State --}}
+            <div x-show="loadingDetail" class="p-8 text-center text-slate-400">
+                <svg class="w-6 h-6 animate-spin mx-auto text-sky-500 mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                <p class="text-xs font-bold">{{ __('messages.loading') ?? 'Loading...' }}</p>
+            </div>
+
+            {{-- Error State --}}
+            <div x-show="detailError" class="p-6 text-center text-rose-500">
+                <p class="text-xs font-bold" x-text="detailError"></p>
+            </div>
+
+            {{-- Detail Content --}}
+            <div x-show="!loadingDetail && activeBuyBack" class="p-3 sm:p-4 space-y-3 overflow-y-auto flex-1">
+                {{-- Info Summary Grid --}}
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 text-xs">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('messages.buyback_number') }}</span>
+                        <span class="font-mono font-bold text-slate-800 dark:text-slate-200 block truncate mt-0.5" x-text="activeBuyBack ? activeBuyBack.buyback_number : '—'"></span>
+                    </div>
+
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('messages.customer') }}</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200 block truncate mt-0.5" x-text="activeBuyBack && activeBuyBack.customer ? activeBuyBack.customer.name : 'Walk-in Customer'"></span>
+                    </div>
+
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">{{ __('messages.status') }}</span>
+                        <span class="font-bold uppercase text-[11px] block mt-0.5"
+                              :class="{
+                                  'text-amber-600 dark:text-amber-400': activeBuyBack && activeBuyBack.status === 'pending',
+                                  'text-emerald-600 dark:text-emerald-400': activeBuyBack && activeBuyBack.status === 'completed',
+                                  'text-slate-500': activeBuyBack && activeBuyBack.status === 'cancelled'
+                              }"
+                              x-text="activeBuyBack ? activeBuyBack.status : '—'"></span>
+                    </div>
+
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-rose-500 block">{{ __('messages.total_value') }}</span>
+                        <span class="font-mono font-black text-rose-600 dark:text-rose-400 block mt-0.5 font-outfit" x-text="activeBuyBack ? activeBuyBack.total_formatted : '0'"></span>
+                    </div>
+                </div>
+
+                {{-- Reason & Notes (if any) --}}
+                <template x-if="activeBuyBack && (activeBuyBack.reason || activeBuyBack.notes)">
+                    <div class="bg-amber-50/60 dark:bg-amber-950/30 p-2 rounded-lg border border-amber-200/60 dark:border-amber-800/40 text-xs flex flex-wrap gap-3">
+                        <div x-show="activeBuyBack && activeBuyBack.reason">
+                            <span class="font-bold text-amber-800 dark:text-amber-300">{{ __('messages.reason') }}:</span>
+                            <span class="text-amber-950 dark:text-amber-200 font-semibold ml-1" x-text="activeBuyBack ? activeBuyBack.reason : ''"></span>
+                        </div>
+                        <div x-show="activeBuyBack && activeBuyBack.notes">
+                            <span class="font-bold text-amber-800 dark:text-amber-300">{{ __('messages.notes') }}:</span>
+                            <span class="text-amber-950 dark:text-amber-200 italic ml-1" x-text="activeBuyBack ? activeBuyBack.notes : ''"></span>
+                        </div>
+                    </div>
+                </template>
+
+                {{-- Buy-back Items Table --}}
+                <div>
+                    <h4 class="text-xs font-black uppercase text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                        <span>📦</span>
+                        <span>{{ __('messages.items') }}</span>
+                    </h4>
+                    <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+                        <table class="w-full text-left text-xs border-collapse font-sans">
+                            <thead class="bg-slate-100 dark:bg-slate-800/80 text-[11px] font-black uppercase text-slate-600 dark:text-slate-300">
+                                <tr class="divide-x divide-slate-200 dark:divide-slate-700">
+                                    <th class="py-1.5 px-2 text-center w-8">#</th>
+                                    <th class="py-1.5 px-2.5">{{ __('messages.products') }}</th>
+                                    <th class="py-1.5 px-2 text-right w-20">{{ __('messages.quantity') }}</th>
+                                    <th class="py-1.5 px-2 text-right w-24">{{ __('messages.price') }}</th>
+                                    <th class="py-1.5 px-2.5 text-right w-28">{{ __('messages.total') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                                <template x-for="(item, idx) in (activeBuyBack ? activeBuyBack.items : [])" :key="item.id">
+                                    <tr class="divide-x divide-slate-100 dark:divide-slate-800 hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                                        <td class="py-1.5 px-2 text-center text-slate-400 font-mono text-[10px]" x-text="idx + 1"></td>
+                                        <td class="py-1.5 px-2.5">
+                                            <span class="font-bold text-slate-900 dark:text-slate-100 block truncate" x-text="item.name"></span>
+                                            <span class="font-mono text-[10px] text-slate-400 block" x-text="item.sku"></span>
+                                        </td>
+                                        <td class="py-1.5 px-2 text-right font-mono font-black text-slate-800 dark:text-slate-200" x-text="item.quantity_formatted"></td>
+                                        <td class="py-1.5 px-2 text-right font-mono text-slate-600 dark:text-slate-400" x-text="item.unit_price_formatted"></td>
+                                        <td class="py-1.5 px-2.5 text-right font-mono font-black text-rose-600 dark:text-rose-400" x-text="item.line_total_formatted"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Modal Footer --}}
+            <div class="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+                <span class="text-[11px] text-slate-400" x-text="activeBuyBack && activeBuyBack.creator ? ('Created by: ' + activeBuyBack.creator.name) : ''"></span>
+                <button type="button" @click="detailModalOpen = false"
+                        class="h-7 px-3 rounded-md bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold transition cursor-pointer">
+                    {{ __('messages.close') ?? 'Close' }}
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

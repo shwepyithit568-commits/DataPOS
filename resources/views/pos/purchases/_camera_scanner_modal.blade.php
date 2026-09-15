@@ -61,7 +61,7 @@
                 <div id="po-camera-scanner-viewport" class="w-full max-w-[340px] h-[220px] rounded overflow-hidden bg-black relative flex items-center justify-center border border-slate-700 shadow-inner">
                     <div x-show="!scannerActive && !scannerError" class="text-slate-400 text-xs flex flex-col items-center gap-1">
                         <svg class="w-6 h-6 animate-spin text-sky-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                        <span>Starting camera...</span>
+                        <span>{{ __('messages.po_camera_starting') }}</span>
                     </div>
                 </div>
 

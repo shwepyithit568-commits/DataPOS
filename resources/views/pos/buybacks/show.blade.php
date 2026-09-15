@@ -38,6 +38,12 @@
 
         {{-- Actions Toolbar in Header --}}
         <div class="flex items-center gap-1.5 self-start sm:self-auto shrink-0">
+            <a href="{{ route('pos.buybacks.print', [...$storeRouteParams, 'buyback' => $buyback->id]) }}"
+               target="_blank"
+               class="h-7 px-2.5 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs">
+                <span>🖨️</span>
+                <span>{{ __('messages.print') }}</span>
+            </a>
             @if($buyback->status === 'pending')
                 <form method="POST" action="{{ route('pos.buybacks.complete', [...$storeRouteParams, 'buyback' => $buyback->id]) }}">
                     @csrf
@@ -91,7 +97,7 @@
             <div class="min-w-0">
                 <p class="text-[9px] sm:text-[10px] text-rose-600/80 dark:text-rose-400/80 font-bold uppercase tracking-wider truncate">{{ __('messages.total_value') }}</p>
                 <p class="text-xs sm:text-sm font-black text-rose-600 dark:text-rose-400 tabular-nums truncate font-outfit">
-                    Ks {{ number_format((float) $buyback->total_value) }}
+                    {{ format_currency($buyback->total_value, $store) }}
                 </p>
             </div>
         </div>
@@ -173,20 +179,20 @@
                                 @endif
                             </td>
                             <td class="px-3 py-2 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 tabular-nums">
-                                {{ number_format((float) $item->quantity) }}
+                                {{ format_quantity($item->quantity, $store) }}
                             </td>
                             <td class="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-400 tabular-nums">
-                                Ks {{ number_format((float) $item->unit_price) }}
+                                {{ format_currency($item->unit_price, $store) }}
                             </td>
                             <td class="px-3 py-2 text-right font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">
-                                Ks {{ number_format((float) ($item->quantity * $item->unit_price)) }}
+                                {{ format_currency($item->quantity * $item->unit_price, $store) }}
                             </td>
                         </tr>
                     @endforeach
                     <tr class="bg-slate-50/80 dark:bg-slate-800/60 font-black">
                         <td colspan="4" class="px-3 py-2 text-right uppercase tracking-wider text-slate-600 dark:text-slate-400 text-[11px]">{{ __('messages.total') }}</td>
                         <td class="px-3 py-2 text-right font-mono font-black text-rose-600 dark:text-rose-400 text-xs sm:text-sm tabular-nums">
-                            Ks {{ number_format((float) $buyback->total_value) }}
+                            {{ format_currency($buyback->total_value, $store) }}
                         </td>
                     </tr>
                 </tbody>

@@ -5,15 +5,32 @@
      * Used by both create.blade.php and edit.blade.php without code duplication.
      */
     window.initPriceAdjustmentComponent = function (config) {
-        const storeRetailMarkup = parseFloat(config.defaultRetailMarkup) || 20;
-        const storeWholesaleMarkup = parseFloat(config.defaultWholesaleMarkup) || 10;
+        // Resolve a markup % with the documented precedence:
+        // 1. Store Settings (Admin → Settings → POS) — only when the owner actually saved one
+        // 2. legacy per-browser localStorage value from the product form
+        // 3. hard fallback (20% retail / 10% wholesale)
+        const resolveMarkup = (storeValue, localValue, fallback) => {
+            const store = parseFloat(storeValue);
+            if (config.storeHasMarkups && !isNaN(store)) return store;
+            const local = parseFloat(localValue);
+            if (!isNaN(local)) return local;
+            return !isNaN(store) ? store : fallback;
+        };
 
-        // Precedence: Store Settings -> legacy localStorage UI fallback -> 20%/10% default
-        const localRetail = parseFloat(localStorage.getItem('datapos_default_retail_markup'));
-        const localWholesale = parseFloat(localStorage.getItem('datapos_default_wholesale_markup'));
+        const effectiveRetailMarkup = resolveMarkup(
+            config.defaultRetailMarkup,
+            localStorage.getItem('datapos_default_retail_markup'),
+            20
+        );
+        const effectiveWholesaleMarkup = resolveMarkup(
+            config.defaultWholesaleMarkup,
+            localStorage.getItem('datapos_default_wholesale_markup'),
+            10
+        );
 
-        const effectiveRetailMarkup = !isNaN(localRetail) ? localRetail : storeRetailMarkup;
-        const effectiveWholesaleMarkup = !isNaN(localWholesale) ? localWholesale : storeWholesaleMarkup;
+        const labelReviewPrices = @js(__('messages.po_price_adjustment_btn'));
+        const labelCostUp = @js(__('messages.po_price_adjustment_badge_up'));
+        const labelCostDown = @js(__('messages.po_price_adjustment_badge_down'));
 
         return {
             priceModalOpen: false,
@@ -66,6 +83,17 @@
                 const diff = ((current - base) / base) * 100;
                 const rounded = Math.round(diff * 10) / 10;
                 return (rounded > 0 ? '+' : '') + rounded;
+            },
+
+            /**
+             * Tooltip for the in-row gear badge, e.g. "Review Prices: +50% (Cost Up)".
+             * Built here (not inline in the view) so the label can be translated without
+             * risking quote collisions inside an x-attribute.
+             */
+            priceAdjustmentTitle(row) {
+                const pct = this.costDiffPct(row);
+                const dir = parseFloat(pct) >= 0 ? labelCostUp : labelCostDown;
+                return labelReviewPrices + ': ' + pct + '% (' + dir + ')';
             },
 
             /**
@@ -437,7 +465,7 @@
         return {
             ...adjustment,
             submitting: false,
-            rows: [],
+            rows: config.initialRows || [],
             q: '',
             results: [],
             open: false,
@@ -445,12 +473,12 @@
             searched: false,
             filterBrand: '',
             filterCategory: '',
-            supplierId: '',
-            supplierName: '',
-            discountAmount: 0,
-            deliveryFee: 0,
-            paymentMode: 'credit',
-            paidAmount: 0,
+            supplierId: config.supplierId || '',
+            supplierName: config.supplierName || '',
+            discountAmount: parseFloat(config.discountAmount) || 0,
+            deliveryFee: parseFloat(config.deliveryFee) || 0,
+            paymentMode: config.paymentMode === 'cash' ? 'cash' : 'credit',
+            paidAmount: parseFloat(config.paidAmount) || 0,
             voucherPreviews: [],
 
             init() {
