@@ -84,24 +84,48 @@ class BrandCategoryImportExportTest extends TestCase
 
     // ─────────────────────────── Export ───────────────────────────
 
+    /**
+     * Parse a streamed export into header + rows so assertions describe the column
+     * contract instead of matching raw CSV text (which hides column-order drift).
+     *
+     * @return array{header: array<int, string>, rows: array<int, array<int, ?string>>}
+     */
+    private function parseExportedCsv(string $content): array
+    {
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $content, 'export must keep its UTF-8 BOM');
+
+        $lines = array_values(array_filter(
+            preg_split('/\r\n|\n/', substr($content, 3)) ?: [],
+            fn ($line) => trim((string) $line) !== ''
+        ));
+
+        return [
+            'header' => str_getcsv((string) array_shift($lines)),
+            'rows' => array_map(fn ($line) => str_getcsv((string) $line), $lines),
+        ];
+    }
+
     public function test_brand_export_streams_csv_with_bom_and_formula_protection(): void
     {
         Storage::fake('local');
         [$store, $manager] = $this->makeManagerAndStore();
-        Brand::create(['store_id' => $store->id, 'name' => 'Xiaomi', 'slug' => 'xiaomi']);
+        Brand::create(['store_id' => $store->id, 'name' => 'Xiaomi', 'code' => 'XM', 'slug' => 'xiaomi']);
         Brand::create(['store_id' => $store->id, 'name' => '=SUM(A1)', 'slug' => 'formula']);
 
         $response = $this->actingAs($manager)->get("/store/{$store->slug}/admin/brands/export");
 
         $response->assertOk();
         $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
-        $content = $response->streamedContent();
 
-        $this->assertStringStartsWith("\xEF\xBB\xBF", $content);
-        $this->assertStringContainsString('Name,Slug', $content);
-        $this->assertStringContainsString('Xiaomi,xiaomi', $content);
+        $csv = $this->parseExportedCsv($response->streamedContent());
+
+        // The Auto-SKU short code sits between Name and Slug; SpreadsheetImportReader
+        // normalises that label back to "short_code_for_auto_sku" on import.
+        $this->assertSame(['Name', 'Short Code (for Auto-SKU)', 'Slug'], $csv['header']);
+        $this->assertCount(2, $csv['rows']);
+        $this->assertContains(['Xiaomi', 'XM', 'xiaomi'], $csv['rows']);
         // Formula injection protected: a cell starting with = gets a leading apostrophe.
-        $this->assertStringContainsString("'=SUM(A1),formula", $content);
+        $this->assertContains(["'=SUM(A1)", '', 'formula'], $csv['rows']);
     }
 
     public function test_category_export_streams_csv_with_parent_column(): void
@@ -109,17 +133,83 @@ class BrandCategoryImportExportTest extends TestCase
         Storage::fake('local');
         [$store, $manager] = $this->makeManagerAndStore();
         $main = Category::create(['store_id' => $store->id, 'name' => 'Mobile Phones', 'slug' => 'mobile-phones']);
-        Category::create(['store_id' => $store->id, 'name' => 'iPhone Cases', 'slug' => 'iphone-cases', 'parent_id' => $main->id]);
+        Category::create(['store_id' => $store->id, 'name' => 'iPhone Cases', 'code' => 'IPC', 'slug' => 'iphone-cases', 'parent_id' => $main->id]);
 
         $response = $this->actingAs($manager)->get("/store/{$store->slug}/admin/categories/export");
 
         $response->assertOk();
-        $content = $response->streamedContent();
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
 
-        $this->assertStringStartsWith("\xEF\xBB\xBF", $content);
-        $this->assertStringContainsString('Name,Slug,Parent,Description,Icon', $content);
-        $this->assertStringContainsString('"Mobile Phones",mobile-phones,,,', $content);
-        $this->assertStringContainsString('"iPhone Cases",iphone-cases,"Mobile Phones",,', $content);
+        $csv = $this->parseExportedCsv($response->streamedContent());
+
+        $this->assertSame(
+            ['Name', 'Short Code (for Auto-SKU)', 'Parent', 'Slug', 'Description', 'Icon'],
+            $csv['header']
+        );
+        $this->assertCount(2, $csv['rows']);
+        $this->assertContains(['Mobile Phones', '', '', 'mobile-phones', '', ''], $csv['rows']);
+        $this->assertContains(['iPhone Cases', 'IPC', 'Mobile Phones', 'iphone-cases', '', ''], $csv['rows']);
+    }
+
+    /**
+     * An export/import drift guard: every column the export writes must be understood
+     * by the importer, otherwise a plain "export -> edit in Excel -> import" trip
+     * silently drops data (that is exactly how the short-code column went unnoticed).
+     */
+    public function test_brand_export_round_trips_losslessly_through_import(): void
+    {
+        Storage::fake('local');
+        [$store, $manager] = $this->makeManagerAndStore();
+        $brand = Brand::create(['store_id' => $store->id, 'name' => 'Xiaomi', 'code' => 'XM', 'slug' => 'xiaomi']);
+
+        $exported = $this->actingAs($manager)
+            ->get("/store/{$store->slug}/admin/brands/export")
+            ->streamedContent();
+
+        // Re-import into a store that no longer has the brand.
+        $brand->forceDelete();
+
+        $response = $this->previewAndConfirm($manager, $store->slug, 'brands', $this->makeCsv($exported, 'brands-export.csv'));
+        $result = $response->getSession()->get('import_result');
+
+        $this->assertEquals(1, $result['total']);
+        $this->assertEquals(0, $result['failed'], 'exported columns must all be importable');
+        $this->assertEquals(1, $result['imported']);
+
+        $restored = Brand::where('store_id', $store->id)->where('slug', 'xiaomi')->first();
+        $this->assertNotNull($restored);
+        $this->assertSame('Xiaomi', $restored->name);
+        $this->assertSame('XM', $restored->code, 'the Auto-SKU short code must survive the round trip');
+    }
+
+    public function test_category_export_round_trips_losslessly_through_import(): void
+    {
+        Storage::fake('local');
+        [$store, $manager] = $this->makeManagerAndStore();
+        $main = Category::create(['store_id' => $store->id, 'name' => 'Mobile Phones', 'code' => 'MP', 'slug' => 'mobile-phones']);
+        Category::create(['store_id' => $store->id, 'name' => 'iPhone Cases', 'code' => 'IPC', 'slug' => 'iphone-cases', 'parent_id' => $main->id]);
+
+        $exported = $this->actingAs($manager)
+            ->get("/store/{$store->slug}/admin/categories/export")
+            ->streamedContent();
+
+        Category::where('store_id', $store->id)->delete();
+
+        $response = $this->previewAndConfirm($manager, $store->slug, 'categories', $this->makeCsv($exported, 'categories-export.csv'));
+        $result = $response->getSession()->get('import_result');
+
+        $this->assertEquals(2, $result['total']);
+        $this->assertEquals(0, $result['failed'], 'exported columns must all be importable');
+        $this->assertEquals(2, $result['imported']);
+
+        $restoredMain = Category::where('store_id', $store->id)->where('slug', 'mobile-phones')->first();
+        $restoredChild = Category::where('store_id', $store->id)->where('slug', 'iphone-cases')->first();
+
+        $this->assertNotNull($restoredMain);
+        $this->assertNotNull($restoredChild);
+        $this->assertSame('MP', $restoredMain->code);
+        $this->assertSame('IPC', $restoredChild->code);
+        $this->assertSame($restoredMain->id, $restoredChild->parent_id, 'the parent column must rebuild the hierarchy');
     }
 
     public function test_import_templates_download_for_brands_and_categories(): void
