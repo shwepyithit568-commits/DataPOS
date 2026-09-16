@@ -12,6 +12,16 @@
 6. [QA and Release Checklists](06_QA_AND_RELEASE_CHECKLISTS.md)
 7. [AI Agent Prompts](07_AI_AGENT_PROMPTS.md)
 
+## Standalone references
+
+1. [Shop Owner/Manager E2E Audit Prompt (Myanmar)](AI_AGENT_SHOP_OWNER_MANAGER_E2E_AUDIT_PROMPT_MM.md) — production မတင်ခင် စစ်ဆေးရန် ကူးထည့်လို့ရတဲ့ prompt
+2. [Project Commands Cheatsheet](PROJECT_COMMANDS_CHEATSHEET.md) — အမြန်ကြည့် command စာရင်း
+3. [QA and Release Checklists](06_QA_AND_RELEASE_CHECKLISTS.md) — release အခါ စစ်ရမည့် စာရင်း
+4. [Production Readiness Audit Report](PRODUCTION_READINESS_AUDIT_REPORT.md)
+5. [Admin Print Audit Report](ADMIN_PRINT_AUDIT_REPORT.md)
+6. [Service Voucher Print Standard](SERVICE_VOUCHER_PRINT_STANDARD.md)
+7. [Consolidation Manifest](CONSOLIDATION_MANIFEST.md)
+
 ## Historical archive
 
 1. [Historical Audits](archive/01_HISTORICAL_AUDITS.md)
