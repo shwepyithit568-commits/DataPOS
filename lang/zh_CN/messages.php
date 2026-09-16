@@ -3473,6 +3473,7 @@ return [
     'refund_total' => '退款总额',
     'refundable' => '可退',
     'refunded' => '已退款',
+    'no_return_items_selected' => '退款时必须至少包含一件数量大于零的商品。',
     'register' => '注册',
     'register_drawer_state' => '开班备用金 :opening · 现金销售 :sales',
     'register_heading' => '创建新账户',

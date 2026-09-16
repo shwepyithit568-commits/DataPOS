@@ -738,7 +738,6 @@ class RepairController extends Controller
 
         // Store products for the spare-part picker (parts & services line items).
         $products = Product::where('store_id', $store->id)
-            ->where('is_active', true)
             ->with(['category.parent', 'brand'])
             ->orderBy('name')
             ->get(['id', 'store_id', 'category_id', 'brand_id', 'name', 'sku', 'retail_price']);

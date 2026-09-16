@@ -110,7 +110,7 @@ class DashboardController extends Controller
                     . ' SELECT psi.product_name AS name, SUM(psi.quantity) AS qty, SUM(psi.line_total) AS amount'
                     . "   FROM pos_sale_items psi JOIN pos_sales ps ON ps.id = psi.pos_sale_id"
                     . "  WHERE ps.store_id = ? AND ps.status = 'posted' GROUP BY psi.product_name"
-                    . ') GROUP BY name ORDER BY qty DESC LIMIT 5',
+                    . ') AS combined_sales GROUP BY name ORDER BY qty DESC LIMIT 5',
                     [$storeId, 'cancelled', $storeId]
                 ),
                 // Last 12 months revenue series (online orders + posted POS

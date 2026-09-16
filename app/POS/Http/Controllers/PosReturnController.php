@@ -71,7 +71,7 @@ class PosReturnController extends Controller
             'items.*.pos_sale_item_id' => ['required', 'integer'],
             // decimal (not plain numeric): bcmath throws on scientific
             // notation ("1e3") — block it here so the return math never 500s.
-            'items.*.quantity' => ['required', 'decimal:0,3', 'gt:0'],
+            'items.*.quantity' => ['required', 'decimal:0,3', 'min:0'],
             'refunds' => ['required', 'array', 'min:1'],
             'refunds.*.method' => ['required', 'string', 'in:cash,credit'],
             'refunds.*.amount' => ['nullable', 'decimal:0,2', 'min:0'],
@@ -80,10 +80,24 @@ class PosReturnController extends Controller
 
         $shift = $this->shifts->openShiftFor($store, $user);
 
-        $items = array_map(fn ($i) => [
-            'pos_sale_item_id' => (int) $i['pos_sale_item_id'],
-            'quantity' => (string) $i['quantity'],
-        ], $data['items']);
+        // Filter out zero-quantity rows (e.g. unreturned items in a partial return).
+        // Validation ensures that all quantities are non-negative, valid decimals before bccomp.
+        $items = [];
+        foreach ($data['items'] as $item) {
+            $qty = (string) $item['quantity'];
+            if (bccomp($qty, '0', 3) > 0) {
+                $items[] = [
+                    'pos_sale_item_id' => (int) $item['pos_sale_item_id'],
+                    'quantity' => $qty,
+                ];
+            }
+        }
+
+        if (empty($items)) {
+            return back()->withInput()->withErrors([
+                'items' => __('messages.no_return_items_selected'),
+            ]);
+        }
 
         try {
             $refund = $this->returns->post(

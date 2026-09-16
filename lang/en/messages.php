@@ -3473,6 +3473,7 @@ return [
     'refund_total' => 'Refund total',
     'refundable' => 'Refundable',
     'refunded' => 'Refunded',
+    'no_return_items_selected' => 'At least one item with a quantity greater than zero is required to process a refund.',
     'register' => 'Register',
     'register_drawer_state' => 'Opening :opening · Sales :sales',
     'register_heading' => 'Create a new account',

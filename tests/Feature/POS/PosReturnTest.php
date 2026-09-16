@@ -542,4 +542,94 @@ class PosReturnTest extends TestCase
         $this->assertSame('refunded', $sale->refresh()->status);
         $this->assertSame('24000.00', (string) $this->shifts->openShiftFor($store, $cashier)->refresh()->cash_refunds);
     }
+
+    public function test_http_partial_refund_with_zero_quantity_for_unreturned_items(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+
+        // Make sale with 2 different products
+        $p1 = $this->makeProduct($store, 10000);
+        $p2 = $this->makeProduct($store, 15000);
+        $this->seedStock($store, $p1, '10');
+        $this->seedStock($store, $p2, '10');
+        $shift = $this->openShift($store, $cashier);
+
+        $this->sales->addToCart($store, $p1->id, null, '2');
+        $this->sales->addToCart($store, $p2->id, null, '1');
+
+        $sale = $this->sales->post(
+            $store,
+            $this->sales->cartLines($store),
+            [['method' => 'cash', 'amount' => '35000']],
+            $cashier,
+            $shift,
+        );
+
+        $item1 = $sale->items->firstWhere('product_id', $p1->id);
+        $item2 = $sale->items->firstWhere('product_id', $p2->id);
+
+        $this->actingAs($cashier);
+
+        // Return 1 unit of item1, and 0 units of item2 (unreturned)
+        $response = $this->post("/store/{$store->slug}/pos/sales/{$sale->id}/refunds", [
+            'items' => [
+                ['pos_sale_item_id' => $item1->id, 'quantity' => '1'],
+                ['pos_sale_item_id' => $item2->id, 'quantity' => '0'],
+            ],
+            'refunds' => [
+                ['method' => 'cash', 'amount' => '10000'],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $this->assertSame(1, PosReturn::count());
+        $this->assertSame('partially_refunded', $sale->refresh()->status);
+        $this->assertSame('9.000', $this->inventory->totalOnHand($store->id, $p1->id));
+        $this->assertSame('9.000', $this->inventory->totalOnHand($store->id, $p2->id));
+    }
+
+    public function test_http_refund_rejects_negative_or_malformed_quantity(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $sale = $this->postedSale($store, $cashier, 10000, '2');
+
+        $this->actingAs($cashier);
+
+        // Negative quantity
+        $response = $this->post("/store/{$store->slug}/pos/sales/{$sale->id}/refunds", [
+            'items' => [
+                ['pos_sale_item_id' => $sale->items->first()->id, 'quantity' => '-1'],
+            ],
+            'refunds' => [
+                ['method' => 'cash', 'amount' => '10000'],
+            ],
+        ]);
+
+        $response->assertSessionHasErrors('items.0.quantity');
+        $this->assertSame(0, PosReturn::count());
+    }
+
+    public function test_http_refund_rejects_when_all_quantities_are_zero(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $sale = $this->postedSale($store, $cashier, 10000, '2');
+
+        $this->actingAs($cashier);
+
+        // All rows zero
+        $response = $this->post("/store/{$store->slug}/pos/sales/{$sale->id}/refunds", [
+            'items' => [
+                ['pos_sale_item_id' => $sale->items->first()->id, 'quantity' => '0'],
+            ],
+            'refunds' => [
+                ['method' => 'cash', 'amount' => '0'],
+            ],
+        ]);
+
+        $response->assertSessionHasErrors('items');
+        $this->assertSame(0, PosReturn::count());
+    }
 }

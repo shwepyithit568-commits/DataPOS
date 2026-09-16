@@ -51,6 +51,7 @@ Thumbs.db
 
 # Browser automation tooling artifacts
 .playwright-mcp/
+/uat-artifacts/
 
 # Freebuff desktop workspace artifacts (chat DB + Lighthouse results)
 .freebuff/

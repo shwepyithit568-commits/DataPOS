@@ -85,7 +85,7 @@ class DailyClosingService
                     ->join('pos_sales', 'pos_sales.id', '=', 'pos_payments.pos_sale_id')
                     ->where('pos_sales.store_id', $store->id)
                     ->where('pos_payments.method', $method)
-                    ->where('pos_sales.status', 'posted')
+                    ->whereIn('pos_sales.status', ['posted', 'partially_refunded', 'refunded'])
                     ->where('pos_sales.posted_at', '>=', $start)
                     ->where('pos_sales.posted_at', '<', $endExclusive),
                 'pos_payments.amount'
@@ -111,7 +111,7 @@ class DailyClosingService
                 ->join('pos_sales', 'pos_sales.id', '=', 'pos_payments.pos_sale_id')
                 ->where('pos_sales.store_id', $store->id)
                 ->where('pos_payments.method', 'credit')
-                ->where('pos_sales.status', 'posted')
+                ->whereIn('pos_sales.status', ['posted', 'partially_refunded', 'refunded'])
                 ->where('pos_sales.posted_at', '>=', $start)
                 ->where('pos_sales.posted_at', '<', $endExclusive),
             'pos_payments.amount'
@@ -134,7 +134,7 @@ class DailyClosingService
         // Calculate sales metrics for reports
         $postedSales = fn () => DB::table('pos_sales')
             ->where('store_id', $store->id)
-            ->where('status', 'posted')
+            ->whereIn('status', ['posted', 'partially_refunded', 'refunded'])
             ->where('posted_at', '>=', $start)
             ->where('posted_at', '<', $endExclusive);
 
@@ -148,7 +148,8 @@ class DailyClosingService
         $discounts = exact_sum($postedSales(), 'discount');
         $tax = exact_sum($postedSales(), 'tax');
         $returnsTotal = exact_sum($postedReturns(), 'total');
-        $netSales = exact_sum($postedSales(), 'total');
+        $salesTotal = exact_sum($postedSales(), 'total');
+        $netSales = bcsub($salesTotal, $returnsTotal, 2);
 
         $summary = [
             'gross_sales' => $grossSales,
@@ -210,7 +211,7 @@ class DailyClosingService
         // Transaction counts
         $salesCount = DB::table('pos_sales')
             ->where('store_id', $store->id)
-            ->where('status', 'posted')
+            ->whereIn('status', ['posted', 'partially_refunded', 'refunded'])
             ->where('posted_at', '>=', $start)
             ->where('posted_at', '<', $endExclusive)
             ->count();
