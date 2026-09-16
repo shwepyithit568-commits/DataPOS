@@ -1,6 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', ($printer->exists ? __('messages.edit') : __('messages.printers_add_new')) . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
 <script nonce="{{ $cspNonce }}">
@@ -18,7 +19,7 @@ window.printerFormData = function () {
 };
 </script>
 
-<div x-data="window.printerFormData()" class="w-full max-w-4xl mx-auto space-y-6">
+<div x-data="window.printerFormData()" class="w-full max-w-4xl mx-auto space-y-0.5 pb-6">
 
     {{-- Header --}}
     <div class="flex items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
@@ -36,7 +37,7 @@ window.printerFormData = function () {
 
     @if ($errors->any())
         <div class="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl text-sm text-rose-800 dark:text-rose-200">
-            <div class="font-bold mb-1">{{ __('messages.fix_errors_prompt') ?? 'ဖြည့်သွင်းချက်များ မှားယွင်းနေပါသည်:' }}</div>
+            <div class="font-bold mb-1">{{ __('messages.fix_errors_prompt') }}</div>
             <ul class="list-disc list-inside space-y-0.5">
                 @foreach ($errors->all() as $err)
                     <li>{{ $err }}</li>
@@ -297,11 +298,11 @@ window.printerFormData = function () {
         {{-- Form Actions --}}
         <div class="flex items-center justify-end gap-3">
             <a href="{{ route('store.admin.printers.index', ['store_slug' => $store->slug]) }}"
-               class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+               class="sf-btn-3d px-5 py-2 rounded-xl text-sm font-bold transition">
                 {{ __('messages.cancel') }}
             </a>
             <button type="submit"
-                    class="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-bold shadow-md transition">
+                    class="sf-btn-3d-primary px-6 py-2 rounded-xl text-sm font-bold transition">
                 {{ $printer->exists ? __('messages.save') : __('messages.printers_add_new') }}
             </button>
         </div>

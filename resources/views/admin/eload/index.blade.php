@@ -12,35 +12,36 @@
         ['key' => 'mytel', 'name' => 'MYTEL', 'discount' => (float) ($accounts->where('operator', 'mytel')->first()?->discount_percent ?? 5.0), 'activeClass' => 'border-orange-500 bg-orange-50 dark:bg-orange-950/60 text-orange-900 dark:text-orange-200 ring-2 ring-orange-500'],
     ];
 
+    $curSym = currency_symbol($store);
     $dataPacks = [
         'mpt' => [
-            ['name' => 'Shal Pyaw 1,000 Ks (800MB + 150 Mins)', 'amount' => 1000],
-            ['name' => 'Carry Plus 3,000 Ks (3GB + 700 Mins)', 'amount' => 3000],
-            ['name' => 'Carry Plus 5,000 Ks (6GB + 1,200 Mins)', 'amount' => 5000],
-            ['name' => 'Data Plus 10,000 Ks (15GB Data)', 'amount' => 10000],
-            ['name' => 'Htaw B 1,000 Ks (5x Bonus)', 'amount' => 1000],
-            ['name' => 'Htaw B 3,000 Ks (5x Bonus)', 'amount' => 3000],
+            ['name' => "Shal Pyaw 1,000 {$curSym} (800MB + 150 Mins)", 'amount' => 1000],
+            ['name' => "Carry Plus 3,000 {$curSym} (3GB + 700 Mins)", 'amount' => 3000],
+            ['name' => "Carry Plus 5,000 {$curSym} (6GB + 1,200 Mins)", 'amount' => 5000],
+            ['name' => "Data Plus 10,000 {$curSym} (15GB Data)", 'amount' => 10000],
+            ['name' => "Htaw B 1,000 {$curSym} (5x Bonus)", 'amount' => 1000],
+            ['name' => "Htaw B 3,000 {$curSym} (5x Bonus)", 'amount' => 3000],
         ],
         'atom' => [
-            ['name' => 'Shal Sub 999 Ks (1GB + Social)', 'amount' => 1000],
-            ['name' => 'Shal Sub 2,999 Ks (3.5GB Data)', 'amount' => 3000],
-            ['name' => 'Shal Sub 4,999 Ks (7GB Data)', 'amount' => 5000],
-            ['name' => 'ATOM Super Data 9,999 Ks (16GB)', 'amount' => 10000],
-            ['name' => 'Stream Pack 1,500 Ks (TikTok & YouTube)', 'amount' => 1500],
+            ['name' => "Shal Sub 999 {$curSym} (1GB + Social)", 'amount' => 1000],
+            ['name' => "Shal Sub 2,999 {$curSym} (3.5GB Data)", 'amount' => 3000],
+            ['name' => "Shal Sub 4,999 {$curSym} (7GB Data)", 'amount' => 5000],
+            ['name' => "ATOM Super Data 9,999 {$curSym} (16GB)", 'amount' => 10000],
+            ['name' => "Stream Pack 1,500 {$curSym} (TikTok & YouTube)", 'amount' => 1500],
         ],
         'ooredoo' => [
-            ['name' => 'Supernet 999 Ks (1.2GB)', 'amount' => 1000],
-            ['name' => 'Maha Baw 2,999 Ks (4GB Data)', 'amount' => 3000],
-            ['name' => 'Maha Baw 4,999 Ks (8.5GB Data)', 'amount' => 5000],
-            ['name' => 'Super Data 9,999 Ks (18GB Data)', 'amount' => 10000],
-            ['name' => 'Night Owl 500 Ks (Unlimited Night)', 'amount' => 500],
+            ['name' => "Supernet 999 {$curSym} (1.2GB)", 'amount' => 1000],
+            ['name' => "Maha Baw 2,999 {$curSym} (4GB Data)", 'amount' => 3000],
+            ['name' => "Maha Baw 4,999 {$curSym} (8.5GB Data)", 'amount' => 5000],
+            ['name' => "Super Data 9,999 {$curSym} (18GB Data)", 'amount' => 10000],
+            ['name' => "Night Owl 500 {$curSym} (Unlimited Night)", 'amount' => 500],
         ],
         'mytel' => [
-            ['name' => 'MyData 999 Ks (1.5GB Data)', 'amount' => 1000],
-            ['name' => 'MyData 2,999 Ks (5GB + TikTok)', 'amount' => 3000],
-            ['name' => 'MyData 4,999 Ks (10GB Data)', 'amount' => 5000],
-            ['name' => 'Super MyData 9,999 Ks (22GB)', 'amount' => 10000],
-            ['name' => 'Maha Pack 1,500 Ks (All-in-one)', 'amount' => 1500],
+            ['name' => "MyData 999 {$curSym} (1.5GB Data)", 'amount' => 1000],
+            ['name' => "MyData 2,999 {$curSym} (5GB + TikTok)", 'amount' => 3000],
+            ['name' => "MyData 4,999 {$curSym} (10GB Data)", 'amount' => 5000],
+            ['name' => "Super MyData 9,999 {$curSym} (22GB)", 'amount' => 10000],
+            ['name' => "Maha Pack 1,500 {$curSym} (All-in-one)", 'amount' => 1500],
         ],
     ];
 
@@ -56,6 +57,7 @@
 <script nonce="{{ $cspNonce }}">
 window.eloadManager = function () {
     return {
+        currencySymbol: '{{ currency_symbol($store) }}',
         openTopupModal: false,
         openAccountsModal: false,
         openFloatModal: false,
@@ -127,7 +129,7 @@ window.eloadManager = function () {
 
             if (tab === 'topup') {
                 this.form.amount = 5000;
-                this.form.package_name = 'ဖုန်းဘေလ် 5,000 Ks';
+                this.form.package_name = '{{ __('messages.eload_topup') }} 5,000 ' + this.currencySymbol;
             } else if (tab === 'data_pack') {
                 this.selectFirstDataPack();
             } else if (tab === 'pin_code') {
@@ -145,7 +147,7 @@ window.eloadManager = function () {
             this.form.type = tab;
             if (tab === 'topup') {
                 this.form.amount = this.form.amount || 5000;
-                this.form.package_name = 'ဖုန်းဘေလ် ' + Number(this.form.amount).toLocaleString() + ' Ks';
+                this.form.package_name = '{{ __('messages.eload_topup') }} ' + Number(this.form.amount).toLocaleString() + ' ' + this.currencySymbol;
                 this.calculateProfit();
             } else if (tab === 'data_pack') {
                 this.selectFirstDataPack();
@@ -188,7 +190,7 @@ window.eloadManager = function () {
 
         setTopupAmount(amt) {
             this.form.amount = amt;
-            this.form.package_name = 'ဖုန်းဘေလ် ' + Number(amt).toLocaleString() + ' Ks';
+            this.form.package_name = '{{ __('messages.eload_topup') }} ' + Number(amt).toLocaleString() + ' ' + this.currencySymbol;
             this.calculateProfit();
         },
 
@@ -197,7 +199,7 @@ window.eloadManager = function () {
             let denom = parseFloat(this.form.card_denom) || 3000;
             let total = qty * denom;
             this.form.amount = total;
-            this.form.package_name = this.form.operator.toUpperCase() + ' ငွေဖြည့်ကတ် ' + Number(denom).toLocaleString() + ' Ks × ' + qty + ' ကတ်';
+            this.form.package_name = this.form.operator.toUpperCase() + ' {{ __('messages.eload_scratch_card') }} ' + Number(denom).toLocaleString() + ' ' + this.currencySymbol + ' × ' + qty + ' {{ __('messages.cards') }}';
             let margin = (parseFloat(this.form.discount_percent) || 0) / 100;
             this.form.cost = Math.round(total * (1 - margin));
             this.form.profit = Math.round(total - this.form.cost);
@@ -330,7 +332,7 @@ window.eloadManager = function () {
                     <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 hidden sm:inline">({{ $store->name }})</span>
                 </h1>
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    MPT, ATOM, OOREDOO, MYTEL ဘေလ်၊ ဒေတာ၊ ငွေဖြည့်ကတ်၊ ဆင်းမ်ကတ် ရောင်းချခြင်း
+                    {{ __('messages.eload_header_subtitle') }}
                 </p>
             </div>
         </div>
@@ -338,23 +340,23 @@ window.eloadManager = function () {
         {{-- Action Bar --}}
         <div class="flex flex-wrap items-center gap-1 self-start sm:self-auto shrink-0">
             <button type="button" @click="openSalesModal('topup')"
-                    class="h-7 px-2.5 rounded-md bg-sky-600 hover:bg-sky-500 text-white text-xs font-black shadow-2xs hover:shadow-sky-500/20 transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
-                <span>⚡ + ဘေလ် / ဒေတာ</span>
+                    class="sf-btn-3d-primary h-7 px-2.5 text-xs font-black inline-flex items-center gap-1 cursor-pointer">
+                <span>⚡ + {{ __('messages.eload_topup_and_data') }}</span>
             </button>
 
             <button type="button" @click="openSalesModal('pin_code')"
-                    class="h-7 px-2 rounded-md bg-amber-500 hover:bg-amber-600 text-white text-xs font-black shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
-                <span>💳 ငွေဖြည့်ကတ်</span>
+                    class="sf-btn-3d-gold h-7 px-2 text-xs font-black inline-flex items-center gap-1 cursor-pointer">
+                <span>💳 {{ __('messages.eload_scratch_card') }}</span>
             </button>
 
             <button type="button" @click="openSalesModal('sim_card')"
-                    class="h-7 px-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
-                <span>🪪 ဆင်းမ်ကတ်</span>
+                    class="sf-btn-3d-success h-7 px-2 text-xs font-black inline-flex items-center gap-1 cursor-pointer">
+                <span>🪪 {{ __('messages.eload_sim_card') }}</span>
             </button>
 
             <button type="button" @click="openAccountsModal = true"
-                    class="h-7 px-2 rounded-md border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 transition inline-flex items-center gap-1 cursor-pointer">
-                <span>🏦 အော်ပရေတာ</span>
+                    class="sf-btn-3d h-7 px-2 text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
+                <span>🏦 {{ __('messages.eload_operators') }}</span>
             </button>
         </div>
     </div>
@@ -398,7 +400,7 @@ window.eloadManager = function () {
                     +{{ format_currency((float) $stats['today_profit'], $store) }}
                 </div>
                 <p class="text-[9px] sm:text-[10px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5 truncate font-bold uppercase tracking-wider">
-                    ယနေ့ အသားတင် အမြတ်
+                    {{ __('messages.eload_today_profit') }}
                 </p>
             </div>
         </div>
@@ -415,7 +417,7 @@ window.eloadManager = function () {
                 <div class="flex items-center justify-between gap-1 mt-0.5">
                     <span class="text-[9px] text-amber-700/80 dark:text-amber-400/80 font-bold uppercase">MPT {{ $mptAccount?->discount_percent ?? 4.0 }}%</span>
                     @if($mptAccount)
-                        <button type="button" @click="openRefillModal({{ $mptAccount->id }}, '{{ $mptAccount->name }}', {{ $mptBal }})" class="text-[9px] font-bold text-amber-800 hover:text-amber-950 dark:text-amber-300 underline cursor-pointer">+ ဖြည့်</button>
+                        <button type="button" @click="openRefillModal({{ $mptAccount->id }}, '{{ $mptAccount->name }}', {{ $mptBal }})" class="text-[9px] font-bold text-amber-800 hover:text-amber-950 dark:text-amber-300 underline cursor-pointer">+ {{ __('messages.refill') }}</button>
                     @endif
                 </div>
             </div>
@@ -433,7 +435,7 @@ window.eloadManager = function () {
                 <div class="flex items-center justify-between gap-1 mt-0.5">
                     <span class="text-[9px] text-sky-700/80 dark:text-sky-400/80 font-bold uppercase">ATOM {{ $atomAccount?->discount_percent ?? 3.5 }}%</span>
                     @if($atomAccount)
-                        <button type="button" @click="openRefillModal({{ $atomAccount->id }}, '{{ $atomAccount->name }}', {{ $atomBal }})" class="text-[9px] font-bold text-sky-800 hover:text-sky-950 dark:text-sky-300 underline cursor-pointer">+ ဖြည့်</button>
+                        <button type="button" @click="openRefillModal({{ $atomAccount->id }}, '{{ $atomAccount->name }}', {{ $atomBal }})" class="text-[9px] font-bold text-sky-800 hover:text-sky-950 dark:text-sky-300 underline cursor-pointer">+ {{ __('messages.refill') }}</button>
                     @endif
                 </div>
             </div>
@@ -451,7 +453,7 @@ window.eloadManager = function () {
                 <div class="flex items-center justify-between gap-1 mt-0.5">
                     <span class="text-[9px] text-rose-700/80 dark:text-rose-400/80 font-bold uppercase">OOREDOO {{ $ooredooAccount?->discount_percent ?? 4.0 }}%</span>
                     @if($ooredooAccount)
-                        <button type="button" @click="openRefillModal({{ $ooredooAccount->id }}, '{{ $ooredooAccount->name }}', {{ $ooredooBal }})" class="text-[9px] font-bold text-rose-800 hover:text-rose-950 dark:text-rose-300 underline cursor-pointer">+ ဖြည့်</button>
+                        <button type="button" @click="openRefillModal({{ $ooredooAccount->id }}, '{{ $ooredooAccount->name }}', {{ $ooredooBal }})" class="text-[9px] font-bold text-rose-800 hover:text-rose-950 dark:text-rose-300 underline cursor-pointer">+ {{ __('messages.refill') }}</button>
                     @endif
                 </div>
             </div>
@@ -469,7 +471,7 @@ window.eloadManager = function () {
                 <div class="flex items-center justify-between gap-1 mt-0.5">
                     <span class="text-[9px] text-orange-700/80 dark:text-orange-400/80 font-bold uppercase">MYTEL {{ $mytelAccount?->discount_percent ?? 5.0 }}%</span>
                     @if($mytelAccount)
-                        <button type="button" @click="openRefillModal({{ $mytelAccount->id }}, '{{ $mytelAccount->name }}', {{ $mytelBal }})" class="text-[9px] font-bold text-orange-800 hover:text-orange-950 dark:text-orange-300 underline cursor-pointer">+ ဖြည့်</button>
+                        <button type="button" @click="openRefillModal({{ $mytelAccount->id }}, '{{ $mytelAccount->name }}', {{ $mytelBal }})" class="text-[9px] font-bold text-orange-800 hover:text-orange-950 dark:text-orange-300 underline cursor-pointer">+ {{ __('messages.refill') }}</button>
                     @endif
                 </div>
             </div>
@@ -548,7 +550,7 @@ window.eloadManager = function () {
             @if(!empty($exportUrl))
                 <a href="{{ $exportUrl }}"
                    title="Export Excel (.xlsx)"
-                   class="h-6 px-2 rounded text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 shadow-2xs transition inline-flex items-center gap-1 cursor-pointer">
+                   class="sf-btn-3d-success h-6 px-2 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer">
                     <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
@@ -586,8 +588,8 @@ window.eloadManager = function () {
                 📱
             </div>
             <p class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200">{{ __('messages.no_transactions_found') }}</p>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 max-w-sm mx-auto">ဖုန်းဘေလ်ဖြည့်ရန် သို့မဟုတ် ငွေဖြည့်ကတ်ရောင်းချရန် အပေါ်ရှိ ခလုတ်များကို အသုံးပြုပါ</p>
-            <button type="button" @click="openSalesModal('topup')" class="h-7 px-3 rounded-md bg-sky-600 hover:bg-sky-500 text-white text-xs font-black shadow-2xs transition inline-flex items-center gap-1.5 mt-3 active:scale-95 cursor-pointer">
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 max-w-sm mx-auto">{{ __('messages.eload_empty_hint') }}</p>
+            <button type="button" @click="openSalesModal('topup')" class="sf-btn-3d-primary h-7 px-3 text-xs font-black inline-flex items-center gap-1.5 mt-3 cursor-pointer">
                 <span>⚡ {{ __('messages.eload_quick_topup') }}</span>
             </button>
         </div>
@@ -601,7 +603,7 @@ window.eloadManager = function () {
                             <th class="px-3 py-2 min-w-[130px]">{{ __('messages.date') }} / Ref</th>
                             <th class="px-3 py-2 min-w-[80px]">{{ __('messages.eload_operator') }}</th>
                             <th class="px-3 py-2 min-w-[140px]">{{ __('messages.phone_number') }}</th>
-                            <th class="px-3 py-2 min-w-[140px]">အမျိုးအစား / ပက်ကေ့ချ်</th>
+                            <th class="px-3 py-2 min-w-[140px]">{{ __('messages.type') }} / {{ __('messages.eload_package') }}</th>
                             <th class="px-3 py-2 min-w-[110px] text-right">{{ __('messages.amount') }}</th>
                             <th class="px-3 py-2 min-w-[100px] text-right">{{ __('messages.cost') }}</th>
                             <th class="px-3 py-2 min-w-[100px] text-right text-emerald-600 dark:text-emerald-400">{{ __('messages.profit') }}</th>
@@ -686,7 +688,7 @@ window.eloadManager = function () {
                                     <div class="flex items-center justify-end gap-1">
                                         <button type="button"
                                                 @click="printSlip('{{ route('store.admin.eload.slip', [...$storeRouteParams, 'id' => $tx->id]) }}')"
-                                                class="h-6 px-1.5 rounded text-[10px] font-bold text-slate-600 hover:text-sky-600 bg-slate-50 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-0.5 cursor-pointer"
+                                                class="sf-btn-3d h-6 px-1.5 text-[10px] font-bold inline-flex items-center gap-0.5 cursor-pointer"
                                                 title="{{ __('messages.print_slip') }}">
                                             <span>🖨️</span>
                                         </button>
@@ -695,7 +697,7 @@ window.eloadManager = function () {
                                                 @csrf
                                                 @method('PATCH')
                                                 <input type="hidden" name="status" value="refunded">
-                                                <button type="submit" class="h-6 px-1.5 rounded text-[10px] font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 border border-rose-200 dark:border-rose-900/40 transition inline-flex items-center cursor-pointer" title="{{ __('messages.refund') }}">
+                                                <button type="submit" class="sf-btn-3d-danger h-6 px-1.5 text-[10px] font-bold inline-flex items-center cursor-pointer" title="{{ __('messages.refund') }}">
                                                     <span>↩️</span>
                                                 </button>
                                             </form>
@@ -747,7 +749,7 @@ window.eloadManager = function () {
                         <span class="text-[10px] text-slate-400">{{ $tx->occurred_at->format('d M, h:i A') }}</span>
                         <div class="flex items-center gap-1">
                             <button type="button" @click="printSlip('{{ route('store.admin.eload.slip', [...$storeRouteParams, 'id' => $tx->id]) }}')"
-                                    class="h-6 px-2 rounded text-[10px] font-bold text-slate-600 hover:text-sky-600 bg-slate-50 dark:bg-slate-800 hover:bg-sky-50 border border-slate-200 dark:border-slate-700 inline-flex items-center gap-0.5 cursor-pointer">
+                                    class="sf-btn-3d h-6 px-2 text-[10px] font-bold inline-flex items-center gap-0.5 cursor-pointer">
                                 <span>🖨️ Slip</span>
                             </button>
                         </div>
@@ -783,7 +785,7 @@ window.eloadManager = function () {
                             📱
                         </span>
                         <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100">
-                            ဖုန်းဆိုင် အမြန်ရောင်းချမှု မှတ်တမ်း
+                            {{ __('messages.eload_sales_record_modal_title') }}
                         </h3>
                     </div>
                     <button type="button" @click="openTopupModal = false" class="w-6 h-6 rounded text-slate-400 hover:text-slate-600 grid place-items-center text-xs cursor-pointer">
@@ -794,16 +796,16 @@ window.eloadManager = function () {
                 {{-- Mode Switcher Tabs --}}
                 <div class="grid grid-cols-4 gap-0.5 p-0.5 bg-slate-100 dark:bg-slate-800 rounded-md text-[11px] font-bold">
                     <button type="button" @click="switchTab('topup')" :class="activeTab === 'topup' ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'" class="py-1 px-1 rounded transition text-center cursor-pointer">
-                        📱 ဘေလ်ဖြည့်
+                        📱 {{ __('messages.eload_tab_topup') }}
                     </button>
                     <button type="button" @click="switchTab('data_pack')" :class="activeTab === 'data_pack' ? 'bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'" class="py-1 px-1 rounded transition text-center cursor-pointer">
-                        🌐 ဒေတာ
+                        🌐 {{ __('messages.eload_tab_data') }}
                     </button>
                     <button type="button" @click="switchTab('pin_code')" :class="activeTab === 'pin_code' ? 'bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'" class="py-1 px-1 rounded transition text-center cursor-pointer">
-                        💳 ငွေဖြည့်ကတ်
+                        💳 {{ __('messages.eload_tab_pin') }}
                     </button>
                     <button type="button" @click="switchTab('sim_card')" :class="activeTab === 'sim_card' ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'" class="py-1 px-1 rounded transition text-center cursor-pointer">
-                        🪪 ဆင်းမ်ကတ်
+                        🪪 {{ __('messages.eload_tab_sim') }}
                     </button>
                 </div>
             </div>
@@ -815,7 +817,7 @@ window.eloadManager = function () {
                 {{-- Operator Selector Chips --}}
                 <div>
                     <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                        အော်ပရေတာ *
+                        {{ __('messages.eload_operator') }} *
                     </label>
                     <div class="grid grid-cols-4 gap-1">
                         <template x-for="op in operators" :key="op.key">
@@ -824,7 +826,7 @@ window.eloadManager = function () {
                                     :class="form.operator === op.key ? op.activeClass : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300'"
                                     class="py-1.5 px-2 rounded-lg border text-xs font-black uppercase tracking-wider flex flex-col items-center justify-center gap-0.5 transition cursor-pointer active:scale-95">
                                 <span x-text="op.name"></span>
-                                <span class="text-[9px] font-medium opacity-75" x-text="op.discount + '% အမြတ်'"></span>
+                                <span class="text-[9px] font-medium opacity-75" x-text="op.discount + '% {{ __('messages.profit') }}'"></span>
                             </button>
                         </template>
                     </div>
@@ -834,13 +836,13 @@ window.eloadManager = function () {
                 {{-- TAB 1: E-LOAD / PHONE TOP-UP --}}
                 <div x-show="activeTab === 'topup'" class="space-y-2">
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">ဖုန်းနံပါတ် (Auto Detect) *</label>
+                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">{{ __('messages.eload_phone_auto_detect') }} *</label>
                         <input type="text" name="phone_number" x-model="form.phone_number" @input="detectOperator()" :required="activeTab === 'topup' || activeTab === 'data_pack'" placeholder="09xxxxxxxxx"
                                class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-sky-500">
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">ဖြည့်သွင်းမည့် ဘေလ်ပမာဏ *</label>
+                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.eload_topup_amount') }} *</label>
                         <div class="grid grid-cols-4 gap-1 mb-1">
                             <template x-for="amt in topupPresets" :key="amt">
                                 <button type="button" @click="setTopupAmount(amt)"
@@ -858,13 +860,13 @@ window.eloadManager = function () {
                 {{-- TAB 2: DATA PACKS --}}
                 <div x-show="activeTab === 'data_pack'" class="space-y-2">
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">ဖုန်းနံပါတ် *</label>
+                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">{{ __('messages.phone_number') }} *</label>
                         <input type="text" x-model="form.phone_number" @input="detectOperator()" placeholder="09xxxxxxxxx"
                                class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono font-bold text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-sky-500">
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">ဒေတာ ပက်ကေ့ချ် ရွေးချယ်ရန် *</label>
+                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.eload_select_data_pack') }} *</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 max-h-40 overflow-y-auto p-0.5">
                             <template x-for="pack in (dataPacksMap[form.operator] || [])" :key="pack.name">
                                 <button type="button" @click="selectDataPack(pack.name, pack.amount)"
@@ -882,13 +884,13 @@ window.eloadManager = function () {
                 <div x-show="activeTab === 'pin_code'" class="space-y-2">
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">ကတ်တန်ဖိုး *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">{{ __('messages.eload_card_denomination') }} *</label>
                             <select x-model="form.card_denom" @change="updateCardCalculation()" class="w-full h-8 px-2 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold">
-                                <option value="1000">{{ format_currency(1000, $store) }} ကတ်</option>
-                                <option value="3000">{{ format_currency(3000, $store) }} ကတ်</option>
-                                <option value="5000">{{ format_currency(5000, $store) }} ကတ်</option>
-                                <option value="10000">{{ format_currency(10000, $store) }} ကတ်</option>
-                                <option value="20000">{{ format_currency(20000, $store) }} ကတ်</option>
+                                <option value="1000">{{ format_currency(1000, $store) }} {{ __('messages.cards') }}</option>
+                                <option value="3000">{{ format_currency(3000, $store) }} {{ __('messages.cards') }}</option>
+                                <option value="5000">{{ format_currency(5000, $store) }} {{ __('messages.cards') }}</option>
+                                <option value="10000">{{ format_currency(10000, $store) }} {{ __('messages.cards') }}</option>
+                                <option value="20000">{{ format_currency(20000, $store) }} {{ __('messages.cards') }}</option>
                             </select>
                         </div>
                         <div>
@@ -906,22 +908,22 @@ window.eloadManager = function () {
                 <div x-show="activeTab === 'sim_card'" class="space-y-2">
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">ဆင်းမ်ကတ် ဖုန်းနံပါတ် *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">{{ __('messages.eload_sim_phone') }} *</label>
                             <input type="text" x-model="form.phone_number" placeholder="09xxxxxxxxx" class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono font-bold">
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">ရောင်းဈေး *</label>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">{{ __('messages.selling_price') }} *</label>
                             <input type="number" x-model="form.sim_price" @input="updateSimCalculation()" min="0" step="500" class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">မူရင်းအရင်း</label>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">{{ __('messages.cost_price') }}</label>
                             <input type="number" x-model="form.sim_cost" @input="updateSimCalculation()" min="0" step="500" class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold">
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">ဝယ်ယူသူ မှတ်ပုံတင် (NRC)</label>
-                            <input type="text" x-model="form.sim_nrc" @input="updateSimCalculation()" placeholder="12/ဥကမ(နိုင်)123456" class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">{{ __('messages.customer_nrc') }}</label>
+                            <input type="text" x-model="form.sim_nrc" @input="updateSimCalculation()" placeholder="{{ __('messages.customer_nrc_placeholder') }}" class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">
                         </div>
                     </div>
                     <div>
@@ -933,13 +935,13 @@ window.eloadManager = function () {
                 {{-- Shared Fields --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">ဝယ်ယူသူ အမည်</label>
+                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">{{ __('messages.customer_name') }}</label>
                         <input type="text" name="customer_name" x-model="form.customer_name" placeholder="Customer Name" class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">ငွေပေးချေမှု ပုံစံ *</label>
+                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">{{ __('messages.payment_method') }} *</label>
                         <select name="payment_method" x-model="form.payment_method" class="w-full h-8 px-2 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold">
-                            <option value="cash">💵 Cash (ငွေသား)</option>
+                            <option value="cash">💵 {{ __('messages.cash') }}</option>
                             <option value="kpay">📱 KBZPay (KPay)</option>
                             <option value="wavepay">💛 WavePay</option>
                             <option value="cbpay">🏦 CBPay</option>
@@ -952,12 +954,12 @@ window.eloadManager = function () {
                 {{-- Calculation Card --}}
                 <div class="p-2.5 rounded-md bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
                     <div>
-                        <span class="text-slate-500 dark:text-slate-400">ကျသင့်ငွေ: </span>
+                        <span class="text-slate-500 dark:text-slate-400">{{ __('messages.payable') }}: </span>
                         <span class="font-black text-slate-900 dark:text-slate-100 font-mono" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(form.amount || 0) : Number(form.amount || 0).toLocaleString()"></span>
-                        <span class="text-slate-400 text-[10px] ml-1" x-text="'(အရင်း: ' + (typeof window.formatCurrency === 'function' ? window.formatCurrency(form.cost || 0) : Number(form.cost || 0).toLocaleString()) + ')'"></span>
+                        <span class="text-slate-400 text-[10px] ml-1" x-text="'(' + '{{ __('messages.cost') }}' + ': ' + (typeof window.formatCurrency === 'function' ? window.formatCurrency(form.cost || 0) : Number(form.cost || 0).toLocaleString()) + ')'"></span>
                     </div>
                     <div class="text-right">
-                        <span class="text-slate-500 dark:text-slate-400">အမြတ်: </span>
+                        <span class="text-slate-500 dark:text-slate-400">{{ __('messages.profit') }}: </span>
                         <span class="font-black text-emerald-600 dark:text-emerald-400 font-mono" x-text="'+' + (typeof window.formatCurrency === 'function' ? window.formatCurrency(form.profit || 0) : Number(form.profit || 0).toLocaleString())"></span>
                     </div>
                 </div>
@@ -972,11 +974,11 @@ window.eloadManager = function () {
 
                 {{-- Actions --}}
                 <div class="flex items-center justify-end gap-1.5 pt-1">
-                    <button type="button" @click="openTopupModal = false" class="h-8 px-3 rounded-md border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                    <button type="button" @click="openTopupModal = false" class="sf-btn-3d h-8 px-3 text-xs font-bold cursor-pointer">
                         {{ __('messages.cancel') }}
                     </button>
-                    <button type="submit" class="h-8 px-4 rounded-md bg-sky-600 hover:bg-sky-500 text-xs font-black text-white shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
-                        <span>✓ ရောင်းချမှု မှတ်တမ်းတင်မည်</span>
+                    <button type="submit" class="sf-btn-3d-primary h-8 px-4 text-xs font-black inline-flex items-center gap-1 cursor-pointer">
+                        <span>✓ {{ __('messages.eload_record_sale') }}</span>
                     </button>
                 </div>
             </form>
@@ -997,7 +999,7 @@ window.eloadManager = function () {
                     </span>
                     <div>
                         <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100">
-                            Float လက်ကျန်ငွေ ထည့်သွင်းခြင်း
+                            {{ __('messages.eload_refill_float_title') }}
                         </h3>
                         <p class="text-[10px] text-slate-500" x-text="refillData.accountName"></p>
                     </div>
@@ -1012,7 +1014,7 @@ window.eloadManager = function () {
                 <input type="hidden" name="eload_account_id" :value="refillData.accountId">
 
                 <div>
-                    <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">ဖြည့်သွင်းမည့် ပမာဏ *</label>
+                    <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.amount') }} *</label>
                     <div class="grid grid-cols-4 gap-1 mb-1">
                         <template x-for="amt in [100000, 300000, 500000, 1000000]" :key="amt">
                             <button type="button" @click="setRefillAmount(amt)"
@@ -1027,17 +1029,17 @@ window.eloadManager = function () {
                 </div>
 
                 <div>
-                    <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">မှတ်ချက် (ဘဏ်လွှဲ / Agent Float)</label>
-                    <input type="text" name="notes" x-model="refillData.notes" placeholder="e.g. KBZ Bank လွှဲပြောင်းဖြည့်သွင်း"
+                    <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">{{ __('messages.notes') }}</label>
+                    <input type="text" name="notes" x-model="refillData.notes" placeholder="{{ __('messages.eload_refill_notes_placeholder') }}"
                            class="w-full h-8 px-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">
                 </div>
 
                 <div class="flex items-center justify-end gap-1.5 pt-1">
-                    <button type="button" @click="openFloatModal = false" class="h-7 px-3 rounded-md border border-slate-300 text-xs font-bold text-slate-600 cursor-pointer">
+                    <button type="button" @click="openFloatModal = false" class="sf-btn-3d h-7 px-3 text-xs font-bold cursor-pointer">
                         {{ __('messages.cancel') }}
                     </button>
-                    <button type="submit" class="h-7 px-4 rounded-md bg-emerald-600 hover:bg-emerald-500 text-xs font-black text-white shadow-2xs transition inline-flex items-center gap-1 cursor-pointer">
-                        + Float ဖြည့်သွင်းမည်
+                    <button type="submit" class="sf-btn-3d-success h-7 px-4 text-xs font-black inline-flex items-center gap-1 cursor-pointer">
+                        + {{ __('messages.eload_refill_float_btn') }}
                     </button>
                 </div>
             </form>
@@ -1058,9 +1060,9 @@ window.eloadManager = function () {
                     </span>
                     <div>
                         <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100">
-                            အော်ပရေတာ Float အကောင့်များ စီမံခန့်ခွဲခြင်း
+                            {{ __('messages.eload_manage_accounts') }}
                         </h3>
-                        <p class="text-[10px] text-slate-500">Agent SIM များ၏ အမြတ်ရာခိုင်နှုန်းနှင့် လက်ကျန်ငွေများ</p>
+                        <p class="text-[10px] text-slate-500">{{ __('messages.eload_manage_accounts_desc') }}</p>
                     </div>
                 </div>
                 <button type="button" @click="openAccountsModal = false" class="w-6 h-6 rounded text-slate-400 hover:text-slate-600 grid place-items-center text-xs cursor-pointer">
@@ -1073,11 +1075,11 @@ window.eloadManager = function () {
                 <table class="w-full text-left text-xs">
                     <thead class="bg-slate-50 dark:bg-slate-800 font-bold uppercase text-[10px] text-slate-500">
                         <tr>
-                            <th class="py-2 px-2.5">အော်ပရေတာ</th>
-                            <th class="py-2 px-2.5">အကောင့်အမည်</th>
-                            <th class="py-2 px-2.5 text-right">လက်ကျန်ငွေ</th>
-                            <th class="py-2 px-2.5 text-right">အမြတ် %</th>
-                            <th class="py-2 px-2.5 text-right">လုပ်ဆောင်ချက်</th>
+                            <th class="py-2 px-2.5">{{ __('messages.eload_operator') }}</th>
+                            <th class="py-2 px-2.5">{{ __('messages.eload_account_name') }}</th>
+                            <th class="py-2 px-2.5 text-right">{{ __('messages.balance') }}</th>
+                            <th class="py-2 px-2.5 text-right">{{ __('messages.eload_margin_percent') }}</th>
+                            <th class="py-2 px-2.5 text-right">{{ __('messages.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1100,14 +1102,14 @@ window.eloadManager = function () {
                                 </td>
                                 <td class="py-2 px-2.5 text-right">
                                     <button type="button" @click="openEditAccount({{ $acc }})" class="px-2 py-0.5 rounded text-[11px] font-bold text-sky-600 hover:bg-sky-50 cursor-pointer">
-                                        ပြင်မည်
+                                        {{ __('messages.edit') }}
                                     </button>
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="5" class="py-4 text-center text-slate-400 text-xs">
-                                    အကောင့်များ မရှိသေးပါ။
+                                    {{ __('messages.eload_no_accounts') }}
                                 </td>
                             </tr>
                         @endforelse
@@ -1121,13 +1123,13 @@ window.eloadManager = function () {
                 <input type="hidden" name="id" :value="accountForm.id">
 
                 <div class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between">
-                    <span x-text="accountForm.id ? 'အကောင့် အချက်အလက် ပြင်ဆင်ရန်' : '+ အကောင့် အသစ်ထည့်သွင်းရန်'"></span>
-                    <button type="button" x-show="accountForm.id" @click="resetAccountForm()" class="text-[10px] text-slate-400 hover:text-slate-600">အသစ်ထည့်ရန် ပြောင်းမည်</button>
+                    <span x-text="accountForm.id ? '{{ __('messages.eload_edit_account') }}' : '{{ __('messages.eload_add_account') }}'"></span>
+                    <button type="button" x-show="accountForm.id" @click="resetAccountForm()" class="text-[10px] text-slate-400 hover:text-slate-600">{{ __('messages.eload_switch_add_new') }}</button>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5">အော်ပရေတာ *</label>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5">{{ __('messages.eload_operator') }} *</label>
                         <select name="operator" x-model="accountForm.operator" required class="w-full h-7 text-xs font-bold rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2">
                             <option value="mpt">MPT</option>
                             <option value="atom">ATOM</option>
@@ -1138,31 +1140,31 @@ window.eloadManager = function () {
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5">အကောင့် အမည် *</label>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5">{{ __('messages.eload_account_name') }} *</label>
                         <input type="text" name="name" x-model="accountForm.name" required placeholder="e.g. MPT Agent SIM" class="w-full h-7 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-2">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5">SIM ဖုန်းနံပါတ်</label>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5">{{ __('messages.eload_sim_phone') }}</label>
                         <input type="text" name="phone_number" x-model="accountForm.phone_number" placeholder="09xxxxxxxxx" class="w-full h-7 text-xs font-mono rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2">
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5">လက်ကျန်ငွေ</label>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5">{{ __('messages.balance') }}</label>
                         <input type="number" name="balance" x-model="accountForm.balance" min="0" step="100" class="w-full h-7 text-xs font-mono font-bold rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2">
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5">အမြတ် %</label>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-0.5">{{ __('messages.eload_margin_percent') }}</label>
                         <input type="number" name="discount_percent" x-model="accountForm.discount_percent" min="0" max="100" step="0.1" class="w-full h-7 text-xs font-mono font-bold rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2">
                     </div>
                 </div>
 
                 <div class="flex items-center justify-end gap-1.5 pt-1">
-                    <button type="submit" class="h-7 px-3 rounded-md bg-sky-600 hover:bg-sky-500 text-xs font-black text-white shadow-2xs transition inline-flex items-center gap-1 cursor-pointer">
-                        သိမ်းဆည်းမည်
+                    <button type="submit" class="sf-btn-3d-primary h-7 px-3 text-xs font-black inline-flex items-center gap-1 cursor-pointer">
+                        {{ __('messages.save') }}
                     </button>
                 </div>
             </form>

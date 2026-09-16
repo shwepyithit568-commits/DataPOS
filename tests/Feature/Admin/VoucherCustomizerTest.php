@@ -560,7 +560,7 @@ class VoucherCustomizerTest extends TestCase
 
     public function test_template_with_document_type_persists_and_reflects_on_respective_voucher_print(): void
     {
-        app(\App\POS\Services\VoucherTemplateService::class)->ensureDefaultTemplates($this->store);
+        app(VoucherTemplateService::class)->ensureDefaultTemplates($this->store);
 
         // 1. Update POS Invoice template subtitle
         $posTemplate = VoucherTemplate::where('store_id', $this->store->id)

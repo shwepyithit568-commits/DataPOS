@@ -740,7 +740,7 @@ window.barcodeDesignerFactory = function () {
             {{-- Add all recent button --}}
             <button type="button"
                     @click="addAllRecent()"
-                    class="h-7 px-2.5 rounded-md text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition border border-slate-200/80 dark:border-slate-700 shadow-2xs inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                    class="sf-btn-3d h-7 px-2.5 rounded-md text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer">
                 <span>⚡</span>
                 <span>{{ __('messages.barcode_add_all_in_stock') }}</span>
             </button>
@@ -750,7 +750,7 @@ window.barcodeDesignerFactory = function () {
                     @click="testPrintSingle()"
                     :disabled="selectedItems.length === 0"
                     title="{{ __('messages.barcode_btn_test_print') }}"
-                    class="h-7 px-2.5 rounded-md text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 disabled:opacity-50 cursor-pointer">
+                    class="sf-btn-3d-gold h-7 px-2.5 rounded-md text-xs font-bold transition inline-flex items-center gap-1 disabled:opacity-50 cursor-pointer">
                 <span>🧪</span>
                 <span>{{ __('messages.barcode_btn_test_print') }}</span>
             </button>
@@ -759,7 +759,7 @@ window.barcodeDesignerFactory = function () {
             <button type="button"
                     x-show="selectedItems.length > 0"
                     @click="clearSelection()"
-                    class="h-7 px-2.5 rounded-md text-xs font-bold bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 transition border border-rose-200 dark:border-rose-800 shadow-2xs inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                    class="sf-btn-3d-danger h-7 px-2.5 rounded-md text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer">
                 <span>✕</span>
                 <span>{{ __('messages.barcode_clear_selection') }}</span>
             </button>
@@ -768,8 +768,8 @@ window.barcodeDesignerFactory = function () {
             @if(!empty($exportUrl))
             <a href="{{ $exportUrl }}"
                title="Export Excel (.xlsx)"
-               class="h-7 px-2.5 rounded-md text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
-                <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+               class="sf-btn-3d-success h-7 px-2.5 rounded-md text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -782,8 +782,8 @@ window.barcodeDesignerFactory = function () {
             <button type="button"
                     @click="submitPrint()"
                     :disabled="selectedItems.length === 0"
-                    :class="selectedItems.length === 0 ? 'opacity-50 cursor-not-allowed bg-slate-200 dark:bg-slate-800 text-slate-400' : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-2xs hover:shadow-violet-500/20 active:scale-95 cursor-pointer'"
-                    class="h-7 px-3 rounded-md text-xs font-black transition inline-flex items-center gap-1.5">
+                    :class="selectedItems.length === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'"
+                    class="sf-btn-3d-primary h-7 px-3 rounded-md text-xs font-black transition inline-flex items-center gap-1.5">
                 <span>🖨️</span>
                 <span>{{ __('messages.print_stickers_btn') }}</span>
             </button>
@@ -1590,8 +1590,8 @@ window.barcodeDesignerFactory = function () {
                     <button type="button"
                             @click="submitPrint()"
                             :disabled="selectedItems.length === 0"
-                            :class="selectedItems.length === 0 ? 'opacity-50 cursor-not-allowed bg-slate-200 dark:bg-slate-800 text-slate-400' : 'bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-900/30 active:scale-95 cursor-pointer'"
-                            class="w-full h-8 sm:h-9 rounded-md font-black text-xs sm:text-sm tracking-wide transition flex items-center justify-center gap-2 border border-violet-400/30">
+                            :class="selectedItems.length === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'"
+                            class="sf-btn-3d-primary w-full h-8 sm:h-9 rounded-md font-black text-xs sm:text-sm tracking-wide transition flex items-center justify-center gap-2">
                         <span>🖨️</span>
                         <span>{{ __('messages.print_stickers_btn') }}</span>
                     </button>
@@ -1599,7 +1599,7 @@ window.barcodeDesignerFactory = function () {
                     <button type="button"
                             @click="testPrintSingle()"
                             :disabled="selectedItems.length === 0"
-                            class="w-full h-7 rounded-md font-bold text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800 transition flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50 cursor-pointer">
+                            class="sf-btn-3d-gold w-full h-7 rounded-md font-bold text-xs transition flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer">
                         <span>🧪</span>
                         <span>{{ __('messages.barcode_btn_test_print') }}</span>
                     </button>
@@ -1652,13 +1652,13 @@ window.barcodeDesignerFactory = function () {
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button type="button"
                         @click="showSaveModal = false"
-                        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer">
+                        class="sf-btn-3d px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer">
                     {{ __('messages.cancel') ?? 'Cancel' }}
                 </button>
                 <button type="button"
                         @click="saveCurrentTemplate()"
                         :disabled="!newTemplateName.trim() || isSavingTemplate"
-                        class="px-4 py-1.5 rounded-lg text-xs font-black bg-violet-600 hover:bg-violet-700 text-white shadow-md disabled:opacity-50 flex items-center gap-1.5 cursor-pointer">
+                        class="sf-btn-3d-primary px-4 py-1.5 rounded-lg text-xs font-black disabled:opacity-50 flex items-center gap-1.5 cursor-pointer">
                     <span x-show="isSavingTemplate">⏳</span>
                     <span>{{ __('messages.barcode_save_template_btn') }}</span>
                 </button>

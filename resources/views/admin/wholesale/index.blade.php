@@ -1,54 +1,69 @@
 @extends('layouts.admin.app')
 
 @section('title', 'Wholesale Applications - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @php
     $storeRouteParams = ['store_slug' => $store->slug];
 @endphp
 
 @section('content')
-<div class="w-full space-y-2 sm:space-y-2.5"
+<div class="w-full space-y-0.5 pb-6"
      x-data="{
         viewMode: localStorage.getItem('admin_wholesale_view_mode') || 'table',
      }"
      @view-changed.window="viewMode = $event.detail; localStorage.setItem('admin_wholesale_view_mode', $event.detail)">
 
     {{-- ============================================================
-         1. TOP PAGE HEADER — Eyebrow, Title, Context & Action Buttons
+         1. TOP ULTRA-DENSE HEADER BANNER (Standard v4.1)
          ============================================================ --}}
-    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-        <div class="min-w-0">
-            <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <span>💼 {{ __('messages.wholesale_admin_title') }}</span>
-            </h1>
+    <div class="px-2 py-1.5 bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 select-none transition">
+        <div class="flex items-center gap-2 min-w-0">
+            <a href="{{ route('store.admin.dashboard', $storeRouteParams) }}"
+               class="h-6 w-6 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition active:scale-95 shrink-0"
+               title="{{ __('messages.back') }}">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <div class="w-6 h-6 rounded bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+                <span>💼</span>
+            </div>
+            <div class="flex items-center gap-1.5 min-w-0">
+                <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-200/50 dark:border-indigo-800/50 truncate max-w-[120px] sm:max-w-none">
+                    {{ $store->name }}
+                </span>
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight truncate">
+                    {{ __('messages.wholesale_admin_title') }}
+                </h1>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono hidden md:inline">
+                    · {{ number_format($stats['total'] ?? $stats['all'] ?? 0) }} {{ __('messages.wholesale_title') }}
+                </span>
+            </div>
         </div>
 
-        {{-- Top Right Actions --}}
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 self-end sm:self-auto">
+            <a href="{{ route('store.admin.orders.index', $storeRouteParams) }}"
+               class="h-7 px-2 sm:px-2.5 rounded text-[11px] sm:text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                <span>🛒</span>
+                <span class="hidden sm:inline">{{ __('messages.orders') }}</span>
+            </a>
             <a href="{{ $exportUrl }}"
-               class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1.5 active:scale-95 shadow-2xs">
+               class="h-7 px-2 sm:px-2.5 rounded text-[11px] sm:text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
                 <span>📊</span>
                 <span>{{ __('messages.export_csv_button') }}</span>
             </a>
-            <a href="{{ route('store.admin.orders.index', $storeRouteParams) }}"
-               class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs transition flex items-center gap-1.5 active:scale-95">
-                <span>🛒</span>
-                <span>အော်ဒါများ</span>
-            </a>
         </div>
-    </header>
+    </div>
 
     {{-- Flash Messages --}}
     @if (session('success'))
-        <div class="w-full p-2.5 sm:p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
+        <div class="w-full p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
             <span>✅</span>
             <span>{{ session('success') }}</span>
         </div>
     @endif
 
     @if ($errors->any())
-        <div class="w-full p-2.5 sm:p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-800 dark:text-rose-300 space-y-1 shadow-2xs">
+        <div class="w-full p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded text-xs text-rose-800 dark:text-rose-300 space-y-1 shadow-2xs">
             <div class="font-black flex items-center gap-1.5">
                 <span>⚠️</span>
                 <span>{{ __('messages.validation_error') }}:</span>
@@ -60,54 +75,105 @@
     @endif
 
     {{-- ============================================================
-         2. 4 KEY KPI CARDS — Compact Filterable Stat Cards
+         2. 4 KEY KPI CARDS (Standard v4.1 Centered Row-based)
          ============================================================ --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1 select-none">
 
         {{-- Pending --}}
         <a href="{{ route('store.admin.wholesale.applications.index', array_merge($storeRouteParams, ['tab' => 'pending'])) }}"
-           class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border {{ $tab === 'pending' ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-slate-200/80 dark:border-slate-800' }} shadow-2xs hover:shadow-xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 truncate">{{ __('messages.wholesale_status_pending') }}</span>
-                <span class="text-xs">⏳</span>
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $tab === 'pending'
+                      ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-400 dark:border-amber-600 ring-2 ring-amber-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-800 hover:bg-amber-50/30' }}"
+           title="{{ __('messages.wholesale_status_pending') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $tab === 'pending'
+                            ? 'bg-amber-500 text-white border-amber-500 shadow-2xs'
+                            : 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/50' }}">⏳</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $tab === 'pending' ? 'text-amber-900 dark:text-amber-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.wholesale_status_pending') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['pending']) }}</span>
+                    @if ($tab === 'pending')
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    @endif
+                </div>
             </div>
-            <div class="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 mt-1 font-mono tracking-tight">{{ number_format($stats['pending']) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">စစ်ဆေးရန် ကျန်ရှိ</div>
         </a>
 
         {{-- Approved --}}
         <a href="{{ route('store.admin.wholesale.applications.index', array_merge($storeRouteParams, ['tab' => 'approved'])) }}"
-           class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border {{ $tab === 'approved' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200/80 dark:border-slate-800' }} shadow-2xs hover:shadow-xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 truncate">{{ __('messages.wholesale_status_approved') }}</span>
-                <span class="text-xs">✅</span>
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $tab === 'approved'
+                      ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-400 dark:border-emerald-600 ring-2 ring-emerald-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-800 hover:bg-emerald-50/30' }}"
+           title="{{ __('messages.wholesale_status_approved') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $tab === 'approved'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                            : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50' }}">✅</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $tab === 'approved' ? 'text-emerald-900 dark:text-emerald-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.wholesale_status_approved') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['approved']) }}</span>
+                    @if ($tab === 'approved')
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    @endif
+                </div>
             </div>
-            <div class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono tracking-tight">{{ number_format($stats['approved']) }}</div>
-            <div class="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">လက်ကားဝင်ခွင့်ပြုပြီး</div>
         </a>
 
         {{-- Rejected --}}
         <a href="{{ route('store.admin.wholesale.applications.index', array_merge($storeRouteParams, ['tab' => 'rejected'])) }}"
-           class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border {{ $tab === 'rejected' ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-200/80 dark:border-slate-800' }} shadow-2xs hover:shadow-xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-rose-600 dark:text-rose-400 truncate">{{ __('messages.wholesale_status_rejected') }}</span>
-                <span class="text-xs">❌</span>
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $tab === 'rejected'
+                      ? 'bg-rose-50/80 dark:bg-rose-950/40 border-rose-400 dark:border-rose-600 ring-2 ring-rose-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/30' }}"
+           title="{{ __('messages.wholesale_status_rejected') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $tab === 'rejected'
+                            ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
+                            : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-900/50' }}">❌</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $tab === 'rejected' ? 'text-rose-900 dark:text-rose-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.wholesale_status_rejected') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['rejected']) }}</span>
+                    @if ($tab === 'rejected')
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                    @endif
+                </div>
             </div>
-            <div class="text-lg sm:text-2xl font-black text-rose-600 dark:text-rose-400 mt-1 font-mono tracking-tight">{{ number_format($stats['rejected']) }}</div>
-            <div class="text-[10px] text-rose-600/80 dark:text-rose-400/80 mt-0.5">ငြင်းပယ်ထားသည်</div>
         </a>
 
         {{-- Suspended --}}
         <a href="{{ route('store.admin.wholesale.applications.index', array_merge($storeRouteParams, ['tab' => 'suspended'])) }}"
-           class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border {{ $tab === 'suspended' ? 'border-slate-500 ring-2 ring-slate-500/20' : 'border-slate-200/80 dark:border-slate-800' }} shadow-2xs hover:shadow-xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-slate-600 dark:text-slate-400 truncate">{{ __('messages.wholesale_status_suspended') }}</span>
-                <span class="text-xs">🚫</span>
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $tab === 'suspended'
+                      ? 'bg-slate-100 dark:bg-slate-800 border-slate-400 dark:border-slate-500 ring-2 ring-slate-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/30' }}"
+           title="{{ __('messages.wholesale_status_suspended') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $tab === 'suspended'
+                            ? 'bg-slate-600 text-white border-slate-600 shadow-2xs'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700' }}">🚫</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $tab === 'suspended' ? 'text-slate-900 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.wholesale_status_suspended') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-slate-700 dark:text-slate-300 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['suspended']) }}</span>
+                    @if ($tab === 'suspended')
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-500 animate-pulse"></span>
+                    @endif
+                </div>
             </div>
-            <div class="text-lg sm:text-2xl font-black text-slate-700 dark:text-slate-300 mt-1 font-mono tracking-tight">{{ number_format($stats['suspended']) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">ဆိုင်းငံ့ထားသည်</div>
         </a>
-
     </div>
 
     {{-- ============================================================
@@ -234,7 +300,7 @@
                 </div>
             @empty
                 <div class="col-span-full py-12 text-center text-slate-400 dark:text-slate-500 text-xs font-bold">
-                    လျှောက်လွှာမှတ်တမ်း မရှိသေးပါ။ (No wholesale applications found.)
+                    {{ __('messages.wholesale_no_applications') }}
                 </div>
             @endforelse
         </div>

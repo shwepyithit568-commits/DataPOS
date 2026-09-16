@@ -1,32 +1,31 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.printers_title') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full space-y-5 sm:space-y-6">
+<div class="w-full space-y-0.5 pb-6">
 
     {{-- ============================================================
-         PAGE HEADER
+         PAGE HEADER (Standard v4.1)
          ============================================================ --}}
-    <div class="admin-page-header">
-        <div class="min-w-0">
-            <p class="text-[11px] font-black uppercase tracking-wider text-violet-600 dark:text-violet-400">
-                {{ __('messages.sidebar_setup') ?? 'Hardware & System Setup' }}
-            </p>
-            <h1 class="admin-page-title mt-0.5">
-                {{ __('messages.printers_title') }}
-            </h1>
-            <p class="admin-page-sub mt-1">
-                {{ $store->name }} · {{ __('messages.printers_subtitle') }}
-            </p>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-lg p-2 sm:p-2.5 shadow-2xs">
+        <div class="flex items-center gap-2">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-violet-50 dark:bg-violet-950/60 border border-violet-200/60 dark:border-violet-800/60 text-violet-600 dark:text-violet-400 grid place-items-center text-sm sm:text-base font-bold shadow-xs shrink-0">
+                🖨️
+            </div>
+            <div class="min-w-0">
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                    <span class="truncate">{{ __('messages.printers_title') }}</span>
+                    <span class="text-[10px] font-mono font-bold text-slate-400">({{ count($printers) }})</span>
+                </h1>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ $store->name }} · {{ __('messages.printers_subtitle') }}</p>
+            </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2 shrink-0">
-            {{-- Add New Printer Button --}}
+        <div class="flex items-center gap-1.5 shrink-0">
             <a href="{{ route('store.admin.printers.create', ['store_slug' => $store->slug]) }}"
-               class="admin-primary-btn bg-violet-600 hover:bg-violet-500">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
+               class="sf-btn-3d-primary h-7 px-2.5 rounded-md text-xs font-black transition flex items-center gap-1">
+                <span class="text-xs leading-none font-bold">+</span>
                 <span>{{ __('messages.printers_add_new') }}</span>
             </a>
         </div>
@@ -34,30 +33,68 @@
 
     {{-- Flash Notifications --}}
     @if (session('success'))
-        <div class="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl text-sm text-emerald-800 dark:text-emerald-200 flex items-center gap-3">
-            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div class="p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-lg text-xs text-emerald-800 dark:text-emerald-200 flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <span class="font-medium">{{ session('success') }}</span>
         </div>
     @endif
 
     {{-- ============================================================
-         SUMMARY STATS HAIRLINE GRID
+         SUMMARY STATS (4 Centered Row-based Cards - Standard v4.1)
          ============================================================ --}}
-    <div class="admin-hairline-grid grid-cols-2 sm:grid-cols-4">
-        {{-- 1. Total Configured --}}
-        <div class="admin-hairline-cell bg-violet-50/30 dark:bg-violet-950/20">
-            <div class="admin-stat-label text-violet-600 dark:text-violet-400">{{ __('messages.printers_total_configured') }}</div>            <div class="admin-stat-value text-violet-700 dark:text-violet-300 font-mono">
-                {{ $stats['total_printers'] }}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-0.5 sm:gap-1">
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-sm sm:text-base font-bold shadow-inner shrink-0">
+                🖨️
             </div>
-            <div class="admin-stat-sub text-slate-500">{{ $stats['active_printers'] }} {{ __('messages.active') }}</div>
+            <div class="min-w-0">
+                <div class="text-[10px] sm:text-xs font-bold text-violet-600 dark:text-violet-400 leading-tight truncate">{{ __('messages.printers_total_configured') }}</div>
+                <div class="text-xs sm:text-sm font-black text-violet-700 dark:text-violet-300 font-mono tracking-tight leading-tight mt-0.5">
+                    {{ $stats['total_printers'] }}
+                </div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ $stats['active_printers'] }} {{ __('messages.active') }}</div>
+            </div>
         </div>
 
-        {{-- 2. Default Printer --}}
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label text-emerald-600 dark:text-emerald-400">{{ __('messages.printers_default_printer') }}</div>
-            <div class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100 truncate mt-0.5" title="{{ $stats['default_printer_name'] }}">
-                {{ $stats['default_printer_name'] }}
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-sm sm:text-base font-bold shadow-inner shrink-0">
+                ⭐
             </div>
+            <div class="min-w-0">
+                <div class="text-[10px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400 leading-tight truncate">{{ __('messages.printers_default_printer') }}</div>
+                <div class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate leading-tight mt-0.5" title="{{ $stats['default_printer_name'] }}">
+                    {{ $stats['default_printer_name'] }}
+                </div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ $stats['default_printer_type'] }}</div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 grid place-items-center text-sm sm:text-base font-bold shadow-inner shrink-0">
+                🌐
+            </div>
+            <div class="min-w-0">
+                <div class="text-[10px] sm:text-xs font-bold text-blue-600 dark:text-blue-400 leading-tight truncate">{{ __('messages.printers_network_lan') }}</div>
+                <div class="text-xs sm:text-sm font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight leading-tight mt-0.5">
+                    {{ $stats['network_printers'] }}
+                </div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.ethernet_wifi_tcpip') }}</div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 grid place-items-center text-sm sm:text-base font-bold shadow-inner shrink-0">
+                📱
+            </div>
+            <div class="min-w-0">
+                <div class="text-[10px] sm:text-xs font-bold text-indigo-600 dark:text-indigo-400 leading-tight truncate">{{ __('messages.printers_bluetooth_mobile') }}</div>
+                <div class="text-xs sm:text-sm font-black text-indigo-600 dark:text-indigo-400 font-mono tracking-tight leading-tight mt-0.5">
+                    {{ $stats['bluetooth_printers'] }}
+                </div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.portable_handheld') }}</div>
+            </div>
+        </div>
+    </div>
             <div class="admin-stat-sub text-slate-400">{{ $stats['default_printer_type'] }}</div>
         </div>
 
@@ -176,7 +213,7 @@
                         <div class="flex items-center gap-1.5">
                             <a href="{{ route('store.admin.printers.test_print', ['store_slug' => $store->slug, 'printer' => $p->id]) }}"
                                target="_blank"
-                               class="px-2.5 py-1.5 text-xs font-bold rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 hover:bg-violet-600 hover:text-white dark:hover:bg-violet-600 dark:hover:text-white transition shadow-sm flex items-center gap-1">
+                               class="sf-btn-3d h-7 px-2.5 text-xs font-bold rounded-lg transition flex items-center gap-1">
                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                                 <span>{{ __('messages.printers_test_print') }}</span>
                             </a>
@@ -185,7 +222,7 @@
                                 <form method="POST" action="{{ route('store.admin.printers.set_default', ['store_slug' => $store->slug, 'printer' => $p->id]) }}" class="inline">
                                     @csrf
                                     <button type="submit"
-                                            class="px-2.5 py-1.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                                            class="sf-btn-3d h-7 px-2.5 text-xs font-bold rounded-lg transition">
                                         {{ __('messages.printers_set_default') }}
                                     </button>
                                 </form>

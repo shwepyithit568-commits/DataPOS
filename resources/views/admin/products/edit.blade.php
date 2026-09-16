@@ -726,7 +726,7 @@
                 <span>{{ __('messages.suppliers') }}</span>
             </a>
             <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/products') }}"
-               class="h-7 px-2.5 rounded-md text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 transition flex items-center gap-1 cursor-pointer">
+               class="sf-btn-3d h-7 px-2.5 rounded-md text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 <span>{{ __('messages.product_form_back_to_products') }}</span>
             </a>
@@ -789,7 +789,7 @@
             <div class="flex-1">
                 <input type="file" name="images[]" multiple accept="image/*" required {{ $remainingGallerySlots === 0 ? 'disabled' : '' }} class="block w-full text-xs text-slate-600 dark:text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-50 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-slate-800 dark:file:text-violet-300 rounded-lg border border-slate-200 dark:border-slate-700 p-1.5 bg-slate-50 dark:bg-slate-800/60 disabled:opacity-50 disabled:cursor-not-allowed" />
             </div>
-            <button type="submit" {{ $remainingGallerySlots === 0 ? 'disabled' : '' }} class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-black text-xs whitespace-nowrap shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition">
+            <button type="submit" {{ $remainingGallerySlots === 0 ? 'disabled' : '' }} class="sf-btn-3d-success px-4 py-2 text-white rounded-lg font-black text-xs whitespace-nowrap shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer">
                 + {{ __('messages.product_form_upload_images') }}
             </button>
         </form>
@@ -855,8 +855,8 @@
                 </p>
             </div>
             <div class="flex justify-end gap-2 pt-1.5">
-                <button type="button" @click="categoryModalOpen = false" class="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.close') }}</button>
-                <button type="button" @click="createCategory()" class="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-black shadow-sm transition">{{ __('messages.product_form_save_category') }}</button>
+                <button type="button" @click="categoryModalOpen = false" class="sf-btn-3d px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">{{ __('messages.close') }}</button>
+                <button type="button" @click="createCategory()" class="sf-btn-3d-primary px-3.5 py-1.5 rounded-lg text-xs font-black shadow-sm transition cursor-pointer">{{ __('messages.product_form_save_category') }}</button>
             </div>
         </div>
     </div>
@@ -880,8 +880,8 @@
                 <input type="text" x-model="newBrandCode" class="w-full uppercase rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition" placeholder="{{ __('messages.product_form_code_placeholder') }}" />
             </div>
             <div class="flex justify-end gap-2 pt-1.5">
-                <button type="button" @click="brandModalOpen = false" class="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.close') }}</button>
-                <button type="button" @click="createBrand()" class="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-black shadow-sm transition">{{ __('messages.product_form_save_brand') }}</button>
+                <button type="button" @click="brandModalOpen = false" class="sf-btn-3d px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">{{ __('messages.close') }}</button>
+                <button type="button" @click="createBrand()" class="sf-btn-3d-primary px-3.5 py-1.5 rounded-lg text-xs font-black shadow-sm transition cursor-pointer">{{ __('messages.product_form_save_brand') }}</button>
             </div>
         </div>
     </div>
@@ -905,8 +905,8 @@
                 <input type="text" x-model="newSupplierPhone" @keydown.enter.prevent="createSupplier()" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500/40 outline-none transition" placeholder="09xxxxxxxxx" />
             </div>
             <div class="flex justify-end gap-2 pt-1.5">
-                <button type="button" @click="supplierModalOpen = false" class="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">{{ __('messages.close') }}</button>
-                <button type="button" @click="createSupplier()" class="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-black shadow-sm transition">{{ __('messages.product_form_save_supplier') }}</button>
+                <button type="button" @click="supplierModalOpen = false" class="sf-btn-3d px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer">{{ __('messages.close') }}</button>
+                <button type="button" @click="createSupplier()" class="sf-btn-3d-primary px-3.5 py-1.5 rounded-lg text-xs font-black shadow-sm transition cursor-pointer">{{ __('messages.product_form_save_supplier') }}</button>
             </div>
         </div>
     </div>

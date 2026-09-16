@@ -10,10 +10,10 @@
 @endphp
 
 @section('title', __('messages.glass_finder_admin_title') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full space-y-2 sm:space-y-2.5"
+<div class="w-full space-y-0.5 pb-6"
      x-data="{
          viewMode: localStorage.getItem('admin_glass_finder_view_mode') || 'card',
          addModalOpen: false,
@@ -30,42 +30,42 @@
     {{-- ============================================================
          PAGE HEADER — eyebrow badge, title, subtitle, CTA row
          ============================================================ --}}
-    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
         <div class="min-w-0">
-            <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                 {{ __('messages.glass_finder_admin_title') }}
             </h1>
-            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                 {{ $store->name }} · {{ __('messages.glass_finder_admin_subtitle') }}
             </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0">
+        <div class="flex flex-wrap items-center gap-1.5 shrink-0">
             {{-- Live Storefront Link --}}
             <a href="{{ $liveGlassFinderUrl }}" target="_blank" rel="noopener noreferrer"
-               class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs font-bold bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/60 border border-sky-200 dark:border-sky-800 transition flex items-center gap-1.5 active:scale-95 shadow-2xs">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+               class="sf-btn-3d px-2 py-1 text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                 <span>Live Finder ↗</span>
             </a>
 
             {{-- Manage Glass Finder Banners --}}
             <a href="{{ route('store.admin.banners.index', ['store_slug' => $store->slug, 'page' => 'glass_finder']) }}"
-               class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800 transition flex items-center gap-1.5 active:scale-95 shadow-2xs">
+               class="sf-btn-3d-gold px-2 py-1 text-xs font-bold transition flex items-center gap-1 cursor-pointer">
                 <span>🖼️</span>
                 <span>{{ __('messages.glass_finder_banner_manage_btn') }}</span>
             </a>
 
             {{-- Import Button --}}
             <button type="button" @click="importModalOpen = true"
-                    class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 transition flex items-center gap-1.5 active:scale-95 shadow-2xs">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    class="sf-btn-3d px-2 py-1 text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                 <span>{{ __('messages.glass_finder_import_btn') }}</span>
             </button>
 
             {{-- Add Item Button --}}
             <button type="button" @click="addModalOpen = true"
-                    class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition flex items-center gap-1.5 active:scale-95">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                    class="sf-btn-3d-primary px-2.5 py-1 text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 <span>{{ __('messages.glass_finder_add_item') }}</span>
             </button>
         </div>
@@ -73,13 +73,13 @@
 
     {{-- Flash Notifications --}}
     @if (session('success'))
-        <div class="w-full p-2.5 sm:p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
+        <div class="w-full p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
             <span>✅</span>
             <span>{{ session('success') }}</span>
         </div>
     @endif
     @if ($errors->any())
-        <div class="w-full p-2.5 sm:p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-800 dark:text-rose-300 space-y-1 shadow-2xs">
+        <div class="w-full p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-800 dark:text-rose-300 space-y-1 shadow-2xs">
             <div class="flex items-center gap-1.5 font-bold"><span>⚠️</span><span>{{ __('messages.errors') }}:</span></div>
             @foreach ($errors->all() as $error)
                 <div class="pl-5 text-xs font-semibold">• {{ $error }}</div>
@@ -88,50 +88,58 @@
     @endif
 
     {{-- ============================================================
-         KPI STAT CARDS — 4 compact interactive summary cards
+         KPI STAT CARDS — 4 Centered Row-based Summary Cards (Standard v4.1)
          ============================================================ --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-0.5 sm:gap-1">
         {{-- Total Items --}}
         <a href="{{ route('store.admin.glass-finder.index', ['store_slug' => $store->slug]) }}"
-           class="group bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs transition active:scale-98">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 truncate">{{ __('messages.glass_finder_total_items') }}</span>
-                <span class="text-xs">📱</span>
+           class="group bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs transition active:scale-98 flex items-center justify-center gap-2.5 sm:gap-3">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0 text-base">
+                📱
             </div>
-            <div class="text-lg sm:text-2xl font-black text-slate-900 dark:text-slate-100 mt-1 font-mono tracking-tight">{{ number_format($stats['total'] ?? 0) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ number_format($stats['brands_count'] ?? 0) }} brands</div>
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 leading-tight block truncate">{{ __('messages.glass_finder_total_items') }}</span>
+                <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 font-mono tracking-tight leading-tight mt-0.5">{{ number_format($stats['total'] ?? 0) }}</div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ number_format($stats['brands_count'] ?? 0) }} brands</div>
+            </div>
         </a>
 
         {{-- Unique Glass Codes --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-violet-600 dark:text-violet-400 truncate">{{ __('messages.glass_finder_unique_codes') }}</span>
-                <span class="text-xs">🏷️</span>
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition flex items-center justify-center gap-2.5 sm:gap-3">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 text-base">
+                🏷️
             </div>
-            <div class="text-lg sm:text-2xl font-black text-violet-600 dark:text-violet-400 mt-1 font-mono tracking-tight">{{ number_format($stats['unique_codes'] ?? 0) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.glass_matrix_groups') }}</div>
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-violet-600 dark:text-violet-400 leading-tight block truncate">{{ __('messages.glass_finder_unique_codes') }}</span>
+                <div class="text-xs sm:text-sm font-black text-violet-600 dark:text-violet-400 font-mono tracking-tight leading-tight mt-0.5">{{ number_format($stats['unique_codes'] ?? 0) }}</div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.glass_matrix_groups') }}</div>
+            </div>
         </div>
 
         {{-- In Stock --}}
         <a href="{{ route('store.admin.glass-finder.index', ['store_slug' => $store->slug, 'stock_status' => 'in_stock']) }}"
-           class="group bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border {{ request('stock_status') === 'in_stock' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200/80 dark:border-slate-800' }} hover:border-emerald-300 shadow-2xs transition active:scale-98">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 truncate">{{ __('messages.glass_finder_in_stock') }}</span>
-                <span class="text-xs">✅</span>
+           class="group bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border {{ request('stock_status') === 'in_stock' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200/80 dark:border-slate-800' }} hover:border-emerald-300 shadow-2xs transition active:scale-98 flex items-center justify-center gap-2.5 sm:gap-3">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-base">
+                ✅
             </div>
-            <div class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono tracking-tight">{{ number_format($stats['in_stock'] ?? 0) }}</div>
-            <div class="text-[10px] text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">{{ __('messages.glass_ready_install') }}</div>
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-emerald-600 dark:text-emerald-400 leading-tight block truncate">{{ __('messages.glass_finder_in_stock') }}</span>
+                <div class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight leading-tight mt-0.5">{{ number_format($stats['in_stock'] ?? 0) }}</div>
+                <div class="text-[9px] text-emerald-600/70 dark:text-emerald-400/70 leading-none mt-0.5">{{ __('messages.glass_ready_install') }}</div>
+            </div>
         </a>
 
         {{-- Out of Stock --}}
         <a href="{{ route('store.admin.glass-finder.index', ['store_slug' => $store->slug, 'stock_status' => 'out_of_stock']) }}"
-           class="group bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border {{ request('stock_status') === 'out_of_stock' ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-200/80 dark:border-slate-800' }} hover:border-rose-300 shadow-2xs transition active:scale-98">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-rose-600 dark:text-rose-400 truncate">{{ __('messages.glass_finder_out_of_stock') }}</span>
-                <span class="text-xs">⚠️</span>
+           class="group bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border {{ request('stock_status') === 'out_of_stock' ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-200/80 dark:border-slate-800' }} hover:border-rose-300 shadow-2xs transition active:scale-98 flex items-center justify-center gap-2.5 sm:gap-3">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 text-base">
+                ⚠️
             </div>
-            <div class="text-lg sm:text-2xl font-black text-rose-600 dark:text-rose-400 mt-1 font-mono tracking-tight">{{ number_format($stats['out_of_stock'] ?? 0) }}</div>
-            <div class="text-[10px] text-rose-600/70 dark:text-rose-400/70 mt-0.5">{{ __('messages.glass_needs_restock') }}</div>
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-rose-600 dark:text-rose-400 leading-tight block truncate">{{ __('messages.glass_finder_out_of_stock') }}</span>
+                <div class="text-xs sm:text-sm font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight leading-tight mt-0.5">{{ number_format($stats['out_of_stock'] ?? 0) }}</div>
+                <div class="text-[9px] text-rose-600/70 dark:text-rose-400/70 leading-none mt-0.5">{{ __('messages.glass_needs_restock') }}</div>
+            </div>
         </a>
     </div>
 
@@ -204,7 +212,7 @@
             <form method="POST" action="{{ route('store.admin.glass-finder.import.confirm', ['store_slug' => $store->slug]) }}" class="flex items-center gap-2">
                 @csrf
                 <input type="hidden" name="token" value="{{ $preview['token'] }}">
-                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold text-xs hover:bg-emerald-700 shadow-2xs flex items-center gap-1.5 active:scale-95 transition">
+                <button type="submit" class="sf-btn-3d-primary px-4 py-2 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer">
                     <span>✓ {{ __('messages.confirm_save') }}</span>
                 </button>
             </form>
@@ -255,7 +263,7 @@
         :filters="[
             'stock_status' => [
                 'label' => 'Stock Status',
-                'options' => ['in_stock' => 'In Stock (လက်ကျန်ရှိ)', 'out_of_stock' => 'Out of Stock (ပြတ်လပ်)']
+                'options' => ['in_stock' => __('messages.glass_in_stock_opt'), 'out_of_stock' => __('messages.glass_out_of_stock_opt')]
             ],
             'brand' => [
                 'label' => 'Brand',
@@ -364,7 +372,7 @@
                     <div class="text-3xl">🔍</div>
                     <div class="font-bold text-sm text-slate-800 dark:text-slate-200">{{ __('messages.glass_finder_empty') }}</div>
                     <p class="text-xs text-slate-400 max-w-sm mx-auto">{{ __('messages.glass_finder_empty_desc') }}</p>
-                    <button type="button" @click="addModalOpen = true" class="mt-2 px-3.5 py-2 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded-lg shadow transition">
+                    <button type="button" @click="addModalOpen = true" class="sf-btn-3d-primary mt-2 px-3.5 py-2 font-bold text-xs transition cursor-pointer">
                         + {{ __('messages.glass_finder_add_item') }}
                     </button>
                 </div>
@@ -512,17 +520,17 @@
                     <div>
                         <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.stock_status') }}</label>
                         <select name="stock_status" class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-violet-500 outline-none cursor-pointer">
-                            <option value="in_stock">In Stock (လက်ကျန်ရှိ)</option>
-                            <option value="out_of_stock">Out of Stock (ပြတ်လပ်)</option>
+                            <option value="in_stock">{{ __('messages.glass_in_stock_opt') }}</option>
+                            <option value="out_of_stock">{{ __('messages.glass_out_of_stock_opt') }}</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="addModalOpen = false" class="px-3.5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition">
+                    <button type="button" @click="addModalOpen = false" class="sf-btn-3d px-3.5 py-2 text-xs font-bold transition cursor-pointer">
                         {{ __('messages.cancel') }}
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-bold text-xs shadow-2xs transition active:scale-95">
+                    <button type="submit" class="sf-btn-3d-primary px-4 py-2 font-bold text-xs transition cursor-pointer">
                         {{ __('messages.save') }}
                     </button>
                 </div>
@@ -567,10 +575,10 @@
                 </div>
 
                 <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="importModalOpen = false" class="px-3.5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition">
+                    <button type="button" @click="importModalOpen = false" class="sf-btn-3d px-3.5 py-2 text-xs font-bold transition cursor-pointer">
                         {{ __('messages.cancel') }}
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-2xs transition active:scale-95">
+                    <button type="submit" class="sf-btn-3d-primary px-4 py-2 font-bold text-xs transition cursor-pointer">
                         Upload & Preview
                     </button>
                 </div>

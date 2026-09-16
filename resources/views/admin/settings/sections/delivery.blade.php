@@ -8,7 +8,7 @@
     <div class="admin-section-head">
         <div>
             <h2 class="admin-section-title">🚚 {{ __('messages.settings_delivery') }}</h2>
-            <p class="admin-section-sub">Payment နှင့် delivery methods များကို structured cards အဖြစ် စီမံပါ — footer, \"မှာယူနည်း\" နှင့် Order Builder မှာ တူညီစွာ ပြမည်။</p>
+            <p class="admin-section-sub">{{ __('messages.settings_delivery_sub') }}</p>
         </div>
     </div>
 
@@ -17,7 +17,7 @@
         <div class="flex items-center justify-between gap-3 flex-wrap">
             <div>
                 <h3 class="admin-section-title">💳 {{ __('messages.settings_payment_methods', ['count' => $store->paymentMethods->count()]) }}</h3>
-                <p class="{{ $helpClass }}">Active methods များက footer / \"မှာယူနည်း\" / Order Builder တွင် ပြမည်။ Account number ကို default အားဖြင့် မပြဘဲ \"Show account details\" ဖွင့်မှသာ ပြမည်။</p>
+                <p class="{{ $helpClass }}">{{ __('messages.settings_delivery_active_help') }}</p>
             </div>
             <button type="button" @click="showPayForm = !showPayForm; if (showPayForm) payForm = { name: '', code: '', type: 'custom', icon_type: 'initials', icon_value: '', account_name: '', account_number: '', instructions: '', is_active: true, show_account_details: false, sort_order: {{ $store->paymentMethods->max('sort_order') + 1 }} }"
                 class="shrink-0 inline-flex min-h-11 items-center rounded-xl border border-violet-300 bg-violet-50 px-4 py-2 text-xs font-black text-violet-700 hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
@@ -85,7 +85,7 @@
                     </div>
                     <div class="sm:col-span-2">
                         <label class="{{ $labelClass }}">{{ __('messages.settings_delivery_instructions') }}</label>
-                        <textarea name="instructions" x-model="payForm.instructions" rows="2" class="{{ $inputClass }}" placeholder="ဥပမာ — လွှဲပြီးရင် payment screenshot ကို Viber မှာ ပို့ပါ"></textarea>
+                        <textarea name="instructions" x-model="payForm.instructions" rows="2" class="{{ $inputClass }}" placeholder="{{ __('messages.settings_payment_transfer_screenshot_example') }}"></textarea>
                     </div>
                     <label class="inline-flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" name="is_active" value="1" x-model="payForm.is_active" class="h-5 w-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500" checked />
@@ -219,7 +219,7 @@
                             </div>
                             <div class="sm:col-span-2">
                                 <label class="{{ $labelClass }}">{{ __('messages.settings_delivery_instructions') }}</label>
-                                <textarea name="instructions" rows="2" class="{{ $inputClass }}" placeholder="ဥပမာ — လွှဲပြီးရင် payment screenshot ကို Viber မှာ ပို့ပါ">{{ $pm->instructions }}</textarea>
+                                <textarea name="instructions" rows="2" class="{{ $inputClass }}" placeholder="{{ __('messages.settings_payment_transfer_screenshot_example') }}">{{ $pm->instructions }}</textarea>
                             </div>
                             <div class="sm:col-span-2 flex flex-wrap gap-4 pt-1">
                                 <label class="inline-flex items-center gap-2 cursor-pointer">
@@ -257,7 +257,7 @@
         <div class="flex items-center justify-between gap-3 flex-wrap">
             <div>
                 <h3 class="admin-section-title">🚚 {{ __('messages.settings_delivery_methods', ['count' => $store->deliveryMethods->count()]) }}</h3>
-                <p class="{{ $helpClass }}">Active methods များက footer (အတိုချုပ်) + \"မှာယူနည်း\" + Order Builder တွင် ပြမည်။</p>
+                <p class="{{ $helpClass }}">{{ __('messages.settings_delivery_footer_summary_help') }}</p>
             </div>
             <button type="button" @click="showDelForm = !showDelForm; if (showDelForm) delForm = { name: '', type: 'custom', icon: '🚚', description: '', service_area: '', estimated_time: '', fee_note: '', is_active: true, sort_order: {{ $store->deliveryMethods->max('sort_order') + 1 }} }"
                 class="shrink-0 inline-flex min-h-11 items-center rounded-xl border border-sky-300 bg-sky-50 px-4 py-2 text-xs font-black text-sky-700 hover:bg-sky-100 dark:border-sky-700 dark:bg-sky-950/40 dark:text-sky-300">
@@ -386,7 +386,7 @@
         <div class="flex items-center justify-between gap-3 flex-wrap">
             <div>
                 <h3 class="admin-section-title">📝 {{ __('messages.settings_legacy_notes') }}</h3>
-                <p class="{{ $helpClass }}">Structured methods မရှိသေးစဉ် ဒီ notes တွေကို fallback အဖြစ် သုံးမည်။ Methods ရှိပြီးရင် ဒီ notes တွေကို footer မှာ မပြတော့ဘဲ \"မှာယူနည်း\" မှာပဲ ပြမည်။</p>
+                <p class="{{ $helpClass }}">{{ __('messages.settings_delivery_fallback_notes_help') }}</p>
             </div>
             <button type="submit" :disabled="submitting"
                 class="shrink-0 inline-flex min-h-11 items-center justify-center rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-black text-white shadow-sm hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-70">
@@ -399,26 +399,26 @@
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
                 <label class="{{ $labelClass }}">{{ __('messages.settings_delivery_general_payment_note') }}</label>
-                <textarea name="payment_info" rows="3" class="{{ $inputClass }}" placeholder="ငွေပေးချေခြင်းဆိုင်ရာ အထွေထွေ မှတ်ချက်">{{ old('payment_info', $setting->payment_info) }}</textarea>
-                <p class="{{ $helpClass }}">Structured methods မရှိသေးစဉ် fallback အဖြစ် ပြမည်။</p>
+                <textarea name="payment_info" rows="3" class="{{ $inputClass }}" placeholder="{{ __('messages.settings_payment_general_note_placeholder') }}">{{ old('payment_info', $setting->payment_info) }}</textarea>
+                <p class="{{ $helpClass }}">{{ __('messages.settings_delivery_fallback_short') }}</p>
                 @error('payment_info')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
             </div>
             <div>
                 <label class="{{ $labelClass }}">{{ __('messages.settings_delivery_general_delivery_note') }}</label>
-                <textarea name="delivery_info" rows="3" class="{{ $inputClass }}" placeholder="ပို့ဆောင်မှုဆိုင်ရာ အထွေထွေ မှတ်ချက်">{{ old('delivery_info', $setting->delivery_info) }}</textarea>
-                <p class="{{ $helpClass }}">Structured methods မရှိသေးစဉ် fallback အဖြစ် ပြမည်။</p>
+                <textarea name="delivery_info" rows="3" class="{{ $inputClass }}" placeholder="{{ __('messages.settings_delivery_general_note_placeholder') }}">{{ old('delivery_info', $setting->delivery_info) }}</textarea>
+                <p class="{{ $helpClass }}">{{ __('messages.settings_delivery_fallback_short') }}</p>
                 @error('delivery_info')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
             </div>
         </div>
 
         <div class="md:col-span-2">
             <h4 class="text-xs font-black text-gray-900 dark:text-slate-100">{{ __('messages.settings_delivery_footer_promo') }}</h4>
-            <p class="{{ $helpClass }}">Footer အောက်ဆုံးဘားတွင် ဆိုင်အမည်နှင့်အတူ ပြသမည့် အတိုချုပ် ကြော်ငြာစာသား (အများဆုံး စာလုံး ၂၅၅ လုံး)။</p>
+            <p class="{{ $helpClass }}">{{ __('messages.settings_footer_ad_text_help') }}</p>
             <div class="mt-2">
                 <label class="{{ $labelClass }}">{{ __('messages.settings_delivery_footer_ad') }}</label>
-                <textarea name="footer_ad_text" rows="2" maxlength="255" x-model="footerAd" class="{{ $inputClass }}" placeholder="ဥပမာ — ဆော့ဖ်ဝဲ မှာယူလိုပါက 09xxxxxxxxx ကို ဆက်သွယ်ပါ"></textarea>
+                <textarea name="footer_ad_text" rows="2" maxlength="255" x-model="footerAd" class="{{ $inputClass }}" placeholder="{{ __('messages.settings_footer_ad_example') }}"></textarea>
                 <div class="mt-1 flex items-center justify-between">
-                    <p class="{{ $helpClass }}">မထည့်ထားပါက "© {{ date('Y') }} DataPOS" ဟု ပြသပါမည်။</p>
+                    <p class="{{ $helpClass }}">{{ __('messages.settings_footer_ad_default_hint', ['year' => date('Y'), 'app' => 'DataPOS']) }}</p>
                     <span class="text-[10px] font-bold text-slate-400" x-text="footerAd.length + ' / 255'"></span>
                 </div>
                 @error('footer_ad_text')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror

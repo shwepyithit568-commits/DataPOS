@@ -79,7 +79,7 @@
             <div class="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
                 <div class="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
-                    <span class="font-semibold">{{ __('messages.supplier_outstanding_balance', ['amount' => number_format($supplier->remaining_balance, 2)]) }}</span>
+                    <span class="font-semibold">{{ __('messages.supplier_outstanding_balance', ['amount' => format_currency($supplier->remaining_balance, $store)]) }}</span>
                 </div>
             </div>
         @endif

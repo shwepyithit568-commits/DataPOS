@@ -1,6 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.vouchers_title') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
 <script nonce="{{ $cspNonce }}">
@@ -24,7 +25,7 @@ window.voucherStudioData = function () {
         showTax: {{ old('show_tax_breakdown', $selectedTemplate->show_tax_breakdown ?? true) ? 'true' : 'false' }},
         showDiscount: {{ old('show_discount_line', $selectedTemplate->show_discount_line ?? true) ? 'true' : 'false' }},
         showBarcode: {{ old('show_barcode', $selectedTemplate->show_barcode ?? true) ? 'true' : 'false' }},
-        footerGreeting: {!! json_encode(old('footer_greeting', $selectedTemplate->footer_greeting ?? 'Thank you for shopping with us! ကျေးဇူးတင်ပါသည်')) !!},
+        footerGreeting: {!! json_encode(old('footer_greeting', $selectedTemplate->footer_greeting ?? __('messages.voucher_footer_greeting_default'))) !!},
         footerPolicy: {!! json_encode(old('footer_policy', $selectedTemplate->footer_policy ?? 'Goods once sold are not returnable without receipt.')) !!},
         fontSize: {!! json_encode(old('font_size', $selectedTemplate->font_size ?? 'medium')) !!},
 
@@ -37,28 +38,41 @@ window.voucherStudioData = function () {
 };
 </script>
 
-<div x-data="window.voucherStudioData()" class="w-full space-y-5 sm:space-y-6">
+<div x-data="window.voucherStudioData()" class="w-full space-y-0.5 pb-6">
 
     {{-- ============================================================
-         PAGE HEADER
+         PAGE HEADER (Standard v4.1 Ultra-Dense)
          ============================================================ --}}
-    <div class="admin-page-header">
-        <div class="min-w-0">
-            <h1 class="admin-page-title">
-                {{ __('messages.vouchers_title') }}
-            </h1>
-            <p class="admin-page-sub mt-1">
-                {{ $store->name }} · {{ __('messages.vouchers_subtitle') }}
-            </p>
+    <div class="px-2 py-1.5 bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 select-none transition">
+        <div class="flex items-center gap-2 min-w-0">
+            <a href="{{ route('store.admin.dashboard', ['store_slug' => $store->slug]) }}"
+               class="h-6 w-6 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition active:scale-95 shrink-0"
+               title="{{ __('messages.back') }}">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <div class="w-6 h-6 rounded bg-violet-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+                <span>🧾</span>
+            </div>
+            <div class="flex items-center gap-1.5 min-w-0">
+                <span class="text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/60 px-1.5 py-0.5 rounded border border-violet-200/50 dark:border-violet-800/50 truncate max-w-[120px] sm:max-w-none">
+                    {{ $store->name }}
+                </span>
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight truncate">
+                    {{ __('messages.vouchers_title') }}
+                </h1>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono hidden md:inline">
+                    · {{ count($templates) }} {{ __('messages.templates') ?? 'Templates' }}
+                </span>
+            </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2 shrink-0">
-            {{-- Print Sample Preview Button (visible on Studio tab) --}}
+
+        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 self-end sm:self-auto">
             @if($selectedTemplate)
                 <div x-show="activeTab === 'studio'">
                     <a href="{{ route('store.admin.vouchers.preview', ['store_slug' => $store->slug, 'voucher' => $selectedTemplate->id]) }}"
                        target="_blank"
-                       class="admin-secondary-btn flex items-center gap-1.5">
-                        <svg class="w-4 h-4 text-violet-600 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                       class="h-7 px-2 sm:px-2.5 rounded text-[11px] sm:text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                        <svg class="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                         <span>{{ __('messages.vouchers_print_sample') }}</span>
                     </a>
                 </div>
@@ -68,31 +82,31 @@ window.voucherStudioData = function () {
 
     {{-- Flash Notifications --}}
     @if (session('success'))
-        <div class="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl text-sm text-emerald-800 dark:text-emerald-200 flex items-center gap-3">
-            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span class="font-medium">{{ session('success') }}</span>
+        <div class="w-full p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
+            <span>✅</span>
+            <span>{{ session('success') }}</span>
         </div>
     @endif
 
     {{-- ============================================================
-         PRIMARY SUB-NAVIGATION TABS
+         PRIMARY SUB-NAVIGATION TABS (Standard v4.1 h-7)
          ============================================================ --}}
-    <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+    <div class="flex items-center gap-1 border-b border-slate-200/80 dark:border-slate-800 pb-1">
         <button type="button"
                 @click="activeTab = 'studio'"
-                :class="activeTab === 'studio' ? 'bg-violet-600 text-white shadow-sm ring-1 ring-violet-500' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"
-                class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                :class="activeTab === 'studio' ? 'bg-violet-600 text-white shadow-2xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
+                class="h-7 px-2.5 rounded text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
             <span>{{ __('messages.vouchers_tab_studio') }}</span>
         </button>
 
         <button type="button"
                 @click="activeTab = 'defaults'"
-                :class="activeTab === 'defaults' ? 'bg-violet-600 text-white shadow-sm ring-1 ring-violet-500' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'"
-                class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                :class="activeTab === 'defaults' ? 'bg-violet-600 text-white shadow-2xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
+                class="h-7 px-2.5 rounded text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             <span>{{ __('messages.vouchers_tab_defaults') }}</span>
-            <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black" :class="activeTab === 'defaults' ? 'bg-violet-800 text-violet-100' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">8</span>
+            <span class="px-1 py-0.2 rounded text-[10px] font-black" :class="activeTab === 'defaults' ? 'bg-violet-800 text-violet-100' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'">8</span>
         </button>
     </div>
 
@@ -420,7 +434,7 @@ window.voucherStudioData = function () {
                             <input type="text"
                                    name="footer_greeting"
                                    x-model="footerGreeting"
-                                   placeholder="Thank you for shopping with us! ကျေးဇူးတင်ပါသည်"
+                                   placeholder="{{ __('messages.voucher_footer_greeting_default') }}"
                                    class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 shadow-sm">
                         </div>
 
@@ -452,7 +466,7 @@ window.voucherStudioData = function () {
                 {{-- Action Bar --}}
                 <div class="flex items-center justify-end gap-3 pt-2">
                     <button type="submit"
-                            class="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-bold shadow-md transition">
+                            class="sf-btn-3d-primary px-6 py-2.5 rounded-xl text-white text-sm font-black cursor-pointer">
                         {{ __('messages.vouchers_save_template') }}
                     </button>
                 </div>
@@ -569,19 +583,19 @@ window.voucherStudioData = function () {
                             <div class="space-y-0.5 text-[10px]">
                                 <div class="flex justify-between text-slate-600">
                                     <span>{{ __('messages.subtotal') }}:</span>
-                                    <span class="font-mono">700,000 Ks</span>
+                                    <span class="font-mono">{{ format_currency(700000, $store) }}</span>
                                 </div>
                                 <div x-show="showDiscount" class="flex justify-between text-rose-600">
                                     <span>{{ __('messages.discount') }}:</span>
-                                    <span class="font-mono">-0 Ks</span>
+                                    <span class="font-mono">-{{ format_currency(0, $store) }}</span>
                                 </div>
                                 <div x-show="showTax" class="flex justify-between text-slate-600">
                                     <span>{{ __('messages.commercial_tax') }} (5%):</span>
-                                    <span class="font-mono">+ 35,000 Ks</span>
+                                    <span class="font-mono">+ {{ format_currency(35000, $store) }}</span>
                                 </div>
                                 <div class="flex justify-between font-black text-[11px] text-violet-700 bg-violet-50 p-1.5 rounded border border-violet-200 mt-1">
                                     <span>{{ __('messages.invoice_total_due') }}:</span>
-                                    <span class="font-mono">735,000 Ks</span>
+                                    <span class="font-mono">{{ format_currency(735000, $store) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -658,18 +672,18 @@ window.voucherStudioData = function () {
                                 <tr>
                                     <td class="py-1.5">
                                         <div class="font-bold">Remax 20W Fast Charger</div>
-                                        <div class="text-[10px] text-slate-400">@ 25,000 MMK</div>
+                                        <div class="text-[10px] text-slate-400">@ {{ format_currency(25000, $store) }}</div>
                                     </td>
                                     <td class="py-1.5 text-center font-mono">1</td>
-                                    <td class="py-1.5 text-right font-mono font-bold">25,000</td>
+                                    <td class="py-1.5 text-right font-mono font-bold">{{ format_currency(25000, $store) }}</td>
                                 </tr>
                                 <tr>
                                     <td class="py-1.5">
                                         <div class="font-bold">Type-C Braided Cable 1m</div>
-                                        <div class="text-[10px] text-slate-400">@ 8,000 MMK</div>
+                                        <div class="text-[10px] text-slate-400">@ {{ format_currency(8000, $store) }}</div>
                                     </td>
                                     <td class="py-1.5 text-center font-mono">2</td>
-                                    <td class="py-1.5 text-right font-mono font-bold">16,000</td>
+                                    <td class="py-1.5 text-right font-mono font-bold">{{ format_currency(16000, $store) }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -680,23 +694,23 @@ window.voucherStudioData = function () {
                         <div class="space-y-1 text-[11px]">
                             <div class="flex justify-between text-slate-600">
                                 <span>{{ __('messages.subtotal') }}:</span>
-                                <span class="font-mono">41,000 MMK</span>
+                                <span class="font-mono">{{ format_currency(41000, $store) }}</span>
                             </div>
                             <div x-show="showDiscount" class="flex justify-between text-rose-600">
                                 <span>{{ __('messages.promotion_discount_pct') }}:</span>
-                                <span class="font-mono">-2,000 MMK</span>
+                                <span class="font-mono">-{{ format_currency(2000, $store) }}</span>
                             </div>
                             <div x-show="showTax" class="flex justify-between text-slate-600">
                                 <span>{{ __('messages.commercial_tax_pct') }}:</span>
-                                <span class="font-mono">1,950 MMK</span>
+                                <span class="font-mono">{{ format_currency(1950, $store) }}</span>
                             </div>
                             <div class="flex justify-between font-black text-sm border-t border-slate-900 pt-1.5 mt-1">
                                 <span>{{ __('messages.net_total') }}:</span>
-                                <span class="font-mono">40,950 MMK</span>
+                                <span class="font-mono">{{ format_currency(40950, $store) }}</span>
                             </div>
                             <div class="flex justify-between text-[10px] text-slate-500 pt-0.5">
                                 <span>{{ __('messages.paid_with') }} KBZPay:</span>
-                                <span class="font-mono">40,950 MMK</span>
+                                <span class="font-mono">{{ format_currency(40950, $store) }}</span>
                             </div>
                         </div>
 
@@ -819,7 +833,7 @@ window.voucherStudioData = function () {
 
                 <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
                     <button type="submit"
-                            class="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-bold shadow-md transition flex items-center gap-2">
+                            class="sf-btn-3d-primary px-6 py-2.5 rounded-xl text-white text-sm font-black flex items-center gap-2 cursor-pointer">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                         <span>{{ __('messages.vouchers_save_document_defaults') }}</span>
                     </button>

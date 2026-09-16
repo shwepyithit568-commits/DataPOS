@@ -363,7 +363,7 @@ class StoreSettingsAndBrandingTest extends TestCase
         $response = $this->actingAs($manager)->get('/store/store-a/admin/settings/currency');
 
         $response->assertOk();
-        $response->assertSee('Currency &amp; Number Formatting', false);
+        $response->assertSee(__('messages.settings_currency_formatting'), false);
         $response->assertSee('name="currency_settings[currency_code]"', false);
         $response->assertSee('name="currency_settings[symbol_position]"', false);
         $response->assertSee('name="currency_settings[qty_decimal_places]"', false);

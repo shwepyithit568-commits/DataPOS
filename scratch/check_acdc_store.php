@@ -12,12 +12,12 @@ echo "User: {$user->name} (id={$user->id})\n";
 $pivot = $user->stores()->where('store_id', $store->id)->first();
 echo "Pivot role: " . ($pivot?->pivot?->role ?? 'NONE') . "\n";
 
-$perms = \App\Models\StoreUserPermission::where('store_id', $store->id)
-    ->where('user_id', $user->id)->get();
-echo "Permissions count: " . $perms->count() . "\n";
-if ($perms->isNotEmpty()) {
+$permService = app(\App\Services\StorePermissionService::class);
+$perms = $permService->effectivePermissions($user, $store);
+echo "Permissions count: " . count($perms) . "\n";
+if (!empty($perms)) {
     foreach ($perms as $p) {
-        echo "  - {$p->permission}\n";
+        echo "  - {$p}\n";
     }
 } else {
     echo "  (no explicit permissions found)\n";

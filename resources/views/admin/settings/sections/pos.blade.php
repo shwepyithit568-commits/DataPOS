@@ -3,7 +3,7 @@
     $paperSize = $pos['paper_size'] ?? '80mm';
     $receiptHeader = $pos['receipt_header'] ?? ($setting->store_name ?? $store->name);
     $receiptSubtitle = $pos['receipt_subtitle'] ?? ($setting->tagline ?? '');
-    $receiptFooter = $pos['receipt_footer'] ?? 'ဝယ်ယူအားပေးမှုကို အထူးပင်ကျေးဇူးတင်ရှိပါသည်။ ပစ္စည်းမှန်ကန်မှုအတွက် ပြေစာနှင့်တကွ ၃ ရက်အတွင်း လာရောက်လဲလှယ်နိုင်ပါသည်။';
+    $receiptFooter = $pos['receipt_footer'] ?? __('messages.settings_default_receipt_footer');
     $autoPrint = $pos['auto_print'] ?? true;
     $showTaxId = $pos['show_tax_id'] ?? false;
     $taxIdNumber = $pos['tax_id_number'] ?? '';
@@ -147,7 +147,7 @@
                 </div>
 
                 <div x-show="showTax" class="pt-2">
-                    <label class="{{ $labelClass }}">Tax Identification Number (TIN / အခွန်အမှတ်အသား)</label>
+                    <label class="{{ $labelClass }}">{{ __('messages.tin_number_label') }}</label>
                     <input type="text" name="pos_settings[tax_id_number]" x-model="taxId"
                            placeholder="e.g. TIN-1029384756" class="{{ $inputClass }}">
                 </div>
@@ -170,7 +170,7 @@
                                value="{{ $holdExpiryHours }}"
                                placeholder="24" class="{{ $inputClass }}" />
                         <p class="{{ $helpClass }}">
-                            Hold လုပ်ထားသော အရောင်းများ အလိုအလျောက် သက်တမ်းကုန်ချိန် (0 = ပိတ်ထားမည်၊ 24 = default)။
+                            {{ __('messages.settings_pos_hold_expiry_help') }}
                         </p>
                         @error('pos_hold_expiry_hours')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                     </div>
@@ -215,9 +215,9 @@
                         <label for="pos_override_pin_threshold" class="{{ $labelClass }}">{{ __('messages.settings_pos_price_override') }}</label>
                         <input id="pos_override_pin_threshold" type="number" name="pos_override_pin_threshold" min="0" max="100" step="1"
                                value="{{ $pinThreshold }}"
-                               placeholder="Disabled (No PIN required)" class="{{ $inputClass }}" />
+                               placeholder="{{ __('messages.settings_pos_override_pin_placeholder') }}" class="{{ $inputClass }}" />
                         <p class="{{ $helpClass }}">
-                            Cashier က ဈေးနှုန်းကို သတ်မှတ်ထားထက် ဤ % ပိုလျှော့ပါက **Manager PIN** တောင်းပါမည်။
+                            {{ __('messages.settings_pos_price_override_help') }}
                         </p>
                         @error('pos_override_pin_threshold')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                     </div>

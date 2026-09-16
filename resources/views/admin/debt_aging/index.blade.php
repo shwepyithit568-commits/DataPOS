@@ -1,13 +1,14 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.debt_aging_title') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @php
     $storeRouteParams = ['store_slug' => $store->slug];
 @endphp
 
 @section('content')
-<div class="w-full space-y-5 sm:space-y-6 pb-12"
+<div class="w-full space-y-0.5 pb-6"
      x-data="{
         viewMode: localStorage.getItem('admin_view_mode') || 'table',
         reminderModalOpen: false,
@@ -17,96 +18,118 @@
             this.reminderModalOpen = true;
         },
         copyReminderText() {
-            const text = `မင်္ဂလာပါ ${this.reminderCustomer.name} ခင်ဗျာ - ${'{{ $store->name }}'} မှ လူကြီးမင်း၏ ကျန်ရှိသော အကြွေးငွေ ကျပ် ${Number(this.reminderCustomer.due).toLocaleString()} အား အဆင်ပြေသည့်အချိန်တွင် လာရောက်ရှင်းလင်းပေးပါရန် လေးစားစွာ အသိပေးအပ်ပါသည်ခင်ဗျာ။ ကျေးဇူးတင်ပါသည်။`;
+            const formattedDue = typeof window.formatCurrency === 'function' ? window.formatCurrency(this.reminderCustomer.due) : ('{{ currency_symbol($store) }} ' + Number(this.reminderCustomer.due).toLocaleString());
+            const template = @js(__('messages.debt_aging_sms_template'));
+            const text = template
+                .replace(':customer', this.reminderCustomer.name)
+                .replace(':store', @js($store->name))
+                .replace(':amount', formattedDue);
             navigator.clipboard.writeText(text);
-            alert('ငွေတောင်းခံလွှာ စာသားကို Copy ကူးယူပြီးပါပြီ (Viber / SMS တွင် Paste ချ၍ ပို့နိုင်ပါသည်)');
+            alert(@js(__('messages.debt_aging_copied_alert')));
             this.reminderModalOpen = false;
         }
      }"
      @view-changed.window="viewMode = $event.detail; localStorage.setItem('admin_view_mode', $event.detail)">
 
-    {{-- 1. Top Page Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex items-center gap-3">
-            <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 grid place-items-center text-xl sm:text-2xl font-bold shadow-sm flex-shrink-0">
-                ⏳
-            </span>
-            <div class="min-w-0">
-                <h1 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
-                    <span class="truncate">{{ __('messages.debt_aging_title') }}</span>
+    {{-- ============================================================
+         1. TOP ULTRA-DENSE HEADER BANNER (Standard v4.1)
+         ============================================================ --}}
+    <div class="px-2 py-1.5 bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 select-none transition">
+        <div class="flex items-center gap-2 min-w-0">
+            <a href="{{ route('store.admin.dashboard', $storeRouteParams) }}"
+               class="h-6 w-6 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition active:scale-95 shrink-0"
+               title="{{ __('messages.back') }}">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <div class="w-6 h-6 rounded bg-amber-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+                <span>⏳</span>
+            </div>
+            <div class="flex items-center gap-1.5 min-w-0">
+                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-200/50 dark:border-amber-800/50 truncate max-w-[120px] sm:max-w-none">
+                    {{ $store->name }}
+                </span>
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight truncate">
+                    {{ __('messages.debt_aging_title') }}
                 </h1>
-                <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ $store->name }} · {{ __('messages.debt_aging_subtitle') }}</p>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono hidden md:inline">
+                    · {{ number_format($metrics['total_debtors']) }} {{ __('messages.debt_aging_total_debtors') }}
+                </span>
             </div>
         </div>
 
-        {{-- Top Right Actions (Print Debt Aging Sheet & CSV Export) --}}
-        <div class="flex items-center gap-2.5 self-start sm:self-auto">
+        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 self-end sm:self-auto">
+            <a href="{{ route('store.admin.receivables.index', $storeRouteParams) }}"
+               class="sf-btn-3d h-7 px-2 sm:px-2.5 rounded-md text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
+                <span>💳</span>
+                <span class="hidden sm:inline">{{ __('messages.receivables_title') ?? 'Receivables' }}</span>
+            </a>
             <a href="{{ route('store.admin.debt_aging.print', array_merge($storeRouteParams, request()->only(['search', 'bucket', 'risk', 'sort']))) }}"
                target="_blank"
-               class="px-3.5 py-2 rounded-2xl text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition inline-flex items-center gap-1.5 active:scale-95">
-                <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+               class="sf-btn-3d-primary h-7 px-2 sm:px-2.5 rounded-md text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                 <span>{{ __('messages.debt_aging_print_statement') }}</span>
             </a>
         </div>
     </div>
 
-    {{-- 2. 4 Key Aging KPI Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-        
+    {{-- ============================================================
+         2. 4 KEY AGING KPI STAT CARDS (Standard v4.1 Centered Row-based)
+         ============================================================ --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1 select-none">
         {{-- Total Outstanding Debt --}}
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.debt_aging_total_receivables') }}</p>
-                <h3 class="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight tabular-nums">
-                    {{ format_currency($metrics['total_outstanding'], $store) }}
-                </h3>
-                <p class="text-[11px] text-slate-400 font-semibold mt-0.5">{{ number_format($metrics['total_debtors']) }} {{ __('messages.debt_aging_total_debtors') }}</p>
+        <div class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.debt_aging_total_receivables') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-900/50">💳</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.debt_aging_total_receivables') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ format_currency($metrics['total_outstanding'], $store) }}</span>
+                </div>
             </div>
-            <span class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                💳
-            </span>
         </div>
 
         {{-- 0 - 30 Days (Current / Safe) --}}
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.debt_aging_bucket_0_30') }}</p>
-                <h3 class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight tabular-nums">
-                    {{ format_currency($metrics['bucket_0_30'], $store) }}
-                </h3>
-                <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">{{ $metrics['pct_current'] }}% {{ __('messages.debt_aging_pct_of_total') }}</p>
+        <div class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.debt_aging_bucket_0_30') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50">🟢</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.debt_aging_bucket_0_30') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ format_currency($metrics['bucket_0_30'], $store) }}</span>
+                </div>
             </div>
-            <span class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                🟢
-            </span>
         </div>
 
         {{-- 31 - 60 Days (Follow-up) --}}
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.debt_aging_bucket_31_60') }}</p>
-                <h3 class="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight tabular-nums">
-                    {{ format_currency($metrics['bucket_31_60'], $store) }}
-                </h3>
-                <p class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">{{ __('messages.debt_aging_need_reminder') }}</p>
+        <div class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.debt_aging_bucket_31_60') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/50">🟡</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.debt_aging_bucket_31_60') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ format_currency($metrics['bucket_31_60'], $store) }}</span>
+                </div>
             </div>
-            <span class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                🟡
-            </span>
         </div>
 
         {{-- 61+ & 90+ Days (Critical Overdue) --}}
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.debt_aging_bucket_90_plus') }}</p>
-                <h3 class="text-xl sm:text-2xl font-black text-rose-700 dark:text-rose-400 font-mono tracking-tight tabular-nums">
-                    {{ format_currency($metrics['bucket_61_90'] + $metrics['bucket_90_plus'], $store) }}
-                </h3>
-                <p class="text-[11px] text-rose-600 dark:text-rose-400 font-bold mt-0.5">{{ $metrics['high_risk_debtors'] }} {{ __('messages.debt_aging_high_risk') }}</p>
+        <div class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.debt_aging_bucket_90_plus') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/50">🔴</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.debt_aging_bucket_90_plus') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-rose-700 dark:text-rose-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ format_currency($metrics['bucket_61_90'] + $metrics['bucket_90_plus'], $store) }}</span>
+                </div>
             </div>
-            <span class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                🔴
-            </span>
         </div>
     </div>
 
@@ -118,7 +141,7 @@
             $p60 = round(($metrics['bucket_61_90'] / $metrics['total_outstanding']) * 100, 1);
             $p90 = round(($metrics['bucket_90_plus'] / $metrics['total_outstanding']) * 100, 1);
         @endphp
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-3">
+        <div class="rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-2 sm:p-2.5 shadow-2xs space-y-1.5">
             <div class="flex items-center justify-between text-xs">
                 <span class="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">{{ __('messages.debt_aging_health_overview') }}</span>
                 <span class="font-mono text-slate-400 font-bold">100% ({{ format_currency($metrics['total_outstanding'], $store) }})</span>
@@ -343,7 +366,7 @@
                             </td>
                             <td class="py-3.5 px-4 text-right">
                                 <button type="button" @click="openReminder({{ json_encode(['name' => $c['customer_name'], 'phone' => $c['customer_phone'], 'due' => $c['total_due'], 'days' => $c['max_overdue_days']]) }})"
-                                        class="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/60 dark:text-amber-300 transition inline-flex items-center gap-1">
+                                        class="sf-btn-3d-gold px-2.5 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
                                     <span>💬</span>
                                     <span>{{ __('messages.debt_aging_reminder_btn') }}</span>
                                 </button>
@@ -375,16 +398,19 @@
             <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 text-xs font-medium text-slate-700 dark:text-slate-300 space-y-2 border border-slate-100 dark:border-slate-700">
                 <p><strong>{{ __('messages.debt_aging_reminder_customer') }}</strong> <span x-text="reminderCustomer.name"></span> (<span x-text="reminderCustomer.phone"></span>)</p>
                 <p><strong>{{ __('messages.debt_aging_reminder_balance') }}</strong> <span class="font-bold text-rose-600 font-mono" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(reminderCustomer.due) : Number(reminderCustomer.due).toLocaleString()"></span></p>
-                <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 font-sans leading-relaxed text-slate-600 dark:text-slate-300">
-                    မင်္ဂလာပါ <span class="font-bold" x-text="reminderCustomer.name"></span> ခင်ဗျာ - <strong>{{ $store->name }}</strong> မှ လူကြီးမင်း၏ ကျန်ရှိသော အကြွေးငွေ ကျပ် <strong class="text-rose-600" x-text="Number(reminderCustomer.due).toLocaleString()"></strong> အား အဆင်ပြေသည့်အချိန်တွင် လာရောက်ရှင်းလင်းပေးပါရန် လေးစားစွာ အသိပေးအပ်ပါသည်ခင်ဗျာ။
+                <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 font-sans leading-relaxed text-slate-600 dark:text-slate-300"
+                     x-html="@js(__('messages.debt_aging_reminder_preview_html'))
+                        .replace(':customer', '<strong>' + (reminderCustomer?.name || '') + '</strong>')
+                        .replace(':store', '<strong>{{ $store->name }}</strong>')
+                        .replace(':amount', '<strong class=\'text-rose-600 font-mono\'>' + (typeof window.formatCurrency === 'function' ? window.formatCurrency(reminderCustomer?.due || 0) : ('{{ currency_symbol($store) }} ' + Number(reminderCustomer?.due || 0).toLocaleString())) + '</strong>')">
                 </div>
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-2">
-                <button type="button" @click="reminderModalOpen = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
+                <button type="button" @click="reminderModalOpen = false" class="sf-btn-3d px-4 py-2 rounded-md text-xs font-bold cursor-pointer">
                     {{ __('messages.debt_aging_reminder_cancel') }}
                 </button>
-                <button type="button" @click="copyReminderText()" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 transition flex items-center gap-1.5">
+                <button type="button" @click="copyReminderText()" class="sf-btn-3d-gold px-4 py-2 rounded-md text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer">
                     <span>📋</span>
                     <span>{{ __('messages.debt_aging_reminder_copy') }}</span>
                 </button>

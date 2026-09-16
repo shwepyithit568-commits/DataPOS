@@ -6,10 +6,10 @@
 @endphp
 
 @section('title', __('messages.push_admin_title') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full space-y-2 sm:space-y-2.5"
+<div class="w-full space-y-0.5 pb-6"
      x-data="pushBroadcastStudio({
          subscriberCount: {{ (int) $subscriberCount }},
          defaultUrl: '{{ url('/?store_slug=' . $store->slug) }}',
@@ -19,27 +19,27 @@
     {{-- ============================================================
          PAGE HEADER — eyebrow badge, title, subtitle, CTA row
          ============================================================ --}}
-    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
         <div class="min-w-0">
-            <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                 {{ __('messages.push_admin_title') }}
             </h1>
-            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                 {{ $store->name }} · {{ __('messages.push_admin_subtitle') }}
             </p>
         </div>
 
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 shrink-0">
             {{-- Quick Subscribe Button --}}
             <button type="button" @click="subscribeCurrentBrowser()" :disabled="subscribing"
-                    class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 transition flex items-center gap-1.5 active:scale-95 shadow-2xs cursor-pointer">
+                    class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 transition flex items-center gap-1 active:scale-95 shadow-2xs cursor-pointer">
                 <span x-show="!subscribing">🔔</span>
                 <span x-show="subscribing" class="animate-spin text-xs">⏳</span>
-                <span>ဤ Browser မှ အသိပေးချက်ဖွင့်မည်</span>
+                <span>{{ __('messages.push_enable_this_browser') }}</span>
             </button>
 
             <a href="{{ $historyUrl }}"
-               class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1.5 active:scale-95 shadow-2xs">
+               class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1 active:scale-95 shadow-2xs">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span>{{ __('messages.push_history_btn') }} ({{ count($recent) }})</span>
             </a>
@@ -48,56 +48,62 @@
 
     {{-- Flash Notifications --}}
     @if (session('success'))
-        <div class="w-full p-2.5 sm:p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
+        <div class="w-full p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
             <span>✅</span>
             <span>{{ session('success') }}</span>
         </div>
     @endif
     @if (session('error'))
-        <div class="w-full p-2.5 sm:p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-800 dark:text-rose-300 space-y-1 shadow-2xs">
+        <div class="w-full p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-800 dark:text-rose-300 space-y-1 shadow-2xs">
             <span>⚠️</span>
             <span>{{ session('error') }}</span>
         </div>
     @endif
 
     {{-- ============================================================
-         KPI STAT CARDS — 3 compact system status summary cards
+         KPI STAT CARDS — 3 Centered Row-based Status Cards (Standard v4.1)
          ============================================================ --}}
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-0.5 sm:gap-1">
         {{-- Total Subscribers --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">{{ __('messages.push_total_subscribers') }}</span>
-                <span class="text-xs">👥</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0 text-base">
+                👥
             </div>
-            <div class="text-lg sm:text-2xl font-black text-slate-900 dark:text-slate-100 mt-1 font-mono tracking-tight" x-text="subscriberCount">
-                {{ number_format($subscriberCount) }}
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 block leading-tight truncate">{{ __('messages.push_total_subscribers') }}</span>
+                <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 font-mono tracking-tight leading-tight mt-0.5" x-text="subscriberCount">
+                    {{ number_format($subscriberCount) }}
+                </div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.active_browser_endpoints') }}</div>
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.active_browser_endpoints') }}</div>
         </div>
 
         {{-- VAPID Keys Status --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">{{ __('messages.push_server_status') }}</span>
-                <span class="text-xs">🔐</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-base">
+                🔐
             </div>
-            <div class="text-sm sm:text-base font-black {{ $isVapidConfigured ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }} mt-1 flex items-center gap-1.5">
-                <span>{{ $isVapidConfigured ? '● VAPID Configured' : '○ Key Missing' }}</span>
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 block leading-tight truncate">{{ __('messages.push_server_status') }}</span>
+                <div class="text-xs sm:text-sm font-bold {{ $isVapidConfigured ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }} leading-tight mt-0.5 flex items-center gap-1">
+                    <span>{{ $isVapidConfigured ? '● VAPID Configured' : '○ Key Missing' }}</span>
+                </div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.rfc_encryption') }}</div>
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.rfc_encryption') }}</div>
         </div>
 
         {{-- Dispatch Channel --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">{{ __('messages.push_dispatch_channel') }}</span>
-                <span class="text-xs">⚡</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 text-base">
+                ⚡
             </div>
-            <div class="text-sm sm:text-base font-black text-indigo-600 dark:text-indigo-400 mt-1 font-mono">
-                WebPush ServiceWorker
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 block leading-tight truncate">{{ __('messages.push_dispatch_channel') }}</span>
+                <div class="text-xs sm:text-sm font-black text-indigo-600 dark:text-indigo-400 font-mono leading-tight mt-0.5">
+                    WebPush SW
+                </div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.endpoint_post') }}</div>
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.endpoint_post') }}</div>
         </div>
     </div>
 
@@ -106,13 +112,13 @@
         <div class="flex items-center gap-2">
             <span class="text-base">💡</span>
             <div>
-                <strong class="block">လက်ရှိတွင် အသိပေးချက် လက်ခံထားသော Browser မရှိသေးပါ (0 Subscribers)</strong>
-                <span class="text-[11px] text-slate-600 dark:text-slate-400">စမ်းသပ်ရန်အတွက် သင့်လက်ရှိ Browser ကို အသိပေးချက်စာရင်းသွင်းလိုက်ပါက ချက်ချင်း Push စမ်းသပ်နိုင်ပါမည်။</span>
+                <strong class="block">{{ __('messages.push_no_subscribers_warning') }}</strong>
+                <span class="text-[11px] text-slate-600 dark:text-slate-400">{{ __('messages.push_test_hint') }}</span>
             </div>
         </div>
         <button type="button" @click="subscribeCurrentBrowser()" :disabled="subscribing"
                 class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg shadow-2xs transition active:scale-95 shrink-0">
-            🔔 ဤ Browser မှ အသိပေးချက်ဖွင့်မည်
+            🔔 {{ __('messages.push_enable_this_browser') }}
         </button>
     </div>
 
@@ -164,7 +170,7 @@
                         </label>
                         <input type="text" id="push-title" name="title" x-model="title" maxlength="255" required autocomplete="off"
                                class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none transition"
-                               placeholder="e.g. 📢 မင်္ဂလာပါ! အထူးပရိုမိုးရှင်း စတင်ပါပြီ" />
+                               placeholder="{{ __('messages.push_title_placeholder') }}" />
                     </div>
 
                     {{-- URL --}}
@@ -185,7 +191,7 @@
                     </label>
                     <textarea id="push-body" name="body" x-model="body" rows="3" maxlength="1000" required
                               class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none transition"
-                              placeholder="ဖောက်သည်များထံ ပေးပို့မည့် အသေးစိတ် အသိပေးစာသား..."></textarea>
+                              placeholder="{{ __('messages.push_body_placeholder') }}"></textarea>
                 </div>
 
                 {{-- Action Buttons (Always Clickable & Highlighted) --}}
@@ -289,8 +295,8 @@
 <script nonce="{{ $cspNonce }}">
 function pushBroadcastStudio(config) {
     return {
-        title: '📢 အထူးသတင်းလွှာ · Special Promotion',
-        body: 'ကျွန်ုပ်တို့၏ စတိုးဆိုင်ခွဲတွင် ပစ္စည်းအသစ်များနှင့် အထူးလျှော့စျေးများ စတင်နေပါပြီ!',
+        title: @js(__('messages.push_template_promo_title')),
+        body: @js(__('messages.push_template_promo_body')),
         url: config.defaultUrl || '',
         subscriberCount: config.subscriberCount || 0,
         busy: false,
@@ -298,20 +304,20 @@ function pushBroadcastStudio(config) {
 
         applyPreset(type) {
             if (type === 'promo') {
-                this.title = '🔥 အထူးလျှော့စျေး ပရိုမိုးရှင်း စတင်ပါပြီ';
-                this.body = 'လူကြိုက်များသော ဖုန်းသုံးပစ္စည်းများကို ယခုလကုန်အထိ ၁၀% မှ ၃၀% အထိ လျှော့စျေးဖြင့် ဝယ်ယူနိုင်ပါပြီ!';
+                this.title = @js(__('messages.push_template_discount_title'));
+                this.body = @js(__('messages.push_template_discount_body'));
                 this.url = config.defaultUrl + '&promo=flash_sale';
             } else if (type === 'new_stock') {
-                this.title = '✨ ပစ္စည်းအသစ်များ ရောက်ရှိပါပြီ';
-                this.body = 'နောက်ဆုံးပေါ် ဖုန်းကာဗာ၊ ဖုန်းမှန်ကပ်နှင့် အားသွင်းကြိုး အသစ်များကို စတိုးတွင် ကြည့်ရှုနိုင်ပါပြီ။';
+                this.title = @js(__('messages.push_template_new_stock_title'));
+                this.body = @js(__('messages.push_template_new_stock_body'));
                 this.url = config.defaultUrl + '&category=accessories';
             } else if (type === 'glass_finder') {
-                this.title = '🔍 ဖုန်းမှန် ရှာဖွေစနစ် အသစ်';
-                this.body = 'မိမိဖုန်း မော်ဒယ်နှင့် ကိုက်ညီသော ဖုန်းမှန်ကပ်များကို စက္ကန့်ပိုင်းအတွင်း ရှာဖွေဝယ်ယူလိုက်ပါ။';
+                this.title = @js(__('messages.push_template_search_glass_title'));
+                this.body = @js(__('messages.push_template_search_glass_body'));
                 this.url = window.location.origin + '/glass-finder?store_slug={{ $store->slug }}';
             } else if (type === 'order_update') {
-                this.title = '📦 အော်ဒါနှင့် ပို့ဆောင်မှု သတင်းလွှာ';
-                this.body = 'ကျွန်ုပ်တို့၏ စတိုးမှ အော်ဒါများကို အချိန်နှင့်တစ်ပြေးညီ မြန်ဆန်စွာ ပို့ဆောင်ပေးနေပါသည်။';
+                this.title = @js(__('messages.push_template_orders_title'));
+                this.body = @js(__('messages.push_template_orders_body'));
                 this.url = config.defaultUrl;
             }
         },
@@ -341,14 +347,14 @@ function pushBroadcastStudio(config) {
 
             try {
                 if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                    alert('သင့် Browser သည် Web Push ကို Support မလုပ်ပါ (HTTPS သို့မဟုတ် localhost လိုအပ်ပါသည်)။');
+                    alert(@js(__('messages.push_browser_not_supported')));
                     this.setStatus('Web Push unsupported in this browser.', false);
                     return;
                 }
 
                 const perm = await Notification.requestPermission();
                 if (perm !== 'granted') {
-                    alert('Notification permission ကို Allow မပေးထားပါသဖြင့် အသိပေးချက် ဖွင့်မရပါ။ Browser settings မှ Notification ဖွင့်ပေးပါ။');
+                    alert(@js(__('messages.push_permission_denied')));
                     this.setStatus('Notification permission denied.', false);
                     return;
                 }
@@ -359,7 +365,7 @@ function pushBroadcastStudio(config) {
                 const vapidKey = (config.vapidKey || '').trim() || (document.querySelector('meta[name="vapid-public-key"]')?.content || '').trim();
 
                 if (!vapidKey) {
-                    alert('VAPID Public Key မတွေ့ပါ။ Server configuration ကို စစ်ဆေးပါ။');
+                    alert(@js(__('messages.push_vapid_missing')));
                     this.setStatus('VAPID key missing.', false);
                     return;
                 }
@@ -393,7 +399,7 @@ function pushBroadcastStudio(config) {
                 if (res.ok && data.success) {
                     this.setStatus('Device subscribed successfully! You can now send push.', true);
                     this.subscriberCount = Math.max(1, this.subscriberCount + 1);
-                    alert('✅ သင့် Browser ကို Web Push လက်ခံသူအဖြစ် အောင်မြင်စွာ စာရင်းသွင်းပြီးပါပြီ! ယခု စမ်းသပ် Push ပို့နိုင်ပါပြီ။');
+                    alert(@js(__('messages.push_subscribed_success')));
                     setTimeout(() => window.location.reload(), 1200);
                 } else {
                     this.setStatus(data.message || 'Subscription failed.', false);
@@ -401,7 +407,7 @@ function pushBroadcastStudio(config) {
             } catch (err) {
                 console.error(err);
                 this.setStatus('Subscription error: ' + err.message, false);
-                alert('အသိပေးချက် ဖွင့်ရာတွင် အမှားဖြစ်ပေါ်ပါသည်: ' + err.message);
+                alert(@js(__('messages.push_subscribe_error')) + err.message);
             } finally {
                 this.subscribing = false;
             }
@@ -411,7 +417,7 @@ function pushBroadcastStudio(config) {
             if (this.busy) return;
 
             if (this.subscriberCount === 0) {
-                const proceed = confirm('လက်ရှိတွင် အသိပေးချက် စာရင်းသွင်းထားသော Browser မရှိသေးပါ (0 Subscribers)။ သင့် Browser မှ Notification ဖွင့်ပြီး စမ်းသပ်လိုပါသလား?');
+                const proceed = confirm(@js(__('messages.push_zero_subscribers_confirm')));
                 if (proceed) {
                     this.subscribeCurrentBrowser();
                 }

@@ -27,7 +27,7 @@
 
         <div class="flex items-center gap-1.5 self-start sm:self-auto shrink-0">
             <a href="{{ route('pos.returns.index', $storeRouteParams) }}"
-               class="h-7 px-2.5 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition inline-flex items-center gap-1 border border-slate-200/60 dark:border-slate-700 cursor-pointer">
+               class="sf-btn-3d h-7 px-2.5 rounded-md text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
                 <span>{{ __('messages.back') }}</span>
             </a>
@@ -48,7 +48,7 @@
                 class="w-full h-7 pl-8 pr-2.5 rounded-md border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:bg-white dark:focus:bg-slate-900 transition"
             />
         </div>
-        <button type="submit" class="h-7 px-3 rounded-md bg-sky-600 hover:bg-sky-500 text-white text-xs font-black shadow-2xs transition inline-flex items-center gap-1 shrink-0 active:scale-95 cursor-pointer">
+        <button type="submit" class="sf-btn-3d-primary h-7 px-3 rounded-md text-white text-xs font-black transition inline-flex items-center gap-1 shrink-0 cursor-pointer">
             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <span>{{ __('messages.search') }}</span>
         </button>
@@ -95,7 +95,7 @@
                                 <td class="px-3 py-2 align-middle text-right font-mono font-black text-slate-900 dark:text-slate-100 tabular-nums">{{ format_currency($sale->total, $store) }}</td>
                                 <td class="px-3 py-2 align-middle text-right">
                                     <a href="{{ route('pos.refund.create', [...$storeRouteParams, 'sale' => $sale->id]) }}"
-                                       class="h-6 px-2.5 rounded text-[11px] font-bold text-white bg-sky-600 hover:bg-sky-500 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                                       class="sf-btn-3d-primary h-6 px-2.5 rounded text-[11px] font-bold text-white transition inline-flex items-center gap-1 cursor-pointer">
                                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-4-4m0 0l4-4m-4 4h11a4 4 0 010 8h-1"/></svg>
                                         <span>{{ __('messages.refund_sale') }}</span>
                                     </a>
@@ -130,7 +130,7 @@
                     <div class="mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1.5">
                         <span class="text-[10px] text-slate-400 dark:text-slate-500">{{ $sale->posted_at?->format('d M Y') }}</span>
                         <a href="{{ route('pos.refund.create', [...$storeRouteParams, 'sale' => $sale->id]) }}"
-                           class="h-6 px-2.5 rounded text-[11px] font-bold text-white bg-sky-600 hover:bg-sky-500 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                           class="sf-btn-3d-primary h-6 px-2.5 rounded text-[11px] font-bold text-white transition inline-flex items-center gap-1 cursor-pointer">
                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-4-4m0 0l4-4m-4 4h11a4 4 0 010 8h-1"/></svg>
                             <span>{{ __('messages.refund_sale') }}</span>
                         </a>

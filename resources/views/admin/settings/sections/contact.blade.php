@@ -2,7 +2,7 @@
     <div class="admin-section-head">
         <div>
             <h2 class="admin-section-title">☎️ {{ __('messages.settings_contact_social') }}</h2>
-            <p class="admin-section-sub">Storefront footer နှင့် order confirmation တွင်ပြမည့် phone, Viber, Telegram, social media data များ။</p>
+            <p class="admin-section-sub">{{ __('messages.settings_contact_sub') }}</p>
         </div>
     </div>
 
@@ -31,13 +31,13 @@
         <div class="md:col-span-2">
             <div class="border-t border-gray-200 pt-4 dark:border-slate-700">
                 <h3 class="text-sm font-black text-gray-900 dark:text-slate-100">{{ __('messages.settings_floating_chat_button') }}</h3>
-                <p class="{{ $helpClass }}">ဖုန်းပေါ်မှာ ပေါ်တဲ့ floating chat button ရဲ့ label နှင့် icon ကို ချိန်ညှိရန်။ Button နှိပ်ရင် popup ဖွင့်ပြီး channel များကို အောက်က "Chat Channels" မှာ ထည့်ပါ။</p>
+                <p class="{{ $helpClass }}">{{ __('messages.settings_floating_chat_sub') }}</p>
             </div>
         </div>
         <div>
             <label class="{{ $labelClass }}">{{ __('messages.settings_floating_button_label') }}</label>
             <input type="text" name="chat_button_label" maxlength="50" value="{{ old('chat_button_label', $setting->chat_button_label) }}" placeholder="Chat with us" class="{{ $inputClass }}" />
-            <p class="{{ $helpClass }}">Button ပေါ်မှာပြမည့်စာသား (အများဆုံး 50 characters)။ မထည့်ပါက "Chat with us / ဆက်သွယ်ရန်" ပြမည်။</p>
+            <p class="{{ $helpClass }}">{{ __('messages.settings_floating_chat_label_help') }}</p>
             @error('chat_button_label')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
         @php
@@ -65,7 +65,7 @@
                 </button>
                 <input type="hidden" name="chat_button_icon_remove" :value="iconPreview ? '' : '1'" />
             </div>
-            <p class="{{ $helpClass }}">ရွေးမထားပါက official brand icon auto ပြမည် (Telegram username ရှိရင် Telegram icon, မရှိရင် Viber icon)။ Emoji မသုံးချင်ရင် ကိုယ့်ပုံ icon ကို upload လုပ်နိုင်သည် (image ရှိရင် image ကအနိုင်ရ)။</p>
+            <p class="{{ $helpClass }}">{{ __('messages.settings_chat_channel_brand_icon_help') }}</p>
             @error('chat_button_icon')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
             @error('chat_button_icon_image')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
@@ -76,7 +76,7 @@
         <div class="md:col-span-2">
             <div class="border-t border-gray-200 pt-4 dark:border-slate-700">
                 <h3 class="text-sm font-black text-gray-900 dark:text-slate-100">📱 {{ __('messages.settings_channel') }}s (floating chat popup)</h3>
-                <p class="{{ $helpClass }}">Popup ထဲမှာ ပြမည့် channel များ — icon (emoji သို့မဟုတ် ပုံ upload) + label + link ကို စိတ်ကြိုက် ထည့်/ဖျက် လုပ်နိုင်သည်။ မထည့်ထားပါက Viber / Telegram / Facebook … auto ပြမည်။</p>
+                <p class="{{ $helpClass }}">{{ __('messages.settings_chat_channels_popup_help') }}</p>
             </div>
         </div>
         <div class="md:col-span-2 space-y-3" x-data="{ channels: {{ json_encode($chatChannels, JSON_UNESCAPED_UNICODE) }} }">
@@ -129,7 +129,7 @@
         <div class="md:col-span-2">
             <div class="border-t border-gray-200 pt-4 dark:border-slate-700">
                 <h3 class="text-sm font-black text-gray-900 dark:text-slate-100">📲 Social Media (Facebook / YouTube / TikTok)</h3>
-                <p class="{{ $helpClass }}">"မှာယူနည်း" စာမျက်နှာနဲ့ footer "Follow Us" တွင်ပြမည့် social media link များ — မထည့်ထားပါက ပေါ်မည်မဟုတ်ပါ။ YouTube / TikTok profile ထည့်ထားရင် "မှာယူနည်း" စာမျက်နှာမှာ channel ခလုပ်တွေ ပေါ်ပါမယ်။</p>
+                <p class="{{ $helpClass }}">{{ __('messages.settings_social_media_help') }}</p>
             </div>
         </div>
         <div class="md:col-span-2">
@@ -140,7 +140,7 @@
         <div class="md:col-span-2">
             <label class="{{ $labelClass }}"><x-brand-icon brand="youtube" class="h-4 w-4 inline-block -mt-0.5 text-red-600"/> YouTube Channel URL</label>
             <input type="text" name="youtube_url" value="{{ old('youtube_url', $setting->youtube_url) }}" placeholder="https://youtube.com/@yourchannel" class="{{ $inputClass }}" />
-            <p class="{{ $helpClass }}">ဒီနေရာက ဆိုင် channel link — "How to Order" စာမျက်နှာမှာ ▶️ YouTube ခလုတ်အဖြစ် ပေါ်မယ်။ Tutorial video တစ်ခုချင်းစီကို "How to Order" section မှာ ထည့်ပါ။</p>
+            <p class="{{ $helpClass }}">{{ __('messages.settings_youtube_channel_help') }}</p>
             @error('youtube_url')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
         <div class="md:col-span-2">
@@ -152,7 +152,7 @@
         <div class="md:col-span-2">
             <div class="border-t border-gray-200 pt-4 dark:border-slate-700">
                 <h3 class="text-sm font-black text-gray-900 dark:text-slate-100">📍 Exact Store Location (Google Maps)</h3>
-                <p class="{{ $helpClass }}">ဆိုင်ရဲ့ တိကျတဲ့ Google Maps နေရာ — footer နဲ့ "မှာယူနည်း" စာမျက်နှာမှာ ပြမည်။ Google Maps ထဲက ဆိုင်နေရာကို Share → Copy link နှိပ်ပြီး ဒီမှာ ကူးထည့်ပါ (ဥပမာ maps.app.goo.gl/… သို့မဟုတ် google.com/maps?…​)။ Lat/Lng မထည့်ရသေးရင် map ကို address-search fallback အဖြစ်ပဲ ပြမယ်။</p>
+                <p class="{{ $helpClass }}">{{ __('messages.settings_google_maps_location_help') }}</p>
             </div>
         </div>
 
@@ -161,21 +161,21 @@
                 <input type="checkbox" id="map_enabled" name="map_enabled" value="1" class="h-5 w-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500" {{ old('map_enabled', $setting->map_enabled) ? 'checked' : '' }} />
                 <span class="{{ $labelClass }}">{{ __('messages.settings_show_store_location') }}</span>
             </label>
-            <p class="{{ $helpClass }}">ဖွင့်ထားရင် footer နဲ့ "မှာယူနည်း" မှာ location card ပေါ်မည်။</p>
+            <p class="{{ $helpClass }}">{{ __('messages.settings_map_enabled_help') }}</p>
             @error('map_enabled')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
 
         <div class="md:col-span-2">
             <label for="google_maps_url" class="{{ $labelClass }}">{{ __('messages.settings_google_maps_url') }}</label>
             <input id="google_maps_url" type="text" name="google_maps_url" value="{{ old('google_maps_url', $setting->google_maps_url) }}" placeholder="https://maps.app.goo.gl/…" class="{{ $inputClass }}" />
-            <p class="{{ $helpClass }}">ဆိုင်ရဲ့ တိကျတဲ့ pin URL — "Open in Google Maps" နဲ့ footer link အတွက် သုံးမည်။ https:// ပဲ လက်ခံမည်။</p>
+            <p class="{{ $helpClass }}">{{ __('messages.settings_google_maps_url_help') }}</p>
             @error('google_maps_url')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
 
         <div>
             <label for="map_latitude" class="{{ $labelClass }}">{{ __('messages.settings_map_latitude') }}</label>
             <input id="map_latitude" type="text" inputmode="decimal" name="map_latitude" value="{{ old('map_latitude', $setting->map_latitude) }}" placeholder="e.g. 17.3515" class="{{ $inputClass }}" />
-            <p class="{{ $helpClass }}">Embed map (မြေပုံပုံ) အတွက် လိုအပ်သည် — မထည့်ရသေးရင် embed မပြဘဲ link ပဲ ပြမည်။</p>
+            <p class="{{ $helpClass }}">{{ __('messages.settings_map_coords_embed_help') }}</p>
             @error('map_latitude')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
         <div>
@@ -187,7 +187,7 @@
         <div class="md:col-span-2">
             <label for="map_title" class="{{ $labelClass }}">{{ __('messages.settings_map_title') }}</label>
             <input id="map_title" type="text" name="map_title" value="{{ old('map_title', $setting->map_title) }}" placeholder="DataPOS & CCTV" class="{{ $inputClass }}" />
-            <p class="{{ $helpClass }}">Accessible map title + location card heading အတွက်။</p>
+            <p class="{{ $helpClass }}">{{ __('messages.settings_map_title_help') }}</p>
             @error('map_title')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
 
@@ -196,7 +196,7 @@
                 <input type="checkbox" id="map_embed_enabled" name="map_embed_enabled" value="1" class="h-5 w-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500" {{ old('map_embed_enabled', $setting->map_embed_enabled) ? 'checked' : '' }} />
                 <span class="{{ $labelClass }}">{{ __('messages.settings_embed_map') }}</span>
             </label>
-            <p class="{{ $helpClass }}">Latitude + Longitude နှစ်ခုလုံး ရှိမှသာ iframe ပြမည် — မရှိရင် link ပဲ ပြမည်။</p>
+            <p class="{{ $helpClass }}">{{ __('messages.settings_map_embed_enabled_help') }}</p>
             @error('map_embed_enabled')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
 

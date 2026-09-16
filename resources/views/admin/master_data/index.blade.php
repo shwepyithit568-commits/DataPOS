@@ -64,7 +64,7 @@
                     <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 hidden sm:inline">({{ $store->name }})</span>
                 </h1>
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    အမျိုးအစားများ၊ အမှတ်တံဆိပ်များ၊ ပစ္စည်းကြိုတင်သတ်မှတ်ချက်များနှင့် အရွယ်အစား/အရောင်စနစ်များ
+                    {{ __('messages.master_data_subtitle') }}
                 </p>
             </div>
         </div>

@@ -4,6 +4,7 @@
     'active' => false,
     'label' => '',
     'variant' => 'sub', // 'main' (Dashboard) | 'direct' (standalone collapsed-aware link) | 'sub' (inside a group) | 'placeholder' (roadmap link to the coming-soon page)
+    'group' => null,
 ])
 
 @php
@@ -12,21 +13,102 @@
     $isPlaceholder = $variant === 'placeholder';
     $standalone = $isMain || $isDirect;
 
+    $linkThemeMap = [
+        'pos' => [
+            'active_bg' => 'sf-btn-3d-primary',
+            'hover_border' => 'hover:border-blue-300/80 dark:hover:border-blue-800',
+        ],
+        'inventory' => [
+            'active_bg' => 'sf-btn-3d-gold',
+            'hover_border' => 'hover:border-amber-300/80 dark:hover:border-amber-800',
+        ],
+        'purchasing' => [
+            'active_bg' => 'sf-btn-3d-orange',
+            'hover_border' => 'hover:border-orange-300/80 dark:hover:border-orange-800',
+        ],
+        'ecommerce' => [
+            'active_bg' => 'sf-btn-3d-success',
+            'hover_border' => 'hover:border-emerald-300/80 dark:hover:border-emerald-800',
+        ],
+        'customers' => [
+            'active_bg' => 'sf-btn-3d-teal',
+            'hover_border' => 'hover:border-teal-300/80 dark:hover:border-teal-800',
+        ],
+        'service' => [
+            'active_bg' => 'sf-btn-3d-indigo',
+            'hover_border' => 'hover:border-indigo-300/80 dark:hover:border-indigo-800',
+        ],
+        'finance' => [
+            'active_bg' => 'sf-btn-3d-lime',
+            'hover_border' => 'hover:border-lime-300/80 dark:hover:border-lime-800',
+        ],
+        'reports' => [
+            'active_bg' => 'sf-btn-3d-cyan',
+            'hover_border' => 'hover:border-cyan-300/80 dark:hover:border-cyan-800',
+        ],
+        'security' => [
+            'active_bg' => 'sf-btn-3d-danger',
+            'hover_border' => 'hover:border-rose-300/80 dark:hover:border-rose-800',
+        ],
+        'maintenance' => [
+            'active_bg' => 'sf-btn-3d-slate',
+            'hover_border' => 'hover:border-slate-300/80 dark:hover:border-slate-700',
+        ],
+        'setup' => [
+            'active_bg' => 'sf-btn-3d-fuchsia',
+            'hover_border' => 'hover:border-fuchsia-300/80 dark:hover:border-fuchsia-800',
+        ],
+        'dashboard' => [
+            'active_bg' => 'sf-btn-3d-telegram',
+            'hover_border' => 'hover:border-sky-300/80 dark:hover:border-sky-800',
+        ],
+        'platform_dashboard' => [
+            'active_bg' => 'sf-btn-3d-telegram',
+            'hover_border' => 'hover:border-sky-300/80 dark:hover:border-sky-800',
+        ],
+        'platform_stores' => [
+            'active_bg' => 'sf-btn-3d-success',
+            'hover_border' => 'hover:border-emerald-300/80 dark:hover:border-emerald-800',
+        ],
+        'platform_theme_governance' => [
+            'active_bg' => 'sf-btn-3d-accent',
+            'hover_border' => 'hover:border-purple-300/80 dark:hover:border-purple-800',
+        ],
+    ];
+
+    $groupKey = (string) $group;
+    $theme = $linkThemeMap[$groupKey] ?? [
+        'active_bg' => 'sf-btn-3d-telegram',
+        'hover_border' => 'hover:border-sky-300/80 dark:hover:border-sky-800',
+    ];
+
     $linkClasses = $isMain
-        ? 'group flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 font-semibold transition focus:outline-none focus:ring-2 focus:ring-violet-500 '
+        ? 'group flex w-full min-h-11 items-center justify-between gap-3 rounded-xl px-3 py-2 font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-500 '
           . ($active
-                ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20'
-                : 'text-gray-600 dark:text-slate-300 hover:bg-violet-50 dark:hover:bg-slate-800/80 hover:text-violet-700 dark:hover:text-white')
-        : 'flex items-center justify-between gap-2 px-3 py-2.5 min-h-11 rounded-md text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-violet-500 '
+                ? $theme['active_bg'] . ' active:translate-y-0.5 active:border-b'
+                : 'bg-gradient-to-b from-white via-slate-50 to-slate-100/80 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 border-b-2 border-b-slate-300 dark:border-b-slate-950 shadow-2xs hover:bg-gradient-to-b hover:from-white ' . $theme['hover_border'] . ' hover:text-slate-900 dark:hover:text-white hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b')
+        : 'group flex w-full items-center justify-between gap-2 px-3 py-2 min-h-10 rounded-lg text-xs font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-500 '
           . ($active
-                ? 'bg-violet-600 text-white shadow-md'
+                ? $theme['active_bg'] . ' active:translate-y-0.5 active:border-b'
                 : ($isPlaceholder
-                    ? 'text-slate-400 dark:text-slate-500 hover:text-violet-500 dark:hover:text-violet-300'
-                    : 'text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800/80'));
+                    ? 'text-slate-400 dark:text-slate-500 hover:text-sky-600 dark:hover:text-sky-300'
+                    : 'text-slate-700 dark:text-slate-300 bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 border-b-2 border-b-slate-300/80 dark:border-b-slate-950 shadow-2xs hover:bg-gradient-to-b hover:from-white ' . $theme['hover_border'] . ' hover:text-slate-900 dark:hover:text-white hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b'));
+
+    $mainBadgeMap = [
+        'dashboard' => 'sf-btn-3d-telegram',
+        'platform_dashboard' => 'sf-btn-3d-telegram',
+        'platform_stores' => 'sf-btn-3d-success',
+        'platform_theme_governance' => 'sf-btn-3d-accent',
+    ];
+    $mainBadgeClass = $mainBadgeMap[$groupKey] ?? 'sf-btn-3d-telegram';
 
     $iconWrapClasses = $isMain
-        ? ($active ? 'bg-white/15' : 'bg-gray-100 dark:bg-slate-800 group-hover:bg-white dark:group-hover:bg-slate-700')
-        : ($active ? 'bg-white/20' : 'bg-gray-100 dark:bg-slate-800');
+        ? ($active
+            ? 'bg-white/20 border border-white/30 text-white shadow-inner'
+            : $mainBadgeClass)
+        : ($active
+            ? 'bg-white/20 border border-white/30 text-white shadow-inner'
+            : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white shadow-2xs');
 
     $iconWrap = $isMain ? 'h-8 w-8 shrink-0 rounded-lg' : 'h-5 w-5 shrink-0 rounded-md';
     $rowGap = $isMain ? 'gap-3' : 'gap-2';

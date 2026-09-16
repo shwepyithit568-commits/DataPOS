@@ -1,106 +1,124 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.inv_val_title') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @php
     $storeRouteParams = ['store_slug' => $store->slug];
 @endphp
 
 @section('content')
-<div class="w-full space-y-5 sm:space-y-6 pb-12"
+<div class="w-full space-y-0.5 pb-6"
      x-data="{
         viewMode: localStorage.getItem('admin_view_mode') || 'table',
      }"
      @view-changed.window="viewMode = $event.detail; localStorage.setItem('admin_view_mode', $event.detail)">
 
-    {{-- 1. Top Page Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex items-center gap-3">
-            <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 grid place-items-center text-xl sm:text-2xl font-bold shadow-sm flex-shrink-0">
-                💎
-            </span>
-            <div class="min-w-0">
-                <h1 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
-                    <span class="truncate">{{ __('messages.inv_val_title') }}</span>
+    {{-- ============================================================
+         1. TOP ULTRA-DENSE HEADER BANNER (Standard v4.1)
+         ============================================================ --}}
+    <div class="px-2 py-1.5 bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 select-none transition">
+        <div class="flex items-center gap-2 min-w-0">
+            <a href="{{ route('store.admin.dashboard', $storeRouteParams) }}"
+               class="h-6 w-6 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition active:scale-95 shrink-0"
+               title="{{ __('messages.back') }}">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <div class="w-6 h-6 rounded bg-cyan-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+                <span>💎</span>
+            </div>
+            <div class="flex items-center gap-1.5 min-w-0">
+                <span class="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-200/50 dark:border-cyan-800/50 truncate max-w-[120px] sm:max-w-none">
+                    {{ $store->name }}
+                </span>
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight truncate">
+                    {{ __('messages.inv_val_title') }}
                 </h1>
-                <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ $store->name }} · {{ __('messages.inv_val_subtitle') }}</p>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono hidden md:inline">
+                    · {{ number_format($metrics['total_items_count']) }} SKUs · {{ number_format($metrics['total_units']) }} Units
+                </span>
             </div>
         </div>
 
-        {{-- Top Right Actions (Print Valuation Sheet & CSV Export) --}}
-        <div class="flex items-center gap-2.5 self-start sm:self-auto">
+        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 self-end sm:self-auto">
+            <a href="{{ route('store.admin.stock_ledger.index', $storeRouteParams) }}"
+               class="sf-btn-3d h-7 px-2 sm:px-2.5 rounded-md text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
+                <span>📜</span>
+                <span class="hidden sm:inline">{{ __('messages.stock_ledger_title') ?? 'Stock Ledger' }}</span>
+            </a>
             <a href="{{ route('store.admin.inventory_valuation.print', array_merge($storeRouteParams, request()->only(['search', 'category_id', 'brand_id', 'stock_status', 'sort']))) }}"
                target="_blank"
-               class="px-3.5 py-2 rounded-2xl text-xs font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition inline-flex items-center gap-1.5 active:scale-95">
-                <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+               class="sf-btn-3d-primary h-7 px-2 sm:px-2.5 rounded-md text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                 <span>{{ __('messages.inv_val_print_statement') }}</span>
             </a>
         </div>
     </div>
 
-    {{-- 2. 4 Key Valuation KPI Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-        
+    {{-- ============================================================
+         2. 4 KEY VALUATION KPI CARDS (Standard v4.1 Centered Row-based)
+         ============================================================ --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1 select-none">
         {{-- Total Cost Value --}}
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.inv_val_total_cost') }}</p>
-                <h3 class="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight tabular-nums">
-                    {{ format_currency($metrics['total_cost_value'], $store) }}
-                </h3>
-                <p class="text-[11px] text-slate-400 font-semibold mt-0.5">{{ number_format($metrics['total_items_count']) }} SKUs · {{ __('messages.stock_valuation_cost') }}</p>
+        <div class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.inv_val_total_cost') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-900/50">🏷️</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.inv_val_total_cost') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ format_currency($metrics['total_cost_value'], $store) }}</span>
+                </div>
             </div>
-            <span class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                🏷️
-            </span>
         </div>
 
         {{-- Total Retail Value --}}
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.inv_val_total_retail') }}</p>
-                <h3 class="text-xl sm:text-2xl font-black text-sky-600 dark:text-sky-400 font-mono tracking-tight tabular-nums">
-                    {{ format_currency($metrics['total_retail_value'], $store) }}
-                </h3>
-                <p class="text-[11px] text-sky-500 font-semibold mt-0.5">{{ __('messages.wholesale') }}: {{ format_currency($metrics['total_wholesale_value'], $store) }}</p>
+        <div class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.inv_val_total_retail') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 border-sky-100 dark:border-sky-900/50">🛍️</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.inv_val_total_retail') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-sky-600 dark:text-sky-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ format_currency($metrics['total_retail_value'], $store) }}</span>
+                </div>
             </div>
-            <span class="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                🛍️
-            </span>
         </div>
 
-        {{-- Potential Gross Profit & Margin % --}}
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.inv_val_potential_profit') }}</p>
-                <h3 class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight tabular-nums">
-                    {{ format_currency($metrics['potential_profit'], $store) }}
-                </h3>
-                <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">Margin: {{ $metrics['potential_margin'] }}%</p>
+        {{-- Potential Gross Profit --}}
+        <div class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.inv_val_potential_profit') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50">📈</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.inv_val_potential_profit') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ format_currency($metrics['potential_profit'], $store) }}</span>
+                </div>
             </div>
-            <span class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                📈
-            </span>
         </div>
 
         {{-- Total Units On Hand --}}
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.inv_val_units_on_hand') }}</p>
-                <h3 class="text-xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 font-mono tracking-tight tabular-nums">
-                    {{ number_format($metrics['total_units']) }}
-                </h3>
-                <p class="text-[11px] text-slate-400 font-semibold mt-0.5">{{ $metrics['in_stock_count'] }} In Stock · {{ $metrics['low_stock_count'] }} Low</p>
+        <div class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.inv_val_units_on_hand') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/50">📦</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.inv_val_units_on_hand') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-indigo-600 dark:text-indigo-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($metrics['total_units']) }}</span>
+                </div>
             </div>
-            <span class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                📦
-            </span>
         </div>
     </div>
 
     {{-- 3. Category Valuation Distribution Progress --}}
     @if (!empty($categoryBreakdown))
-        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-3">
+        <div class="rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-2 sm:p-2.5 shadow-2xs space-y-1.5">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between">
                 <span>{{ __('messages.inv_val_category_breakdown') }}</span>
                 <span>{{ count($categoryBreakdown) }} Categories</span>
@@ -206,7 +224,7 @@
                         <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                             <span class="text-slate-400 block text-[10px] font-bold uppercase">{{ __('messages.reports_qty') }}</span>
                             <span class="font-mono font-black text-slate-800 dark:text-slate-200 text-sm">
-                                {{ number_format($p->computed_qty) }}
+                                {{ format_quantity($p->computed_qty, $store) }}
                             </span>
                         </div>
                         <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50">
@@ -271,7 +289,7 @@
                             </td>
                             <td class="py-3.5 px-4 text-center font-black text-slate-900 dark:text-slate-100 tabular-nums">
                                 <span class="px-2.5 py-1 rounded-xl text-xs {{ $p->computed_qty > 0 ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300' }}">
-                                    {{ number_format($p->computed_qty) }}
+                                    {{ format_quantity($p->computed_qty, $store) }}
                                 </span>
                             </td>
                             <td class="py-3.5 px-4 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 tabular-nums">

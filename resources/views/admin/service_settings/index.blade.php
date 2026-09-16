@@ -87,17 +87,17 @@
 
         <div class="flex items-center gap-1.5 flex-wrap shrink-0">
             <button type="button" @click="exportOpen = true"
-                    class="h-7 px-2.5 rounded text-xs font-bold text-violet-700 dark:text-violet-300 bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/60 dark:hover:bg-violet-900/60 border border-violet-200 dark:border-violet-800 transition inline-flex items-center gap-1 cursor-pointer shadow-2xs active:scale-95">
+                    class="sf-btn-3d h-7 px-2.5 text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer">
                 <span>📤</span>
                 <span>{{ __('messages.export') }}</span>
             </button>
             <button type="button" @click="importOpen = true"
-                    class="h-7 px-2.5 rounded text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition inline-flex items-center gap-1 cursor-pointer shadow-2xs active:scale-95">
+                    class="sf-btn-3d h-7 px-2.5 text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer">
                 <span>📥</span>
                 <span>{{ __('messages.import') }}</span>
             </button>
             <button type="button" @click="createOpen = true"
-                    class="h-7 px-2.5 rounded text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-2xs hover:shadow-violet-500/20 transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer">
+                    class="sf-btn-3d-primary h-7 px-2.5 text-xs font-black transition inline-flex items-center gap-1.5 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 <span>{{ __('messages.add_new') }}</span>
             </button>
@@ -476,8 +476,8 @@
                 </div>
 
                 <div class="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="createOpen = false" class="flex-1 py-2 rounded-lg font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition cursor-pointer">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="flex-1 py-2 rounded-lg font-black text-xs bg-violet-600 hover:bg-violet-500 text-white shadow-2xs transition cursor-pointer active:scale-95">+ {{ __('messages.save') }}</button>
+                    <button type="button" @click="createOpen = false" class="sf-btn-3d flex-1 py-2 text-xs font-bold cursor-pointer">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="sf-btn-3d-primary flex-1 py-2 text-xs font-black cursor-pointer">+ {{ __('messages.save') }}</button>
                 </div>
             </form>
         </div>
@@ -546,8 +546,8 @@
                 </div>
 
                 <div class="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="editOpen = false" class="flex-1 py-2 rounded-lg font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition cursor-pointer">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="flex-1 py-2 rounded-lg font-black text-xs bg-violet-600 hover:bg-violet-500 text-white shadow-2xs transition cursor-pointer active:scale-95">{{ __('messages.update') }}</button>
+                    <button type="button" @click="editOpen = false" class="sf-btn-3d flex-1 py-2 text-xs font-bold cursor-pointer">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="sf-btn-3d-primary flex-1 py-2 text-xs font-black cursor-pointer">{{ __('messages.update') }}</button>
                 </div>
             </form>
         </div>
@@ -617,7 +617,7 @@
                         </span>
                     </div>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                        {{ __('messages.service_settings_export_all_desc') }} ({{ number_format($stats['all_total'] ?? 0) }} ခု)
+                        {{ __('messages.service_settings_export_all_desc') }} ({{ number_format($stats['all_total'] ?? 0) }})
                     </p>
                     <div class="flex gap-2 pt-1">
                         <a href="{{ route('store.admin.service_settings.export', array_merge($storeRouteParams, ['scope' => 'all', 'format' => 'xlsx', 'search' => $search])) }}"
@@ -725,13 +725,13 @@
                     <input type="file" name="file" required accept=".xlsx,.xls,.csv,.txt"
                            class="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-violet-950/60 dark:file:text-violet-300 cursor-pointer">
                     <p class="text-[10px] text-slate-400 mt-1">
-                        💡 .xlsx (Excel) သို့မဟုတ် .csv ဖိုင်တင်နိုင်ပါသည်။ Multi-sheet Excel ဖြစ်ပါက Sheet အမည်အလိုက် အလိုအလျောက် သွင်းယူပေးပါမည်။
+                        {{ __('messages.service_settings_import_format_tip') }}
                     </p>
                 </div>
 
                 <div class="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="importOpen = false" class="flex-1 py-2 rounded-lg font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition cursor-pointer">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="flex-1 py-2 rounded-lg font-black text-xs bg-violet-600 hover:bg-violet-500 text-white shadow-2xs transition cursor-pointer active:scale-95">📥 {{ __('messages.import') }}</button>
+                    <button type="button" @click="importOpen = false" class="sf-btn-3d flex-1 py-2 text-xs font-bold cursor-pointer">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="sf-btn-3d-primary flex-1 py-2 text-xs font-black cursor-pointer">📥 {{ __('messages.import') }}</button>
                 </div>
             </form>
         </div>

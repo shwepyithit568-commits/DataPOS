@@ -1,13 +1,14 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.users_staff_title') . ' - ' . $store->name)
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @php
     $storeRouteParams = ['store_slug' => $store->slug];
 @endphp
 
 @section('content')
-<div class="w-full space-y-5 sm:space-y-6 pb-12"
+<div class="w-full space-y-0.5 pb-6"
      x-data="{
         createOpen: {{ $errors->any() ? 'true' : 'false' }},
         selectedRole: '{{ old('role', 'staff') }}',
@@ -16,31 +17,47 @@
         }
      }">
 
-    {{-- 1. Top Page Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex items-center gap-3">
-            <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
-                <span>👨‍💼 {{ __('messages.users_staff_title') }}</span>
-            </h1>
-            <span class="text-xs text-slate-400 hidden md:inline">· {{ __('messages.users_staff_subtitle') }}</span>
+    {{-- ============================================================
+         1. TOP ULTRA-DENSE HEADER BANNER (Standard v4.1)
+         ============================================================ --}}
+    <div class="px-2 py-1.5 bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 select-none transition">
+        <div class="flex items-center gap-2 min-w-0">
+            <a href="{{ route('store.admin.dashboard', $storeRouteParams) }}"
+               class="h-6 w-6 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition active:scale-95 shrink-0"
+               title="{{ __('messages.back') }}">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <div class="w-6 h-6 rounded bg-violet-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+                <span>👨‍💼</span>
+            </div>
+            <div class="flex items-center gap-1.5 min-w-0">
+                <span class="text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/60 px-1.5 py-0.5 rounded border border-violet-200/50 dark:border-violet-800/50 truncate max-w-[120px] sm:max-w-none">
+                    {{ $store->name }}
+                </span>
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight truncate">
+                    {{ __('messages.users_staff_title') }}
+                </h1>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono hidden md:inline">
+                    · {{ $metrics['total_staff'] }} {{ __('messages.all_store_employees') }}
+                </span>
+            </div>
         </div>
 
-        {{-- Top Right Action (Customer Directory, Role Templates, Create Staff) --}}
-        <div class="flex items-center flex-wrap gap-2.5 self-start sm:self-auto">
+        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 self-end sm:self-auto">
             <a href="{{ route('store.admin.customers.index', $storeRouteParams) }}"
-               class="px-3.5 py-2.5 rounded-2xl text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition flex items-center gap-2 border border-emerald-200/80 dark:border-emerald-800/80 shadow-sm"
+               class="h-7 px-2 sm:px-2.5 rounded text-[11px] sm:text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer"
                title="{{ __('messages.users_customer_directory_link') }}">
                 <span>🛍️</span>
-                <span>{{ __('messages.users_customer_directory_link') }} →</span>
+                <span class="hidden sm:inline">{{ __('messages.users_customer_directory_link') }}</span>
             </a>
             <a href="{{ route('store.admin.roles.index', $storeRouteParams) }}"
-               class="px-3.5 py-2.5 rounded-2xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition flex items-center gap-2">
+               class="h-7 px-2 sm:px-2.5 rounded text-[11px] sm:text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
                 <span>🛡️</span>
-                <span>{{ __('messages.sidebar_roles') }}</span>
+                <span class="hidden sm:inline">{{ __('messages.sidebar_roles') }}</span>
             </a>
             <button type="button" @click.stop="createOpen = !createOpen"
-                    class="px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20 transition flex items-center gap-2 active:scale-95">
-                <span class="text-base leading-none" x-text="createOpen ? '✕' : '+'">+</span>
+                    class="h-7 px-2.5 sm:px-3 rounded text-[11px] sm:text-xs font-black bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                <span class="text-sm leading-none" x-text="createOpen ? '✕' : '+'">+</span>
                 <span>{{ __('messages.users_enroll_staff') }}</span>
             </button>
         </div>
@@ -48,17 +65,17 @@
 
     {{-- Flash Messages --}}
     @if (session('success'))
-        <div class="p-4 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-3xl text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-2.5 shadow-sm">
-            <span class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900 grid place-items-center text-emerald-600 dark:text-emerald-300 font-black">✓</span>
+        <div class="w-full p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
+            <span>✅</span>
             <span>{{ session('success') }}</span>
         </div>
     @endif
 
     @if ($errors->any())
-        <div class="p-4 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-3xl text-xs font-bold text-rose-700 dark:text-rose-300 space-y-1 shadow-sm">
+        <div class="w-full p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded text-xs text-rose-800 dark:text-rose-300 space-y-1 shadow-2xs">
             <div class="font-black flex items-center gap-1.5">
                 <span>⚠️</span>
-                <span>အချက်အလက် ဖြည့်သွင်းမှု မှားယွင်းနေပါသည်:</span>
+                <span>{{ __('messages.validation_errors_alert') }}</span>
             </div>
             @foreach ($errors->all() as $error)
                 <p class="ml-5">• {{ $error }}</p>
@@ -66,66 +83,100 @@
         </div>
     @endif
 
-    {{-- 2. 4 Key Staff KPI Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+    {{-- ============================================================
+         2. 4 KEY STAFF KPI CARDS (Standard v4.1 Centered Row-based)
+         ============================================================ --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1 select-none">
         <a href="{{ route('store.admin.users.index', array_merge($storeRouteParams, ['tab' => 'all'])) }}"
-           class="rounded-3xl bg-white dark:bg-slate-900 border {{ $currentTab === 'all' ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.users_total_staff') }}</p>
-                <h3 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{{ $metrics['total_staff'] }}</h3>
-                <p class="text-[11px] text-slate-400 font-semibold mt-0.5">{{ __('messages.all_store_employees') }}</p>
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $currentTab === 'all'
+                      ? 'bg-violet-50/80 dark:bg-violet-950/40 border-violet-400 dark:border-violet-600 ring-2 ring-violet-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-violet-300 dark:hover:border-violet-800 hover:bg-violet-50/30' }}"
+           title="{{ __('messages.users_total_staff') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $currentTab === 'all'
+                            ? 'bg-violet-600 text-white border-violet-600 shadow-2xs'
+                            : 'bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 border-violet-100 dark:border-violet-900/50' }}">👨‍💼</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $currentTab === 'all' ? 'text-violet-900 dark:text-violet-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.users_total_staff') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-slate-900 dark:text-white font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ $metrics['total_staff'] }}</span>
+                </div>
             </div>
-            <span class="w-12 h-12 rounded-2xl bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                👨‍💼
-            </span>
         </a>
 
         <a href="{{ route('store.admin.users.index', array_merge($storeRouteParams, ['tab' => 'active'])) }}"
-           class="rounded-3xl bg-white dark:bg-slate-900 border {{ $currentTab === 'active' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.users_active_staff') }}</p>
-                <h3 class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">{{ $metrics['active_staff'] }}</h3>
-                <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">{{ __('messages.active_operating') }}</p>
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $currentTab === 'active'
+                      ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-400 dark:border-emerald-600 ring-2 ring-emerald-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-800 hover:bg-emerald-50/30' }}"
+           title="{{ __('messages.users_active_staff') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $currentTab === 'active'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                            : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50' }}">🟢</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $currentTab === 'active' ? 'text-emerald-900 dark:text-emerald-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.users_active_staff') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ $metrics['active_staff'] }}</span>
+                </div>
             </div>
-            <span class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                🟢
-            </span>
         </a>
 
         <a href="{{ route('store.admin.users.index', array_merge($storeRouteParams, ['tab' => 'leadership'])) }}"
-           class="rounded-3xl bg-white dark:bg-slate-900 border {{ $currentTab === 'leadership' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.users_leadership') }}</p>
-                <h3 class="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight">{{ $metrics['leadership_count'] }}</h3>
-                <p class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5">{{ __('messages.owners_managers') }}</p>
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $currentTab === 'leadership'
+                      ? 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-400 dark:border-blue-600 ring-2 ring-blue-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-800 hover:bg-blue-50/30' }}"
+           title="{{ __('messages.users_leadership') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $currentTab === 'leadership'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                            : 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/50' }}">🛡️</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $currentTab === 'leadership' ? 'text-blue-900 dark:text-blue-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.users_leadership') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ $metrics['leadership_count'] }}</span>
+                </div>
             </div>
-            <span class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                🛡️
-            </span>
         </a>
 
         <a href="{{ route('store.admin.users.index', array_merge($storeRouteParams, ['tab' => 'suspended'])) }}"
-           class="rounded-3xl bg-white dark:bg-slate-900 border {{ $currentTab === 'suspended' ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 sm:p-5 shadow-sm flex items-center justify-between transition hover:shadow-md">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 truncate">{{ __('messages.users_suspended_staff') }}</p>
-                <h3 class="text-xl sm:text-2xl font-black {{ $metrics['suspended_staff'] > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white' }} font-mono tracking-tight">{{ $metrics['suspended_staff'] }}</h3>
-                <p class="text-[11px] text-slate-400 font-semibold mt-0.5">{{ __('messages.access_disabled') }}</p>
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $currentTab === 'suspended'
+                      ? 'bg-rose-50/80 dark:bg-rose-950/40 border-rose-400 dark:border-rose-600 ring-2 ring-rose-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/30' }}"
+           title="{{ __('messages.users_suspended_staff') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $currentTab === 'suspended'
+                            ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
+                            : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-900/50' }}">🚫</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $currentTab === 'suspended' ? 'text-rose-900 dark:text-rose-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.users_suspended_staff') }}
+                </div>
+                <div class="text-sm sm:text-base font-black {{ $metrics['suspended_staff'] > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white' }} font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ $metrics['suspended_staff'] }}</span>
+                </div>
             </div>
-            <span class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 grid place-items-center text-xl font-bold shadow-inner flex-shrink-0">
-                🚫
-            </span>
         </a>
     </div>
 
     {{-- 3. Collapsible Create New User / Staff Form --}}
     <div x-show="createOpen" x-transition x-cloak
-         class="rounded-3xl bg-white dark:bg-slate-900 border border-violet-200 dark:border-violet-900/50 p-5 sm:p-7 shadow-xl space-y-5">
+         class="rounded-lg bg-white dark:bg-slate-900 border border-violet-200 dark:border-violet-900/50 p-3 sm:p-4 shadow-md space-y-3">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <div class="flex items-center gap-2">
                 <span class="text-lg">✨</span>
                 <div>
                     <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">{{ __('messages.users_enroll_staff') }} (Enroll Store Staff)</h3>
-                    <p class="text-xs text-slate-400">ဆိုင်ဝန်ထမ်း (Manager, Cashier, Service Technician, etc.) အကောင့်သစ် ဖွင့်လှစ်ပြီး ရာထူးနှင့် အခွင့်အရေးများ သတ်မှတ်ပါ</p>
+                    <p class="text-xs text-slate-400">{{ __('messages.users_enroll_staff_desc') }}</p>
                 </div>
             </div>
             <button type="button" @click="createOpen = false" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
@@ -134,7 +185,7 @@
         <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">
                 <span>💡</span>
-                <span>ဖောက်သည်များ စာရင်းသွင်းရန်နှင့် စီမံရန် ဖောက်သည် စာမျက်နှာကို အသုံးပြုပါ။</span>
+                <span>{{ __('messages.users_use_customer_page_hint') }}</span>
             </div>
             <a href="{{ route('store.admin.customers.index', $storeRouteParams) }}" class="underline font-black text-emerald-700 dark:text-emerald-400 shrink-0">
                 {{ __('messages.users_customer_directory_link') }} →
@@ -234,7 +285,7 @@
                     Cancel
                 </button>
                 <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-md shadow-violet-500/20 transition">
-                    အကောင့် အတည်ပြုဖွင့်လှစ်မည်
+                    {{ __('messages.users_confirm_account_create') }}
                 </button>
             </div>
         </form>
@@ -261,7 +312,7 @@
 
     <x-admin.toolbar
         :search="request('search', '')"
-        searchPlaceholder="အမည်၊ ဖုန်းနံပါတ်၊ အီးမေးလ်ဖြင့် ရှာဖွေပါ..."
+        :searchPlaceholder="__('messages.users_search_placeholder')"
         :sort="request('sort', 'newest')"
         :sortOptions="[
             'newest' => 'Newest First',
@@ -380,7 +431,7 @@
 
                                     @if (! $user->isPlatformOwner() && auth()->id() !== $user->id)
                                         <form method="POST" action="{{ route('store.admin.users.suspend', array_merge($storeRouteParams, ['user' => $user->id])) }}"
-                                              data-confirm="{{ $status === 'suspended' ? 'အကောင့်အား ပြန်လည် အသုံးပြုခွင့် ပေးမှာ သေချာပါသလား?' : 'အသုံးပြုသူ အကောင့်အား ယာယီ ပိတ်ပင်မှာ သေချာပါသလား?' }}">
+                                              data-confirm="{{ $status === 'suspended' ? __('messages.users_confirm_unsuspend') : __('messages.users_confirm_suspend') }}">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit"
@@ -391,7 +442,7 @@
                                         </form>
 
                                         <form method="POST" action="{{ route('store.admin.users.destroy', array_merge($storeRouteParams, ['user' => $user->id])) }}"
-                                              data-confirm="အသုံးပြုသူ {{ $user->name }} ({{ $user->phone }}) အား ဤဆိုင်စာရင်းမှ ဖျက်/ဖယ်ရှားမှာ သေချာပါသလား?">
+                                              data-confirm="{{ __('messages.users_confirm_remove_user', ['name' => $user->name, 'phone' => $user->phone]) }}">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"

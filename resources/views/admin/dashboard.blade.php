@@ -1,10 +1,10 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.admin_dashboard') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-1 sm:p-1.5')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full space-y-0.5">
+<div class="w-full space-y-0.5 pb-6">
 
     {{-- ============================================================
          DAILY QUICK ACTIONS HUB: 12 EMBOSSED 3D PUSH BUTTONS

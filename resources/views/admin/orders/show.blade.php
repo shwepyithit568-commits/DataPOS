@@ -1,7 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', 'Order #' . $order->order_number . ' - ' . $store->name)
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @php
     $storeRouteParams = ['store_slug' => $store->slug];
@@ -17,7 +17,7 @@
 @endphp
 
 @section('content')
-<div class="w-full space-y-2 sm:space-y-2.5">
+<div class="w-full space-y-0.5 pb-6">
 
     {{-- ============================================================
          HEADER — back button, breadcrumb, status badge

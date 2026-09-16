@@ -198,7 +198,7 @@
                                 {{ __('messages.repair_contact_name') }}
                             </label>
                             <input type="text" name="contact_name" value="{{ old('contact_name', $repair->contact_name) }}" maxlength="120"
-                                   placeholder="အမည် ရိုက်ထည့်ပါ..."
+                                   placeholder="{{ __('messages.enter_name_placeholder') }}"
                                    class="w-full h-8 px-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-violet-500 outline-none" />
                         </div>
                         <div>
@@ -216,7 +216,7 @@
                             {{ __('messages.address') }}
                         </label>
                         <input type="text" name="shipping_address" value="{{ old('shipping_address', $repair->shipping_address) }}" maxlength="1000"
-                               placeholder="နေရပ်လိပ်စာ / ပို့ဆောင်ရမည့်လိပ်စာ..."
+                               placeholder="{{ __('messages.address_shipping_placeholder') }}"
                                class="w-full h-8 px-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-violet-500 outline-none" />
                     </div>
                 </div>
@@ -284,7 +284,7 @@
                                 {{ __('messages.repair_imei_serial') }}
                             </label>
                             <input type="text" name="imei_serial" value="{{ old('imei_serial', $repair->imei_serial) }}" maxlength="60"
-                                   placeholder="IMEI သို့မဟုတ် Serial No."
+                                   placeholder="{{ __('messages.imei_or_serial_placeholder') }}"
                                    class="w-full h-8 px-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono font-semibold text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-violet-500 outline-none" />
                         </div>
                     </div>
@@ -295,7 +295,7 @@
                                 {{ __('messages.repair_color') }}
                             </label>
                             <input type="text" name="color" list="colors_list" value="{{ old('color', $repair->color) }}" maxlength="40"
-                                   placeholder="အရောင်"
+                                   placeholder="{{ __('messages.color_placeholder') }}"
                                    class="w-full h-8 px-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-violet-500 outline-none" />
                             <datalist id="colors_list">
                                 @foreach ($colors as $c)
@@ -323,7 +323,7 @@
                                 Pattern / Passcode
                             </label>
                             <input type="text" name="pattern_lock" value="{{ old('pattern_lock', $repair->pattern_lock) }}" maxlength="60"
-                                   placeholder="PIN သို့မဟုတ် Pattern"
+                                   placeholder="{{ __('messages.pin_or_pattern_placeholder') }}"
                                    class="w-full h-8 px-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono font-semibold text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-violet-500 outline-none" />
                         </div>
                     </div>
@@ -333,7 +333,7 @@
                             {{ __('messages.repair_reported_problem') }} <span class="text-rose-500">*</span>
                         </label>
                         <textarea name="reported_problem" rows="2" required maxlength="1000"
-                                  placeholder="စက်တွင် ဖြစ်ပေါ်နေသော ပြဿနာ သို့မဟုတ် ချွတ်ယွင်းချက်..."
+                                  placeholder="{{ __('messages.problem_defect_placeholder') }}"
                                   class="w-full p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-violet-500 outline-none resize-y">{{ old('reported_problem', $repair->reported_problem) }}</textarea>
                     </div>
 
@@ -476,8 +476,7 @@
                         <div class="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                             <span>{{ __('messages.repair_items_total') }}:</span>
                             <span class="text-sm font-black font-mono text-violet-600 dark:text-violet-400"
-                                  x-text="Number(total()).toLocaleString()"></span>
-                            <span class="text-[10px] text-slate-400 font-semibold">{{ $store->currency ?? 'MMK' }}</span>
+                                  x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(total()) : ('{{ currency_symbol($store) }} ' + Number(total()).toLocaleString())"></span>
                         </div>
 
                         <button type="button" @click="useAsFinal()" x-show="items.length > 0"
@@ -570,7 +569,7 @@
                             {{ __('messages.notes') }}
                         </label>
                         <textarea name="notes" rows="2" maxlength="1000"
-                                  placeholder="ဆိုင်အတွင်း သီးသန့်မှတ်ချက်..."
+                                  placeholder="{{ __('messages.internal_notes_placeholder') }}"
                                   class="w-full p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-violet-500 outline-none resize-y">{{ old('notes', $repair->notes) }}</textarea>
                     </div>
                 </div>
@@ -582,14 +581,14 @@
         {{-- ── SECTION 3: Action Toolbar (Bottom) ── --}}
         <div class="rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 p-2 sm:p-2.5 shadow-xs flex items-center justify-between gap-2">
             <a href="{{ route('store.admin.repairs.show', [...$storeRouteParams, 'repair' => $repair->id]) }}"
-               class="h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-750 transition flex items-center gap-1">
+               class="sf-btn-3d h-8 px-3 rounded-lg text-xs font-semibold transition flex items-center gap-1">
                 <span>✕</span>
                 <span>{{ __('messages.cancel') }}</span>
             </a>
 
             <div class="flex items-center gap-1.5 sm:gap-2">
                 <a href="{{ route('store.admin.repairs.print', [...$storeRouteParams, 'repair' => $repair->id]) }}" target="_blank"
-                   class="h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition flex items-center gap-1">
+                   class="sf-btn-3d h-8 px-2.5 sm:px-3 rounded-lg text-xs font-semibold transition flex items-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2z" />
                     </svg>
@@ -597,7 +596,7 @@
                 </a>
 
                 <button type="submit"
-                        class="h-8 px-4 rounded-lg text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 active:scale-[0.98] shadow-xs shadow-violet-500/20 transition flex items-center gap-1.5 cursor-pointer">
+                        class="sf-btn-3d-primary h-8 px-4 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
                     <span>💾</span>
                     <span>{{ __('messages.repair_save') }}</span>
                 </button>

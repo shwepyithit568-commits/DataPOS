@@ -198,17 +198,17 @@ class AdminSidebarNavigationUXTest extends TestCase
 
         $response->assertStatus(200);
         foreach ([
-            'POS & In-store Sales',
-            'Inventory & Products',
-            'Purchasing & Transfers',
-            'Ecommerce Storefront',
-            'Customers & CRM',
-            'Repairs & Service',
-            'Finance & Accounts',
-            'Reports & Analytics',
-            'Business Setup',
-            'Security & Access',
-            'System Maintenance',
+            __('messages.sidebar_pos_group'),
+            __('messages.sidebar_inventory'),
+            __('messages.sidebar_purchasing'),
+            __('messages.sidebar_ecommerce'),
+            __('messages.sidebar_customers'),
+            __('messages.sidebar_service'),
+            __('messages.sidebar_finance'),
+            __('messages.sidebar_reports'),
+            __('messages.sidebar_setup'),
+            __('messages.sidebar_security'),
+            __('messages.sidebar_maintenance'),
         ] as $group) {
             $response->assertSeeText($group);
         }
@@ -386,7 +386,7 @@ class AdminSidebarNavigationUXTest extends TestCase
         $response->assertSee("localStorage.setItem('adminSidebar'", false);
 
         // Collapsed aside narrows to an icon rail; expanded keeps the full width.
-        $response->assertSee("sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'", false);
+        $response->assertSee("sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'", false);
 
         // Accessible label reflects the current state via translated strings.
         $response->assertSee(":aria-label=\"sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'\"", false);
@@ -609,8 +609,8 @@ class AdminSidebarNavigationUXTest extends TestCase
         );
 
         $this->assertNotSame('', $inventoryTrigger);
-        $this->assertStringContainsString('bg-violet-100 text-violet-800', $inventoryTrigger);
-        $this->assertStringContainsString('ring-2 ring-violet-500', $content);
+        $this->assertStringContainsString('nav-active-inventory', $inventoryTrigger);
+        $this->assertStringContainsString('ring-2 ring-amber-500', $content);
         $this->assertStringContainsString("sidebarCollapsed ? 'lg:justify-center' : ''", $inventoryTrigger);
         $this->assertSame(1, substr_count($content, 'data-nav-group-active="true"'));
     }

@@ -1,6 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.exchange_title') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
 <script nonce="{{ $cspNonce }}">
@@ -66,26 +67,36 @@ window.exchangeHubData = function () {
 };
 </script>
 
-<div class="w-full space-y-5 sm:space-y-6" x-data="exchangeHubData()">
+<div class="w-full space-y-0.5 pb-6" x-data="exchangeHubData()">
 
-    {{-- ============================================================
-         PAGE HEADER
-         ============================================================ --}}
-    <div class="admin-page-header">
-        <div class="min-w-0">
-            <h1 class="admin-page-title">
-                {{ __('messages.exchange_title') }}
-            </h1>
-            <p class="admin-page-sub mt-1">
-                {{ $store->name }} · {{ __('messages.exchange_subtitle') }}
-            </p>
+    {{-- Top Ultra-Dense Header Banner (Standard v4.1) --}}
+    <div class="px-2 py-1.5 bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 select-none transition">
+        <div class="flex items-center gap-2 min-w-0">
+            <a href="{{ route('store.admin.dashboard', ['store_slug' => $store->slug]) }}"
+               class="h-6 w-6 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition active:scale-95 shrink-0"
+               title="{{ __('messages.back') }}">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <div class="w-6 h-6 rounded bg-violet-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+                <span>💱</span>
+            </div>
+            <div class="flex items-center gap-1.5 min-w-0">
+                <span class="text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/60 px-1.5 py-0.5 rounded border border-violet-200/50 dark:border-violet-800/50 truncate max-w-[120px] sm:max-w-none">
+                    {{ $store->name }}
+                </span>
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight truncate">
+                    {{ __('messages.exchange_title') }}
+                </h1>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono hidden md:inline">
+                    · {{ __('messages.exchange_subtitle') }}
+                </span>
+            </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2 shrink-0">
-            {{-- Add New Foreign Currency Modal Trigger --}}
+        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 self-end sm:self-auto">
             <button type="button"
                     @click="showAddModal = true"
-                    class="admin-primary-btn bg-violet-600 hover:bg-violet-500">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    class="sf-btn-3d-primary h-7 px-2.5 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
                 <span>{{ __('messages.exchange_add_new') }}</span>
@@ -95,75 +106,99 @@ window.exchangeHubData = function () {
 
     {{-- Flash Notifications & Errors --}}
     @if (session('success'))
-        <div class="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl text-sm text-emerald-800 dark:text-emerald-200 flex items-center gap-3">
-            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span class="font-medium">{{ session('success') }}</span>
+        <div class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded text-xs text-emerald-800 dark:text-emerald-200 flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="font-bold">{{ session('success') }}</span>
         </div>
     @endif
     @if ($errors->any())
-        <div class="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl text-sm text-rose-800 dark:text-rose-200">
+        <div class="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded text-xs text-rose-800 dark:text-rose-200">
             @foreach ($errors->all() as $err)
                 <p>{{ $err }}</p>
             @endforeach
         </div>
     @endif
 
-    {{-- ============================================================
-         SUMMARY STATS HAIRLINE GRID
-         ============================================================ --}}
-    <div class="admin-hairline-grid grid-cols-2 sm:grid-cols-4">
+    {{-- 4 Summary Stat Cards (Standard v4.1 Centered Row-based) --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1 select-none">
         {{-- 1. Base Currency --}}
-        <div class="admin-hairline-cell bg-emerald-50/30 dark:bg-emerald-950/20">
-            <div class="admin-stat-label text-emerald-600 dark:text-emerald-400">{{ __('messages.exchange_base_currency') }}</div>
-            <div class="admin-stat-value text-emerald-700 dark:text-emerald-300 font-mono">
-                MMK
+        <div class="rounded border p-1.5 sm:p-2 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.exchange_base_currency') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs shrink-0 border bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50">
+                🇲🇲
             </div>
-            <div class="admin-stat-sub text-slate-500">{{ __('messages.exchange_fixed_base_rate') }}</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[10px] sm:text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.exchange_base_currency') }}
+                </div>
+                <div class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>MMK (1.0000)</span>
+                </div>
+            </div>
         </div>
 
         {{-- 2. USD Rate --}}
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label text-blue-600 dark:text-blue-400">{{ __('messages.exchange_usd_rate') }}</div>
-            <div class="admin-stat-value text-blue-600 dark:text-blue-400 font-mono">
-                {{ format_currency($stats['usd_rate'], $store) }}
+        <div class="rounded border p-1.5 sm:p-2 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.exchange_usd_rate') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs shrink-0 border bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/50">
+                💵
             </div>
-            <div class="admin-stat-sub text-slate-400">1 USD ($)</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[10px] sm:text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.exchange_usd_rate') }}
+                </div>
+                <div class="text-xs sm:text-sm font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ format_currency($stats['usd_rate'], $store) }}</span>
+                </div>
+            </div>
         </div>
 
         {{-- 3. THB Rate --}}
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label text-violet-600 dark:text-violet-400">{{ __('messages.exchange_thb_rate') }}</div>
-            <div class="admin-stat-value text-violet-600 dark:text-violet-400 font-mono">
-                {{ format_currency($stats['thb_rate'], $store) }}
+        <div class="rounded border p-1.5 sm:p-2 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.exchange_thb_rate') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs shrink-0 border bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 border-violet-100 dark:border-violet-900/50">
+                🇹🇭
             </div>
-            <div class="admin-stat-sub text-slate-400">1 THB (฿)</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[10px] sm:text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.exchange_thb_rate') }}
+                </div>
+                <div class="text-xs sm:text-sm font-black text-violet-600 dark:text-violet-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ format_currency($stats['thb_rate'], $store) }}</span>
+                </div>
+            </div>
         </div>
 
         {{-- 4. CNY Rate --}}
-        <div class="admin-hairline-cell">
-            <div class="admin-stat-label text-amber-600 dark:text-amber-400">{{ __('messages.exchange_cny_rate') }}</div>
-            <div class="admin-stat-value text-amber-600 dark:text-amber-400 font-mono">
-                {{ format_currency($stats['cny_rate'], $store) }}
+        <div class="rounded border p-1.5 sm:p-2 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.exchange_cny_rate') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs shrink-0 border bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/50">
+                🇨🇳
             </div>
-            <div class="admin-stat-sub text-slate-400">1 CNY (¥)</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[10px] sm:text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.exchange_cny_rate') }}
+                </div>
+                <div class="text-xs sm:text-sm font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ format_currency($stats['cny_rate'], $store) }}</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    {{-- ============================================================
-         TWO-COLUMN LAYOUT: RATES TABLE & LIVE CALCULATORS
-         ============================================================ --}}
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    {{-- Two-Column Layout: Rates Table & Live Calculators --}}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-0.5 sm:gap-1 items-start">
 
         {{-- LEFT COLUMN: DAILY EXCHANGE RATES BOARD (7 COLS) --}}
-        <div class="lg:col-span-7 space-y-6">
+        <div class="lg:col-span-7 space-y-0.5">
 
-            <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
-                <div class="flex items-center justify-between gap-4">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded p-2.5 sm:p-3 shadow-2xs space-y-2">
+                <div class="flex items-center justify-between gap-2">
                     <div>
-                        <h2 class="text-sm font-extrabold text-slate-900 dark:text-slate-100 font-outfit">
+                        <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 font-outfit">
                             {{ __('messages.exchange_table_title') }}
                         </h2>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400">
                             {{ __('messages.exchange_table_desc') }}
                         </p>
                     </div>
@@ -259,11 +294,11 @@ window.exchangeHubData = function () {
                          </table>
                      </div>
 
-                     {{-- Bulk Save Button --}}n --}}
-                    <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                     {{-- Bulk Save Button --}}
+                    <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
                         <button type="submit"
-                                class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold shadow-md transition flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                class="sf-btn-3d-primary h-7 px-3 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             <span>{{ __('messages.exchange_save_all_rates') }}</span>
                         </button>
                     </div>
@@ -273,15 +308,15 @@ window.exchangeHubData = function () {
         </div>
 
         {{-- RIGHT COLUMN: REAL-TIME CONVERTER & PRICING HELPER (5 COLS) --}}
-        <div class="lg:col-span-5 space-y-6">
+        <div class="lg:col-span-5 space-y-0.5">
 
             {{-- Card 1: Interactive Live Converter --}}
-            <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
-                <div class="flex items-center gap-2">
-                    <span class="p-2 rounded-xl bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded p-2.5 sm:p-3 shadow-2xs space-y-2">
+                <div class="flex items-center gap-1.5">
+                    <span class="p-1 rounded bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
                     </span>
-                    <h3 class="text-sm font-extrabold text-slate-900 dark:text-slate-100 font-outfit">
+                    <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 font-outfit">
                         {{ __('messages.exchange_converter_title') }}
                     </h3>
                 </div>
@@ -308,7 +343,7 @@ window.exchangeHubData = function () {
                         <div class="col-span-1 text-center pt-5">
                             <button type="button"
                                     @click="swapCurrencies()"
-                                    class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                                    class="sf-btn-3d p-2 rounded-xl text-xs font-bold transition cursor-pointer"
                                     title="Swap">
                                 ⇄
                             </button>
@@ -339,12 +374,12 @@ window.exchangeHubData = function () {
             </div>
 
             {{-- Card 2: Import Cost & Pricing Calculator --}}
-            <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
-                <div class="flex items-center gap-2">
-                    <span class="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded p-2.5 sm:p-3 shadow-2xs space-y-2">
+                <div class="flex items-center gap-1.5">
+                    <span class="p-1 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                     </span>
-                    <h3 class="text-sm font-extrabold text-slate-900 dark:text-slate-100 font-outfit">
+                    <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 font-outfit">
                         {{ __('messages.exchange_pricing_helper_title') }}
                     </h3>
                 </div>
@@ -467,8 +502,8 @@ window.exchangeHubData = function () {
                 </div>
 
                 <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="showAddModal = false" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-violet-600 text-white font-bold shadow-md">{{ __('messages.exchange_add_currency_btn') }}</button>
+                    <button type="button" @click="showAddModal = false" class="sf-btn-3d px-4 py-2 rounded-xl text-xs font-bold cursor-pointer">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="sf-btn-3d-primary px-5 py-2 rounded-xl text-xs font-bold cursor-pointer">{{ __('messages.exchange_add_currency_btn') }}</button>
                 </div>
             </form>
         </div>
@@ -535,8 +570,8 @@ window.exchangeHubData = function () {
                 </div>
 
                 <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="editModalOpen = false" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-300">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-violet-600 text-white font-bold shadow-md">{{ __('messages.exchange_update_currency_btn') }}</button>
+                    <button type="button" @click="editModalOpen = false" class="sf-btn-3d px-4 py-2 rounded-xl text-xs font-bold cursor-pointer">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="sf-btn-3d-primary px-5 py-2 rounded-xl text-xs font-bold cursor-pointer">{{ __('messages.exchange_update_currency_btn') }}</button>
                 </div>
             </form>
         </div>

@@ -373,7 +373,7 @@
                 @php
                     $currentPage = $paginator->currentPage();
                     $lastPage = method_exists($paginator, 'lastPage') ? $paginator->lastPage() : 1;
-                    $onFirst = $paginator->onFirstPage();
+                    $onFirst = $currentPage <= 1;
                     $hasMore = $paginator->hasMorePages();
                     $prevUrl = $paginator->previousPageUrl();
                     $nextUrl = $paginator->nextPageUrl();

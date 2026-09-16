@@ -124,7 +124,7 @@
                     {{ format_currency($metrics['total_value'], $store) }}
                 </div>
                 <div class="text-[10px] text-slate-400 dark:text-slate-500 truncate">
-                    {{ $store->currency ?? 'MMK' }} Total
+                    {{ currency_code($store) }} · {{ __('messages.total_value') }}
                 </div>
             </div>
         </div>

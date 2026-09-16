@@ -43,7 +43,7 @@
             {{-- Print A4 Statement --}}
             <a href="{{ route('store.admin.profit_loss.statement', array_merge(['store_slug' => $store->slug], request()->all())) }}"
                target="_blank"
-               class="h-7 px-2 sm:px-2.5 rounded text-[11px] sm:text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition inline-flex items-center gap-1 active:scale-95 shadow-2xs">
+               class="sf-btn-3d h-7 px-2 sm:px-2.5 rounded-md text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
                 <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
@@ -52,9 +52,9 @@
 
             {{-- Dual Export Button (Excel & CSV) --}}
             <div class="relative inline-flex items-center">
-                <div class="h-7 inline-flex items-stretch rounded bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs overflow-hidden border border-emerald-600">
+                <div class="sf-btn-3d-success h-7 inline-flex items-stretch rounded-md p-0 overflow-hidden cursor-pointer">
                     <a href="{{ $xlsxUrl }}" download title="{{ __('messages.export') }} Excel (.xlsx)"
-                       class="inline-flex items-center gap-1 px-2.5 text-white hover:bg-emerald-700 text-[11px] sm:text-xs font-bold transition active:scale-95">
+                       class="inline-flex items-center gap-1 px-2.5 text-white hover:bg-emerald-700/50 text-[11px] sm:text-xs font-bold transition">
                         <svg class="w-3.5 h-3.5 shrink-0 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 14l5-5 5 5M12 3v12" />
                         </svg>
@@ -62,7 +62,7 @@
                         <span class="text-[9px] bg-white/25 text-white px-1 py-0.2 rounded font-mono uppercase font-black">XLSX</span>
                     </a>
                     <button type="button" @click="exportModalOpen = true"
-                            class="inline-flex items-center justify-center w-6 px-1 bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 text-white border-l border-emerald-500/80 transition cursor-pointer"
+                            class="inline-flex items-center justify-center w-6 px-1 hover:bg-emerald-700/70 active:bg-emerald-800 text-white border-l border-emerald-500/50 transition cursor-pointer"
                             title="Export Options (Excel / CSV)" aria-label="Export Options">
                         <svg class="w-3 h-3 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
@@ -162,7 +162,7 @@
             @endphp
             @foreach ($presetsList as $key => $label)
                 <a href="{{ route('store.admin.profit_loss.index', array_merge(['store_slug' => $store->slug, 'preset' => $key], request()->filled('branch_id') ? ['branch_id' => request('branch_id')] : [])) }}"
-                   class="h-7 px-2 sm:px-2.5 rounded text-[11px] font-bold whitespace-nowrap transition inline-flex items-center gap-1 shadow-2xs {{ $preset === $key ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700' }}">
+                   class="h-7 px-2 sm:px-2.5 rounded-md text-[11px] font-bold whitespace-nowrap transition inline-flex items-center gap-1 cursor-pointer {{ $preset === $key ? 'sf-btn-3d-primary' : 'sf-btn-3d' }}">
                     <span>{{ $label }}</span>
                     @if ($preset === $key)
                         <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
@@ -203,13 +203,13 @@
                        class="h-7 px-2 text-xs font-mono font-bold rounded border border-slate-200 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 dark:border-slate-700 outline-none shadow-2xs">
             </div>
 
-            <button type="submit" class="h-7 px-2.5 text-xs font-bold rounded bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-700 dark:hover:bg-slate-600 transition shadow-2xs cursor-pointer active:scale-95">
+            <button type="submit" class="sf-btn-3d-primary h-7 px-2.5 text-xs font-bold rounded-md inline-flex items-center gap-1 cursor-pointer">
                 {{ __('messages.filter') }}
             </button>
 
             @if(request()->filled('from') || request()->filled('to') || request()->filled('branch_id') || $preset !== 'this_month')
                 <a href="{{ route('store.admin.profit_loss.index', ['store_slug' => $store->slug]) }}"
-                   class="h-7 px-2 text-xs font-bold rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition shadow-2xs inline-flex items-center gap-1"
+                   class="sf-btn-3d h-7 px-2 text-xs font-bold rounded-md inline-flex items-center gap-1 cursor-pointer"
                    title="{{ __('messages.clear') }}">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     <span>{{ __('messages.clear') }}</span>
@@ -321,7 +321,7 @@
                     <p class="text-[10px] text-slate-400 font-mono">{{ $statement['period']['label'] }}</p>
                 </div>
                 <span class="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-mono text-slate-600 dark:text-slate-400 font-bold">
-                    {{ $store->currency ?? 'MMK' }}
+                    {{ currency_code($store) }}
                 </span>
             </div>
 

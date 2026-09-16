@@ -702,7 +702,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                             <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
-                                {{ __('messages.expense_amount') }} ({{ $store->currency ?? 'MMK' }}) <span class="text-rose-500">*</span>
+                                {{ __('messages.expense_amount') }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="number" step="0.01" min="1" name="amount" required placeholder="0.00"
                                    class="w-full h-8 px-2.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-xs font-bold font-mono text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition">
@@ -844,7 +844,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                             <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
-                                {{ __('messages.expense_amount') }} ({{ $store->currency ?? 'MMK' }}) <span class="text-rose-500">*</span>
+                                {{ __('messages.expense_amount') }} <span class="text-rose-500">*</span>
                             </label>
                             <input type="number" step="0.01" min="1" name="amount" x-model="editingExpense.amount" required
                                    class="w-full h-8 px-2.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-xs font-bold font-mono text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition">

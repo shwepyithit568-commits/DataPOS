@@ -1,34 +1,51 @@
 @extends('layouts.admin.app')
 
+@section('title', __('messages.store_management') . ' · DataPOS')
+@section('main_padding', 'p-0.5 sm:p-1')
+
 @section('content')
-<div class="w-full space-y-6">
-    {{-- Header --}}
-    <div class="admin-page-header">
-        <div>
-            <h1 class="admin-page-title">{{ __('messages.store_management') }}</h1>
-            <p class="admin-page-sub">{{ __('messages.store_management_sub') }}</p>
+<div class="w-full space-y-0.5 pb-6">
+    {{-- Top Ultra-Dense Header Banner (34px - 38px) --}}
+    <div class="relative overflow-hidden rounded-lg bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 dark:from-slate-950 dark:via-indigo-950/80 dark:to-slate-950 p-2 sm:p-2.5 shadow-sm border border-indigo-900/40">
+        <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-md bg-indigo-600/30 flex items-center justify-center border border-indigo-500/30 text-indigo-300 flex-shrink-0 text-sm">
+                    🏪
+                </div>
+                <div>
+                    <h1 class="text-xs sm:text-sm font-bold text-white tracking-tight leading-none flex items-center gap-1.5">
+                        {{ __('messages.store_management') }}
+                        <span class="text-[10px] font-normal px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-200 border border-indigo-500/30 leading-tight">
+                            {{ count($stores) }}
+                        </span>
+                    </h1>
+                    <p class="text-[10px] text-indigo-200/80 leading-tight mt-0.5">{{ __('messages.store_management_sub') }}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <a href="{{ route('admin.stores.create') }}"
+                    class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow transition active:scale-95">
+                    <span class="text-xs leading-none font-bold">+</span>
+                    <span>{{ __('messages.store_create_title') }}</span>
+                </a>
+            </div>
         </div>
-        <a href="{{ route('admin.stores.create') }}"
-            class="shrink-0 inline-flex items-center gap-2 min-h-11 px-4 py-2.5 rounded-lg bg-violet-600 text-white hover:bg-violet-700 font-semibold text-sm shadow transition">
-            <span class="text-base leading-none">+</span>
-            <span>{{ __('messages.store_create_title') }}</span>
-        </a>
     </div>
 
     {{-- Success Flash --}}
     @if (session('success'))
-        <div class="p-3.5 sm:p-4 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-700 dark:text-green-300 flex items-start gap-2">
-            <span class="text-base flex-shrink-0">✓</span>
+        <div class="p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs text-emerald-700 dark:text-emerald-300 flex items-start gap-1.5">
+            <span class="text-xs flex-shrink-0 font-bold">✓</span>
             <span>{{ session('success') }}</span>
         </div>
     @endif
 
     {{-- Error Flash --}}
     @if ($errors->any())
-        <div class="p-3.5 sm:p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 space-y-1">
-            <div class="flex items-center gap-2 font-bold"><span>⚠️</span><span>Errors:</span></div>
+        <div class="p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-700 dark:text-rose-300 space-y-0.5">
+            <div class="flex items-center gap-1 font-bold"><span>⚠️</span><span>Errors:</span></div>
             @foreach ($errors->all() as $error)
-                <div class="pl-6">• {{ $error }}</div>
+                <div class="pl-4">• {{ $error }}</div>
             @endforeach
         </div>
     @endif
@@ -63,52 +80,52 @@
             else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
         }
     }" @keydown.escape.window="if (confirmTarget) closeConfirm()"
-        class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden transition-colors duration-200">
+        class="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs overflow-hidden transition-colors duration-200">
 
         {{-- Table (horizontal scroll on narrow screens) --}}
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[720px] text-left text-sm text-gray-600 dark:text-slate-300">
-                <thead class="bg-gray-50 dark:bg-slate-900/50 border-b dark:border-slate-700 font-semibold text-gray-700 dark:text-slate-200">
+            <table class="w-full min-w-[720px] text-left text-xs text-gray-600 dark:text-slate-300">
+                <thead class="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-200">
                     <tr>
-                        <th class="p-3">{{ __('messages.store_name') }}</th>
-                        <th class="p-3">{{ __('messages.store_slug') }}</th>
-                        <th class="p-3 text-center">{{ __('messages.store_status') }}</th>
-                        <th class="p-3 text-center">{{ __('messages.products') }}</th>
-                        <th class="p-3 text-right">{{ __('messages.store_actions') }}</th>
+                        <th class="px-2.5 py-1.5">{{ __('messages.store_name') }}</th>
+                        <th class="px-2.5 py-1.5">{{ __('messages.store_slug') }}</th>
+                        <th class="px-2.5 py-1.5 text-center">{{ __('messages.store_status') }}</th>
+                        <th class="px-2.5 py-1.5 text-center">{{ __('messages.products') }}</th>
+                        <th class="px-2.5 py-1.5 text-right">{{ __('messages.store_actions') }}</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                     @forelse ($stores as $store)
-                        <tr class="hover:bg-gray-50/60 dark:hover:bg-slate-700/40 transition">
-                            <td class="p-3 max-w-[16rem]">
-                                <div class="flex items-center gap-2 min-w-0">
-                                    <span class="font-bold text-gray-900 dark:text-slate-100 break-words">{{ $store->name }}</span>
+                        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-700/40 transition">
+                            <td class="px-2.5 py-1.5 max-w-[16rem]">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="font-bold text-slate-900 dark:text-slate-100 break-words">{{ $store->name }}</span>
                                     @if ($store->is_primary)
-                                        <span class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[11px] font-bold">
-                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.05 2.9a1 1 0 0 1 1.9 0l1.2 3.9 4.05.2a1 1 0 0 1 .58 1.79l-3.17 2.53 1.06 3.91a1 1 0 0 1-1.53 1.1L10 13.47l-3.14 1.86a1 1 0 0 1-1.53-1.1l1.06-3.9-3.17-2.54a1 1 0 0 1 .58-1.79l4.05-.2 1.2-3.9Z"/></svg>
+                                        <span class="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] font-bold">
+                                            <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.05 2.9a1 1 0 0 1 1.9 0l1.2 3.9 4.05.2a1 1 0 0 1 .58 1.79l-3.17 2.53 1.06 3.91a1 1 0 0 1-1.53 1.1L10 13.47l-3.14 1.86a1 1 0 0 1-1.53-1.1l1.06-3.9-3.17-2.54a1 1 0 0 1 .58-1.79l4.05-.2 1.2-3.9Z"/></svg>
                                             {{ __('messages.store_primary') }}
                                         </span>
                                     @endif
                                 </div>
                             </td>
-                            <td class="p-3 font-mono text-xs text-gray-400 dark:text-slate-400 break-all">{{ $store->slug }}</td>
-                            <td class="p-3 text-center">
+                            <td class="px-2.5 py-1.5 font-mono text-[11px] text-slate-400 dark:text-slate-400 break-all">{{ $store->slug }}</td>
+                            <td class="px-2.5 py-1.5 text-center">
                                 @if ($store->is_active)
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-300 text-[11px] font-bold">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                         {{ __('messages.store_active') }}
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-[11px] font-bold">
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold">
                                         {{ __('messages.store_inactive') }}
                                     </span>
                                 @endif
                             </td>
-                            <td class="p-3 text-center">
-                                <span class="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 text-xs font-semibold">{{ $store->products_count }}</span>
+                            <td class="px-2.5 py-1.5 text-center">
+                                <span class="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-semibold">{{ $store->products_count }}</span>
                             </td>
-                            <td class="p-3">
-                                <div class="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                            <td class="px-2.5 py-1.5">
+                                <div class="flex items-center justify-end gap-1 whitespace-nowrap">
                                     <a href="{{ url('/store/' . $store->slug) }}" target="_blank" rel="noopener"
                                         class="min-h-11 inline-flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition"
                                         title="{{ __('messages.store_open_storefront') }}">
@@ -158,14 +175,14 @@
 
                                     @if (auth()->user()?->isPlatformOwner())
                                         <form method="POST" action="{{ route('admin.stores.force-destroy', $store) }}" class="inline"
-                                            data-confirm="⚠️ သတိပေးချက်: Store '{{ $store->name }}' ({{ $store->slug }}) နှင့် သက်ဆိုင်သော ကုန်ပစ္စည်း၊ စတော့၊ အော်ဒါ၊ အရောင်းဒေတာအားလုံးကို အပြီးတိုင် ဖျက်ပစ်ပါမည်။ သေချာပါသလား?">
+                                            data-confirm="{{ __('messages.stores_delete_confirm', ['name' => $store->name, 'slug' => $store->slug]) }}">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
                                                 class="min-h-11 inline-flex items-center gap-1 px-2.5 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
-                                                title="အပြီးတိုင် ဖျက်မည်">
+                                                title="{{ __('messages.stores_delete_permanently') }}">
                                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                အပြီးတိုင်ဖျက်မည်
+                                                {{ __('messages.stores_delete_permanently') }}
                                             </button>
                                         </form>
                                     @endif

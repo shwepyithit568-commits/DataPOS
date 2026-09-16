@@ -42,8 +42,8 @@
             @if(!empty($exportUrl))
             <a href="{{ $exportUrl }}"
                title="Export Excel (.xlsx)"
-               class="h-7 px-2.5 rounded-md text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
-                <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+               class="sf-btn-3d-success h-7 px-2.5 rounded-md text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -54,7 +54,7 @@
 
             {{-- Switch to Bin Card --}}
             <a href="{{ route('store.admin.stock_ledger.bin_card', ['store_slug' => $store->slug]) }}"
-               class="h-7 px-2.5 rounded-md text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 dark:hover:bg-violet-900/60 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+               class="sf-btn-3d-primary h-7 px-2.5 rounded-md text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
                 <span>📑</span>
                 <span>{{ __('messages.stock_ledger_bin_card') }}</span>
             </a>
@@ -320,7 +320,7 @@
 
                             {{-- Unit Cost --}}
                             <td class="py-1.5 px-2.5 text-right whitespace-nowrap font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                {{ number_format($cost) }}
+                                {{ format_currency($cost, $store) }}
                             </td>
 
                             {{-- Total Value --}}
@@ -347,7 +347,7 @@
                             <td class="py-1.5 px-2 text-center whitespace-nowrap">
                                 @if($m->product_id)
                                     <a href="{{ route('store.admin.stock_ledger.bin_card', ['store_slug' => $store->slug, 'product' => $m->product_id]) }}"
-                                       class="h-6 px-2 text-xs font-bold rounded-md text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-950/40 transition inline-flex items-center gap-1 active:scale-95">
+                                       class="sf-btn-3d h-6 px-2 text-xs font-bold rounded-md inline-flex items-center gap-1 cursor-pointer">
                                         <span>📑</span>
                                         <span>{{ __('messages.stock_ledger_view_bin_card') ?? 'Bin Card' }}</span>
                                     </a>
@@ -470,7 +470,7 @@
                 <div class="p-2 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
                     @if($m->product_id)
                         <a href="{{ route('store.admin.stock_ledger.bin_card', ['store_slug' => $store->slug, 'product' => $m->product_id]) }}"
-                           class="w-full text-center px-2.5 py-1 rounded text-xs font-bold bg-violet-50 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/60 dark:text-violet-300 transition inline-flex items-center justify-center gap-1 active:scale-95 shadow-2xs">
+                           class="sf-btn-3d w-full text-center px-2.5 py-1 rounded-md text-xs font-bold inline-flex items-center justify-center gap-1 cursor-pointer">
                             <span>📑</span>
                             <span>{{ __('messages.stock_ledger_view_bin_card') ?? 'Bin Card' }}</span>
                             <span>&rarr;</span>

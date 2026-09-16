@@ -1,9 +1,10 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.master_preset_import_title', ['type' => ucfirst(str_replace('_', ' ', $type ?? 'Preset'))]) . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="space-y-6 max-w-5xl">
+<div class="w-full max-w-5xl space-y-0.5 pb-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100 font-outfit">
             <span>{{ __('messages.master_data_import_title') }}</span>

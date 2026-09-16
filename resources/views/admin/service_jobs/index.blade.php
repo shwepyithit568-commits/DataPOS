@@ -1,7 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.sidebar_service_jobs') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
 @php
@@ -53,7 +53,7 @@
     };
 @endphp
 
-<div class="w-full space-y-2 sm:space-y-2.5"
+<div class="w-full space-y-0.5 pb-6"
      x-data="{
         viewMode: localStorage.getItem('admin_view_mode') || 'card',
         open: false,
@@ -76,38 +76,50 @@
      @view-changed.window="viewMode = $event.detail; localStorage.setItem('admin_view_mode', $event.detail)">
 
     {{-- ============================================================
-         1. TOP PAGE HEADER — Eyebrow, Title, Context & New Job Action
+         1. TOP ULTRA-DENSE HEADER BANNER (Standard v4.1)
          ============================================================ --}}
-    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-        <div class="min-w-0">
-            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300 text-[10px] sm:text-[11px] font-black uppercase tracking-wider border border-teal-100 dark:border-teal-900/60 mb-0.5">
+    <div class="px-2 py-1.5 bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 select-none transition">
+        <div class="flex items-center gap-2 min-w-0">
+            <a href="{{ route('store.admin.dashboard', $storeRouteParams) }}"
+               class="h-6 w-6 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition active:scale-95 shrink-0"
+               title="{{ __('messages.back') }}">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <div class="w-6 h-6 rounded bg-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
                 <span>🛠️</span>
-                <span>{{ __('messages.sidebar_service_jobs') }}</span>
-                <span class="text-slate-400 dark:text-slate-500">·</span>
-                <span class="font-normal normal-case text-slate-500 dark:text-slate-400">{{ __('messages.computer_cctv_network_jobs') }}</span>
             </div>
-            <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <span>{{ __('messages.sidebar_service_jobs') }}</span>
-            </h1>
-            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                {{ $store->name }} · {{ number_format($totalCount) }} {{ __('messages.repair_jobs') }}
-            </p>
+            <div class="flex items-center gap-1.5 min-w-0">
+                <span class="text-[10px] font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.5 rounded border border-teal-200/50 dark:border-teal-800/50 truncate max-w-[120px] sm:max-w-none">
+                    {{ $store->name }}
+                </span>
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight truncate">
+                    {{ __('messages.sidebar_service_jobs') }}
+                </h1>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono hidden md:inline">
+                    · {{ number_format($totalCount) }} {{ __('messages.repair_jobs') }}
+                </span>
+            </div>
         </div>
 
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 self-end sm:self-auto">
+            <a href="{{ route('store.admin.service_settings.index', $storeRouteParams) }}"
+               class="h-7 px-2 sm:px-2.5 rounded text-[11px] sm:text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+                <span>⚙️</span>
+                <span class="hidden sm:inline">{{ __('messages.repair_service_settings') }}</span>
+            </a>
             <a href="{{ route('store.admin.service_jobs.create', $storeRouteParams) }}"
-               class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-black bg-teal-600 hover:bg-teal-700 text-white shadow-2xs transition flex items-center gap-1.5 active:scale-95 cursor-pointer">
+               class="h-7 px-2.5 sm:px-3 rounded text-[11px] sm:text-xs font-black bg-teal-600 hover:bg-teal-700 text-white shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
                 <span class="text-sm leading-none">+</span>
                 <span>{{ __('messages.repair_new_job') }}</span>
             </a>
         </div>
-    </header>
+    </div>
 
     {{-- ============================================================
          2. SEGMENTED TABS: All / Processing / Ready / History
          ============================================================ --}}
     <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin">
-        <div class="inline-flex items-center gap-1 p-1 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+        <div class="inline-flex items-center gap-1 p-0.5 bg-white dark:bg-slate-900 rounded border border-slate-200/80 dark:border-slate-800 shadow-2xs">
             @foreach ([
                 'all'        => __('messages.repair_tab_all'),
                 'processing' => __('messages.repair_tab_processing'),
@@ -121,7 +133,7 @@
                         : route('store.admin.service_jobs.index', [...$storeRouteParams, ...$tabParams, 'tab' => $value]);
                 @endphp
                 <a href="{{ $url }}"
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold whitespace-nowrap transition cursor-pointer
+                   class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold whitespace-nowrap transition cursor-pointer
                           {{ $isActive
                               ? 'bg-teal-600 text-white shadow-2xs'
                               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800' }}">
@@ -136,47 +148,63 @@
     </div>
 
     {{-- ============================================================
-         3. 4 KEY KPI STAT CARDS
+         3. 4 KEY KPI STAT CARDS (Standard v4.1 Centered Row-based)
          ============================================================ --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1 select-none">
         {{-- Total Jobs --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-blue-600 dark:text-blue-400 truncate">{{ __('messages.repair_stat_total') }}</span>
-                <span class="text-xs">📋</span>
+        <div class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.repair_stat_total') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/50">📋</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.repair_stat_total') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['total']) }}</span>
+                </div>
             </div>
-            <div class="text-lg sm:text-2xl font-black text-blue-600 dark:text-blue-400 mt-1 font-mono tracking-tight">{{ number_format($stats['total']) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.total_registered_jobs') }}</div>
         </div>
 
         {{-- Active / In Progress --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 truncate">{{ __('messages.repair_stat_active') }}</span>
-                <span class="text-xs">⚡</span>
+        <div class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.repair_stat_active') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50">⚡</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.repair_stat_active') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['active']) }}</span>
+                </div>
             </div>
-            <div class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono tracking-tight">{{ number_format($stats['active']) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.diagnosing_in_repair') }}</div>
         </div>
 
         {{-- Ready for Pickup --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-teal-600 dark:text-teal-400 truncate">{{ __('messages.repair_stat_ready') }}</span>
-                <span class="text-xs">✅</span>
+        <div class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.repair_stat_ready') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 border-teal-100 dark:border-teal-900/50">✅</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.repair_stat_ready') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-teal-700 dark:text-teal-300 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['ready']) }}</span>
+                </div>
             </div>
-            <div class="text-lg sm:text-2xl font-black text-teal-700 dark:text-teal-300 mt-1 font-mono tracking-tight">{{ number_format($stats['ready']) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.ready_for_collection') }}</div>
         </div>
 
         {{-- Outstanding Balance --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 truncate">{{ __('messages.repair_stat_debt') }}</span>
-                <span class="text-xs">💰</span>
+        <div class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
+             title="{{ __('messages.repair_stat_debt') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/50">💰</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate text-slate-500 dark:text-slate-400">
+                    {{ __('messages.repair_stat_debt') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ format_currency($stats['debt'], $store) }}</span>
+                </div>
             </div>
-            <div class="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 mt-1 font-mono tracking-tight">{{ format_currency($stats['debt'], $store) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.unpaid_job_invoices') }}</div>
         </div>
     </div>
 

@@ -54,7 +54,7 @@
         <div class="p-4 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-3xl text-xs font-bold text-rose-700 dark:text-rose-300 space-y-1 shadow-sm">
             <div class="font-black flex items-center gap-1.5">
                 <span>⚠️</span>
-                <span>ဖြည့်သွင်းချက်များ မှားယွင်းနေပါသည်:</span>
+                <span>{{ __('messages.validation_errors_alert') }}</span>
             </div>
             @foreach ($errors->all() as $error)
                 <p class="ml-5">• {{ $error }}</p>
@@ -150,9 +150,9 @@
                         POS Manager PIN <span class="text-slate-400 font-normal">(4-6 Digits, Optional)</span>
                     </label>
                     <input type="password" name="pos_pin" inputmode="numeric" maxlength="6" autocomplete="new-password"
-                           placeholder="ထားခဲ့ပါက ယခင်အတိုင်း မပြောင်းလဲပါ"
+                           placeholder="{{ __('messages.users_leave_blank_keep_current') }}"
                            class="w-full px-3.5 py-2.5 rounded-xl text-xs font-mono bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                    <p class="text-[11px] text-slate-400 mt-1">ကောင်တာတွင် ဈေးလျှော့ခွင့် သတ်မှတ်ချက် ကျော်လွန်သည့်အခါ မန်နေဂျာအတည်ပြု PIN</p>
+                    <p class="text-[11px] text-slate-400 mt-1">{{ __('messages.users_manager_pin_help') }}</p>
                 </div>
             </div>
         </div>
@@ -163,7 +163,7 @@
                 <span>🔑</span>
                 <span>{{ __('messages.reset_password_optional') }}</span>
             </h3>
-            <p class="text-[11px] text-slate-400 mb-3">စကားဝှက် အဟောင်းအတိုင်း ထားလိုပါက အလွတ်ထားခဲ့နိုင်ပါသည်</p>
+            <p class="text-[11px] text-slate-400 mb-3">{{ __('messages.users_leave_blank_password_help') }}</p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -184,7 +184,7 @@
         @if ($managedUser->id === auth()->id())
             <div class="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-2">
                 <span>⚠️</span>
-                <span>မိမိကိုယ်ပိုင် Platform Owner အဆင့်အား ဤနေရာမှ ဖြုတ်ချခွင့် မရှိပါ။</span>
+                <span>{{ __('messages.users_cannot_demote_platform_owner') }}</span>
             </div>
         @endif
 
@@ -208,11 +208,11 @@
                     <span>{{ __('messages.remove_staff_from_store') }}</span>
                 </h4>
                 <p class="text-xs text-rose-600/80 dark:text-rose-400/70 mt-0.5">
-                    ဤဝန်ထမ်းအား {{ $store->name }} ၏ ဝန်ထမ်းစာရင်းမှ အပြီးတိုင် ဖယ်ရှားပါမည်။
+                    {{ __('messages.users_remove_employee_warning', ['store' => $store->name]) }}
                 </p>
             </div>
             <form method="POST" action="{{ route('store.admin.users.destroy', array_merge($storeRouteParams, ['user' => $managedUser->id])) }}"
-                  data-confirm="ဝန်ထမ်း {{ $managedUser->name }} ({{ $managedUser->phone }}) အား ဤဆိုင်စာရင်းမှ ဖယ်ရှားမှာ သေချာပါသလား?">
+                  data-confirm="{{ __('messages.users_confirm_remove_employee', ['name' => $managedUser->name, 'phone' => $managedUser->phone]) }}">
                 @csrf
                 @method('DELETE')
                 <button type="submit"

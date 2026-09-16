@@ -1,13 +1,14 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.sidebar_audit_logs') . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @php
     $storeRouteParams = ['store_slug' => $store->slug];
 @endphp
 
 @section('content')
-<div class="w-full space-y-5 sm:space-y-6 pb-12"
+<div class="w-full space-y-0.5 pb-6"
      x-data="{
         viewMode: localStorage.getItem('admin_audit_logs_view_mode') || 'table',
         modalOpen: false,
@@ -24,98 +25,156 @@
      @keydown.escape.window="closeModal()"
      @view-changed.window="viewMode = $event.detail; localStorage.setItem('admin_audit_logs_view_mode', $event.detail)">
 
-    {{-- 1. Top Page Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex items-center gap-3">
-            <span class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 grid place-items-center text-xl sm:text-2xl font-bold shadow-sm flex-shrink-0">
-                🛡️
-            </span>
-            <div class="min-w-0">
-                <h1 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
-                    <span>{{ __('messages.audit_logs_title') }}</span>
+    {{-- ============================================================
+         1. TOP ULTRA-DENSE HEADER BANNER (Standard v4.1)
+         ============================================================ --}}
+    <div class="px-2 py-1.5 bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 select-none transition">
+        <div class="flex items-center gap-2 min-w-0">
+            <a href="{{ route('store.admin.dashboard', $storeRouteParams) }}"
+               class="h-6 w-6 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition active:scale-95 shrink-0"
+               title="{{ __('messages.back') }}">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <div class="w-6 h-6 rounded bg-rose-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+                <span>🛡️</span>
+            </div>
+            <div class="flex items-center gap-1.5 min-w-0">
+                <span class="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-200/50 dark:border-rose-800/50 truncate max-w-[120px] sm:max-w-none">
+                    {{ $store->name }}
+                </span>
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight truncate">
+                    {{ __('messages.audit_logs_title') }}
                 </h1>
-                <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ $store->name }} · {{ __('messages.audit_logs_subtitle') }}</p>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono hidden md:inline">
+                    · {{ number_format($stats['total']) }} {{ __('messages.sidebar_audit_logs') }}
+                </span>
             </div>
         </div>
 
-        {{-- Top Right Actions --}}
-        <div class="flex items-center gap-2.5 self-start sm:self-auto">
+        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 self-end sm:self-auto">
+            <a href="{{ route('store.admin.roles.index', $storeRouteParams) }}"
+               class="sf-btn-3d h-7 px-2 sm:px-2.5 rounded-md text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
+                <span>🔑</span>
+                <span class="hidden sm:inline">{{ __('messages.sidebar_roles') }}</span>
+            </a>
             <a href="{{ $exportUrl }}"
-               class="px-3.5 py-2.5 rounded-2xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-2 shadow-sm">
+               class="sf-btn-3d-success h-7 px-2 sm:px-2.5 rounded-md text-[11px] sm:text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
                 <span>📊</span>
                 <span>{{ __('messages.export_csv_button') }}</span>
-            </a>
-            <a href="{{ route('store.admin.roles.index', $storeRouteParams) }}"
-               class="px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-500/20 transition flex items-center gap-2 active:scale-95">
-                <span>🔑</span>
-                <span>{{ __('messages.sidebar_roles') }}</span>
             </a>
         </div>
     </div>
 
     {{-- Flash Messages --}}
     @if (session('success'))
-        <div class="p-4 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-3xl text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-2.5 shadow-sm">
-            <span class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900 grid place-items-center text-emerald-600 dark:text-emerald-300 font-black">✓</span>
+        <div class="w-full p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
+            <span>✅</span>
             <span>{{ session('success') }}</span>
         </div>
     @endif
 
-    {{-- 2. 5 Key KPI Summary Cards (Interactive Category Filter Tabs) --}}
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3.5">
+    {{-- ============================================================
+         2. 5 KEY KPI SUMMARY CARDS (Standard v4.1 Centered Row-based)
+         ============================================================ --}}
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-0.5 sm:gap-1 select-none">
         {{-- Total All --}}
         <a href="{{ route('store.admin.audit-logs.index', array_merge($storeRouteParams, ['category' => 'all'])) }}"
-           class="rounded-3xl bg-white dark:bg-slate-900 border {{ $category === 'all' ? 'border-slate-700 dark:border-slate-300 ring-2 ring-slate-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 shadow-sm transition hover:shadow-md">
-            <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">{{ __('messages.audit_logs_total') }}</span>
-                <span class="text-base">📋</span>
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $category === 'all'
+                      ? 'bg-slate-100 dark:bg-slate-800 border-slate-400 dark:border-slate-500 ring-2 ring-slate-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/30' }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $category === 'all'
+                            ? 'bg-slate-700 text-white border-slate-700 shadow-2xs'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700' }}">📋</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $category === 'all' ? 'text-slate-900 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.audit_logs_total') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-slate-900 dark:text-white font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['total']) }}</span>
+                </div>
             </div>
-            <h3 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{{ number_format($stats['total']) }}</h3>
-            <p class="text-[10px] text-slate-400 font-semibold mt-0.5">{{ __('messages.audit_logs_total_desc') }}</p>
         </a>
 
         {{-- Pricing & Sales --}}
         <a href="{{ route('store.admin.audit-logs.index', array_merge($storeRouteParams, ['category' => 'pricing_sales'])) }}"
-           class="rounded-3xl bg-white dark:bg-slate-900 border {{ $category === 'pricing_sales' ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 shadow-sm transition hover:shadow-md">
-            <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold text-amber-600 dark:text-amber-400 truncate">{{ __('messages.audit_logs_pricing_sales') }}</span>
-                <span class="text-base">💰</span>
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $category === 'pricing_sales'
+                      ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-400 dark:border-amber-600 ring-2 ring-amber-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-800 hover:bg-amber-50/30' }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $category === 'pricing_sales'
+                            ? 'bg-amber-500 text-white border-amber-500 shadow-2xs'
+                            : 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/50' }}">💰</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $category === 'pricing_sales' ? 'text-amber-900 dark:text-amber-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.audit_logs_pricing_sales') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['pricing_sales']) }}</span>
+                </div>
             </div>
-            <h3 class="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight">{{ number_format($stats['pricing_sales']) }}</h3>
-            <p class="text-[10px] text-slate-400 font-semibold mt-0.5">{{ __('messages.audit_logs_pricing_sales_desc') }}</p>
         </a>
 
         {{-- Inventory --}}
         <a href="{{ route('store.admin.audit-logs.index', array_merge($storeRouteParams, ['category' => 'inventory'])) }}"
-           class="rounded-3xl bg-white dark:bg-slate-900 border {{ $category === 'inventory' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 shadow-sm transition hover:shadow-md">
-            <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold text-blue-600 dark:text-blue-400 truncate">{{ __('messages.audit_logs_inventory') }}</span>
-                <span class="text-base">📦</span>
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $category === 'inventory'
+                      ? 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-400 dark:border-blue-600 ring-2 ring-blue-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-800 hover:bg-blue-50/30' }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $category === 'inventory'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                            : 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/50' }}">📦</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $category === 'inventory' ? 'text-blue-900 dark:text-blue-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.audit_logs_inventory') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['inventory']) }}</span>
+                </div>
             </div>
-            <h3 class="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight">{{ number_format($stats['inventory']) }}</h3>
-            <p class="text-[10px] text-slate-400 font-semibold mt-0.5">{{ __('messages.audit_logs_inventory_desc') }}</p>
         </a>
 
         {{-- Financial --}}
         <a href="{{ route('store.admin.audit-logs.index', array_merge($storeRouteParams, ['category' => 'financial'])) }}"
-           class="rounded-3xl bg-white dark:bg-slate-900 border {{ $category === 'financial' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 shadow-sm transition hover:shadow-md">
-            <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 truncate">{{ __('messages.audit_logs_financial') }}</span>
-                <span class="text-base">💵</span>
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $category === 'financial'
+                      ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-400 dark:border-emerald-600 ring-2 ring-emerald-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-800 hover:bg-emerald-50/30' }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $category === 'financial'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                            : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50' }}">💵</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $category === 'financial' ? 'text-emerald-900 dark:text-emerald-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.audit_logs_financial') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['financial']) }}</span>
+                </div>
             </div>
-            <h3 class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">{{ number_format($stats['financial']) }}</h3>
-            <p class="text-[10px] text-slate-400 font-semibold mt-0.5">{{ __('messages.audit_logs_financial_desc') }}</p>
         </a>
 
         {{-- Security --}}
         <a href="{{ route('store.admin.audit-logs.index', array_merge($storeRouteParams, ['category' => 'security'])) }}"
-           class="col-span-2 sm:col-span-1 rounded-3xl bg-white dark:bg-slate-900 border {{ $category === 'security' ? 'border-rose-500 ring-2 ring-rose-500/20' : 'border-slate-200/90 dark:border-slate-800' }} p-4 shadow-sm transition hover:shadow-md">
-            <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-bold text-rose-600 dark:text-rose-400 truncate">{{ __('messages.audit_logs_security') }}</span>
-                <span class="text-base">🛡️</span>
+           class="col-span-2 sm:col-span-1 rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $category === 'security'
+                      ? 'bg-rose-50/80 dark:bg-rose-950/40 border-rose-400 dark:border-rose-600 ring-2 ring-rose-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50/30' }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $category === 'security'
+                            ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
+                            : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-900/50' }}">🛡️</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $category === 'security' ? 'text-rose-900 dark:text-rose-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.audit_logs_security') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['security']) }}</span>
+                </div>
             </div>
-            <h3 class="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 font-mono tracking-tight">{{ number_format($stats['security']) }}</h3>
-            <p class="text-[10px] text-slate-400 font-semibold mt-0.5">{{ __('messages.audit_logs_security_desc') }}</p>
         </a>
     </div>
 
@@ -346,7 +405,7 @@
                                             'created_at'  => $log->created_at?->format('d M Y, h:i:s A'),
                                             'time_ago'    => $log->created_at?->diffForHumans(),
                                         ]) }})"
-                                        class="px-3 py-1 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 transition inline-flex items-center gap-1 cursor-pointer">
+                                        class="sf-btn-3d px-3 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
                                     <span>🔍</span>
                                     <span>{{ __('messages.details') }}</span>
                                 </button>
@@ -476,7 +535,7 @@
             {{-- Modal Footer --}}
             <div class="p-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
                 <button type="button" @click="closeModal()"
-                        class="px-5 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition cursor-pointer">
+                        class="sf-btn-3d px-5 py-2 rounded-md text-xs font-bold cursor-pointer">
                     {{ __('messages.close') }}
                 </button>
             </div>

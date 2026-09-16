@@ -105,19 +105,19 @@
 
         <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 self-end sm:self-auto">
             <a href="{{ route('store.admin.service_settings.index', $storeRouteParams) }}"
-               class="h-7 px-2 sm:px-2.5 rounded text-[11px] sm:text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer"
+               class="sf-btn-3d h-7 px-2 sm:px-2.5 rounded text-[11px] sm:text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer"
                title="{{ __('messages.repair_service_settings') }}">
                 <span>⚙️</span>
                 <span class="hidden sm:inline">{{ __('messages.repair_service_settings') }}</span>
             </a>
             <a href="{{ route('pos.reports.services', $storeRouteParams) }}"
-               class="h-7 px-2 sm:px-2.5 rounded text-[11px] sm:text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer"
+               class="sf-btn-3d h-7 px-2 sm:px-2.5 rounded text-[11px] sm:text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer"
                title="{{ __('messages.sidebar_service_revenue') }}">
                 <span>📊</span>
                 <span class="hidden sm:inline">{{ __('messages.sidebar_service_revenue') }}</span>
             </a>
             <a href="{{ route('store.admin.repairs.create', $storeRouteParams) }}"
-               class="h-7 px-2.5 sm:px-3 rounded text-[11px] sm:text-xs font-black bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+               class="sf-btn-3d-primary h-7 px-2.5 sm:px-3 rounded text-[11px] sm:text-xs font-black transition inline-flex items-center gap-1 cursor-pointer">
                 <span class="text-sm leading-none">+</span>
                 <span>{{ __('messages.repair_new_job') }}</span>
             </a>
@@ -544,11 +544,11 @@
 
                 <div class="flex items-center justify-end gap-1.5 pt-2.5 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" @click="closeModal()"
-                        class="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 rounded cursor-pointer">
+                        class="sf-btn-3d px-3 py-1.5 text-xs font-bold rounded cursor-pointer">
                         {{ __('messages.cancel') }}
                     </button>
                     <button type="submit" :disabled="!selected"
-                        class="px-3.5 py-1.5 text-xs font-black text-white bg-violet-600 hover:bg-violet-700 rounded shadow-2xs transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
+                        class="sf-btn-3d-primary px-3.5 py-1.5 text-xs font-black rounded transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                         {{ __('messages.repair_apply') }}
                     </button>
                 </div>

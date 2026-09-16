@@ -1,9 +1,10 @@
 @extends('layouts.admin.app')
 
 @section('title', ($branch->exists ? __('messages.edit') : __('messages.branches_add_new')) . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full max-w-3xl mx-auto space-y-6">
+<div class="w-full max-w-3xl mx-auto space-y-0.5 pb-6">
 
     {{-- Header --}}
     <div class="flex items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
@@ -21,7 +22,7 @@
 
     @if ($errors->any())
         <div class="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-2xl text-sm text-rose-800 dark:text-rose-200">
-            <div class="font-bold mb-1">{{ __('messages.fix_errors_prompt') ?? 'ဖြည့်သွင်းချက်များ မှားယွင်းနေပါသည်:' }}</div>
+            <div class="font-bold mb-1">{{ __('messages.fix_errors_prompt') }}</div>
             <ul class="list-disc list-inside space-y-0.5">
                 @foreach ($errors->all() as $err)
                     <li>{{ $err }}</li>

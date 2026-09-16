@@ -20,7 +20,7 @@
 
 @php
     $customBtnClass = $attributes->get('btn-class');
-    $defaultBtnClass = 'h-10 w-10 inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 text-base shadow-sm transition hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500';
+    $defaultBtnClass = 'h-10 w-10 inline-flex items-center justify-center rounded-xl border border-slate-200/80 border-b-2 border-b-slate-300 dark:border-slate-700 dark:border-b-slate-950 bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 text-base shadow-xs hover:shadow hover:-translate-y-0.5 active:translate-y-0.5 active:border-b transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-500';
 @endphp
     <button
         type="button"

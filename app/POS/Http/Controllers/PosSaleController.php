@@ -519,7 +519,7 @@ class PosSaleController extends Controller
      * JSON cart mutation responses for the AJAX POS UI; plain form posts
      * (non-XHR) keep the classic redirect-with-flash behaviour.
      */
-    private function jsonOrRedirect(Request $request, \App\Models\Store $store, ?string $success = null, ?string $error = null): JsonResponse|RedirectResponse
+    private function jsonOrRedirect(Request $request, Store $store, ?string $success = null, ?string $error = null): JsonResponse|RedirectResponse
     {
         $wantsJson = $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
 

@@ -1,7 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.price_wizard_title') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
 <script nonce="{{ $cspNonce }}">
@@ -45,12 +45,13 @@ window.priceWizardData = function (initialProducts) {
         },
 
         getValueLabel: function () {
+            const sym = window.__currencyConfig?.currency_symbol || '{{ currency_symbol($store) }}';
             switch (this.calcMode) {
                 case 'markup_on_cost': return 'Markup % (e.g. 20%)';
                 case 'margin_on_cost': return 'Target Margin % (e.g. 25%)';
                 case 'percentage_on_current': return 'Adjustment % (+/- %)';
-                case 'fixed_amount_on_current': return 'Fixed Amount (+/- MMK)';
-                case 'fixed_price': return 'Fixed Price (MMK)';
+                case 'fixed_amount_on_current': return 'Fixed Amount (+/- ' + sym + ')';
+                case 'fixed_price': return 'Fixed Price (' + sym + ')';
                 case 'wholesale_from_retail': return 'Discount % from Retail';
                 default: return 'Value';
             }
@@ -252,25 +253,25 @@ window.priceWizardData = function (initialProducts) {
 
 <div
     x-data="window.priceWizardData({{ $productsPayload }})"
-    class="w-full space-y-2 sm:space-y-2.5"
+    class="w-full space-y-0.5 pb-6"
 >
 
     {{-- ============================================================
          1. COMPACT HERO PAGE HEADER
          ============================================================ --}}
-    <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+    <div class="p-2 sm:p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
         <div class="min-w-0">
-            <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <span>{{ __('messages.price_wizard_title') }}</span>
-                <span class="text-xs font-mono font-bold text-slate-400">({{ number_format(count($products)) }})</span>
+                <span class="text-[10px] font-mono font-bold text-slate-400">({{ number_format(count($products)) }})</span>
             </h1>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{{ __('messages.price_wizard_subtitle') }}</p>
+            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{{ __('messages.price_wizard_subtitle') }}</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-1.5 shrink-0">
             {{-- Export CSV --}}
             <a href="{{ route('store.admin.price_wizard.export', array_merge(['store_slug' => $store->slug], request()->all())) }}"
-               class="px-2.5 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 shadow-2xs transition flex items-center gap-1">
+               class="px-2 py-1 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 shadow-2xs transition flex items-center gap-1">
                 <span>📊</span>
                 <span class="hidden sm:inline">{{ __('messages.price_wizard_export_csv') }}</span>
             </a>
@@ -279,7 +280,7 @@ window.priceWizardData = function (initialProducts) {
             <button type="button"
                     @click="openConfirmModal()"
                     :disabled="selectedCount === 0 || modifiedCount === 0"
-                    class="px-3 py-1.5 rounded-lg text-xs font-black bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                    class="px-2.5 py-1 rounded-lg text-xs font-black bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
                 <span>💾</span>
                 <span>{{ __('messages.price_wizard_apply_changes') }} (<span x-text="modifiedCount"></span>)</span>
             </button>
@@ -288,14 +289,14 @@ window.priceWizardData = function (initialProducts) {
 
     {{-- Flash Notifications --}}
     @if (session('success'))
-        <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-lg text-xs text-emerald-800 dark:text-emerald-200 flex items-center gap-2 shadow-2xs font-semibold">
+        <div class="p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-lg text-xs text-emerald-800 dark:text-emerald-200 flex items-center gap-2 shadow-2xs font-semibold">
             <span>✅</span>
             <span>{{ session('success') }}</span>
         </div>
     @endif
 
     @if ($errors->any())
-        <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg text-xs text-rose-800 dark:text-rose-200 shadow-2xs">
+        <div class="p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-lg text-xs text-rose-800 dark:text-rose-200 shadow-2xs">
             <div class="font-bold mb-1">{{ __('messages.fix_issues') }}:</div>
             <ul class="list-disc list-inside space-y-0.5">
                 @foreach ($errors->all() as $err)
@@ -306,62 +307,64 @@ window.priceWizardData = function (initialProducts) {
     @endif
 
     {{-- ============================================================
-         2. KPI SUMMARY CARDS (4-UP COMPACT)
+         2. KPI SUMMARY CARDS (4 Centered Row-based Cards - Standard v4.1)
          ============================================================ --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-0.5 sm:gap-1">
         {{-- Total Products --}}
-        <div class="p-2.5 sm:p-3 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
-            <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                <span>📦</span>
-                <span>{{ __('messages.price_wizard_stat_total_products') }}</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0 text-base">
+                📦
             </div>
-            <div class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 font-mono mt-0.5">
-                {{ number_format($stats['total_products']) }}
-            </div>
-            <div class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">
-                {{ number_format(count($products)) }} matched in filter
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 block leading-tight truncate">{{ __('messages.price_wizard_stat_total_products') }}</span>
+                <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 font-mono tracking-tight leading-tight mt-0.5">
+                    {{ number_format($stats['total_products']) }}
+                </div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ number_format(count($products)) }} matched</div>
             </div>
         </div>
 
         {{-- With Purchase Cost --}}
-        <div class="p-2.5 sm:p-3 rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-2xs">
-            <div class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1">
-                <span>💵</span>
-                <span>{{ __('messages.price_wizard_stat_with_cost') }}</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-2xs">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-base">
+                💵
             </div>
-            <div class="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
-                {{ number_format($stats['with_cost_count']) }}
-            </div>
-            <div class="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5 truncate">
-                {{ number_format($stats['zero_cost_count']) }} {{ __('messages.price_wizard_stat_zero_cost') }}
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-300 block leading-tight truncate">{{ __('messages.price_wizard_stat_with_cost') }}</span>
+                <div class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight leading-tight mt-0.5">
+                    {{ number_format($stats['with_cost_count']) }}
+                </div>
+                <div class="text-[9px] text-emerald-600/80 dark:text-emerald-400/80 leading-none mt-0.5">{{ number_format($stats['zero_cost_count']) }} zero cost</div>
             </div>
         </div>
 
         {{-- Avg Retail Margin --}}
-        <div class="p-2.5 sm:p-3 rounded-lg border border-violet-200/80 dark:border-violet-900/60 bg-violet-50/40 dark:bg-violet-950/20 shadow-2xs">
-            <div class="text-[11px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider flex items-center gap-1">
-                <span>📈</span>
-                <span>{{ __('messages.price_wizard_stat_avg_margin') }}</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 rounded-lg border border-violet-200/80 dark:border-violet-900/60 bg-violet-50/40 dark:bg-violet-950/20 shadow-2xs">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 text-base">
+                📈
             </div>
-            <div class="text-base sm:text-lg font-black text-violet-600 dark:text-violet-400 font-mono mt-0.5">
-                {{ $stats['avg_margin'] }}%
-            </div>
-            <div class="text-[10px] text-violet-600/80 dark:text-violet-400/80 mt-0.5 truncate">
-                Based on cost & retail
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-violet-700 dark:text-violet-300 block leading-tight truncate">{{ __('messages.price_wizard_stat_avg_margin') }}</span>
+                <div class="text-xs sm:text-sm font-black text-violet-600 dark:text-violet-400 font-mono tracking-tight leading-tight mt-0.5">
+                    {{ $stats['avg_margin'] }}%
+                </div>
+                <div class="text-[9px] text-violet-600/80 dark:text-violet-400/80 leading-none mt-0.5">Cost & retail margin</div>
             </div>
         </div>
 
         {{-- Below Cost Warning --}}
-        <div class="p-2.5 sm:p-3 rounded-lg border shadow-2xs {{ $stats['below_cost_count'] > 0 ? 'border-rose-200/80 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20' : 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900' }}">
-            <div class="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 {{ $stats['below_cost_count'] > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500 dark:text-slate-400' }}">
-                <span>⚠️</span>
-                <span>{{ __('messages.price_wizard_stat_below_cost') }}</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 rounded-lg border shadow-2xs {{ $stats['below_cost_count'] > 0 ? 'border-rose-200/80 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20' : 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900' }}">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md {{ $stats['below_cost_count'] > 0 ? 'bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' }} flex items-center justify-center shrink-0 text-base">
+                ⚠️
             </div>
-            <div class="text-base sm:text-lg font-black font-mono mt-0.5 {{ $stats['below_cost_count'] > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-200' }}">
-                {{ number_format($stats['below_cost_count']) }}
-            </div>
-            <div class="text-[10px] mt-0.5 truncate {{ $stats['below_cost_count'] > 0 ? 'text-rose-600/80 dark:text-rose-400/80 font-bold' : 'text-slate-400 dark:text-slate-500' }}">
-                {{ $stats['below_cost_count'] > 0 ? 'Requires attention' : 'All healthy' }}
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium {{ $stats['below_cost_count'] > 0 ? 'text-rose-700 dark:text-rose-300' : 'text-slate-500 dark:text-slate-400' }} block leading-tight truncate">{{ __('messages.price_wizard_stat_below_cost') }}</span>
+                <div class="text-xs sm:text-sm font-black font-mono tracking-tight leading-tight mt-0.5 {{ $stats['below_cost_count'] > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-200' }}">
+                    {{ number_format($stats['below_cost_count']) }}
+                </div>
+                <div class="text-[9px] leading-none mt-0.5 {{ $stats['below_cost_count'] > 0 ? 'text-rose-600/80 dark:text-rose-400/80 font-bold' : 'text-slate-400 dark:text-slate-500' }}">
+                    {{ $stats['below_cost_count'] > 0 ? 'Requires attention' : 'All healthy' }}
+                </div>
             </div>
         </div>
     </div>
@@ -443,7 +446,7 @@ window.priceWizardData = function (initialProducts) {
                            @input="recalculateAll()"
                            class="w-full rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 pr-10 text-xs bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-mono font-bold focus:ring-2 focus:ring-violet-500 shadow-2xs">
                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 dark:text-slate-500"
-                          x-text="isPercentageMode() ? '%' : (window.__currencyConfig ? (window.__currencyConfig.currency_symbol || 'Ks') : 'Ks')"></span>
+                          x-text="isPercentageMode() ? '%' : (window.__currencyConfig ? (window.__currencyConfig.currency_symbol || '{{ currency_symbol($store) }}') : '{{ currency_symbol($store) }}')"></span>
                 </div>
             </div>
 

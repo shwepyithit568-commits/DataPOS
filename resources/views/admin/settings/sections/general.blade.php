@@ -2,7 +2,7 @@
     <div class="admin-section-head">
         <div>
             <h2 class="admin-section-title">🏪 {{ __('messages.settings_store_identity') }}</h2>
-            <p class="admin-section-sub">အရှေ့ဘက် storefront header, title နှင့် default language အတွက်အချက်အလက်များ။</p>
+            <p class="admin-section-sub">{{ __('messages.settings_general_sub') }}</p>
         </div>
     </div>
 
@@ -14,8 +14,8 @@
         </div>
         <div>
             <label for="tagline" class="{{ $labelClass }}">{{ __('messages.settings_store_tagline') }}</label>
-            <input id="tagline" type="text" name="tagline" maxlength="160" value="{{ old('tagline', $setting->tagline) }}" placeholder="ဥပမာ — မိုဘိုင်းဖုန်းနှင့် အပိုပစ္စည်းများ" class="{{ $inputClass }}" />
-            <p class="{{ $helpClass }}">Storefront header တွင် ဆိုင်အမည်အောက်မှာ ပြမည့် စာသား (အများဆုံး 160 characters)။</p>
+            <input id="tagline" type="text" name="tagline" maxlength="160" value="{{ old('tagline', $setting->tagline) }}" placeholder="{{ __('messages.settings_tagline_placeholder') }}" class="{{ $inputClass }}" />
+            <p class="{{ $helpClass }}">{{ __('messages.settings_tagline_help') }}</p>
             @error('tagline')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
         </div>
         <div>

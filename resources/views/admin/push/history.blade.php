@@ -12,27 +12,27 @@
 @endphp
 
 @section('title', __('messages.push_history_btn') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full space-y-2 sm:space-y-2.5">
+<div class="w-full space-y-0.5 pb-6">
     
     {{-- ============================================================
          PAGE HEADER — Eyebrow, title, subtitle & Back CTA
          ============================================================ --}}
-    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
         <div class="min-w-0">
-            <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                 {{ __('messages.push_history_btn') }}
             </h1>
-            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                {{ $store->name }} · စတိုးမှ ပေးပို့ခဲ့သော နောက်ဆုံး အသိပေးချက် (၅၀) ၏ မှတ်တမ်းများ
+            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                {{ __('messages.push_history_subtitle', ['store' => $store->name]) }}
             </p>
         </div>
 
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 shrink-0">
             <a href="{{ route('store.admin.push.index', ['store_slug' => $store->slug]) }}"
-               class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1.5 active:scale-95 shadow-2xs">
+               class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1 active:scale-95 shadow-2xs">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                 <span>{{ __('messages.back') }}</span>
             </a>
@@ -40,55 +40,63 @@
     </header>
 
     {{-- ============================================================
-         KPI STAT CARDS (4 Summary Cards)
+         KPI STAT CARDS (4 Centered Row-based Cards - Standard v4.1)
          ============================================================ --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-0.5 sm:gap-1">
         {{-- Total Logged --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">စုစုပေါင်း ပေးပို့မှု</span>
-                <span class="text-xs">📋</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0 text-base">
+                📋
             </div>
-            <div class="text-lg sm:text-2xl font-black text-slate-900 dark:text-slate-100 mt-1 font-mono tracking-tight">
-                {{ number_format($counts['all']) }}
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 block leading-tight truncate">{{ __('messages.push_total_dispatched') }}</span>
+                <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 font-mono tracking-tight leading-tight mt-0.5">
+                    {{ number_format($counts['all']) }}
+                </div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.all_dispatches_logged') }}</div>
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.all_dispatches_logged') }}</div>
         </div>
 
         {{-- Orders --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">အော်ဒါသစ်များ</span>
-                <span class="text-xs">🆕</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 text-base">
+                🆕
             </div>
-            <div class="text-lg sm:text-2xl font-black text-violet-600 dark:text-violet-400 mt-1 font-mono tracking-tight">
-                {{ number_format($counts['order']) }}
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 block leading-tight truncate">{{ __('messages.push_new_orders') }}</span>
+                <div class="text-xs sm:text-sm font-black text-violet-600 dark:text-violet-400 font-mono tracking-tight leading-tight mt-0.5">
+                    {{ number_format($counts['order']) }}
+                </div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.new_order_alerts') }}</div>
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.new_order_alerts') }}</div>
         </div>
 
         {{-- Payments --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">ငွေပေးချေမှုများ</span>
-                <span class="text-xs">💵</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-base">
+                💵
             </div>
-            <div class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono tracking-tight">
-                {{ number_format($counts['payment']) }}
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 block leading-tight truncate">{{ __('messages.push_payments') }}</span>
+                <div class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight leading-tight mt-0.5">
+                    {{ number_format($counts['payment']) }}
+                </div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.payment_receipts') }}</div>
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.payment_receipts') }}</div>
         </div>
 
         {{-- Broadcast Studio --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">သတင်းလွှာ/စမ်းသပ်</span>
-                <span class="text-xs">📣</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 text-base">
+                📣
             </div>
-            <div class="text-lg sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1 font-mono tracking-tight">
-                {{ number_format($counts['system']) }}
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 block leading-tight truncate">{{ __('messages.push_broadcast_tests') }}</span>
+                <div class="text-xs sm:text-sm font-black text-indigo-600 dark:text-indigo-400 font-mono tracking-tight leading-tight mt-0.5">
+                    {{ number_format($counts['system']) }}
+                </div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.broadcasts_dispatched') }}</div>
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.broadcasts_dispatched') }}</div>
         </div>
     </div>
 

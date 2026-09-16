@@ -1,7 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.reviews_title') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @php
     $storeRouteParams = ['store_slug' => $store->slug];
@@ -28,7 +28,7 @@
 @endphp
 
 @section('content')
-<div class="w-full space-y-2 sm:space-y-2.5"
+<div class="w-full space-y-0.5 pb-6"
      x-data="{
         viewMode: localStorage.getItem('admin_reviews_view_mode') || 'table',
         detailsModal: false,
@@ -44,25 +44,25 @@
     {{-- ============================================================
          PAGE HEADER — eyebrow badge, title, subtitle, CTA row
          ============================================================ --}}
-    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
         <div class="min-w-0">
-            <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                 {{ __('messages.reviews_title') }}
             </h1>
-            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 {{ $store->name }} · {{ __('messages.reviews_subtitle') }}
             </p>
         </div>
-        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0">
+        <div class="flex flex-wrap items-center gap-1.5 shrink-0">
             @if($stats['pending'] > 0)
                 <a href="{{ route('store.admin.reviews.index', array_merge($baseParams, ['status' => 'pending'])) }}"
-                   class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition flex items-center gap-1.5 shadow-2xs active:scale-95 animate-pulse">
+                   class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition flex items-center gap-1 shadow-2xs active:scale-95 animate-pulse">
                     <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                     <span>{{ $stats['pending'] }} {{ __('messages.reviews_filter_pending') }}</span>
                 </a>
             @endif
             <a href="{{ route('storefront.store.home', ['store_slug' => $store->slug]) }}" target="_blank"
-               class="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-2xs transition flex items-center gap-1.5 active:scale-95">
+               class="px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-2xs transition flex items-center gap-1 active:scale-95">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                 <span>{{ __('messages.web_catalog_preview_storefront') }}</span>
             </a>
@@ -71,103 +71,103 @@
 
     {{-- Flash Notification --}}
     @if(session('success'))
-        <div class="w-full p-2.5 sm:p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
+        <div class="w-full p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
             <span>✅</span>
             <span>{{ session('success') }}</span>
         </div>
     @endif
 
     {{-- ============================================================
-         KPI STAT CARDS — 5 responsive interactive cards
+         KPI STAT CARDS — 5 Centered Row-based Cards (Standard v4.1)
          ============================================================ --}}
-    <div class="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5" role="list" aria-label="{{ __('messages.reviews_title') }}">
+    <div class="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-0.5 sm:gap-1" role="list" aria-label="{{ __('messages.reviews_title') }}">
         {{-- Total Reviews --}}
         <a href="{{ $clearFiltersUrl }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['total'] }}">
-            <div class="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg grid place-items-center {{ $statAccents['total'] }} shadow-inner">
-                <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2 sm:p-2.5 flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['total'] }}">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-md grid place-items-center {{ $statAccents['total'] }} shadow-inner">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-xl font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums font-outfit">
-                    {{ number_format($stats['total']) }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
+            <div class="min-w-0">
+                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 leading-tight truncate font-bold uppercase tracking-wider">
                     {{ __('messages.reviews_total') }}
+                </p>
+                <p class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 leading-tight tabular-nums font-outfit mt-0.5">
+                    {{ number_format($stats['total']) }}
                 </p>
             </div>
         </a>
 
         {{-- Pending Moderation --}}
         <a href="{{ route('store.admin.reviews.index', array_merge($baseParams, $currentSort, ['status' => 'pending'])) }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['pending'] }}">
-            <div class="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg grid place-items-center {{ $statAccents['pending'] }} shadow-inner">
-                <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2 sm:p-2.5 flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['pending'] }}">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-md grid place-items-center {{ $statAccents['pending'] }} shadow-inner">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-xl font-black text-amber-600 dark:text-amber-400 leading-none tabular-nums font-outfit">
-                    {{ number_format($stats['pending']) }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
+            <div class="min-w-0">
+                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 leading-tight truncate font-bold uppercase tracking-wider">
                     {{ __('messages.reviews_pending') }}
+                </p>
+                <p class="text-xs sm:text-sm font-black text-amber-600 dark:text-amber-400 leading-tight tabular-nums font-outfit mt-0.5">
+                    {{ number_format($stats['pending']) }}
                 </p>
             </div>
         </a>
 
         {{-- Approved & Live --}}
         <a href="{{ route('store.admin.reviews.index', array_merge($baseParams, $currentSort, ['status' => 'approved'])) }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['approved'] }}">
-            <div class="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg grid place-items-center {{ $statAccents['approved'] }} shadow-inner">
-                <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2 sm:p-2.5 flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['approved'] }}">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-md grid place-items-center {{ $statAccents['approved'] }} shadow-inner">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                 </svg>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-xl font-black text-emerald-600 dark:text-emerald-400 leading-none tabular-nums font-outfit">
-                    {{ number_format($stats['approved']) }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
+            <div class="min-w-0">
+                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 leading-tight truncate font-bold uppercase tracking-wider">
                     {{ __('messages.reviews_approved') }}
+                </p>
+                <p class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 leading-tight tabular-nums font-outfit mt-0.5">
+                    {{ number_format($stats['approved']) }}
                 </p>
             </div>
         </a>
 
         {{-- Average Rating --}}
         <div role="listitem"
-             class="w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5">
-            <div class="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg grid place-items-center {{ $statAccents['rating'] }} shadow-inner">
-                <svg class="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-amber-500 text-amber-500" viewBox="0 0 20 20">
+             class="w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2 sm:p-2.5 flex items-center justify-center gap-2.5 sm:gap-3">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-md grid place-items-center {{ $statAccents['rating'] }} shadow-inner">
+                <svg class="w-4 h-4 fill-amber-500 text-amber-500" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                 </svg>
             </div>
-            <div class="min-w-0 flex-1">
-                <div class="flex items-baseline gap-1">
-                    <p class="text-base sm:text-xl font-black text-sky-600 dark:text-sky-400 leading-none tabular-nums font-outfit">
-                        {{ number_format($stats['avg_rating'], 1) }}
-                    </p>
-                    <span class="text-[10px] text-slate-400 font-bold">/ 5.0</span>
-                </div>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
+            <div class="min-w-0">
+                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 leading-tight truncate font-bold uppercase tracking-wider">
                     {{ __('messages.reviews_avg_rating') }}
                 </p>
+                <div class="flex items-baseline gap-1 mt-0.5">
+                    <p class="text-xs sm:text-sm font-black text-sky-600 dark:text-sky-400 leading-tight tabular-nums font-outfit">
+                        {{ number_format($stats['avg_rating'], 1) }}
+                    </p>
+                    <span class="text-[9px] text-slate-400 font-bold">/ 5.0</span>
+                </div>
             </div>
         </div>
 
         {{-- 5-Star Reviews --}}
         <a href="{{ route('store.admin.reviews.index', array_merge($baseParams, $currentSort, ['rating' => 5])) }}" role="listitem"
-           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2.5 sm:p-3 flex items-center gap-2 sm:gap-2.5 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['five_star'] }} col-span-2 sm:col-span-1">
-            <div class="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg grid place-items-center {{ $statAccents['five_star'] }} shadow-inner">
+           class="group w-full bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 p-2 sm:p-2.5 flex items-center justify-center gap-2.5 sm:gap-3 transition-all duration-200 hover:shadow-sm active:scale-[.99] {{ $statBorders['five_star'] }} col-span-2 sm:col-span-1">
+            <div class="shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-md grid place-items-center {{ $statAccents['five_star'] }} shadow-inner">
                 <span class="text-xs font-black">5★</span>
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-base sm:text-xl font-black text-rose-600 dark:text-rose-400 leading-none tabular-nums font-outfit">
-                    {{ number_format($stats['five_star']) }}
-                </p>
-                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 truncate font-bold uppercase tracking-wider">
+            <div class="min-w-0">
+                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 leading-tight truncate font-bold uppercase tracking-wider">
                     {{ __('messages.reviews_5_star') }}
+                </p>
+                <p class="text-xs sm:text-sm font-black text-rose-600 dark:text-rose-400 leading-tight tabular-nums font-outfit mt-0.5">
+                    {{ number_format($stats['five_star']) }}
                 </p>
             </div>
         </a>

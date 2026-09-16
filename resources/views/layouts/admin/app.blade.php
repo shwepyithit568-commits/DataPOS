@@ -43,6 +43,90 @@
                 transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
             }
         }
+
+        /* Admin Navigation Theme Scoped Styles (Guaranteed 100% display in Light & Dark Mode) */
+        .nav-active-pos { background: linear-gradient(180deg, #eff6ff, #dbeafe) !important; color: #1e40af !important; border-color: #93c5fd !important; border-bottom: 2px solid #3b82f6 !important; }
+        .dark .nav-active-pos { background: linear-gradient(180deg, #172554, #1e3a8a) !important; color: #bfdbfe !important; border-color: #1d4ed8 !important; border-bottom: 2px solid #0f172a !important; }
+        .nav-accordion-pos { border-color: #93c5fd !important; }
+        .dark .nav-accordion-pos { border-color: #1e3a8a !important; }
+        .nav-arrow-pos { color: #2563eb !important; }
+        .dark .nav-arrow-pos { color: #60a5fa !important; }
+
+        .nav-active-inventory { background: linear-gradient(180deg, #fffbeb, #fef3c7) !important; color: #92400e !important; border-color: #fcd34d !important; border-bottom: 2px solid #f59e0b !important; }
+        .dark .nav-active-inventory { background: linear-gradient(180deg, #451a03, #78350f) !important; color: #fde68a !important; border-color: #b45309 !important; border-bottom: 2px solid #0f172a !important; }
+        .nav-accordion-inventory { border-color: #fcd34d !important; }
+        .dark .nav-accordion-inventory { border-color: #78350f !important; }
+        .nav-arrow-inventory { color: #d97706 !important; }
+        .dark .nav-arrow-inventory { color: #fbbf24 !important; }
+
+        .nav-active-purchasing { background: linear-gradient(180deg, #fff7ed, #ffedd5) !important; color: #9a3412 !important; border-color: #fdba74 !important; border-bottom: 2px solid #f97316 !important; }
+        .dark .nav-active-purchasing { background: linear-gradient(180deg, #431407, #7c2d12) !important; color: #fed7aa !important; border-color: #c2410c !important; border-bottom: 2px solid #0f172a !important; }
+        .nav-accordion-purchasing { border-color: #fdba74 !important; }
+        .dark .nav-accordion-purchasing { border-color: #7c2d12 !important; }
+        .nav-arrow-purchasing { color: #ea580c !important; }
+        .dark .nav-arrow-purchasing { color: #fb923c !important; }
+
+        .nav-active-ecommerce { background: linear-gradient(180deg, #ecfdf5, #d1fae5) !important; color: #065f46 !important; border-color: #6ee7b7 !important; border-bottom: 2px solid #10b981 !important; }
+        .dark .nav-active-ecommerce { background: linear-gradient(180deg, #022c22, #064e3b) !important; color: #a7f3d0 !important; border-color: #047857 !important; border-bottom: 2px solid #0f172a !important; }
+        .nav-accordion-ecommerce { border-color: #6ee7b7 !important; }
+        .dark .nav-accordion-ecommerce { border-color: #064e3b !important; }
+        .nav-arrow-ecommerce { color: #059669 !important; }
+        .dark .nav-arrow-ecommerce { color: #34d399 !important; }
+
+        .nav-active-customers { background: linear-gradient(180deg, #f0fdfa, #ccfbf1) !important; color: #115e59 !important; border-color: #5eead4 !important; border-bottom: 2px solid #14b8a6 !important; }
+        .dark .nav-active-customers { background: linear-gradient(180deg, #042f2e, #134e4a) !important; color: #99f6e4 !important; border-color: #0f766e !important; border-bottom: 2px solid #0f172a !important; }
+        .nav-accordion-customers { border-color: #5eead4 !important; }
+        .dark .nav-accordion-customers { border-color: #134e4a !important; }
+        .nav-indicator-customers { background-color: #14b8a6 !important; }
+        .nav-arrow-customers { color: #0d9488 !important; }
+        .dark .nav-arrow-customers { color: #2dd4bf !important; }
+
+        .nav-active-service { background: linear-gradient(180deg, #eef2ff, #e0e7ff) !important; color: #3730a3 !important; border-color: #a5b4fc !important; border-bottom: 2px solid #6366f1 !important; }
+        .dark .nav-active-service { background: linear-gradient(180deg, #1e1b4b, #312e81) !important; color: #c7d2fe !important; border-color: #4338ca !important; border-bottom: 2px solid #0f172a !important; }
+        .nav-accordion-service { border-color: #a5b4fc !important; }
+        .dark .nav-accordion-service { border-color: #312e81 !important; }
+        .nav-arrow-service { color: #4f46e5 !important; }
+        .dark .nav-arrow-service { color: #818cf8 !important; }
+
+        .nav-active-finance { background: linear-gradient(180deg, #f7fee7, #ecfccb) !important; color: #3f6212 !important; border-color: #bef264 !important; border-bottom: 2px solid #84cc16 !important; }
+        .dark .nav-active-finance { background: linear-gradient(180deg, #1a2e05, #365314) !important; color: #d9f99d !important; border-color: #4d7c0f !important; border-bottom: 2px solid #0f172a !important; }
+        .nav-accordion-finance { border-color: #bef264 !important; }
+        .dark .nav-accordion-finance { border-color: #365314 !important; }
+        .nav-indicator-finance { background-color: #84cc16 !important; }
+        .nav-arrow-finance { color: #65a30d !important; }
+        .dark .nav-arrow-finance { color: #a3e635 !important; }
+
+        .nav-active-reports { background: linear-gradient(180deg, #ecfeff, #cffafe) !important; color: #155e75 !important; border-color: #67e8f9 !important; border-bottom: 2px solid #06b6d4 !important; }
+        .dark .nav-active-reports { background: linear-gradient(180deg, #083344, #164e63) !important; color: #a5f3fc !important; border-color: #0e7490 !important; border-bottom: 2px solid #0f172a !important; }
+        .nav-accordion-reports { border-color: #67e8f9 !important; }
+        .dark .nav-accordion-reports { border-color: #164e63 !important; }
+        .nav-arrow-reports { color: #0891b2 !important; }
+        .dark .nav-arrow-reports { color: #22d3ee !important; }
+
+        .nav-active-security { background: linear-gradient(180deg, #fff1f2, #ffe4e6) !important; color: #9f1239 !important; border-color: #fda4af !important; border-bottom: 2px solid #f43f5e !important; }
+        .dark .nav-active-security { background: linear-gradient(180deg, #4c0519, #881337) !important; color: #fecdd3 !important; border-color: #be123c !important; border-bottom: 2px solid #0f172a !important; }
+        .nav-accordion-security { border-color: #fda4af !important; }
+        .dark .nav-accordion-security { border-color: #881337 !important; }
+        .nav-arrow-security { color: #e11d48 !important; }
+        .dark .nav-arrow-security { color: #fb7185 !important; }
+
+        .nav-active-maintenance { background: linear-gradient(180deg, #f8fafc, #f1f5f9) !important; color: #1e293b !important; border-color: #cbd5e1 !important; border-bottom: 2px solid #64748b !important; }
+        .dark .nav-active-maintenance { background: linear-gradient(180deg, #0f172a, #1e293b) !important; color: #cbd5e1 !important; border-color: #334155 !important; border-bottom: 2px solid #020617 !important; }
+        .nav-accordion-maintenance { border-color: #cbd5e1 !important; }
+        .dark .nav-accordion-maintenance { border-color: #334155 !important; }
+        .nav-arrow-maintenance { color: #475569 !important; }
+        .dark .nav-arrow-maintenance { color: #94a3b8 !important; }
+
+        .nav-active-setup { background: linear-gradient(180deg, #fdf4ff, #fae8ff) !important; color: #86198f !important; border-color: #f0abfc !important; border-bottom: 2px solid #d946ef !important; }
+        .dark .nav-active-setup { background: linear-gradient(180deg, #4a044e, #701a75) !important; color: #f5d0fe !important; border-color: #a21caf !important; border-bottom: 2px solid #0f172a !important; }
+        .nav-accordion-setup { border-color: #f0abfc !important; }
+        .dark .nav-accordion-setup { border-color: #701a75 !important; }
+        .nav-indicator-setup { background-color: #d946ef !important; }
+        .nav-arrow-setup { color: #c026d3 !important; }
+        .dark .nav-arrow-setup { color: #e879f9 !important; }
+
+        .nav-active-dashboard { background: linear-gradient(180deg, #f0f9ff, #e0f2fe) !important; color: #075985 !important; border-color: #7dd3fc !important; border-bottom: 2px solid #0284c7 !important; }
+        .dark .nav-active-dashboard { background: linear-gradient(180deg, #082f49, #0c4a6e) !important; color: #bae6fd !important; border-color: #0369a1 !important; border-bottom: 2px solid #0f172a !important; }
     </style>
     {{-- Preload fonts so text renders without font-swap CLS. --}}
     <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/assets/fonts/Roboto-Regular.woff2') }}">
@@ -252,7 +336,7 @@
         }
     @endphp
 
-    <aside :inert="!viewportLg && !sidebarOpen" :class="[sidebarOpen ? 'translate-x-0' : '-translate-x-full', sidebarCollapsed ? 'lg:w-20' : 'lg:w-72']"
+    <aside :inert="!viewportLg && !sidebarOpen" :class="[sidebarOpen ? 'translate-x-0' : '-translate-x-full', sidebarCollapsed ? 'lg:w-20' : 'lg:w-64']"
         data-admin-alerts-url="{{ $hasStoreContext ? url('/store/' . $currentSlug . '/admin/alerts/check') : '' }}"
         data-admin-alerts-interval="30000"
         x-data="{
@@ -340,11 +424,11 @@
             }
         }"
         @admin-sidebar-collapsed.window="closeGroups()"
-        class="fixed inset-y-0 left-0 z-30 w-72 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-all duration-300 ease-in-out lg:static lg:translate-x-0 flex flex-col shadow-lg border-r border-slate-200/80 dark:border-slate-800/80 pb-[env(safe-area-inset-bottom)] lg:overflow-visible">
+        class="fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-all duration-300 ease-in-out lg:static lg:translate-x-0 flex flex-col shadow-lg border-r border-slate-200/80 dark:border-slate-800/80 pb-[env(safe-area-inset-bottom)] lg:overflow-visible">
 
-        <div class="h-16 flex items-center justify-between px-4 font-bold border-b border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-950/40">
-            <span class="font-outfit text-violet-700 dark:text-violet-300 flex min-w-0 items-center gap-3" :class="sidebarCollapsed ? 'lg:justify-center lg:gap-0' : ''">
-                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white text-violet-600 shadow-lg shadow-violet-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-violet-300">
+        <div class="h-16 flex items-center justify-between px-4 font-bold border-b border-slate-200/80 dark:border-slate-800/80 bg-gradient-to-b from-white to-slate-50/80 dark:from-slate-950 dark:to-slate-900/80">
+            <span class="font-outfit text-sky-600 dark:text-sky-400 flex min-w-0 items-center gap-3" :class="sidebarCollapsed ? 'lg:justify-center lg:gap-0' : ''">
+                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/90 border-b-2 border-b-slate-300 dark:border-slate-700 dark:border-b-slate-900 bg-gradient-to-b from-white via-white to-slate-50 dark:from-slate-900 dark:to-slate-950 text-sky-600 dark:text-sky-300 shadow-xs">
                     @if (!empty($adminStoreSetting?->adminLogo()))
                         <img
                             src="{{ asset('storage/' . $adminStoreSetting->adminLogo()) }}"
@@ -357,11 +441,11 @@
                     @endif
                 </span>
                 <span class="min-w-0" :class="sidebarCollapsed ? 'lg:hidden' : ''">
-                    <span class="block truncate text-base">{{ __('messages.admin_panel') }}</span>
+                    <span class="block truncate text-base font-extrabold text-slate-800 dark:text-slate-100">{{ __('messages.admin_panel') }}</span>
                     <span class="block truncate text-xs font-medium text-slate-500 dark:text-slate-400">{{ $activeStore->name ?? 'DataPOS' }}</span>
                 </span>
             </span>
-            <button x-ref="sidebarClose" @click="closeDrawer()" class="lg:hidden inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 hover:bg-gray-200 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-violet-500" aria-label="{{ __('messages.close_menu') }}">
+            <button x-ref="sidebarClose" @click="closeDrawer()" class="lg:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 border-b-2 border-b-slate-300 dark:border-slate-700 dark:border-b-slate-900 bg-gradient-to-b from-white to-slate-100 dark:from-slate-800 dark:to-slate-900 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white shadow-xs hover:shadow hover:-translate-y-0.5 active:translate-y-0.5 active:border-b transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-500" aria-label="{{ __('messages.close_menu') }}">
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M6 6l12 12M18 6 6 18" />
                 </svg>
@@ -372,7 +456,7 @@
             @if ($hasStoreContext && auth()->user()?->isPlatformOwner() && ! $isPlatformScope)
                 <div class="pt-0.5 pb-0.5">
                     <a href="{{ route('admin.dashboard') }}"
-                       class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-300 hover:bg-violet-50/60 dark:hover:bg-slate-800/60 transition"
+                       class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-300 border border-transparent hover:border-slate-200/80 hover:border-b-2 hover:border-b-slate-300 dark:hover:border-slate-700 dark:hover:border-b-slate-900 hover:bg-gradient-to-b hover:from-white hover:to-slate-100/80 dark:hover:from-slate-800 dark:hover:to-slate-900 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b transition-all duration-150"
                        :class="sidebarCollapsed ? 'lg:justify-center' : ''"
                        title="← Platform Admin">
                         <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
@@ -383,8 +467,9 @@
 
             @foreach ($navigationTree ?? [] as $item)
                 @if (($item['type'] ?? '') === 'link')
-                    <div>
+                    <div class="w-full">
                         <x-admin.nav-link variant="main"
+                            :group="$item['key']"
                             :href="$item['url']"
                             :route-name="$item['route_name'] ?? null"
                             :active="!empty($item['active'])"
@@ -417,6 +502,7 @@
 
                         @foreach ($item['children'] as $child)
                             <x-admin.nav-link
+                                :group="$item['key']"
                                 :href="$child['url']"
                                 :route-name="$child['route_name'] ?? null"
                                 :active="!empty($child['active'])"
@@ -464,13 +550,13 @@
 
         <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200/80 dark:border-slate-800/80 h-[calc(3.25rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] flex items-center justify-between px-3 sm:px-4 transition-colors duration-200 gap-1.5 sm:gap-2 sticky top-0 z-10">
             <div class="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-                <button x-ref="menuButton" @click="sidebarOpen = true; $nextTick(() => document.querySelector('aside [x-ref=sidebarClose]')?.focus())" class="lg:hidden inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0" aria-label="{{ __('messages.open_menu') }}">
+                <button x-ref="menuButton" @click="sidebarOpen = true; $nextTick(() => document.querySelector('aside [x-ref=sidebarClose]')?.focus())" class="lg:hidden inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200/80 border-b-2 border-b-slate-300 dark:border-slate-700 dark:border-b-slate-950 bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 text-slate-700 dark:text-slate-200 shadow-xs hover:shadow hover:-translate-y-0.5 active:translate-y-0.5 active:border-b transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0" aria-label="{{ __('messages.open_menu') }}">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
                 <button type="button" @click="toggleSidebarCollapsed()"
-                    class="hidden lg:inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 hover:text-violet-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0"
+                    class="hidden lg:inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 border-b-2 border-b-slate-300 dark:border-slate-700 dark:border-b-slate-950 bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 text-slate-600 hover:text-violet-700 dark:text-slate-300 dark:hover:text-violet-300 shadow-xs hover:shadow hover:-translate-y-0.5 active:translate-y-0.5 active:border-b transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0"
                     :aria-label="sidebarCollapsed ? '{{ __('messages.expand_sidebar') }}' : '{{ __('messages.collapse_sidebar') }}'">
                     <svg x-show="!sidebarCollapsed" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h10M4 17h16" />
@@ -499,7 +585,7 @@
 
                 {{-- Language switcher: inline on sm+ (mobile lives inside the More menu) --}}
                 <div class="hidden sm:block">
-                    <x-language-switcher id="admin-header" />
+                    <x-language-switcher id="admin-header" btn-class="sf-btn-3d-telegram h-11 w-11 sm:h-10 sm:w-10 rounded-xl inline-flex items-center justify-center text-base cursor-pointer shadow-xs text-white" />
                 </div>
 
                 {{-- More actions (mobile only: view store, reload, calculator, language) --}}
@@ -524,9 +610,9 @@
                     @scroll.window="moreOpen && updatePos()"
                     @resize.window="moreOpen && updatePos()">
                     <button type="button" x-ref="moreBtn" @click="moreOpen ? close() : open()"
-                        class="h-11 w-11 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0"
+                        class="sf-btn-3d-accent h-11 w-11 inline-flex items-center justify-center rounded-xl text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0"
                         :aria-expanded="moreOpen.toString()" aria-haspopup="menu" aria-label="{{ __('messages.more_actions') }}">
-                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <svg class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                             <circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>
                         </svg>
                     </button>
@@ -599,10 +685,10 @@
 
                 @if ($hasStoreContext)
                     <a href="{{ url('/store/' . $currentSlug) }}" target="_blank" rel="noopener noreferrer"
-                        class="hidden sm:inline-flex h-11 w-11 sm:h-10 sm:w-10 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-300 dark:hover:bg-emerald-500/25 transition items-center justify-center focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        class="sf-btn-3d-success hidden sm:inline-flex h-11 w-11 sm:h-10 sm:w-10 rounded-xl items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         aria-label="{{ __('messages.view_commerce') }}"
                         title="{{ __('messages.view_commerce') }}">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.5 5 5h14l2 5.5M4 10.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.5M3 10.5h18M8 21v-6h8v6" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 5v5.5m5-5.5v5.5M17 5v5.5" />
                         </svg>
@@ -610,10 +696,10 @@
                 @endif
 
                 <button @click="window.location.reload()" type="button"
-                    class="hidden sm:inline-flex h-11 w-11 sm:h-10 sm:w-10 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white transition items-center justify-center focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    class="sf-btn-3d-teal hidden sm:inline-flex h-11 w-11 sm:h-10 sm:w-10 rounded-xl items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
                     aria-label="{{ __('messages.reload_page') }}"
                     title="{{ __('messages.reload_page') }}">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
                         <path d="M21 3v5h-5"/>
                         <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
@@ -622,22 +708,22 @@
                 </button>
 
                 <button @click="openCalculator()" type="button"
-                    class="h-11 w-11 sm:h-10 sm:w-10 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:hover:bg-blue-500/25 transition inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    class="sf-btn-3d-primary h-11 w-11 sm:h-10 sm:w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                     aria-label="{{ __('messages.calculator') }}"
                     title="{{ __('messages.calculator') }}">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                         <rect x="5" y="3" width="14" height="18" rx="2" stroke-width="2" />
                         <path stroke-linecap="round" stroke-width="2" d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01" />
                     </svg>
                 </button>
 
                 <button @click="toggleDarkMode()" type="button"
-                    class="h-11 w-11 sm:h-10 sm:w-10 rounded-lg bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-amber-400 hover:bg-gray-200 dark:hover:bg-slate-600 transition inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    class="sf-btn-3d-gold h-11 w-11 sm:h-10 sm:w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
                     :aria-label="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">
-                    <svg x-show="!darkMode" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <svg x-show="!darkMode" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.8A8.5 8.5 0 1111.2 3a6.5 6.5 0 009.8 9.8z" />
                     </svg>
-                    <svg x-show="darkMode" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <svg x-show="darkMode" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36-6.36-1.42 1.42M7.06 16.94l-1.42 1.42m12.72 0-1.42-1.42M7.06 7.06 5.64 5.64" />
                         <circle cx="12" cy="12" r="4" stroke-width="2" />
                     </svg>
@@ -646,15 +732,15 @@
                 {{-- User Profile Dropdown Menu --}}
                 <div class="relative" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false" @keydown.escape.window="userMenuOpen = false">
                     <button type="button" @click="userMenuOpen = !userMenuOpen"
-                        class="h-11 w-11 sm:h-10 sm:w-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/80 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-violet-500 border border-slate-200/80 dark:border-slate-600 shadow-sm flex-shrink-0"
+                        class="sf-btn-3d-accent h-11 w-11 sm:h-10 sm:w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0"
                         :aria-expanded="userMenuOpen.toString()"
                         aria-haspopup="menu"
                         aria-label="{{ auth()->user()?->name ?? 'User Profile' }}">
-                        <div class="h-7 w-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                        <div class="h-7 w-7 rounded-lg bg-white/20 border border-white/30 text-white flex items-center justify-center font-bold text-xs shadow-xs">
                             @if(auth()->user()?->name)
                                 {{ mb_substr(auth()->user()->name, 0, 1) }}
                             @else
-                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
                                     <circle cx="12" cy="7" r="4"/>
                                 </svg>

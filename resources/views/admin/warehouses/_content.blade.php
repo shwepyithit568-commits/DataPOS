@@ -15,43 +15,53 @@
      }"
      @view-changed.window="viewMode = $event.detail; localStorage.setItem('admin_view_mode', $event.detail)"
      @open-warehouse-create.window="showCreate = true"
-     class="w-full space-y-2 sm:space-y-2.5">
+     class="w-full space-y-0.5 pb-6">
 
     {{-- ============================================================
-         1. COMPACT HERO PAGE HEADER (Admin UI Standard)
+         1. COMPACT HERO PAGE HEADER (Standard v4.1 Ultra-Dense)
          ============================================================ --}}
-    <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 transition">
-        <div class="min-w-0">
-            <h1 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <span>🏬 {{ __('messages.warehouses_title') }}</span>
-                <span class="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                    {{ number_format($stats['total']) }}
+    <div class="px-2 py-1.5 bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 select-none transition">
+        <div class="flex items-center gap-2 min-w-0">
+            <a href="{{ route('store.admin.dashboard', $storeRouteParams) }}"
+               class="h-6 w-6 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-500 transition active:scale-95 shrink-0"
+               title="{{ __('messages.back') }}">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <div class="w-6 h-6 rounded bg-violet-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+                <span>🏬</span>
+            </div>
+            <div class="flex items-center gap-1.5 min-w-0">
+                <span class="text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/60 px-1.5 py-0.5 rounded border border-violet-200/50 dark:border-violet-800/50 truncate max-w-[120px] sm:max-w-none">
+                    {{ $store->name }}
                 </span>
-            </h1>
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight truncate">
+                    {{ __('messages.warehouses_title') }}
+                </h1>
+                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono hidden md:inline">
+                    · {{ number_format($stats['total']) }} {{ __('messages.all') }}
+                </span>
+            </div>
         </div>
 
-        <div class="flex items-center gap-1.5 flex-wrap shrink-0">
-            {{-- Quick Link: Stock Transfers --}}
+        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 self-end sm:self-auto">
             @if(\Illuminate\Support\Facades\Route::has('pos.transfers.index'))
                 <a href="{{ route('pos.transfers.index', $storeRouteParams) }}"
-                   class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1 shadow-2xs">
+                   class="h-7 px-2 sm:px-2.5 rounded text-[11px] sm:text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
                     <span>🔄</span>
                     <span class="hidden sm:inline">{{ __('messages.sidebar_transfers') }}</span>
                 </a>
             @endif
 
-            {{-- Quick Link: Stock Count --}}
             @if(\Illuminate\Support\Facades\Route::has('store.admin.stock_count.index'))
                 <a href="{{ route('store.admin.stock_count.index', $storeRouteParams) }}"
-                   class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1 shadow-2xs">
+                   class="h-7 px-2 sm:px-2.5 rounded text-[11px] sm:text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
                     <span>📋</span>
                     <span class="hidden sm:inline">{{ __('messages.stock_count_title') ?? 'Stock Count' }}</span>
                 </a>
             @endif
 
-            {{-- Primary Action: Add Warehouse Modal --}}
             <button @click="showCreate = true" type="button"
-                    class="px-3 py-1.5 rounded-lg text-xs font-black bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-900/20 transition flex items-center gap-1.5 active:scale-95 cursor-pointer">
+                    class="sf-btn-3d-primary h-7 px-2.5 sm:px-3 rounded text-[11px] sm:text-xs font-black inline-flex items-center gap-1 cursor-pointer">
                 <span>+</span>
                 <span>{{ __('messages.add_warehouse') }}</span>
             </button>
@@ -60,104 +70,113 @@
 
     {{-- Flash Notifications --}}
     @if (session('success'))
-        <div class="p-2.5 sm:p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-between shadow-2xs">
-            <div class="flex items-center gap-2">
-                <span>✅</span>
-                <span>{{ session('success') }}</span>
-            </div>
+        <div class="w-full p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
+            <span>✅</span>
+            <span>{{ session('success') }}</span>
         </div>
     @endif
 
     @if ($errors->any())
-        <div class="p-2.5 sm:p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs font-bold text-rose-700 dark:text-rose-300 space-y-1 shadow-2xs">
+        <div class="w-full p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded text-xs text-rose-800 dark:text-rose-300 space-y-1 shadow-2xs">
+            <div class="font-black flex items-center gap-1.5">
+                <span>⚠️</span>
+                <span>{{ __('messages.validation_error') }}:</span>
+            </div>
             @foreach ($errors->all() as $error)
-                <p class="flex items-center gap-1.5">
-                    <span>⚠️</span>
-                    <span>{{ $error }}</span>
-                </p>
+                <p class="ml-4">• {{ $error }}</p>
             @endforeach
         </div>
     @endif
 
     {{-- ============================================================
-         2. KPI SUMMARY METRIC CARDS (4-Up Click-to-Filter)
+         2. 4 KEY KPI CARDS (Standard v4.1 Centered Row-based)
          ============================================================ --}}
-    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1 select-none">
         {{-- Card 1: Total Warehouses --}}
         <a href="{{ route('store.admin.warehouses.index', array_merge($storeRouteParams, ['status' => ''])) }}"
-           class="p-2.5 sm:p-3 rounded-lg border transition duration-150 flex flex-col justify-between shadow-2xs cursor-pointer group {{ $status === '' ? 'bg-violet-50/70 border-violet-300 dark:bg-violet-950/30 dark:border-violet-800 ring-2 ring-violet-500/20' : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700' }}">
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $status === ''
+                      ? 'bg-violet-50/80 dark:bg-violet-950/40 border-violet-400 dark:border-violet-600 ring-2 ring-violet-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-violet-300 dark:hover:border-violet-800 hover:bg-violet-50/30' }}"
+           title="{{ __('messages.warehouse_stat_total') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $status === ''
+                            ? 'bg-violet-600 text-white border-violet-600 shadow-2xs'
+                            : 'bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 border-violet-100 dark:border-violet-900/50' }}">🏬</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $status === '' ? 'text-violet-900 dark:text-violet-200' : 'text-slate-500 dark:text-slate-400' }}">
                     {{ __('messages.warehouse_stat_total') }}
-                </span>
-                <span class="w-6 h-6 rounded-md bg-violet-100 dark:bg-violet-950 text-violet-600 dark:text-violet-400 grid place-items-center text-xs">
-                    🏬
-                </span>
-            </div>
-            <div class="mt-1 flex items-baseline justify-between">
-                <span class="text-base sm:text-lg font-black font-mono text-slate-900 dark:text-slate-100">
-                    {{ number_format($stats['total']) }}
-                </span>
-                <span class="text-[10px] text-slate-400">{{ __('messages.all') }}</span>
+                </div>
+                <div class="text-sm sm:text-base font-black text-violet-600 dark:text-violet-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['total']) }}</span>
+                    @if ($status === '')
+                        <span class="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse"></span>
+                    @endif
+                </div>
             </div>
         </a>
 
         {{-- Card 2: Active Locations --}}
         <a href="{{ route('store.admin.warehouses.index', array_merge($storeRouteParams, ['status' => 'active'])) }}"
-           class="p-2.5 sm:p-3 rounded-lg border transition duration-150 flex flex-col justify-between shadow-2xs cursor-pointer group {{ $status === 'active' || $status === '1' ? 'bg-emerald-50/70 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-800 ring-2 ring-emerald-500/20' : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700' }}">
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>{{ __('messages.warehouse_stat_active') }}</span>
-                </span>
-                <span class="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 grid place-items-center text-xs">
-                    ✓
-                </span>
-            </div>
-            <div class="mt-1 flex items-baseline justify-between">
-                <span class="text-base sm:text-lg font-black font-mono text-emerald-600 dark:text-emerald-400">
-                    {{ number_format($stats['active']) }}
-                </span>
-                <span class="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 font-bold">{{ __('messages.active') }}</span>
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $status === 'active' || $status === '1'
+                      ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-400 dark:border-emerald-600 ring-2 ring-emerald-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-800 hover:bg-emerald-50/30' }}"
+           title="{{ __('messages.warehouse_stat_active') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $status === 'active' || $status === '1'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                            : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50' }}">✅</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $status === 'active' || $status === '1' ? 'text-emerald-900 dark:text-emerald-200' : 'text-slate-500 dark:text-slate-400' }}">
+                    {{ __('messages.warehouse_stat_active') }}
+                </div>
+                <div class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['active']) }}</span>
+                    @if ($status === 'active' || $status === '1')
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    @endif
+                </div>
             </div>
         </a>
 
         {{-- Card 3: Inactive Locations --}}
         <a href="{{ route('store.admin.warehouses.index', array_merge($storeRouteParams, ['status' => 'inactive'])) }}"
-           class="p-2.5 sm:p-3 rounded-lg border transition duration-150 flex flex-col justify-between shadow-2xs cursor-pointer group {{ $status === 'inactive' || $status === '0' ? 'bg-slate-100 border-slate-300 dark:bg-slate-800/80 dark:border-slate-700 ring-2 ring-slate-500/20' : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700' }}">
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+           class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition cursor-pointer active:scale-[0.98]
+                  {{ $status === 'inactive' || $status === '0'
+                      ? 'bg-slate-100 dark:bg-slate-800 border-slate-400 dark:border-slate-500 ring-2 ring-slate-500/20'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/30' }}"
+           title="{{ __('messages.inactive') }}">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border
+                        {{ $status === 'inactive' || $status === '0'
+                            ? 'bg-slate-600 text-white border-slate-600 shadow-2xs'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700' }}">⏸</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold truncate {{ $status === 'inactive' || $status === '0' ? 'text-slate-900 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400' }}">
                     {{ __('messages.inactive') }}
-                </span>
-                <span class="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 grid place-items-center text-xs">
-                    ⏸
-                </span>
-            </div>
-            <div class="mt-1 flex items-baseline justify-between">
-                <span class="text-base sm:text-lg font-black font-mono text-slate-700 dark:text-slate-300">
-                    {{ number_format($stats['inactive']) }}
-                </span>
-                <span class="text-[10px] text-slate-400">{{ __('messages.inactive') }}</span>
+                </div>
+                <div class="text-sm sm:text-base font-black text-slate-700 dark:text-slate-300 font-mono tracking-tight flex items-center gap-1">
+                    <span>{{ number_format($stats['inactive']) }}</span>
+                    @if ($status === 'inactive' || $status === '0')
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-500 animate-pulse"></span>
+                    @endif
+                </div>
             </div>
         </a>
 
         {{-- Card 4: Linked Branches & Default Warehouse --}}
-        <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs flex flex-col justify-between">
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <div class="rounded border p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 border bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 border-sky-100 dark:border-sky-900/50">🏢</div>
+            <div class="min-w-0 text-left">
+                <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
                     {{ __('messages.warehouse_stat_branches') }}
-                </span>
-                <span class="w-6 h-6 rounded-md bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 grid place-items-center text-xs">
-                    🏢
-                </span>
-            </div>
-            <div class="mt-1 flex items-baseline justify-between">
-                <span class="text-base sm:text-lg font-black font-mono text-sky-600 dark:text-sky-400">
-                    {{ number_format($stats['branches']) }}
-                </span>
-                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 truncate max-w-[120px]" title="Default: {{ $stats['default_warehouse'] }}">
-                    ★ {{ $stats['default_warehouse'] }}
-                </span>
+                </div>
+                <div class="text-sm sm:text-base font-black text-sky-600 dark:text-sky-400 font-mono tracking-tight flex items-center gap-1.5">
+                    <span>{{ number_format($stats['branches']) }}</span>
+                    <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 truncate max-w-[90px] sm:max-w-[120px]" title="Default: {{ $stats['default_warehouse'] }}">
+                        ★ {{ $stats['default_warehouse'] }}
+                    </span>
+                </div>
             </div>
         </div>
     </div>
@@ -306,7 +325,7 @@
                                         </span>
                                         <span class="text-slate-300 dark:text-slate-600">•</span>
                                         <span class="text-slate-600 dark:text-slate-400">
-                                            {{ number_format($wh->total_stock_quantity ?? 0, 2) }} pcs
+                                            {{ format_quantity($wh->total_stock_quantity ?? 0, $store) }} {{ __('messages.pcs') }}
                                         </span>
                                     </div>
                                 </td>
@@ -398,7 +417,7 @@
                             {{ number_format($wh->active_products_count ?? 0) }} {{ __('messages.products') }}
                         </span>
                         <span class="font-bold text-violet-600 dark:text-violet-400">
-                            {{ number_format($wh->total_stock_quantity ?? 0, 2) }} pcs
+                            {{ format_quantity($wh->total_stock_quantity ?? 0, $store) }} {{ __('messages.pcs') }}
                         </span>
                     </div>
 
@@ -474,11 +493,11 @@
 
                 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" @click="showCreate = false"
-                            class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer">
+                            class="sf-btn-3d px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
                         {{ __('messages.cancel') }}
                     </button>
                     <button type="submit"
-                            class="px-4 py-1.5 rounded-lg text-xs font-black bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-900/20 transition active:scale-95 cursor-pointer">
+                            class="sf-btn-3d-primary px-4 py-1.5 rounded-lg text-xs font-black text-white cursor-pointer">
                         + {{ __('messages.create') }}
                     </button>
                 </div>
@@ -549,11 +568,11 @@
 
                 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" @click="editWh = null"
-                            class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer">
+                            class="sf-btn-3d px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
                         {{ __('messages.cancel') }}
                     </button>
                     <button type="submit"
-                            class="px-4 py-1.5 rounded-lg text-xs font-black bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-900/20 transition active:scale-95 cursor-pointer">
+                            class="sf-btn-3d-primary px-4 py-1.5 rounded-lg text-xs font-black text-white cursor-pointer">
                         {{ __('messages.save_changes') }}
                     </button>
                 </div>
@@ -585,11 +604,11 @@
                 @method('DELETE')
                 <div class="flex items-center justify-center gap-2 pt-2">
                     <button type="button" @click="deleteWh = null"
-                            class="px-4 py-2 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer">
+                            class="sf-btn-3d px-4 py-2 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
                         {{ __('messages.cancel') }}
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition cursor-pointer shadow-2xs">
+                            class="sf-btn-3d-danger px-4 py-2 rounded-lg text-xs font-black text-white cursor-pointer">
                         {{ __('messages.delete') }}
                     </button>
                 </div>

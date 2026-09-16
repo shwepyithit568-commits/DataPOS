@@ -1,7 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.roles_title') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2 sm:p-3')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @php
     $storeRouteParams = ['store_slug' => $store->slug];
@@ -30,7 +30,7 @@
 @endphp
 
 @section('content')
-<div class="w-full space-y-3 sm:space-y-4"
+<div class="w-full space-y-0.5 pb-6"
      x-data="{
         activeTab: 'roles',
         viewMode: localStorage.getItem('admin_roles_view_mode') || 'card',
@@ -288,36 +288,36 @@
      @view-changed.window="viewMode = $event.detail; localStorage.setItem('admin_roles_view_mode', $event.detail)">
 
     {{-- 1. Top Page Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-sm">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200/60 dark:border-red-800/60 text-red-600 dark:text-red-400 grid place-items-center text-lg sm:text-xl font-bold shadow-sm shrink-0">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-lg p-2 sm:p-2.5 shadow-2xs">
+        <div class="flex items-center gap-2">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-red-50 dark:bg-red-950/60 border border-red-200/60 dark:border-red-800/60 text-red-600 dark:text-red-400 grid place-items-center text-sm sm:text-base font-bold shadow-xs shrink-0">
                 🛡️
             </div>
             <div class="min-w-0">
-                <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
                     <span class="truncate">{{ __('messages.roles_title') }}</span>
                 </h1>
-                <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ $store->name }} · {{ __('messages.roles_subtitle') }}</p>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ $store->name }} · {{ __('messages.roles_subtitle') }}</p>
             </div>
         </div>
 
         {{-- Top Right Actions --}}
-        <div class="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
+        <div class="flex items-center gap-1.5 self-start sm:self-auto shrink-0 flex-wrap">
             <a href="{{ route('store.admin.audit-logs.index', $storeRouteParams) }}"
-               class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center gap-1.5 shadow-sm">
+               class="px-2.5 py-1 rounded-md text-xs font-bold bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center gap-1 shadow-2xs">
                 <span>📋</span>
                 <span>{{ __('messages.sidebar_audit_logs') }}</span>
             </a>
 
             <a href="{{ $exportUrl }}"
-               class="px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 shadow-sm">
+               class="px-2.5 py-1 rounded-md text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1 shadow-2xs">
                 <span>📊</span>
                 <span>{{ __('messages.export_csv_button') }}</span>
             </a>
 
             <button type="button" @click.stop="openCreateModal()"
-                    class="px-3.5 py-2 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/20 transition flex items-center gap-1.5 active:scale-95">
-                <span class="text-sm leading-none font-bold">+</span>
+                    class="px-2.5 py-1 rounded-md text-xs font-black bg-blue-600 hover:bg-blue-500 text-white shadow-2xs transition flex items-center gap-1 active:scale-95">
+                <span class="text-xs leading-none font-bold">+</span>
                 <span>{{ __('messages.roles_new') }}</span>
             </button>
         </div>
@@ -325,66 +325,66 @@
 
     {{-- Flash Messages --}}
     @if (session('success'))
-        <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-2xl text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-2.5 shadow-sm">
-            <span class="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900 grid place-items-center text-emerald-600 dark:text-emerald-300 font-black text-xs shrink-0">✓</span>
+        <div class="p-2 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
+            <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-900 grid place-items-center text-emerald-600 dark:text-emerald-300 font-black text-[10px] shrink-0">✓</span>
             <span>{{ session('success') }}</span>
         </div>
     @endif
 
     @if ($errors->any())
-        <div class="p-3.5 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-2xl text-xs font-bold text-rose-700 dark:text-rose-300 space-y-1 shadow-sm">
+        <div class="p-2 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-lg text-xs font-bold text-rose-700 dark:text-rose-300 space-y-0.5 shadow-2xs">
             @foreach ($errors->all() as $error)
                 <p>• {{ $error }}</p>
             @endforeach
         </div>
     @endif
 
-    {{-- 2. 4 Key Roles KPI Cards --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-        <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 shadow-sm flex items-center justify-between transition hover:shadow">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">{{ __('messages.roles_total') }}</p>
-                <h3 class="text-lg sm:text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">{{ $metrics['total_roles'] }}</h3>
-                <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">
-                    <span class="text-indigo-600 dark:text-indigo-400 font-semibold">{{ $metrics['system_roles_count'] ?? 0 }} {{ __('messages.roles_type_system') }}</span> · 
-                    <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $metrics['custom_roles_count'] ?? 0 }} {{ __('messages.roles_type_custom') }}</span>
-                </p>
-            </div>
-            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 grid place-items-center text-lg sm:text-xl font-bold shadow-inner shrink-0">
+    {{-- 2. 4 Key Roles KPI Cards — Centered Row-based (Standard v4.1) --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1">
+        <div class="rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 grid place-items-center text-sm sm:text-base font-bold shadow-inner shrink-0">
                 🎭
             </div>
+            <div class="min-w-0">
+                <p class="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 leading-tight truncate">{{ __('messages.roles_total') }}</p>
+                <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-mono tracking-tight leading-tight mt-0.5">{{ $metrics['total_roles'] }}</h3>
+                <p class="text-[9px] text-slate-400 font-medium truncate leading-none mt-0.5">
+                    <span class="text-indigo-600 dark:text-indigo-400 font-semibold">{{ $metrics['system_roles_count'] ?? 0 }} sys</span> · 
+                    <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $metrics['custom_roles_count'] ?? 0 }} cust</span>
+                </p>
+            </div>
         </div>
 
-        <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 shadow-sm flex items-center justify-between transition hover:shadow">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">{{ __('messages.roles_active') }}</p>
-                <h3 class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight">{{ $metrics['active_roles'] }}</h3>
-                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium truncate mt-0.5">{{ __('messages.roles_active_desc') }}</p>
-            </div>
-            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-lg sm:text-xl font-bold shadow-inner shrink-0">
+        <div class="rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-sm sm:text-base font-bold shadow-inner shrink-0">
                 ✅
             </div>
+            <div class="min-w-0">
+                <p class="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 leading-tight truncate">{{ __('messages.roles_active') }}</p>
+                <h3 class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight leading-tight mt-0.5">{{ $metrics['active_roles'] }}</h3>
+                <p class="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium truncate leading-none mt-0.5">{{ __('messages.roles_active_desc') }}</p>
+            </div>
         </div>
 
-        <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 shadow-sm flex items-center justify-between transition hover:shadow">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">{{ __('messages.roles_total_staff') }}</p>
-                <h3 class="text-lg sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 font-mono tracking-tight">{{ $metrics['total_staff'] }}</h3>
-                <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">{{ __('messages.managers_staff') }}</p>
-            </div>
-            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 grid place-items-center text-lg sm:text-xl font-bold shadow-inner shrink-0">
+        <div class="rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 grid place-items-center text-sm sm:text-base font-bold shadow-inner shrink-0">
                 👥
             </div>
+            <div class="min-w-0">
+                <p class="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 leading-tight truncate">{{ __('messages.roles_total_staff') }}</p>
+                <h3 class="text-xs sm:text-sm font-black text-indigo-600 dark:text-indigo-400 font-mono tracking-tight leading-tight mt-0.5">{{ $metrics['total_staff'] }}</h3>
+                <p class="text-[9px] text-slate-400 font-medium truncate leading-none mt-0.5">{{ __('messages.managers_staff') }}</p>
+            </div>
         </div>
 
-        <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 shadow-sm flex items-center justify-between transition hover:shadow">
-            <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5 truncate">{{ __('messages.roles_unassigned_staff') }}</p>
-                <h3 class="text-lg sm:text-2xl font-black {{ $metrics['unassigned_staff'] > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white' }} font-mono tracking-tight">{{ $metrics['unassigned_staff'] }}</h3>
-                <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">{{ $metrics['unassigned_staff'] > 0 ? 'Need Role Assignment' : 'All Staff Assigned' }}</p>
-            </div>
-            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 grid place-items-center text-lg sm:text-xl font-bold shadow-inner shrink-0">
+        <div class="rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-2 sm:p-2.5 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 grid place-items-center text-sm sm:text-base font-bold shadow-inner shrink-0">
                 ⚠️
+            </div>
+            <div class="min-w-0">
+                <p class="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 leading-tight truncate">{{ __('messages.roles_unassigned_staff') }}</p>
+                <h3 class="text-xs sm:text-sm font-black {{ $metrics['unassigned_staff'] > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white' }} font-mono tracking-tight leading-tight mt-0.5">{{ $metrics['unassigned_staff'] }}</h3>
+                <p class="text-[9px] text-slate-400 font-medium truncate leading-none mt-0.5">{{ $metrics['unassigned_staff'] > 0 ? 'Need Role Assignment' : 'All Staff Assigned' }}</p>
             </div>
         </div>
     </div>
@@ -745,7 +745,7 @@
                                                 -- {{ __('messages.roles_no_specific_role') }} --
                                             </option>
                                             
-                                            <optgroup label="⭐ Standard System Roles (မူလစနစ် ရာထူးများ)">
+                                            <optgroup label="{{ __('messages.roles_optgroup_system') }}">
                                                 @foreach ($allRolesForSelect->where('is_system', true) as $r)
                                                     <option value="{{ $r->id }}" {{ $staff->staff_role_id == $r->id ? 'selected' : '' }}>
                                                         {{ $r->name }}
@@ -754,7 +754,7 @@
                                             </optgroup>
 
                                             @if ($allRolesForSelect->where('is_system', false)->count() > 0)
-                                                <optgroup label="🛠️ Owner Custom Roles (ပိုင်ရှင် သတ်မှတ် ရာထူးများ)">
+                                                <optgroup label="{{ __('messages.roles_optgroup_custom') }}">
                                                     @foreach ($allRolesForSelect->where('is_system', false) as $r)
                                                         <option value="{{ $r->id }}" {{ $staff->staff_role_id == $r->id ? 'selected' : '' }}>
                                                             {{ $r->name }}

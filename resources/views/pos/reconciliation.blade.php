@@ -69,20 +69,20 @@
 
             <div class="flex items-center gap-1.5 self-start sm:self-auto shrink-0">
                 <a href="{{ url('/store/' . $store->slug . '/pos') }}"
-                   class="h-7 px-2.5 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                   class="sf-btn-3d h-7 px-2.5 rounded-md text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer">
                     <span>🛒</span>
                     <span>{{ __('messages.back_to_pos') }}</span>
                 </a>
 
                 <button type="button" onclick="window.print()"
-                        class="h-7 px-2.5 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                        class="sf-btn-3d h-7 px-2.5 rounded-md text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer">
                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                     <span>Print</span>
                 </button>
 
                 @if ($isManager && !$isClean)
                     <button type="button" @click="reconcileModalOpen = true"
-                            class="h-7 px-3 rounded-md bg-sky-600 hover:bg-sky-500 text-white text-xs font-black shadow-2xs hover:shadow-sky-500/20 transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer">
+                            class="sf-btn-3d-primary h-7 px-3 rounded-md text-white text-xs font-black transition inline-flex items-center gap-1.5 cursor-pointer">
                         <span>⚖️</span>
                         <span>{{ __('messages.reconciliation_approve') }}</span>
                     </button>
@@ -510,11 +510,11 @@
 
                         <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                             <button type="button" @click="reconcileModalOpen = false"
-                                    class="h-7 px-3 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer">
+                                    class="sf-btn-3d h-7 px-3 rounded-md text-xs font-bold transition cursor-pointer">
                                 {{ __('messages.cancel') }}
                             </button>
                             <button type="submit" :disabled="submitting"
-                                    class="h-7 px-4 rounded-md bg-sky-600 hover:bg-sky-500 text-white text-xs font-black shadow-2xs hover:shadow-sky-500/20 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+                                    class="sf-btn-3d-primary h-7 px-4 rounded-md text-white text-xs font-black transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
                                 <span x-show="!submitting" class="inline-flex items-center gap-1.5">
                                     <span>⚖️</span> {{ __('messages.reconciliation_approve') }}
                                 </span>

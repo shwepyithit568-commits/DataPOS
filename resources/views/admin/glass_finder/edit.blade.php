@@ -1,10 +1,10 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.glass_finder_edit_item') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full space-y-2 sm:space-y-2.5">
+<div class="w-full space-y-0.5 pb-6">
     
     {{-- Header --}}
     <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
@@ -25,7 +25,7 @@
 
         <div class="flex items-center gap-2 shrink-0">
             <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/glass-finder') }}"
-               class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 transition flex items-center gap-1.5 active:scale-95">
+               class="sf-btn-3d px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                 <span>{{ __('messages.back') }}</span>
             </a>
@@ -72,18 +72,18 @@
                     <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.stock_status') }}</label>
                     <select name="stock_status"
                             class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-violet-500 outline-none transition cursor-pointer">
-                        <option value="in_stock" {{ old('stock_status', $item->stock_status) === 'in_stock' ? 'selected' : '' }}>In Stock (လက်ကျန်ရှိ)</option>
-                        <option value="out_of_stock" {{ old('stock_status', $item->stock_status) === 'out_of_stock' ? 'selected' : '' }}>Out of Stock (ပြတ်လပ်)</option>
+                        <option value="in_stock" {{ old('stock_status', $item->stock_status) === 'in_stock' ? 'selected' : '' }}>{{ __('messages.glass_in_stock_opt') }}</option>
+                        <option value="out_of_stock" {{ old('stock_status', $item->stock_status) === 'out_of_stock' ? 'selected' : '' }}>{{ __('messages.glass_out_of_stock_opt') }}</option>
                     </select>
                 </div>
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/glass-finder') }}"
-                   class="px-3.5 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition">
+                   class="sf-btn-3d px-3.5 py-2 text-xs font-bold transition cursor-pointer">
                     {{ __('messages.cancel') }}
                 </a>
-                <button type="submit" class="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-bold text-xs shadow-2xs transition active:scale-95">
+                <button type="submit" class="sf-btn-3d-primary px-4 py-2 font-bold text-xs transition cursor-pointer">
                     {{ __('messages.update') }}
                 </button>
             </div>

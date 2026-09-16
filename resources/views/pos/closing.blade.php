@@ -74,21 +74,21 @@
             <div class="flex items-center gap-1.5 self-start sm:self-auto shrink-0 flex-wrap">
                 {{-- X-Report Button --}}
                 <a href="{{ route('pos.closing.x-report', ['store_slug' => $store->slug, 'date' => $date->toDateString()]) }}"
-                   class="h-7 px-2.5 rounded-md bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-200 text-xs font-bold transition inline-flex items-center gap-1 shadow-2xs cursor-pointer">
+                   class="sf-btn-3d-gold h-7 px-2.5 rounded-md text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer">
                     <span>📊</span>
                     <span>{{ __('messages.x_report') }}</span>
                 </a>
 
                 {{-- Print Modal Button --}}
                 <button type="button" @click.stop="showPrintModal = true"
-                        class="h-7 px-2.5 rounded-md bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white text-xs font-bold transition inline-flex items-center gap-1 shadow-2xs cursor-pointer">
+                        class="sf-btn-3d-primary h-7 px-2.5 rounded-md text-white text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer">
                     <span>🖨️</span>
                     <span>{{ __('messages.print') }}</span>
                 </button>
 
                 {{-- Back to POS Button --}}
                 <a href="{{ url('/store/' . $store->slug . '/pos') }}"
-                   class="h-7 px-2.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition inline-flex items-center gap-1 shadow-2xs">
+                   class="sf-btn-3d h-7 px-2.5 rounded-md text-xs font-bold transition inline-flex items-center gap-1">
                     <span>←</span>
                     <span>{{ __('messages.back_to_pos') }}</span>
                 </a>
@@ -387,7 +387,7 @@
                                   onsubmit="return confirm('{{ __('messages.confirm_action') }}: နေ့စဉ် စာရင်းချုပ်အား အတည်ပြုရန် သေချာပါသလား? အတည်ပြုပြီးပါက ပြင်ဆင်၍ မရတော့ပါ။');">
                                 @csrf
                                 <button type="submit"
-                                        class="h-8 px-4 rounded-md text-xs font-black text-white bg-emerald-600 hover:bg-emerald-500 transition shadow-2xs active:scale-95 cursor-pointer">
+                                        class="sf-btn-3d-success h-8 px-4 rounded-md text-xs font-black text-white cursor-pointer">
                                     ✅ {{ __('messages.closing_approve') }}
                                 </button>
                             </form>
@@ -404,7 +404,7 @@
                         </div>
                         <a href="{{ route('pos.closing.print', ['store_slug' => $store->slug, 'closing' => $closing->id, 'type' => 'z', 'layout' => '80mm']) }}"
                            target="_blank"
-                           class="h-6 px-2.5 rounded-md text-[11px] font-bold text-white bg-emerald-700 hover:bg-emerald-600 transition shadow-2xs inline-flex items-center gap-1 cursor-pointer">
+                           class="sf-btn-3d-success h-6 px-2.5 rounded-md text-[11px] font-bold text-white inline-flex items-center gap-1 cursor-pointer">
                             <span>🖨️</span>
                             <span>{{ __('messages.reprint') }}</span>
                         </a>
@@ -510,7 +510,7 @@
                                   class="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500"></textarea>
 
                         <button type="submit"
-                                class="w-full h-8 sm:h-9 rounded-md font-black text-xs sm:text-sm text-white bg-sky-600 hover:bg-sky-500 active:scale-[0.99] transition shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer">
+                                class="sf-btn-3d-primary w-full h-8 sm:h-9 rounded-md font-black text-xs sm:text-sm text-white flex items-center justify-center gap-1.5 cursor-pointer">
                             <span>📋</span>
                             <span>{{ __('messages.closing_create') }}</span>
                         </button>
@@ -616,12 +616,12 @@
 
                 <div class="flex items-center justify-end gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" @click="showPrintModal = false"
-                            class="h-7 px-3 text-xs font-bold rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
+                            class="sf-btn-3d h-7 px-3 text-xs font-bold rounded-md cursor-pointer">
                         {{ __('messages.cancel') ?? 'Cancel' }}
                     </button>
                     <a :href="'{{ url('/store/' . $store->slug . '/pos/closing/print') }}?type=' + printType + '&layout=' + printLayout + '&date={{ $date->toDateString() }}'"
                        target="_blank" @click="showPrintModal = false"
-                       class="h-7 px-3 text-xs font-black rounded-md text-white bg-sky-600 hover:bg-sky-500 shadow-2xs transition inline-flex items-center gap-1 cursor-pointer">
+                       class="sf-btn-3d-primary h-7 px-3 text-xs font-black rounded-md text-white transition inline-flex items-center gap-1 cursor-pointer">
                         <span>🖨️ {{ __('messages.print') }} →</span>
                     </a>
                 </div>

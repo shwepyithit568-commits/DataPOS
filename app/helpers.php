@@ -47,6 +47,48 @@ if (! function_exists('format_quantity')) {
     }
 }
 
+if (! function_exists('currency_symbol')) {
+    /**
+     * Get the active store currency symbol according to the store's settings.
+     */
+    function currency_symbol(?Store $store = null): string
+    {
+        if (! $store && app()->bound(StoreContext::class)) {
+            try {
+                $store = app(StoreContext::class)->getStore();
+            } catch (\Throwable) {
+                $store = null;
+            }
+        }
+
+        $setting = $store?->setting;
+        $currencySettings = $setting?->currency_settings ?? [];
+
+        return $currencySettings['currency_symbol'] ?? CurrencyFormatter::DEFAULT_SETTINGS['currency_symbol'];
+    }
+}
+
+if (! function_exists('currency_code')) {
+    /**
+     * Get the active store currency code (e.g. MMK, USD) according to the store's settings.
+     */
+    function currency_code(?Store $store = null): string
+    {
+        if (! $store && app()->bound(StoreContext::class)) {
+            try {
+                $store = app(StoreContext::class)->getStore();
+            } catch (\Throwable) {
+                $store = null;
+            }
+        }
+
+        $setting = $store?->setting;
+        $currencySettings = $setting?->currency_settings ?? [];
+
+        return $currencySettings['currency_code'] ?? CurrencyFormatter::DEFAULT_SETTINGS['currency_code'];
+    }
+}
+
 if (! function_exists('store_can')) {
     /**
      * Determine if the current active store has a specific capability,

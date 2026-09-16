@@ -18,7 +18,7 @@
                 </p>
             </div>
             <a href="{{ url('/store/' . $store->slug . '/pos') }}"
-               class="rounded-xl px-4 py-2 text-sm font-bold bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition">
+               class="sf-btn-3d rounded-xl px-4 py-2 text-sm font-bold transition">
                 ← {{ __('messages.back_to_pos') }}
             </a>
         </div>
@@ -71,9 +71,9 @@
                             <tr>
                                 <td class="px-3 py-2.5">
                                     <p class="font-semibold" x-text="r.name"></p>
-                                    <p class="text-xs text-slate-500 font-mono" x-text="'Ks ' + r.price.toLocaleString() + ' × ' + r.qty"></p>
+                                    <p class="text-xs text-slate-500 font-mono" x-text="(typeof formatCurrency === 'function' ? formatCurrency(r.price) : r.price.toLocaleString()) + ' × ' + r.qty"></p>
                                 </td>
-                                <td class="px-3 py-2.5 text-right font-semibold" x-text="'Ks ' + r.price.toLocaleString()"></td>
+                                <td class="px-3 py-2.5 text-right font-semibold" x-text="typeof formatCurrency === 'function' ? formatCurrency(r.price) : r.price.toLocaleString()"></td>
                                 <td class="px-3 py-2.5 text-center text-slate-500" x-text="r.already"></td>
                                 <td class="px-3 py-2.5 text-center font-bold text-sky-600 dark:text-sky-400" x-text="r.refundable"></td>
                                 <td class="px-3 py-2.5 text-center">
@@ -117,10 +117,10 @@
                 @endif
 
                 <div class="rounded-xl bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 text-sm space-y-1">
-                    <p class="flex justify-between"><span class="text-slate-500">{{ __('messages.return_value') }}</span><span class="font-black" x-text="'Ks ' + returnTotal.toLocaleString()"></span></p>
+                    <p class="flex justify-between"><span class="text-slate-500">{{ __('messages.return_value') }}</span><span class="font-black" x-text="typeof formatCurrency === 'function' ? formatCurrency(returnTotal) : returnTotal.toLocaleString()"></span></p>
                     <p class="flex justify-between" x-show="diff !== 0">
                         <span class="text-slate-500">{{ __('messages.difference') }}</span>
-                        <span class="font-bold" :class="diff < 0 ? 'text-rose-600' : 'text-amber-600'" x-text="'Ks ' + diff.toLocaleString()"></span>
+                        <span class="font-bold" :class="diff < 0 ? 'text-rose-600' : 'text-amber-600'" x-text="typeof formatCurrency === 'function' ? formatCurrency(diff) : diff.toLocaleString()"></span>
                     </p>
                 </div>
             </div>
@@ -128,8 +128,8 @@
             <textarea name="notes" rows="2" maxlength="1000" placeholder="{{ __('messages.notes') }}"
                       class="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"></textarea>
 
-            <button type="submit" :disabled="!valid" :class="valid ? 'bg-rose-600 hover:bg-rose-500' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'"
-                    class="w-full rounded-xl px-4 py-3 text-sm font-black text-white transition">
+            <button type="submit" :disabled="!valid"
+                    class="sf-btn-3d-danger w-full rounded-xl px-4 py-3 text-sm font-black text-white transition disabled:opacity-50 disabled:cursor-not-allowed">
                 ↩ {{ __('messages.post_refund') }}
             </button>
         </form>

@@ -65,14 +65,14 @@
         <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <button type="button"
                     data-repair-notify-open
-                    class="h-7 px-2 sm:px-2.5 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition flex items-center gap-1 cursor-pointer"
+                    class="sf-btn-3d-success h-7 px-2 sm:px-2.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
                     title="{{ __('messages.repair_notify_customer') }}">
                 <span>📢</span>
                 <span class="hidden sm:inline">{{ __('messages.repair_notify_customer') }}</span>
             </button>
 
             <a href="{{ route('store.admin.repairs.print', [...$storeRouteParams, 'repair' => $repair->id]) }}" target="_blank"
-               class="h-7 px-2 sm:px-2.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition flex items-center gap-1">
+               class="sf-btn-3d h-7 px-2 sm:px-2.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2z" />
                 </svg>
@@ -81,7 +81,7 @@
 
             @if (! $repair->isTerminal())
                 <a href="{{ route('store.admin.repairs.edit', [...$storeRouteParams, 'repair' => $repair->id]) }}"
-                   class="h-7 px-2 sm:px-2.5 rounded-lg text-xs font-semibold bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 dark:hover:bg-violet-900/50 transition flex items-center gap-1">
+                   class="sf-btn-3d-primary h-7 px-2 sm:px-2.5 rounded-lg text-xs font-semibold transition flex items-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -441,7 +441,7 @@
                                                           data-confirm="{{ __('messages.repair_deduct_confirm') ?? 'Deduct stock for this part?' }}">
                                                         @csrf
                                                         <button type="submit"
-                                                                class="h-6 px-2 rounded text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition cursor-pointer">
+                                                                class="sf-btn-3d-gold h-6 px-2 rounded text-[10px] font-bold transition cursor-pointer">
                                                             📦 {{ __('messages.repair_deduct_stock') }}
                                                         </button>
                                                     </form>
@@ -546,13 +546,13 @@
 
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">{{ __('messages.reference') }}</label>
-                                <input type="text" name="reference" maxlength="100" placeholder="TXN ID / မှတ်ချက်..."
+                                <input type="text" name="reference" maxlength="100" placeholder="{{ __('messages.txn_id_note_placeholder') }}"
                                        class="w-full h-7 px-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none" />
                             </div>
                         </div>
 
                         <button type="submit"
-                                class="w-full h-7 rounded text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] transition cursor-pointer shadow-xs">
+                                class="sf-btn-3d-success w-full h-7 rounded text-xs font-bold transition cursor-pointer">
                             ✓ {{ __('messages.repair_add_payment') }}
                         </button>
                     </form>
@@ -610,7 +610,7 @@
                         </div>
 
                         <button type="submit" data-repair-status-submit
-                                class="w-full h-7 rounded text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 transition cursor-pointer shadow-xs">
+                                class="sf-btn-3d-primary w-full h-7 rounded text-xs font-bold transition cursor-pointer">
                             {{ __('messages.repair_apply') }}
                         </button>
                     </form>
@@ -691,12 +691,12 @@
                     <button type="button" id="notifyTabReady" data-notify-tab="ready"
                             class="flex-1 py-1 px-2 rounded-md transition text-center flex items-center justify-center gap-1 cursor-pointer bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-xs font-bold border border-slate-200/60 dark:border-slate-700">
                         <span>🎉</span>
-                        <span>စက်ပြင်ပြီးစီး လာယူရန်</span>
+                        <span>{{ __('messages.repair_ready_pickup_tab') }}</span>
                     </button>
                     <button type="button" id="notifyTabProgress" data-notify-tab="progress"
                             class="flex-1 py-1 px-2 rounded-md transition text-center flex items-center justify-center gap-1 cursor-pointer text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 font-medium border border-transparent">
                         <span>ℹ️</span>
-                        <span>လက်ရှိအခြေအနေ အသိပေးစာ</span>
+                        <span>{{ __('messages.repair_current_status_tab') }}</span>
                     </button>
                 </div>
 
@@ -704,7 +704,7 @@
                 <div class="space-y-1">
                     <div class="flex items-center justify-between text-[11px] font-bold text-slate-700 dark:text-slate-300">
                         <span>{{ __('messages.repair_notify_preview_title') }}</span>
-                        <span class="text-slate-400 dark:text-slate-500 font-normal text-[10px]">စိတ်ကြိုက် ပြင်ဆင်နိုင်ပါသည်</span>
+                        <span class="text-slate-400 dark:text-slate-500 font-normal text-[10px]">{{ __('messages.can_customize') }}</span>
                     </div>
                     <textarea id="notifyMessageText" rows="7"
                               class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs leading-relaxed text-slate-800 dark:text-slate-200 font-myanmar outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"></textarea>
@@ -719,28 +719,28 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {{-- Viber Button --}}
                         <button type="button" data-notify-channel="viber"
-                                class="w-full py-2 px-3 rounded-xl bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-violet-500/20 transition cursor-pointer">
+                                class="sf-btn-3d-primary w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer">
                             <span>💬</span>
                             <span>{{ __('messages.repair_notify_send_viber') }}</span>
                         </button>
 
                         {{-- Telegram Button --}}
                         <button type="button" data-notify-channel="telegram"
-                                class="w-full py-2 px-3 rounded-xl bg-sky-500 hover:bg-sky-600 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-sky-500/20 transition cursor-pointer">
+                                class="sf-btn-3d w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer">
                             <span>✈️</span>
                             <span>{{ __('messages.repair_notify_send_telegram') }}</span>
                         </button>
 
                         {{-- SMS Button --}}
                         <button type="button" data-notify-channel="sms"
-                                class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-emerald-500/20 transition cursor-pointer">
+                                class="sf-btn-3d-success w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer">
                             <span>📱</span>
                             <span>{{ __('messages.repair_notify_send_sms') }}</span>
                         </button>
 
                         {{-- Copy Text Button --}}
                         <button type="button" id="notifyCopyBtn" data-notify-channel="copy"
-                                class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-[0.98] text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 transition cursor-pointer">
+                                class="sf-btn-3d w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer">
                             <span>📋</span>
                             <span id="notifyCopyText">{{ __('messages.repair_notify_copy_message') }}</span>
                         </button>
@@ -755,7 +755,7 @@
                     Live: <span class="font-mono text-violet-500 dark:text-violet-400">{{ $trackingUrl }}</span>
                 </span>
                 <button type="button" data-repair-notify-close
-                        class="px-3 py-1.5 rounded-lg font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700 transition cursor-pointer">
+                        class="sf-btn-3d px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer">
                     {{ __('messages.close') ?? 'Close' }}
                 </button>
             </div>
@@ -785,25 +785,37 @@
         trackingUrl: @js($trackingUrl)
     };
 
+    var _notifyPhrases = {
+        hello: @js(__('messages.repair_msg_hello', ['name' => '__NAME__'])),
+        readyBody: @js(__('messages.repair_msg_ready_body', ['store' => '__STORE__', 'device' => '__DEVICE__', 'job' => '__JOB__'])),
+        statusBody: @js(__('messages.repair_msg_status_body', ['store' => '__STORE__', 'device' => '__DEVICE__', 'job' => '__JOB__', 'status' => '__STATUS__'])),
+        charge: @js(__('messages.repair_msg_charge')),
+        paid: @js(__('messages.repair_msg_paid')),
+        outstanding: @js(__('messages.repair_msg_outstanding')),
+        liveLink: @js(__('messages.repair_msg_live_link')),
+        contactPhone: @js(__('messages.repair_msg_contact_phone')),
+        thankYou: @js(__('messages.repair_msg_thank_you'))
+    };
+
     var _notifyTab = _notifyData.status === 'ready' ? 'ready' : 'progress';
 
     function _buildNotifyText(tab) {
         var d = _notifyData;
         var lines = [];
         if (tab === 'ready') {
-            lines.push('မင်္ဂလာပါ ' + d.customerName + ' ရှင့်။');
-            lines.push(d.storeName + ' မှ လူကြီးမင်း အပ်နှံထားသော ' + d.deviceLabel + ' (အလုပ်နံပါတ်: #' + d.jobNumber + ') ပြင်ဆင်ပြီးစီးပါပြီဖြစ်ပါ၍ ဆိုင်သို့ လာရောက်ထုတ်ယူနိုင်ပါပြီရှင်。\n');
-            lines.push('💵 ကျသင့်ငွေ: ' + d.charge);
-            lines.push('✅ ပေးချေပြီး: ' + d.paid);
-            if (d.hasOutstanding) { lines.push('⚠️ ပေးရန်ကျန်ငွေ: ' + d.outstanding); }
+            lines.push(_notifyPhrases.hello.replace('__NAME__', d.customerName));
+            lines.push(_notifyPhrases.readyBody.replace('__STORE__', d.storeName).replace('__DEVICE__', d.deviceLabel).replace('__JOB__', d.jobNumber) + '\n');
+            lines.push(_notifyPhrases.charge + ' ' + d.charge);
+            lines.push(_notifyPhrases.paid + ' ' + d.paid);
+            if (d.hasOutstanding) { lines.push(_notifyPhrases.outstanding + ' ' + d.outstanding); }
         } else {
-            lines.push('မင်္ဂလာပါ ' + d.customerName + ' ရှင့်။');
-            lines.push(d.storeName + ' မှ လူကြီးမင်း အပ်နှံထားသော ' + d.deviceLabel + ' (အလုပ်နံပါတ်: #' + d.jobNumber + ') ၏ ပြင်ဆင်မှုအခြေအနေမှာ \'[' + d.statusLabel + ']\' သို့ ရောက်ရှိနေပါပြီဖြစ်ကြောင်း လေးစားစွာ အသိပေးအပ်ပါသည်။\n');
+            lines.push(_notifyPhrases.hello.replace('__NAME__', d.customerName));
+            lines.push(_notifyPhrases.statusBody.replace('__STORE__', d.storeName).replace('__DEVICE__', d.deviceLabel).replace('__JOB__', d.jobNumber).replace('__STATUS__', d.statusLabel) + '\n');
         }
-        lines.push('\n🔍 Live အခြေအနေနှင့် ပြေစာအသေးစိတ်ကို အောက်ပါ link တွင် စစ်ဆေးနိုင်ပါသည်:');
+        lines.push('\n' + _notifyPhrases.liveLink);
         lines.push(d.trackingUrl);
-        if (d.storePhone) { lines.push('\n📞 ဆက်သွယ်ရန် ဖုန်း: ' + d.storePhone); }
-        lines.push('ကျေးဇူးတင်ရှိပါသည်ရှင်။');
+        if (d.storePhone) { lines.push('\n' + _notifyPhrases.contactPhone + ' ' + d.storePhone); }
+        lines.push(_notifyPhrases.thankYou);
         return lines.join('\n');
     }
 

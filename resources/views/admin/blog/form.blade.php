@@ -16,10 +16,10 @@
 @endphp
 
 @section('title', ($isEdit ? __('messages.blog_edit') : __('messages.blog_add_new')) . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
-<div class="w-full space-y-2 sm:space-y-2.5"
+<div class="w-full space-y-0.5 pb-6"
      x-data="richWordEditor({
          initialHtml: @js($contentValue),
          initialStatus: @js((bool) old('is_published', $post->is_published ?? true)),

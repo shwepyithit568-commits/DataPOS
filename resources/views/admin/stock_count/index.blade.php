@@ -42,13 +42,13 @@
 
         <div class="flex items-center gap-1.5 self-start sm:self-auto shrink-0 flex-wrap">
             <a href="{{ route('store.admin.stock_ledger.index', ['store_slug' => $store->slug]) }}"
-               class="h-7 px-2.5 rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-1.5 shadow-2xs">
+               class="sf-btn-3d h-7 px-2.5 rounded-md text-xs font-bold inline-flex items-center gap-1.5">
                 <span>📑</span>
                 <span>{{ __('messages.sidebar_stock_ledger') ?? 'Stock Ledger' }}</span>
             </a>
 
             <a href="{{ route('store.admin.stock_count.create', ['store_slug' => $store->slug]) }}"
-               class="h-7 px-3 rounded-md bg-violet-600 hover:bg-violet-500 text-white text-xs font-black shadow-2xs hover:shadow-violet-500/20 transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer">
+               class="sf-btn-3d-primary h-7 px-3 rounded-md text-xs font-black inline-flex items-center gap-1.5 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
@@ -357,7 +357,7 @@
                                     <a href="{{ route('store.admin.stock_count.print', ['store_slug' => $store->slug, 'stock_count' => $session->id]) }}"
                                        target="_blank"
                                        title="{{ __('messages.stock_count_print_sheet') }}"
-                                       class="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                                       class="sf-btn-3d h-6 px-1.5 rounded-md inline-flex items-center justify-center cursor-pointer">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                         </svg>
@@ -365,7 +365,7 @@
 
                                     {{-- Primary Action Link --}}
                                     <a href="{{ route('store.admin.stock_count.show', ['store_slug' => $store->slug, 'stock_count' => $session->id]) }}"
-                                       class="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold rounded transition shadow-2xs {{ $session->isInProgress() ? 'bg-violet-600 hover:bg-violet-700 text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200' }}">
+                                       class="inline-flex items-center gap-1 px-2.5 h-6 text-xs font-bold rounded-md cursor-pointer {{ $session->isInProgress() ? 'sf-btn-3d-primary' : 'sf-btn-3d' }}">
                                         <span>{{ $session->isInProgress() ? __('messages.stock_count_continue_count') : __('messages.stock_count_view_audit') }}</span>
                                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -492,13 +492,13 @@
                     <a href="{{ route('store.admin.stock_count.print', ['store_slug' => $store->slug, 'stock_count' => $session->id]) }}"
                        target="_blank"
                        title="{{ __('messages.stock_count_print_sheet') }}"
-                       class="h-6 px-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition text-[11px] font-bold inline-flex items-center gap-1">
+                       class="sf-btn-3d h-6 px-2 rounded-md text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer">
                         <span>🖨️</span>
                         <span>Print</span>
                     </a>
 
                     <a href="{{ route('store.admin.stock_count.show', ['store_slug' => $store->slug, 'stock_count' => $session->id]) }}"
-                       class="h-6 px-2.5 rounded text-[11px] font-bold transition inline-flex items-center gap-1 shadow-2xs {{ $session->isInProgress() ? 'bg-violet-600 hover:bg-violet-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700' }}">
+                       class="h-6 px-2.5 rounded-md text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer {{ $session->isInProgress() ? 'sf-btn-3d-primary' : 'sf-btn-3d' }}">
                         <span>{{ $session->isInProgress() ? __('messages.stock_count_continue_count') : __('messages.stock_count_view_audit') }}</span>
                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />

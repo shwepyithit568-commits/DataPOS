@@ -34,7 +34,7 @@
                     🔄
                 </button>
                 <button type="button" @click="closeBarcodeScanner()"
-                        class="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-black hover:bg-rose-100 dark:hover:bg-rose-900/60 transition cursor-pointer">✕</button>
+                        class="sf-btn-3d w-8 h-8 rounded-lg text-rose-600 dark:text-rose-400 font-black cursor-pointer">✕</button>
             </div>
         </div>
 
@@ -110,7 +110,7 @@
                 </div>
             </div>
             <button type="button" @click="quickAddOpen = false"
-                    class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition">✕</button>
+                    class="sf-btn-3d w-8 h-8 rounded-lg text-slate-500 dark:text-slate-400 font-black cursor-pointer">✕</button>
         </div>
         <div>
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.pos_customer_name') }} <span class="text-rose-500">*</span></label>
@@ -177,7 +177,7 @@
                 </div>
             </div>
             <button type="button" @click="expenseModalOpen = false"
-                    class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition">✕</button>
+                    class="sf-btn-3d w-8 h-8 rounded-lg text-slate-500 dark:text-slate-400 font-black cursor-pointer">✕</button>
         </div>
 
         {{-- Quick Expense Title Chips --}}
@@ -274,7 +274,7 @@
             <button type="button" @click="expenseModalOpen = false"
                     class="sf-btn-3d flex-1 rounded-xl px-4 py-2.5 text-sm font-bold cursor-pointer">{{ __('messages.cancel') }}</button>
             <button type="button" @click="submitExpense()" :disabled="expenseBusy || !expenseTitle.trim() || !expenseAmount"
-                    class="sf-btn-3d-primary flex-1 rounded-xl px-4 py-2.5 text-sm font-black disabled:opacity-50 transition flex items-center justify-center gap-2 cursor-pointer !bg-amber-600 hover:!bg-amber-500 !border-amber-700 text-white shadow-amber-900/30">
+                    class="sf-btn-3d-gold flex-1 rounded-xl px-4 py-2.5 text-sm font-black disabled:opacity-50 transition flex items-center justify-center gap-2 cursor-pointer text-white">
                 <svg x-show="expenseBusy" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
                 <span x-text="expenseBusy ? (labels.pos_expense_saving || '{{ __('messages.pos_expense_saving') }}') : '{{ __('messages.save') }}'"></span>
             </button>
@@ -300,7 +300,7 @@
                 </div>
             </div>
             <button type="button" @click="discountModalOpen = false"
-                    class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer">✕</button>
+                    class="sf-btn-3d w-8 h-8 rounded-lg text-slate-500 dark:text-slate-400 font-black cursor-pointer">✕</button>
         </div>
 
         {{-- Type Switcher: Fixed Amount vs Percentage --}}
@@ -459,7 +459,7 @@
             <h3 class="text-sm font-black uppercase tracking-wide text-slate-700 dark:text-slate-200"
                 x-text="fsTab === 'more' ? '{{ __('messages.pos_more') }}' : '{{ __('messages.pos_filters') }}'"></h3>
             <button type="button" @click="fsOpen = false" aria-label="{{ __('messages.close') }}"
-                    class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition">✕</button>
+                    class="sf-btn-3d w-9 h-9 rounded-xl text-slate-500 dark:text-slate-400 font-black cursor-pointer">✕</button>
         </div>
 
         {{-- Tabs: More | Categories | Brands --}}
@@ -564,7 +564,7 @@
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{{ __('messages.pos_web_orders_hint') }}</p>
             </div>
             <button type="button" @click="webOrdersOpen = false" aria-label="{{ __('messages.close') }}"
-                    class="shrink-0 w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition">✕</button>
+                    class="sf-btn-3d shrink-0 w-9 h-9 rounded-xl text-slate-500 dark:text-slate-400 font-black cursor-pointer">✕</button>
         </div>
 
         <div class="px-5 pt-3">

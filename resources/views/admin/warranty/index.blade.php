@@ -36,7 +36,7 @@
             @if(!empty($exportUrl))
             <a href="{{ $exportUrl }}"
                title="Export Excel (.xlsx)"
-               class="h-7 px-2.5 rounded-md text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 shadow-2xs transition inline-flex items-center gap-1 active:scale-95 cursor-pointer">
+               class="sf-btn-3d-success h-7 px-2.5 text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer">
                 <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
@@ -48,7 +48,7 @@
 
             {{-- Register New Warranty --}}
             <a href="{{ route('store.admin.warranty.create', ['store_slug' => $store->slug]) }}"
-               class="h-7 px-3 rounded-md text-xs font-black bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-2xs hover:shadow-violet-500/20 transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer">
+               class="sf-btn-3d-primary h-7 px-3 text-xs font-black transition inline-flex items-center gap-1.5 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
                 </svg>
@@ -372,7 +372,7 @@
                                     </a>
                                     {{-- View Details --}}
                                     <a href="{{ route('store.admin.warranty.show', ['store_slug' => $store->slug, 'warranty' => $w->id]) }}"
-                                       class="h-6 px-2 text-xs font-bold rounded-md bg-violet-50 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/60 dark:text-violet-300 transition inline-flex items-center gap-0.5 active:scale-95">
+                                       class="sf-btn-3d h-6 px-2 text-xs font-bold transition inline-flex items-center gap-0.5 cursor-pointer">
                                         <span>{{ __('messages.view_details') }}</span>
                                         <span>&rarr;</span>
                                     </a>

@@ -5,7 +5,7 @@
 
 @section('content')
 @php
-    $productOptions = $products->map(function ($p) {
+    $productOptions = $products->map(function ($p) use ($store) {
         $catName = $p->category?->name ?? 'General';
         $parentCatName = $p->category?->parent?->name;
         $categoryPath = $parentCatName ? ($parentCatName . ' > ' . $catName) : $catName;
@@ -17,7 +17,7 @@
             'price' => (float) $p->retail_price,
             'category_id' => $p->category_id,
             'category_name' => $categoryPath,
-            'display_label' => '[' . $catName . '] ' . $p->name . ($p->sku ? " ({$p->sku})" : '') . ' · ' . number_format($p->retail_price) . ' MMK',
+            'display_label' => '[' . $catName . '] ' . $p->name . ($p->sku ? " ({$p->sku})" : '') . ' · ' . format_currency($p->retail_price, $store),
         ];
     })->values();
 
@@ -98,7 +98,7 @@
                                 <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                                     {{ __('messages.repair_customer_section') }}
                                 </h2>
-                                <p class="text-[10px] text-slate-400">ရှာဖွေရွေးချယ်ပါ သို့မဟုတ် တိုက်ရိုက်ရိုက်ထည့်ပါ</p>
+                                <p class="text-[10px] text-slate-400">{{ __('messages.search_select_or_type') }}</p>
                             </div>
                         </div>
                         
@@ -128,7 +128,7 @@
                             <div class="relative">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
                                 <input type="text" name="contact_name" x-model="contactName" @input="onContactNameInput()" @focus="showCustomerDropdown = true"
-                                       placeholder="ဖောက်သည် အမည် ရိုက်ထည့်ပါ သို့မဟုတ် အမည်/ဖုန်းဖြင့် ရှာပါ..." autocomplete="off"
+                                       placeholder="{{ __('messages.customer_search_placeholder') }}" autocomplete="off"
                                        class="w-full pl-8 pr-7 py-2 rounded-lg border bg-slate-50 dark:bg-slate-800/60 text-xs font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-sky-500 outline-none transition"
                                        :class="!contactName.trim() ? 'border-rose-300 dark:border-rose-800' : 'border-slate-200 dark:border-slate-700'">
                                 
@@ -201,7 +201,7 @@
                             <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                                 {{ __('messages.status_and_payment') }}
                             </h2>
-                            <p class="text-[10px] text-slate-400">အခြေအနေ၊ တာဝန်ကျပညာရှင်နှင့် ကြိုတင်ပေးငွေ</p>
+                            <p class="text-[10px] text-slate-400">{{ __('messages.repair_status_tech_advance_sub') }}</p>
                         </div>
                     </div>
 
@@ -251,7 +251,7 @@
                                     💵 {{ __('messages.advance_payment') }}
                                 </label>
                                 <div class="relative min-w-0">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">{{ $store->currency ?? 'MMK' }}</span>
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">{{ currency_symbol($store) }}</span>
                                     <input type="number" name="advance_payment" x-model="advancePayment" min="0" step="100"
                                            placeholder="0"
                                            class="w-full pl-13 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-xs font-mono font-bold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-teal-500 outline-none transition">
@@ -277,7 +277,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-0.5">
                             <div class="min-w-0">
                                 <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
-                                    💰 {{ __('messages.repair_estimated_charge') }} ({{ $store->currency ?? 'MMK' }})
+                                    💰 {{ __('messages.repair_estimated_charge') }}
                                 </label>
                                 <input type="number" name="estimated_charge" x-model="estimatedCharge" min="0" step="100"
                                        placeholder="0"
@@ -614,7 +614,7 @@
                             ⚡ {{ __('messages.repair_use_total_as_charge') }}
                         </button>
                         <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
-                            Total: <span class="text-emerald-600 dark:text-emerald-400 font-mono" x-text="'{{ $store->currency ?? 'MMK' }} ' + Number(totalItems()).toLocaleString()"></span>
+                            Total: <span class="text-emerald-600 dark:text-emerald-400 font-mono" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(totalItems()) : ('{{ currency_symbol($store) }} ' + Number(totalItems()).toLocaleString())"></span>
                         </div>
                     </div>
                 </div>
@@ -749,7 +749,7 @@
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div class="flex items-center gap-2">
                     <span class="text-base">👨‍🔧</span>
-                    <h3 class="text-sm font-black text-slate-900 dark:text-white">+ {{ __('messages.repair_technician') }} (စက်ပြင်ပညာရှင်အသစ်)</h3>
+                    <h3 class="text-sm font-black text-slate-900 dark:text-white">+ {{ __('messages.repair_technician') }} ({{ __('messages.repair_new_technician') }})</h3>
                 </div>
                 <button type="button" @click="technicianModalOpen = false" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
             </div>

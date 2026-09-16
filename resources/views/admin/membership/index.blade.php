@@ -1,7 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.membership_title') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
 <script nonce="{{ $cspNonce }}">
@@ -81,26 +81,26 @@ window.membershipHubData = function () {
 };
 </script>
 
-<div class="w-full space-y-2 sm:space-y-2.5" x-data="membershipHubData()">
+<div class="w-full space-y-0.5 pb-6" x-data="membershipHubData()">
 
     {{-- ============================================================
          1. TOP PAGE HEADER — Eyebrow, Title, Context & Add Tier Action
          ============================================================ --}}
-    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+    <header class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
         <div class="min-w-0">
-            <h1 class="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <h1 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                 <span>{{ __('messages.membership_title') }}</span>
             </h1>
-            <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+            <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                 {{ $store->name }} · {{ __('messages.membership_subtitle') }}
             </p>
         </div>
 
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 shrink-0">
             <button type="button"
                     @click="showAddTierModal = true"
-                    class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-black bg-violet-600 hover:bg-violet-700 text-white shadow-2xs transition flex items-center gap-1.5 active:scale-95 cursor-pointer">
-                <span class="text-sm leading-none">+</span>
+                    class="sf-btn-3d-primary px-2.5 py-1 text-xs font-black transition flex items-center gap-1 cursor-pointer">
+                <span class="text-xs leading-none">+</span>
                 <span>{{ __('messages.membership_add_tier') }}</span>
             </button>
         </div>
@@ -108,13 +108,13 @@ window.membershipHubData = function () {
 
     {{-- Flash Notifications & Errors --}}
     @if (session('success'))
-        <div class="w-full p-2.5 sm:p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
+        <div class="w-full p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2 shadow-2xs">
             <span>✅</span>
             <span>{{ session('success') }}</span>
         </div>
     @endif
     @if ($errors->any())
-        <div class="w-full p-2.5 sm:p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-800 dark:text-rose-300 space-y-1 shadow-2xs">
+        <div class="w-full p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-xs text-rose-800 dark:text-rose-300 space-y-1 shadow-2xs">
             <div class="font-black flex items-center gap-1.5">
                 <span>⚠️</span>
                 <span>{{ __('messages.validation_error') }}:</span>
@@ -126,47 +126,55 @@ window.membershipHubData = function () {
     @endif
 
     {{-- ============================================================
-         2. 4 KEY KPI STAT CARDS
+         2. 4 KEY KPI STAT CARDS — Centered Row-based (Standard v4.1)
          ============================================================ --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-0.5 sm:gap-1">
         {{-- Total Registered Members --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-violet-600 dark:text-violet-400 truncate">{{ __('messages.membership_total_members') }}</span>
-                <span class="text-xs">👥</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 text-base">
+                👥
             </div>
-            <div class="text-lg sm:text-2xl font-black text-violet-700 dark:text-violet-300 mt-1 font-mono tracking-tight">{{ number_format($stats['total_members']) }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.registered_customers') }}</div>
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-violet-600 dark:text-violet-400 block leading-tight truncate">{{ __('messages.membership_total_members') }}</span>
+                <div class="text-xs sm:text-sm font-black text-violet-700 dark:text-violet-300 font-mono tracking-tight leading-tight mt-0.5">{{ number_format($stats['total_members']) }}</div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.registered_customers') }}</div>
+            </div>
         </div>
 
         {{-- Active VIP Tiers --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-blue-600 dark:text-blue-400 truncate">{{ __('messages.membership_active_tiers') }}</span>
-                <span class="text-xs">🏆</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 text-base">
+                🏆
             </div>
-            <div class="text-lg sm:text-2xl font-black text-blue-600 dark:text-blue-400 mt-1 font-mono tracking-tight">{{ $stats['active_tiers'] }}</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.progression_levels') }}</div>
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-blue-600 dark:text-blue-400 block leading-tight truncate">{{ __('messages.membership_active_tiers') }}</span>
+                <div class="text-xs sm:text-sm font-black text-blue-600 dark:text-blue-400 font-mono tracking-tight leading-tight mt-0.5">{{ $stats['active_tiers'] }}</div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.progression_levels') }}</div>
+            </div>
         </div>
 
         {{-- Points in Circulation --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 truncate">{{ __('messages.membership_points_circulation') }}</span>
-                <span class="text-xs">🪙</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 text-base">
+                🪙
             </div>
-            <div class="text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 mt-1 font-mono tracking-tight">{{ number_format($stats['points_in_circulation']) }} <span class="text-xs font-normal">{{ __('messages.pts') }}</span></div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.customer_balance') }}</div>
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-amber-600 dark:text-amber-400 block leading-tight truncate">{{ __('messages.membership_points_circulation') }}</span>
+                <div class="text-xs sm:text-sm font-black text-amber-600 dark:text-amber-400 font-mono tracking-tight leading-tight mt-0.5">{{ number_format($stats['points_in_circulation']) }} <span class="text-[10px] font-normal">{{ __('messages.pts') }}</span></div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.customer_balance') }}</div>
+            </div>
         </div>
 
         {{-- Total Points Redeemed --}}
-        <div class="bg-white dark:bg-slate-900 rounded-lg p-2.5 sm:p-3 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 truncate">{{ __('messages.membership_points_redeemed') }}</span>
-                <span class="text-xs">🎁</span>
+        <div class="flex items-center justify-center gap-2.5 sm:gap-3 bg-white dark:bg-slate-900 rounded-lg p-2 sm:p-2.5 border border-slate-200/80 dark:border-slate-800 shadow-2xs transition">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 text-base">
+                🎁
             </div>
-            <div class="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 font-mono tracking-tight">{{ number_format($stats['total_points_redeemed']) }} <span class="text-xs font-normal">{{ __('messages.pts') }}</span></div>
-            <div class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.claimed_rewards') }}</div>
+            <div class="min-w-0">
+                <span class="text-[10px] sm:text-xs font-medium text-emerald-600 dark:text-emerald-400 block leading-tight truncate">{{ __('messages.membership_points_redeemed') }}</span>
+                <div class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight leading-tight mt-0.5">{{ number_format($stats['total_points_redeemed']) }} <span class="text-[10px] font-normal">{{ __('messages.pts') }}</span></div>
+                <div class="text-[9px] text-slate-400 leading-none mt-0.5">{{ __('messages.claimed_rewards') }}</div>
+            </div>
         </div>
     </div>
 
@@ -244,7 +252,7 @@ window.membershipHubData = function () {
                     <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-1">
                         <button type="button"
                                 @click="openEditTier({{ $tier->id }}, '{{ addslashes($tier->name) }}', '{{ $tier->code }}', {{ $tier->min_spending }}, {{ $tier->discount_percent }}, {{ $tier->point_multiplier }}, '{{ $tier->badge_color }}', {{ $tier->is_active ? 'true' : 'false' }})"
-                                class="px-2 py-1 text-xs font-bold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                                class="sf-btn-3d px-2 py-1 text-xs font-bold transition cursor-pointer"
                                 title="Edit Tier">
                             Edit
                         </button>
@@ -254,7 +262,7 @@ window.membershipHubData = function () {
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"
-                                        class="px-2 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-md transition cursor-pointer"
+                                        class="sf-btn-3d-danger px-2 py-1 text-xs font-bold transition cursor-pointer"
                                         title="Delete Tier">
                                     Delete
                                 </button>
@@ -298,7 +306,7 @@ window.membershipHubData = function () {
                     @endforeach
                 </select>
 
-                <button type="submit" class="px-3 py-1 bg-violet-600 text-white rounded-md text-xs font-bold hover:bg-violet-700 transition active:scale-95 cursor-pointer shadow-2xs">
+                <button type="submit" class="sf-btn-3d-primary px-3 py-1 text-xs font-bold transition cursor-pointer shadow-2xs">
                     Filter
                 </button>
             </form>
@@ -373,14 +381,14 @@ window.membershipHubData = function () {
                                     {{-- Adjust Points --}}
                                     <button type="button"
                                             @click="openAdjustPoints({{ $m->id }}, '{{ addslashes($m->name) }}', {{ $m->loyalty_points }})"
-                                            class="px-2 py-1 rounded-md text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 transition cursor-pointer">
+                                            class="sf-btn-3d-gold px-2 py-1 text-[11px] font-bold transition cursor-pointer">
                                         {{ __('messages.membership_adjust_points') }}
                                     </button>
 
                                     {{-- Change Tier --}}
                                     <button type="button"
                                             @click="openAssignTier({{ $m->id }}, '{{ addslashes($m->name) }}', {{ $m->membership_tier_id ?? 'null' }})"
-                                            class="px-2 py-1 rounded-md text-[11px] font-bold bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/60 hover:bg-violet-100 transition cursor-pointer">
+                                            class="sf-btn-3d px-2 py-1 text-[11px] font-bold transition cursor-pointer">
                                         {{ __('messages.membership_assign_tier') }}
                                     </button>
                                 </div>
@@ -464,8 +472,8 @@ window.membershipHubData = function () {
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="showAddTierModal = false" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">{{ __('messages.create_tier') }}</button>
+                    <button type="button" @click="showAddTierModal = false" class="sf-btn-3d px-3 py-1.5 text-xs font-bold cursor-pointer">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="sf-btn-3d-primary px-4 py-2 text-xs font-bold cursor-pointer">{{ __('messages.create_tier') }}</button>
                 </div>
             </form>
         </div>
@@ -539,8 +547,8 @@ window.membershipHubData = function () {
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="showEditTierModal = false" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">{{ __('messages.update_tier') }}</button>
+                    <button type="button" @click="showEditTierModal = false" class="sf-btn-3d px-3 py-1.5 text-xs font-bold cursor-pointer">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="sf-btn-3d-primary px-4 py-2 text-xs font-bold cursor-pointer">{{ __('messages.update_tier') }}</button>
                 </div>
             </form>
         </div>
@@ -593,8 +601,8 @@ window.membershipHubData = function () {
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="showAdjustPointsModal = false" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">{{ __('messages.apply_points') }}</button>
+                    <button type="button" @click="showAdjustPointsModal = false" class="sf-btn-3d px-3 py-1.5 text-xs font-bold cursor-pointer">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="sf-btn-3d-gold px-4 py-2 text-xs font-bold cursor-pointer">{{ __('messages.apply_points') }}</button>
                 </div>
             </form>
         </div>
@@ -633,8 +641,8 @@ window.membershipHubData = function () {
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="showAssignTierModal = false" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{{ __('messages.cancel') }}</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-2xs active:scale-95 cursor-pointer">{{ __('messages.assign_tier') }}</button>
+                    <button type="button" @click="showAssignTierModal = false" class="sf-btn-3d px-3 py-1.5 text-xs font-bold cursor-pointer">{{ __('messages.cancel') }}</button>
+                    <button type="submit" class="sf-btn-3d-primary px-4 py-2 text-xs font-bold cursor-pointer">{{ __('messages.assign_tier') }}</button>
                 </div>
             </form>
         </div>

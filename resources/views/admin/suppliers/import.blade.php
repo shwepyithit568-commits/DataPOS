@@ -1,7 +1,9 @@
 @extends('layouts.admin.app')
 
+@section('main_padding', 'p-0.5 sm:p-1')
+
 @section('content')
-<div class="space-y-6 max-w-5xl">
+<div class="w-full max-w-5xl space-y-0.5 pb-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-slate-100 font-outfit">{{ __('messages.supplier_import_title') }}</h1>
         <div class="w-full sm:w-auto flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0">

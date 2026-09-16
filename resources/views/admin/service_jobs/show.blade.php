@@ -1,5 +1,8 @@
 @extends('layouts.admin.app')
 
+@section('title', 'Service Job #' . $job->job_number . ' - ' . ($store->name ?? 'DataPOS'))
+@section('main_padding', 'p-0.5 sm:p-1')
+
 @section('content')
 @php
     $statusColors = [
@@ -16,7 +19,7 @@
     $badge = $statusColors[$job->status] ?? 'bg-gray-100 text-gray-500';
 @endphp
 
-<div class="w-full space-y-5 sm:space-y-6">
+<div class="w-full space-y-0.5 pb-6">
     {{-- Header --}}
     <div class="admin-page-header">
         <div class="flex items-center gap-3 flex-wrap">
@@ -255,8 +258,8 @@
                                     @endif
                                 </td>
                                 <td class="p-3 text-center text-gray-700 dark:text-slate-200">{{ $item->quantity }}</td>
-                                <td class="p-3 text-right text-gray-700 dark:text-slate-200">{{ number_format((float) $item->unit_price, 0) }}</td>
-                                <td class="p-3 text-right font-semibold text-gray-900 dark:text-slate-100">{{ number_format((float) $item->subtotal, 0) }} MMK</td>
+                                <td class="p-3 text-right text-gray-700 dark:text-slate-200">{{ format_currency($item->unit_price, $store) }}</td>
+                                <td class="p-3 text-right font-semibold text-gray-900 dark:text-slate-100">{{ format_currency($item->subtotal, $store) }}</td>
                                 <td class="p-3 text-right whitespace-nowrap">
                                     @if ($item->isPart() && $item->product_id)
                                         @if ($item->is_deducted)
@@ -286,7 +289,7 @@
                     <tfoot class="bg-gray-50 dark:bg-slate-900/50 border-t dark:border-slate-700">
                         <tr>
                             <td colspan="4" class="p-3 text-right font-semibold text-gray-600 dark:text-slate-300">{{ __('messages.repair_items_total') }}</td>
-                            <td class="p-3 text-right font-bold text-gray-900 dark:text-white">{{ number_format($job->itemsTotal(), 0) }} MMK</td>
+                            <td class="p-3 text-right font-bold text-gray-900 dark:text-white">{{ format_currency($job->itemsTotal(), $store) }}</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -306,23 +309,23 @@
             <div class="grid grid-cols-3 gap-3 text-center">
                 <div class="p-3 rounded-lg bg-gray-50 dark:bg-slate-900/50">
                     <div class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.repair_estimated_charge') }}</div>
-                    <div class="font-bold text-gray-900 dark:text-slate-100">{{ number_format((float) $job->estimated_charge, 0) }}</div>
+                    <div class="font-bold text-gray-900 dark:text-slate-100">{{ format_currency($job->estimated_charge, $store) }}</div>
                 </div>
                 <div class="p-3 rounded-lg bg-gray-50 dark:bg-slate-900/50">
                     <div class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.repair_final_charge') }}</div>
                     <div class="font-bold text-gray-900 dark:text-slate-100">
-                        {{ $job->final_charge !== null ? number_format((float) $job->final_charge, 0) : 'â€”' }}
+                        {{ $job->final_charge !== null ? format_currency($job->final_charge, $store) : '—' }}
                     </div>
                 </div>
                 <div class="p-3 rounded-lg {{ $job->outstanding() > 0 ? 'bg-amber-50 dark:bg-amber-950/40' : 'bg-emerald-50 dark:bg-emerald-950/40' }}">
                     <div class="text-xs text-gray-500 dark:text-slate-400">{{ __('messages.repair_outstanding') }}</div>
                     <div class="font-bold {{ $job->outstanding() > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400' }}">
-                        {{ number_format($job->outstanding(), 0) }}
+                        {{ format_currency($job->outstanding(), $store) }}
                     </div>
                 </div>
             </div>
             <div class="text-xs text-gray-400 dark:text-slate-500">
-                {{ __('messages.repair_paid') }}: {{ number_format($job->paidAmount(), 0) }} MMK
+                {{ __('messages.repair_paid') }}: {{ format_currency($job->paidAmount(), $store) }}
             </div>
         </div>
 
@@ -345,7 +348,7 @@
                                 @endif
                                 <div class="text-xs text-gray-400 dark:text-slate-500">{{ $payment->created_at->format('M d, Y H:i') }}</div>
                             </div>
-                            <div class="font-semibold text-gray-900 dark:text-slate-100">{{ number_format((float) $payment->amount, 0) }} MMK</div>
+                            <div class="font-semibold text-gray-900 dark:text-slate-100">{{ format_currency($payment->amount, $store) }}</div>
                         </div>
                     @endforeach
                 </div>

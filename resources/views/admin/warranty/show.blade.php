@@ -1,14 +1,14 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.warranty_details') . ' - ' . $warranty->serial_number)
-@section('main_padding', 'p-2')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @section('content')
 @php
     $compStatus = $warranty->computed_status;
 @endphp
 
-<div x-data="{ claimModalOpen: false }" class="w-full max-w-5xl mx-auto space-y-2 sm:space-y-2.5">
+<div x-data="{ claimModalOpen: false }" class="w-full max-w-5xl mx-auto space-y-0.5 pb-6">
 
     {{-- ============================================================
          1. COMPACT HERO PAGE HEADER
@@ -35,7 +35,7 @@
             {{-- Print Certificate --}}
             <a href="{{ route('store.admin.warranty.certificate', ['store_slug' => $store->slug, 'warranty' => $warranty->id]) }}"
                target="_blank"
-               class="px-2.5 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 shadow-2xs transition flex items-center gap-1">
+               class="sf-btn-3d px-2.5 py-1.5 text-xs font-bold transition flex items-center gap-1 cursor-pointer">
                 <span>🖨️</span>
                 <span>{{ __('messages.print_certificate') }}</span>
             </a>
@@ -43,14 +43,14 @@
             {{-- Record Claim Modal Button --}}
             <button type="button"
                     @click="claimModalOpen = true"
-                    class="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs transition flex items-center gap-1">
+                    class="sf-btn-3d-primary px-2.5 py-1.5 text-xs font-bold transition flex items-center gap-1 cursor-pointer">
                 <span>🛠️</span>
                 <span>{{ __('messages.record_warranty_claim') }}</span>
             </button>
 
             {{-- Edit --}}
             <a href="{{ route('store.admin.warranty.edit', ['store_slug' => $store->slug, 'warranty' => $warranty->id]) }}"
-               class="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition shadow-2xs">
+               class="sf-btn-3d px-2.5 py-1.5 text-xs font-bold transition cursor-pointer">
                 <span>✏️ {{ __('messages.edit') }}</span>
             </a>
         </div>
@@ -94,9 +94,9 @@
             </div>
             <div class="text-xl sm:text-2xl font-black font-mono mt-1 {{ $warranty->days_remaining > 0 ? 'text-slate-900 dark:text-slate-100' : 'text-rose-600 dark:text-rose-400' }}">
                 @if($warranty->days_remaining > 0)
-                    {{ $warranty->days_remaining }} <span class="text-xs font-bold text-slate-500">Days Remaining (ရက်ကျန်)</span>
+                    {{ $warranty->days_remaining }} <span class="text-xs font-bold text-slate-500">{{ __('messages.days_remaining') }}</span>
                 @else
-                    Expired {{ abs($warranty->days_remaining) }} days ago
+                    {{ __('messages.warranty_expired_days_ago', ['days' => abs($warranty->days_remaining)]) }}
                 @endif
             </div>
         </div>
@@ -176,7 +176,7 @@
                     <span class="font-semibold text-slate-800 dark:text-slate-200">{{ $warranty->warranty_duration_months }} Months</span>
                 </div>
                 <div class="pt-1.5 flex justify-between">
-                    <span class="text-slate-500">{{ __('messages.claims_count') ?? 'ပြင်ဆင်မှတ်တမ်း အကြိမ်:' }}</span>
+                    <span class="text-slate-500">{{ __('messages.claims_count') }}</span>
                     <span class="font-bold {{ $warranty->claim_count > 0 ? 'text-indigo-600' : 'text-slate-400' }}">{{ $warranty->claim_count }}</span>
                 </div>
             </div>
@@ -205,7 +205,7 @@
             </div>
             <a href="{{ route('store.admin.repairs.create', ['store_slug' => $store->slug, 'imei_serial' => $warranty->serial_number]) }}"
                class="text-xs font-bold text-violet-600 hover:text-violet-500">
-                + {{ __('messages.repairs_add_new') ?? 'ပြင်ဆင်မှုလက်မှတ်ဖွင့်မည်' }}
+                + {{ __('messages.repairs_add_new') }}
             </a>
         </div>
 
@@ -290,16 +290,16 @@
                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.update_status') }}</label>
                     <select name="status" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 font-semibold focus:ring-2 focus:ring-violet-500">
                         <option value="active">{{ __('messages.active_keep_active') }}</option>
-                        <option value="claimed" selected>Claimed (အာမခံ လဲလှယ်/ပြင်ဆင်ပြီး)</option>
-                        <option value="void">Void (အာမခံ ပျက်ပြယ်အဖြစ် သတ်မှတ်မည်)</option>
+                        <option value="claimed" selected>{{ __('messages.warranty_status_claimed_opt') }}</option>
+                        <option value="void">{{ __('messages.warranty_status_void_opt') }}</option>
                     </select>
                 </div>
 
                 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="claimModalOpen = false" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-50">
+                    <button type="button" @click="claimModalOpen = false" class="sf-btn-3d px-3 py-1.5 text-xs font-bold cursor-pointer">
                         {{ __('messages.cancel') }}
                     </button>
-                    <button type="submit" class="px-4 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs">
+                    <button type="submit" class="sf-btn-3d-primary px-4 py-1.5 text-xs font-bold cursor-pointer">
                         {{ __('messages.save_claim') }}
                     </button>
                 </div>

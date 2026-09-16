@@ -73,7 +73,7 @@
                         name="label_my"
                         value="{{ old('label_my', $item->label_my) }}"
                         required
-                        placeholder="ဥပမာ- ကုန်ပစ္စည်းများ"
+                        placeholder="{{ __('messages.navigation_label_example') }}"
                         class="h-8 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-2.5 text-xs font-semibold text-slate-900 dark:text-white focus:border-sky-500 focus:outline-hidden"
                     />
                 </div>

@@ -1,14 +1,14 @@
 @extends('layouts.admin.app')
 
 @section('title', __('messages.import_history_batch_details') . ' - ' . ($store->name ?? 'DataPOS'))
-@section('main_padding', 'p-2 sm:p-3 md:p-4')
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @php
     $storeRouteParams = ['store_slug' => $store->slug];
 @endphp
 
 @section('content')
-<div class="w-full space-y-2.5 sm:space-y-3 pb-8" x-data>
+<div class="w-full space-y-0.5 pb-6" x-data>
 
     {{-- 1. Compact Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 sm:p-4 shadow-sm">

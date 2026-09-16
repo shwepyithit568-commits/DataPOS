@@ -91,7 +91,7 @@
                 <span>{{ __('messages.supplier_col_outstanding') }}</span>
             </a>
             <button type="button" @click="openCreate()"
-                    class="h-7 px-2.5 rounded text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-2xs hover:shadow-violet-500/20 transition inline-flex items-center gap-1.5 active:scale-95 cursor-pointer">
+                    class="sf-btn-3d-primary h-7 px-2.5 rounded text-xs font-black text-white inline-flex items-center gap-1.5 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                 <span>{{ __('messages.supplier_add_title') }}</span>
             </button>
@@ -496,16 +496,16 @@
                     {{-- Modal Footer --}}
                     <div class="flex items-center justify-end gap-1.5 pt-2.5 border-t border-slate-100 dark:border-slate-800">
                         <button type="button" @click="closeModal()"
-                                class="h-7 px-3 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer">
+                                class="sf-btn-3d h-7 px-3 rounded text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
                             {{ __('messages.cancel') }}
                         </button>
                         <button type="submit" :disabled="saving"
-                                class="h-7 px-4 rounded bg-violet-600 hover:bg-violet-500 text-white text-xs font-black shadow-2xs hover:shadow-violet-500/20 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+                                class="sf-btn-3d-primary h-7 px-4 rounded text-white text-xs font-black disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
                             <span x-show="!saving" class="inline-flex items-center gap-1">
                                 <span x-text="modalMode === 'create' ? '+ {{ __('messages.supplier_save') }}' : '✓ {{ __('messages.save_changes') }}'"></span>
                             </span>
                             <span x-show="saving" class="inline-flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                                <svg class="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
                                 <span>{{ __('messages.processing') }}</span>
                             </span>
                         </button>
@@ -534,11 +534,11 @@
                     @method('DELETE')
                     <div class="flex items-center justify-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
                         <button type="button" @click="closeConfirm()"
-                                class="h-7 px-3 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer">
+                                class="sf-btn-3d h-7 px-3 rounded text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
                             {{ __('messages.cancel') }}
                         </button>
                         <button type="submit" :disabled="deleting"
-                                class="h-7 px-4 rounded bg-rose-600 hover:bg-rose-500 text-white text-xs font-black shadow-2xs hover:shadow-rose-500/20 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+                                class="sf-btn-3d-danger h-7 px-4 rounded text-white text-xs font-black disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
                             <span x-show="!deleting">{{ __('messages.delete') }}</span>
                             <span x-show="deleting">{{ __('messages.deleting') }}</span>
                         </button>

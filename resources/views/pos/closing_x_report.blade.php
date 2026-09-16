@@ -9,7 +9,7 @@
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
             <div class="flex items-center gap-2">
                 <a href="{{ route('pos.closing.index', ['store_slug' => $store->slug, 'date' => $date->toDateString()]) }}"
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                   class="sf-btn-3d inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition">
                     ← {{ __('messages.back') }}
                 </a>
                 <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-black uppercase bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
@@ -24,7 +24,7 @@
                 <form method="GET" action="{{ route('pos.closing.x-report', ['store_slug' => $store->slug]) }}" class="flex items-center gap-1">
                     <input type="date" name="date" value="{{ $date->toDateString() }}" max="{{ today()->toDateString() }}"
                            class="h-7 px-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-                    <button type="submit" class="h-7 px-2.5 text-xs font-bold rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition">
+                    <button type="submit" class="sf-btn-3d-primary h-7 px-2.5 text-xs font-bold rounded-lg transition">
                         →
                     </button>
                 </form>
@@ -32,7 +32,7 @@
                 {{-- Print Dropdown / Link --}}
                 <a href="{{ route('pos.closing.print', ['store_slug' => $store->slug, 'type' => 'x', 'date' => $date->toDateString(), 'layout' => '80mm']) }}"
                    target="_blank"
-                   class="inline-flex items-center gap-1 h-7 px-3 text-xs font-black rounded-lg text-white bg-sky-600 hover:bg-sky-500 transition shadow-2xs">
+                   class="sf-btn-3d-primary inline-flex items-center gap-1 h-7 px-3 text-xs font-black rounded-lg transition shadow-2xs">
                     🖨️ {{ __('messages.print') }}
                 </a>
             </div>

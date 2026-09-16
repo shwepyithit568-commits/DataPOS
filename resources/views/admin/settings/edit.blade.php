@@ -23,7 +23,7 @@
 
     $sectionTitles = [
         'general'      => __('messages.settings_store_identity'),
-        'currency'     => 'Currency & Number Formatting',
+        'currency'     => __('messages.settings_currency_formatting'),
         'pos'          => __('messages.settings_pos'),
         'appearance'   => __('messages.settings_appearance'),
         'contact'      => __('messages.settings_contact_social'),
@@ -36,14 +36,14 @@
     $sectionPartial = $section === 'how-to-order' ? 'how_to_order' : $section;
 
     $sectionDescs = [
-        'general'      => $store->name . ' ၏ storefront header, ဆိုင်အမည်၊ Logo နှင့် အဓိကဘာသာစကား သတ်မှတ်ချက်များ။',
-        'currency'     => 'စနစ်တစ်ခုလုံးရှိ ငွေကြေးသင်္ကေတ၊ ဒသမနေရာ၊ စတော့အရေအတွက် တိကျမှုနှင့် စာရင်းကိုင် ဖော်မက် သတ်မှတ်ချက်များ။',
-        'pos'          => 'POS ဆိုင် cashier အတွေ့အကြုံ — thermal voucher, shift, held sale, pin control ဆက်တင်များ။',
-        'appearance'   => 'Storefront ၏ Brand Color, Button Color, Header Background တို့ကို ထိန်းချုပ်ပါ — preset palette ဒါမှမဟုတ် custom HEX color ရွေးချယ်နိုင်ပါသည်။',
-        'contact'      => 'Storefront footer နှင့် order confirmation တွင်ပြမည့် phone, Viber, Telegram, social media data များ။',
-        'delivery'     => 'Storefront footer တွင်ပြမည့် delivery area, payment method, ကြော်ညာ စာသားများ။',
-        'how-to-order' => 'Storefront ရဲ့ "မှာယူနည်း" စာမျက်နှာမှာ ပြမည့် မိတ်ဆက်စာသား၊ အဆင့်တွေနဲ့ ဗီဒီယိုလင့်များ။',
-        'footer'       => 'Storefront footer တစ်ခုလုံးကို စုစည်း preview — customer တွေ မြင်ရတဲ့ပုံ အတိအကျ။',
+        'general'      => __('messages.settings_section_general_desc'),
+        'currency'     => __('messages.settings_section_currency_desc'),
+        'pos'          => __('messages.settings_section_pos_desc'),
+        'appearance'   => __('messages.settings_section_appearance_desc'),
+        'contact'      => __('messages.settings_section_contact_desc'),
+        'delivery'     => __('messages.settings_section_delivery_desc'),
+        'how-to-order' => __('messages.settings_section_how_to_order_desc'),
+        'footer'       => __('messages.settings_section_footer_desc'),
     ];
 @endphp
 
@@ -198,7 +198,7 @@
                         {{ __('messages.settings_fields_note') }}
                     </p>
                     <button type="submit" :disabled="submitting"
-                            class="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 px-5 py-2.5 text-xs font-black text-white shadow-sm shadow-blue-500/20 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-70 active:scale-95">
+                            class="sf-btn-3d-primary inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-black text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-70">
                         <svg x-show="submitting" x-cloak class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>

@@ -15,33 +15,33 @@
     $shelfList = isset($masterPresets) && $masterPresets->where('type', 'shelf_location')->isNotEmpty()
         ? $masterPresets->where('type', 'shelf_location')->values()
         : collect([
-            (object)['code' => 'A-01', 'name' => 'Shelf A1 (ရှေ့စင် အပေါ်ထပ်)'],
-            (object)['code' => 'A-02', 'name' => 'Shelf A2 (ရှေ့စင် အလယ်ထပ်)'],
-            (object)['code' => 'B-01', 'name' => 'Shelf B1 (ဘေးစင် အပေါ်ထပ်)'],
-            (object)['code' => 'B-02', 'name' => 'Shelf B2 (ဘေးစင် အောက်ထပ်)'],
-            (object)['code' => 'CTR-01', 'name' => 'Counter Glass (ကောင်တာ မှန်ပုံး)'],
-            (object)['code' => 'CAB-01', 'name' => 'Back Cabinet (နောက်ဘက် ဗီရို)'],
-            (object)['code' => 'RP-01', 'name' => 'Repair Bench (ပြင်ဆင်ရေး စင်)'],
-            (object)['code' => 'WH-RACK', 'name' => 'Warehouse Rack (ဂိုဒေါင် စင်)'],
+            (object)['code' => 'A-01', 'name' => __('messages.shelf_a1_example')],
+            (object)['code' => 'A-02', 'name' => __('messages.shelf_a2_example')],
+            (object)['code' => 'B-01', 'name' => __('messages.shelf_b1_example')],
+            (object)['code' => 'B-02', 'name' => __('messages.shelf_b2_example')],
+            (object)['code' => 'CTR-01', 'name' => __('messages.counter_glass_example')],
+            (object)['code' => 'CAB-01', 'name' => __('messages.shelf_cab_example')],
+            (object)['code' => 'RP-01', 'name' => __('messages.shelf_rp_example')],
+            (object)['code' => 'WH-RACK', 'name' => __('messages.shelf_wh_example')],
         ]);
 
     $warrantyList = isset($masterPresets) && $masterPresets->where('type', 'warranty')->isNotEmpty()
         ? $masterPresets->where('type', 'warranty')->values()
         : collect([
-            (object)['name' => '7 Days Testing Warranty', 'content' => '၇ ရက်အတွင်း စက်ချို့ယွင်းချက်ရှိပါက အသစ်လဲပေးသည်'],
-            (object)['name' => '1 Month Service Warranty', 'content' => '၁ လအတွင်း လက်ခအခမဲ့ ပြုပြင်ပေးသည်'],
-            (object)['name' => '3 Months Warranty', 'content' => '၃ လ အာမခံ'],
-            (object)['name' => '6 Months Warranty', 'content' => '၆ လ အာမခံ'],
-            (object)['name' => '1 Year Official Warranty', 'content' => '၁ နှစ် တရားဝင် အာမခံ'],
-            (object)['name' => 'No Warranty', 'content' => 'အာမခံမပါပါ'],
+            (object)['name' => '7 Days Testing Warranty', 'content' => __('messages.warranty_7_days_desc')],
+            (object)['name' => '1 Month Service Warranty', 'content' => __('messages.warranty_1_month_desc')],
+            (object)['name' => '3 Months Warranty', 'content' => __('messages.warranty_3_months_desc')],
+            (object)['name' => '6 Months Warranty', 'content' => __('messages.warranty_6_months_desc')],
+            (object)['name' => '1 Year Official Warranty', 'content' => __('messages.warranty_1_year_desc')],
+            (object)['name' => 'No Warranty', 'content' => __('messages.warranty_no_warranty_desc')],
         ]);
 
     $returnPolicyList = isset($masterPresets) && $masterPresets->where('type', 'return_policy')->isNotEmpty()
         ? $masterPresets->where('type', 'return_policy')->values()
         : collect([
-            (object)['name' => '7 Days Exchange', 'content' => 'ပစ္စည်းဘူးခွံ၊ ဘားကုဒ်နှင့် ဆက်စပ်ပစ္စည်းများ အကောင်းပကတိအတိုင်း ရှိပါက ဝယ်ယူပြီး ၇ ရက်အတွင်း တန်ဖိုးတူ အခြားပစ္စည်းနှင့် လဲလှယ်နိုင်ပါသည်။'],
-            (object)['name' => 'Screen & Touch LCD Policy', 'content' => 'Touch LCD နှင့် မှန်ချပ်များကို ဖုန်းတွင် ကော်မကပ်မီ အပြင်မှ ကြိုးထိုး စမ်းသပ်ပေးရပါမည်။ တံဆိပ်တုံးပျက်စီးခြင်း၊ ကော်ကပ်ပြီးခြင်း၊ ဖလင်ခွာပြီးပါက ပြန်လဲမပေးပါ။'],
-            (object)['name' => 'Accessories Return Policy', 'content' => 'ကြိုး၊ အားသွင်းခေါင်း စသည့် Accessories များ ပျက်စီးချို့ယွင်းပါက ဝယ်ယူသည့် ဘောက်ချာပြသ၍ အသစ်လဲလှယ်နိုင်ပါသည်။'],
+            (object)['name' => '7 Days Exchange', 'content' => __('messages.policy_7_days_desc')],
+            (object)['name' => 'Screen & Touch LCD Policy', 'content' => __('messages.policy_screen_touch_desc')],
+            (object)['name' => 'Accessories Return Policy', 'content' => __('messages.policy_accessories_desc')],
         ]);
 @endphp
 
@@ -116,11 +116,11 @@
                     {{-- Product Name (Full Width) --}}
                     <div class="md:col-span-2">
                         <label class="{{ $label }}">
-                            <span x-text="productType === 'service' ? 'ဝန်ဆောင်မှု အမည်' : (productType === 'digital' ? 'ဒစ်ဂျစ်တယ် ပစ္စည်း အမည်' : '{{ __('messages.product_form_name') }}')"></span>
+                            <span x-text="productType === 'service' ? @js(__('messages.product_service_name')) : (productType === 'digital' ? @js(__('messages.product_digital_name')) : '{{ __('messages.product_form_name') }}')"></span>
                             <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" name="name" x-model="productNameInput" @input="nameTouched = true" required class="{{ $input }}"
-                            :placeholder="productType === 'service' ? 'ဥပမာ - မှန်ကပ်ပေးခြင်း / iOS Update တင်ပေးခြင်း' : (productType === 'digital' ? 'ဥပမာ - iTunes $10 Gift Card / MLBB 500 Diamonds' : (productType === 'serialized' ? 'ဥပမာ - iPhone 15 Pro Max 256GB / Dell XPS 15' : (productType === 'weight_based' ? 'ဥပမာ - ကော်ကြိုး / ခဲကြိုး / အပူခံပိုက်' : '{{ __('messages.product_form_name_placeholder') }}')))" />
+                            :placeholder="productType === 'service' ? @js(__('messages.product_service_name_placeholder')) : (productType === 'digital' ? @js(__('messages.product_digital_name_placeholder')) : (productType === 'serialized' ? @js(__('messages.product_serialized_name_placeholder')) : (productType === 'weight_based' ? @js(__('messages.product_weight_name_placeholder')) : '{{ __('messages.product_form_name_placeholder') }}')))" />
                         @error('name')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                     </div>
 
@@ -692,7 +692,7 @@
                         </span>
                         <div>
                             <h2 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white"
-                                x-text="productType === 'service' ? '{{ __('messages.product_type_service') }} အသေးစိတ်' : (productType === 'digital' ? '{{ __('messages.product_type_digital') }} အသေးစိတ်' : '{{ __('messages.product_type_weight_based') }} အသေးစိတ်')">
+                                x-text="productType === 'service' ? @js(__('messages.product_type_service_details')) : (productType === 'digital' ? @js(__('messages.product_type_digital_details')) : @js(__('messages.product_type_weight_details')))">
                             </h2>
                         </div>
                     </div>
@@ -721,14 +721,14 @@
                             <div>
                                 <label class="{{ $label }}">{{ __('messages.product_form_weight_unit') }}</label>
                                 <select name="specs[unit]" class="{{ $input }} cursor-pointer font-bold">
-                                    <option value="kg" @selected(($product->specs['unit'] ?? '') === 'kg')>kg (ကီလိုဂရမ် - Kilogram)</option>
-                                    <option value="g" @selected(($product->specs['unit'] ?? '') === 'g')>g (ဂရမ် - Gram)</option>
-                                    <option value="viss" @selected(($product->specs['unit'] ?? '') === 'viss')>viss (ပိဿာ - Viss)</option>
-                                    <option value="kyat" @selected(($product->specs['unit'] ?? '') === 'kyat')>kyat-tha (ကျပ်သား - Kyat-tha)</option>
-                                    <option value="lb" @selected(($product->specs['unit'] ?? '') === 'lb')>lb (ပေါင် - Pound)</option>
-                                    <option value="l" @selected(($product->specs['unit'] ?? '') === 'l')>l (လီတာ - Liter)</option>
-                                    <option value="ml" @selected(($product->specs['unit'] ?? '') === 'ml')>ml (မီလီလီတာ - Milliliter)</option>
-                                    <option value="pack" @selected(($product->specs['unit'] ?? '') === 'pack')>pack (ထုပ် - Pack)</option>
+                                    <option value="kg" @selected(($product->specs['unit'] ?? '') === 'kg')>{{ __('messages.unit_kg_label') }}</option>
+                                    <option value="g" @selected(($product->specs['unit'] ?? '') === 'g')>{{ __('messages.unit_g_label') }}</option>
+                                    <option value="viss" @selected(($product->specs['unit'] ?? '') === 'viss')>{{ __('messages.unit_viss_label') }}</option>
+                                    <option value="kyat" @selected(($product->specs['unit'] ?? '') === 'kyat')>{{ __('messages.unit_kyat_label') }}</option>
+                                    <option value="lb" @selected(($product->specs['unit'] ?? '') === 'lb')>{{ __('messages.unit_lb_label') }}</option>
+                                    <option value="l" @selected(($product->specs['unit'] ?? '') === 'l')>{{ __('messages.unit_l_label') }}</option>
+                                    <option value="ml" @selected(($product->specs['unit'] ?? '') === 'ml')>{{ __('messages.unit_ml_label') }}</option>
+                                    <option value="pack" @selected(($product->specs['unit'] ?? '') === 'pack')>{{ __('messages.unit_pack_label') }}</option>
                                 </select>
                             </div>
                             <div class="rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 p-2 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
@@ -1865,21 +1865,21 @@
 
             <div class="flex items-center gap-1.5 w-full sm:w-auto justify-end">
                 <a href="{{ $returnTo ?? url('/store/' . $store->slug . '/admin/products') }}"
-                   class="h-10 sm:h-8 px-3.5 flex-1 sm:flex-none justify-center rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition flex items-center cursor-pointer">
+                   class="sf-btn-3d h-10 sm:h-8 px-3.5 flex-1 sm:flex-none justify-center rounded-md font-bold text-xs transition inline-flex items-center cursor-pointer">
                     {{ __('messages.cancel') }}
                 </a>
 
                 @if (!$isEdit)
                 <button type="submit" name="action" value="save_and_new"
-                        class="h-10 sm:h-8 px-3.5 flex-1 sm:flex-none justify-center rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 font-bold text-xs transition flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
-                        title="သိမ်းဆည်းပြီး အမျိုးအစားနှင့် Brand ဆက်လက်ထိန်းသိမ်းကာ နောက်ပစ္စည်း ဆက်ထည့်မည်">
+                        class="sf-btn-3d-accent h-10 sm:h-8 px-3.5 flex-1 sm:flex-none justify-center rounded-md font-bold text-xs transition inline-flex items-center gap-1 cursor-pointer"
+                        title="{{ __('messages.save_and_continue_tip') }}">
                     <span>⚡</span>
                     <span>{{ __('messages.product_form_save_and_new') }}</span>
                 </button>
                 @endif
 
                 <button type="submit" name="action" value="save"
-                        class="h-10 sm:h-8 px-4 flex-1 sm:flex-none justify-center rounded-md bg-violet-600 hover:bg-violet-500 text-white font-black text-xs shadow-md shadow-violet-500/20 transition flex items-center gap-1.5 cursor-pointer active:scale-95">
+                        class="sf-btn-3d-primary h-10 sm:h-8 px-4 flex-1 sm:flex-none justify-center rounded-md font-black text-xs transition inline-flex items-center gap-1.5 cursor-pointer">
                     <span>💾</span>
                     <span>{{ $isEdit ? __('messages.product_form_update_product') : __('messages.product_form_save_product') }}</span>
                 </button>

@@ -7,7 +7,7 @@
     // Consumed parts are preserved server-side (they already moved stock)
     // only editable lines go back into the form payload.
     $editableItems = $job->items->where('is_deducted', false)->values();
-    $productOptions = $products->map(function ($p) {
+    $productOptions = $products->map(function ($p) use ($store) {
         $catName = $p->category?->name ?? 'General';
         $parentCatName = $p->category?->parent?->name;
         $categoryPath = $parentCatName ? ($parentCatName . ' > ' . $catName) : $catName;
@@ -19,7 +19,7 @@
             'price' => (float) $p->retail_price,
             'category_id' => $p->category_id,
             'category_name' => $categoryPath,
-            'display_label' => '[' . $catName . '] ' . $p->name . ($p->sku ? " ({$p->sku})" : '') . ' · ' . number_format($p->retail_price) . ' MMK',
+            'display_label' => '[' . $catName . '] ' . $p->name . ($p->sku ? " ({$p->sku})" : '') . ' · ' . format_currency($p->retail_price, $store),
         ];
     })->values();
 @endphp
@@ -240,7 +240,7 @@
                 <template x-if="items.length > 0">
                     <span class="text-sm text-gray-500 dark:text-slate-400 ml-auto">
                         {{ __('messages.repair_items_total') }}:
-                        <span class="font-bold text-gray-900 dark:text-white" x-text="Number(total()).toLocaleString()"></span> MMK
+                        <span class="font-bold text-gray-900 dark:text-white" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(total()) : ('{{ currency_symbol($store) }} ' + Number(total()).toLocaleString())"></span>
                     </span>
                 </template>
             </div>
@@ -281,12 +281,12 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ __('messages.repair_estimated_charge') }} (MMK)</label>
+                    <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ __('messages.repair_estimated_charge') }}</label>
                     <input type="number" name="estimated_charge" value="{{ old('estimated_charge', $job->estimated_charge) }}" min="0" step="0.01"
                            class="w-full border dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ __('messages.repair_final_charge') }} (MMK)</label>
+                    <label class="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">{{ __('messages.repair_final_charge') }}</label>
                     <input type="number" id="repair_final_charge" name="final_charge" value="{{ old('final_charge', $job->final_charge) }}" min="0" step="0.01"
                            class="w-full border dark:border-slate-600 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 </div>

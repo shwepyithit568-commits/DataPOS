@@ -236,9 +236,23 @@
         closeViberModal() {
             if (window.__viberModalState) window.__viberModalState.close();
         },
-        incViberQty(d) { /* unused in product detail; modal has its own inc */ },
-        async viberCopyMessage() { /* unused */ },
-        async viberCopyAndOpen() { /* unused */ },
+        addedFeedback: false,
+        addToOrder() {
+            if (this.$store && this.$store.orderBuilder) {
+                this.$store.orderBuilder.addItem({
+                    id: {{ $product->id }},
+                    product_variant_id: this.variantId,
+                    variant_id: this.variantId,
+                    name: this.cartName,
+                    price: this.price,
+                    sku: this.sku,
+                    image_path: this.selectedImagePath,
+                    is_taxable: {{ $product->is_taxable ? 'true' : 'false' }}
+                });
+            }
+            this.addedFeedback = true;
+            setTimeout(() => { this.addedFeedback = false; }, 1600);
+        },
 
         // --- Grouped (attribute) selector — used when variants carry attributes ---
         get attrLabels() {
@@ -724,15 +738,16 @@
                             <span class="font-black text-white">{{ __('messages.buy_now') }}</span>
                         </button>
 
-                        {{-- Add to Cart / Order (Secondary 3D Primary Dynamic Sky/Brand Button) --}}
+                        {{-- Add to Cart / Order (Secondary 3D Primary Dynamic Sky/Brand Button with Instant Micro-Feedback) --}}
                         <button
-                            @click.prevent="$store.orderBuilder.addItem({ id: {{ $product->id }}, product_variant_id: variantId, variant_id: variantId, name: cartName, price: price, sku: sku, image_path: selectedImagePath, is_taxable: {{ $product->is_taxable ? 'true' : 'false' }} })"
+                            @click.prevent="addToOrder()"
                             :disabled="!inStock"
                             type="button"
-                            class="sf-btn-3d-primary flex-1 h-12 px-4 sm:px-6 disabled:opacity-50 text-white font-black text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 cursor-pointer select-none"
+                            class="sf-btn-3d-primary flex-1 h-12 px-4 sm:px-6 disabled:opacity-50 text-white font-black text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 cursor-pointer select-none transition-all"
+                            :class="addedFeedback ? '!bg-emerald-600 !border-b-emerald-800' : ''"
                         >
-                            <span class="text-base">🛒</span>
-                            <span class="font-black text-white">{{ __('messages.add_to_order') }}</span>
+                            <span class="text-base" x-text="addedFeedback ? '✓' : '🛒'">🛒</span>
+                            <span class="font-black text-white" x-text="addedFeedback ? '{{ __('messages.added_to_order') }}' : '{{ __('messages.add_to_order') }}'">{{ __('messages.add_to_order') }}</span>
                         </button>
                     @else
                         <div class="w-full space-y-2.5">

@@ -53,12 +53,12 @@
 
         <div class="flex items-center gap-1.5 shrink-0 self-start sm:self-auto">
             <a href="{{ route('store.admin.customers.index', ['store_slug' => $store->slug]) }}"
-               class="h-7 px-2 sm:px-2.5 rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1 border border-slate-200/80 dark:border-slate-700 shadow-2xs cursor-pointer">
+               class="sf-btn-3d h-7 px-2 sm:px-2.5 rounded-md text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
                 <span>👥</span>
                 <span>{{ __('messages.sidebar_customer_directory') }}</span>
             </a>
             <a href="{{ route('store.admin.debt_aging.index', ['store_slug' => $store->slug]) }}"
-               class="h-7 px-2 sm:px-2.5 rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1 border border-slate-200/80 dark:border-slate-700 shadow-2xs cursor-pointer">
+               class="sf-btn-3d h-7 px-2 sm:px-2.5 rounded-md text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
                 <span>⏳</span>
                 <span>{{ __('messages.sidebar_debt_aging') ?? 'Debt Aging' }}</span>
             </a>
@@ -235,22 +235,22 @@
                                     name: '{{ addslashes($cust->name) }}',
                                     phone: '{{ addslashes($cust->phone ?? '') }}',
                                     balance: '{{ $cust->balance }}',
-                                    balance_formatted: '{{ number_format($bal, 0) }}'
+                                    balance_formatted: '{{ format_currency($bal, $store) }}'
                                 })"
-                                class="flex-1 h-7 px-2 rounded-md text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs transition flex items-center justify-center gap-1 cursor-pointer active:scale-95">
+                                class="sf-btn-3d-success flex-1 h-7 px-2 rounded-md text-xs font-black inline-flex items-center justify-center gap-1 cursor-pointer">
                             <span>💰</span>
                             <span>{{ __('messages.receivables_collect_btn') }}</span>
                         </button>
                     @endif
 
                     <a href="{{ route('store.admin.receivables.show', ['store_slug' => $store->slug, 'customer' => $cust->customer_id]) }}"
-                       class="h-7 px-2.5 rounded-md text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition flex items-center justify-center flex-1">
+                       class="sf-btn-3d h-7 px-2.5 rounded-md text-xs font-bold inline-flex items-center justify-center flex-1">
                         {{ __('messages.view') }}
                     </a>
 
                     <a href="{{ route('store.admin.receivables.statement', ['store_slug' => $store->slug, 'customer' => $cust->customer_id]) }}"
                        target="_blank"
-                       class="w-7 h-7 rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition grid place-items-center shrink-0 cursor-pointer"
+                       class="sf-btn-3d w-7 h-7 rounded-md inline-flex items-center justify-center shrink-0 cursor-pointer"
                        title="{{ __('messages.print_statement') }}">
                         📄
                     </a>
@@ -341,26 +341,26 @@
                                     @if ($bal > 0)
                                         <button type="button"
                                                 @click="openCollectModal({
-                                                    customer_id: {{ $cust->customer_id }},
-                                                    name: '{{ addslashes($cust->name) }}',
-                                                    phone: '{{ addslashes($cust->phone ?? '') }}',
-                                                    balance: '{{ $cust->balance }}',
-                                                    balance_formatted: '{{ number_format($bal, 0) }}'
-                                                })"
-                                                class="h-6 px-2 rounded text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs transition flex items-center gap-1 cursor-pointer active:scale-95">
+                                    customer_id: {{ $cust->customer_id }},
+                                    name: '{{ addslashes($cust->name) }}',
+                                    phone: '{{ addslashes($cust->phone ?? '') }}',
+                                    balance: '{{ $cust->balance }}',
+                                    balance_formatted: '{{ format_currency($bal, $store) }}'
+                                })"
+                                                class="sf-btn-3d-success h-6 px-2 rounded-md text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer">
                                             <span>💰</span>
                                             <span>{{ __('messages.receivables_collect_btn') }}</span>
                                         </button>
                                     @endif
 
                                     <a href="{{ route('store.admin.receivables.show', ['store_slug' => $store->slug, 'customer' => $cust->customer_id]) }}"
-                                       class="h-6 px-2 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition flex items-center">
+                                       class="sf-btn-3d h-6 px-2 rounded-md text-[10px] font-bold inline-flex items-center">
                                         {{ __('messages.view') }}
                                     </a>
 
                                     <a href="{{ route('store.admin.receivables.statement', ['store_slug' => $store->slug, 'customer' => $cust->customer_id]) }}"
                                        target="_blank"
-                                       class="w-6 h-6 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition grid place-items-center cursor-pointer"
+                                       class="sf-btn-3d w-6 h-6 rounded-md text-[10px] font-bold inline-flex items-center justify-center cursor-pointer"
                                        title="{{ __('messages.print_statement') }}">
                                         📄
                                     </a>
@@ -431,7 +431,7 @@
                                class="w-full h-8 px-2.5 text-xs font-bold font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500">
                         <button type="button"
                                 @click="collectAmount = selectedCustomer?.balance"
-                                class="absolute right-1 top-1 h-6 px-2 text-[10px] font-bold rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 cursor-pointer transition">
+                                class="sf-btn-3d-success absolute right-1 top-1 h-6 px-2 text-[10px] font-bold rounded-md cursor-pointer">
                             {{ __('messages.receivables_pay_full') }}
                         </button>
                     </div>
@@ -492,10 +492,10 @@
 
                 {{-- Form Actions --}}
                 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" @click="closeCollectModal()" class="flex-1 h-8 rounded-lg font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition cursor-pointer">
+                    <button type="button" @click="closeCollectModal()" class="sf-btn-3d flex-1 h-8 rounded-md font-bold text-xs cursor-pointer">
                         {{ __('messages.cancel') }}
                     </button>
-                    <button type="submit" class="flex-1 h-8 rounded-lg font-black text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs transition cursor-pointer active:scale-95">
+                    <button type="submit" class="sf-btn-3d-success flex-1 h-8 rounded-md font-black text-xs cursor-pointer">
                         {{ __('messages.receivables_confirm_collection') }}
                     </button>
                 </div>

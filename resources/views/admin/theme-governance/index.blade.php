@@ -474,7 +474,7 @@
             <div class="p-2 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/50 space-y-0.5">
                 <div class="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    <span>Active (အသုံးပြုနိုင်)</span>
+                    <span>{{ __('messages.theme_status_active_label') }}</span>
                 </div>
                 <p class="text-slate-600 dark:text-slate-300 text-[10.5px] leading-tight">
                     {{ __('messages.theme_lifecycle_active_desc') }}
@@ -484,7 +484,7 @@
             <div class="p-2 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/50 space-y-0.5">
                 <div class="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1">
                     <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                    <span>Deprecated (ရပ်ဆိုင်းရန်လျာထား)</span>
+                    <span>{{ __('messages.theme_status_deprecated_label') }}</span>
                 </div>
                 <p class="text-slate-600 dark:text-slate-300 text-[10.5px] leading-tight">
                     {{ __('messages.theme_lifecycle_deprecated_desc') }}
@@ -494,7 +494,7 @@
             <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 space-y-0.5">
                 <div class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
                     <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                    <span>Hidden (ဝှက်ထားသည်)</span>
+                    <span>{{ __('messages.theme_status_hidden_label') }}</span>
                 </div>
                 <p class="text-slate-600 dark:text-slate-300 text-[10.5px] leading-tight">
                     {{ __('messages.theme_lifecycle_hidden_desc') }}

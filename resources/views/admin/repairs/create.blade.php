@@ -5,7 +5,7 @@
 
 @section('content')
 @php
-    $productOptions = $products->map(function ($p) {
+    $productOptions = $products->map(function ($p) use ($store) {
         $catName = $p->category?->name ?? 'General';
         $parentCatName = $p->category?->parent?->name;
         $categoryPath = $parentCatName ? ($parentCatName . ' > ' . $catName) : $catName;
@@ -17,7 +17,7 @@
             'price' => (float) $p->retail_price,
             'category_id' => $p->category_id,
             'category_name' => $categoryPath,
-            'display_label' => '[' . $catName . '] ' . $p->name . ($p->sku ? " ({$p->sku})" : '') . ' · ' . number_format($p->retail_price) . ' MMK',
+            'display_label' => '[' . $catName . '] ' . $p->name . ($p->sku ? " ({$p->sku})" : '') . ' · ' . format_currency($p->retail_price, $store),
         ];
     })->values();
 
@@ -98,7 +98,7 @@
                                 <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">
                                     {{ __('messages.repair_customer_section') }}
                                 </h2>
-                                <p class="text-[11px] text-slate-400">ရှာဖွေရွေးချယ်ပါ သို့မဟုတ် တိုက်ရိုက်ရိုက်ထည့်ပါ</p>
+                                <p class="text-[11px] text-slate-400">{{ __('messages.search_select_or_type') }}</p>
                             </div>
                         </div>
                         
@@ -129,7 +129,7 @@
                             <div class="relative">
                                 <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
                                 <input type="text" name="contact_name" x-model="contactName" @input="onContactNameInput()" @focus="showCustomerDropdown = true"
-                                       placeholder="ဖောက်သည် အမည် ရိုက်ထည့်ပါ သို့မဟုတ် အမည်/ဖုန်းဖြင့် ရှာပါ..." autocomplete="off"
+                                       placeholder="{{ __('messages.customer_search_placeholder') }}" autocomplete="off"
                                        class="w-full pl-9 pr-8 py-2.5 rounded-2xl border bg-slate-50 dark:bg-slate-800/60 text-sm font-semibold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-sky-500 outline-none transition"
                                        :class="!contactName.trim() ? 'border-rose-300 dark:border-rose-800' : 'border-slate-200 dark:border-slate-700'">
                                 
@@ -204,7 +204,7 @@
                             <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">
                                 {{ __('messages.status_and_payment') }}
                             </h2>
-                            <p class="text-[11px] text-slate-400">အခြေအနေ၊ တာဝန်ကျပညာရှင်နှင့် ကြိုတင်ပေးငွေ</p>
+                            <p class="text-[11px] text-slate-400">{{ __('messages.repair_status_tech_advance_sub') }}</p>
                         </div>
                     </div>
 
@@ -254,7 +254,7 @@
                                     💵 {{ __('messages.advance_payment') }}
                                 </label>
                                 <div class="relative min-w-0">
-                                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">{{ $store->currency ?? 'MMK' }}</span>
+                                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">{{ currency_symbol($store) }}</span>
                                     <input type="number" name="advance_payment" x-model="advancePayment" min="0" step="100"
                                            placeholder="0"
                                            class="w-full pl-14 pr-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-sm font-mono font-bold focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-violet-500 outline-none transition">
@@ -280,7 +280,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                             <div class="min-w-0">
                                 <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
-                                    💰 {{ __('messages.repair_estimated_charge') }} ({{ $store->currency ?? 'MMK' }})
+                                    💰 {{ __('messages.repair_estimated_charge') }}
                                 </label>
                                 <input type="number" name="estimated_charge" x-model="estimatedCharge" min="0" step="100"
                                        placeholder="0"
@@ -621,7 +621,7 @@
                             ⚡ {{ __('messages.repair_use_total_as_charge') }}
                         </button>
                         <div class="text-sm font-black text-slate-900 dark:text-white">
-                            Total: <span class="text-emerald-600 dark:text-emerald-400 font-mono" x-text="'{{ $store->currency ?? 'MMK' }} ' + Number(totalItems()).toLocaleString()"></span>
+                            Total: <span class="text-emerald-600 dark:text-emerald-400 font-mono" x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(totalItems()) : ('{{ currency_symbol($store) }} ' + Number(totalItems()).toLocaleString())"></span>
                         </div>
                     </div>
                 </div>
@@ -637,18 +637,18 @@
         {{-- Sticky Action Buttons Bar --}}
         <div class="sticky bottom-0 z-20 w-full rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-2 sm:px-4 border border-slate-200/90 dark:border-slate-800/90 shadow-[0_-4px_16px_rgba(15,23,42,0.06)] flex flex-col sm:flex-row sm:items-center sm:justify-end gap-1.5 sm:gap-2">
             <a href="{{ route('store.admin.repairs.index', $storeRouteParams) }}"
-               class="h-8 px-4 flex-1 sm:flex-none justify-center rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition flex items-center cursor-pointer">
+               class="sf-btn-3d h-8 px-4 flex-1 sm:flex-none justify-center rounded-md text-xs font-bold transition flex items-center cursor-pointer">
                 ✕ {{ __('messages.cancel') }}
             </a>
 
             <button type="button" @click="saveAndPrint()"
-                    class="h-8 px-4 flex-1 sm:flex-none justify-center rounded-md text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-sm shadow-sky-500/20 transition flex items-center gap-1.5 cursor-pointer">
+                    class="sf-btn-3d h-8 px-4 flex-1 sm:flex-none justify-center rounded-md text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
                 <span>🖨️</span>
                 <span>{{ __('messages.print') }}</span>
             </button>
 
             <button type="submit"
-                    class="h-8 px-5 flex-1 sm:flex-none justify-center rounded-md text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-md shadow-violet-500/20 transition flex items-center gap-2 cursor-pointer active:scale-95">
+                    class="sf-btn-3d-primary h-8 px-5 flex-1 sm:flex-none justify-center rounded-md text-xs font-black transition flex items-center gap-2 cursor-pointer">
                 <span>💾</span>
                 <span>{{ __('messages.save') }}</span>
             </button>
@@ -709,11 +709,11 @@
 
                 <div class="flex gap-2.5 pt-2">
                     <button type="button" @click="customerModalOpen = false"
-                            class="flex-1 py-2.5 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition">
+                            class="sf-btn-3d flex-1 py-2.5 rounded-2xl text-xs font-bold transition">
                         {{ __('messages.cancel') }}
                     </button>
                     <button type="button" @click="submitNewCustomer()" :disabled="customerModalBusy || !newCustomer.name.trim() || !newCustomer.phone.trim()"
-                            class="flex-1 py-2.5 rounded-2xl text-xs font-black bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-500/20 disabled:opacity-50 transition flex items-center justify-center gap-1.5">
+                            class="sf-btn-3d-primary flex-1 py-2.5 rounded-2xl text-xs font-black disabled:opacity-50 transition flex items-center justify-center gap-1.5">
                         <span x-text="customerModalBusy ? '{{ __('messages.saving') }}' : '✓ {{ __('messages.save') }}'"></span>
                     </button>
                 </div>
@@ -741,9 +741,9 @@
 
                 <div class="flex gap-2 pt-2">
                     <button type="button" @click="quickAddModalOpen = false"
-                            class="flex-1 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition">{{ __('messages.cancel') }}</button>
+                            class="sf-btn-3d flex-1 py-2 rounded-xl text-xs font-bold transition">{{ __('messages.cancel') }}</button>
                     <button type="button" @click="submitQuickAdd()" :disabled="quickAddBusy || !quickAddName.trim()"
-                            class="flex-1 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-500/20 disabled:opacity-50 transition">
+                            class="sf-btn-3d-success flex-1 py-2 rounded-xl text-xs font-black disabled:opacity-50 transition">
                         <span x-text="quickAddBusy ? '{{ __('messages.saving') }}' : '{{ __('messages.quick_add_and_select') }}'"></span>
                     </button>
                 </div>
@@ -758,7 +758,7 @@
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
                 <div class="flex items-center gap-2">
                     <span class="text-base">👨‍🔧</span>
-                    <h3 class="text-sm font-black text-slate-900 dark:text-white">+ {{ __('messages.repair_technician') }} (စက်ပြင်ပညာရှင်အသစ်)</h3>
+                    <h3 class="text-sm font-black text-slate-900 dark:text-white">+ {{ __('messages.repair_technician') }} ({{ __('messages.repair_new_technician') }})</h3>
                 </div>
                 <button type="button" @click="technicianModalOpen = false" class="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
             </div>
@@ -780,9 +780,9 @@
 
                 <div class="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <button type="button" @click="technicianModalOpen = false"
-                            class="flex-1 py-2 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition">{{ __('messages.cancel') }}</button>
+                            class="sf-btn-3d flex-1 py-2 rounded-lg text-xs font-bold transition">{{ __('messages.cancel') }}</button>
                     <button type="button" @click="submitNewTechnician()" :disabled="technicianModalBusy || !newTechnician.name.trim() || !newTechnician.phone.trim()"
-                            class="flex-1 py-2 rounded-lg text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs disabled:opacity-50 transition active:scale-95 cursor-pointer">
+                            class="sf-btn-3d-success flex-1 py-2 rounded-lg text-xs font-black disabled:opacity-50 transition cursor-pointer">
                         <span x-text="technicianModalBusy ? '{{ __('messages.saving') }}' : '✓ {{ __('messages.save') }}'"></span>
                     </button>
                 </div>

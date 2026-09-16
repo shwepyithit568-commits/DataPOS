@@ -1,6 +1,7 @@
 @extends('layouts.admin.app')
 
 @section('title', 'Audit Log #' . $log->id . ' - ' . $store->name)
+@section('main_padding', 'p-0.5 sm:p-1')
 
 @php
     $storeRouteParams = ['store_slug' => $store->slug];
@@ -10,7 +11,7 @@
 @endphp
 
 @section('content')
-<div class="w-full space-y-5 sm:space-y-6 pb-12">
+<div class="w-full space-y-0.5 pb-6">
 
     {{-- Top Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -40,7 +41,7 @@
         <div class="flex items-center gap-2.5 self-start sm:self-auto">
             <a href="{{ route('store.admin.audit-logs.index', $storeRouteParams) }}"
                class="px-4 py-2.5 rounded-2xl text-xs font-black bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm">
-                ← မှတ်တမ်းများစာရင်းသို့
+                ← {{ __('messages.back_to_audit_logs') }}
             </a>
         </div>
     </div>
@@ -104,7 +105,7 @@
                     </div>
                 @else
                     <div class="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-6 text-center text-xs text-slate-400">
-                        {{ __('messages.no_metadata_recorded') ?? 'ဤမှတ်တမ်းတွင် အပိုဆောင်း Metadata အချက်အလက် မပါဝင်ပါ။' }}
+                        {{ __('messages.no_metadata_recorded') }}
                     </div>
                 @endif
             </div>

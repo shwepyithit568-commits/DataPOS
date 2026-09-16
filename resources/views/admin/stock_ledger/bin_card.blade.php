@@ -50,13 +50,13 @@
             {{-- Print Bin Card --}}
             <a href="{{ route('store.admin.stock_ledger.print_bin_card', array_merge(['store_slug' => $store->slug, 'product' => $product->id], request()->all())) }}"
                target="_blank"
-               class="h-7 px-2.5 rounded-md text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition inline-flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer">
+               class="sf-btn-3d h-7 px-2.5 rounded-md text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
                 <span>🖨️</span>
                 <span>{{ __('messages.stock_ledger_print_bin_card') }}</span>
             </a>
             {{-- Back to Ledger --}}
             <a href="{{ route('store.admin.stock_ledger.index', ['store_slug' => $store->slug]) }}"
-               class="h-7 px-2.5 rounded-md text-xs font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800 hover:bg-violet-100 dark:hover:bg-violet-900/60 transition inline-flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer">
+               class="sf-btn-3d-primary h-7 px-2.5 rounded-md text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 <span>{{ __('messages.stock_ledger_all_movements') }}</span>
             </a>
@@ -108,7 +108,7 @@
                         'all' => __('messages.all'),
                     ] as $key => $label)
                         <button type="submit" name="preset" value="{{ $key }}"
-                                class="h-7 px-2 rounded-md text-xs font-bold border transition {{ ($preset ?? 'this_month') === $key ? 'bg-violet-600 text-white border-violet-600 shadow-2xs' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100' }}">
+                                class="h-7 px-2 rounded-md text-xs font-bold cursor-pointer transition {{ ($preset ?? 'this_month') === $key ? 'sf-btn-3d-primary' : 'sf-btn-3d' }}">
                             {{ $label }}
                         </button>
                     @endforeach
@@ -267,7 +267,7 @@
 
                             {{-- Unit Cost --}}
                             <td class="py-1.5 px-2.5 text-right font-mono font-semibold text-slate-700 dark:text-slate-300">
-                                {{ number_format($item['unit_cost']) }}
+                                {{ format_currency($item['unit_cost'], $store) }}
                             </td>
 
                             {{-- Posted By --}}

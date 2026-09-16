@@ -125,7 +125,7 @@
                     <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 hidden sm:inline">({{ $store->name }})</span>
                 </h1>
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    ကုန်ပစ္စည်းစာရင်း၊ စတော့လက်ကျန်နှင့် ဈေးနှုန်းများ စီမံခန့်ခွဲခြင်း
+                    {{ __('messages.products_index_subtitle') }}
                 </p>
             </div>
         </div>

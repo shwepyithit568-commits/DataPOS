@@ -89,7 +89,7 @@
             {{-- Link URL & Sort Order --}}
             <div>
                 <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.banners_link_label') }}</label>
-                <input type="text" name="link_url" value="{{ old('link_url', $banner->link_url) }}" placeholder="https://example.com သို့မဟုတ် /products?..."
+                <input type="text" name="link_url" value="{{ old('link_url', $banner->link_url) }}" placeholder="{{ __('messages.banner_link_url_placeholder') }}"
                        class="w-full h-8 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 text-xs font-mono bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-violet-500 focus:bg-white dark:focus:bg-slate-900 transition">
             </div>
             <div>

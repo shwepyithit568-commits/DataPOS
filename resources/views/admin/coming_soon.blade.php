@@ -1,7 +1,12 @@
 @extends('layouts.admin.app')
 
+@section('main_padding', 'p-0.5 sm:p-1')
+
 @section('content')
 @php
+    /** @var string $module */
+    $currentModule = (string) ($module ?? '');
+
     // Modules that already shipped as real pages (sidebar uses real nav-links,
     // not the placeholder route) — excluded from the roadmap grid below.
     $shippedModules = ['suppliers', 'transfers', 'warehouses', 'buy-back', 'returns'];
@@ -9,7 +14,7 @@
     // Roadmap grid: every registry module still on the roadmap, grouped by
     // phase, with the current module surfaced in the status card instead.
     $roadmap = collect($modules)
-        ->reject(fn ($meta, $slug) => in_array($slug, $shippedModules, true) || $slug === $module)
+        ->reject(fn ($meta, $slug) => in_array($slug, $shippedModules, true) || $slug === $currentModule)
         ->groupBy(fn ($meta) => $meta[1])
         ->sortKeys();
 
@@ -24,7 +29,7 @@
         ],
     ];
 @endphp
-<div class="w-full space-y-4 sm:space-y-5">
+<div class="w-full space-y-0.5 pb-6">
 
     {{-- ============================================================
          HERO HEADER — eyebrow, module title, phase subtitle
@@ -76,10 +81,10 @@
         </p>
 
         <div class="mt-7 flex flex-wrap items-center justify-center gap-2.5">
-            @if (isset($readyLinks[$module]))
-                <a href="{{ $readyLinks[$module]['url'] }}"
+            @if (isset($readyLinks[$currentModule]))
+                <a href="{{ $readyLinks[$currentModule]['url'] }}"
                    class="admin-secondary-btn">
-                    <span>{{ $readyLinks[$module]['label'] }}</span>
+                    <span>{{ $readyLinks[$currentModule]['label'] }}</span>
                 </a>
             @endif
             <a href="{{ route('store.admin.dashboard', ['store_slug' => $store->slug]) }}"

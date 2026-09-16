@@ -1067,10 +1067,10 @@ if (window.Alpine) {
             {{-- 4-Item Value Trust Strip (Section 6.1 standard) --}}
             <div class="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-2 px-3.5 py-2">
                 @foreach ([
-                    ['icon' => '⚡', 'title' => __('messages.fast_delivery') ?? 'အမြန်ဆုံး ပို့ဆောင်မှု', 'sub' => 'Township Delivery'],
-                    ['icon' => '🛡️', 'title' => __('messages.genuine_warranty') ?? 'စစ်မှန်သော အာမခံ', 'sub' => '100% Original'],
-                    ['icon' => '🔧', 'title' => __('messages.service_tracking') ?? 'ကျွမ်းကျင် ဆာဗစ်', 'sub' => 'Expert Tech Care'],
-                    ['icon' => '💬', 'title' => __('messages.direct_support') ?? 'တိုက်ရိုက် အကူအညီ', 'sub' => 'Viber / Telegram'],
+                    ['icon' => '⚡', 'title' => __('messages.fast_delivery'), 'sub' => __('messages.feature_township_delivery')],
+                    ['icon' => '🛡️', 'title' => __('messages.genuine_warranty'), 'sub' => __('messages.feature_original_warranty')],
+                    ['icon' => '🔧', 'title' => __('messages.service_tracking'), 'sub' => __('messages.feature_expert_tech_care')],
+                    ['icon' => '💬', 'title' => __('messages.direct_support'), 'sub' => __('messages.feature_viber_telegram')],
                 ] as $tIdx => $tCard)
                 <div class="flex items-center gap-2 p-1.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60 shadow-2xs transition-colors"
                      :class="preview_dark ? 'bg-slate-900/60' : 'bg-white/80'">
@@ -1121,7 +1121,7 @@ if (window.Alpine) {
                             </h4>
                             <p class="text-xs font-black mt-0.5"
                                :style="'color:' + colors.primary">
-                                {{ $dp['price'] }} <span class="text-[9px] font-normal text-slate-400">MMK</span>
+                                {{ format_currency((float) str_replace(',', '', $dp['price']), $store) }}
                             </p>
                         </div>
 

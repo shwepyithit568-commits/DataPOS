@@ -139,7 +139,7 @@
                         <label class="{{ $labelClass }}">{{ __('messages.settings_currency_symbol') }}</label>
                         <input type="text" name="currency_settings[currency_symbol]" x-model="symbol"
                                placeholder="Ks" class="{{ $inputClass }} font-bold" />
-                        <p class="{{ $helpClass }}">e.g. Ks, K, $, ฿, ¥, ကျပ်</p>
+                        <p class="{{ $helpClass }}">{{ __('messages.settings_currency_symbol_help') }}</p>
                     </div>
                 </div>
 
@@ -309,7 +309,7 @@
                         <div>
                             <span class="text-xs font-black text-slate-900 dark:text-white block">{{ __('messages.settings_currency_qty_auto') }}</span>
                             <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">10, 25, 1.5, 2.25</span>
-                            <span class="text-[10px] text-slate-400 block">(Recommended — .000 မပါဘဲ သန့်ရှင်းစွာ ပြသခြင်း)</span>
+                            <span class="text-[10px] text-slate-400 block">{{ __('messages.settings_clean_qty_recommended') }}</span>
                         </div>
                     </label>
 
@@ -320,7 +320,7 @@
                         <div>
                             <span class="text-xs font-black text-slate-900 dark:text-white block">{{ __('messages.settings_currency_qty_integers') }}</span>
                             <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">10, 25, 100</span>
-                            <span class="text-[10px] text-slate-400 block">(Mobile, Computer, Fashion & Electronics)</span>
+                            <span class="text-[10px] text-slate-400 block">{{ __('messages.settings_currency_qty_integers_desc') }}</span>
                         </div>
                     </label>
 
@@ -331,7 +331,7 @@
                         <div>
                             <span class="text-xs font-black text-slate-900 dark:text-white block">{{ __('messages.settings_currency_qty_2dec') }}</span>
                             <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">10.00, 1.50</span>
-                            <span class="text-[10px] text-slate-400 block">(Meter, Yards, Standard Weighed Items)</span>
+                            <span class="text-[10px] text-slate-400 block">{{ __('messages.settings_currency_qty_2dec_desc') }}</span>
                         </div>
                     </label>
 
@@ -342,7 +342,7 @@
                         <div>
                             <span class="text-xs font-black text-slate-900 dark:text-white block">{{ __('messages.settings_currency_qty_3dec') }}</span>
                             <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">10.000, 1.500</span>
-                            <span class="text-[10px] text-slate-400 block">(Kilograms, Precision Weighing, Fuel)</span>
+                            <span class="text-[10px] text-slate-400 block">{{ __('messages.settings_currency_qty_3dec_desc') }}</span>
                         </div>
                     </label>
                 </div>
@@ -353,7 +353,7 @@
                                class="rounded text-emerald-600 focus:ring-emerald-500">
                         <div>
                             <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block">{{ __('messages.settings_currency_qty_trim') }}</span>
-                            <span class="text-[10px] text-slate-400 block">စတော့အရေအတွက် ကိန်းပြည့်ဖြစ်နေပါက `.000` မပါဘဲ ဥပမာ- `10` အဖြစ် သန့်ရှင်းစွာ ပြသပေးပါမည်။</span>
+                            <span class="text-[10px] text-slate-400 block">{{ __('messages.settings_currency_qty_trim_desc') }}</span>
                         </div>
                     </label>
                 </div>

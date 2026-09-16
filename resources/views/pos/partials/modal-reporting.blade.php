@@ -1,4 +1,8 @@
 {{-- ── POS Reporting Modal (Today | Registers | Debt | Repairs) ────── --}}
+@php
+    /** @var array<int, array{customer_id: int, name: string, phone: string|null, balance: string|float, last_activity: string|null}> $outstanding */
+    /** @var string|float $outstandingTotal */
+@endphp
 <div x-show="reportingModalOpen" x-cloak x-transition.opacity class="fixed inset-0 z-[95] flex items-center justify-center p-0 sm:p-3 md:p-4 lg:p-6"
      @keydown.escape.window="reportingModalOpen = false">
     <div class="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-xs transition-opacity" @click="reportingModalOpen = false"></div>

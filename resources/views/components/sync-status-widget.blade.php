@@ -71,15 +71,15 @@
         }
     }
 }" class="inline-flex items-center">
-    {{-- Status Pill (Clickable to trigger sync) --}}
+    {{-- Status Pill (Clickable to trigger sync) with 3D tactile pill style --}}
     <button type="button"
             @click="syncNow()"
             :disabled="syncing"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-tight transition shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-emerald-500 disabled:cursor-not-allowed"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-tight shadow-xs hover:shadow hover:-translate-y-0.5 active:translate-y-0.5 active:border-b transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-emerald-500 disabled:cursor-not-allowed"
             :class="{
-                'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-950/60': online && !syncing && pendingCount === 0 && failedCount === 0,
-                'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 animate-pulse': syncing || pendingCount > 0,
-                'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-950/60': !online || failedCount > 0
+                'bg-gradient-to-b from-white via-emerald-50/70 to-emerald-100/60 text-emerald-800 border border-emerald-200/90 border-b-2 border-b-emerald-400 dark:bg-gradient-to-b dark:from-emerald-950/40 dark:to-emerald-900/60 dark:text-emerald-300 dark:border-emerald-700/80 dark:border-b-emerald-900 hover:from-emerald-50 hover:to-emerald-100': online && !syncing && pendingCount === 0 && failedCount === 0,
+                'bg-gradient-to-b from-white via-amber-50/70 to-amber-100/60 text-amber-800 border border-amber-200/90 border-b-2 border-b-amber-400 dark:bg-gradient-to-b dark:from-amber-950/40 dark:to-amber-900/60 dark:text-amber-300 dark:border-amber-700/80 dark:border-b-amber-900 animate-pulse': syncing || pendingCount > 0,
+                'bg-gradient-to-b from-white via-rose-50/70 to-rose-100/60 text-rose-800 border border-rose-200/90 border-b-2 border-b-rose-400 dark:bg-gradient-to-b dark:from-rose-950/40 dark:to-rose-900/60 dark:text-rose-300 dark:border-rose-700/80 dark:border-b-rose-900 hover:from-rose-50 hover:to-rose-100': !online || failedCount > 0
             }"
             :title="online ? (syncing ? '{{ __('messages.sync_in_progress') ?? 'Syncing...' }}' : '{{ __('messages.sync_online') ?? 'Online — Click to sync' }}') : '{{ __('messages.sync_offline') ?? 'Offline — Transactions queued locally' }}'">
         
