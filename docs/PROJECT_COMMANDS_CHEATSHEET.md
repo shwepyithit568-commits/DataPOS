@@ -22,8 +22,6 @@ Laravel server ဖွင့်ရန်:
 $env:PHP_CLI_SERVER_WORKERS=4; php artisan serve --host=127.0.0.1 --port=8501
 ```
 
-
-
 > Note: Local `.env` ထဲက `APP_URL` က `8502` ဖြစ်နေနိုင်သည်။ Docs standard က `8501` ဖြစ်သည်။ Browser link generation မှားနေလျှင် `.env` ကို `APP_URL=http://127.0.0.1:8501` ပြောင်းပြီး `php artisan config:clear` run ပါ။
 
 Browser URL:
@@ -53,9 +51,9 @@ ipconfig | findstr /i "IPv4"
 
 ```text
 # Home WiFi
-http://192.168.1.233:8501/store/datapos-mobile
-http://192.168.1.233:8501/store/datapos-mobile/pos
-http://192.168.1.233:8501/store/datapos-mobile/admin/dashboard
+http://192.168.1.64:8501/store/datapos-mobile
+http://192.168.1.64:8501/store/datapos-mobile/pos
+http://192.168.1.64:8501/store/datapos-mobile/admin/dashboard
 ```
 
 > ⚠️ **Windows Firewall ပိတ်နေလျှင်** — Control Panel → Windows Defender Firewall → Allow an app through firewall → PHP ကို Private + Public ✅ check လုပ်ပါ။ (သို့မဟုတ် Inbound Rule အသစ်ဖြင့် TCP port 8501 ကို Allow ပါ)
@@ -81,6 +79,7 @@ cloudflared tunnel --url http://127.0.0.1:8501
 > **မှတ်ချက်:** Run ပြီးပါက `trycloudflare.com` ဖြင့် ဆုံးသော Link တစ်ခု ထွက်လာပါမည်။ ထို Link ကို ဖုန်း/Browser တွင် ရိုက်ထည့်၍ အသုံးပြုနိုင်ပါသည်။ Terminal နှစ်ခုစလုံးကို မပိတ်ဘဲ ထားရပါမည်။
 >
 > **`cloudflared` command မရှိဘူးဆိုလျှင်** — အောက်ပါ command ဖြင့် install လုပ်ပါ (Terminal အသစ်တစ်ခုဖွင့်ပြီး):
+>
 > ```powershell
 > # Download & Install
 > New-Item -ItemType Directory -Force -Path "$env:LOCALAPPDATA\cloudflared" | Out-Null
@@ -90,7 +89,6 @@ cloudflared tunnel --url http://127.0.0.1:8501
 > [Environment]::SetEnvironmentVariable("Path", (($p + "$env:LOCALAPPDATA\cloudflared") -join ";"), "User")
 > # Terminal အသစ်ဖွင့်ပြီး cloudflared --version စစ်ပါ
 > ```
-
 
 Vite CSS/JS watcher ဖွင့်ရန်:
 
@@ -348,14 +346,14 @@ php artisan datapos:build-demo-stores
 
 ### 🔑 Demo Login Accounts (Password: `password`)
 
-| Role | Name | Login Phone | Default Password | URL / Access |
-|---|---|---|---|---|
-| 👑 Platform Super Admin | ဦးအောင်မျိုး | `09777000111` | `password` | `/admin/dashboard` |
-| 👔 Store Manager | ဦးကျော်ကျော် | `09111222333` | `password` | `/store/{slug}/admin/dashboard` (PIN: `1234`) |
-| 💵 Cashier | ဒေါ်လှလှ | `09222333444` | `password` | `/store/{slug}/pos` (PIN: `1234`) |
-| 🔧 Technician / Staff | ကိုမင်းမင်း | `09333444555` | `password` | `/store/{slug}/admin/service-jobs` (PIN: `1234`) |
-| 🏬 Wholesale Customer | ဦးဘသိန်း | `09988776655` | `password` | `/store/{slug}/wholesale` |
-| 🛒 Retail Customer | ဒေါ်နီလာ | `09776655443` | `password` | `/store/{slug}` |
+| Role                    | Name         | Login Phone   | Default Password | URL / Access                                     |
+| ----------------------- | ------------ | ------------- | ---------------- | ------------------------------------------------ |
+| 👑 Platform Super Admin | ဦးအောင်မျိုး | `09777000111` | `password`       | `/admin/dashboard`                               |
+| 👔 Store Manager        | ဦးကျော်ကျော် | `09111222333` | `password`       | `/store/{slug}/admin/dashboard` (PIN: `1234`)    |
+| 💵 Cashier              | ဒေါ်လှလှ     | `09222333444` | `password`       | `/store/{slug}/pos` (PIN: `1234`)                |
+| 🔧 Technician / Staff   | ကိုမင်းမင်း  | `09333444555` | `password`       | `/store/{slug}/admin/service-jobs` (PIN: `1234`) |
+| 🏬 Wholesale Customer   | ဦးဘသိန်း     | `09988776655` | `password`       | `/store/{slug}/wholesale`                        |
+| 🛒 Retail Customer      | ဒေါ်နီလာ     | `09776655443` | `password`       | `/store/{slug}`                                  |
 
 > 💡 **Production Deployment Note:**
 > Deployment သို့မဟုတ် Production တင်သည့်အခါ Login မျက်နှာပြင်တွင် Quick Login ခလုတ်များ မပေါ်စေရန် `.env` တွင် `SHOW_QUICK_LOGIN=false` (သို့မဟုတ် variable မထည့်ထားပါက default false) ဖြစ်ပြီးဖြစ်ပါသည်။ ဝယ်ယူမည့် Client များကို အထက်ပါ Phone နှင့် Password ပေး၍ တိုက်ရိုက် စမ်းသပ်သုံးစွဲခိုင်းနိုင်ပါသည်။
@@ -364,15 +362,15 @@ php artisan datapos:build-demo-stores
 
 ## 9. Common Problems
 
-| Problem | Cause | Fix |
-|---|---|---|
-| `php` command မသိဘူး | PATH မဝင်သေးခြင်း၊ terminal အဟောင်းဖြစ်ခြင်း | terminal အသစ်ဖွင့်ပါ၊ `php -v` စစ်ပါ |
-| `Port 8501 is already in use` | Server အဟောင်း run နေဆဲ | terminal အဟောင်းပိတ်ပါ၊ သို့မဟုတ် `--port=8502` ဖြင့် run ပါ |
-| UI မပြောင်းသေးဘူး | Vite build/watch မလုပ်ထားခြင်း၊ view cache ကျန်ခြင်း | `npm run dev` သို့ `npm run build`, ပြီးလျှင် `php artisan optimize:clear` |
-| Route 404/old route ဖြစ်နေတယ် | route cache ကျန်ခြင်း | `php artisan route:clear` သို့ `php artisan optimize:clear` |
-| `.env` ပြင်ပြီး effect မရှိဘူး | config cache ကျန်ခြင်း | `php artisan config:clear` |
-| Login user မရှိဘူး | UAT seeder မ run ထားခြင်း | `php artisan db:seed --class=UatSeeder` |
-| Uploaded image မပေါ်ဘူး | storage symlink မရှိခြင်း | `php artisan storage:link` |
+| Problem                        | Cause                                                | Fix                                                                        |
+| ------------------------------ | ---------------------------------------------------- | -------------------------------------------------------------------------- |
+| `php` command မသိဘူး           | PATH မဝင်သေးခြင်း၊ terminal အဟောင်းဖြစ်ခြင်း         | terminal အသစ်ဖွင့်ပါ၊ `php -v` စစ်ပါ                                       |
+| `Port 8501 is already in use`  | Server အဟောင်း run နေဆဲ                              | terminal အဟောင်းပိတ်ပါ၊ သို့မဟုတ် `--port=8502` ဖြင့် run ပါ               |
+| UI မပြောင်းသေးဘူး              | Vite build/watch မလုပ်ထားခြင်း၊ view cache ကျန်ခြင်း | `npm run dev` သို့ `npm run build`, ပြီးလျှင် `php artisan optimize:clear` |
+| Route 404/old route ဖြစ်နေတယ်  | route cache ကျန်ခြင်း                                | `php artisan route:clear` သို့ `php artisan optimize:clear`                |
+| `.env` ပြင်ပြီး effect မရှိဘူး | config cache ကျန်ခြင်း                               | `php artisan config:clear`                                                 |
+| Login user မရှိဘူး             | UAT seeder မ run ထားခြင်း                            | `php artisan db:seed --class=UatSeeder`                                    |
+| Uploaded image မပေါ်ဘူး        | storage symlink မရှိခြင်း                            | `php artisan storage:link`                                                 |
 
 ---
 

@@ -127,6 +127,59 @@
 
         .nav-active-dashboard { background: linear-gradient(180deg, #f0f9ff, #e0f2fe) !important; color: #075985 !important; border-color: #7dd3fc !important; border-bottom: 2px solid #0284c7 !important; }
         .dark .nav-active-dashboard { background: linear-gradient(180deg, #082f49, #0c4a6e) !important; color: #bae6fd !important; border-color: #0369a1 !important; border-bottom: 2px solid #0f172a !important; }
+
+        /* Admin Navigation Inactive Trigger & Sublink Styles (Guaranteed 100% Solid Dark in Dark Mode, Crisp Light in Light Mode) */
+        .nav-idle-trigger {
+            background: linear-gradient(180deg, #ffffff, #f8fafc) !important;
+            border: 1px solid #e2e8f0 !important;
+            border-bottom: 2px solid #cbd5e1 !important;
+            color: #334155 !important;
+        }
+        .nav-idle-trigger:hover {
+            background: linear-gradient(180deg, #ffffff, #f1f5f9) !important;
+            border-color: #cbd5e1 !important;
+            border-bottom: 2px solid #94a3b8 !important;
+            color: #0f172a !important;
+        }
+        .dark .nav-idle-trigger {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+            border: 1px solid #334155 !important;
+            border-bottom: 2px solid #020617 !important;
+            color: #f1f5f9 !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+        }
+        .dark .nav-idle-trigger:hover {
+            background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
+            border-color: #475569 !important;
+            border-bottom: 2px solid #020617 !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .nav-idle-sublink {
+            background: rgba(255, 255, 255, 0.9) !important;
+            border: 1px solid #e2e8f0 !important;
+            border-bottom: 2px solid #cbd5e1 !important;
+            color: #475569 !important;
+        }
+        .nav-idle-sublink:hover {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            border-bottom: 2px solid #94a3b8 !important;
+            color: #0f172a !important;
+        }
+        .dark .nav-idle-sublink {
+            background: rgba(15, 23, 42, 0.8) !important;
+            border: 1px solid #1e293b !important;
+            border-bottom: 2px solid #020617 !important;
+            color: #cbd5e1 !important;
+        }
+        .dark .nav-idle-sublink:hover {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+            border-bottom: 2px solid #020617 !important;
+            color: #ffffff !important;
+        }
     </style>
     {{-- Preload fonts so text renders without font-swap CLS. --}}
     <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/assets/fonts/Roboto-Regular.woff2') }}">
@@ -456,7 +509,7 @@
             @if ($hasStoreContext && auth()->user()?->isPlatformOwner() && ! $isPlatformScope)
                 <div class="pt-0.5 pb-0.5">
                     <a href="{{ route('admin.dashboard') }}"
-                       class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-300 border border-transparent hover:border-slate-200/80 hover:border-b-2 hover:border-b-slate-300 dark:hover:border-slate-700 dark:hover:border-b-slate-900 hover:bg-gradient-to-b hover:from-white hover:to-slate-100/80 dark:hover:from-slate-800 dark:hover:to-slate-900 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b transition-all duration-150"
+                       class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-300 border border-transparent hover:border-slate-200/80 hover:border-b-2 hover:border-b-slate-300 dark:hover:border-slate-700 dark:hover:border-b-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b transition-all duration-150"
                        :class="sidebarCollapsed ? 'lg:justify-center' : ''"
                        title="← Platform Admin">
                         <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>

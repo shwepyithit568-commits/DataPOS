@@ -14,7 +14,6 @@
         'general'      => ['label' => __('messages.settings_general'),        'icon' => '🏪', 'badge' => 'Profile',  'desc' => 'Name, logo, tagline & language',      'url' => $settingsBase],
         'currency'     => ['label' => 'Currency & Numbers',                   'icon' => '💱', 'badge' => 'Money & Qty', 'desc' => 'Currency symbol, decimals & stock quantity precision', 'url' => $settingsBase . '/currency'],
         'pos'          => ['label' => __('messages.settings_pos'),            'icon' => '🛒', 'badge' => 'Counter',  'desc' => 'Cashier held sales & PIN controls',    'url' => $settingsBase . '/pos'],
-        'appearance'   => ['label' => __('messages.settings_appearance'),     'icon' => '🎨', 'badge' => 'Branding', 'desc' => 'Brand colors, themes & banners',       'url' => $settingsBase . '/appearance'],
         'contact'      => ['label' => __('messages.settings_contact'),        'icon' => '☎️', 'badge' => 'Channels', 'desc' => 'Phones, Viber, Telegram & chats',      'url' => $settingsBase . '/contact'],
         'delivery'     => ['label' => __('messages.settings_delivery'),       'icon' => '🚚', 'badge' => 'Checkout', 'desc' => 'Delivery zones & payment methods',     'url' => $settingsBase . '/delivery'],
         'how-to-order' => ['label' => __('messages.settings_how_to_order'),   'icon' => '📖', 'badge' => 'Guide',    'desc' => 'Order tutorial & step instructions',   'url' => $settingsBase . '/how-to-order'],
@@ -52,11 +51,11 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-sm">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-800/60 text-blue-600 dark:text-blue-400 grid place-items-center text-lg sm:text-xl font-bold shadow-sm shrink-0">
-                ⚙️
+                {{ $section === 'appearance' ? '🎨' : '⚙️' }}
             </div>
             <div class="min-w-0">
                 <h1 class="admin-page-title text-base sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2 truncate">
-                    <span>{{ __('messages.settings_storefront_settings') }}</span>
+                    <span>{{ $section === 'appearance' ? __('messages.sidebar_theme_branding') : __('messages.settings_storefront_settings') }}</span>
                 </h1>
                 <p class="admin-page-sub text-xs text-slate-500 dark:text-slate-400 truncate">{{ $sectionDescs[$section] ?? ($store->name . ' Store Configuration') }}</p>
             </div>
@@ -148,6 +147,7 @@
     </div>
 
     {{-- 3. Horizontal Scroll Navigation Tabs --}}
+    @if ($section !== 'appearance')
     <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-1.5 sm:p-2 shadow-sm">
         <nav class="flex items-center gap-1.5 overflow-x-auto scroll-smooth py-0.5 px-0.5"
              aria-label="Store settings sections"
@@ -168,6 +168,7 @@
             @endforeach
         </nav>
     </div>
+    @endif
 
     {{-- 4. Full-Width Form Panel for Active Section --}}
     <main class="w-full">

@@ -125,7 +125,7 @@
     $triggerClasses = 'relative w-full flex min-h-11 items-center justify-between px-3 py-2 rounded-xl font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-500 '
         . ($groupActive
             ? $theme['active_trigger'] . ' active:translate-y-0.5 active:border-b shadow-xs'
-            : 'bg-gradient-to-b from-white via-slate-50 to-slate-100/80 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 border-b-2 border-b-slate-300 dark:border-b-slate-950 shadow-2xs hover:bg-gradient-to-b hover:from-white ' . $theme['hover_trigger'] . ' hover:text-slate-900 dark:hover:text-white hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b');
+            : 'nav-idle-trigger shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b');
 
     $finalBadgeClass = $theme['badge'];
     $activeIconClasses = $groupActive ? $theme['ring'] : '';

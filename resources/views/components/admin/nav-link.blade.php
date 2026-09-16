@@ -86,13 +86,13 @@
         ? 'group flex w-full min-h-11 items-center justify-between gap-3 rounded-xl px-3 py-2 font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-500 '
           . ($active
                 ? $theme['active_bg'] . ' active:translate-y-0.5 active:border-b'
-                : 'bg-gradient-to-b from-white via-slate-50 to-slate-100/80 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200/90 dark:border-slate-800 border-b-2 border-b-slate-300 dark:border-b-slate-950 shadow-2xs hover:bg-gradient-to-b hover:from-white ' . $theme['hover_border'] . ' hover:text-slate-900 dark:hover:text-white hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b')
+                : 'nav-idle-trigger shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b')
         : 'group flex w-full items-center justify-between gap-2 px-3 py-2 min-h-10 rounded-lg text-xs font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-500 '
           . ($active
                 ? $theme['active_bg'] . ' active:translate-y-0.5 active:border-b'
                 : ($isPlaceholder
                     ? 'text-slate-400 dark:text-slate-500 hover:text-sky-600 dark:hover:text-sky-300'
-                    : 'text-slate-700 dark:text-slate-300 bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 border-b-2 border-b-slate-300/80 dark:border-b-slate-950 shadow-2xs hover:bg-gradient-to-b hover:from-white ' . $theme['hover_border'] . ' hover:text-slate-900 dark:hover:text-white hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b'));
+                    : 'nav-idle-sublink shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b'));
 
     $mainBadgeMap = [
         'dashboard' => 'sf-btn-3d-telegram',
