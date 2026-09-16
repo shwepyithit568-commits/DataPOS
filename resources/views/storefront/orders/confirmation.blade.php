@@ -434,7 +434,7 @@
 
     {{-- 7. Actions Toolbar (Print Slip & Continue Shopping) --}}
     <div class="no-print pt-2 flex flex-col sm:flex-row items-center justify-between gap-2.5">
-        <button type="button" onclick="window.print()"
+        <button type="button" data-print
                 class="sf-btn-3d flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-black rounded-md w-full sm:w-auto">
             <span>🖨️</span>
             <span>{{ __('messages.order_print_slip') }}</span>

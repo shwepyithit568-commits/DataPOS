@@ -81,7 +81,7 @@ class DebtAgingController extends Controller
 
             fputcsv($handle, ['Debt Aging Analysis Report', $store->name]);
             fputcsv($handle, ['Generated Date', now()->toFormattedDateString() . ' ' . now()->format('h:i A')]);
-            fputcsv($handle, ['Total Outstanding Debt (Ks)', number_format($metrics['total_outstanding'], 2)]);
+            fputcsv($handle, ['Total Outstanding Debt', number_format($metrics['total_outstanding'], 2)]);
             fputcsv($handle, ['0 - 30 Days (Current)', number_format($metrics['bucket_0_30'], 2)]);
             fputcsv($handle, ['31 - 60 Days (Follow-up)', number_format($metrics['bucket_31_60'], 2)]);
             fputcsv($handle, ['61 - 90 Days (Warning)', number_format($metrics['bucket_61_90'], 2)]);
@@ -92,11 +92,11 @@ class DebtAgingController extends Controller
             fputcsv($handle, [
                 'Customer Name',
                 'Phone Number',
-                'Total Outstanding (Ks)',
-                '0 - 30 Days (Ks)',
-                '31 - 60 Days (Ks)',
-                '61 - 90 Days (Ks)',
-                '90+ Days (Ks)',
+                'Total Outstanding',
+                '0 - 30 Days',
+                '31 - 60 Days',
+                '61 - 90 Days',
+                '90+ Days',
                 'Oldest Unpaid Date',
                 'Max Overdue Days',
                 'Risk Level',

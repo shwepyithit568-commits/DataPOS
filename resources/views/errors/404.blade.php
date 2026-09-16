@@ -25,7 +25,7 @@
         @endif
 
         <div class="flex items-center justify-center gap-2.5 pt-2">
-            <button type="button" onclick="window.history.back()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs rounded-lg transition cursor-pointer">
+            <button type="button" data-back class="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs rounded-lg transition cursor-pointer">
                 ← ရှေ့စာမျက်နှာသို့ (Go Back)
             </button>
             <a href="{{ url('/') }}" class="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded-lg transition">

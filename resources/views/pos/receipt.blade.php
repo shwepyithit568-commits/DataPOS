@@ -709,56 +709,56 @@
     </div>
 
     {{-- ── SECTION 3: Social Sharing Modal Dialog ── --}}
-    <div id="shareModal" class="share-modal no-print" onclick="if(event.target===this)closeShareModal()">
+    <div id="shareModal" class="share-modal no-print" data-call-self="closeShareModal">
         <div class="share-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <h3 style="font-size:15px; font-weight:800; color:#0f172a;">
                     📲 {{ __('messages.receipt_share_modal_title') }}
                 </h3>
-                <button type="button" onclick="closeShareModal()" style="border:none; background:transparent; font-size:18px; cursor:pointer; color:#64748b;">✕</button>
+                <button type="button" data-call="closeShareModal" style="border:none; background:transparent; font-size:18px; cursor:pointer; color:#64748b;">✕</button>
             </div>
             <p style="font-size:12px; color:#64748b; margin-bottom:14px;">
                 {{ __('messages.receipt_share_modal_desc') }}
             </p>
 
             {{-- 1. Copy Receipt Summary Text --}}
-            <button type="button" class="share-channel-btn" onclick="copyReceiptText()" style="background:#0284c7; color:#fff; border-color:#0369a1;">
+            <button type="button" class="share-channel-btn" data-call="copyReceiptText" style="background:#0284c7; color:#fff; border-color:#0369a1;">
                 <span>📋</span>
                 <span id="copyReceiptTextLabel">{{ __('messages.receipt_copy_text') }}</span>
             </button>
 
             {{-- 2. Share / Copy JPG Image --}}
-            <button type="button" class="share-channel-btn" id="modalBtnShareJpg" onclick="shareJpgDirectly()" style="background:#0d9488; color:#fff; border-color:#0f766e;">
+            <button type="button" class="share-channel-btn" id="modalBtnShareJpg" data-call="shareJpgDirectly" style="background:#0d9488; color:#fff; border-color:#0f766e;">
                 <span>🖼️</span>
                 <span>{{ __('messages.vouchers_share_jpg') }} ({{ __('messages.vouchers_copy_jpg') }})</span>
             </button>
 
             {{-- 3. Viber Channel --}}
-            <button type="button" class="share-channel-btn" onclick="shareToViber()">
+            <button type="button" class="share-channel-btn" data-call="shareToViber">
                 <span style="color:#7360f2; font-size:16px;">💬</span>
                 <span>{{ __('messages.repair_share_viber') }}</span>
             </button>
 
             {{-- 4. Telegram Channel --}}
-            <button type="button" class="share-channel-btn" onclick="shareToTelegram()">
+            <button type="button" class="share-channel-btn" data-call="shareToTelegram">
                 <span style="color:#229ed9; font-size:16px;">✈️</span>
                 <span>{{ __('messages.repair_share_telegram') }}</span>
             </button>
 
             {{-- 5. WhatsApp Channel --}}
-            <button type="button" class="share-channel-btn" onclick="shareToWhatsApp()">
+            <button type="button" class="share-channel-btn" data-call="shareToWhatsApp">
                 <span style="color:#25d366; font-size:16px;">🟢</span>
                 <span>{{ __('messages.repair_share_whatsapp') }}</span>
             </button>
 
             {{-- 6. Native Share PDF --}}
-            <button type="button" class="share-channel-btn" onclick="shareNativePdf()" style="background:#7c3aed; color:#fff; border-color:#6d28d9;">
+            <button type="button" class="share-channel-btn" data-call="shareNativePdf" style="background:#7c3aed; color:#fff; border-color:#6d28d9;">
                 <span>📄</span>
                 <span>{{ __('messages.share_pdf') }}</span>
             </button>
 
             {{-- 7. Copy Link Only --}}
-            <button type="button" class="share-channel-btn" onclick="copyReceiptLink()">
+            <button type="button" class="share-channel-btn" data-call="copyReceiptLink">
                 <span>🔗</span>
                 <span id="copyReceiptLinkLabel">{{ __('messages.receipt_copy_link') }}</span>
             </button>

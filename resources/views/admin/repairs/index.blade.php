@@ -296,7 +296,7 @@
          ============================================================ --}}
     <div x-show="viewMode === 'card'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-0.5 sm:gap-1">
         @forelse ($jobs as $job)
-            <div data-href="{{ $detailUrls[$job->id] }}" onclick="window.location.href = this.dataset.href"
+            <div data-href="{{ $detailUrls[$job->id] }}"
                  class="bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs hover:border-violet-300 dark:hover:border-violet-700 transition overflow-hidden cursor-pointer group flex flex-col justify-between">
                 
                 <div>
@@ -359,21 +359,18 @@
                         <span class="text-[10px] text-slate-400 font-mono">{{ $job->created_at->format('d/m/Y') }}</span>
                         <div class="flex items-center gap-1">
                             <a href="{{ route('store.admin.repairs.show', [...$storeRouteParams, 'repair' => $job->id]) }}"
-                               onclick="event.stopPropagation();"
                                class="px-2 py-0.5 rounded text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200/60 dark:border-indigo-800/60 transition cursor-pointer"
                                title="{{ __('messages.view') }}">
                                 👁️ {{ __('messages.view') }}
                             </a>
                             @if (! $job->isTerminal())
                                 <button type="button"
-                                        onclick="event.stopPropagation();"
                                         @click="openQuickStatus({{ $job->id }}, '{{ $job->job_number }}', '{{ $job->status }}')"
                                         class="px-2 py-0.5 rounded text-[10px] font-bold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/60 hover:bg-violet-100 dark:hover:bg-violet-900/50 border border-violet-200/60 dark:border-violet-800/60 transition cursor-pointer"
                                         title="{{ __('messages.repair_quick_status') }}">
                                     🔄 {{ __('messages.status') }}
                                 </button>
                                 <a href="{{ route('store.admin.repairs.edit', [...$storeRouteParams, 'repair' => $job->id]) }}"
-                                   onclick="event.stopPropagation();"
                                    class="px-2 py-0.5 rounded text-[10px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/50 border border-sky-200/60 dark:border-sky-800/60 transition cursor-pointer"
                                    title="{{ __('messages.edit') }}">
                                     ✏️ {{ __('messages.edit') }}
@@ -381,7 +378,6 @@
                             @endif
                             <a href="{{ route('store.admin.repairs.print', [...$storeRouteParams, 'repair' => $job->id]) }}"
                                target="_blank"
-                               onclick="event.stopPropagation();"
                                class="px-2 py-0.5 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
                                title="{{ __('messages.repair_print_ticket') }}">
                                 🖨️ {{ __('messages.print') }}

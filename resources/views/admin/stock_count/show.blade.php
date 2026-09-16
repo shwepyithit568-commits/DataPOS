@@ -273,7 +273,7 @@
                 <input type="hidden" name="tab" value="{{ $tab }}">
                 
                 @if($sessionCategories->count() > 1)
-                    <select name="category_id" onchange="this.form.submit()" class="h-7 px-2 text-[11px] font-bold rounded-md border border-slate-300 dark:border-slate-700 bg-slate-50 text-slate-800 dark:bg-slate-800 dark:text-slate-200 shadow-2xs">
+                    <select name="category_id" data-auto-submit class="h-7 px-2 text-[11px] font-bold rounded-md border border-slate-300 dark:border-slate-700 bg-slate-50 text-slate-800 dark:bg-slate-800 dark:text-slate-200 shadow-2xs">
                         <option value="">{{ __('messages.all_categories') ?? 'All Categories' }}</option>
                         @foreach($sessionCategories as $cat)
                             <option value="{{ $cat->id }}" {{ $categoryId == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>

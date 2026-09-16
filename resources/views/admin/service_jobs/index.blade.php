@@ -265,7 +265,7 @@
          ============================================================ --}}
     <div x-show="viewMode === 'card'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-2.5">
         @forelse ($jobs as $job)
-            <div data-href="{{ $detailUrls[$job->id] }}" onclick="window.location.href = this.dataset.href"
+            <div data-href="{{ $detailUrls[$job->id] }}"
                  class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 transition overflow-hidden cursor-pointer group flex flex-col justify-between">
                 
                 <div>
@@ -317,17 +317,16 @@
                         <div class="flex items-center gap-1">
                             @if (! $job->isTerminal())
                                 <button type="button"
-                                        onclick="event.stopPropagation();"
                                         @click="openQuickStatus({{ $job->id }}, '{{ $job->job_number }}', '{{ $job->status }}')"
                                         class="px-2 py-1 rounded-md text-[10px] font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition cursor-pointer" title="{{ __('messages.repair_quick_status') }}">
                                     Status
                                 </button>
-                                <a href="{{ route('store.admin.service_jobs.edit', [...$storeRouteParams, 'job' => $job->id]) }}" onclick="event.stopPropagation();"
+                                <a href="{{ route('store.admin.service_jobs.edit', [...$storeRouteParams, 'job' => $job->id]) }}"
                                    class="px-2 py-1 rounded-md text-[10px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition cursor-pointer" title="{{ __('messages.repair_edit') }}">
                                     Edit
                                 </a>
                             @endif
-                            <a href="{{ route('store.admin.service_jobs.print', [...$storeRouteParams, 'job' => $job->id]) }}" target="_blank" onclick="event.stopPropagation();"
+                            <a href="{{ route('store.admin.service_jobs.print', [...$storeRouteParams, 'job' => $job->id]) }}" target="_blank"
                                class="px-2 py-1 rounded-md text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition cursor-pointer" title="{{ __('messages.repair_print_ticket') }}">
                                 Slip
                             </a>

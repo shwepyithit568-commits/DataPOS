@@ -876,7 +876,7 @@
                 {{-- Compact Paper Size Dropdown --}}
                 <div class="size-select-wrapper">
                     <label for="paperSizeSelect" class="size-select-label">📄 {{ __('messages.paper_size') }}:</label>
-                    <select class="size-select" id="paperSizeSelect" onchange="setPaperSize(this.value)">
+                    <select class="size-select" id="paperSizeSelect">
                         <option value="58mm" {{ $paperSize === '58mm' ? 'selected' : '' }}>58mm (POS)</option>
                         <option value="80mm" {{ $paperSize === '80mm' ? 'selected' : '' }}>80mm (POS)</option>
                         <option value="a5" {{ $paperSize === 'a5' ? 'selected' : '' }}>A5 (Half)</option>
@@ -888,16 +888,19 @@
             <div class="top-nav-divider"></div>
 
             <div class="top-nav-right">
-                <button type="button" class="tool-btn tool-btn-print" id="btnPrint" data-print onclick="window.print()">
+                {{-- Handlers are bound in this view's own <script> block below;
+                     inline onclick/onchange are blocked by the CSP anyway, and
+                     keeping both would fire each action twice. --}}
+                <button type="button" class="tool-btn tool-btn-print" id="btnPrint">
                     🖨️ <span>{{ __('messages.invoice_print') }}</span>
                 </button>
-                <button type="button" class="tool-btn tool-btn-pdf" id="btnDownloadPdf" onclick="downloadPdf()">
+                <button type="button" class="tool-btn tool-btn-pdf" id="btnDownloadPdf">
                     📥 <span>{{ __('messages.vouchers_save_pdf') }}</span>
                 </button>
-                <button type="button" class="tool-btn tool-btn-share-jpg" id="btnShareJpg" onclick="shareJpgDirectly()" title="{{ __('messages.vouchers_copy_jpg') }}">
+                <button type="button" class="tool-btn tool-btn-share-jpg" id="btnShareJpg" title="{{ __('messages.vouchers_copy_jpg') }}">
                     🖼️ <span>{{ __('messages.vouchers_copy_jpg') }}</span>
                 </button>
-                <button type="button" class="tool-btn tool-btn-share" id="btnOpenShareModal" onclick="openShareModal()">
+                <button type="button" class="tool-btn tool-btn-share" id="btnOpenShareModal">
                     📲 <span>{{ __('messages.vouchers_share_jpg') }}</span>
                 </button>
             </div>
@@ -1545,14 +1548,8 @@
                 });
             }
 
-            // Delegated click support for any data-print or data-paper-size elements
-            document.addEventListener('click', function(e) {
-                var printEl = e.target.closest('[data-print]');
-                if (printEl) {
-                    e.preventDefault();
-                    window.print();
-                }
-            }, true);
+            // [data-print] click handling is delegated globally by csp-helpers.js
+            // (binding it here as well opened the print dialog twice).
 
             // Initialize responsive preview scale and window resize listener
             updatePreviewScale();

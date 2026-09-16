@@ -71,7 +71,7 @@
                 <input type="hidden" name="preset" value="custom">
 
                 {{-- Cashier Filter --}}
-                <select name="cashier_id" onchange="this.form.submit()" class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-sky-500 shadow-2xs">
+                <select name="cashier_id" data-auto-submit class="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-sky-500 shadow-2xs">
                     <option value="">{{ __('messages.reports_all_cashiers') }}</option>
                     @foreach ($cashiers as $c)
                         <option value="{{ $c->id }}" @selected(request('cashier_id') == $c->id)>{{ $c->name }}</option>

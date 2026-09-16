@@ -279,7 +279,7 @@
                 </svg>
             </div>
 
-            <select name="sort" onchange="this.form.submit()"
+            <select name="sort" data-auto-submit
                     class="h-7 rounded-md border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500">
                 <option value="newest" {{ ($sort ?? request('sort')) === 'newest' ? 'selected' : '' }}>{{ __('messages.po_sort_newest') }}</option>
                 <option value="oldest" {{ ($sort ?? request('sort')) === 'oldest' ? 'selected' : '' }}>{{ __('messages.po_sort_oldest') }}</option>

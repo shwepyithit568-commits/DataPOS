@@ -190,7 +190,7 @@
                 <span class="w-6 h-6 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center text-xs">💰</span>
             </div>
             <div class="mt-1">
-                <p class="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono truncate" x-text="'Ks ' + fmt(totalValue)"></p>
+                <p class="text-base sm:text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono truncate" x-text="window.formatCurrency(totalValue)"></p>
                 <span class="text-[10px] text-slate-400 block mt-0.5">{{ __('messages.transfer_inventory_cost_value') }}</span>
             </div>
         </div>
@@ -320,7 +320,7 @@
                                     </span>
                                     <span class="shrink-0 flex items-center gap-2">
                                         <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-mono" x-text="'Stock: ' + p.balance"></span>
-                                        <span class="text-xs font-black text-violet-600 dark:text-violet-400 font-mono" x-text="'Ks ' + Number(p.cost).toLocaleString()"></span>
+                                        <span class="text-xs font-black text-violet-600 dark:text-violet-400 font-mono" x-text="window.formatCurrency(p.cost)"></span>
                                     </span>
                                 </button>
                             </template>
@@ -383,7 +383,7 @@
                             <th class="p-2.5 text-center w-10">#</th>
                             <th class="p-2.5 min-w-[200px]">{{ __('messages.products') }}</th>
                             <th class="p-2.5 text-center min-w-[160px]">{{ __('messages.reports_qty') }}</th>
-                            <th class="p-2.5 text-right min-w-[130px]">{{ __('messages.unit_cost') }} (Ks)</th>
+                            <th class="p-2.5 text-right min-w-[130px]">{{ __('messages.unit_cost') }}</th>
                             <th class="p-2.5 text-right min-w-[130px]">{{ __('messages.receiving_total') ?? 'Subtotal' }}</th>
                             <th class="p-2.5 text-center w-14"></th>
                         </tr>
@@ -419,12 +419,12 @@
 
                                 {{-- Unit Cost --}}
                                 <td class="p-2.5 text-right font-mono text-slate-600 dark:text-slate-400 text-xs">
-                                    <span x-text="'Ks ' + fmt(r.unit_cost)"></span>
+                                    <span x-text="window.formatCurrency(r.unit_cost)"></span>
                                 </td>
 
                                 {{-- Line Total --}}
                                 <td class="p-2.5 text-right font-mono font-black text-xs text-violet-600 dark:text-violet-400 whitespace-nowrap"
-                                    x-text="'Ks ' + fmt(lineTotal(r))"></td>
+                                    x-text="window.formatCurrency(lineTotal(r))"></td>
 
                                 {{-- Delete Line --}}
                                 <td class="p-2.5 text-center">
@@ -447,7 +447,7 @@
                             </td>
                             <td></td>
                             <td class="p-2.5 text-right font-mono font-black text-xs text-violet-600 dark:text-violet-400">
-                                <span x-text="'Ks ' + fmt(totalValue)"></span>
+                                <span x-text="window.formatCurrency(totalValue)"></span>
                             </td>
                             <td></td>
                         </tr>
@@ -465,7 +465,7 @@
                 </div>
                 <div class="border-l border-slate-200 dark:border-slate-700 pl-3">
                     <span class="text-[10px] uppercase font-bold text-slate-400 block">Estimated Value</span>
-                    <span class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono" x-text="'Ks ' + fmt(totalValue)"></span>
+                    <span class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono" x-text="window.formatCurrency(totalValue)"></span>
                 </div>
             </div>
 

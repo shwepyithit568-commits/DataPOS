@@ -120,7 +120,7 @@
                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     <span>+ {{ __('messages.opening_stock_add_new') }}</span>
                 </button>
-                <button type="button" onclick="window.print()"
+                <button type="button" data-print
                         class="h-7 px-2 rounded text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition inline-flex items-center gap-1"
                         title="{{ __('messages.print') ?? 'Print' }}">
                     <span>🖨️</span>
@@ -208,7 +208,7 @@
                         {{ __('messages.valuation_total') ?? 'စုစုပေါင်း တန်ဖိုး' }}
                     </p>
                     <div class="text-xs sm:text-sm font-black font-mono text-emerald-600 dark:text-emerald-400 tabular-nums mt-0.5 truncate">
-                        Ks {{ number_format($totalValuation, 0) }}
+                        {{ format_currency($totalValuation) }}
                     </div>
                 </div>
             </div>
@@ -365,7 +365,7 @@
 
                                 {{-- Total Valuation --}}
                                 <td class="py-1.5 px-2.5 text-right font-mono font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
-                                    Ks {{ number_format((float) $req->total_cost, 0) }}
+                                    {{ format_currency($req->total_cost) }}
                                 </td>
 
                                 {{-- Status --}}
@@ -458,7 +458,7 @@
                             <div class="text-right">
                                 <span class="text-[10px] text-slate-400 block uppercase font-bold">Total Cost</span>
                                 <span class="font-mono font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
-                                    Ks {{ number_format((float) $req->total_cost, 0) }}
+                                    {{ format_currency($req->total_cost) }}
                                 </span>
                             </div>
                         </div>
@@ -529,8 +529,8 @@
                                         <td class="px-3 py-1.5 font-bold text-slate-900 dark:text-slate-100" x-text="item.product?.name || '—'"></td>
                                         <td class="px-3 py-1.5 text-right font-mono text-slate-500" x-text="Number(item.on_hand || 0).toLocaleString()"></td>
                                         <td class="px-3 py-1.5 text-right font-mono font-black text-emerald-600" x-text="Number(item.quantity || 0).toLocaleString()"></td>
-                                        <td class="px-3 py-1.5 text-right font-mono text-slate-700 dark:text-slate-300" x-text="'Ks ' + Number(item.unit_cost || 0).toLocaleString()"></td>
-                                        <td class="px-3 py-1.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100" x-text="'Ks ' + Number((item.quantity || 0) * (item.unit_cost || 0)).toLocaleString()"></td>
+                                        <td class="px-3 py-1.5 text-right font-mono text-slate-700 dark:text-slate-300" x-text="window.formatCurrency(item.unit_cost || 0)"></td>
+                                        <td class="px-3 py-1.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100" x-text="window.formatCurrency((item.quantity || 0) * (item.unit_cost || 0))"></td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -540,7 +540,7 @@
                     <div class="flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-slate-800">
                         <div class="text-xs">
                             <span class="text-slate-400">Total Cost:</span>
-                            <span class="font-mono font-black text-emerald-600 ml-1" x-text="'Ks ' + Number(selectedReq?.total_cost || 0).toLocaleString()"></span>
+                            <span class="font-mono font-black text-emerald-600 ml-1" x-text="window.formatCurrency(selectedReq?.total_cost || 0)"></span>
                         </div>
                         <button type="button" @click="selectedReq = null"
                                 class="h-7 px-3 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer">
@@ -639,7 +639,7 @@
                                                         <span class="block font-bold text-xs text-slate-900 dark:text-white" x-text="p.name"></span>
                                                         <span class="block text-[10px] font-mono text-slate-400" x-text="p.sku + ' · လက်ကျန်: ' + (p.balance || 0)"></span>
                                                     </div>
-                                                    <span class="text-xs font-bold text-emerald-600 font-mono" x-text="'Ks ' + Number(p.price || 0).toLocaleString()"></span>
+                                                    <span class="text-xs font-bold text-emerald-600 font-mono" x-text="window.formatCurrency(p.price || 0)"></span>
                                                 </button>
                                             </template>
                                         </div>
@@ -661,7 +661,7 @@
                                                    class="w-full rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-right font-mono font-bold text-xs">
                                         </div>
                                         <div class="sm:col-span-4 space-y-0.5">
-                                            <label class="text-[10px] font-bold uppercase text-slate-400 block">အရင်းစျေး (Unit Cost - Ks) *</label>
+                                            <label class="text-[10px] font-bold uppercase text-slate-400 block">{{ __('messages.stock_count_unit_cost') }} *</label>
                                             <input type="number" min="0" step="any" :name="'items[' + i + '][unit_cost]'" x-model="r.unit_cost" :disabled="!r.product_id"
                                                    class="w-full rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-right font-mono font-bold text-xs text-emerald-600">
                                         </div>
@@ -684,7 +684,7 @@
                         <div class="flex items-center justify-between p-2.5 rounded bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
                             <div>
                                 <span class="text-xs text-slate-500 dark:text-slate-400 block">စုစုပေါင်း အရင်းတန်ဖိုး:</span>
-                                <span class="text-sm sm:text-base font-mono font-black text-emerald-600 dark:text-emerald-400" x-text="'Ks ' + Number(totalCost).toLocaleString()"></span>
+                                <span class="text-sm sm:text-base font-mono font-black text-emerald-600 dark:text-emerald-400" x-text="window.formatCurrency(totalCost)"></span>
                             </div>
                             <div class="flex gap-1.5">
                                 <button type="button" @click="formModalOpen = false" 

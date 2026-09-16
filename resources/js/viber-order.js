@@ -53,7 +53,7 @@ export function buildProductInquiryMessage(data) {
     ];
     if (data.variant_name) lines.push('ရွေးချယ်မှု: ' + data.variant_name);
     lines.push('အရေအတွက်: ' + (data.quantity || 1));
-    if (data.price) lines.push('ဈေးနှုန်း: Ks ' + fmt(data.price));
+    if (data.price) lines.push('ဈေးနှုန်း: ' + money(data.price));
     if (data.product_url) lines.push('လင့်ခ်: ' + data.product_url);
     return lines.join('\n');
 }
@@ -69,14 +69,25 @@ export function buildOrderMessage(data) {
     ];
     if (data.variant_name) lines.push('ရွေးချယ်မှု: ' + data.variant_name);
     lines.push('အရေအတွက်: ' + (data.quantity || 1));
-    if (data.unit_price) lines.push('တစ်ခုဈေး: Ks ' + fmt(data.unit_price));
-    if (data.total_price) lines.push('စုစုပေါင်း: Ks ' + fmt(data.total_price));
+    if (data.unit_price) lines.push('တစ်ခုဈေး: ' + money(data.unit_price));
+    if (data.total_price) lines.push('စုစုပေါင်း: ' + money(data.total_price));
     if (data.product_url) lines.push('ပစ္စည်းလင့်ခ်: ' + data.product_url);
     return lines.join('\n');
 }
 
 function fmt(n) {
     return Number(n).toLocaleString('en-US');
+}
+
+// Currency for the order/inquiry message, following /admin/settings/currency.
+// window.formatCurrency is published by the currency-js-init component; the
+// plain number is the fallback when the store has not configured a symbol.
+function money(n) {
+    if (typeof window.formatCurrency === 'function') {
+        return window.formatCurrency(n);
+    }
+
+    return fmt(n);
 }
 
 // Copy text to the clipboard; falls back to a temporary <textarea> + execCommand.

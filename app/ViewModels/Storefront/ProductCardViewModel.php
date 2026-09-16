@@ -49,7 +49,7 @@ class ProductCardViewModel
 
     public function formattedPrice(): string
     {
-        return 'Ks ' . number_format($this->price(), 0);
+        return format_currency($this->price(), $this->store);
     }
 
     public function oldPrice(): ?float
@@ -64,7 +64,8 @@ class ProductCardViewModel
     public function formattedOldPrice(): ?string
     {
         $old = $this->oldPrice();
-        return $old ? 'Ks ' . number_format($old, 0) : null;
+
+        return $old ? format_currency($old, $this->store) : null;
     }
 
     public function discountPercentage(): int

@@ -739,7 +739,7 @@
                                         <input type="hidden" name="user_id" value="{{ $staff->user_id }}">
                                         <input type="hidden" name="action_mode" value="select">
                                         
-                                        <select name="staff_role_id" onchange="this.form.submit()"
+                                        <select name="staff_role_id" data-auto-submit
                                                 class="px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-w-[170px]">
                                             <option value="" {{ is_null($staff->staff_role_id) ? 'selected' : '' }}>
                                                 -- {{ __('messages.roles_no_specific_role') }} --

@@ -135,7 +135,8 @@
                                        required
                                        class="w-full h-8 px-2.5 text-xs font-bold font-mono rounded-lg border border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 focus:ring-1 focus:ring-emerald-500 focus:outline-none">
                                 <button type="button"
-                                        onclick="document.getElementById('collect_amount_input').value = '{{ $balance }}'"
+                                        data-set-target="collect_amount_input"
+                                        data-set-value="{{ $balance }}"
                                         class="absolute right-1 top-1 h-6 px-2 text-[10px] font-bold rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 cursor-pointer">
                                     {{ __('messages.receivables_pay_full') }}
                                 </button>

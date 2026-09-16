@@ -263,7 +263,8 @@
                                     </a>
                                 @endif
                                 <button type="button"
-                                        onclick="if (confirm('Delete this voucher image?')) { document.getElementById('del-voucher-{{ $idx }}').submit(); }"
+                                        data-confirm="{{ __('messages.purchases_confirm_delete_voucher') ?? 'Delete this voucher image?' }}"
+                                        data-submit-form="del-voucher-{{ $idx }}"
                                         class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-rose-600 text-white grid place-items-center text-[9px] font-black opacity-0 group-hover:opacity-100 transition shadow cursor-pointer"
                                         title="Delete voucher">
                                     ✕

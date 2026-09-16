@@ -384,7 +384,7 @@
                         </div>
                         @if ($isManager)
                             <form method="POST" action="{{ route('pos.closing.approve', ['store_slug' => $store->slug, 'closing' => $closing->id]) }}"
-                                  onsubmit="return confirm('{{ __('messages.confirm_action') }}: နေ့စဉ် စာရင်းချုပ်အား အတည်ပြုရန် သေချာပါသလား? အတည်ပြုပြီးပါက ပြင်ဆင်၍ မရတော့ပါ။');">
+                                  data-confirm="{{ __('messages.confirm_action') }}: နေ့စဉ် စာရင်းချုပ်အား အတည်ပြုရန် သေချာပါသလား? အတည်ပြုပြီးပါက ပြင်ဆင်၍ မရတော့ပါ။">
                                 @csrf
                                 <button type="submit"
                                         class="sf-btn-3d-success h-8 px-4 rounded-md text-xs font-black text-white cursor-pointer">

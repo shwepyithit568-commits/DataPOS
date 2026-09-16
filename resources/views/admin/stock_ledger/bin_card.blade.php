@@ -73,7 +73,8 @@
                 {{-- Product Selector Dropdown --}}
                 <div class="relative min-w-[180px] flex-1 sm:max-w-xs">
                     <select name="product_id"
-                            onchange="window.location.href='{{ route('store.admin.stock_ledger.bin_card', ['store_slug' => $store->slug]) }}/' + this.value"
+                            data-navigate
+                            data-navigate-prefix="{{ route('store.admin.stock_ledger.bin_card', ['store_slug' => $store->slug]) }}/"
                             class="w-full h-7 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-1 focus:ring-violet-500 cursor-pointer">
                         @foreach($products as $p)
                             <option value="{{ $p->id }}" {{ $p->id === $product->id ? 'selected' : '' }}>

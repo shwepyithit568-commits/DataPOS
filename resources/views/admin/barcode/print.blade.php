@@ -406,8 +406,8 @@
             </span>
         </div>
         <div class="btn-group">
-            <button type="button" class="btn btn-close" onclick="window.close()">{{ __('messages.close') }}</button>
-            <button type="button" class="btn btn-print" onclick="window.print()">🖨️ {{ __('messages.print') }}</button>
+            <button type="button" class="btn btn-close" data-close-window>{{ __('messages.close') }}</button>
+            <button type="button" class="btn btn-print" data-print>🖨️ {{ __('messages.print') }}</button>
         </div>
     </div>
 

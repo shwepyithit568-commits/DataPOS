@@ -591,7 +591,7 @@
                                                     <span class="block font-bold text-xs text-slate-900 dark:text-white truncate" x-text="p.name"></span>
                                                     <span class="block text-[10px] font-mono text-slate-400" x-text="(p.sku ? p.sku + ' · ' : '') + '{{ __('messages.adjustment_on_hand') }}: ' + (p.balance || 0)"></span>
                                                 </div>
-                                                <span class="text-xs font-bold text-amber-600 font-mono shrink-0" x-text="'Ks ' + Number(p.price || 0).toLocaleString()"></span>
+                                                <span class="text-xs font-bold text-amber-600 font-mono shrink-0" x-text="window.formatCurrency(p.price || 0)"></span>
                                             </button>
                                         </template>
                                     </div>

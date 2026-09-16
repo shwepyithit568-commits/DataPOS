@@ -194,8 +194,8 @@
 
     {{-- Action Bar (Hidden during Print) --}}
     <div class="print-actions">
-        <button type="button" class="btn" onclick="window.close()">{{ __('messages.close') }}</button>
-        <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ {{ __('messages.print') }}</button>
+        <button type="button" class="btn" data-close-window>{{ __('messages.close') }}</button>
+        <button type="button" class="btn btn-primary" data-print>🖨️ {{ __('messages.print') }}</button>
     </div>
 
     {{-- Printable Container --}}

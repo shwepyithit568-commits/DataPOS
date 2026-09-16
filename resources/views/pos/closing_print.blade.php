@@ -504,7 +504,7 @@
             <button type="button" id="btnSavePdf" class="tool-btn tool-btn-pdf" data-save-pdf title="{{ __('messages.vouchers_save_pdf') }}">
                 📥 <span id="btnSavePdfText">{{ __('messages.vouchers_save_pdf') }}</span>
             </button>
-            <button type="button" id="btnShareJpg" class="tool-btn tool-btn-share-jpg" onclick="shareJpgDirectly()" title="{{ __('messages.vouchers_copy_jpg') }}">
+            <button type="button" id="btnShareJpg" class="tool-btn tool-btn-share-jpg" title="{{ __('messages.vouchers_copy_jpg') }}">
                 🖼️ <span>{{ __('messages.vouchers_share_jpg') }}</span>
             </button>
         </div>
@@ -1112,21 +1112,11 @@
                     });
                 }
 
-                var shareJpgBtn = document.getElementById('btnShareJpg');
-                if (shareJpgBtn) {
-                    shareJpgBtn.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        shareJpgDirectly();
-                    });
-                }
-
+                // btnShareJpg is bound by the delegated [data-print]/#btnShareJpg
+                // [data-print] is handled globally by csp-helpers.js; binding it
+                // here too would open the print dialog twice. This page-local
+                // delegate only owns the attributes csp-helpers does not know.
                 document.addEventListener('click', function (e) {
-                    var printTarget = e.target.closest('[data-print]');
-                    if (printTarget) {
-                        e.preventDefault();
-                        doPrint();
-                        return;
-                    }
                     var savePdfTarget = e.target.closest('[data-save-pdf]');
                     if (savePdfTarget) {
                         e.preventDefault();

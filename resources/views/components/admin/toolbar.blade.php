@@ -577,7 +577,7 @@
                             @endif
                         @endforeach
                         <div class="relative">
-                            <select name="sort" data-auto-submit onchange="this.form.submit()" class="w-full h-9 border border-slate-200 dark:border-slate-700 rounded-lg pl-3 pr-8 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-violet-500/40 appearance-none cursor-pointer shadow-2xs">
+                            <select name="sort" data-auto-submit class="w-full h-9 border border-slate-200 dark:border-slate-700 rounded-lg pl-3 pr-8 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-violet-500/40 appearance-none cursor-pointer shadow-2xs">
                                 @foreach ($sortOptions as $key => $label)
                                     <option value="{{ $key }}" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort', $sort) === $key ? 'selected' : '' }}>
                                         {{ $label }}
@@ -636,7 +636,7 @@
                             @endif
                         @endforeach
                         <div class="relative">
-                            <select name="{{ $filterKey }}" data-auto-submit onchange="this.form.submit()" class="w-full h-9 sm:h-8 border border-slate-200 dark:border-slate-700 rounded-lg pl-3 pr-8 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-violet-500/40 appearance-none cursor-pointer shadow-2xs">
+                            <select name="{{ $filterKey }}" data-auto-submit class="w-full h-9 sm:h-8 border border-slate-200 dark:border-slate-700 rounded-lg pl-3 pr-8 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-violet-500/40 appearance-none cursor-pointer shadow-2xs">
                                 <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
                                     {{ $filterConfig['placeholder'] ?? ($filterConfig['all_label'] ?? (__('messages.all') . ' ' . $filterConfig['label'])) }}
                                 </option>

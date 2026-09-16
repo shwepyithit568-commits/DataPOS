@@ -27,7 +27,7 @@
             {{-- Reset Defaults Button (triggers modal) --}}
             <button
                 type="button"
-                onclick="document.getElementById('reset-defaults-modal').classList.remove('hidden')"
+                data-show="reset-defaults-modal"
                 class="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-[11px] font-extrabold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
             >
                 <svg class="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -376,7 +376,7 @@
         <div class="mt-5 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
             <button
                 type="button"
-                onclick="document.getElementById('reset-defaults-modal').classList.add('hidden')"
+                data-hide="reset-defaults-modal"
                 class="h-7 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50"
             >
                 {{ __('messages.cancel') }}

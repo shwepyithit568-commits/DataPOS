@@ -549,13 +549,13 @@
 </div>
 
 <div class="btn-print-box">
-    <button type="button" class="btn-print" onclick="window.print()">
+    <button type="button" class="btn-print" data-print>
         🖨️ {{ __('messages.print') ?? 'Print Sample' }}
     </button>
-    <button type="button" class="btn-pdf" onclick="saveAsPdf()">
+    <button type="button" class="btn-pdf" data-call="saveAsPdf">
         📥 {{ __('messages.export_pdf') ?? 'Save PDF' }}
     </button>
-    <button type="button" class="btn-close" onclick="window.close()">
+    <button type="button" class="btn-close" data-close-window>
         ✕ {{ __('messages.close') ?? 'Close' }}
     </button>
 </div>

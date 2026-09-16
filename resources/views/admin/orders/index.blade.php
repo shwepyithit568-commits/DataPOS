@@ -260,7 +260,7 @@
             <div class="grid grid-cols-2 sm:flex sm:items-center gap-1.5">
                 {{-- Filter: Pricing Type --}}
                 <div class="relative">
-                    <select name="pricing_type" data-auto-submit onchange="this.form.submit()"
+                    <select name="pricing_type" data-auto-submit
                             class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
                         <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{{ __('messages.orders_filter_pricing') }}: {{ __('messages.orders_filter_all') }}</option>
                         <option value="retail" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('pricing_type') === 'retail' ? 'selected' : '' }}>{{ __('messages.retail') }}</option>
@@ -273,7 +273,7 @@
 
                 {{-- Filter: Channel --}}
                 <div class="relative">
-                    <select name="contact_channel" data-auto-submit onchange="this.form.submit()"
+                    <select name="contact_channel" data-auto-submit
                             class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
                         <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{{ __('messages.orders_filter_channel') }}: {{ __('messages.orders_filter_all') }}</option>
                         <option value="viber" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('contact_channel') === 'viber' ? 'selected' : '' }}>Viber</option>
@@ -289,7 +289,7 @@
             {{-- Sort By & Reset Controls --}}
             <div class="flex items-center gap-1.5">
                 <div class="relative flex-1 sm:flex-none">
-                    <select name="sort" data-auto-submit onchange="this.form.submit()"
+                    <select name="sort" data-auto-submit
                             class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
                         <option value="newest" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ $sort === 'newest' ? 'selected' : '' }}>{{ __('messages.sort_newest') }}</option>
                         <option value="oldest" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ $sort === 'oldest' ? 'selected' : '' }}>{{ __('messages.sort_oldest') }}</option>

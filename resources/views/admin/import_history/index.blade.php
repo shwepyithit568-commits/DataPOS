@@ -131,7 +131,7 @@
             </div>
 
             {{-- Type Selector --}}
-            <select name="type" onchange="this.form.submit()"
+            <select name="type" data-auto-submit
                     class="h-7 px-2 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-violet-500">
                 <option value="all" {{ ($type ?? 'all') === 'all' ? 'selected' : '' }}>{{ __('messages.import_history_type_all') }}</option>
                 <option value="products" {{ ($type ?? '') === 'products' ? 'selected' : '' }}>📦 {{ __('messages.import_history_type_products') }}</option>

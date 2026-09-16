@@ -467,7 +467,7 @@
                       enctype="multipart/form-data" class="flex items-center gap-2">
                     @csrf
                     <input type="file" name="voucher_images[]" multiple accept="image/*,.pdf" capture="environment"
-                           id="po-add-voucher-file" class="sr-only" onchange="this.form.submit()">
+                           id="po-add-voucher-file" class="sr-only" data-auto-submit>
                     <label for="po-add-voucher-file"
                            class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 transition cursor-pointer flex items-center gap-1">
                         <span>+</span>

@@ -407,7 +407,7 @@
             <div class="grid grid-cols-2 sm:flex sm:items-center gap-1.5">
                 {{-- Filter: Category --}}
                 <div class="relative">
-                    <select name="category_id" data-auto-submit onchange="this.form.submit()"
+                    <select name="category_id" data-auto-submit
                             class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
                         <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{{ __('messages.categories') }}: {{ __('messages.all') }}</option>
                         @foreach($categoryGroups as $groupId => $grp)
@@ -425,7 +425,7 @@
 
                 {{-- Filter: Brand --}}
                 <div class="relative">
-                    <select name="brand_id" data-auto-submit onchange="this.form.submit()"
+                    <select name="brand_id" data-auto-submit
                             class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
                         <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{{ __('messages.brands') }}: {{ __('messages.all') }}</option>
                         @foreach($brands as $bId => $bName)
@@ -442,7 +442,7 @@
             <div class="grid grid-cols-2 sm:flex sm:items-center gap-1.5">
                 {{-- Filter: Stock Status --}}
                 <div class="relative">
-                    <select name="stock_status" data-auto-submit onchange="this.form.submit()"
+                    <select name="stock_status" data-auto-submit
                             class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
                         <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{{ __('messages.stock_status') }}: {{ __('messages.all') }}</option>
                         <option value="in_stock" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('stock_status') === 'in_stock' ? 'selected' : '' }}>{{ __('messages.in_stock') }}</option>
@@ -456,7 +456,7 @@
 
                 {{-- Sort By --}}
                 <div class="relative">
-                    <select name="sort" data-auto-submit onchange="this.form.submit()"
+                    <select name="sort" data-auto-submit
                             class="w-full sm:w-auto h-8 sm:h-7 pl-2.5 pr-7 rounded-lg sm:rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-sky-500 appearance-none cursor-pointer">
                         <option value="newest" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort', 'newest') === 'newest' ? 'selected' : '' }}>{{ __('messages.sort_newest') }}</option>
                         <option value="oldest" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100" {{ request('sort') === 'oldest' ? 'selected' : '' }}>{{ __('messages.sort_oldest') }}</option>

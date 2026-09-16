@@ -105,7 +105,7 @@ class ContactLinkBuilder
         }
         $lines[] = 'အရေအတွက်: ' . $qty;
         if ($price > 0) {
-            $lines[] = 'ဈေးနှုန်း: Ks ' . number_format($price);
+            $lines[] = 'ဈေးနှုန်း: ' . format_currency($price);
         }
         if ($url !== '') {
             $lines[] = 'လင့်ခ်: ' . $url;
@@ -143,10 +143,10 @@ class ContactLinkBuilder
         }
         $lines[] = 'အရေအတွက်: ' . $qty;
         if ($unit > 0) {
-            $lines[] = 'တစ်ခုဈေး: Ks ' . number_format($unit);
+            $lines[] = 'တစ်ခုဈေး: ' . format_currency($unit);
         }
         if ($total > 0) {
-            $lines[] = 'စုစုပေါင်း: Ks ' . number_format($total);
+            $lines[] = 'စုစုပေါင်း: ' . format_currency($total);
         }
         if ($url !== '') {
             $lines[] = 'ပစ္စည်းလင့်ခ်: ' . $url;

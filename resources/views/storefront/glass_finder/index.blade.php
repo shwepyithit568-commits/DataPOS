@@ -83,7 +83,7 @@
             {{-- Step 1 --}}
             <button
                 type="button"
-                onclick="document.getElementById('brand-select')?.focus(); document.getElementById('brand-select')?.scrollIntoView({behavior: 'smooth', block: 'center'});"
+                data-focus-scroll="brand-select"
                 class="sf-btn-3d w-full flex-1 !flex-row !justify-between items-center p-2.5 sm:p-3 rounded-lg text-left cursor-pointer group transition-all"
             >
                 <div class="flex items-center gap-2.5 min-w-0">
@@ -105,7 +105,7 @@
             {{-- Step 2 --}}
             <button
                 type="button"
-                onclick="document.getElementById('phone-model-select')?.focus(); document.getElementById('phone-model-select')?.scrollIntoView({behavior: 'smooth', block: 'center'});"
+                data-focus-scroll="phone-model-select"
                 class="sf-btn-3d w-full flex-1 !flex-row !justify-between items-center p-2.5 sm:p-3 rounded-lg text-left cursor-pointer group transition-all"
             >
                 <div class="flex items-center gap-2.5 min-w-0">
@@ -127,7 +127,7 @@
             {{-- Step 3 --}}
             <button
                 type="button"
-                onclick="document.getElementById('glass-items-section')?.scrollIntoView({behavior: 'smooth'});"
+                data-focus-scroll="glass-items-section"
                 class="sf-btn-3d w-full flex-1 !flex-row !justify-between items-center p-2.5 sm:p-3 rounded-lg text-left cursor-pointer group transition-all"
             >
                 <div class="flex items-center gap-2.5 min-w-0">

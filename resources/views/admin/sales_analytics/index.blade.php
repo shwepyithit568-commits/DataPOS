@@ -37,7 +37,7 @@
 
         <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 self-end sm:self-auto">
             <button type="button"
-                    onclick="window.print()"
+                    data-print
                     class="sf-btn-3d h-7 px-2.5 text-xs font-semibold rounded-md inline-flex items-center gap-1.5 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -83,7 +83,7 @@
             <input type="hidden" name="preset" value="custom">
 
             {{-- Channel Dropdown --}}
-            <select name="channel" onchange="this.form.submit()" class="h-7 px-2 text-xs rounded border border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-indigo-500">
+            <select name="channel" data-auto-submit class="h-7 px-2 text-xs rounded border border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-indigo-500">
                 <option value="all" {{ $channel === 'all' ? 'selected' : '' }}>{{ __('messages.all_channels') }}</option>
                 <option value="pos" {{ $channel === 'pos' ? 'selected' : '' }}>{{ __('messages.channel_pos_counter') }}</option>
                 <option value="online" {{ $channel === 'online' ? 'selected' : '' }}>{{ __('messages.channel_online_web') }}</option>
