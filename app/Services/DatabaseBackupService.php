@@ -42,18 +42,18 @@ class DatabaseBackupService
             $safeLabel = preg_replace('/[^A-Za-z0-9_-]/', '_', $label) ?: 'full_backup';
             $filename = "{$safeLabel}_{$stamp}.full.zip";
             $zipRelative = self::DIRECTORY . '/' . $filename;
-            $zipFullPath = Storage::disk('local')->path($zipRelative);
+            $zipFullPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, Storage::disk('local')->path($zipRelative));
 
             $dir = dirname($zipFullPath);
             if (! is_dir($dir)) {
                 mkdir($dir, 0755, true);
             }
-            if (file_exists($zipFullPath)) {
-                @unlink($zipFullPath);
-            }
+
+            // Stage in system temp directory to prevent Windows file-system watchers & antivirus from locking during ZipArchive::close() rename
+            $tempZip = tempnam(sys_get_temp_dir(), 'dpos_bk_') . '.zip';
 
             $zip = new ZipArchive();
-            if ($zip->open($zipFullPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+            if ($zip->open($tempZip, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
                 // Add Database SQL Dump
                 $sql = $this->dump($pdo, $driver);
                 $zip->addFromString('database.sql', $sql);
@@ -84,6 +84,22 @@ class DatabaseBackupService
                 $zip->addFromString('manifest.json', json_encode($manifest, JSON_PRETTY_PRINT));
 
                 $zip->close();
+
+                // Move/copy to canonical destination with retry for Windows file locks
+                $copied = false;
+                for ($attempt = 0; $attempt < 5; $attempt++) {
+                    if (@copy($tempZip, $zipFullPath)) {
+                        $copied = true;
+                        break;
+                    }
+                    usleep(50000); // 50ms
+                }
+                @unlink($tempZip);
+
+                if (! $copied) {
+                    throw new \RuntimeException("Failed to write backup ZIP archive to {$zipFullPath}");
+                }
+
                 $this->prune();
 
                 return [

@@ -237,6 +237,7 @@
             if (window.__viberModalState) window.__viberModalState.close();
         },
         addedFeedback: false,
+        @if ($product->isInStock())
         addToOrder() {
             if (this.$store && this.$store.orderBuilder) {
                 this.$store.orderBuilder.addItem({
@@ -253,6 +254,9 @@
             this.addedFeedback = true;
             setTimeout(() => { this.addedFeedback = false; }, 1600);
         },
+        @else
+        addToOrder() {},
+        @endif
 
         // --- Grouped (attribute) selector — used when variants carry attributes ---
         get attrLabels() {
