@@ -175,6 +175,44 @@ class FinancialTransactionService
     }
 
     /**
+     * Normalize a monetary input to an exact 2-decimal string.
+     *
+     * Account balances are updated with raw SQL `increment`/`decrement`, so the
+     * value handed to the database must be a decimal string: passing a PHP float
+     * lets binary rounding reach the ledger column.
+     */
+    private function toDecimal(mixed $value): string
+    {
+        if (is_string($value) && preg_match('/^-?\d+(\.\d+)?$/', trim($value)) === 1) {
+            return bcadd(trim($value), '0', 2);
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return bcadd(sprintf('%.2F', $value), '0', 2);
+        }
+
+        throw new \InvalidArgumentException('Invalid monetary amount.');
+    }
+
+    /**
+     * Refuse to take an account below zero. Must be called while the account
+     * row is locked (`lockForUpdate`) so the check and the write are atomic.
+     */
+    private function assertSufficientBalance(FinancialAccount $account, string $debit): void
+    {
+        $balance = bcadd((string) $account->current_balance, '0', 2);
+
+        if (bccomp($balance, $debit, 2) < 0) {
+            throw new \InvalidArgumentException(sprintf(
+                'Insufficient balance in "%s": available %s, required %s.',
+                $account->name,
+                $balance,
+                $debit
+            ));
+        }
+    }
+
+    /**
      * Record a Deposit (ငွေသွင်း - Cash in).
      */
     public function recordDeposit(Store $store, array $data, User $user): FinancialTransaction
@@ -184,7 +222,7 @@ class FinancialTransactionService
                 ->lockForUpdate()
                 ->findOrFail($data['to_account_id']);
 
-            $amount = (float) $data['amount'];
+            $amount = $this->toDecimal($data['amount']);
             $txnNumber = $this->generateTransactionNumber($store);
 
             $transaction = FinancialTransaction::create([
@@ -216,7 +254,7 @@ class FinancialTransactionService
                     'account_id' => $account->id,
                     'account_name' => $account->name,
                     'amount' => $amount,
-                    'new_balance' => (float) $account->fresh()->current_balance,
+                    'new_balance' => $account->fresh()->current_balance,
                 ],
                 $user->id
             );
@@ -235,7 +273,12 @@ class FinancialTransactionService
                 ->lockForUpdate()
                 ->findOrFail($data['from_account_id']);
 
-            $amount = (float) $data['amount'];
+            $amount = $this->toDecimal($data['amount']);
+
+            // An account must never go negative; the row is locked above, so the
+            // check and the decrement cannot interleave with a second withdrawal.
+            $this->assertSufficientBalance($account, $amount);
+
             $txnNumber = $this->generateTransactionNumber($store);
 
             $transaction = FinancialTransaction::create([
@@ -267,7 +310,7 @@ class FinancialTransactionService
                     'account_id' => $account->id,
                     'account_name' => $account->name,
                     'amount' => $amount,
-                    'new_balance' => (float) $account->fresh()->current_balance,
+                    'new_balance' => $account->fresh()->current_balance,
                 ],
                 $user->id
             );
@@ -294,8 +337,16 @@ class FinancialTransactionService
                 throw new \InvalidArgumentException('Source and destination accounts must be different.');
             }
 
-            $amount = (float) $data['amount'];
-            $fee = isset($data['fee']) ? (float) $data['fee'] : 0.00;
+            $amount = $this->toDecimal($data['amount']);
+            $fee = isset($data['fee']) && $data['fee'] !== null && $data['fee'] !== ''
+                ? $this->toDecimal($data['fee'])
+                : '0.00';
+            $debit = bcadd($amount, $fee, 2);
+
+            // Both accounts are locked above; the fee is part of the debit so a
+            // transfer cannot overdraw the source once its fee is included.
+            $this->assertSufficientBalance($fromAccount, $debit);
+
             $txnNumber = $this->generateTransactionNumber($store);
 
             $transaction = FinancialTransaction::create([
@@ -316,7 +367,7 @@ class FinancialTransactionService
             ]);
 
             // Deduct from source (amount + fee)
-            $fromAccount->decrement('current_balance', $amount + $fee);
+            $fromAccount->decrement('current_balance', $debit);
 
             // Add to destination (amount)
             $toAccount->increment('current_balance', $amount);
@@ -344,50 +395,57 @@ class FinancialTransactionService
      */
     public function createAccount(Store $store, array $data, ?User $user = null): FinancialAccount
     {
-        $code = !empty($data['code']) ? $data['code'] : \Illuminate\Support\Str::slug($data['name'], '_');
-        // Ensure code uniqueness
-        $existing = FinancialAccount::where('store_id', $store->id)->where('code', $code)->exists();
-        if ($existing) {
-            $code .= '_' . time();
-        }
+        // The account row and its opening-balance transaction must land together;
+        // without a transaction a failure between them leaves a balance with no
+        // ledger entry behind it.
+        return DB::transaction(function () use ($store, $data, $user) {
+            $code = !empty($data['code']) ? $data['code'] : \Illuminate\Support\Str::slug($data['name'], '_');
+            // Ensure code uniqueness
+            $existing = FinancialAccount::where('store_id', $store->id)->where('code', $code)->exists();
+            if ($existing) {
+                $code .= '_' . time();
+            }
 
-        $openingBalance = isset($data['opening_balance']) ? (float) $data['opening_balance'] : 0.00;
+            $openingBalance = isset($data['opening_balance']) && $data['opening_balance'] !== null && $data['opening_balance'] !== ''
+                ? $this->toDecimal($data['opening_balance'])
+                : '0.00';
 
-        $account = FinancialAccount::create([
-            'store_id' => $store->id,
-            'name' => $data['name'],
-            'code' => $code,
-            'account_type' => $data['account_type'] ?? 'bank_account',
-            'account_number' => $data['account_number'] ?? null,
-            'account_holder' => $data['account_holder'] ?? null,
-            'opening_balance' => $openingBalance,
-            'current_balance' => $openingBalance,
-            'currency' => 'MMK',
-            'is_active' => true,
-            'sort_order' => (int) ($data['sort_order'] ?? 10),
-            'notes' => $data['notes'] ?? null,
-        ]);
-
-        if ($openingBalance > 0 && $user) {
-            // Record opening balance transaction
-            FinancialTransaction::create([
+            $account = FinancialAccount::create([
                 'store_id' => $store->id,
-                'transaction_number' => $this->generateTransactionNumber($store),
-                'from_account_id' => null,
-                'to_account_id' => $account->id,
-                'type' => 'deposit',
-                'category' => 'opening_balance',
-                'amount' => $openingBalance,
-                'fee' => 0.00,
-                'transaction_date' => now(),
-                'reference_no' => 'INIT-BAL',
-                'payer_or_payee' => 'Opening Balance',
-                'notes' => 'Account opening balance',
-                'recorded_by' => $user->id,
+                'name' => $data['name'],
+                'code' => $code,
+                'account_type' => $data['account_type'] ?? 'bank_account',
+                'account_number' => $data['account_number'] ?? null,
+                'account_holder' => $data['account_holder'] ?? null,
+                'opening_balance' => $openingBalance,
+                'current_balance' => $openingBalance,
+                'currency' => 'MMK',
+                'is_active' => true,
+                'sort_order' => (int) ($data['sort_order'] ?? 10),
+                'notes' => $data['notes'] ?? null,
             ]);
-        }
 
-        return $account;
+            if (bccomp($openingBalance, '0', 2) > 0 && $user) {
+                // Record opening balance transaction
+                FinancialTransaction::create([
+                    'store_id' => $store->id,
+                    'transaction_number' => $this->generateTransactionNumber($store),
+                    'from_account_id' => null,
+                    'to_account_id' => $account->id,
+                    'type' => 'deposit',
+                    'category' => 'opening_balance',
+                    'amount' => $openingBalance,
+                    'fee' => '0.00',
+                    'transaction_date' => now(),
+                    'reference_no' => 'INIT-BAL',
+                    'payer_or_payee' => 'Opening Balance',
+                    'notes' => 'Account opening balance',
+                    'recorded_by' => $user->id,
+                ]);
+            }
+
+            return $account;
+        });
     }
 
     /**

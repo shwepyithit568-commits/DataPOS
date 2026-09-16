@@ -182,10 +182,13 @@ class PurchaseOrderController extends Controller
             'price_updates' => ['nullable', 'array'],
             'price_updates.*.product_id' => ['required_with:price_updates', 'integer'],
             'price_updates.*.product_variant_id' => ['nullable', 'integer'],
-            'price_updates.*.expected_retail_price' => ['nullable', 'numeric'],
-            'price_updates.*.expected_wholesale_price' => ['nullable', 'numeric'],
-            'price_updates.*.retail_price' => ['nullable', 'numeric'],
-            'price_updates.*.wholesale_price' => ['nullable', 'numeric'],
+            // decimal (not plain numeric): these feed bcadd()/bccomp() in
+            // PurchasePriceAdjustmentService, which rejects scientific
+            // notation ("1e3") with a ValueError.
+            'price_updates.*.expected_retail_price' => ['nullable', 'decimal:0,2'],
+            'price_updates.*.expected_wholesale_price' => ['nullable', 'decimal:0,2'],
+            'price_updates.*.retail_price' => ['nullable', 'decimal:0,2'],
+            'price_updates.*.wholesale_price' => ['nullable', 'decimal:0,2'],
             'price_updates.*.update_prices' => ['nullable'],
         ]);
 
@@ -364,10 +367,13 @@ class PurchaseOrderController extends Controller
             'price_updates' => ['nullable', 'array'],
             'price_updates.*.product_id' => ['required_with:price_updates', 'integer'],
             'price_updates.*.product_variant_id' => ['nullable', 'integer'],
-            'price_updates.*.expected_retail_price' => ['nullable', 'numeric'],
-            'price_updates.*.expected_wholesale_price' => ['nullable', 'numeric'],
-            'price_updates.*.retail_price' => ['nullable', 'numeric'],
-            'price_updates.*.wholesale_price' => ['nullable', 'numeric'],
+            // decimal (not plain numeric): these feed bcadd()/bccomp() in
+            // PurchasePriceAdjustmentService, which rejects scientific
+            // notation ("1e3") with a ValueError.
+            'price_updates.*.expected_retail_price' => ['nullable', 'decimal:0,2'],
+            'price_updates.*.expected_wholesale_price' => ['nullable', 'decimal:0,2'],
+            'price_updates.*.retail_price' => ['nullable', 'decimal:0,2'],
+            'price_updates.*.wholesale_price' => ['nullable', 'decimal:0,2'],
             'price_updates.*.update_prices' => ['nullable'],
         ]);
 
@@ -643,7 +649,7 @@ class PurchaseOrderController extends Controller
             'B4' => __('messages.po_col_po_number'),
             'C4' => __('messages.supplier_col_name'),
             'D4' => __('messages.reports_qty'),
-            'E4' => __('messages.reports_value') . ' (Ks)',
+            'E4' => __('messages.reports_value'),
             'F4' => __('messages.po_return_col_reason'),
             'G4' => __('messages.po_return_col_date'),
         ];
@@ -923,7 +929,7 @@ class PurchaseOrderController extends Controller
                 'B4' => __('messages.report_contact_person'),
                 'C4' => __('messages.phone'),
                 'D4' => __('messages.report_unpaid_po_count'),
-                'E4' => __('messages.report_outstanding_debt') . ' (Ks)',
+                'E4' => __('messages.report_outstanding_debt'),
                 'F4' => __('messages.report_oldest_unpaid_date'),
             ];
 

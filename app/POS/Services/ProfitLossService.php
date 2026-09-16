@@ -16,17 +16,20 @@ class ProfitLossService
     /**
      * Generate complete Income & Profit/Loss Statement for a store in a date range.
      *
+     * Money figures are decimal strings (accumulated with bcmath so the printed
+     * statement is exact); the margins are floats because they are ratios.
+     *
      * @return array{
      *   period: array{from: string, to: string, label: string},
-     *   revenue: array{gross_sales: float, discounts: float, returns: float, net_sales: float},
-     *   cogs: array{gross_cogs: float, returns_cogs: float, net_cogs: float},
-     *   gross_profit: float,
+     *   revenue: array{gross_sales: string, discounts: string, returns: string, net_sales: string},
+     *   cogs: array{gross_cogs: string, returns_cogs: string, net_cogs: string},
+     *   gross_profit: string,
      *   gross_margin: float,
-     *   expenses: array{total: float, by_category: array<int, array{id: int|null, name: string, color: string, amount: float, percent: float}>},
-     *   net_profit: float,
+     *   expenses: array{total: string, by_category: array<int, array{id: int|null, name: string, color: string, amount: string, percent: float}>},
+     *   net_profit: string,
      *   net_margin: float,
-     *   metrics: array{order_count: int, aov: float, profit_per_order: float},
-     *   top_products: array<int, array{product_id: int, name: string, quantity: float, revenue: float, cogs: float, profit: float, margin: float}>
+     *   metrics: array{order_count: int, aov: string, profit_per_order: string},
+     *   top_products: array<int, array{product_id: int, name: string, quantity: string, revenue: string, cogs: string, profit: string, margin: float}>
      * }
      */
     public function generateStatement(Store $store, Carbon $from, Carbon $to, ?int $branchId = null): array
@@ -45,38 +48,58 @@ class ProfitLossService
 
         $saleIds = (clone $salesQuery)->pluck('id');
         $orderCount = $saleIds->count();
-        $discounts = (float) (clone $salesQuery)->sum('discount');
+        // exact_sum(): MySQL sums DECIMAL exactly, SQLite sums in REAL and
+        // drifts over a large report — the helper makes both agree.
+        $discounts = exact_sum(clone $salesQuery, 'discount');
 
         // ── 2. Sales Items (Gross Sales & Gross COGS) ──
-        $itemStats = DB::table('pos_sale_items')
-            ->whereIn('pos_sale_id', $saleIds)
-            ->selectRaw('
-                SUM(line_total) AS gross_sales,
-                SUM(quantity * unit_cost) AS gross_cogs
-            ')
-            ->first();
-
-        $grossSales = (float) ($itemStats->gross_sales ?? 0);
-        $grossCogs = (float) ($itemStats->gross_cogs ?? 0);
+        $itemsQuery = DB::table('pos_sale_items')->whereIn('pos_sale_id', $saleIds);
+        $grossSales = exact_sum(clone $itemsQuery, 'line_total');
+        $grossCogs = exact_sum(clone $itemsQuery, 'quantity * unit_cost');
 
         // ── 3. Returns & Refunds ──
+        // `pos_returns` has `total` and `posted_at`; the previous column names
+        // (`refund_amount`, `total_cost`, `occurred_at`) do not exist. SQLite
+        // reads an unknown "quoted" identifier as a string literal, so the old
+        // query silently matched zero rows and the statement never deducted a
+        // single return — and on MySQL it would fail outright.
         $returnsQuery = PosReturn::where('store_id', $store->id)
-            ->whereBetween('occurred_at', [$start, $end]);
+            ->where('status', 'posted')
+            ->whereBetween('posted_at', [$start, $end]);
 
         if ($branchId) {
             $returnsQuery->where('branch_id', $branchId);
         }
 
-        $returnsAmount = (float) (clone $returnsQuery)->sum('refund_amount');
-        $returnsCogs = (float) (clone $returnsQuery)->sum('total_cost');
+        $returnsAmount = exact_sum(clone $returnsQuery, 'total');
+
+        // Cost of the goods coming back lives on the return lines.
+        $returnsCogs = exact_sum(
+            DB::table('pos_return_items')
+                ->join('pos_returns', 'pos_returns.id', '=', 'pos_return_items.pos_return_id')
+                ->where('pos_returns.store_id', $store->id)
+                ->where('pos_returns.status', 'posted')
+                ->whereBetween('pos_returns.posted_at', [$start, $end])
+                ->when($branchId, fn ($q) => $q->where('pos_returns.branch_id', $branchId)),
+            'pos_return_items.quantity * pos_return_items.unit_cost'
+        );
 
         // ── 4. Net Sales & Net COGS ──
-        $netSales = max(0, $grossSales - $discounts - $returnsAmount);
-        $netCogs = max(0, $grossCogs - $returnsCogs);
+        $netSales = bcsub(bcsub($grossSales, $discounts, 2), $returnsAmount, 2);
+        if (bccomp($netSales, '0', 2) < 0) {
+            $netSales = '0.00';
+        }
+
+        $netCogs = bcsub($grossCogs, $returnsCogs, 2);
+        if (bccomp($netCogs, '0', 2) < 0) {
+            $netCogs = '0.00';
+        }
 
         // ── 5. Gross Profit & Margin ──
-        $grossProfit = $netSales - $netCogs;
-        $grossMargin = $netSales > 0 ? round(($grossProfit / $netSales) * 100, 2) : 0.0;
+        $grossProfit = bcsub($netSales, $netCogs, 2);
+        $grossMargin = bccomp($netSales, '0', 2) > 0
+            ? round(((float) $grossProfit / (float) $netSales) * 100, 2)
+            : 0.0;
 
         // ── 6. Operating Expenses ──
         $expensesQuery = Expense::where('store_id', $store->id)
@@ -84,17 +107,19 @@ class ProfitLossService
             ->with('category');
 
         $expenses = $expensesQuery->get();
-        $totalExpenses = (float) $expenses->sum('amount');
+        $totalExpenses = bc_sum($expenses->pluck('amount'));
 
         // Group expenses by category
         $expensesByCategory = [];
         $grouped = $expenses->groupBy('expense_category_id');
         foreach ($grouped as $catId => $catExpenses) {
             $first = $catExpenses->first();
-            $catAmount = (float) $catExpenses->sum('amount');
+            $catAmount = bc_sum($catExpenses->pluck('amount'));
             $catName = $first->category?->name ?? 'အထွေထွေ စရိတ် (General)';
             $catColor = $first->category?->color ?? '#64748b';
-            $percent = $totalExpenses > 0 ? round(($catAmount / $totalExpenses) * 100, 1) : 0.0;
+            $percent = bccomp($totalExpenses, '0', 2) > 0
+                ? round(((float) $catAmount / (float) $totalExpenses) * 100, 1)
+                : 0.0;
 
             $expensesByCategory[] = [
                 'id' => $catId,
@@ -106,7 +131,7 @@ class ProfitLossService
         }
 
         // Sort expenses by highest amount
-        usort($expensesByCategory, fn($a, $b) => $b['amount'] <=> $a['amount']);
+        usort($expensesByCategory, fn($a, $b) => bccomp($a['amount'], $b['amount'], 2));
 
         // ── 7. Service & Repair Revenue (if applicable) ──
         $serviceJobsQuery = \App\POS\Models\ServiceJob::where('store_id', $store->id)
@@ -115,33 +140,41 @@ class ProfitLossService
         $serviceJobs = $serviceJobsQuery->with(['items', 'payments'])->get();
         $serviceJobsCount = $serviceJobs->count();
 
-        $serviceRevenue = 0.0;
-        $servicePartsCost = 0.0;
+        $serviceRevenue = '0.00';
+        $servicePartsCost = '0.00';
 
         foreach ($serviceJobs as $job) {
-            $finalCharge = (float) ($job->final_charge ?: $job->estimated_charge ?: 0);
-            $paid = (float) $job->payments->sum('amount');
+            $finalCharge = bcadd((string) ($job->final_charge ?: $job->estimated_charge ?: '0'), '0', 2);
+            $paid = bc_sum($job->payments->pluck('amount'));
+            $partsCost = bc_sum($job->items->where('type', 'part')->pluck('cost'));
+
             // If job is delivered/ready, count final charge or paid amount
-            $serviceRevenue += max($paid, in_array($job->status, ['ready', 'delivered'], true) ? $finalCharge : $paid);
-            $servicePartsCost += (float) $job->items->where('type', 'part')->sum('cost');
+            $billable = in_array($job->status, ['ready', 'delivered'], true) ? $finalCharge : $paid;
+            $serviceRevenue = bcadd($serviceRevenue, bccomp($paid, $billable, 2) >= 0 ? $paid : $billable, 2);
+            $servicePartsCost = bcadd($servicePartsCost, $partsCost, 2);
         }
 
-        $serviceGrossProfit = max(0, $serviceRevenue - $servicePartsCost);
-        $hasServices = ($serviceJobsCount > 0 || $serviceRevenue > 0);
+        $serviceGrossProfit = bcsub($serviceRevenue, $servicePartsCost, 2);
+        if (bccomp($serviceGrossProfit, '0', 2) < 0) {
+            $serviceGrossProfit = '0.00';
+        }
+        $hasServices = ($serviceJobsCount > 0 || bccomp($serviceRevenue, '0', 2) > 0);
 
         // Combined Net Revenue & Combined COGS
-        $totalCombinedRevenue = $netSales + $serviceRevenue;
-        $totalCombinedCogs = $netCogs + $servicePartsCost;
-        $totalGrossProfit = $grossProfit + $serviceGrossProfit;
+        $totalCombinedRevenue = bcadd($netSales, $serviceRevenue, 2);
+        $totalCombinedCogs = bcadd($netCogs, $servicePartsCost, 2);
+        $totalGrossProfit = bcadd($grossProfit, $serviceGrossProfit, 2);
 
         // ── 8. Net Profit & Margin ──
-        $netProfit = $totalGrossProfit - $totalExpenses;
-        $netMargin = $totalCombinedRevenue > 0 ? round(($netProfit / $totalCombinedRevenue) * 100, 2) : 0.0;
-        $grossMargin = $totalCombinedRevenue > 0 ? round(($totalGrossProfit / $totalCombinedRevenue) * 100, 2) : 0.0;
+        $netProfit = bcsub($totalGrossProfit, $totalExpenses, 2);
+        // Margins are ratios, not money — float is correct for the percentage.
+        $hasCombinedRevenue = bccomp($totalCombinedRevenue, '0', 2) > 0;
+        $netMargin = $hasCombinedRevenue ? round(((float) $netProfit / (float) $totalCombinedRevenue) * 100, 2) : 0.0;
+        $grossMargin = $hasCombinedRevenue ? round(((float) $totalGrossProfit / (float) $totalCombinedRevenue) * 100, 2) : 0.0;
 
         // ── 9. Operational Metrics ──
-        $aov = $orderCount > 0 ? round($netSales / $orderCount, 2) : 0.0;
-        $profitPerOrder = $orderCount > 0 ? round($netProfit / $orderCount, 2) : 0.0;
+        $aov = $orderCount > 0 ? bcdiv($netSales, (string) $orderCount, 2) : '0.00';
+        $profitPerOrder = $orderCount > 0 ? bcdiv($netProfit, (string) $orderCount, 2) : '0.00';
 
         // ── 10. Top Profitable Products ──
         $topProductsRaw = DB::table('pos_sale_items')
@@ -160,15 +193,15 @@ class ProfitLossService
 
         $topProducts = [];
         foreach ($topProductsRaw as $row) {
-            $rev = (float) $row->revenue;
-            $prof = (float) $row->profit;
+            $rev = bcadd((string) ($row->revenue ?? '0'), '0', 2);
+            $prof = bcadd((string) ($row->profit ?? '0'), '0', 2);
             $topProducts[] = [
                 'name' => $row->name,
-                'quantity' => (float) $row->quantity,
+                'quantity' => bcadd((string) ($row->quantity ?? '0'), '0', 3),
                 'revenue' => $rev,
-                'cogs' => (float) $row->cogs,
+                'cogs' => bcadd((string) ($row->cogs ?? '0'), '0', 2),
                 'profit' => $prof,
-                'margin' => $rev > 0 ? round(($prof / $rev) * 100, 1) : 0.0,
+                'margin' => bccomp($rev, '0', 2) > 0 ? round(((float) $prof / (float) $rev) * 100, 1) : 0.0,
             ];
         }
 

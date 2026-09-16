@@ -2832,3 +2832,159 @@ Confirm Import လုပ်တဲ့အခါ 500 မတက်တော့ဘူ
 - **Consolidated Playbook:** Synthesized 10 legacy QA/fix prompts into `docs/prompts/AI_AGENT_QA_PLAYBOOK.md`.
 - **Archive Isolation:** Relocated historical audits, phase completion reports, legacy prompt fragments, and superseded plans into `docs/archive/` subdirectories with zero content loss.
 - **Link Normalization:** Cleaned all local Windows absolute paths (`file:///d:/...`) across active documents, ensuring 100% repository-relative links and 0 broken links.
+
+---
+
+## 2026-09-17 — Pre-Production Security & Correctness Audit (4 blockers + UI/i18n/currency sweep)
+
+Audit run against a clean `main` (`7d3c3a7`) before the Hostinger go-live. Suite at audit start: **1900 passed / 1 skipped**. Every finding below was verified by execution, not by reading alone. Suite after all fixes: **1937 passed / 0 failed / 0 skipped**.
+
+### Blockers found and fixed
+
+1. **Project root was web-servable (`.env` downloadable).** XAMPP's DocumentRoot is `D:/xmapp/htdocs` with `Options Indexes`, and the project had no root `.htaccess` — `http://localhost/DataPOS/.env` returned **200 with the full file including `APP_KEY`**, and `manual_*.mysql.sql` (3.6 MB), `DataPOS_clean_project.zip` (17 MB) and root helper `.php` files were all reachable. Fixed by adding `.htaccess` at the project root (`Require all denied`) and re-granting access in `public/.htaccess` (a child `Require` replaces the inherited one rather than merging). Verified live: every root path now 403, `public/` still 200.
+
+2. **Offline-sync API was completely unauthenticated.** `routes/api.php` `v1/store/{slug}/sync/*` had no middleware and the controller had no auth check. Verified live: `sync/status` returned 200 with real data and `sync/push` returned 422 (reaching the controller) with no credentials. `OfflineSyncService` trusted the client's `unit_price`, so anyone knowing a store slug could post `unit_price: 0` sales that still deducted stock, collect arbitrary customer debt, backdate sales, and pull customer PII. Fixed with a per-store sync key (`stores.sync_api_key_hash` + `last4`, stored hashed), a new `AuthenticateSyncRequest` middleware (`sync.auth`), a per-store `throttle:sync` limiter, and a key issuer/revoker plus one-time reveal on the Sync admin screen. The status widget now uses new session-authenticated admin JSON endpoints instead. Verified live: no key → 401, wrong key → 401, valid key via `Authorization: Bearer` or `X-Sync-Key` → 200.
+
+3. **Any store manager could download/restore/delete the whole platform database.** Backup routes were gated only by per-store `store_manager` + `backups.*`, but `DatabaseBackupService::create()` dumps the entire database and all media, and `restore()` overwrites all of it. A manager of one store could read and destroy every tenant's data. Same for `VACUUM`/`OPTIMIZE`/integrity checks and cache clearing. Now restricted to `platform_owner`, with both nav items hidden for everyone else. Covered by `PlatformOnlyDatabaseAccessTest` (13 tests).
+
+4. **A cashier register could only ever be closed once.** `unique(store_id, register_name, status)` included `status`, so every closed shift collided with the previous closed shift on the same register — the second ever daily close raised a UNIQUE violation. Proven by running it: Day-1 close succeeded, Day-2 close threw `UNIQUE constraint failed: cashier_shifts.store_id, register_name, status`. Replaced with an `open_shift_key` column (`"<store_id>:<register_name>"` while open, NULL once closed) maintained by a `CashierShift::saving` hook and a unique index on it, so any number of past closings coexist while "one open shift per register" is still enforced. Migration backfills existing open shifts in PHP (`||` is logical OR on MySQL). Covered by `CashierShiftRegisterReuseTest` (6 tests).
+
+### Additional production blocker found by the MySQL smoke test
+
+5. **`php artisan migrate` crashed on MySQL.** `2026_09_09_000002` added `variance_reason ... after('closing_note')`, but `cashier_shifts` has `notes`, not `closing_note`. SQLite ignores `AFTER` so the regular suite never caught it; the MySQL smoke test only runs when a local MySQL is reachable, and it had been skipping. MySQL rejects `AFTER <missing column>`, so the migration — and therefore the whole deploy — would have failed. Anchor corrected to `notes`. The smoke test now passes again, which also confirms both new 2026-09-17 migrations are MySQL-clean.
+
+### Other fixes in this pass
+
+- **CSP-blocked inline handlers removed (66 occurrences).** The policy has no `unsafe-inline`, so every `onclick`/`onchange`/`onsubmit` was dead at runtime. Worst cases: the entire POS receipt share modal (7 buttons + backdrop), the daily-closing approve confirmation (an irreversible action lost its guard), and print/close buttons across statements. `resources/js/csp-helpers.js` gained delegated handlers for `data-close-window`, `data-back`, `data-href`, `data-navigate`, `data-set-value`, `data-focus-scroll`, `data-show`/`data-hide`, `data-submit-form`, and `data-call`/`data-call-self`; row views no longer need `event.stopPropagation()`.
+- **Two double-fire bugs surfaced while migrating the handlers.** `admin/orders/invoice.blade.php` had both `data-print` and its own `[data-print]` listener; `pos/closing_print.blade.php` had an explicit `addEventListener` *and* a delegated listener for `#btnShareJpg` plus the inline attribute — so the share dialog ran twice and the print dialog opened twice. Redundant handlers removed.
+- **38 translation keys were missing from all three locales** (the locale key sets themselves were already in sync at 5,793). They rendered as literal `messages.xxx` on storefront nav, POS buybacks, closing print and stock-count exports. All 38 added to `my`/`en`/`zh_CN`; the dynamic prefix families (`payment_*`, `repair_status_*`, `movement_type_*`, `po_status_*`, `po_payment_*`, `warranty_type_*`, `group_*`, `stock_count_status_*`) were verified to resolve at runtime and are complete. Locale parity after: **5,845 keys in each of my/en/zh_CN, 0 missing, 0 extra**.
+- **Hardcoded `Ks` removed from genuine displays.** `pos/opening_stock.blade.php` (9), `pos/transfers/create.blade.php` (7, incl. the forbidden `(Ks)` table header), `pos/adjustments.blade.php` (1) now use `format_currency()` / `window.formatCurrency()`, and the two `(Ks)` form labels were replaced with translation keys. `ProductCardViewModel::formattedPrice()/formattedOldPrice()` no longer bypass the currency setting — storefront prices were ignoring `/admin/settings/currency` entirely. Order/inquiry messages (`OrderController::confirmation`, `ContactLinkBuilder`, `viber-order.js`) and export headers (debt aging, service jobs, PO returns, promotion type label) likewise. Messages now render as `40,000 Ks` (the formatter's documented default `after_space`) instead of `Ks 40,000`; product import still round-trips because `SpreadsheetImportReader::normalizeHeader()` strips `(ks)` before snake-casing.
+- **Deleted `resources/views/admin/products/ProductController.php`** — a stale 1,670-line duplicate of the real controller (which already exports the corrected, `(Ks)`-free headers) tracked inside the views directory.
+
+### Verification
+
+- Full suite: **1937 passed / 0 failed / 0 skipped** (9,130 assertions). The MySQL smoke test no longer skips — it runs and passes, which is what caught item 5.
+- Live HTTP: root tree 403, `public/` 200, sync API 401 without a key and 200 with one.
+- New tests: `SyncApiAuthenticationTest` (14), `PlatformOnlyDatabaseAccessTest` (13), `CashierShiftRegisterReuseTest` (6). Existing backup/database/sync tests were updated to act as a platform owner or send the sync key, since they encoded the previous (insecure) behaviour.
+
+---
+
+## 2026-09-17 (second pass) — Money Precision, Ledger Atomicity & Tenant Scoping
+
+Continuation of the same-day audit: the float-money and missing-transaction findings from the first pass. Suite after: **1965 passed / 0 failed / 0 skipped** (9,186 assertions).
+
+### Money now moves as exact decimals, never floats
+
+Every one of these previously cast a `DECIMAL` price into a PHP float, did arithmetic, and (in several cases) handed the rounded float straight back to SQL `increment`/`decrement`:
+
+- **Storefront checkout** (`OrderController`): `$subtotal = $unitPrice * $qty` fed bcmath via a string cast, so a per-line rounding error could reach `orders.total_amount`. Now `bcmul`. Also fixes a wholesale shopper whose product had no wholesale price resolving to `null` instead of falling back to retail (`resolveUnitPrice()`), and removes the dead `$totalAmount` float accumulator (assigned in three places, never read).
+- **Buy back** (`BuyBackController`): total was `collect()->sum(fn => unit_price * quantity)`. Now bcmath, per line.
+- **Cash & bank** (`FinancialTransactionService`): deposits/withdrawals/transfers and account opening balances. `increment('current_balance', $amount + $fee)` was raw float addition against a decimal column.
+- **E-Load** (`EloadService`): amount, cost (`amount * (1 - discount/100)`), profit, and the operator float balance on create/refund/refill.
+- **Expenses** (`ExpenseController`, POS `CashierShiftController`) and **cashier cash events** (`CashierShiftService::addCashEvent`).
+- **Stock count variance** (`StockCountLine::setCount`): `countedQty - (float) system_quantity` and `round(variance * unit_cost, 2)` — this variance is what gets posted to the inventory ledger on approval.
+- **Financial export totals** (`CashBankTransactionController`) summed with `+=` on floats.
+- `amount`/`fee`/`balance`/`opening_balance` validation switched from `numeric` to `decimal:0,2` (or `:0,3` for quantities). `numeric` accepts scientific notation like `"1e3"`, which bcmath rejects outright — see the 500-fix below.
+
+### Guards that could be bypassed
+
+- **Customer debt collection** (`CustomerDebtService::collect`): the outstanding-balance check and the ledger insert were separate transactions, so two concurrent collections could each pass the check and drive a receivable negative. The check now runs inside a transaction that locks the customer's ledger rows first (`lockForUpdate`). It also refuses a customer who is not attached to the store — the same guard `recordOpeningBalance()` already had, and the one the offline-sync path was relying on.
+- **Service job payments** (`ServiceJobController`, `RepairController`): the overpayment guard was a read-then-write with no lock — two concurrent submissions could both pass. Now inside a transaction with the job row locked, and the charge/outstanding math moved to new bcmath accessors (`paidAmountDecimal()`, `outstandingDecimal()`), with the old float methods delegating to them.
+- **Stock count approval** (`StockCountService::approveAndReconcile`): the "already approved" check sat *outside* the transaction, and the idempotency key ended in a fresh `Str::uuid()`, so the unique index on `(store_id, client_transaction_id)` could never fire — two concurrent approvals would each post every variance. The check now runs inside the transaction against a locked row, and the key is deterministic (`sc-{session}-line-{line}`).
+- **Bulk stock count save** (`StockCountController::bulkUpdate`): passed `$request->input('lines')` straight through with no validation, so negative or non-numeric counts reached `(float)` and became a stored line (unlike `updateLine`, which validates). Now validated (`decimal:0,3`, `min:0`), with a matching guard inside the service for non-HTTP callers.
+- **Buy back / transfers with two lines for the same product**: `client_transaction_id` was keyed by product (`buyback:{id}:{product_id}`, `trf_out:{id}:{product_id}`), so the second line collided with the first and silently returned/moved stock only once. Now keyed per line (`...:item:{item_id}`), which keeps the operation idempotent per line.
+- **Buy back validation was unscoped**: `exists:products,id` / `exists:users,id` accepted any store's records. Both now scoped to the store.
+- **Cash & bank account IDs were unscoped** in `deposit`/`withdraw`/`transfer` validation. Now `Rule::exists(...)->where('store_id', ...)`.
+- **Push notification broadcast** (`PushNotificationController::test`) sent to `PushSubscription::all()` — a manager of any store could push to every tenant's subscribers. Now scoped to the subscribers of the stores the manager belongs to; only a platform owner reaches everyone. Guest subscriptions (no user, so no store) are no longer reachable by a manager.
+- **A withdrawal could overdraw an account** — `recordWithdrawal` had no balance check at all. Added, including the fee in the transfer guard, evaluated while the account row is locked.
+
+### 500s that should have been validation errors
+
+`bccomp`/`bcadd` throw a `ValueError` on a non-decimal string, and `numeric` validation lets `"1e3"` through. Fixed in `CustomerReceivableController` (collections) and `PurchasePriceAdjustmentService` (+ its `price_updates.*` rules), which now require plain decimal strings and raise a validation message instead of a server error.
+
+### Verification
+
+- Full suite **1965 passed / 0 failed / 0 skipped** (9,186 assertions).
+- New: `FinancialAccountGuardTest` (10), `PosMoneyAndAtomicityTest` (16), plus 2 push tenant-isolation tests.
+- Live: cash & bank, e-load, stock count, receivables, buy back, service jobs and expenses all render 200; `.env` still 403 and the sync API still 401 without a key.
+
+---
+
+## 2026-09-17 (third pass) — Document Numbering, Write-Path Precision & Concurrency Cleanup
+
+Final pass over the audit backlog. Suite after: **1984 passed / 0 failed / 0 skipped** (9,219 assertions).
+
+### Document numbers are no longer read-then-write
+
+Six series generated their number with "read the newest row, add one", which hands the same number to two documents created in the same instant. They now use the existing `DocumentSequenceService` (a row-locked `document_sequences` table) — the same mechanism `GoodsReceiptService` and `InventoryAdjustmentService` already used:
+
+| Series | Before | Now |
+|---|---|---|
+| Expenses `EXP-` | count-today + 1 on `expense_number` | sequence |
+| Buy back `BB-` | `substr(last, -4) + 1` | sequence |
+| Stock transfer `TRF-` | `substr(last, -4) + 1` | sequence |
+| Service jobs `SVC-` | `substr(last, -4) + 1` | sequence |
+| Opening stock `OSR-` | count-today + 1 | sequence |
+| Stock count `SC-` | count rows with today's date + 1 | sequence |
+
+- `DocumentSequenceService` gained configs and number-column mappings for all six, and its seeding changed from *counting existing rows* to *reading the highest numeric suffix* — a count drifts as soon as one document is deleted, which would re-issue a number that already exists. This also fixes the seed for `adjustment`, which previously had no mapping and always restarted at 0.
+- `service_job`'s configured prefix said `SRV-` but the code emitted `SVC-`; the config now matches reality.
+- New unique indexes on `expenses(store_id, expense_number)` and `stock_counts(store_id, session_number)` — the other four series already had one, and this makes a future regression fail loudly instead of silently duplicating. Checked for existing duplicates before adding (none).
+
+### Remaining float money on write paths
+
+- **Bulk price wizard** (`applyBulkUpdate`): prices were cast to float and written back to `products`/`product_variants`. Now decimal strings end to end, with `bccomp` for the below-cost warning and the compare-at price decision.
+- **Promotion** (`Promotion::value`, `min_order_amount`, `PromotionUsage::discount_applied`): the model cast was `float`, so a stored `1500.25` came back as a float before any maths ran. Now `decimal:2`, and `PromotionService` gained `calculateDiscountDecimal()` (`bcmul` + `bcdiv`, not `$total * ($value / 100)`) with the existing float method delegating to it.
+- **Currency conversion**: added `convertDecimal()` (`bcmul`/`bcdiv` on the rate) with `convert()` delegating. Rates were applied with `$amount * $rate`.
+- **Order inventory adapter**: the per-product quantity merge accumulated in a float (`quantity => 0.0; += (float)`) and negated with PHP's unary minus — both now `bcadd`/`bcmul`.
+
+### Operations that could run twice or half-way
+
+- **Held-sale posting**: the held row was read without a lock, so two simultaneous posts of the same held sale would both pass the status check and each write a full set of payment rows against the one sale. Now re-read under `lockForUpdate` inside the posting transaction.
+- **Order status change** (`OrderAdminController`): the stock movement and `$order->update(['status' => …])` were separate units of work — a failure between them left stock reserved against an order still showing its old status. Now one transaction.
+- **Order fulfilment from POS** (`PosSaleController::fulfillWebOrder`): same shape — release + status write + audit log now share a transaction, with the order row locked so two fulfilments cannot both release.
+- **Delivered transition** (`OrderInventoryAdapter::handleStatusChange`): `reserve()` then `commit()` ran as two transactions; they are now wrapped in one so a failed commit cannot leave the stock merely reserved.
+
+### Report aggregates
+
+`bc_sum()` was added to `app/helpers.php` for exact decimal accumulation, and used where a summed figure is displayed or exported:
+
+- **E-Load summary**: operator float balances and the today/month volume and profit totals.
+- **Debt aging**: both the store totals and the per-customer FIFO consumption algorithm — `$remainingPaidToConsume -= $debitAmount` and the bucket accumulation decided which portion of each debit was still unpaid, i.e. the numbers on the aging report and its CSV export.
+- **Inventory valuation**: per-product `qty x unit_cost` and the store totals. Percentages (margin) stayed float, which is correct for a ratio.
+
+### Verification
+
+- Full suite **1984 passed / 0 failed / 0 skipped** (9,219 assertions).
+- New: `DocumentNumberUniquenessTest` (9), `MoneyWritePathSafetyTest` (10).
+- Live: e-load, promotions, expenses, buy back, stock count, cash & bank, debt-aging report + export and inventory-valuation report + export all return 200; `.env` still 403 and the sync API still 401 without a key.
+
+---
+
+## 2026-09-17 (fourth pass) — Exact Report Totals, and Three Silent-Column Bugs They Exposed
+
+Suite after: **1991 passed / 0 failed / 0 skipped** (9,235 assertions).
+
+### The three bugs the conversion uncovered
+
+While converting the report services to bcmath, a scan for column names that exist in *no* table turned up queries reading columns that were never there. SQLite reads an unknown `"quoted"` identifier as a **string literal**, so those queries did not error — they quietly matched zero rows. On MySQL (production) they would have failed outright.
+
+1. **The P&L statement never deducted a single return.** `ProfitLossService` filtered `pos_returns` on `occurred_at` and summed `refund_amount` / `total_cost`. The table has `posted_at` and `total`, and no cost column at all. Net sales and profit were therefore overstated by every return ever taken. (Proven: the table holds 1 return, and `WHERE "occurred_at" BETWEEN …` matched 0 rows while `posted_at` matched 1.) Returns COGS now comes from `pos_return_items.quantity * unit_cost` through a join. Live proof — the export now prints `Less: ပြန်အမ်းငွေများ −52,500.00` and `Less: ပြန်သွင်းပစ္စည်းအရင်း −40,000.00`, where both lines were previously 0.
+2. **Cash reconciliation ignored customer debt collections.** `BusinessReconciliationService` queried `customer_ledger_entries` with `entry_type = 'credit_payment'` and `sum('credit_amount')`. The columns are `type` and `amount`, and `credit_payment` is not one of the four type constants (`sale_debt`, `collection`, `reversal`, `opening_balance`). Cash taken in against customer debt never reached the expected drawer total. Now `type = collection` with the stored negative amount negated.
+3. **Store data export reported zero revenue.** `StoreDataExportService` summed `pos_sales.final_total`; the column is `total`.
+
+Two more of the same family were clean (`customers_count` style aliases and a `requires_update` array key), and `PosReportService`'s own returns query already used `posted_at` correctly — the bug was confined to `ProfitLossService`.
+
+### Exact totals everywhere a report is printed
+
+- New `exact_sum()` helper in `app/helpers.php`. MySQL sums DECIMAL exactly, so its answer is taken verbatim; SQLite has no DECIMAL type and its `SUM()` runs in REAL, drifting once a report covers enough rows (measured at these column totals: **exact to 100,000 rows, −0.01 kyat at 200,000, −0.19 at 1,000,000**), so those rows are totalled with bcmath instead. Every caller therefore gets the same figure on both engines.
+- `bc_sum()` used where the rows are already loaded in PHP.
+- Converted: `ProfitLossService` (revenue, COGS, expenses by category, service jobs, top products, AOV, profit per order), `PosReportService` (cash-shift totals, service report totals and the per-technician table), `DailyClosingService` (payment-method expectations, the day's sales metrics, counted-amount normalisation), `CustomerDebtService` receivables KPIs, `SupplierController` owing amount, `StockLedgerService` inflow/outflow/net.
+- Percentages, margins and ratios stay float — a ratio is not money, and converting it would gain nothing.
+- `DailyClosingService::normaliseCounted()` now rejects a value bcmath cannot parse with a validation message instead of throwing a `ValueError` (a 500).
+
+### Verification
+
+- Full suite **1991 passed / 0 failed / 0 skipped** (9,235 assertions).
+- New: `ReportTotalsExactnessTest` (7), including a 200,000-row test that asserts `exact_sum()` equals the bcmath product *and* that the plain SQL aggregate does not.
+- Live: profit-loss index/statement/export, debt-aging, inventory-valuation, reconciliation, stock-ledger + export, suppliers, receivables, POS closing — all 200. `.env` still 403, sync API still 401 without a key.

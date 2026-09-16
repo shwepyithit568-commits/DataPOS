@@ -19,25 +19,28 @@ class DebtAgingService
     {
         $customersWithDebt = $this->calculateAllCustomerAging($store);
 
-        // Calculate aggregate store KPIs
-        $totalOutstanding = 0.0;
-        $bucket0To30 = 0.0;
-        $bucket31To60 = 0.0;
-        $bucket61To90 = 0.0;
-        $bucket90Plus = 0.0;
+        // Calculate aggregate store KPIs. Running totals are decimal strings —
+        // these figures appear on the aging report and in its CSV export.
+        $totalOutstanding = '0.00';
+        $bucket0To30 = '0.00';
+        $bucket31To60 = '0.00';
+        $bucket61To90 = '0.00';
+        $bucket90Plus = '0.00';
         $highRiskCount = 0;
 
         foreach ($customersWithDebt as $c) {
-            $totalOutstanding += $c['total_due'];
-            $bucket0To30 += $c['bucket_0_30'];
-            $bucket31To60 += $c['bucket_31_60'];
-            $bucket61To90 += $c['bucket_61_90'];
-            $bucket90Plus += $c['bucket_90_plus'];
+            $totalOutstanding = bcadd($totalOutstanding, (string) $c['total_due'], 2);
+            $bucket0To30 = bcadd($bucket0To30, (string) $c['bucket_0_30'], 2);
+            $bucket31To60 = bcadd($bucket31To60, (string) $c['bucket_31_60'], 2);
+            $bucket61To90 = bcadd($bucket61To90, (string) $c['bucket_61_90'], 2);
+            $bucket90Plus = bcadd($bucket90Plus, (string) $c['bucket_90_plus'], 2);
 
-            if ($c['bucket_61_90'] > 0 || $c['bucket_90_plus'] > 0) {
+            if (bccomp((string) $c['bucket_61_90'], '0', 2) > 0 || bccomp((string) $c['bucket_90_plus'], '0', 2) > 0) {
                 $highRiskCount++;
             }
         }
+
+        $hasOutstanding = bccomp($totalOutstanding, '0', 2) > 0;
 
         $metrics = [
             'total_outstanding'     => $totalOutstanding,
@@ -47,8 +50,9 @@ class DebtAgingService
             'bucket_90_plus'        => $bucket90Plus,
             'total_debtors'         => count($customersWithDebt),
             'high_risk_debtors'     => $highRiskCount,
-            'pct_current'           => $totalOutstanding > 0 ? round(($bucket0To30 / $totalOutstanding) * 100, 1) : 0,
-            'pct_overdue'           => $totalOutstanding > 0 ? round((($bucket61To90 + $bucket90Plus) / $totalOutstanding) * 100, 1) : 0,
+            // Percentages are proportions, not money — float is correct here.
+            'pct_current'           => $hasOutstanding ? round(((float) $bucket0To30 / (float) $totalOutstanding) * 100, 1) : 0,
+            'pct_overdue'           => $hasOutstanding ? round((((float) $bucket61To90 + (float) $bucket90Plus) / (float) $totalOutstanding) * 100, 1) : 0,
         ];
 
         // Apply filters
@@ -131,8 +135,8 @@ class DebtAgingService
         $results = [];
 
         foreach ($grouped as $customerId => $entries) {
-            $totalBalance = (float) $entries->sum('amount');
-            if ($totalBalance <= 0.001) {
+            $totalBalance = bc_sum($entries->pluck('amount'));
+            if (bccomp($totalBalance, '0.001', 3) <= 0) {
                 continue; // No outstanding debt
             }
 
@@ -140,31 +144,34 @@ class DebtAgingService
             $customerName = $customer?->name ?? "Customer #{$customerId}";
             $customerPhone = $customer?->phone ?? '-';
 
-            $totalPaid = (float) abs($entries->filter(fn ($e) => (float) $e->amount < 0)->sum('amount'));
-            $debitEntries = $entries->filter(fn ($e) => (float) $e->amount > 0);
+            $totalPaid = ltrim(bc_sum($entries->filter(fn ($e) => bccomp((string) $e->amount, '0', 2) < 0)->pluck('amount')), '-');
+            $debitEntries = $entries->filter(fn ($e) => bccomp((string) $e->amount, '0', 2) > 0);
 
-            $bucket0To30 = 0.0;
-            $bucket31To60 = 0.0;
-            $bucket61To90 = 0.0;
-            $bucket90Plus = 0.0;
+            // The FIFO consumption below decides which portion of each debit is
+            // still unpaid and how it ages — the numbers printed on the report
+            // and exported to CSV, so they are accumulated with bcmath.
+            $bucket0To30 = '0.00';
+            $bucket31To60 = '0.00';
+            $bucket61To90 = '0.00';
+            $bucket90Plus = '0.00';
 
             $oldestUnpaidDate = null;
             $maxOverdueDays = 0;
             $remainingPaidToConsume = $totalPaid;
 
             foreach ($debitEntries as $debit) {
-                $debitAmount = (float) $debit->amount;
-                if ($debitAmount <= 0) {
+                $debitAmount = bcadd((string) $debit->amount, '0', 2);
+                if (bccomp($debitAmount, '0', 2) <= 0) {
                     continue;
                 }
 
-                if ($remainingPaidToConsume >= $debitAmount) {
-                    $remainingPaidToConsume -= $debitAmount;
+                if (bccomp($remainingPaidToConsume, $debitAmount, 2) >= 0) {
+                    $remainingPaidToConsume = bcsub($remainingPaidToConsume, $debitAmount, 2);
                     continue; // Fully covered by earlier/subsequent payment
                 }
 
-                $unpaidPortion = $debitAmount - $remainingPaidToConsume;
-                $remainingPaidToConsume = 0.0;
+                $unpaidPortion = bcsub($debitAmount, $remainingPaidToConsume, 2);
+                $remainingPaidToConsume = '0.00';
 
                 $occurredAt = $debit->occurred_at ?? $debit->created_at ?? $now;
                 $days = max(0, $occurredAt->diffInDays($now));
@@ -175,23 +182,23 @@ class DebtAgingService
                 }
 
                 if ($days <= 30) {
-                    $bucket0To30 += $unpaidPortion;
+                    $bucket0To30 = bcadd($bucket0To30, $unpaidPortion, 2);
                 } elseif ($days <= 60) {
-                    $bucket31To60 += $unpaidPortion;
+                    $bucket31To60 = bcadd($bucket31To60, $unpaidPortion, 2);
                 } elseif ($days <= 90) {
-                    $bucket61To90 += $unpaidPortion;
+                    $bucket61To90 = bcadd($bucket61To90, $unpaidPortion, 2);
                 } else {
-                    $bucket90Plus += $unpaidPortion;
+                    $bucket90Plus = bcadd($bucket90Plus, $unpaidPortion, 2);
                 }
             }
 
             // Determine Risk Level
             $riskLevel = 'low';
-            if ($bucket90Plus > 0) {
+            if (bccomp($bucket90Plus, '0', 2) > 0) {
                 $riskLevel = 'critical';
-            } elseif ($bucket61To90 > 0) {
+            } elseif (bccomp($bucket61To90, '0', 2) > 0) {
                 $riskLevel = 'high';
-            } elseif ($bucket31To60 > 0) {
+            } elseif (bccomp($bucket31To60, '0', 2) > 0) {
                 $riskLevel = 'medium';
             }
 
@@ -199,11 +206,11 @@ class DebtAgingService
                 'customer_id'        => $customerId,
                 'customer_name'      => $customerName,
                 'customer_phone'     => $customerPhone,
-                'total_due'          => round($totalBalance, 2),
-                'bucket_0_30'        => round($bucket0To30, 2),
-                'bucket_31_60'       => round($bucket31To60, 2),
-                'bucket_61_90'       => round($bucket61To90, 2),
-                'bucket_90_plus'     => round($bucket90Plus, 2),
+                'total_due'          => bcadd($totalBalance, '0', 2),
+                'bucket_0_30'        => bcadd($bucket0To30, '0', 2),
+                'bucket_31_60'       => bcadd($bucket31To60, '0', 2),
+                'bucket_61_90'       => bcadd($bucket61To90, '0', 2),
+                'bucket_90_plus'     => bcadd($bucket90Plus, '0', 2),
                 'oldest_unpaid_date' => $oldestUnpaidDate?->toDateString(),
                 'max_overdue_days'   => $maxOverdueDays,
                 'risk_level'         => $riskLevel,

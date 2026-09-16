@@ -75,23 +75,40 @@ class CustomerDebtService
             throw new InventoryException('Collection amount must be positive.');
         }
 
-        $outstanding = $this->balanceFor($store->id, $customerId);
-        if (bccomp($amount, $outstanding, 2) > 0) {
-            throw new InventoryException(
-                'Cannot collect more than the outstanding balance (Ks ' . rtrim(rtrim($outstanding, '0'), '.') . ').'
-            );
+        // Never collect on a cross-store receivable.
+        $customer = User::find($customerId);
+        if (! $customer || ! $customer->stores()->wherePivot('store_id', $store->id)->exists()) {
+            throw new InventoryException('Customer is not attached to this store — cannot collect.');
         }
 
-        return $this->createEntry($store, [
-            'customer_id' => $customerId,
-            'type' => CustomerLedgerEntry::TYPE_COLLECTION,
-            'amount' => '-' . $amount,
-            'source_type' => 'manual',
-            'notes' => $notes ?: 'Debt collection',
-            'slip_image' => $slipImage,
-            'created_by' => $actor->id,
-            'client_transaction_id' => $clientTransactionId,
-        ]);
+        return DB::transaction(function () use ($store, $customerId, $amount, $actor, $notes, $clientTransactionId, $slipImage) {
+            // Lock this customer's ledger rows for the store so two concurrent
+            // collections cannot both pass the outstanding check and drive the
+            // receivable negative. createEntry() below joins this transaction.
+            CustomerLedgerEntry::query()
+                ->where('store_id', $store->id)
+                ->where('customer_id', $customerId)
+                ->lockForUpdate()
+                ->get(['id']);
+
+            $outstanding = $this->balanceFor($store->id, $customerId);
+            if (bccomp($amount, $outstanding, 2) > 0) {
+                throw new InventoryException(
+                    'Cannot collect more than the outstanding balance (Ks ' . rtrim(rtrim($outstanding, '0'), '.') . ').'
+                );
+            }
+
+            return $this->createEntry($store, [
+                'customer_id' => $customerId,
+                'type' => CustomerLedgerEntry::TYPE_COLLECTION,
+                'amount' => '-' . $amount,
+                'source_type' => 'manual',
+                'notes' => $notes ?: 'Debt collection',
+                'slip_image' => $slipImage,
+                'created_by' => $actor->id,
+                'client_transaction_id' => $clientTransactionId,
+            ]);
+        });
     }
 
     /**
@@ -300,27 +317,32 @@ class CustomerDebtService
             ->selectRaw('SUM(amount) as customer_balance')
             ->havingRaw('SUM(amount) > 0');
 
-        $totalOutstanding = DB::query()->fromSub($sub, 'debts')->sum('customer_balance');
+        // Decimal strings, summed exactly: these are the receivables KPIs.
+        $totalOutstanding = exact_sum(DB::query()->fromSub($sub, 'debts'), 'customer_balance');
         $customerCount = DB::query()->fromSub($sub, 'debts')->count();
 
-        $collectedToday = CustomerLedgerEntry::query()
-            ->where('store_id', $store->id)
-            ->where('type', CustomerLedgerEntry::TYPE_COLLECTION)
-            ->whereDate('occurred_at', today())
-            ->sum(DB::raw('ABS(amount)'));
+        $collectedToday = exact_sum(
+            CustomerLedgerEntry::query()
+                ->where('store_id', $store->id)
+                ->where('type', CustomerLedgerEntry::TYPE_COLLECTION)
+                ->whereDate('occurred_at', today()),
+            'ABS(amount)'
+        );
 
-        $collectedThisMonth = CustomerLedgerEntry::query()
-            ->where('store_id', $store->id)
-            ->where('type', CustomerLedgerEntry::TYPE_COLLECTION)
-            ->whereYear('occurred_at', now()->year)
-            ->whereMonth('occurred_at', now()->month)
-            ->sum(DB::raw('ABS(amount)'));
+        $collectedThisMonth = exact_sum(
+            CustomerLedgerEntry::query()
+                ->where('store_id', $store->id)
+                ->where('type', CustomerLedgerEntry::TYPE_COLLECTION)
+                ->whereYear('occurred_at', now()->year)
+                ->whereMonth('occurred_at', now()->month),
+            'ABS(amount)'
+        );
 
         return [
-            'total_outstanding' => number_format((float) $totalOutstanding, 2, '.', ''),
+            'total_outstanding' => $totalOutstanding,
             'customers_with_debt_count' => (int) $customerCount,
-            'collected_today' => number_format((float) $collectedToday, 2, '.', ''),
-            'collected_this_month' => number_format((float) $collectedThisMonth, 2, '.', ''),
+            'collected_today' => $collectedToday,
+            'collected_this_month' => $collectedThisMonth,
         ];
     }
 

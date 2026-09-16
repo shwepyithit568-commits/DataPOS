@@ -348,25 +348,24 @@ class PurchasePriceAdjustmentService
             }
 
             // 5. When update_prices=true, all expected and new retail/wholesale prices are required
-            if (! isset($raw['expected_retail_price']) || ! is_numeric($raw['expected_retail_price'])) {
-                throw ValidationException::withMessages([
-                    "price_updates.{$index}.expected_retail_price" => ['Expected retail price is required for verification.'],
-                ]);
-            }
-            if (! isset($raw['expected_wholesale_price']) || ! is_numeric($raw['expected_wholesale_price'])) {
-                throw ValidationException::withMessages([
-                    "price_updates.{$index}.expected_wholesale_price" => ['Expected wholesale price is required for verification.'],
-                ]);
-            }
-            if (! isset($raw['retail_price']) || ! is_numeric($raw['retail_price'])) {
-                throw ValidationException::withMessages([
-                    "price_updates.{$index}.retail_price" => ['New retail price is required and must be numeric.'],
-                ]);
-            }
-            if (! isset($raw['wholesale_price']) || ! is_numeric($raw['wholesale_price'])) {
-                throw ValidationException::withMessages([
-                    "price_updates.{$index}.wholesale_price" => ['New wholesale price is required and must be numeric.'],
-                ]);
+            //    is_numeric() alone would accept scientific notation ("1e3"),
+            //    which bcadd() below rejects with a ValueError (a 500, not a
+            //    validation message), so require a plain decimal string.
+            $priceChecks = [
+                'expected_retail_price'    => 'Expected retail price is required for verification.',
+                'expected_wholesale_price' => 'Expected wholesale price is required for verification.',
+                'retail_price'             => 'New retail price is required and must be numeric.',
+                'wholesale_price'          => 'New wholesale price is required and must be numeric.',
+            ];
+
+            foreach ($priceChecks as $field => $message) {
+                $value = $raw[$field] ?? null;
+
+                if ($value === null || $value === '' || preg_match('/^-?\d+(\.\d+)?$/', trim((string) $value)) !== 1) {
+                    throw ValidationException::withMessages([
+                        "price_updates.{$index}.{$field}" => [$message],
+                    ]);
+                }
             }
 
             $expectedRetail = bcadd((string) $raw['expected_retail_price'], '0', 2);

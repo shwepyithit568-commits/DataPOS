@@ -32,9 +32,11 @@ class SupplierController extends Controller
             'total' => Supplier::where('store_id', $store->id)->count(),
             'owing' => Supplier::where('store_id', $store->id)
                 ->whereRaw('(total_credit - total_repaid) > 0')->count(),
-            'owing_amount' => Supplier::where('store_id', $store->id)
-                ->whereRaw('(total_credit - total_repaid) > 0')
-                ->sum(DB::raw('total_credit - total_repaid')),
+            'owing_amount' => exact_sum(
+                Supplier::where('store_id', $store->id)
+                    ->whereRaw('(total_credit - total_repaid) > 0'),
+                'total_credit - total_repaid'
+            ),
         ];
 
         // Search: name, phone, contact_person, email

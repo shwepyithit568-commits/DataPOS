@@ -115,7 +115,8 @@ class ContactLinkBuilderTest extends TestCase
         $this->assertStringContainsString('IP15-256', $msg);
         $this->assertStringContainsString('256GB / Blue', $msg);
         $this->assertStringContainsString('အရေအတွက်: 2', $msg);
-        $this->assertStringContainsString('Ks 2,500,000', $msg);
+        // Prices follow /admin/settings/currency (default: symbol after, "100,000 Ks").
+        $this->assertStringContainsString('2,500,000 Ks', $msg);
         $this->assertStringContainsString('လင့်ခ်:', $msg);
     }
 
@@ -145,8 +146,9 @@ class ContactLinkBuilderTest extends TestCase
             'total_price' => 15000,
         ]);
 
-        $this->assertStringContainsString('တစ်ခုဈေး: Ks 5,000', $msg);
-        $this->assertStringContainsString('စုစုပေါင်း: Ks 15,000', $msg);
+        // Prices follow /admin/settings/currency (default: symbol after, "100,000 Ks").
+        $this->assertStringContainsString('တစ်ခုဈေး: 5,000 Ks', $msg);
+        $this->assertStringContainsString('စုစုပေါင်း: 15,000 Ks', $msg);
         $this->assertStringContainsString('အရေအတွက်: 3', $msg);
     }
 
@@ -161,7 +163,7 @@ class ContactLinkBuilderTest extends TestCase
             // total_price omitted → should auto-calculate
         ]);
 
-        $this->assertStringContainsString('စုစုပေါင်း: Ks 40,000', $msg);
+        $this->assertStringContainsString('စုစုပေါင်း: 40,000 Ks', $msg);
     }
 
     public function test_missing_sku_shows_dash(): void

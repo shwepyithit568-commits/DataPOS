@@ -288,7 +288,10 @@ class CustomerReceivableController extends Controller
         }
 
         $data = $request->validate([
-            'amount' => ['required', 'numeric', 'gt:0'],
+            // decimal, not numeric: `numeric` accepts scientific notation
+            // ("1e3"), which bccomp() below then rejects with a ValueError —
+            // a 500 instead of a validation message.
+            'amount' => ['required', 'decimal:0,2', 'gt:0'],
             'payment_method' => ['nullable', 'string', 'in:cash,kpay,wave,bank,other'],
             'reference_no' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:255'],

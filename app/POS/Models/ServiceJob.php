@@ -4,6 +4,7 @@ namespace App\POS\Models;
 
 use App\Models\Store;
 use App\Models\User;
+use App\POS\Services\DocumentSequenceService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -149,16 +150,45 @@ class ServiceJob extends Model
     }
 
     /**
+     * Paid so far as an exact decimal string — sum of immutable payment rows.
+     * Uses the eager-loaded relation when available so list views never trigger
+     * N+1 queries.
+     */
+    public function paidAmountDecimal(): string
+    {
+        $payments = $this->relationLoaded('payments')
+            ? $this->payments
+            : $this->payments()->get();
+
+        $total = '0.00';
+        foreach ($payments as $payment) {
+            $total = bcadd($total, (string) $payment->amount, 2);
+        }
+
+        return $total;
+    }
+
+    /**
+     * Outstanding as an exact decimal string: final charge (or the estimate
+     * while unprimed) minus what has been paid, floored at zero.
+     */
+    public function outstandingDecimal(): string
+    {
+        $charge = $this->final_charge !== null ? $this->final_charge : $this->estimated_charge;
+        $charge = bcadd((string) ($charge ?? '0'), '0', 2);
+
+        $outstanding = bcsub($charge, $this->paidAmountDecimal(), 2);
+
+        return bccomp($outstanding, '0', 2) < 0 ? '0.00' : $outstanding;
+    }
+
+    /**
      * Paid so far — sum of immutable payment rows. Uses the eager-loaded
      * relation when available so list views never trigger N+1 queries.
      */
     public function paidAmount(): float
     {
-        if ($this->relationLoaded('payments')) {
-            return (float) $this->payments->sum('amount');
-        }
-
-        return (float) $this->payments()->sum('amount');
+        return (float) $this->paidAmountDecimal();
     }
 
     /**
@@ -166,11 +196,7 @@ class ServiceJob extends Model
      */
     public function outstanding(): float
     {
-        $charge = $this->final_charge !== null
-            ? (float) $this->final_charge
-            : (float) $this->estimated_charge;
-
-        return max(0, $charge - $this->paidAmount());
+        return (float) $this->outstandingDecimal();
     }
 
     // ── Public tracking URL ────────────────────────────────────────────────
@@ -193,16 +219,10 @@ class ServiceJob extends Model
      */
     public static function generateNumber(int $storeId): string
     {
-        $date   = now()->format('Ymd');
-        $prefix = "SVC-{$date}-";
-
-        $last = static::where('store_id', $storeId)
-            ->where('job_number', 'like', "{$prefix}%")
-            ->orderByDesc('job_number')
-            ->value('job_number');
-
-        $seq = $last ? (int) substr($last, -4) + 1 : 1;
-
-        return $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+        // Shared, row-locked sequence — see DocumentSequenceService.
+        return app(DocumentSequenceService::class)->nextNumber(
+            Store::findOrFail($storeId),
+            'service_job'
+        );
     }
 }

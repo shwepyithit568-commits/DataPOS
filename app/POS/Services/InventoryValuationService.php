@@ -23,10 +23,10 @@ class InventoryValuationService
             ->get();
 
         $totalItemsCount = $products->count();
-        $totalUnits = 0.0;
-        $totalCostValue = 0.0;
-        $totalRetailValue = 0.0;
-        $totalWholesaleValue = 0.0;
+        $totalUnits = '0.000';
+        $totalCostValue = '0.00';
+        $totalRetailValue = '0.00';
+        $totalWholesaleValue = '0.00';
 
         $inStockCount = 0;
         $lowStockCount = 0;
@@ -35,24 +35,28 @@ class InventoryValuationService
 
         foreach ($products as $product) {
             $balances = $product->inventoryBalances;
+            // Quantities and money are decimal strings: this loop multiplies
+            // qty x cost for every product and totals the results.
             $qty = $balances->isNotEmpty()
-                ? (float) $balances->sum('quantity_on_hand')
-                : ($product->stock_status === 'in_stock' ? 1.0 : 0.0);
+                ? bc_sum($balances->pluck('quantity_on_hand'), 3)
+                : ($product->stock_status === 'in_stock' ? '1.000' : '0.000');
 
-            $unitCost = $balances->isNotEmpty() && (float) $balances->first()->unit_cost_avg > 0
-                ? (float) $balances->first()->unit_cost_avg
-                : (float) ($product->purchase_cost ?? 0);
+            $unitCost = $balances->isNotEmpty() && bccomp((string) $balances->first()->unit_cost_avg, '0', 4) > 0
+                ? bcadd((string) $balances->first()->unit_cost_avg, '0', 4)
+                : bcadd((string) ($product->purchase_cost ?? '0'), '0', 4);
 
-            $retailPrice = (float) ($product->retail_price ?? 0);
-            $wholesalePrice = (float) ($product->wholesale_price ?? $retailPrice);
+            $retailPrice = bcadd((string) ($product->retail_price ?? '0'), '0', 2);
+            $wholesalePrice = $product->wholesale_price !== null && $product->wholesale_price !== ''
+                ? bcadd((string) $product->wholesale_price, '0', 2)
+                : $retailPrice;
 
-            if ($unitCost <= 0) {
+            if (bccomp($unitCost, '0', 4) <= 0) {
                 $zeroCostCount++;
             }
 
-            if ($qty > 0) {
-                $reorderLevel = (float) ($product->reorder_level ?? 5);
-                if ($qty <= $reorderLevel) {
+            if (bccomp($qty, '0', 3) > 0) {
+                $reorderLevel = bcadd((string) ($product->reorder_level ?? '5'), '0', 3);
+                if (bccomp($qty, $reorderLevel, 3) <= 0) {
                     $lowStockCount++;
                 } else {
                     $inStockCount++;
@@ -61,18 +65,25 @@ class InventoryValuationService
                 $outOfStockCount++;
             }
 
-            $costVal = $qty > 0 ? ($qty * $unitCost) : 0.0;
-            $retailVal = $qty > 0 ? ($qty * $retailPrice) : 0.0;
-            $wholesaleVal = $qty > 0 ? ($qty * $wholesalePrice) : 0.0;
+            $hasStock = bccomp($qty, '0', 3) > 0;
+            $costVal = $hasStock ? bcmul($qty, $unitCost, 2) : '0.00';
+            $retailVal = $hasStock ? bcmul($qty, $retailPrice, 2) : '0.00';
+            $wholesaleVal = $hasStock ? bcmul($qty, $wholesalePrice, 2) : '0.00';
 
-            $totalUnits += $qty;
-            $totalCostValue += $costVal;
-            $totalRetailValue += $retailVal;
-            $totalWholesaleValue += $wholesaleVal;
+            $totalUnits = bcadd($totalUnits, $qty, 3);
+            $totalCostValue = bcadd($totalCostValue, $costVal, 2);
+            $totalRetailValue = bcadd($totalRetailValue, $retailVal, 2);
+            $totalWholesaleValue = bcadd($totalWholesaleValue, $wholesaleVal, 2);
         }
 
-        $potentialProfit = max(0.0, $totalRetailValue - $totalCostValue);
-        $potentialMargin = $totalRetailValue > 0 ? round(($potentialProfit / $totalRetailValue) * 100, 2) : 0.0;
+        $potentialProfit = bcsub($totalRetailValue, $totalCostValue, 2);
+        if (bccomp($potentialProfit, '0', 2) < 0) {
+            $potentialProfit = '0.00';
+        }
+        // A ratio, not money — float is correct for the percentage itself.
+        $potentialMargin = bccomp($totalRetailValue, '0', 2) > 0
+            ? round(((float) $potentialProfit / (float) $totalRetailValue) * 100, 2)
+            : 0.0;
 
         return [
             'total_items_count'      => $totalItemsCount,

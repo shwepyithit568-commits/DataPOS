@@ -56,11 +56,15 @@ class OrderInventoryAdapter
 
             case 'delivered':
                 // Defensive: an order may skip 'confirmed' — deduct at the
-                // earliest of (confirmed, delivered), never twice.
-                if (! $this->isReserved($order)) {
-                    $this->reserve($order);
-                }
-                $this->commit($order);
+                // earliest of (confirmed, delivered), never twice. Reserve and
+                // commit share one transaction so a failed commit cannot leave
+                // the stock merely reserved.
+                DB::transaction(function () use ($order) {
+                    if (! $this->isReserved($order)) {
+                        $this->reserve($order);
+                    }
+                    $this->commit($order);
+                });
                 break;
 
             case 'cancelled':
@@ -85,7 +89,9 @@ class OrderInventoryAdapter
                         'product_id' => $line['product_id'],
                         'product_variant_id' => $line['product_variant_id'],
                         'movement_type' => InventoryMovementType::OnlineReserve->value,
-                        'quantity_delta' => -$line['quantity'],
+                        // Negate with bcmath: PHP's unary minus on a numeric
+                        // string produces a float.
+                        'quantity_delta' => bcmul($line['quantity'], '-1', 3),
                         'source_type' => 'order_reserve',
                         'source_id' => $order->id,
                         'client_transaction_id' => "order-reserve-{$order->id}-{$index}",
@@ -200,11 +206,13 @@ class OrderInventoryAdapter
                     'product_id' => (int) $item->product_id,
                     'product_variant_id' => $item->product_variant_id ? (int) $item->product_variant_id : null,
                     'warehouse_id' => $warehouseId,
-                    'quantity' => 0.0,
+                    'quantity' => '0.000',
                 ];
             }
 
-            $lines[$key]['quantity'] += (float) $item->quantity;
+            // Decimal string, not float: the merged quantity becomes a ledger
+            // movement when one product/variant appears on several order lines.
+            $lines[$key]['quantity'] = bcadd($lines[$key]['quantity'], (string) $item->quantity, 3);
         }
 
         return array_values($lines);

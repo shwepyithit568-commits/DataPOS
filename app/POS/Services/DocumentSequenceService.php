@@ -56,7 +56,27 @@ class DocumentSequenceService
             'period_format' => 'Ymd',
         ],
         'service_job' => [
-            'prefix' => 'SRV-{Ymd}-',
+            'prefix' => 'SVC-{Ymd}-',
+            'pad_length' => 4,
+            'period_format' => 'Ymd',
+        ],
+        'expense' => [
+            'prefix' => 'EXP-{Ymd}-',
+            'pad_length' => 4,
+            'period_format' => 'Ymd',
+        ],
+        'buy_back' => [
+            'prefix' => 'BB-{Ymd}-',
+            'pad_length' => 4,
+            'period_format' => 'Ymd',
+        ],
+        'stock_count' => [
+            'prefix' => 'SC-{Ymd}-',
+            'pad_length' => 4,
+            'period_format' => 'Ymd',
+        ],
+        'opening_stock' => [
+            'prefix' => 'OSR-{Ymd}-',
             'pad_length' => 4,
             'period_format' => 'Ymd',
         ],
@@ -71,6 +91,11 @@ class DocumentSequenceService
             'period_format' => 'Ymd',
         ],
         'transfer' => [
+            'prefix' => 'TRF-{Ymd}-',
+            'pad_length' => 4,
+            'period_format' => 'Ymd',
+        ],
+        'stock_transfer' => [
             'prefix' => 'TRF-{Ymd}-',
             'pad_length' => 4,
             'period_format' => 'Ymd',
@@ -149,34 +174,57 @@ class DocumentSequenceService
     }
 
     /**
-     * Inspect existing tables to prevent collision with previously created documents.
+     * Where each document type keeps its number, so a sequence started fresh
+     * (new day, new period) can resume after the rows that already exist.
+     *
+     * @var array<string, array{0: string, 1: string}>
+     */
+    protected array $numberColumns = [
+        'sale'             => ['pos_sales', 'receipt_number'],
+        'pos_sale'         => ['pos_sales', 'receipt_number'],
+        'return'           => ['pos_returns', 'refund_number'],
+        'pos_return'       => ['pos_returns', 'refund_number'],
+        'goods_receipt'    => ['goods_receipts', 'receipt_number'],
+        'purchase_order'   => ['purchase_orders', 'po_number'],
+        'purchase_return'  => ['purchase_returns', 'return_number'],
+        'adjustment'       => ['inventory_adjustments', 'adjustment_number'],
+        'stock_adjustment' => ['inventory_adjustments', 'adjustment_number'],
+        'service_job'      => ['service_jobs', 'job_number'],
+        'expense'          => ['expenses', 'expense_number'],
+        'buy_back'         => ['buy_backs', 'buyback_number'],
+        'stock_transfer'   => ['stock_transfers', 'transfer_number'],
+        'transfer'         => ['stock_transfers', 'transfer_number'],
+        'opening_stock'    => ['opening_stock_requests', 'request_number'],
+        'stock_count'      => ['stock_counts', 'session_number'],
+    ];
+
+    /**
+     * Inspect existing rows so a newly created sequence never re-issues a number
+     * that is already in use. Reads the highest numeric suffix (not a row count,
+     * which drifts as soon as a document is deleted).
      */
     protected function determineExistingMax(Store $store, string $documentType, string $prefix): int
     {
+        [$table, $column] = $this->numberColumns[$documentType] ?? [null, null];
+
+        if ($table === null || $column === null) {
+            return 0;
+        }
+
         try {
-            return match ($documentType) {
-                'sale' => (int) DB::table('pos_sales')
-                    ->where('store_id', $store->id)
-                    ->where('receipt_number', 'like', $prefix . '%')
-                    ->count(),
-                'return' => (int) DB::table('pos_returns')
-                    ->where('store_id', $store->id)
-                    ->where('refund_number', 'like', $prefix . '%')
-                    ->count(),
-                'goods_receipt' => (int) DB::table('goods_receipts')
-                    ->where('store_id', $store->id)
-                    ->where('receipt_number', 'like', $prefix . '%')
-                    ->count(),
-                'purchase_order' => (int) DB::table('purchase_orders')
-                    ->where('store_id', $store->id)
-                    ->where('po_number', 'like', $prefix . '%')
-                    ->count(),
-                'purchase_return' => (int) DB::table('purchase_returns')
-                    ->where('store_id', $store->id)
-                    ->where('return_number', 'like', $prefix . '%')
-                    ->count(),
-                default => 0,
-            };
+            $latest = DB::table($table)
+                ->where('store_id', $store->id)
+                ->where($column, 'like', $prefix . '%')
+                ->orderByDesc($column)
+                ->value($column);
+
+            if ($latest === null) {
+                return 0;
+            }
+
+            return preg_match('/-(\d+)$/', (string) $latest, $matches) === 1
+                ? (int) $matches[1]
+                : 0;
         } catch (\Throwable) {
             return 0;
         }

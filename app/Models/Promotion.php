@@ -28,8 +28,10 @@ class Promotion extends Model
     ];
 
     protected $casts = [
-        'value' => 'float',
-        'min_order_amount' => 'float',
+        // Decimal, not float: `value` is applied to an order total and
+        // `min_order_amount` gates coupon use — both are money.
+        'value' => 'decimal:2',
+        'min_order_amount' => 'decimal:2',
         'total_uses_limit' => 'integer',
         'per_customer_limit' => 'integer',
         'used_count' => 'integer',
@@ -118,7 +120,7 @@ class Promotion extends Model
     {
         return match ($this->type) {
             'percent_off' => 'Percent Off (%)',
-            'flat_off' => 'Flat Amount Off (Ks)',
+            'flat_off' => 'Flat Amount Off',
             'bogo' => 'Buy 1 Get 1 Free',
             default => ucfirst($this->type),
         };

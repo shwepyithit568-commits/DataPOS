@@ -97,8 +97,8 @@ class ServiceJobController extends Controller
             fputcsv($stream, [
                 'Job #', 'Voucher #', 'Date', 'Customer', 'Phone',
                 'Category', 'Brand', 'Model', 'IMEI/Serial',
-                'Status', 'Technician', 'Estimate (Ks)', 'Final (Ks)',
-                'Paid (Ks)', 'Outstanding (Ks)', 'Line Items',
+                'Status', 'Technician', 'Estimate', 'Final',
+                'Paid', 'Outstanding', 'Line Items',
             ]);
 
             /** @var ServiceJob $job */
@@ -336,21 +336,37 @@ class ServiceJobController extends Controller
 
         $validated = $request->validate([
             'method'    => 'required|in:cash,kpay,wavepay,cb_pay,mmqr',
-            'amount'    => 'required|numeric|min:0.01',
+            'amount'    => 'required|decimal:0,2|min:0.01',
             'reference' => 'nullable|string|max:100',
         ]);
 
-        if ((float) $validated['amount'] > $job->outstanding()) {
-            return back()->withErrors(['amount' => __('messages.repair_overpay')]);
-        }
+        $amount = bcadd((string) $validated['amount'], '0', 2);
 
-        ServiceJobPayment::create([
-            'service_job_id' => $job->id,
-            'method'         => $validated['method'],
-            'amount'         => $validated['amount'],
-            'reference'      => $validated['reference'] ?? null,
-            'created_by'     => Auth::id(),
-        ]);
+        try {
+            DB::transaction(function () use ($job, $validated, $amount) {
+                // Lock the job so two concurrent submissions cannot both pass
+                // the overpayment guard.
+                $locked = ServiceJob::whereKey($job->id)->lockForUpdate()->firstOrFail();
+
+                if (bccomp($amount, $locked->outstandingDecimal(), 2) > 0) {
+                    throw new \RuntimeException('overpay');
+                }
+
+                ServiceJobPayment::create([
+                    'service_job_id' => $job->id,
+                    'method'         => $validated['method'],
+                    'amount'         => $amount,
+                    'reference'      => $validated['reference'] ?? null,
+                    'created_by'     => Auth::id(),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            if ($e->getMessage() === 'overpay') {
+                return back()->withErrors(['amount' => __('messages.repair_overpay')]);
+            }
+
+            throw $e;
+        }
 
         return back()->with('success', __('messages.repair_payment_recorded'));
     }

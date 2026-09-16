@@ -70,12 +70,24 @@ class StockCountLine extends Model
 
     /**
      * Update counted quantity and compute variance.
+     *
+     * Variance drives the inventory adjustment posted on approval, so it is
+     * derived with bcmath rather than float subtraction/rounding.
      */
-    public function setCount(float $countedQty, ?string $notes = null): void
+    public function setCount(float|int|string $countedQty, ?string $notes = null): void
     {
-        $this->counted_quantity = $countedQty;
-        $this->variance_quantity = $countedQty - (float) $this->system_quantity;
-        $this->variance_cost = round($this->variance_quantity * (float) $this->unit_cost, 2);
+        $counted = bcadd((string) $countedQty, '0', 3);
+
+        if (bccomp($counted, '0', 3) < 0) {
+            throw new \InvalidArgumentException('Counted quantity cannot be negative.');
+        }
+
+        $system = bcadd((string) ($this->system_quantity ?? '0'), '0', 3);
+        $variance = bcsub($counted, $system, 3);
+
+        $this->counted_quantity = $counted;
+        $this->variance_quantity = $variance;
+        $this->variance_cost = bcmul($variance, bcadd((string) ($this->unit_cost ?? '0'), '0', 4), 2);
         $this->is_counted = true;
         $this->counted_at = now();
         if ($notes !== null) {

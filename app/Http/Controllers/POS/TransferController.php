@@ -147,7 +147,9 @@ class TransferController extends Controller
             'notes' => ['nullable', 'string', 'max:500'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', \Illuminate\Validation\Rule::exists('products', 'id')->where('store_id', $store->id)],
-            'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
+            // decimal (not plain numeric): `numeric` accepts scientific notation
+            // ("1e3"), which the inventory ledger cannot round-trip.
+            'items.*.quantity' => ['required', 'decimal:0,3', 'min:0.001'],
         ]);
 
         $transfer = DB::transaction(function () use ($store, $validated) {
@@ -221,6 +223,9 @@ class TransferController extends Controller
 
         DB::transaction(function () use ($transfer) {
             foreach ($transfer->items as $item) {
+                // Keyed per line, not per product: two lines for the same product
+                // must both move stock, and the unique index on
+                // (store_id, client_transaction_id) still makes this idempotent.
                 $this->inventory->postMovement([
                     'store_id' => $transfer->store_id,
                     'product_id' => $item->product_id,
@@ -228,7 +233,7 @@ class TransferController extends Controller
                     'movement_type' => 'transfer_out',
                     'quantity_delta' => -$item->quantity,
                     'unit_cost' => $item->unit_cost,
-                    'client_transaction_id' => "trf_out:{$transfer->id}:{$item->product_id}",
+                    'client_transaction_id' => "trf_out:{$transfer->id}:item:{$item->id}",
                     'posted_by' => auth()->id(),
                 ]);
 
@@ -239,7 +244,7 @@ class TransferController extends Controller
                     'movement_type' => 'transfer_in',
                     'quantity_delta' => $item->quantity,
                     'unit_cost' => $item->unit_cost,
-                    'client_transaction_id' => "trf_in:{$transfer->id}:{$item->product_id}",
+                    'client_transaction_id' => "trf_in:{$transfer->id}:item:{$item->id}",
                     'posted_by' => auth()->id(),
                 ]);
             }

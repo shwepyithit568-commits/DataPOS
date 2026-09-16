@@ -60,11 +60,12 @@ class PushNotificationController extends Controller
     }
 
     /**
-     * Send a test / custom notification to every stored subscription.
+     * Send a test / custom notification to the store's subscribers.
      *
-     * Admin only: the storefront has no public endpoint that broadcasts to
-     * all subscribers. Access is guarded here by role checks (platform owner
-     * or a store manager/staff in any active store).
+     * Admin only. A store manager reaches the subscribers of the stores they
+     * belong to; only a platform owner reaches every tenant. Subscriptions are
+     * per-user (guest browsers have no user), so the store scope is applied
+     * through the subscriber's store membership.
      */
     public function test(Request $request): JsonResponse
     {
@@ -80,7 +81,9 @@ class PushNotificationController extends Controller
             'url' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $subscriberCount = PushSubscription::count();
+        $subscribers = $this->subscribersFor($user);
+
+        $subscriberCount = (clone $subscribers)->count();
 
         if ($subscriberCount === 0) {
             return response()->json([
@@ -101,7 +104,7 @@ class PushNotificationController extends Controller
         // must never fail the whole broadcast, so the send is guarded and the
         // response reports the intended recipient count.
         try {
-            $notifiable = new PushSubscriberList(PushSubscription::all());
+            $notifiable = new PushSubscriberList($subscribers->get());
             Notification::send($notifiable, $notification);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Web push broadcast failed: ' . $e->getMessage());
@@ -174,6 +177,38 @@ class PushNotificationController extends Controller
         $recent = Cache::get(self::RECENT_CACHE_KEY, []);
 
         return view('admin.push.index', compact('store', 'subscriberCount', 'recent'));
+    }
+
+    /**
+     * Subscriptions the given user is allowed to broadcast to.
+     *
+     * Subscriptions are recorded per user (a guest browser has none), so the
+     * store scope is applied through the subscriber's store membership. A
+     * platform owner reaches everyone; anyone else only reaches subscribers
+     * belonging to their own active stores.
+     */
+    protected function subscribersFor(\App\Models\User $user): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = PushSubscription::query();
+
+        if ($user->isPlatformOwner()) {
+            return $query;
+        }
+
+        $storeIds = $user->activeStores()->pluck('stores.id')->all();
+
+        if (empty($storeIds)) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->whereHas('user', function ($q) use ($storeIds) {
+            $q->whereIn('users.id', function ($sub) use ($storeIds) {
+                $sub->select('user_id')
+                    ->from('store_user')
+                    ->whereIn('store_id', $storeIds)
+                    ->where('status', 'active');
+            });
+        });
     }
 
     /**

@@ -190,7 +190,7 @@ class ExpenseController extends Controller
 
         $validated = $request->validate([
             'title'               => ['required', 'string', 'max:255'],
-            'amount'              => ['required', 'numeric', 'min:0.01', 'max:999999999999'],
+            'amount'              => ['required', 'decimal:0,2', 'min:0.01', 'max:999999999999'],
             'expense_date'        => ['required', 'date'],
             'expense_category_id' => [
                 'nullable',
@@ -215,7 +215,7 @@ class ExpenseController extends Controller
             'expense_category_id' => $validated['expense_category_id'] ?? null,
             'expense_number'      => $expenseNumber,
             'title'               => trim($validated['title']),
-            'amount'              => (float) $validated['amount'],
+            'amount'              => bcadd((string) $validated['amount'], '0', 2),
             'expense_date'        => $validated['expense_date'],
             'payment_method'      => $validated['payment_method'],
             'paid_to'             => ! empty($validated['paid_to']) ? trim($validated['paid_to']) : null,
@@ -239,7 +239,7 @@ class ExpenseController extends Controller
 
         $validated = $request->validate([
             'title'               => ['required', 'string', 'max:255'],
-            'amount'              => ['required', 'numeric', 'min:0.01', 'max:999999999999'],
+            'amount'              => ['required', 'decimal:0,2', 'min:0.01', 'max:999999999999'],
             'expense_date'        => ['required', 'date'],
             'expense_category_id' => [
                 'nullable',
@@ -269,7 +269,7 @@ class ExpenseController extends Controller
         $expenseModel->update([
             'expense_category_id' => $validated['expense_category_id'] ?? null,
             'title'               => trim($validated['title']),
-            'amount'              => (float) $validated['amount'],
+            'amount'              => bcadd((string) $validated['amount'], '0', 2),
             'expense_date'        => $validated['expense_date'],
             'payment_method'      => $validated['payment_method'],
             'paid_to'             => ! empty($validated['paid_to']) ? trim($validated['paid_to']) : null,

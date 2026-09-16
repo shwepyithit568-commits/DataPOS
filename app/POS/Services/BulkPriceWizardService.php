@@ -294,43 +294,46 @@ class BulkPriceWizardService
                     continue;
                 }
 
-                $oldRetail = (float) $product->retail_price;
-                $oldWholesale = (float) $product->wholesale_price;
-                $oldCompareAt = (float) $product->old_price;
-                $cost = (float) $product->purchase_cost;
+                // Prices stay decimal strings end to end: this method WRITES to
+                // products, so a float round-trip would persist the float's
+                // rounding rather than what the operator entered.
+                $oldRetail = bcadd((string) ($product->retail_price ?? '0'), '0', 2);
+                $oldWholesale = bcadd((string) ($product->wholesale_price ?? '0'), '0', 2);
+                $oldCompareAt = bcadd((string) ($product->old_price ?? '0'), '0', 2);
+                $cost = bcadd((string) ($product->purchase_cost ?? '0'), '0', 2);
 
                 $newRetail = isset($item['retail_price']) && $item['retail_price'] !== ''
-                    ? (float) $item['retail_price']
+                    ? bcadd((string) $item['retail_price'], '0', 2)
                     : null;
 
                 $newWholesale = isset($item['wholesale_price']) && $item['wholesale_price'] !== ''
-                    ? (float) $item['wholesale_price']
+                    ? bcadd((string) $item['wholesale_price'], '0', 2)
                     : null;
 
                 $newOldPrice = isset($item['old_price']) && $item['old_price'] !== ''
-                    ? (float) $item['old_price']
+                    ? bcadd((string) $item['old_price'], '0', 2)
                     : null;
 
                 $productUpdates = [];
 
-                if ($newRetail !== null && $newRetail >= 0) {
+                if ($newRetail !== null && bccomp($newRetail, '0', 2) >= 0) {
                     $productUpdates['retail_price'] = $newRetail;
 
-                    if ($setOldPrice && $newRetail < $oldRetail && $oldCompareAt <= 0) {
+                    if ($setOldPrice && bccomp($newRetail, $oldRetail, 2) < 0 && bccomp($oldCompareAt, '0', 2) <= 0) {
                         $productUpdates['old_price'] = $oldRetail;
                     }
 
-                    if ($cost > 0 && $newRetail < $cost) {
+                    if (bccomp($cost, '0', 2) > 0 && bccomp($newRetail, $cost, 2) < 0) {
                         $warnings[] = "Product '{$product->name}' (SKU: {$product->sku}) new retail price ({$newRetail}) is below cost ({$cost}).";
                     }
                 }
 
-                if ($newWholesale !== null && $newWholesale >= 0) {
+                if ($newWholesale !== null && bccomp($newWholesale, '0', 2) >= 0) {
                     $productUpdates['wholesale_price'] = $newWholesale;
                 }
 
                 if ($newOldPrice !== null) {
-                    $productUpdates['old_price'] = $newOldPrice > 0 ? $newOldPrice : null;
+                    $productUpdates['old_price'] = bccomp($newOldPrice, '0', 2) > 0 ? $newOldPrice : null;
                 }
 
                 if (!empty($productUpdates)) {

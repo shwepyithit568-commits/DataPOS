@@ -76,112 +76,96 @@ class DailyClosingService
         $expected = ['cash' => $drawerCash];
 
         // Electronic payment methods from posted sales and refunds in the date range.
+        // exact_sum() rather than a SQL sum wrapped in a float cast: MySQL sums
+        // DECIMAL exactly but SQLite sums in REAL and drifts over a large range,
+        // and these figures are what the drawer is reconciled against.
         foreach (['kpay', 'wavepay', 'cb_pay', 'mmqr'] as $method) {
-            $sold = (string) DB::table('pos_payments')
-                ->join('pos_sales', 'pos_sales.id', '=', 'pos_payments.pos_sale_id')
-                ->where('pos_sales.store_id', $store->id)
-                ->where('pos_payments.method', $method)
-                ->where('pos_sales.status', 'posted')
-                ->where('pos_sales.posted_at', '>=', $start)
-                ->where('pos_sales.posted_at', '<', $endExclusive)
-                ->sum('pos_payments.amount');
-
-            $refunded = (string) DB::table('pos_return_payments')
-                ->join('pos_returns', 'pos_returns.id', '=', 'pos_return_payments.pos_return_id')
-                ->where('pos_returns.store_id', $store->id)
-                ->where('pos_return_payments.method', $method)
-                ->where('pos_returns.status', 'posted')
-                ->where('pos_returns.posted_at', '>=', $start)
-                ->where('pos_returns.posted_at', '<', $endExclusive)
-                ->sum('pos_return_payments.amount');
-
-            $net = bcsub(
-                number_format((float) $sold, 2, '.', ''),
-                number_format((float) $refunded, 2, '.', ''),
-                2
+            $sold = exact_sum(
+                DB::table('pos_payments')
+                    ->join('pos_sales', 'pos_sales.id', '=', 'pos_payments.pos_sale_id')
+                    ->where('pos_sales.store_id', $store->id)
+                    ->where('pos_payments.method', $method)
+                    ->where('pos_sales.status', 'posted')
+                    ->where('pos_sales.posted_at', '>=', $start)
+                    ->where('pos_sales.posted_at', '<', $endExclusive),
+                'pos_payments.amount'
             );
 
-            $expected[$method] = $net;
+            $refunded = exact_sum(
+                DB::table('pos_return_payments')
+                    ->join('pos_returns', 'pos_returns.id', '=', 'pos_return_payments.pos_return_id')
+                    ->where('pos_returns.store_id', $store->id)
+                    ->where('pos_return_payments.method', $method)
+                    ->where('pos_returns.status', 'posted')
+                    ->where('pos_returns.posted_at', '>=', $start)
+                    ->where('pos_returns.posted_at', '<', $endExclusive),
+                'pos_return_payments.amount'
+            );
+
+            $expected[$method] = bcsub($sold, $refunded, 2);
         }
 
         // Credit sales from posted sales
-        $creditSold = (string) DB::table('pos_payments')
-            ->join('pos_sales', 'pos_sales.id', '=', 'pos_payments.pos_sale_id')
-            ->where('pos_sales.store_id', $store->id)
-            ->where('pos_payments.method', 'credit')
-            ->where('pos_sales.status', 'posted')
-            ->where('pos_sales.posted_at', '>=', $start)
-            ->where('pos_sales.posted_at', '<', $endExclusive)
-            ->sum('pos_payments.amount');
-
-        // Credit refunds reduce the receivable created that day.
-        $creditRefunded = (string) DB::table('pos_return_payments')
-            ->join('pos_returns', 'pos_returns.id', '=', 'pos_return_payments.pos_return_id')
-            ->where('pos_returns.store_id', $store->id)
-            ->where('pos_return_payments.method', 'credit')
-            ->where('pos_returns.status', 'posted')
-            ->where('pos_returns.posted_at', '>=', $start)
-            ->where('pos_returns.posted_at', '<', $endExclusive)
-            ->sum('pos_return_payments.amount');
-
-        $expected['credit'] = bcsub(
-            number_format((float) $creditSold, 2, '.', ''),
-            number_format((float) $creditRefunded, 2, '.', ''),
-            2
+        $creditSold = exact_sum(
+            DB::table('pos_payments')
+                ->join('pos_sales', 'pos_sales.id', '=', 'pos_payments.pos_sale_id')
+                ->where('pos_sales.store_id', $store->id)
+                ->where('pos_payments.method', 'credit')
+                ->where('pos_sales.status', 'posted')
+                ->where('pos_sales.posted_at', '>=', $start)
+                ->where('pos_sales.posted_at', '<', $endExclusive),
+            'pos_payments.amount'
         );
 
+        // Credit refunds reduce the receivable created that day.
+        $creditRefunded = exact_sum(
+            DB::table('pos_return_payments')
+                ->join('pos_returns', 'pos_returns.id', '=', 'pos_return_payments.pos_return_id')
+                ->where('pos_returns.store_id', $store->id)
+                ->where('pos_return_payments.method', 'credit')
+                ->where('pos_returns.status', 'posted')
+                ->where('pos_returns.posted_at', '>=', $start)
+                ->where('pos_returns.posted_at', '<', $endExclusive),
+            'pos_return_payments.amount'
+        );
+
+        $expected['credit'] = bcsub($creditSold, $creditRefunded, 2);
+
         // Calculate sales metrics for reports
-        $grossSales = (string) DB::table('pos_sales')
+        $postedSales = fn () => DB::table('pos_sales')
             ->where('store_id', $store->id)
             ->where('status', 'posted')
             ->where('posted_at', '>=', $start)
-            ->where('posted_at', '<', $endExclusive)
-            ->sum('subtotal');
+            ->where('posted_at', '<', $endExclusive);
 
-        $discounts = (string) DB::table('pos_sales')
+        $postedReturns = fn () => DB::table('pos_returns')
             ->where('store_id', $store->id)
             ->where('status', 'posted')
             ->where('posted_at', '>=', $start)
-            ->where('posted_at', '<', $endExclusive)
-            ->sum('discount');
+            ->where('posted_at', '<', $endExclusive);
 
-        $tax = (string) DB::table('pos_sales')
-            ->where('store_id', $store->id)
-            ->where('status', 'posted')
-            ->where('posted_at', '>=', $start)
-            ->where('posted_at', '<', $endExclusive)
-            ->sum('tax');
-
-        $returnsTotal = (string) DB::table('pos_returns')
-            ->where('store_id', $store->id)
-            ->where('status', 'posted')
-            ->where('posted_at', '>=', $start)
-            ->where('posted_at', '<', $endExclusive)
-            ->sum('total');
-
-        $netSales = (string) DB::table('pos_sales')
-            ->where('store_id', $store->id)
-            ->where('status', 'posted')
-            ->where('posted_at', '>=', $start)
-            ->where('posted_at', '<', $endExclusive)
-            ->sum('total');
+        $grossSales = exact_sum($postedSales(), 'subtotal');
+        $discounts = exact_sum($postedSales(), 'discount');
+        $tax = exact_sum($postedSales(), 'tax');
+        $returnsTotal = exact_sum($postedReturns(), 'total');
+        $netSales = exact_sum($postedSales(), 'total');
 
         $summary = [
-            'gross_sales' => number_format((float) $grossSales, 2, '.', ''),
-            'discounts' => number_format((float) $discounts, 2, '.', ''),
-            'tax' => number_format((float) $tax, 2, '.', ''),
-            'returns' => number_format((float) $returnsTotal, 2, '.', ''),
-            'net_sales' => number_format((float) $netSales, 2, '.', ''),
-            'opening_cash' => number_format((float) $opening, 2, '.', ''),
-            'cash_sales' => number_format((float) $cashSales, 2, '.', ''),
-            'cash_refunds' => number_format((float) $cashRefunds, 2, '.', ''),
-            'cash_in' => number_format((float) $cashIn, 2, '.', ''),
-            'cash_out' => number_format((float) $cashOut, 2, '.', ''),
+            'gross_sales' => $grossSales,
+            'discounts' => $discounts,
+            'tax' => $tax,
+            'returns' => $returnsTotal,
+            'net_sales' => $netSales,
+            'opening_cash' => bcadd($opening, '0', 2),
+            'cash_sales' => bcadd($cashSales, '0', 2),
+            'cash_refunds' => bcadd($cashRefunds, '0', 2),
+            'cash_in' => bcadd($cashIn, '0', 2),
+            'cash_out' => bcadd($cashOut, '0', 2),
             'expected_cash' => $drawerCash,
         ];
 
         return [
-            'opening_amount' => number_format((float) $opening, 2, '.', ''),
+            'opening_amount' => bcadd($opening, '0', 2),
             'expected' => $expected,
             'date' => $date->toDateString(),
             'summary' => $summary,
@@ -305,10 +289,20 @@ class DailyClosingService
         $normalized = [];
         foreach (DailyClosing::countedMethods() as $method) {
             $amount = (string) ($counted[$method] ?? '0');
+
+            // A value bcmath cannot parse would throw a ValueError; treat it as
+            // invalid input rather than a server error.
+            if (preg_match('/^-?\d+(\.\d+)?$/', trim($amount)) !== 1) {
+                throw new InventoryException("Counted amount for '{$method}' must be a number.");
+            }
+
+            $amount = bcadd($amount, '0', 2);
+
             if (bccomp($amount, '0', 2) < 0) {
                 throw new InventoryException("Counted amount for '{$method}' cannot be negative.");
             }
-            $normalized[$method] = number_format((float) $amount, 2, '.', '');
+
+            $normalized[$method] = $amount;
         }
 
         $differences = [];

@@ -67,7 +67,6 @@ class OrderController extends Controller
         $pricingType = $isWholesaleApproved ? 'wholesale' : 'retail';
 
         $orderItemsData = [];
-        $totalAmount = 0.00;
 
         // 1. Multi-item Order Builder submission via JSON
         if (!empty($validated['items_json'])) {
@@ -104,11 +103,11 @@ class OrderController extends Controller
                             }
                         }
 
-                        $unitPrice = $variant
-                            ? ($isWholesaleApproved ? ($variant->wholesale_price ?? $variant->retail_price) : $variant->retail_price)
-                            : ($isWholesaleApproved ? $product->wholesale_price : $product->retail_price);
-                        $subtotal = $unitPrice * $qty;
-                        $totalAmount += $subtotal;
+                        $unitPrice = $this->resolveUnitPrice($variant, $product, $isWholesaleApproved);
+                        // Decimal line total: bcmul, not `*`. The product is a
+                        // float and its string form then feeds bcmath below, so
+                        // float rounding would land on the customer's invoice.
+                        $subtotal = bcmul($unitPrice, (string) $qty, 2);
 
                         $orderItemsData[] = [
                             'product_id' => $product->id,
@@ -171,9 +170,7 @@ class OrderController extends Controller
                 }
 
                 $productName = $variant ? "{$product->name} - {$variant->name}" : $product->name;
-                $unitPrice = $variant
-                    ? ($isWholesaleApproved ? ($variant->wholesale_price ?? $variant->retail_price) : $variant->retail_price)
-                    : ($isWholesaleApproved ? $product->wholesale_price : $product->retail_price);
+                $unitPrice = $this->resolveUnitPrice($variant, $product, $isWholesaleApproved);
             } elseif (!empty($validated['glass_finder_item_id'])) {
                 $glassItem = GlassFinderItem::where('store_id', $store->id)
                     ->where('id', $validated['glass_finder_item_id'])
@@ -189,8 +186,7 @@ class OrderController extends Controller
                 return back()->withErrors(['product' => 'Invalid product selection.']);
             }
 
-            $subtotal = $unitPrice * $qty;
-            $totalAmount = $subtotal;
+            $subtotal = bcmul($unitPrice, (string) $qty, 2);
 
             $orderItemsData[] = [
                 'product_id' => $validated['product_id'] ?? null,
@@ -302,6 +298,25 @@ class OrderController extends Controller
     }
 
     /**
+     * Resolve the price a shopper pays for a product (or one of its variants).
+     *
+     * Returns a decimal string, never a float, so line totals stay exact when
+     * they are accumulated with bcmath. A wholesale shopper whose product has no
+     * wholesale price falls back to retail rather than to null.
+     */
+    private function resolveUnitPrice(?ProductVariant $variant, Product $product, bool $isWholesaleApproved): string
+    {
+        $wholesale = $variant ? $variant->wholesale_price : $product->wholesale_price;
+        $retail = $variant ? $variant->retail_price : $product->retail_price;
+
+        if ($isWholesaleApproved && $wholesale !== null && $wholesale !== '') {
+            return (string) $wholesale;
+        }
+
+        return (string) ($retail ?? '0');
+    }
+
+    /**
      * Show order confirmation page with pre-formatted Viber & Telegram links.
      */
     public function confirmation(string $store_slug, Order $order, StoreContext $context, Request $request): View
@@ -326,8 +341,8 @@ class OrderController extends Controller
         }
 
         // Build formatted items text
-        $itemsLines = $order->items->map(function ($item) {
-            return "- {$item->product_name} x{$item->quantity} (Ks " . number_format($item->subtotal) . ")";
+        $itemsLines = $order->items->map(function ($item) use ($store) {
+            return "- {$item->product_name} x{$item->quantity} (" . format_currency($item->subtotal, $store) . ")";
         })->implode("\n");
 
         $orderMessage = "မင်္ဂလာပါ။ Order Request (#{$order->order_number})\n"
@@ -336,7 +351,7 @@ class OrderController extends Controller
             . ($order->contact_identifier ? "ဆက်သွယ်ရန်: {$order->contact_identifier}\n" : '')
             . "လိပ်စာ: {$order->customer_address}\n"
             . "မှာယူသော ပစ္စည်းများ:\n{$itemsLines}\n"
-            . "စုစုပေါင်း: Ks " . number_format((float) $order->total_amount);
+            . "စုစုပေါင်း: " . format_currency($order->total_amount, $store);
 
         $viberUrl = \App\Support\ContactLinkBuilder::viberChatUrl(
             $store->setting?->viber_number,

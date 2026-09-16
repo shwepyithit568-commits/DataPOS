@@ -4,6 +4,7 @@ namespace App\POS\Models;
 
 use App\Models\Store;
 use App\Models\User;
+use App\POS\Services\DocumentSequenceService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -70,23 +71,15 @@ class Expense extends Model
 
     /**
      * Generate sequential, store-scoped expense number: EXP-YYYYMMDD-0001
+     *
+     * Issued from the shared document-sequence table under a row lock, so two
+     * simultaneous expenses can never be handed the same number.
      */
     public static function generateExpenseNumber(int $storeId): string
     {
-        $today = now()->format('Ymd');
-        $prefix = "EXP-{$today}-";
-
-        $lastExpense = self::where('store_id', $storeId)
-            ->where('expense_number', 'LIKE', "{$prefix}%")
-            ->orderBy('id', 'desc')
-            ->first();
-
-        if ($lastExpense && preg_match('/-(\d+)$/', $lastExpense->expense_number, $matches)) {
-            $nextSeq = (int) $matches[1] + 1;
-        } else {
-            $nextSeq = 1;
-        }
-
-        return $prefix . str_pad((string) $nextSeq, 4, '0', STR_PAD_LEFT);
+        return app(DocumentSequenceService::class)->nextNumber(
+            Store::findOrFail($storeId),
+            'expense'
+        );
     }
 }

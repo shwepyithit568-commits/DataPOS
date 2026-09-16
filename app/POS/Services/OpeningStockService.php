@@ -9,6 +9,7 @@ use App\Models\User;
 use App\POS\Exceptions\InventoryException;
 use App\POS\Models\OpeningStockRequest;
 use App\POS\Models\OpeningStockRequestItem;
+use App\POS\Services\DocumentSequenceService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -258,13 +259,9 @@ class OpeningStockService
     /** OSR-YYYYMMDD-#### sequence per store. */
     private function nextRequestNumber(Store $store): string
     {
-        $prefix = 'OSR-' . now()->format('Ymd') . '-';
-        $seq = OpeningStockRequest::query()
-            ->where('store_id', $store->id)
-            ->where('request_number', 'like', $prefix . '%')
-            ->count() + 1;
-
-        return $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+        // Shared, row-locked sequence: a count-based read hands the same number
+        // to two requests created in the same instant.
+        return app(DocumentSequenceService::class)->nextNumber($store, 'opening_stock');
     }
 
     private function isUniqueViolation(QueryException $e): bool

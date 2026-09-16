@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Store;
+use App\POS\Exceptions\InventoryException;
 use App\POS\Models\Branch;
 use App\POS\Models\StockCount;
 use App\POS\Models\StockCountLine;
@@ -243,7 +244,20 @@ class StockCountController extends Controller
 
         $counts = $request->input('lines', []);
         if (is_array($counts) && !empty($counts)) {
-            $this->stockCountService->bulkSaveCounts($session, $counts);
+            // The bulk path used to write whatever arrived straight into the
+            // float cast, so a negative or non-numeric count reached the line.
+            $validated = $request->validate([
+                'lines'                    => ['array'],
+                'lines.*.id'               => ['required', 'integer'],
+                'lines.*.counted_quantity' => ['nullable', 'decimal:0,3', 'min:0'],
+                'lines.*.notes'            => ['nullable', 'string', 'max:255'],
+            ]);
+
+            try {
+                $this->stockCountService->bulkSaveCounts($session, $validated['lines'] ?? []);
+            } catch (InventoryException $e) {
+                return back()->withInput()->with('error', $e->getMessage());
+            }
         }
 
         return redirect()

@@ -9,6 +9,7 @@ use App\POS\Enums\InventoryMovementType;
 use App\POS\Exceptions\InventoryException;
 use App\POS\Models\StockCount;
 use App\POS\Models\StockCountLine;
+use App\POS\Services\DocumentSequenceService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -93,11 +94,9 @@ class StockCountService
     public function createSession(Store $store, array $data, ?User $user = null): StockCount
     {
         return DB::transaction(function () use ($store, $data, $user) {
-            $datePrefix = now()->format('Ymd');
-            $countToday = StockCount::where('store_id', $store->id)
-                ->whereDate('created_at', now()->toDateString())
-                ->count() + 1;
-            $sessionNumber = sprintf('SC-%s-%04d', $datePrefix, $countToday);
+            // Shared, row-locked sequence: counting today's sessions hands the
+            // same number to two sessions opened in the same instant.
+            $sessionNumber = app(DocumentSequenceService::class)->nextNumber($store, 'stock_count');
 
             $scope = $data['scope'] ?? StockCount::SCOPE_ALL;
             $categoryIds = ($scope === StockCount::SCOPE_CATEGORY && !empty($data['category_ids']))
@@ -212,13 +211,20 @@ class StockCountService
                     continue;
                 }
 
+                // Guard here as well as at the controller: this method is also
+                // reachable from commands, where no request validation runs.
+                $counted = (string) $item['counted_quantity'];
+                if (preg_match('/^\d+(\.\d+)?$/', trim($counted)) !== 1) {
+                    throw new InventoryException('Counted quantity must be a non-negative number.');
+                }
+
                 /** @var StockCountLine|null $line */
                 $line = StockCountLine::where('stock_count_id', $session->id)
                     ->where('id', (int) $item['id'])
                     ->first();
 
                 if ($line) {
-                    $line->setCount((float) $item['counted_quantity'], $item['notes'] ?? null);
+                    $line->setCount($counted, $item['notes'] ?? null);
                 }
             }
 
@@ -273,15 +279,22 @@ class StockCountService
      */
     public function approveAndReconcile(StockCount $session, ?User $user = null): StockCount
     {
-        if ($session->isApproved()) {
-            throw new InventoryException('Stock count session is already approved and reconciled.');
-        }
-
-        if ($session->isCancelled()) {
-            throw new InventoryException('Cannot approve a cancelled stock count session.');
-        }
-
         return DB::transaction(function () use ($session, $user) {
+            // Re-read under a lock: two concurrent approvals would otherwise both
+            // observe an unapproved session and post every variance twice.
+            $locked = StockCount::whereKey($session->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->isApproved()) {
+                throw new InventoryException('Stock count session is already approved and reconciled.');
+            }
+
+            if ($locked->isCancelled()) {
+                throw new InventoryException('Cannot approve a cancelled stock count session.');
+            }
+
+            // Continue with the locked state on the caller's instance.
+            $session->setRawAttributes($locked->getAttributes(), true);
+
             $session->recalculateStats();
 
             // Fetch all counted lines with non-zero variance
@@ -310,7 +323,11 @@ class StockCountService
                         'unit_cost' => (float) $line->unit_cost,
                         'source_type' => 'stock_count',
                         'source_id' => $session->id,
-                        'client_transaction_id' => 'sc-' . $session->id . '-line-' . $line->id . '-' . Str::uuid(),
+                        // Deterministic key (deliberately no UUID): the unique
+                        // index on (store_id, client_transaction_id) is the
+                        // backstop that makes a repeat approval for this line a
+                        // no-op instead of a second stock correction.
+                        'client_transaction_id' => 'sc-' . $session->id . '-line-' . $line->id,
                         'occurred_at' => now(),
                         'posted_by' => $approverId,
                         'metadata' => [
@@ -336,7 +353,11 @@ class StockCountService
                         'unit_cost' => (float) $line->unit_cost,
                         'source_type' => 'stock_count',
                         'source_id' => $session->id,
-                        'client_transaction_id' => 'sc-' . $session->id . '-line-' . $line->id . '-' . Str::uuid(),
+                        // Deterministic key (deliberately no UUID): the unique
+                        // index on (store_id, client_transaction_id) is the
+                        // backstop that makes a repeat approval for this line a
+                        // no-op instead of a second stock correction.
+                        'client_transaction_id' => 'sc-' . $session->id . '-line-' . $line->id,
                         'occurred_at' => now(),
                         'posted_by' => $approverId,
                         'metadata' => [

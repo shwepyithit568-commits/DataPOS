@@ -1126,10 +1126,16 @@ class PosSaleService
             if ($heldSale) {
                 // held = still waiting in the held list; resumed = recalled
                 // into the active cart. Both reuse the same row when posted.
-                if ((int) $heldSale->store_id !== (int) $store->id || ! in_array($heldSale->status, ['held', 'resumed'], true)) {
+                //
+                // Re-read under a lock: without it, two simultaneous posts of the
+                // same held sale would both pass this check and each write a full
+                // set of payment rows against the one sale.
+                $locked = PosSale::whereKey($heldSale->id)->lockForUpdate()->firstOrFail();
+
+                if ((int) $locked->store_id !== (int) $store->id || ! in_array($locked->status, ['held', 'resumed'], true)) {
                     throw new InventoryException('The held sale cannot be posted from this store.');
                 }
-                $sale = $heldSale;
+                $sale = $locked;
             } else {
                 $sale = new PosSale(['store_id' => $store->id]);
             }
@@ -1153,7 +1159,7 @@ class PosSaleService
             ])->save();
 
             if ($heldSale) {
-                $heldSale->items()->delete();
+                $sale->items()->delete();
             }
 
             foreach ($resolved as $i => $line) {

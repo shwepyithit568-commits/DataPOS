@@ -203,11 +203,11 @@ class PromotionService
             return ['valid' => false, 'discount' => 0.0, 'message' => 'This promotion\'s usage limit has been reached.', 'promotion' => $promotion];
         }
 
-        if ($orderTotal < $promotion->min_order_amount) {
+        if (bccomp((string) $orderTotal, bcadd((string) ($promotion->min_order_amount ?? '0'), '0', 2), 2) < 0) {
             return [
                 'valid' => false,
                 'discount' => 0.0,
-                'message' => 'Minimum order amount of ' . number_format($promotion->min_order_amount) . ' Ks required.',
+                'message' => 'Minimum order amount of ' . number_format((float) $promotion->min_order_amount) . ' Ks required.',
                 'promotion' => $promotion,
             ];
         }
@@ -237,11 +237,26 @@ class PromotionService
      */
     public function calculateDiscount(Promotion $promotion, float $orderTotal): float
     {
+        return (float) $this->calculateDiscountDecimal($promotion, (string) $orderTotal);
+    }
+
+    /**
+     * Calculate the discount as an exact decimal string.
+     *
+     * @param  string  $orderTotal  decimal string; the discount may be written
+     *                              onto the order, so it must not be a float.
+     */
+    public function calculateDiscountDecimal(Promotion $promotion, string $orderTotal): string
+    {
+        $total = bcadd($orderTotal !== '' ? $orderTotal : '0', '0', 2);
+        $value = bcadd((string) ($promotion->value ?? '0'), '0', 2);
+
         return match ($promotion->type) {
-            'percent_off' => round($orderTotal * ($promotion->value / 100), 2),
-            'flat_off'    => min($promotion->value, $orderTotal),
-            'bogo'        => 0.0, // BOGO is handled at line-item level in POS
-            default       => 0.0,
+            // total x percent / 100
+            'percent_off' => bcdiv(bcmul($total, $value, 4), '100', 2),
+            'flat_off'    => bccomp($value, $total, 2) > 0 ? $total : $value,
+            'bogo'        => '0.00', // BOGO is handled at line-item level in POS
+            default       => '0.00',
         };
     }
 }

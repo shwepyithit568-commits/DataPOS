@@ -311,14 +311,14 @@ class EloadController extends Controller
         $validated = $request->validate([
             'operator'         => ['required', 'string', 'in:mpt,atom,ooredoo,mytel,other'],
             'phone_number'     => ['required', 'string', 'min:5', 'max:50'],
-            'amount'           => ['required', 'numeric', 'min:100', 'max:50000000'],
+            'amount'           => ['required', 'decimal:0,2', 'min:100', 'max:50000000'],
             'type'             => ['nullable', 'string', 'in:topup,data_pack,pin_code,sim_card,bill_payment'],
             'package_name'     => ['nullable', 'string', 'max:150'],
             'customer_name'    => ['nullable', 'string', 'max:100'],
             'payment_method'   => ['nullable', 'string', 'in:cash,kpay,wavepay,cbpay,ayapay,other'],
             'eload_account_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('eload_accounts', 'id')->where('store_id', $store->id)],
-            'cost'             => ['nullable', 'numeric', 'min:0'],
-            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'cost'             => ['nullable', 'decimal:0,2', 'min:0'],
+            'discount_percent' => ['nullable', 'decimal:0,2', 'min:0', 'max:100'],
             'notes'            => ['nullable', 'string', 'max:500'],
             'occurred_at'      => ['nullable', 'date'],
         ]);
@@ -349,12 +349,12 @@ class EloadController extends Controller
 
         $validated = $request->validate([
             'eload_account_id' => ['required', 'integer', \Illuminate\Validation\Rule::exists('eload_accounts', 'id')->where('store_id', $store->id)],
-            'amount'           => ['required', 'numeric', 'min:100', 'max:50000000'],
+            'amount'           => ['required', 'decimal:0,2', 'min:100', 'max:50000000'],
             'notes'            => ['nullable', 'string', 'max:255'],
         ]);
 
         $account = EloadAccount::where('store_id', $store->id)->findOrFail($validated['eload_account_id']);
-        $this->eloadService->refillAccount($account, (float) $validated['amount'], $validated['notes'] ?? null);
+        $this->eloadService->refillAccount($account, $validated['amount'], $validated['notes'] ?? null);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -382,8 +382,8 @@ class EloadController extends Controller
             'operator'         => ['required', 'string', 'in:mpt,atom,ooredoo,mytel,other'],
             'name'             => ['required', 'string', 'max:100'],
             'phone_number'     => ['nullable', 'string', 'max:50'],
-            'balance'          => ['nullable', 'numeric', 'min:0'],
-            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'balance'          => ['nullable', 'decimal:0,2', 'min:0'],
+            'discount_percent' => ['nullable', 'decimal:0,2', 'min:0', 'max:100'],
             'is_active'        => ['nullable', 'boolean'],
         ]);
 

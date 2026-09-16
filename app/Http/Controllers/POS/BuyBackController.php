@@ -14,6 +14,7 @@ use App\Services\StoreContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -288,17 +289,37 @@ class BuyBackController extends Controller
         $store = $context->getStore();
 
         $validated = $request->validate([
-            'customer_id' => 'nullable|exists:users,id',
+            // Both relations are store-scoped: an unscoped `exists` would let a
+            // terminal attach another store's product or customer to this buy back.
+            'customer_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('users', 'id')->where(function ($query) use ($store) {
+                    $query->whereIn('users.id', function ($sub) use ($store) {
+                        $sub->select('user_id')
+                            ->from('store_user')
+                            ->where('store_id', $store->id)
+                            ->whereIn('role', ['retail_customer', 'wholesale_customer'])
+                            ->where('status', 'active');
+                    });
+                }),
+            ],
             'reason' => 'nullable|string|max:500',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => ['required', 'integer', Rule::exists('products', 'id')->where('store_id', $store->id)],
             'items.*.quantity' => 'required|numeric|min:0.001',
-            'items.*.unit_price' => 'required|numeric|min:0',
+            // decimal (not plain numeric): money is accumulated with bcmath
+            // below, which throws a ValueError on scientific notation ("1e3").
+            'items.*.unit_price' => 'required|decimal:0,2|min:0',
         ]);
 
         $buyback = DB::transaction(function () use ($store, $validated) {
-            $totalValue = collect($validated['items'])->sum(fn ($item) => $item['unit_price'] * $item['quantity']);
+            $totalValue = '0.00';
+            foreach ($validated['items'] as $item) {
+                $lineTotal = bcmul((string) $item['unit_price'], (string) $item['quantity'], 2);
+                $totalValue = bcadd($totalValue, $lineTotal, 2);
+            }
 
             $buyback = BuyBack::create([
                 'store_id' => $store->id,
@@ -447,7 +468,11 @@ class BuyBackController extends Controller
                     'movement_type' => 'sales_return',
                     'quantity_delta' => $item->quantity,
                     'unit_cost' => $item->unit_price,
-                    'client_transaction_id' => "buyback:{$buyback->id}:{$item->product_id}",
+                    // Keyed per line, not per product: two lines for the same
+                    // product must both restore stock, and the unique index on
+                    // (store_id, client_transaction_id) still makes completion
+                    // idempotent.
+                    'client_transaction_id' => "buyback:{$buyback->id}:item:{$item->id}",
                     'posted_by' => auth()->id(),
                 ]);
             }

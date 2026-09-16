@@ -15,6 +15,25 @@ use Illuminate\Support\Str;
 class EloadService
 {
     /**
+     * Normalize a monetary input to an exact 2-decimal string.
+     *
+     * Balances are moved with raw SQL increment/decrement, so the value handed
+     * to the database must be a decimal string rather than a PHP float.
+     */
+    private function toDecimal(mixed $value): string
+    {
+        if (is_string($value) && preg_match('/^-?\d+(\.\d+)?$/', trim($value)) === 1) {
+            return bcadd(trim($value), '0', 2);
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return bcadd(sprintf('%.2F', $value), '0', 2);
+        }
+
+        throw new \InvalidArgumentException('Invalid monetary amount.');
+    }
+
+    /**
      * Get summary KPI stats for E-Load module.
      */
     public function getSummaryStats(Store $store, ?string $dateFrom = null, ?string $dateTo = null): array
@@ -37,24 +56,27 @@ class EloadService
             ->selectRaw('COUNT(*) as total_count, COALESCE(SUM(amount), 0) as total_volume, COALESCE(SUM(profit), 0) as total_profit')
             ->first();
 
-        // Operator float balances
+        // Operator float balances — summed with bcmath; a running float total
+        // would drift once cents are involved.
         $accounts = EloadAccount::where('store_id', $store->id)->where('is_active', true)->get();
-        $totalFloatBalance = (float) $accounts->sum('balance');
+        $totalFloatBalance = bc_sum($accounts->pluck('balance'));
 
         $operatorBalances = [
-            'mpt'     => (float) $accounts->where('operator', 'mpt')->sum('balance'),
-            'atom'    => (float) $accounts->where('operator', 'atom')->sum('balance'),
-            'ooredoo' => (float) $accounts->where('operator', 'ooredoo')->sum('balance'),
-            'mytel'   => (float) $accounts->where('operator', 'mytel')->sum('balance'),
+            'mpt'     => bc_sum($accounts->where('operator', 'mpt')->pluck('balance')),
+            'atom'    => bc_sum($accounts->where('operator', 'atom')->pluck('balance')),
+            'ooredoo' => bc_sum($accounts->where('operator', 'ooredoo')->pluck('balance')),
+            'mytel'   => bc_sum($accounts->where('operator', 'mytel')->pluck('balance')),
         ];
 
         return [
-            'today_volume'        => (float) ($todayStats->total_volume ?? 0),
+            // Decimal strings: the SQL SUM is exact, so keep it that way and let
+            // the view decide when to become a float for display.
+            'today_volume'        => bcadd((string) ($todayStats->total_volume ?? '0'), '0', 2),
             'today_count'         => (int) ($todayStats->total_count ?? 0),
-            'today_profit'        => (float) ($todayStats->total_profit ?? 0),
-            'month_volume'        => (float) ($monthStats->total_volume ?? 0),
+            'today_profit'        => bcadd((string) ($todayStats->total_profit ?? '0'), '0', 2),
+            'month_volume'        => bcadd((string) ($monthStats->total_volume ?? '0'), '0', 2),
             'month_count'         => (int) ($monthStats->total_count ?? 0),
-            'month_profit'        => (float) ($monthStats->total_profit ?? 0),
+            'month_profit'        => bcadd((string) ($monthStats->total_profit ?? '0'), '0', 2),
             'total_float_balance' => $totalFloatBalance,
             'operator_balances'   => $operatorBalances,
         ];
@@ -137,7 +159,7 @@ class EloadService
     public function createTransaction(Store $store, array $data, ?User $user = null): EloadTransaction
     {
         return DB::transaction(function () use ($store, $data, $user) {
-            $amount = (float) $data['amount'];
+            $amount = $this->toDecimal($data['amount']);
             $operator = strtolower($data['operator']);
 
             // Find matching operator account
@@ -154,14 +176,18 @@ class EloadService
 
             // Calculate cost and profit from request discount percent or account discount percent
             $discountPercent = (isset($data['discount_percent']) && $data['discount_percent'] !== null && $data['discount_percent'] !== '')
-                ? (float) $data['discount_percent']
-                : ($account ? (float) $account->discount_percent : 0.0);
-            if ($discountPercent > 0) {
-                $cost = round($amount * (1 - ($discountPercent / 100)), 2);
-                $profit = round($amount - $cost, 2);
+                ? (string) $data['discount_percent']
+                : (string) ($account?->discount_percent ?? '0');
+
+            if (bccomp($discountPercent, '0', 4) > 0) {
+                // cost = amount x (100 - discount) / 100
+                $cost = bcdiv(bcmul($amount, bcsub('100', $discountPercent, 4), 4), '100', 2);
+                $profit = bcsub($amount, $cost, 2);
             } else {
-                $cost = isset($data['cost']) ? (float) $data['cost'] : $amount;
-                $profit = round($amount - $cost, 2);
+                $cost = isset($data['cost']) && $data['cost'] !== null && $data['cost'] !== ''
+                    ? $this->toDecimal($data['cost'])
+                    : $amount;
+                $profit = bcsub($amount, $cost, 2);
             }
 
             $refNo = $data['ref_no'] ?? ('EL-' . strtoupper(Str::random(8)));
@@ -199,10 +225,12 @@ class EloadService
     /**
      * Refill / Add float balance to an operator account.
      */
-    public function refillAccount(EloadAccount $account, float $amount, ?string $notes = null): void
+    public function refillAccount(EloadAccount $account, float|int|string $amount, ?string $notes = null): void
     {
-        DB::transaction(function () use ($account, $amount) {
-            $account->increment('balance', $amount);
+        $delta = $this->toDecimal($amount);
+
+        DB::transaction(function () use ($account, $delta) {
+            $account->increment('balance', $delta);
         });
     }
 
@@ -221,12 +249,14 @@ class EloadService
 
             // Balance adjustment on refund / cancellation
             if ($transaction->account) {
+                $amount = $this->toDecimal($transaction->amount);
+
                 if ($oldStatus === 'completed' && in_array($newStatus, ['refunded', 'failed'], true)) {
                     // Refund float back to account
-                    $transaction->account->increment('balance', (float) $transaction->amount);
+                    $transaction->account->increment('balance', $amount);
                 } elseif (in_array($oldStatus, ['refunded', 'failed'], true) && $newStatus === 'completed') {
                     // Deduct float
-                    $transaction->account->decrement('balance', (float) $transaction->amount);
+                    $transaction->account->decrement('balance', $amount);
                 }
             }
         });
@@ -245,8 +275,12 @@ class EloadService
             'operator'         => strtolower($data['operator']),
             'name'             => $data['name'],
             'phone_number'     => $data['phone_number'] ?? null,
-            'balance'          => isset($data['balance']) ? (float) $data['balance'] : $account->balance ?? 0,
-            'discount_percent' => isset($data['discount_percent']) ? (float) $data['discount_percent'] : $account->discount_percent ?? 0,
+            'balance'          => isset($data['balance']) && $data['balance'] !== null && $data['balance'] !== ''
+                ? $this->toDecimal($data['balance'])
+                : ($account->balance ?? '0.00'),
+            'discount_percent' => isset($data['discount_percent']) && $data['discount_percent'] !== null && $data['discount_percent'] !== ''
+                ? (string) $data['discount_percent']
+                : ($account->discount_percent ?? '0'),
             'is_active'        => isset($data['is_active']) ? (bool) $data['is_active'] : true,
         ]);
         $account->save();

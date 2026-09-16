@@ -26,6 +26,79 @@ if (! function_exists('format_currency')) {
     }
 }
 
+if (! function_exists('bc_sum')) {
+    /**
+     * Sum money/quantity values exactly.
+     *
+     * Use this instead of array_sum()/`+=` whenever the numbers are decimals:
+     * PHP floats cannot represent most decimal fractions, so a running total
+     * accumulates error. Returns a decimal string.
+     */
+    function bc_sum(iterable $values, int $scale = 2): string
+    {
+        $total = '0';
+
+        foreach ($values as $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $total = bcadd($total, (string) $value, $scale);
+        }
+
+        return $total;
+    }
+}
+
+if (! function_exists('exact_sum')) {
+    /**
+     * Exact SUM of a column (or SQL expression) over a query, as a decimal string.
+     *
+     * MySQL sums DECIMAL columns exactly, so its answer is taken verbatim.
+     * SQLite has no DECIMAL type — `SUM()` runs in REAL (a double) and drifts
+     * once a report covers a few hundred thousand rows (measured: ~0.01 kyat at
+     * 200k rows, 0.19 at 1M), so the rows are totalled here with bcmath instead.
+     * Callers therefore get the same figure on both engines.
+     *
+     * The query should be a plain where-clause query; a custom select list is
+     * discarded so only the aggregated value is fetched.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder  $query
+     */
+    function exact_sum($query, string $columnOrExpression, int $scale = 2): string
+    {
+        $connection = $query->getConnection();
+
+        if ($connection->getDriverName() !== 'sqlite') {
+            $row = (clone $query)
+                ->selectRaw('COALESCE(SUM(' . $columnOrExpression . '), 0) AS exact_sum_value')
+                ->first();
+
+            $value = is_object($row) ? ($row->exact_sum_value ?? null) : null;
+
+            return bcadd((string) ($value ?? '0'), '0', $scale);
+        }
+
+        $total = '0';
+
+        $rows = (clone $query)
+            ->selectRaw('(' . $columnOrExpression . ') AS exact_sum_value')
+            ->cursor();
+
+        foreach ($rows as $row) {
+            $value = $row->exact_sum_value ?? null;
+
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $total = bcadd($total, (string) $value, $scale);
+        }
+
+        return $total;
+    }
+}
+
 if (! function_exists('format_quantity')) {
     /**
      * Format a numerical quantity according to the store's currency/number settings.

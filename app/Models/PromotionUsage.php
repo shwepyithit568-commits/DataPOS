@@ -17,7 +17,7 @@ class PromotionUsage extends Model
     ];
 
     protected $casts = [
-        'discount_applied' => 'float',
+        'discount_applied' => 'decimal:2',
     ];
 
     public function promotion(): BelongsTo

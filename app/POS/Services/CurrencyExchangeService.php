@@ -236,23 +236,40 @@ class CurrencyExchangeService
      */
     public function convert(Store $store, float $amount, string $fromCode, string $toCode): float
     {
-        $this->ensureDefaultCurrencies($store);
+        return (float) $this->convertDecimal($store, (string) $amount, $fromCode, $toCode);
+    }
+
+    /**
+     * Convert an amount between two currencies, returning an exact decimal.
+     *
+     * The rate is applied with bcmath because a conversion is a multiplication
+     * whose result may be written down — a float would carry its binary rounding
+     * into that figure.
+     */
+    public function convertDecimal(Store $store, string $amount, string $fromCode, string $toCode): string
+    {
+        $value = bcadd($amount !== '' ? $amount : '0', '0', 2);
 
         if ($fromCode === $toCode) {
-            return $amount;
+            return $value;
         }
+
+        $this->ensureDefaultCurrencies($store);
 
         $from = Currency::where('store_id', $store->id)->where('code', $fromCode)->first();
         $to = Currency::where('store_id', $store->id)->where('code', $toCode)->first();
 
-        if (!$from || !$to || $from->exchange_rate <= 0 || $to->exchange_rate <= 0) {
-            return $amount;
+        if (
+            ! $from || ! $to
+            || bccomp((string) $from->exchange_rate, '0', 6) <= 0
+            || bccomp((string) $to->exchange_rate, '0', 6) <= 0
+        ) {
+            return $value;
         }
 
-        // Amount in Base (MMK) = amount * from_rate
-        $amountInBase = $amount * $from->exchange_rate;
+        // Amount in base currency, then into the target currency.
+        $amountInBase = bcmul($value, (string) $from->exchange_rate, 6);
 
-        // Amount in Target = amountInBase / to_rate
-        return $amountInBase / $to->exchange_rate;
+        return bcdiv($amountInBase, (string) $to->exchange_rate, 2);
     }
 }

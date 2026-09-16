@@ -11,6 +11,7 @@ use App\Services\StoreContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -184,12 +185,16 @@ class OrderAdminController extends Controller
         $fromStatus = $order->status;
 
         try {
-            app(OrderInventoryAdapter::class)->handleStatusChange($order, $fromStatus, $validated['status']);
+            // The stock movement and the status change are one unit of work:
+            // run separately, a failure between them would leave stock reserved
+            // against an order still showing its previous status.
+            DB::transaction(function () use ($order, $fromStatus, $validated) {
+                app(OrderInventoryAdapter::class)->handleStatusChange($order, $fromStatus, $validated['status']);
+                $order->update(['status' => $validated['status']]);
+            });
         } catch (InventoryException $e) {
             return back()->withErrors(['status' => $e->getMessage()]);
         }
-
-        $order->update(['status' => $validated['status']]);
 
         app(\App\Support\AdminPushNotifier::class)->dispatch(
             $store,

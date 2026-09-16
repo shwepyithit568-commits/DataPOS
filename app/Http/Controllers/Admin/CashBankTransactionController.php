@@ -9,6 +9,7 @@ use App\POS\Services\FinancialTransactionService;
 use App\Services\StoreContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -136,8 +137,8 @@ class CashBankTransactionController extends Controller
         }
 
         $validated = $request->validate([
-            'to_account_id' => 'required|exists:financial_accounts,id',
-            'amount' => 'required|numeric|min:0.01',
+            'to_account_id' => ['required', Rule::exists('financial_accounts', 'id')->where('store_id', $store->id)],
+            'amount' => 'required|decimal:0,2|min:0.01',
             'category' => 'nullable|string|max:100',
             'payer_or_payee' => 'nullable|string|max:150',
             'reference_no' => 'nullable|string|max:100',
@@ -163,8 +164,8 @@ class CashBankTransactionController extends Controller
         }
 
         $validated = $request->validate([
-            'from_account_id' => 'required|exists:financial_accounts,id',
-            'amount' => 'required|numeric|min:0.01',
+            'from_account_id' => ['required', Rule::exists('financial_accounts', 'id')->where('store_id', $store->id)],
+            'amount' => 'required|decimal:0,2|min:0.01',
             'category' => 'nullable|string|max:100',
             'payer_or_payee' => 'nullable|string|max:150',
             'reference_no' => 'nullable|string|max:100',
@@ -172,7 +173,11 @@ class CashBankTransactionController extends Controller
             'transaction_date' => 'nullable|date',
         ]);
 
-        $this->transactionService->recordWithdrawal($store, $validated, $request->user());
+        try {
+            $this->transactionService->recordWithdrawal($store, $validated, $request->user());
+        } catch (\InvalidArgumentException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('store.admin.transactions.index', ['store_slug' => $store->slug])
@@ -190,16 +195,20 @@ class CashBankTransactionController extends Controller
         }
 
         $validated = $request->validate([
-            'from_account_id' => 'required|exists:financial_accounts,id',
-            'to_account_id' => 'required|exists:financial_accounts,id|different:from_account_id',
-            'amount' => 'required|numeric|min:0.01',
-            'fee' => 'nullable|numeric|min:0',
+            'from_account_id' => ['required', Rule::exists('financial_accounts', 'id')->where('store_id', $store->id)],
+            'to_account_id' => ['required', Rule::exists('financial_accounts', 'id')->where('store_id', $store->id), 'different:from_account_id'],
+            'amount' => 'required|decimal:0,2|min:0.01',
+            'fee' => 'nullable|decimal:0,2|min:0',
             'reference_no' => 'nullable|string|max:100',
             'notes' => 'nullable|string|max:1000',
             'transaction_date' => 'nullable|date',
         ]);
 
-        $this->transactionService->recordTransfer($store, $validated, $request->user());
+        try {
+            $this->transactionService->recordTransfer($store, $validated, $request->user());
+        } catch (\InvalidArgumentException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('store.admin.transactions.index', ['store_slug' => $store->slug])
@@ -221,7 +230,7 @@ class CashBankTransactionController extends Controller
             'account_type' => 'required|in:cash,mobile_wallet,bank_account,other',
             'account_number' => 'nullable|string|max:80',
             'account_holder' => 'nullable|string|max:120',
-            'opening_balance' => 'nullable|numeric|min:0',
+            'opening_balance' => 'nullable|decimal:0,2|min:0',
             'notes' => 'nullable|string|max:1000',
         ]);
 
@@ -373,14 +382,14 @@ class CashBankTransactionController extends Controller
         $sheet->getRowDimension(1)->setRowHeight(26);
 
         $rowNumber = 2;
-        $totalAmount = 0;
-        $totalFee = 0;
+        $totalAmount = '0';
+        $totalFee = '0';
 
         foreach ($transactions as $index => $t) {
-            $amount = (float) $t->amount;
-            $fee = (float) $t->fee;
-            $totalAmount += $amount;
-            $totalFee += $fee;
+            $amount = bcadd((string) $t->amount, '0', 2);
+            $fee = bcadd((string) $t->fee, '0', 2);
+            $totalAmount = bcadd($totalAmount, $amount, 2);
+            $totalFee = bcadd($totalFee, $fee, 2);
 
             $sheet->fromArray([[
                 $index + 1,

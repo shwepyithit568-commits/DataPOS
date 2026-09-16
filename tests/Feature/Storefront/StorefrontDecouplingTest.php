@@ -122,16 +122,17 @@ class StorefrontDecouplingTest extends TestCase
         // Regular shopper
         $vm = new ProductCardViewModel($product, $store, isWholesaleApproved: false);
         $this->assertEquals(1500.0, $vm->price());
-        $this->assertEquals('Ks 1,500', $vm->formattedPrice());
+        // Currency follows /admin/settings/currency (default: symbol after).
+        $this->assertEquals('1,500 Ks', $vm->formattedPrice());
         $this->assertEquals(2000.0, $vm->oldPrice());
-        $this->assertEquals('Ks 2,000', $vm->formattedOldPrice());
+        $this->assertEquals('2,000 Ks', $vm->formattedOldPrice());
         $this->assertEquals(25, $vm->discountPercentage()); // 25% discount
         $this->assertFalse($vm->isOutOfStock());
 
         // Wholesale customer
         $vmWholesale = new ProductCardViewModel($product, $store, isWholesaleApproved: true);
         $this->assertEquals(1200.0, $vmWholesale->price());
-        $this->assertEquals('Ks 1,200', $vmWholesale->formattedPrice());
+        $this->assertEquals('1,200 Ks', $vmWholesale->formattedPrice());
         $this->assertNull($vmWholesale->oldPrice());
     }
 

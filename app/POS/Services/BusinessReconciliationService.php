@@ -5,6 +5,7 @@ namespace App\POS\Services;
 use App\Models\Store;
 use App\POS\Enums\InventoryMovementType;
 use App\POS\Models\CashierShift;
+use App\POS\Models\CustomerLedgerEntry;
 use App\POS\Models\InventoryBalance;
 use App\POS\Models\InventoryMovement;
 use Illuminate\Support\Carbon;
@@ -154,13 +155,21 @@ class BusinessReconciliationService
             $countedCash = bcadd($countedCash, (string) ($s->actual_closing_amount ?? '0'), 2);
         }
 
-        // 2. Customer debt collections paid in cash during this date
-        $debtCollections = number_format((float) DB::table('customer_ledger_entries')
-            ->where('store_id', $store->id)
-            ->where('entry_type', 'credit_payment')
-            ->where('notes', 'like', '%cash%')
-            ->whereBetween('created_at', [$start, $end])
-            ->sum('credit_amount'), 2, '.', '');
+        // 2. Customer debt collections paid in cash during this date.
+        //    The ledger stores its kind on `type` (sale_debt, collection,
+        //    reversal, opening_balance) and its value on `amount`, signed
+        //    negative for a collection — there is no `entry_type`,
+        //    `credit_amount` or 'credit_payment'. The old query therefore
+        //    always produced 0 (and would error on MySQL), so cash taken in
+        //    against customer debt never reached the expected drawer total.
+        $debtCollections = exact_sum(
+            DB::table('customer_ledger_entries')
+                ->where('store_id', $store->id)
+                ->where('type', CustomerLedgerEntry::TYPE_COLLECTION)
+                ->where('notes', 'like', '%cash%')
+                ->whereBetween('created_at', [$start, $end]),
+            '-amount'
+        );
 
         // 3. Cash expenses paid from cash drawer
         $expensesPaid = number_format((float) DB::table('expenses')

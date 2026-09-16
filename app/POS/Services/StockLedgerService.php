@@ -82,9 +82,10 @@ class StockLedgerService
 
         $totalRecords = (clone $query)->count();
 
-        $inflow = (float) (clone $query)->where('quantity_delta', '>', 0)->sum('quantity_delta');
-        $outflow = (float) (clone $query)->where('quantity_delta', '<', 0)->sum(DB::raw('ABS(quantity_delta)'));
-        $netDelta = $inflow - $outflow;
+        // Decimal strings, summed exactly: these are the ledger movement totals.
+        $inflow = exact_sum((clone $query)->where('quantity_delta', '>', 0), 'quantity_delta', 3);
+        $outflow = exact_sum((clone $query)->where('quantity_delta', '<', 0), 'ABS(quantity_delta)', 3);
+        $netDelta = bcsub($inflow, $outflow, 3);
 
         $uniqueProducts = (clone $query)->distinct('product_id')->count('product_id');
 

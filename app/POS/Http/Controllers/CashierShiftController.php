@@ -141,7 +141,7 @@ class CashierShiftController extends Controller
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'amount' => ['required', 'numeric', 'min:0.01', 'max:999999999999'],
+            'amount' => ['required', 'decimal:0,2', 'min:0.01', 'max:999999999999'],
             'expense_category_id' => [
                 'nullable',
                 Rule::exists('expense_categories', 'id')->where('store_id', $store->id),
@@ -152,7 +152,7 @@ class CashierShiftController extends Controller
         ]);
 
         $title = trim($data['title']);
-        $amount = (float) $data['amount'];
+        $amount = bcadd((string) $data['amount'], '0', 2);
         $paymentMethod = $data['payment_method'];
 
         $shiftsEnabled = $store->hasCapability(Capability::OPERATIONS_CASHIER_SHIFTS);
@@ -189,7 +189,7 @@ class CashierShiftController extends Controller
                 if ($openShift) {
                     $this->shifts->addCashEvent($openShift, [
                         'type' => 'cash_out',
-                        'amount' => number_format($amount, 2, '.', ''),
+                        'amount' => $amount,
                         'reason' => 'Expense: ' . $title . ($expense->expense_number ? ' (' . $expense->expense_number . ')' : ''),
                     ], auth()->user());
                 }

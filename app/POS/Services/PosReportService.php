@@ -204,7 +204,9 @@ class PosReportService
             ->orderBy('opened_at')
             ->get();
 
-        $sum = fn (string $col) => number_format((float) $shifts->sum($col), 2, '.', '');
+        // bc_sum, not a float sum: these are money totals printed on the shift
+        // report, and PHP floats cannot represent decimal fractions exactly.
+        $sum = fn (string $col) => bc_sum($shifts->pluck($col), 2);
 
         return [
             'shifts' => $shifts,
@@ -297,10 +299,12 @@ class PosReportService
 
         $jobs = $query->latest('created_at')->get();
 
-        $totalEstimated = 0.0;
-        $totalFinalCharge = 0.0;
-        $totalPaid = 0.0;
-        $totalPartsCost = 0.0;
+        // Decimal strings: these totals are printed on the service report, and
+        // the per-technician rows accumulate across every job in the range.
+        $totalEstimated = '0.00';
+        $totalFinalCharge = '0.00';
+        $totalPaid = '0.00';
+        $totalPartsCost = '0.00';
 
         $statusCounts = [
             'received'          => 0,
@@ -317,14 +321,14 @@ class PosReportService
         $techPerformance = [];
 
         foreach ($jobs as $job) {
-            $final = (float) ($job->final_charge ?: $job->estimated_charge ?: 0);
-            $paid = (float) $job->payments->sum('amount');
-            $partsCost = (float) $job->items->where('type', 'part')->sum('cost');
+            $final = bcadd((string) ($job->final_charge ?: $job->estimated_charge ?: '0'), '0', 2);
+            $paid = bc_sum($job->payments->pluck('amount'));
+            $partsCost = bc_sum($job->items->where('type', 'part')->pluck('cost'));
 
-            $totalEstimated += (float) ($job->estimated_charge ?? 0);
-            $totalFinalCharge += $final;
-            $totalPaid += $paid;
-            $totalPartsCost += $partsCost;
+            $totalEstimated = bcadd($totalEstimated, bcadd((string) ($job->estimated_charge ?? '0'), '0', 2), 2);
+            $totalFinalCharge = bcadd($totalFinalCharge, $final, 2);
+            $totalPaid = bcadd($totalPaid, $paid, 2);
+            $totalPartsCost = bcadd($totalPartsCost, $partsCost, 2);
 
             if (isset($statusCounts[$job->status])) {
                 $statusCounts[$job->status]++;
@@ -339,19 +343,19 @@ class PosReportService
                     'name'        => $techName,
                     'jobs_count'  => 0,
                     'completed'   => 0,
-                    'revenue'     => 0.0,
-                    'parts_cost'  => 0.0,
+                    'revenue'     => '0.00',
+                    'parts_cost'  => '0.00',
                 ];
             }
             $techPerformance[$techId]['jobs_count']++;
             if (in_array($job->status, ['ready', 'delivered'], true)) {
                 $techPerformance[$techId]['completed']++;
             }
-            $techPerformance[$techId]['revenue'] += $final;
-            $techPerformance[$techId]['parts_cost'] += $partsCost;
+            $techPerformance[$techId]['revenue'] = bcadd($techPerformance[$techId]['revenue'], $final, 2);
+            $techPerformance[$techId]['parts_cost'] = bcadd($techPerformance[$techId]['parts_cost'], $partsCost, 2);
         }
 
-        $grossServiceProfit = $totalFinalCharge - $totalPartsCost;
+        $grossServiceProfit = bcsub($totalFinalCharge, $totalPartsCost, 2);
         $completedCount = $statusCounts['ready'] + $statusCounts['delivered'];
         $pendingCount = $jobs->count() - $completedCount - $statusCounts['cancelled'] - $statusCounts['unrepairable'];
 

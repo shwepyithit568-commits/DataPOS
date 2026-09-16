@@ -117,15 +117,68 @@ class PushNotificationTest extends TestCase
     {
         Notification::fake();
 
+        // A store manager reaches the subscribers of their own store. Guest
+        // subscriptions (no user) carry no store, so a manager cannot reach
+        // them — see test_manager_cannot_reach_another_stores_subscribers.
+        $this->customer->stores()->attach($this->store->id, ['role' => 'retail_customer', 'status' => 'active']);
+
         PushSubscription::create([
             'endpoint' => 'https://push.example.com/sub/t1',
             'keys' => ['p256dh' => 'x', 'auth' => 'y'],
+            'user_id' => $this->customer->id,
         ]);
 
         $this->actingAs($this->manager)
             ->postJson('/api/push/test')
             ->assertOk()
             ->assertJson(['success' => true]);
+
+        Notification::assertSentTimes(TestPushNotification::class, 1);
+    }
+
+    public function test_manager_cannot_reach_another_stores_subscribers(): void
+    {
+        Notification::fake();
+
+        $otherStore = Store::create(['name' => 'Other Store', 'slug' => 'other-push-store']);
+        $otherCustomer = User::factory()->create(['phone' => '09111110003', 'role' => 'customer']);
+        $otherCustomer->stores()->attach($otherStore->id, ['role' => 'retail_customer', 'status' => 'active']);
+
+        PushSubscription::create([
+            'endpoint' => 'https://push.example.com/sub/other',
+            'keys' => ['p256dh' => 'x', 'auth' => 'y'],
+            'user_id' => $otherCustomer->id,
+        ]);
+
+        // The only subscriber belongs to a different store, so the manager's
+        // broadcast finds nobody rather than messaging another tenant's users.
+        $this->actingAs($this->manager)
+            ->postJson('/api/push/test')
+            ->assertStatus(422);
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_platform_owner_reaches_every_store(): void
+    {
+        Notification::fake();
+
+        $otherStore = Store::create(['name' => 'Other Store', 'slug' => 'other-push-store-2']);
+        $otherCustomer = User::factory()->create(['phone' => '09111110004', 'role' => 'customer']);
+        $otherCustomer->stores()->attach($otherStore->id, ['role' => 'retail_customer', 'status' => 'active']);
+
+        PushSubscription::create([
+            'endpoint' => 'https://push.example.com/sub/owner',
+            'keys' => ['p256dh' => 'x', 'auth' => 'y'],
+            'user_id' => $otherCustomer->id,
+        ]);
+
+        $owner = User::factory()->create(['phone' => '09111110005', 'role' => 'platform_owner']);
+
+        $this->actingAs($owner)
+            ->postJson('/api/push/test')
+            ->assertOk()
+            ->assertJson(['recipients' => 1]);
 
         Notification::assertSentTimes(TestPushNotification::class, 1);
     }

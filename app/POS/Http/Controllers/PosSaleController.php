@@ -20,6 +20,7 @@ use App\Services\StoreContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -640,23 +641,29 @@ class PosSaleController extends Controller
      */
     private function fulfillWebOrder(Store $store, int $orderId, User $actor, string $receiptNumber): void
     {
-        $order = Order::where('store_id', $store->id)->find($orderId);
+        DB::transaction(function () use ($store, $orderId, $actor, $receiptNumber) {
+            // Locked and re-read: two concurrent fulfilments would otherwise both
+            // see a non-delivered order and both release the reservation.
+            $order = Order::where('store_id', $store->id)->lockForUpdate()->find($orderId);
 
-        if (! $order || in_array($order->status, ['delivered', 'cancelled'], true)) {
-            return; // nothing to fulfil / already handled
-        }
+            if (! $order || in_array($order->status, ['delivered', 'cancelled'], true)) {
+                return; // nothing to fulfil / already handled
+            }
 
-        app(OrderInventoryAdapter::class)->release($order);
-        $order->update(['status' => 'delivered']);
+            // Release and the status write share this transaction so a failure
+            // between them cannot strand the stock release without its status.
+            app(OrderInventoryAdapter::class)->release($order);
+            $order->update(['status' => 'delivered']);
 
-        AuditLog::write(
-            storeId: $store->id,
-            action: 'pos_web_order_fulfilled',
-            entityType: 'order',
-            entityId: $order->id,
-            metadata: ['order_number' => $order->order_number, 'sale_receipt' => $receiptNumber],
-            actorId: $actor->id,
-        );
+            AuditLog::write(
+                storeId: $store->id,
+                action: 'pos_web_order_fulfilled',
+                entityType: 'order',
+                entityId: $order->id,
+                metadata: ['order_number' => $order->order_number, 'sale_receipt' => $receiptNumber],
+                actorId: $actor->id,
+            );
+        });
     }
 
     /* ------------------------------------------------------------------ */

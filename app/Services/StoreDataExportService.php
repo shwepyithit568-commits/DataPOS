@@ -75,7 +75,13 @@ class StoreDataExportService
             ],
             'sales_summary' => [
                 'total_sales_count' => \App\POS\Models\PosSale::where('store_id', $store->id)->count(),
-                'total_revenue'     => (float) \App\POS\Models\PosSale::where('store_id', $store->id)->sum('final_total'),
+                // `total` is the sale total — pos_sales has no `final_total`
+                // column, so this line always exported 0 (and would error on
+                // MySQL, which rejects an unknown column).
+                'total_revenue'     => exact_sum(
+                    \App\POS\Models\PosSale::where('store_id', $store->id),
+                    'total'
+                ),
             ],
         ];
     }
