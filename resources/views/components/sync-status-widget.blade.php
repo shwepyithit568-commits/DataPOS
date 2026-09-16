@@ -2,6 +2,10 @@
 
 @php
     $storeSlug = $store?->slug ?? request()->route('store_slug') ?? '';
+    // Session-authenticated admin endpoints. The old /api/v1/.../sync/* URLs
+    // are now machine-to-machine and require the store's sync API key.
+    $statusUrl = $storeSlug ? route('store.admin.sync.status', ['store_slug' => $storeSlug]) : '';
+    $triggerUrl = $storeSlug ? route('store.admin.sync.trigger', ['store_slug' => $storeSlug]) : '';
 @endphp
 
 <div x-data="{
@@ -10,7 +14,8 @@
     pendingCount: 0,
     failedCount: 0,
     lastSynced: null,
-    storeSlug: '{{ $storeSlug }}',
+    statusUrl: '{{ $statusUrl }}',
+    triggerUrl: '{{ $triggerUrl }}',
 
     init() {
         window.addEventListener('online', () => {
@@ -21,16 +26,16 @@
             this.online = false;
         });
 
-        if (this.storeSlug) {
+        if (this.statusUrl) {
             this.fetchStatus();
             setInterval(() => this.fetchStatus(), 20000);
         }
     },
 
     async fetchStatus() {
-        if (!this.storeSlug || !navigator.onLine) return;
+        if (!this.statusUrl || !navigator.onLine) return;
         try {
-            const res = await fetch(`/api/v1/store/${this.storeSlug}/sync/status`);
+            const res = await fetch(this.statusUrl, { headers: { 'Accept': 'application/json' } });
             if (res.ok) {
                 const data = await res.json();
                 this.pendingCount = data.health?.pending_count || 0;
@@ -48,10 +53,10 @@
     },
 
     async syncNow() {
-        if (!this.storeSlug || this.syncing) return;
+        if (!this.triggerUrl || this.syncing) return;
         this.syncing = true;
         try {
-            const res = await fetch(`/api/v1/store/${this.storeSlug}/sync/trigger`, {
+            const res = await fetch(this.triggerUrl, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '',

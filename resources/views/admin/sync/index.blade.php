@@ -46,6 +46,87 @@
         </div>
     </div>
 
+    {{-- 1b. Terminal Sync Credential (machine-to-machine API key) --}}
+    <div class="px-2 py-2 bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs transition"
+         x-data="{ copied: false, copy(text) { navigator.clipboard?.writeText(text).then(() => { this.copied = true; setTimeout(() => this.copied = false, 2000); }); } }">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
+            <div class="flex items-start gap-2 min-w-0">
+                <div class="w-7 h-7 rounded-lg bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center text-sm shrink-0">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                </div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-xs font-black text-slate-900 dark:text-white tracking-tight">{{ __('messages.sync_api_key') }}</span>
+                        @if($store->hasSyncApiKey())
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800/60">
+                                {{ __('messages.sync_key_active') }} · <span class="font-mono">••••{{ $store->sync_api_key_last4 }}</span>
+                            </span>
+                            @if($store->sync_api_key_rotated_at)
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                                    {{ $store->sync_api_key_rotated_at->format('Y-m-d H:i') }}
+                                </span>
+                            @endif
+                        @else
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-400 dark:border-rose-800/60">
+                                {{ __('messages.sync_key_none') }}
+                            </span>
+                        @endif
+                    </div>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                        {{ __('messages.sync_api_key_desc') }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 shrink-0">
+                <form action="{{ route('store.admin.sync.key.rotate', $storeRouteParams) }}" method="POST"
+                      data-confirm="{{ __('messages.sync_key_generate_confirm') }}">
+                    @csrf
+                    <button type="submit" class="sf-btn-3d-primary h-7 px-2.5 rounded-md text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>{{ $store->hasSyncApiKey() ? __('messages.sync_key_rotate') : __('messages.sync_key_generate') }}</span>
+                    </button>
+                </form>
+
+                @if($store->hasSyncApiKey())
+                    <form action="{{ route('store.admin.sync.key.revoke', $storeRouteParams) }}" method="POST"
+                          data-confirm="{{ __('messages.sync_key_revoke_confirm') }}">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="h-7 px-2.5 rounded-md text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer border border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950 transition">
+                            <span>{{ __('messages.sync_key_revoke') }}</span>
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </div>
+
+        {{-- Plaintext key is shown exactly once, immediately after generation. --}}
+        @if(session('sync_api_key_plaintext'))
+            <div class="mt-2 rounded border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/40 p-2">
+                <div class="flex items-center gap-1.5 mb-1">
+                    <span class="text-[10px] font-black text-amber-800 dark:text-amber-400 uppercase tracking-wide">
+                        {{ __('messages.sync_key_show_once') }}
+                    </span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <code class="flex-1 min-w-0 text-[11px] font-mono break-all bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/60 rounded px-2 py-1 text-slate-900 dark:text-amber-200 select-all">{{ session('sync_api_key_plaintext') }}</code>
+                    <button type="button" @click="copy(@js(session('sync_api_key_plaintext')))"
+                            class="h-7 px-2.5 shrink-0 rounded-md text-xs font-bold border border-amber-300 dark:border-amber-700/60 bg-white dark:bg-slate-900 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950 transition cursor-pointer">
+                        <span x-text="copied ? '{{ __('messages.copied') }}' : '{{ __('messages.copy') }}'"></span>
+                    </button>
+                </div>
+                <p class="text-[10px] text-amber-700 dark:text-amber-500 mt-1 leading-snug">
+                    {{ __('messages.sync_key_usage_hint') }}
+                </p>
+            </div>
+        @endif
+    </div>
+
     {{-- 2. Centered Row-based 4 Stat Cards (Standard v4.1) --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1 select-none">
         <div class="rounded border p-1.5 sm:p-2 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"

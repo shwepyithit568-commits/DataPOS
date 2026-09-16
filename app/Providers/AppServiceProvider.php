@@ -78,6 +78,12 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->ip());
         });
 
+        // Offline sync API: keyed per store so a known slug cannot be used to
+        // brute-force that store's sync key from many IPs.
+        RateLimiter::for('sync', function (Request $request) {
+            return Limit::perMinute(120)->by('sync|' . (string) $request->route('slug'));
+        });
+
         View::composer('layouts.admin.app', function ($view) {
             $isPlatformScope = request()->is('admin/*') && ! request()->is('store/*');
             $store = $isPlatformScope

@@ -149,11 +149,11 @@ class Phase8SecurityMaintenanceDataIsolationTest extends TestCase
             ->post("/store/{$this->storeA->slug}/admin/database/clear-cache")
             ->assertForbidden();
 
-        // 2. Store manager can access database maintenance tools
-        $response = $this->actingAs($this->managerA)
-            ->get("/store/{$this->storeA->slug}/admin/database");
-
-        $response->assertOk();
+        // 2. A store manager cannot either — these commands act on the shared
+        //    database (every store's rows), so they are platform-level.
+        $this->actingAs($this->managerA)
+            ->get("/store/{$this->storeA->slug}/admin/database")
+            ->assertForbidden();
     }
 
     public function test_user_management_owner_role_protection(): void

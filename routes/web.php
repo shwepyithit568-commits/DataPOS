@@ -815,25 +815,37 @@ Route::prefix('store/{store_slug}')
         Route::get('/admin/import-history/{history}/errors', [ImportHistoryController::class, 'downloadErrors'])->name('store.admin.import-history.errors')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:product_import.view']);
         Route::delete('/admin/import-history/{history}', [ImportHistoryController::class, 'destroy'])->name('store.admin.import-history.destroy')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:product_import.delete']);
 
-        // Database backups & restore
-        Route::get('/admin/backups', [BackupController::class, 'index'])->name('store.admin.backups.index')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:backups.view']);
-        Route::post('/admin/backups', [BackupController::class, 'store'])->name('store.admin.backups.store')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:backups.create']);
+        // Database backups & restore.
+        // A backup is a dump of the WHOLE database plus every store's media, and
+        // restore overwrites all of it — so these are platform-level operations.
+        // Store-scoped access here would let one tenant read and destroy every
+        // other tenant's data.
+        Route::get('/admin/backups', [BackupController::class, 'index'])->name('store.admin.backups.index')->middleware([EnsureStoreAccess::class . ':store_manager', 'platform_owner', 'store.permission:backups.view']);
+        Route::post('/admin/backups', [BackupController::class, 'store'])->name('store.admin.backups.store')->middleware([EnsureStoreAccess::class . ':store_manager', 'platform_owner', 'store.permission:backups.create']);
 
         // Offline-to-Cloud Sync Manager & Outbox Queue
         Route::get('/admin/sync', [\App\Http\Controllers\Admin\SyncAdminController::class, 'index'])->name('store.admin.sync.index')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.view']);
         Route::post('/admin/sync/retry/{id}', [\App\Http\Controllers\Admin\SyncAdminController::class, 'retry'])->name('store.admin.sync.retry')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.update']);
         Route::post('/admin/sync/retry-all', [\App\Http\Controllers\Admin\SyncAdminController::class, 'retryAll'])->name('store.admin.sync.retry_all')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.update']);
-        Route::get('/admin/backups/{file}/download', [BackupController::class, 'download'])->name('store.admin.backups.download')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:backups.view']);
-        Route::delete('/admin/backups/{file}', [BackupController::class, 'destroy'])->name('store.admin.backups.destroy')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:backups.delete']);
-        Route::post('/admin/backups/restore', [BackupController::class, 'restore'])->name('store.admin.backups.restore')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:backups.create']);
-        Route::post('/admin/backups/upload-restore', [BackupController::class, 'uploadRestore'])->name('store.admin.backups.upload_restore')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:backups.create']);
+        // Session-authenticated replacements for the status widget's old
+        // unauthenticated calls to /api/v1/.../sync/*.
+        Route::get('/admin/sync/status', [\App\Http\Controllers\Admin\SyncAdminController::class, 'status'])->name('store.admin.sync.status')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.view']);
+        Route::post('/admin/sync/trigger', [\App\Http\Controllers\Admin\SyncAdminController::class, 'trigger'])->name('store.admin.sync.trigger')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.update']);
+        // Terminal credential for the machine-to-machine sync API.
+        Route::post('/admin/sync/key', [\App\Http\Controllers\Admin\SyncAdminController::class, 'rotateKey'])->name('store.admin.sync.key.rotate')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:settings.update']);
+        Route::delete('/admin/sync/key', [\App\Http\Controllers\Admin\SyncAdminController::class, 'revokeKey'])->name('store.admin.sync.key.revoke')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:settings.update']);
+        Route::get('/admin/backups/{file}/download', [BackupController::class, 'download'])->name('store.admin.backups.download')->middleware([EnsureStoreAccess::class . ':store_manager', 'platform_owner', 'store.permission:backups.view']);
+        Route::delete('/admin/backups/{file}', [BackupController::class, 'destroy'])->name('store.admin.backups.destroy')->middleware([EnsureStoreAccess::class . ':store_manager', 'platform_owner', 'store.permission:backups.delete']);
+        Route::post('/admin/backups/restore', [BackupController::class, 'restore'])->name('store.admin.backups.restore')->middleware([EnsureStoreAccess::class . ':store_manager', 'platform_owner', 'store.permission:backups.create']);
+        Route::post('/admin/backups/upload-restore', [BackupController::class, 'uploadRestore'])->name('store.admin.backups.upload_restore')->middleware([EnsureStoreAccess::class . ':store_manager', 'platform_owner', 'store.permission:backups.create']);
 
-        // Database Tools & Optimizer (sidebar_database)
-        Route::get('/admin/database', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'index'])->name('store.admin.database.index')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:database.view']);
-        Route::post('/admin/database/vacuum', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'vacuum'])->name('store.admin.database.vacuum')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:database.update']);
-        Route::post('/admin/database/optimize', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'optimize'])->name('store.admin.database.optimize')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:database.update']);
-        Route::post('/admin/database/integrity-check', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'integrityCheck'])->name('store.admin.database.integrity')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:database.update']);
-        Route::post('/admin/database/clear-cache', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'clearCache'])->name('store.admin.database.clear_cache')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:database.update']);
+        // Database Tools & Optimizer (sidebar_database). VACUUM/OPTIMIZE/PRAGMA
+        // act on the shared database, so they are platform-level too.
+        Route::get('/admin/database', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'index'])->name('store.admin.database.index')->middleware([EnsureStoreAccess::class . ':store_manager', 'platform_owner', 'store.permission:database.view']);
+        Route::post('/admin/database/vacuum', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'vacuum'])->name('store.admin.database.vacuum')->middleware([EnsureStoreAccess::class . ':store_manager', 'platform_owner', 'store.permission:database.update']);
+        Route::post('/admin/database/optimize', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'optimize'])->name('store.admin.database.optimize')->middleware([EnsureStoreAccess::class . ':store_manager', 'platform_owner', 'store.permission:database.update']);
+        Route::post('/admin/database/integrity-check', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'integrityCheck'])->name('store.admin.database.integrity')->middleware([EnsureStoreAccess::class . ':store_manager', 'platform_owner', 'store.permission:database.update']);
+        Route::post('/admin/database/clear-cache', [\App\Http\Controllers\Admin\DatabaseToolController::class, 'clearCache'])->name('store.admin.database.clear_cache')->middleware([EnsureStoreAccess::class . ':store_manager', 'platform_owner', 'store.permission:database.update']);
 
         // System Alert Center & Notifications (sidebar_alerts)
         Route::get('/admin/alerts', [\App\Http\Controllers\Admin\SystemAlertCenterController::class, 'index'])->name('store.admin.alerts.index')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:alerts.view']);

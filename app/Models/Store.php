@@ -44,7 +44,64 @@ class Store extends Model
         'max_branches'           => 'integer',
         'capabilities_override'  => 'array',
         'sales_channels'         => 'array',
+        'sync_api_key_rotated_at' => 'datetime',
     ];
+
+    /**
+     * Never serialize the sync credential. `sync_api_key_hash` is deliberately
+     * left out of $fillable too, so it can only be written through
+     * generateSyncApiKey().
+     */
+    protected $hidden = [
+        'sync_api_key_hash',
+    ];
+
+    /**
+     * Issue a new sync API key for this store, replacing any existing one.
+     *
+     * Returns the plaintext key — it is shown to the operator exactly once and
+     * only the hash is persisted.
+     */
+    public function generateSyncApiKey(): string
+    {
+        $key = 'dps_' . bin2hex(random_bytes(24));
+
+        $this->forceFill([
+            'sync_api_key_hash'       => hash('sha256', $key),
+            'sync_api_key_last4'      => substr($key, -4),
+            'sync_api_key_rotated_at' => now(),
+        ])->save();
+
+        return $key;
+    }
+
+    public function hasSyncApiKey(): bool
+    {
+        return ! empty($this->sync_api_key_hash);
+    }
+
+    public function revokeSyncApiKey(): void
+    {
+        $this->forceFill([
+            'sync_api_key_hash'       => null,
+            'sync_api_key_last4'      => null,
+            'sync_api_key_rotated_at' => null,
+        ])->save();
+    }
+
+    /**
+     * Constant-time check of a presented sync key against the stored hash.
+     */
+    public function verifySyncApiKey(?string $key): bool
+    {
+        $hash = (string) $this->sync_api_key_hash;
+
+        if ($hash === '' || $key === null || $key === '') {
+            return false;
+        }
+
+        return hash_equals($hash, hash('sha256', $key));
+    }
 
     public function users(): BelongsToMany
     {

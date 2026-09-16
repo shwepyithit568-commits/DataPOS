@@ -100,7 +100,9 @@ class CashierShiftService
         $this->assertOpen($shift);
 
         $type = $data['type'];
-        $amount = (string) ($data['amount'] ?? '0');
+        // Normalize to an exact decimal: bccomp below and the increment() call
+        // further down both need a value bcmath/SQL can parse verbatim.
+        $amount = bcadd((string) ($data['amount'] ?? '0'), '0', 2);
 
         if (! in_array($type, ['cash_in', 'cash_out'], true)) {
             throw new InventoryException("Unknown cash event type '{$type}'.");
@@ -120,7 +122,9 @@ class CashierShiftService
                 'created_by' => $actor?->id,
             ]);
 
-            $shift->increment($type === 'cash_in' ? 'cash_in' : 'cash_out', (float) $amount);
+            // Decimal string, not a float: increment() hands this straight to
+            // SQL, where a float would let binary rounding reach the column.
+            $shift->increment($type === 'cash_in' ? 'cash_in' : 'cash_out', $amount);
 
             return $event;
         });

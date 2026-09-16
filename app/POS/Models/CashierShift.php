@@ -52,6 +52,23 @@ class CashierShift extends Model
         'closed_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        // Backs the unique index that enforces "one open shift per register".
+        // Closed shifts store NULL so any number of past closings on the same
+        // register may coexist (NULLs never collide in a unique index).
+        static::saving(function (self $shift): void {
+            if ($shift->status !== 'open') {
+                $shift->open_shift_key = null;
+
+                return;
+            }
+
+            $storeId = $shift->store_id ?? $shift->getOriginal('store_id');
+            $shift->open_shift_key = $storeId . ':' . $shift->register_name;
+        });
+    }
+
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);

@@ -25,6 +25,7 @@ class OfflineSyncEngineTest extends TestCase
     private User $customer;
     private Product $product;
     private CashierShift $shift;
+    private string $syncKey;
 
     protected function setUp(): void
     {
@@ -37,6 +38,11 @@ class OfflineSyncEngineTest extends TestCase
             'currency'      => 'MMK',
             'is_active'     => true,
         ]);
+
+        // The sync API is machine-to-machine and authenticates with the store's
+        // key — a session is no longer accepted.
+        $this->syncKey = $this->store->generateSyncApiKey();
+        $this->withHeaders(['X-Sync-Key' => $this->syncKey]);
 
         $this->owner = User::factory()->create(['role' => 'store_manager']);
         $this->owner->stores()->attach($this->store->id, ['role' => 'store_manager']);

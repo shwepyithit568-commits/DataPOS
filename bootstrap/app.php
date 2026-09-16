@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'store.channel' => \App\Http\Middleware\CheckStoreChannel::class,
             'store.permission' => \App\Http\Middleware\CheckStorePermission::class,
             'finance_access' => \App\Http\Middleware\EnsureFinanceAccess::class,
+            'sync.auth' => \App\Http\Middleware\AuthenticateSyncRequest::class,
         ]);
 
         $middleware->trustProxies(at: '*');

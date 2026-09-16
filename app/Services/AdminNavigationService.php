@@ -1065,6 +1065,8 @@ class AdminNavigationService
                             'route_name' => 'store.admin.database.index',
                             'required_roles' => ['store_owner'],
                             'required_permissions' => ['database.view', 'database.edit'],
+                            // VACUUM/OPTIMIZE run against the shared database.
+                            'platform_owner_only' => true,
                             'active_patterns' => ['route:store.admin.database.*'],
                             'icon' => '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
                         ],
@@ -1082,6 +1084,8 @@ class AdminNavigationService
                             'route_name' => 'store.admin.backups.index',
                             'required_roles' => ['store_owner', 'store_manager'],
                             'required_permissions' => ['backups.view', 'backups.edit'],
+                            // Whole-database dump + restore: platform-level only.
+                            'platform_owner_only' => true,
                             'active_patterns' => ['path:store/*/admin/backups*'],
                             'icon' => '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M13 6l6 6-6 6M19 12H5"/></svg>',
                         ],

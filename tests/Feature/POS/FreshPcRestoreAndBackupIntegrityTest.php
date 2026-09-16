@@ -68,6 +68,20 @@ class FreshPcRestoreAndBackupIntegrityTest extends TestCase
     }
 
     /**
+     * Whole-database backup/restore is platform-level: the dump spans every
+     * store, so a per-store role cannot be granted access to it.
+     */
+    private function platformOwner(): User
+    {
+        return User::create([
+            'name' => 'Platform Owner ' . Str::random(4),
+            'phone' => '09' . rand(10000000, 99999999),
+            'password' => bcrypt('password'),
+            'role' => 'platform_owner',
+        ]);
+    }
+
+    /**
      * §13.1 Full System Backup Export UAT:
      * Generates ZIP archive with database.sql, media files, and manifest.json.
      */
@@ -368,11 +382,11 @@ class FreshPcRestoreAndBackupIntegrityTest extends TestCase
      * §19/§20 Admin Backup Management UI & AuditLog UAT:
      * Store Owner can view backup lists, trigger manual backup, and download file.
      */
-    public function test_backup_controller_endpoints_for_store_owner(): void
+    public function test_backup_controller_endpoints_for_platform_owner(): void
     {
         Storage::fake('local');
         $store = $this->makeStore('Admin Backup Control Hub');
-        $owner = $this->storeOwner($store);
+        $owner = $this->platformOwner();
 
         $this->actingAs($owner);
 

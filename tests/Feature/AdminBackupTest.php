@@ -16,6 +16,7 @@ class AdminBackupTest extends TestCase
     protected Store $store;
     protected User $manager;
     protected User $staff;
+    protected User $platformOwner;
 
     protected function setUp(): void
     {
@@ -24,6 +25,14 @@ class AdminBackupTest extends TestCase
         Storage::fake('local');
 
         $this->store = Store::create(['name' => 'DataPOS Backup', 'slug' => 'datapos-backup']);
+
+        // Whole-database backup/restore is a platform-level operation: a dump
+        // contains every store's rows and media, so a per-store role is not
+        // enough (see PlatformOnlyDatabaseAccessTest for the denial cases).
+        $this->platformOwner = User::factory()->create([
+            'phone' => '09111111000',
+            'role'  => 'platform_owner',
+        ]);
 
         $this->manager = User::factory()->create(['phone' => '09111111001']);
         $this->manager->stores()->attach($this->store->id, ['role' => 'store_manager']);
@@ -49,9 +58,9 @@ class AdminBackupTest extends TestCase
         $this->assertStringContainsString('DataPOS database backup', $content);
     }
 
-    public function test_manager_can_view_backups_page(): void
+    public function test_platform_owner_can_view_backups_page(): void
     {
-        $response = $this->actingAs($this->manager)
+        $response = $this->actingAs($this->platformOwner)
             ->get("/store/{$this->store->slug}/admin/backups");
 
         $response->assertOk();
@@ -67,9 +76,17 @@ class AdminBackupTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_manager_can_create_backup_from_admin(): void
+    public function test_store_manager_cannot_access_backups_page(): void
     {
         $response = $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/backups");
+
+        $response->assertForbidden();
+    }
+
+    public function test_platform_owner_can_create_backup_from_admin(): void
+    {
+        $response = $this->actingAs($this->platformOwner)
             ->post("/store/{$this->store->slug}/admin/backups");
 
         $response->assertRedirect();
@@ -80,12 +97,12 @@ class AdminBackupTest extends TestCase
         $this->assertTrue(str_ends_with($files[0], '.zip') || str_ends_with($files[0], '.sql'));
     }
 
-    public function test_manager_can_download_backup(): void
+    public function test_platform_owner_can_download_backup(): void
     {
         $service = new DatabaseBackupService();
         $result = $service->create('download');
 
-        $response = $this->actingAs($this->manager)
+        $response = $this->actingAs($this->platformOwner)
             ->get("/store/{$this->store->slug}/admin/backups/{$result['filename']}/download");
 
         $response->assertOk();
@@ -94,18 +111,18 @@ class AdminBackupTest extends TestCase
 
     public function test_download_missing_backup_returns_404(): void
     {
-        $response = $this->actingAs($this->manager)
+        $response = $this->actingAs($this->platformOwner)
             ->get("/store/{$this->store->slug}/admin/backups/nope_2020-01-01_000000.sqlite.sql/download");
 
         $response->assertNotFound();
     }
 
-    public function test_manager_can_delete_backup(): void
+    public function test_platform_owner_can_delete_backup(): void
     {
         $service = new DatabaseBackupService();
         $result = $service->create('delete-me');
 
-        $response = $this->actingAs($this->manager)
+        $response = $this->actingAs($this->platformOwner)
             ->delete("/store/{$this->store->slug}/admin/backups/{$result['filename']}");
 
         $response->assertRedirect();

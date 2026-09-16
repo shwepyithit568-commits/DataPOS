@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\AuthenticateSyncRequest;
 use App\Models\Store;
 use App\Services\OfflineSyncService;
 use Carbon\Carbon;
@@ -17,14 +18,22 @@ class SyncApiController extends Controller
     }
 
     /**
+     * Store resolved by AuthenticateSyncRequest; the key is already verified.
+     */
+    private function store(Request $request): Store
+    {
+        return $request->attributes->get(AuthenticateSyncRequest::STORE_ATTRIBUTE);
+    }
+
+    /**
      * Push batch of offline operational records.
      */
     public function push(Request $request, string $slug): JsonResponse
     {
-        $store = Store::where('slug', $slug)->firstOrFail();
+        $store = $this->store($request);
 
         $validated = $request->validate([
-            'records'                         => ['required', 'array', 'min:1'],
+            'records'                         => ['required', 'array', 'min:1', 'max:500'],
             'records.*.client_transaction_id' => ['required', 'string', 'max:64'],
             'records.*.record_type'           => ['required', 'string', 'in:pos_sale,customer_debt,expense'],
             'records.*.payload'               => ['required', 'array'],
@@ -46,7 +55,7 @@ class SyncApiController extends Controller
      */
     public function pull(Request $request, string $slug): JsonResponse
     {
-        $store = Store::where('slug', $slug)->firstOrFail();
+        $store = $this->store($request);
 
         $since = $request->query('since') ? Carbon::parse($request->query('since')) : null;
         $delta = $this->syncService->getPullDelta($store, $since);
@@ -63,7 +72,7 @@ class SyncApiController extends Controller
      */
     public function status(Request $request, string $slug): JsonResponse
     {
-        $store = Store::where('slug', $slug)->firstOrFail();
+        $store = $this->store($request);
         $health = $this->syncService->getSyncHealth($store);
 
         return response()->json([
@@ -79,7 +88,7 @@ class SyncApiController extends Controller
      */
     public function trigger(Request $request, string $slug): JsonResponse
     {
-        $store = Store::where('slug', $slug)->firstOrFail();
+        $store = $this->store($request);
         $pending = $this->syncService->getPendingQueue($store);
 
         if ($pending->isEmpty()) {

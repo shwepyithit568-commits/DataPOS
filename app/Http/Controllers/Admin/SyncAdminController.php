@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Store;
 use App\Models\SyncOutboxRecord;
 use App\Services\OfflineSyncService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -82,5 +84,98 @@ class SyncAdminController extends Controller
         $syncedCount = count(array_filter($results, fn ($r) => ($r['status'] ?? '') === 'synced'));
 
         return redirect()->back()->with('success', "Processed {$syncedCount} of " . count($results) . " records successfully.");
+    }
+
+    /**
+     * Issue a new sync API key, invalidating any previously installed one.
+     *
+     * The plaintext key is flashed so it can be shown exactly once on the Sync
+     * screen; only its hash is persisted.
+     */
+    public function rotateKey(Request $request, string $store_slug): RedirectResponse
+    {
+        $store = Store::where('slug', $store_slug)->firstOrFail();
+
+        $key = $store->generateSyncApiKey();
+
+        AuditLog::write(
+            $store->id,
+            'sync_api_key_rotated',
+            'store',
+            $store->id,
+            ['last4' => $store->sync_api_key_last4],
+            auth()->id(),
+            $request->ip()
+        );
+
+        return redirect()
+            ->route('store.admin.sync.index', ['store_slug' => $store->slug])
+            ->with('sync_api_key_plaintext', $key)
+            ->with('success', __('messages.sync_key_generated'));
+    }
+
+    /**
+     * Revoke the sync API key, disabling terminal sync until a new key is issued.
+     */
+    public function revokeKey(Request $request, string $store_slug): RedirectResponse
+    {
+        $store = Store::where('slug', $store_slug)->firstOrFail();
+
+        $store->revokeSyncApiKey();
+
+        AuditLog::write(
+            $store->id,
+            'sync_api_key_revoked',
+            'store',
+            $store->id,
+            [],
+            auth()->id(),
+            $request->ip()
+        );
+
+        return redirect()
+            ->route('store.admin.sync.index', ['store_slug' => $store->slug])
+            ->with('success', __('messages.sync_key_revoked'));
+    }
+
+    /**
+     * JSON sync health for the admin status widget (session-authenticated).
+     *
+     * Replaces the widget's old unauthenticated hit on /api/v1/.../sync/status.
+     */
+    public function status(Request $request, string $store_slug): JsonResponse
+    {
+        $store = Store::where('slug', $store_slug)->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'store'   => $store->slug,
+            'health'  => $this->syncService->getSyncHealth($store),
+        ]);
+    }
+
+    /**
+     * Process the pending outbox for the status widget (session-authenticated).
+     */
+    public function trigger(Request $request, string $store_slug): JsonResponse
+    {
+        $store = Store::where('slug', $store_slug)->firstOrFail();
+        $pending = $this->syncService->getPendingQueue($store);
+
+        if ($pending->isNotEmpty()) {
+            $records = $pending->map(fn ($r) => [
+                'client_transaction_id' => $r->client_transaction_id,
+                'record_type'           => $r->record_type,
+                'payload'               => $r->payload,
+                'created_offline_at'    => $r->created_offline_at?->toIso8601String(),
+            ])->all();
+
+            $this->syncService->processPushBatch($store, $records);
+        }
+
+        return response()->json([
+            'success' => true,
+            'health'  => $this->syncService->getSyncHealth($store),
+        ]);
     }
 }

@@ -24,16 +24,21 @@ Route::middleware(['web'])->prefix('push')->group(function () {
     Route::post('/test', [PushNotificationController::class, 'test']);
 });
 
-Route::prefix('v1/store/{slug}/sync')->group(function () {
-    // Batch ingest offline operational records
-    Route::post('/push', [SyncApiController::class, 'push']);
+// Offline-to-Cloud Auto Sync API. Machine-to-machine: every route requires the
+// store's sync API key (issued from the Sync admin screen). Throttling is keyed
+// per store so a known slug cannot be used to brute-force the key.
+Route::prefix('v1/store/{slug}/sync')
+    ->middleware(['sync.auth', 'throttle:sync'])
+    ->group(function () {
+        // Batch ingest offline operational records
+        Route::post('/push', [SyncApiController::class, 'push']);
 
-    // Delta pull for products, categories, customers
-    Route::get('/pull', [SyncApiController::class, 'pull']);
+        // Delta pull for products, categories, customers
+        Route::get('/pull', [SyncApiController::class, 'pull']);
 
-    // Live sync status and health stats
-    Route::get('/status', [SyncApiController::class, 'status']);
+        // Live sync status and health stats
+        Route::get('/status', [SyncApiController::class, 'status']);
 
-    // Trigger immediate sync
-    Route::post('/trigger', [SyncApiController::class, 'trigger']);
-});
+        // Trigger immediate sync
+        Route::post('/trigger', [SyncApiController::class, 'trigger']);
+    });

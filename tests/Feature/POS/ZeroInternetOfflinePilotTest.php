@@ -134,7 +134,12 @@ class ZeroInternetOfflinePilotTest extends TestCase
         $staff = $this->staff($store);
         $this->actingAs($staff);
 
-        $statusResponse = $this->getJson("/api/v1/store/{$store->slug}/sync/status");
+        // The sync API is machine-to-machine: it requires the store's sync key
+        // (a logged-in session alone is not enough).
+        $syncKey = $store->generateSyncApiKey();
+
+        $statusResponse = $this->withHeaders(['X-Sync-Key' => $syncKey])
+            ->getJson("/api/v1/store/{$store->slug}/sync/status");
         $statusResponse->assertOk();
         $statusResponse->assertJsonStructure([
             'health' => [
@@ -143,7 +148,8 @@ class ZeroInternetOfflinePilotTest extends TestCase
             ],
         ]);
 
-        $triggerResponse = $this->postJson("/api/v1/store/{$store->slug}/sync/trigger");
+        $triggerResponse = $this->withHeaders(['X-Sync-Key' => $syncKey])
+            ->postJson("/api/v1/store/{$store->slug}/sync/trigger");
         $triggerResponse->assertOk();
     }
 }

@@ -14,6 +14,7 @@ class DatabaseToolTest extends TestCase
     protected Store $store;
     protected User $manager;
     protected User $staff;
+    protected User $platformOwner;
 
     protected function setUp(): void
     {
@@ -22,6 +23,10 @@ class DatabaseToolTest extends TestCase
         $this->store = Store::create(['name' => 'Database Test Store', 'slug' => 'database-test-store']);
         $this->store->setting()->create(['store_name' => 'Database Test Store', 'default_language' => 'en']);
 
+        // VACUUM / OPTIMIZE / integrity checks run against the shared database,
+        // so they are platform-level operations.
+        $this->platformOwner = User::factory()->create(['name' => 'Platform Owner', 'phone' => '09111000111', 'role' => 'platform_owner']);
+
         $this->manager = User::factory()->create(['name' => 'Manager U Hla', 'phone' => '09111222333']);
         $this->manager->stores()->attach($this->store->id, ['role' => 'store_manager', 'status' => 'active']);
 
@@ -29,9 +34,16 @@ class DatabaseToolTest extends TestCase
         $this->staff->stores()->attach($this->store->id, ['role' => 'staff', 'status' => 'active']);
     }
 
-    public function test_manager_can_access_database_dashboard(): void
+    public function test_manager_cannot_access_database_dashboard(): void
     {
-        $response = $this->actingAs($this->manager)
+        $this->actingAs($this->manager)
+            ->get("/store/{$this->store->slug}/admin/database")
+            ->assertForbidden();
+    }
+
+    public function test_platform_owner_can_access_database_dashboard(): void
+    {
+        $response = $this->actingAs($this->platformOwner)
             ->get("/store/{$this->store->slug}/admin/database");
 
         $response->assertOk();
@@ -40,36 +52,36 @@ class DatabaseToolTest extends TestCase
         $response->assertSee('Integrity Health Check', false);
     }
 
-    public function test_manager_can_execute_vacuum(): void
+    public function test_platform_owner_can_execute_vacuum(): void
     {
-        $response = $this->actingAs($this->manager)
+        $response = $this->actingAs($this->platformOwner)
             ->post("/store/{$this->store->slug}/admin/database/vacuum");
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
     }
 
-    public function test_manager_can_execute_optimize(): void
+    public function test_platform_owner_can_execute_optimize(): void
     {
-        $response = $this->actingAs($this->manager)
+        $response = $this->actingAs($this->platformOwner)
             ->post("/store/{$this->store->slug}/admin/database/optimize");
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
     }
 
-    public function test_manager_can_execute_integrity_check(): void
+    public function test_platform_owner_can_execute_integrity_check(): void
     {
-        $response = $this->actingAs($this->manager)
+        $response = $this->actingAs($this->platformOwner)
             ->post("/store/{$this->store->slug}/admin/database/integrity-check");
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
     }
 
-    public function test_manager_can_clear_cache(): void
+    public function test_platform_owner_can_clear_cache(): void
     {
-        $response = $this->actingAs($this->manager)
+        $response = $this->actingAs($this->platformOwner)
             ->post("/store/{$this->store->slug}/admin/database/clear-cache");
 
         $response->assertRedirect();

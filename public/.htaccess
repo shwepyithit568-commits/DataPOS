@@ -1,3 +1,15 @@
+# The application root denies everything (../.htaccess). This subtree is the
+# real webroot, so access must be re-granted here — a child .htaccess that
+# declares its own `Require` replaces the inherited one rather than merging.
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Allow from all
+</IfModule>
+
 # Hostinger/LiteSpeed injects a bare `upgrade-insecure-requests` CSP at the
 # vhost level, which replaces the app's full policy (incl. frame-src for the
 # Google Maps footer iframe and YouTube embeds). Directory-level Header

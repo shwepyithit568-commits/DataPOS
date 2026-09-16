@@ -1,0 +1,17 @@
+# The Laravel application root is NOT a webroot — only public/ is.
+#
+# XAMPP's DocumentRoot is D:/xmapp/htdocs with `Options Indexes`, so without
+# this file http://localhost/DataPOS/ returns a directory listing and serves
+# .env (including APP_KEY), the MySQL dumps, source archives and every
+# root-level .php helper. Deny the whole tree here and re-grant access inside
+# public/ (see public/.htaccess), which is the only directory that should ever
+# be reachable over HTTP.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+# Apache 2.2 fallback
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

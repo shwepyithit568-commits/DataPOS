@@ -12,7 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('cashier_shifts', function (Blueprint $table) {
-            $table->text('variance_reason')->nullable()->after('closing_note');
+            // Anchor is `notes` — this table has no `closing_note` column. MySQL
+            // rejects `AFTER <missing column>`; SQLite silently ignores AFTER,
+            // which is why the bad anchor only surfaced on the MySQL smoke test.
+            $table->text('variance_reason')->nullable()->after('notes');
             $table->foreignId('manager_signoff_id')->nullable()->constrained('users')->nullOnDelete()->after('variance_reason');
             $table->dateTime('signed_off_at')->nullable()->after('manager_signoff_id');
         });
