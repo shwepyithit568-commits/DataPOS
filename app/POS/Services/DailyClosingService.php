@@ -67,34 +67,41 @@ class DailyClosingService
             $cashIn = bcadd($cashIn, (string) $s->cash_in, 2);
         });
 
-        // 1. Drawer-paid cash expenses (authoritative source: expenses with payment_method='cash', payment_source='drawer', status='paid')
-        $drawerExpensesQuery = DB::table('expenses')
-            ->where('store_id', $store->id)
-            ->where('payment_method', 'cash')
-            ->where('payment_source', \App\POS\Models\Expense::SOURCE_DRAWER)
-            ->where('status', 'paid');
-
-        if (!empty($shiftIds)) {
-            $drawerExpensesQuery->where(function ($q) use ($shiftIds, $start, $endExclusive) {
-                $q->whereIn('cashier_shift_id', $shiftIds)
-                  ->orWhere(function ($sub) use ($start, $endExclusive) {
-                      $sub->whereNull('cashier_shift_id')
-                          ->whereDate('expense_date', '>=', $start->toDateString())
-                          ->whereDate('expense_date', '<', $endExclusive->toDateString());
-                  });
-            });
-        } else {
-            $drawerExpensesQuery->whereDate('expense_date', '>=', $start->toDateString())
-                                ->whereDate('expense_date', '<', $endExclusive->toDateString());
-        }
-
+        // 1. Drawer-paid cash expenses — the ONLY expense cash-out that reduces
+        //    the drawer. Built from the shared attribution query so the daily
+        //    total is exactly the sum of the same shifts' own close figures.
+        $drawerExpensesQuery = ExpenseCashAttribution::drawerDeductionQuery($store->id, $shiftIds);
         $drawerExpenses = exact_sum($drawerExpensesQuery, 'amount');
 
-        // 2. Other Cash Out: Non-expense cash events (safe drops, owner drawings, etc.)
-        // Reconciled shift-by-shift to ensure mixed legacy/current representations do NOT lose outflow (Fix B / F08).
+        // 1b. Paid cash expenses whose drawer cannot be proven (legacy rows with
+        //     no payment_source, or a 'drawer' claim with no shift). They are NOT
+        //     deducted — guessing a drawer is worse than reporting the gap — but
+        //     they stay visible so a period is never called balanced while a real
+        //     outflow is still unresolved.
+        $unresolvedQuery = DB::table('expenses')
+            ->where('store_id', $store->id)
+            ->where('status', 'paid')
+            ->where('payment_method', 'cash');
+        ExpenseCashAttribution::scopeFilter($unresolvedQuery, $shiftIds, $start, $endExclusive);
+        ExpenseCashAttribution::unprovenDrawerFilter($unresolvedQuery);
+
+        $unresolvedExpenses = exact_sum($unresolvedQuery, 'amount');
+        $unresolvedCount = (clone $unresolvedQuery)->count();
+        $unresolvedRefs = (clone $unresolvedQuery)->orderBy('id')->limit(20)->pluck('expense_number')->all();
+
+        // 2. Other Cash Out: non-expense cash events (safe drops, owner drawings,
+        //    drawer→safe transfers). Reconciled shift-by-shift so mixed
+        //    legacy/current representations neither lose nor double-count outflow.
         $cashOut = '0.00';
         if (!empty($shifts)) {
-            $linkedExpenseIds = (clone $drawerExpensesQuery)->pluck('id')->all();
+            $linkedExpenseIds = DB::table('expenses')
+                ->where('store_id', $store->id)
+                ->where('status', 'paid')
+                ->where('payment_method', 'cash')
+                ->where('payment_source', \App\POS\Models\Expense::SOURCE_DRAWER)
+                ->whereIn('cashier_shift_id', $shiftIds)
+                ->pluck('id')
+                ->all();
 
             foreach ($shifts as $s) {
                 $shiftHasEvents = DB::table('cash_events')->where('cashier_shift_id', $s->id)->exists();
@@ -119,20 +126,16 @@ class DailyClosingService
             }
         }
 
-        // 3. Other non-drawer cash expenses (e.g. paid from Safe, Petty Cash, Bank, or legacy unresolved)
-        $otherCashExpenses = exact_sum(
-            DB::table('expenses')
-                ->where('store_id', $store->id)
-                ->where('payment_method', 'cash')
-                ->where(function ($q) {
-                    $q->where('payment_source', '!=', \App\POS\Models\Expense::SOURCE_DRAWER)
-                      ->orWhereNull('payment_source');
-                })
-                ->where('status', 'paid')
-                ->whereDate('expense_date', '>=', $start->toDateString())
-                ->whereDate('expense_date', '<', $endExclusive->toDateString()),
-            'amount'
-        );
+        // 3. Confirmed non-drawer cash expenses (safe / petty cash / bank / other).
+        //    Reported for drill-down only — they never touch the POS drawer.
+        $otherCashQuery = DB::table('expenses')
+            ->where('store_id', $store->id)
+            ->where('status', 'paid')
+            ->where('payment_method', 'cash');
+        ExpenseCashAttribution::scopeFilter($otherCashQuery, $shiftIds, $start, $endExclusive);
+        ExpenseCashAttribution::confirmedNonDrawerFilter($otherCashQuery);
+
+        $otherCashExpenses = exact_sum($otherCashQuery, 'amount');
 
         // Authoritative Drawer Math (Section 4.3):
         // Expected Cash = Opening + Cash Sales + Other Cash In - Cash Refunds - Drawer Expenses - Other Cash Out
@@ -240,31 +243,32 @@ class DailyClosingService
             'cash_expenses' => bcadd($drawerExpenses, '0', 2),
             // Store cash expenses paid from Safe, Petty Cash, or other non-drawer accounts.
             'other_cash_expenses' => bcadd($otherCashExpenses, '0', 2),
+            // Paid cash expenses whose drawer is unproven. Deliberately kept out of
+            // `drawer_expenses` (no guessing) and out of `other_cash_expenses`
+            // (a NULL source is not proof of "safe").
+            'unresolved_cash_expenses' => bcadd($unresolvedExpenses, '0', 2),
+            'unresolved_expense_count' => $unresolvedCount,
+            'unresolved_expense_refs' => $unresolvedRefs,
+            'is_reconciled' => ExpenseCashAttribution::isReconciled($unresolvedExpenses, $unresolvedCount),
             'expected_cash' => $drawerCash,
         ];
 
-        // Retrieve all expenses for the business date with category/recorder/shift for drill-down breakdown.
+        // Retrieve all expenses for the business date with category/recorder/shift
+        // for drill-down breakdown. Scope matches the deduction queries exactly, so
+        // summing the rows the UI marks as "deducted" reproduces drawer_expenses.
         $expensesQuery = \App\POS\Models\Expense::query()
             ->where('store_id', $store->id);
 
-        if (!empty($shiftIds)) {
-            $expensesQuery->where(function ($q) use ($shiftIds, $start, $endExclusive) {
-                $q->whereIn('cashier_shift_id', $shiftIds)
-                  ->orWhere(function ($sub) use ($start, $endExclusive) {
-                      $sub->whereNull('cashier_shift_id')
-                          ->whereDate('expense_date', '>=', $start->toDateString())
-                          ->whereDate('expense_date', '<', $endExclusive->toDateString());
-                  });
-            });
-        } else {
-            $expensesQuery->whereDate('expense_date', '>=', $start->toDateString())
-                          ->whereDate('expense_date', '<', $endExclusive->toDateString());
-        }
+        ExpenseCashAttribution::scopeFilter($expensesQuery, $shiftIds, $start, $endExclusive);
 
         $dayExpenses = $expensesQuery
             ->with(['category', 'recorder', 'shift'])
             ->orderBy('id', 'desc')
-            ->get();
+            ->get()
+            ->each(fn (\App\POS\Models\Expense $e) => $e->setAttribute(
+                'cash_out_state',
+                ExpenseCashAttribution::stateFor($e, $shiftIds)
+            ));
 
         return [
             'opening_amount' => bcadd($opening, '0', 2),
@@ -272,6 +276,7 @@ class DailyClosingService
             'date' => $date->toDateString(),
             'summary' => $summary,
             'expenses' => $dayExpenses,
+            'scope_shift_ids' => array_map('intval', $shiftIds),
         ];
     }
 
@@ -431,8 +436,13 @@ class DailyClosingService
                 'counted_totals' => $normalized,
                 'differences' => $differences,
                 'summary_snapshot' => [
-                    'version' => 1,
+                    'version' => 2,
                     'metrics' => $totals['summary'],
+                    // Historical expense detail, frozen at closing time. Without it
+                    // an approved closing would have to re-query live expenses to
+                    // explain its own totals, which is not historical evidence.
+                    'expenses' => $this->snapshotExpenseDetail($totals),
+                    'detail_available' => true,
                 ],
                 'total_difference' => $totalDifference,
                 'explanation' => trim((string) $explanation) !== '' ? $explanation : null,
@@ -453,6 +463,61 @@ class DailyClosingService
 
             return $closing;
         });
+    }
+
+    /**
+     * Freeze the day's expense detail into the closing snapshot.
+     *
+     * Bounded on purpose: a closing must stay a legal-size document, so only the
+     * first `$limit` rows are kept and the true row count is recorded alongside.
+     * Returns a plain array (no Eloquent models) so the snapshot JSON never
+     * depends on model casts or relations that may change later.
+     *
+     * @param  array<string, mixed>  $totals
+     * @return array{rows:list<array<string,mixed>>,total:int,truncated:bool,dropped_amount:string}
+     */
+    private function snapshotExpenseDetail(array $totals, int $limit = 200): array
+    {
+        $expenses = $totals['expenses'] ?? collect();
+        $scopeShiftIds = $totals['scope_shift_ids'] ?? [];
+
+        $rows = [];
+        $droppedAmount = '0';
+        $index = 0;
+
+        foreach ($expenses as $exp) {
+            $state = ExpenseCashAttribution::stateFor($exp, $scopeShiftIds);
+
+            if ($index >= $limit) {
+                if (ExpenseCashAttribution::isDeducted($state)) {
+                    $droppedAmount = bcadd($droppedAmount, (string) $exp->amount, 2);
+                }
+                $index++;
+                continue;
+            }
+
+            $rows[] = [
+                'id' => (int) $exp->id,
+                'expense_number' => (string) $exp->expense_number,
+                'title' => (string) $exp->title,
+                'amount' => bcadd((string) $exp->amount, '0', 2),
+                'payment_method' => (string) $exp->payment_method,
+                'payment_source' => $exp->payment_source,
+                'cashier_shift_id' => $exp->cashier_shift_id !== null ? (int) $exp->cashier_shift_id : null,
+                'status' => (string) ($exp->status ?? 'paid'),
+                'state' => $state,
+                'expense_date' => $exp->expense_date?->format('Y-m-d'),
+                'created_at' => $exp->created_at?->toDateTimeString(),
+            ];
+            $index++;
+        }
+
+        return [
+            'rows' => $rows,
+            'total' => $index,
+            'truncated' => $index > count($rows),
+            'dropped_amount' => bcadd($droppedAmount, '0', 2),
+        ];
     }
 
     /**

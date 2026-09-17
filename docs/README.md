@@ -20,7 +20,10 @@
 4. [Production Readiness Audit Report](PRODUCTION_READINESS_AUDIT_REPORT.md)
 5. [Admin Print Audit Report](ADMIN_PRINT_AUDIT_REPORT.md)
 6. [Service Voucher Print Standard](SERVICE_VOUCHER_PRINT_STANDARD.md)
-7. [Consolidation Manifest](CONSOLIDATION_MANIFEST.md)
+7. [Closing Cash-Out Audit Fix](DataPOS_Closing_Cash_Out_Audit_Fix_MM.md) — ပထမ pass (`4de2cb3`)
+8. [Closing Follow-up Fix Prompt](DataPOS_Closing_Followup_Fix_Prompt_MM.md)
+9. [Closing Cash-Out Remaining Defects Fix](DataPOS_Closing_CashOut_Remaining_Defects_Fix_MM.md) — ဒုတိယ pass: retry protection, drawer attribution, unknown source, closed-shift lock, snapshot integrity
+10. [Consolidation Manifest](CONSOLIDATION_MANIFEST.md)
 
 ## Historical archive
 

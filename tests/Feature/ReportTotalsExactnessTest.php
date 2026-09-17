@@ -135,10 +135,20 @@ class ReportTotalsExactnessTest extends TestCase
 
         $this->assertSame($expected, exact_sum(Expense::where('store_id', $this->store->id), 'amount'));
 
-        // The plain SQL aggregate is the thing that drifts — this documents why
-        // exact_sum exists rather than a normalised `(float) sum()`.
+        // The plain SQL aggregate is the thing that drifts on SQLite — this
+        // documents why exact_sum exists rather than a normalised `(float) sum()`.
+        //
+        // The drift is an SQLite artefact, not a universal law: MySQL/MariaDB sum a
+        // DECIMAL column exactly, so there the raw aggregate agrees. Asserting "it
+        // must differ" would be asserting the wrong engine's behaviour on MySQL, so
+        // each engine gets the assertion that is actually true of it.
         $raw = number_format((float) DB::table('expenses')->where('store_id', $this->store->id)->sum('amount'), 2, '.', '');
-        $this->assertNotSame($expected, $raw);
+
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            $this->assertNotSame($expected, $raw, 'SQLite sums REAL here, so the plain aggregate is expected to drift.');
+        } else {
+            $this->assertSame($expected, $raw, 'This engine sums DECIMAL exactly — exact_sum must agree with the raw aggregate.');
+        }
     }
 
     /* ------------------------------------------------------------------ */

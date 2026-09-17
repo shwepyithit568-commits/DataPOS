@@ -253,6 +253,21 @@
             <span>{{ __('messages.pos_expense_shift_cash_sync') }}</span>
         </div>
 
+        {{-- Duplicate-submission conflict: the same submission already reached the
+             server, but with different values. Nothing was written for the new
+             values, and retrying must not silently resubmit them. --}}
+        <div x-show="expenseConflict" x-cloak
+             class="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 text-[11px] font-medium text-rose-800 dark:text-rose-300 space-y-2">
+            <div class="flex items-start gap-2">
+                <svg class="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span x-text="expenseConflict"></span>
+            </div>
+            <button type="button" @click="startNewExpenseAfterConflict()"
+                    class="w-full rounded-lg px-3 py-1.5 text-[11px] font-black bg-rose-600 hover:bg-rose-500 text-white transition cursor-pointer">
+                {{ __('messages.expense_record_as_new') }}
+            </button>
+        </div>
+
         {{-- Optional Paid To & Notes --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>

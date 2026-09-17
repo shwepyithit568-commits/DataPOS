@@ -22,6 +22,7 @@ class Expense extends Model
         'expense_category_id',
         'expense_number',
         'client_transaction_id',
+        'request_fingerprint',
         'title',
         'amount',
         'status',
@@ -104,5 +105,45 @@ class Expense extends Model
             Store::findOrFail($storeId),
             'expense'
         );
+    }
+
+    /**
+     * Can this expense still move money in its drawer/shift scope?
+     *
+     * Only a paid cash expense explicitly sourced from the drawer is deducted
+     * (see ExpenseCashAttribution). Unpaid/void rows and every other source
+     * never reduce a drawer.
+     */
+    public function affectsDrawer(): bool
+    {
+        return strtolower((string) ($this->status ?? 'paid')) === 'paid'
+            && strtolower((string) $this->payment_method) === 'cash'
+            && $this->payment_source === self::SOURCE_DRAWER
+            && $this->cashier_shift_id !== null;
+    }
+
+    /**
+     * The shift whose already-closed drawer math includes (or excluded) this
+     * expense. Returns null when nothing was ever deducted.
+     */
+    public function deductionShift(): ?CashierShift
+    {
+        if (! $this->affectsDrawer()) {
+            return null;
+        }
+
+        return $this->relationLoaded('shift')
+            ? $this->shift
+            : CashierShift::find($this->cashier_shift_id);
+    }
+
+    /**
+     * True when editing this row would silently rewrite a drawer that has
+     * already been counted and closed. Such a change must go through a reversal
+     * or an audited adjustment, not through a form edit.
+     */
+    public function isLockedByClosedShift(): bool
+    {
+        return $this->deductionShift()?->status === 'closed';
     }
 }

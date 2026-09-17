@@ -86,6 +86,61 @@ class DailyClosing extends Model
         return $this->belongsTo(Store::class);
     }
 
+    /**
+     * The expense detail as it stood when this closing was created.
+     *
+     * Returns null when the closing predates detail snapshots (v1: the original
+     * `version` + `metrics` shape). Callers must NOT fall back to live expenses
+     * in that case — live rows are not historical evidence for an approved
+     * document.
+     *
+     * @return list<array<string, mixed>>|null
+     */
+    public function frozenExpenseRows(): ?array
+    {
+        $snapshot = $this->summary_snapshot;
+
+        if (! is_array($snapshot) || ! array_key_exists('expenses', $snapshot)) {
+            return null;
+        }
+
+        $meta = $snapshot['expenses'];
+
+        return is_array($meta) && isset($meta['rows']) && is_array($meta['rows'])
+            ? array_values($meta['rows'])
+            : null;
+    }
+
+    /**
+     * True when this closing carries a real historical expense breakdown.
+     */
+    public function hasFrozenExpenseDetail(): bool
+    {
+        return $this->frozenExpenseRows() !== null;
+    }
+
+    /**
+     * Snapshot detail metadata: how many rows existed at closing time, and how
+     * much deducted cash-out was dropped when the bounded snapshot overflowed.
+     *
+     * @return array{total:int,truncated:bool,dropped_amount:string}
+     */
+    public function frozenExpenseMeta(): array
+    {
+        $snapshot = $this->summary_snapshot;
+        $meta = is_array($snapshot) ? ($snapshot['expenses'] ?? null) : null;
+
+        if (! is_array($meta)) {
+            return ['total' => 0, 'truncated' => false, 'dropped_amount' => '0.00'];
+        }
+
+        return [
+            'total' => (int) ($meta['total'] ?? count($meta['rows'] ?? [])),
+            'truncated' => (bool) ($meta['truncated'] ?? false),
+            'dropped_amount' => (string) ($meta['dropped_amount'] ?? '0.00'),
+        ];
+    }
+
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);

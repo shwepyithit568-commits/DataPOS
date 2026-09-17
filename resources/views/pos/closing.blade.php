@@ -313,7 +313,10 @@
                     <div class="flex items-center justify-between py-0.5 border-b border-slate-50 dark:border-slate-800/60">
                         <div class="flex items-center gap-1.5">
                             <span class="text-slate-500 font-semibold">{{ __('messages.drawer_expenses') }}</span>
-                            <button type="button" id="btn-view-expenses-closing" @click="showExpenseModal = true"
+                            {{-- @click.stop: the modal's own @click.away listens on the document,
+                                 so without stopping propagation this very click re-closes the
+                                 modal it just opened and the detail can never be reached. --}}
+                            <button type="button" id="btn-view-expenses-closing" @click.stop="showExpenseModal = true"
                                     class="text-[10px] font-bold px-1.5 py-0.5 rounded transition cursor-pointer {{ !empty($totals['expenses']) && $totals['expenses']->count() > 0 ? 'bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700' }}">
                                 {{ __('messages.view_expense_details') }} ({{ !empty($totals['expenses']) ? $totals['expenses']->count() : 0 }})
                             </button>
@@ -362,6 +365,23 @@
                         <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-[11px] text-slate-500 mt-2">
                             <span>✅ {{ __('messages.cash_reconciliation_equation') }}</span>
                             <p class="text-[10px] text-slate-400 mt-0.5">Expected = Opening + Cash Sales + In - Refunds - Expenses - Cash Out</p>
+                        </div>
+                    @endif
+
+                    {{-- A NULL/unknown payment source is not proof of "safe". While
+                         any paid cash expense cannot be tied to a drawer, this period
+                         must not be presented as balanced. --}}
+                    @if (! ($summary['is_reconciled'] ?? true))
+                        <div class="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 text-[11px] text-rose-900 dark:text-rose-200 mt-2">
+                            <div class="flex items-center justify-between font-bold">
+                                <span>⚠️ {{ __('messages.unresolved_cash_expenses') }}:</span>
+                                <span class="font-mono">{{ format_currency((float) ($summary['unresolved_cash_expenses'] ?? 0), $store) }}</span>
+                            </div>
+                            <p class="text-[10px] mt-0.5">{{ __('messages.unresolved_cash_out_notice') }}</p>
+                            @if (!empty($summary['unresolved_expense_refs']))
+                                <p class="text-[10px] font-mono mt-0.5">{{ implode(', ', $summary['unresolved_expense_refs']) }}</p>
+                            @endif
+                            <p class="text-[10px] font-bold mt-0.5">{{ __('messages.reconciliation_unresolved_blocked') }}</p>
                         </div>
                     @endif
                 </div>
@@ -742,26 +762,134 @@
                     </button>
                 </div>
 
+                @php
+                    // An approved closing is a historical document: its breakdown must
+                    // come from the frozen snapshot, because live expense rows are
+                    // today's truth, not what was signed off. Legacy closings (v1
+                    // snapshot) carry no detail at all — and saying so is the correct
+                    // answer. Rendering live rows to "explain" an old total would
+                    // present current data as historical evidence.
+                    $historical = $closing && $closing->isApproved();
+                    $frozenRows = $historical ? $closing->frozenExpenseRows() : null;
+                    $frozenMeta = $historical ? $closing->frozenExpenseMeta() : null;
+
+                    $detailRows = [];
+
+                    if ($historical) {
+                        foreach ($frozenRows ?? [] as $row) {
+                            $detailRows[] = [
+                                'number' => $row['expense_number'] ?? '—',
+                                'time' => ! empty($row['created_at']) ? \Illuminate\Support\Carbon::parse($row['created_at'])->format('H:i') : null,
+                                'title' => $row['title'] ?? '—',
+                                'category' => null,
+                                'state' => $row['state'] ?? \App\POS\Services\ExpenseCashAttribution::STATE_UNRESOLVED,
+                                'source' => $row['payment_source'] ?? null,
+                                'shift_id' => $row['cashier_shift_id'] ?? null,
+                                'register' => null,
+                                'amount' => $row['amount'] ?? '0.00',
+                            ];
+                        }
+                    } else {
+                        foreach ($totals['expenses'] ?? [] as $exp) {
+                            $detailRows[] = [
+                                'number' => $exp->expense_number,
+                                'time' => $exp->created_at?->format('H:i'),
+                                'title' => $exp->title,
+                                'category' => $exp->category?->name,
+                                'state' => $exp->cash_out_state,
+                                'source' => $exp->payment_source,
+                                'shift_id' => $exp->cashier_shift_id,
+                                'register' => $exp->shift?->register_name,
+                                'amount' => (string) $exp->amount,
+                            ];
+                        }
+                    }
+
+                    // The rows the UI marks "deducted" must add up to the drawer
+                    // subtotal. Computing it from the rows themselves is what keeps
+                    // the badge honest instead of asserting a deduction by column.
+                    $rowsDeductedTotal = '0.00';
+                    foreach ($detailRows as $detailRow) {
+                        if ($detailRow['state'] === \App\POS\Services\ExpenseCashAttribution::STATE_DEDUCTED) {
+                            $rowsDeductedTotal = bcadd($rowsDeductedTotal, (string) $detailRow['amount'], 2);
+                        }
+                    }
+
+                    // For an approved closing prefer the frozen metrics: the live ones
+                    // move whenever a source record is edited.
+                    $frozenMetrics = $historical ? $closing->getSummarySnapshot() : [];
+                    $legacySnapshot = $historical && $frozenRows === null;
+
+                    $headerDrawer = $historical
+                        ? ($frozenMetrics['drawer_expenses'] ?? null)
+                        : ($summary['drawer_expenses'] ?? null);
+
+                    // "Other account" cash-out is only shown when the metrics behind
+                    // it came from the current attribution rules. The superseded rule
+                    // folded unproven sources into this bucket, so repeating that
+                    // number would re-assert the very claim we no longer stand behind.
+                    $headerOtherCash = $legacySnapshot
+                        ? null
+                        : ($historical ? ($frozenMetrics['other_cash_expenses'] ?? null) : ($summary['other_cash_expenses'] ?? null));
+
+                    // Unresolved cash-out: from the frozen metrics when they carry
+                    // the classification, otherwise from the live ledger — flagged so
+                    // it is clear which of the two is being shown.
+                    $headerUnresolved = $legacySnapshot
+                        ? ($summary['unresolved_cash_expenses'] ?? null)
+                        : ($historical ? ($frozenMetrics['unresolved_cash_expenses'] ?? null) : ($summary['unresolved_cash_expenses'] ?? null));
+                @endphp
+
                 <div class="px-4 py-2 bg-slate-100/70 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div class="flex items-center gap-3">
                         <div>
                             <span class="text-slate-500 dark:text-slate-400 text-[11px]">{{ __('messages.drawer_expenses') }}:</span>
-                            <span class="font-mono font-bold text-rose-600 dark:text-rose-400 ml-1">{{ format_currency((float) ($summary['drawer_expenses'] ?? 0), $store) }}</span>
+                            <span class="font-mono font-bold text-rose-600 dark:text-rose-400 ml-1">
+                                {{ $headerDrawer !== null ? format_currency((float) $headerDrawer, $store) : '—' }}
+                            </span>
                         </div>
-                        @if (!empty($summary['other_cash_expenses']) && (float) $summary['other_cash_expenses'] > 0)
+                        <div>
+                            <span class="text-slate-500 dark:text-slate-400 text-[11px]">{{ __('messages.shown_rows_deducted_total') }}:</span>
+                            <span class="font-mono font-bold text-slate-700 dark:text-slate-300 ml-1">{{ format_currency((float) $rowsDeductedTotal, $store) }}</span>
+                        </div>
+                        @if ($headerOtherCash !== null && (float) $headerOtherCash > 0)
                             <div>
                                 <span class="text-slate-500 dark:text-slate-400 text-[11px]">{{ __('messages.other_cash_expenses') }}:</span>
-                                <span class="font-mono font-bold text-slate-700 dark:text-slate-300 ml-1">{{ format_currency((float) ($summary['other_cash_expenses'] ?? 0), $store) }}</span>
+                                <span class="font-mono font-bold text-slate-700 dark:text-slate-300 ml-1">{{ format_currency((float) $headerOtherCash, $store) }}</span>
                             </div>
                         @endif
                     </div>
-                    <span class="text-[10px] text-slate-400">
-                        {{ __('messages.non_drawer_expenses_notice') }}
-                    </span>
+                    <div class="flex items-center gap-2">
+                        @if ($historical)
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                                {{ __('messages.historical_snapshot') }}
+                            </span>
+                        @endif
+                        @if ($headerUnresolved !== null && (float) $headerUnresolved > 0)
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300"
+                                  @if ($legacySnapshot) title="{{ __('messages.live_ledger_classification') }}" @endif>
+                                ⚠️ {{ __('messages.unresolved_cash_expenses') }}:
+                                {{ format_currency((float) $headerUnresolved, $store) }}
+                                @if ($legacySnapshot)
+                                    <span class="font-normal">({{ __('messages.live_ledger_classification') }})</span>
+                                @endif
+                            </span>
+                        @endif
+                    </div>
                 </div>
 
                 <div class="p-3 max-h-96 overflow-y-auto">
-                    @if (!empty($totals['expenses']) && $totals['expenses']->count() > 0)
+                    @if ($frozenMeta && $frozenMeta['truncated'])
+                        <p class="mb-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-[10px] font-semibold text-amber-900 dark:text-amber-200">
+                            {{ __('messages.expense_detail_truncated', ['rows' => count($detailRows), 'total' => $frozenMeta['total']]) }}
+                        </p>
+                    @endif
+
+                    @if ($historical && $frozenRows === null)
+                        <p class="text-center text-xs text-slate-500 dark:text-slate-400 py-4 font-semibold">
+                            {{ __('messages.expense_detail_unavailable') }}
+                        </p>
+                    @elseif (count($detailRows) > 0)
                         <table class="w-full text-xs">
                             <thead>
                                 <tr class="text-slate-400 border-b border-slate-100 dark:border-slate-800 text-[11px]">
@@ -773,53 +901,59 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                @foreach ($totals['expenses'] as $exp)
+                                @foreach ($detailRows as $row)
                                     @php
-                                        $isDrawer = ($exp->payment_method === 'cash' && ($exp->payment_source === 'drawer' || $exp->cashier_shift_id));
+                                        $state = $row['state'];
+                                        $isDeducted = \App\POS\Services\ExpenseCashAttribution::isDeducted($state);
+                                        $stateBadge = match ($state) {
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_DEDUCTED => 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_UNRESOLVED => 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_UNPAID => 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
+                                            default => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+                                        };
+                                        $stateIcon = match ($state) {
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_DEDUCTED => '✅',
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_UNRESOLVED => '⚠️',
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_UNPAID => '⏳',
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_VOID => '🚫',
+                                            default => '•',
+                                        };
                                     @endphp
                                     <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                                         <td class="py-1.5 font-mono text-[11px] text-slate-500">
-                                            {{ $exp->expense_number }}
-                                            <div class="text-[10px] text-slate-400">{{ $exp->created_at?->format('H:i') }}</div>
+                                            {{ $row['number'] }}
+                                            @if ($row['time'])
+                                                <div class="text-[10px] text-slate-400">{{ $row['time'] }}</div>
+                                            @endif
                                         </td>
                                         <td class="py-1.5 font-semibold text-slate-900 dark:text-slate-100">
-                                            {{ $exp->title }}
-                                            @if ($exp->category)
-                                                <span class="block text-[10px] text-slate-400">{{ $exp->category->name }}</span>
+                                            {{ $row['title'] }}
+                                            @if ($row['category'])
+                                                <span class="block text-[10px] text-slate-400">{{ $row['category'] }}</span>
                                             @endif
                                         </td>
                                         <td class="py-1.5">
-                                            @if ($isDrawer)
-                                                @if ($exp->cashier_shift_id)
-                                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300" title="{{ __('messages.source_drawer_confirmed') }}">
-                                                        <span>✅</span>
-                                                        <span>{{ __('messages.source_drawer_confirmed') }}</span>
-                                                    </span>
-                                                @else
-                                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300" title="{{ __('messages.source_drawer_unconfirmed') }}">
-                                                        <span>⚠️</span>
-                                                        <span>{{ __('messages.source_drawer_unconfirmed') }}</span>
-                                                    </span>
-                                                @endif
-                                            @else
-                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                                    {{ \App\POS\Models\Expense::PAYMENT_SOURCES[$exp->payment_source] ?? ucfirst($exp->payment_source ?? 'other') }}
-                                                </span>
-                                                <span class="block text-[9px] text-slate-400">{{ __('messages.non_drawer_not_deducted') }}</span>
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold {{ $stateBadge }}">
+                                                <span>{{ $stateIcon }}</span>
+                                                <span>{{ \App\POS\Services\ExpenseCashAttribution::stateLabel($state) }}</span>
+                                            </span>
+                                            @php $sourceLabel = \App\POS\Models\Expense::PAYMENT_SOURCES[$row['source']] ?? null; @endphp
+                                            @if ($sourceLabel)
+                                                <span class="block text-[9px] text-slate-400">{{ $sourceLabel }}</span>
                                             @endif
                                         </td>
                                         <td class="py-1.5 font-mono text-[11px] text-slate-500">
-                                            @if ($exp->shift)
-                                                <span>{{ $exp->shift->register_name ?? 'Register' }} (#{{ $exp->shift->id }})</span>
+                                            @if ($row['shift_id'])
+                                                <span>{{ $row['register'] ?? __('messages.shift') }} (#{{ $row['shift_id'] }})</span>
                                             @else
                                                 <span class="text-slate-400">—</span>
                                             @endif
                                         </td>
-                                        <td class="py-1.5 text-right font-mono font-bold {{ $isDrawer ? 'text-rose-600' : 'text-slate-500 dark:text-slate-400' }}">
-                                            {{ format_currency((float) $exp->amount, $store) }}
-                                            @if (! $isDrawer)
-                                                <span class="block text-[9px] font-normal text-slate-400">({{ __('messages.not_deducted') }})</span>
-                                            @endif
+                                        <td class="py-1.5 text-right font-mono font-bold {{ $isDeducted ? 'text-rose-600' : 'text-slate-500 dark:text-slate-400' }}">
+                                            {{ format_currency((float) $row['amount'], $store) }}
+                                            <span class="block text-[9px] font-normal text-slate-400">
+                                                {{ $isDeducted ? __('messages.deducted_from_drawer') : __('messages.not_deducted') }}
+                                            </span>
                                         </td>
                                     </tr>
                                 @endforeach

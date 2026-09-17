@@ -50,6 +50,7 @@
             'pos_price_pin_label' => __('messages.pos_price_pin_label'),
             'web_order_imported' => __('messages.web_order_imported'),
             'expense_created_success' => __('messages.expense_created_success'),
+            'expense_new_key_ready' => __('messages.expense_new_key_ready'),
             'pos_expense_saving' => __('messages.pos_expense_saving'),
             'pos_discount_applied' => __('messages.pos_discount_applied'),
             'pos_discount_cleared' => __('messages.pos_discount_cleared'),

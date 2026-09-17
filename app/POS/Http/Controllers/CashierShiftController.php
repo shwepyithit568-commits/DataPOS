@@ -13,7 +13,9 @@ use App\POS\Models\ServiceJob;
 use App\POS\Services\CashierShiftService;
 use App\POS\Services\CustomerDebtService;
 use App\POS\Services\PosSaleService;
+use App\POS\Support\ExpenseIdempotency;
 use App\Services\StoreContext;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -155,10 +157,74 @@ class CashierShiftController extends Controller
         $title = trim($data['title']);
         $amount = bcadd((string) $data['amount'], '0', 2);
         $paymentMethod = $data['payment_method'];
-        $clientTxId = ! empty($data['client_transaction_id']) ? trim($data['client_transaction_id']) : null;
+        $clientTxId = ExpenseIdempotency::normalizeKey($data['client_transaction_id'] ?? null);
+        $isCash = $paymentMethod === 'cash';
+        $expenseDate = now()->toDateString();
+
+        $shiftsEnabled = $store->hasCapability(Capability::OPERATIONS_CASHIER_SHIFTS);
+        $openShift = null;
+        $paymentSource = $isCash ? Expense::SOURCE_SAFE : Expense::SOURCE_BANK;
+
+        if ($isCash && $shiftsEnabled) {
+            $openShifts = $this->shifts->openShiftsFor($store, auth()->user());
+
+            if ($openShifts->isEmpty()) {
+                return $this->expenseError($request, 'payment_method', __('messages.pos_expense_shift_required'));
+            }
+
+            // A cashier can hold one open shift per register. Picking "the latest"
+            // would charge a drawer that may not be the one the cash came from, so
+            // an ambiguous drawer is refused instead of guessed.
+            if ($openShifts->count() > 1) {
+                return $this->expenseError($request, 'payment_method', __('messages.pos_expense_shift_ambiguous'));
+            }
+
+            $openShift = $openShifts->first();
+
+            // The shift's own business date must still be open. Charging a drawer
+            // whose day was already closed and approved would move a signed-off
+            // figure, and the shift close (which is date-independent) would then
+            // disagree with the period it belongs to.
+            $shiftDate = $openShift->opened_at?->copy()->timezone(config('app.timezone'))->toDateString();
+
+            if ($shiftDate !== null) {
+                try {
+                    app(\App\POS\Services\PeriodLockService::class)->assertDateNotLocked($store, $shiftDate, 'expense');
+                } catch (\App\POS\Exceptions\PeriodLockedException $e) {
+                    return $this->expenseError($request, 'payment_method', __('messages.expense_shift_period_locked'));
+                }
+            }
+
+            // Only now is the drawer provable. When the cashier-shifts capability
+            // is off there is no drawer to attribute to, so the expense is booked
+            // as a confirmed non-drawer outflow — never a 'drawer' row with a NULL
+            // shift, which would be an unattributable claim on the drawer.
+            $paymentSource = Expense::SOURCE_DRAWER;
+        }
+
+        $payload = [
+            'store_id' => $store->id,
+            'title' => $title,
+            'amount' => $amount,
+            'expense_date' => $expenseDate,
+            'payment_method' => $paymentMethod,
+            'payment_source' => $paymentSource,
+            'cashier_shift_id' => $openShift?->id,
+            'recorded_by' => auth()->id(),
+        ];
+
+        // Idempotency before the period lock: a retry of an already-recorded
+        // expense must replay the stored row even if the day has closed since.
+        if ($clientTxId !== null) {
+            $existing = $this->findByClientKey($store, $clientTxId);
+
+            if ($existing) {
+                return $this->expenseReplayOrConflict($request, $existing, $payload);
+            }
+        }
 
         try {
-            app(\App\POS\Services\PeriodLockService::class)->assertDateNotLocked($store, now()->toDateString(), 'expense');
+            app(\App\POS\Services\PeriodLockService::class)->assertDateNotLocked($store, $expenseDate, 'expense');
         } catch (\App\POS\Exceptions\PeriodLockedException $e) {
             if ($request->expectsJson()) {
                 return response()->json(['error' => $e->getMessage()], 422);
@@ -166,57 +232,39 @@ class CashierShiftController extends Controller
             return back()->withInput()->withErrors(['expense' => $e->getMessage()])->with('error', $e->getMessage());
         }
 
-        if ($clientTxId !== null) {
-            $existing = Expense::where('store_id', $store->id)
-                ->where('client_transaction_id', $clientTxId)
-                ->first();
-            if ($existing) {
-                if ($request->wantsJson() || $request->ajax()) {
-                    return response()->json([
-                        'success' => true,
-                        'message' => __('messages.expense_created_success'),
-                        'expense' => $existing,
-                        'idempotent_replay' => true,
-                    ]);
-                }
-                return back()->with('success', __('messages.expense_created_success'));
-            }
-        }
-
-        $shiftsEnabled = $store->hasCapability(Capability::OPERATIONS_CASHIER_SHIFTS);
-        $openShift = null;
-        if ($paymentMethod === 'cash' && $shiftsEnabled) {
-            $openShift = $this->shifts->openShiftFor($store, auth()->user());
-            if (! $openShift) {
-                $errorMsg = __('messages.pos_expense_shift_required');
-                if ($request->expectsJson()) {
-                    return response()->json(['error' => $errorMsg], 422);
-                }
-                return back()->withInput()->withErrors(['payment_method' => $errorMsg])->with('error', $errorMsg);
-            }
-        }
-
         try {
-            $expense = DB::transaction(function () use ($store, $data, $title, $amount, $paymentMethod, $openShift, $clientTxId) {
-                $expenseNumber = Expense::generateExpenseNumber($store->id);
-                $isCash = $paymentMethod === 'cash';
+            $expense = DB::transaction(function () use ($store, $data, $payload, $openShift, $clientTxId) {
+                if ($openShift !== null) {
+                    // Hold the drawer's row lock: an expense must not land on a
+                    // shift that is being closed in the same instant, or it would
+                    // be deducted from a drawer that never counted it.
+                    $locked = CashierShift::where('store_id', $store->id)
+                        ->whereKey($openShift->id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (! $locked || $locked->status !== 'open') {
+                        throw new InventoryException(__('messages.shift_already_closed'));
+                    }
+                }
 
                 $expense = Expense::create([
                     'store_id' => $store->id,
-                    'cashier_shift_id' => $isCash && $openShift ? $openShift->id : null,
+                    'cashier_shift_id' => $openShift?->id,
                     'expense_category_id' => ! empty($data['expense_category_id']) ? (int) $data['expense_category_id'] : null,
-                    'expense_number' => $expenseNumber,
+                    'expense_number' => Expense::generateExpenseNumber($store->id),
                     'client_transaction_id' => $clientTxId,
-                    'title' => $title,
-                    'amount' => $amount,
+                    'request_fingerprint' => ExpenseIdempotency::fingerprint($payload),
+                    'title' => $payload['title'],
+                    'amount' => $payload['amount'],
                     'status' => 'paid',
-                    'expense_date' => now()->toDateString(),
-                    'payment_method' => $paymentMethod,
-                    'payment_source' => $isCash ? Expense::SOURCE_DRAWER : Expense::SOURCE_BANK,
+                    'expense_date' => $payload['expense_date'],
+                    'payment_method' => $payload['payment_method'],
+                    'payment_source' => $payload['payment_source'],
                     'paid_to' => ! empty($data['paid_to']) ? trim($data['paid_to']) : null,
                     'reference_no' => null,
                     'notes' => ! empty($data['notes']) ? trim($data['notes']) : null,
-                    'recorded_by' => auth()->id(),
+                    'recorded_by' => $payload['recorded_by'],
                 ]);
 
                 // NOTE: We intentionally do NOT increment shift.cash_out here.
@@ -227,30 +275,26 @@ class CashierShiftController extends Controller
 
                 return $expense;
             });
-        } catch (\Illuminate\Database\QueryException $e) {
-            if ($clientTxId !== null && ($e->errorInfo[1] ?? 0) === 1062) {
-                $existing = Expense::where('store_id', $store->id)->where('client_transaction_id', $clientTxId)->first();
-                if ($existing) {
-                    if ($request->wantsJson() || $request->ajax()) {
-                        return response()->json([
-                            'success' => true,
-                            'message' => __('messages.expense_created_success'),
-                            'expense' => $existing,
-                            'idempotent_replay' => true,
-                        ]);
-                    }
-                    return back()->with('success', __('messages.expense_created_success'));
+        } catch (QueryException $e) {
+            // Concurrent double-submit: the other request won the unique index.
+            if ($clientTxId !== null && ExpenseIdempotency::isDuplicateKey($e)) {
+                $winner = $this->findByClientKey($store, $clientTxId);
+
+                if ($winner) {
+                    return $this->expenseReplayOrConflict($request, $winner, $payload);
                 }
             }
-            if ($request->expectsJson()) {
-                return response()->json(['error' => $e->getMessage()], 422);
-            }
-            return back()->withInput()->with('error', $e->getMessage());
-        } catch (\Exception $e) {
-            if ($request->expectsJson()) {
-                return response()->json(['error' => $e->getMessage()], 422);
-            }
-            return back()->withInput()->with('error', $e->getMessage());
+
+            report($e);
+
+            return $this->expenseError($request, 'expense', __('messages.expense_save_failed_retry'));
+        } catch (InventoryException $e) {
+            return $this->expenseError($request, 'payment_method', $e->getMessage());
+        } catch (\Throwable $e) {
+            // Never surface a driver/stack message to the POS screen.
+            report($e);
+
+            return $this->expenseError($request, 'expense', __('messages.expense_save_failed_retry'));
         }
 
         \App\Models\AuditLog::write(
@@ -277,6 +321,69 @@ class CashierShiftController extends Controller
         }
 
         return back()->with('success', __('messages.expense_created_success'));
+    }
+
+    /**
+     * Return a POS expense failure in whichever shape the caller understands.
+     *
+     * Callers only ever see a translated, actionable message — never a driver or
+     * stack message.
+     */
+    private function expenseError(Request $request, string $field, string $message): JsonResponse|RedirectResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['error' => $message, 'field' => $field], 422);
+        }
+
+        return back()->withInput()->withErrors([$field => $message])->with('error', $message);
+    }
+
+    private function findByClientKey(Store $store, string $clientTxId): ?Expense
+    {
+        return Expense::where('store_id', $store->id)
+            ->where('client_transaction_id', $clientTxId)
+            ->first();
+    }
+
+    /**
+     * Answer a resubmission that carries a client_transaction_id we already hold.
+     *
+     * Same payload → the original row is returned as a successful replay (the
+     * browser lost the first response, nothing new was written).
+     * Different payload → 409. The operator edited values after a submission
+     * whose outcome they could not see; replying "saved" would leave the stored
+     * row at the OLD values, and writing a second row would double-deduct the
+     * drawer.
+     */
+    private function expenseReplayOrConflict(Request $request, Expense $existing, array $payload): JsonResponse|RedirectResponse
+    {
+        if (ExpenseIdempotency::resultFor($existing, $payload) === ExpenseIdempotency::RESULT_REPLAY) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => __('messages.expense_created_success'),
+                    'expense' => $existing,
+                    'idempotent_replay' => true,
+                ]);
+            }
+
+            return back()->with('success', __('messages.expense_created_success'));
+        }
+
+        $message = __('messages.expense_duplicate_submission_conflict', [
+            'number' => $existing->expense_number,
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'conflict' => true,
+                'error' => $message,
+                'expense' => $existing,
+            ], 409);
+        }
+
+        return back()->withInput()->withErrors(['title' => $message])->with('error', $message);
     }
 
     public function open(Request $request, StoreContext $context): RedirectResponse

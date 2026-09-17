@@ -93,6 +93,29 @@ class CashierShiftService
     }
 
     /**
+     * Every open shift the actor is running on this store.
+     *
+     * Used where guessing is not acceptable: a cashier can hold one open shift
+     * per register, so "the latest one" is not necessarily the drawer that paid.
+     * Callers must reject the request when this returns more than one.
+     *
+     * @return \Illuminate\Support\Collection<int, CashierShift>
+     */
+    public function openShiftsFor(Store $store, User $cashier): \Illuminate\Support\Collection
+    {
+        if (! $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS)) {
+            return collect();
+        }
+
+        return CashierShift::query()
+            ->where('store_id', $store->id)
+            ->where('cashier_id', $cashier->id)
+            ->where('status', 'open')
+            ->orderBy('opened_at')
+            ->get();
+    }
+
+    /**
      * @param  array{type:string, amount:float|string, reason?:string}  $data
      */
     public function addCashEvent(CashierShift $shift, array $data, ?User $actor = null): CashEvent
@@ -171,35 +194,39 @@ class CashierShiftService
         }
 
         return DB::transaction(function () use ($shift, $actual, $data, $actor) {
-            // Shift-period cash expenses deducted from drawer:
-            // ONLY expenses paid from THIS shift drawer (payment_source = 'drawer'
-            // and cashier_shift_id = $shift->id and status = 'paid').
+            // Take the row lock before reading any figure the expected amount is
+            // built from. Expense creation locks the same row, so an expense can
+            // never land between this read and the `status = closed` write and be
+            // left on a closed shift without ever having been deducted.
+            $locked = CashierShift::query()
+                ->whereKey($shift->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $locked || $locked->status !== 'open') {
+                throw new InventoryException('This shift is no longer open — it was closed by another request.');
+            }
+
+            // Shift-period cash expenses deducted from drawer. Built from the
+            // shared attribution query so this equals the same shifts' share of
+            // the branch daily deduction.
+            $scopeShiftIds = [$locked->id];
             $shiftDrawerExpenses = exact_sum(
-                DB::table('expenses')
-                    ->where('store_id', $shift->store_id)
-                    ->where('cashier_shift_id', $shift->id)
-                    ->where('payment_method', 'cash')
-                    ->where('payment_source', \App\POS\Models\Expense::SOURCE_DRAWER)
-                    ->where('status', 'paid'),
+                ExpenseCashAttribution::drawerDeductionQuery($locked->store_id, $scopeShiftIds),
                 'amount'
             );
 
             // Other cash out: calculate non-expense cash-out events (safe drops, etc.)
             // to guarantee legacy linked events or expense-linked events are NEVER double-counted.
-            $hasCashEvents = DB::table('cash_events')->where('cashier_shift_id', $shift->id)->exists();
+            $hasCashEvents = DB::table('cash_events')->where('cashier_shift_id', $locked->id)->exists();
             if ($hasCashEvents) {
-                $linkedExpenseIds = DB::table('expenses')
-                    ->where('store_id', $shift->store_id)
-                    ->where('cashier_shift_id', $shift->id)
-                    ->where('payment_method', 'cash')
-                    ->where('payment_source', \App\POS\Models\Expense::SOURCE_DRAWER)
-                    ->where('status', 'paid')
+                $linkedExpenseIds = ExpenseCashAttribution::drawerDeductionQuery($locked->store_id, $scopeShiftIds)
                     ->pluck('id')
                     ->all();
 
                 $otherCashOut = exact_sum(
                     DB::table('cash_events')
-                        ->where('cashier_shift_id', $shift->id)
+                        ->where('cashier_shift_id', $locked->id)
                         ->where('type', 'cash_out')
                         ->where(function ($q) use ($linkedExpenseIds) {
                             if (! empty($linkedExpenseIds)) {
@@ -210,24 +237,25 @@ class CashierShiftService
                     'amount'
                 );
             } else {
-                $otherCashOut = (string) ($shift->cash_out ?? '0.00');
+                $otherCashOut = (string) ($locked->cash_out ?? '0.00');
             }
 
             // Expected cash = Opening + Cash Sales + Other Cash In - Cash Refunds - Drawer Expenses - Other Cash Out
             $expected = bcsub(
                 bcsub(
                     bcadd(
-                        bcadd((string) $shift->opening_cash, (string) $shift->cash_sales, 2),
-                        (string) $shift->cash_in,
+                        bcadd((string) $locked->opening_cash, (string) $locked->cash_sales, 2),
+                        (string) $locked->cash_in,
                         2
                     ),
-                    (string) $shift->cash_refunds,
+                    (string) $locked->cash_refunds,
                     2
                 ),
                 bcadd($shiftDrawerExpenses, $otherCashOut, 2),
                 2
             );
 
+            $shift = $locked;
             $difference = bcsub($actual, $expected, 2);
             $absDiff = bccomp($difference, '0', 2) < 0 ? bcmul($difference, '-1', 2) : $difference;
 

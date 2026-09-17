@@ -697,6 +697,18 @@
                 <form method="POST" action="{{ route('store.admin.expenses.store', $storeRouteParams) }}" enctype="multipart/form-data" class="p-3.5 space-y-2.5 overflow-y-auto">
                     @csrf
 
+                    {{-- Retry identity: a lost response or a double-click resends the
+                         same value, so the server replays the row it already wrote
+                         instead of recording the expense a second time.
+                         The key is retired FIRST, inside the same x-init that issues a
+                         new one: clearing it from a separate DOMContentLoaded handler
+                         raced with this expression and left the input holding a key the
+                         server had already seen, which turned the NEXT expense into a
+                         false duplicate-submission conflict. --}}
+                    <input type="hidden" name="client_transaction_id"
+                           x-data
+                           x-init="@if (session('expense_saved')) window.dataposClearExpenseKey('{{ $store->id }}'); @endif $el.value = window.dataposExpenseKey('{{ $store->id }}')">
+
                     {{-- Title / Description --}}
                     <div>
                         <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">

@@ -136,7 +136,10 @@
                         <div class="flex items-center gap-1.5">
                             <span class="text-slate-500 font-semibold">{{ __('messages.drawer_expenses') }}</span>
                             @if (!empty($xData['totals']['expenses']) && $xData['totals']['expenses']->count() > 0)
-                                <button type="button" id="btn-view-expenses" @click="showExpenseModal = true"
+                                {{-- @click.stop: the modal's own @click.away listens on the document,
+                                     so without stopping propagation this click re-closes the modal it
+                                     just opened and the breakdown can never be reached. --}}
+                                <button type="button" id="btn-view-expenses" @click.stop="showExpenseModal = true"
                                         class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition cursor-pointer">
                                     {{ __('messages.view_expense_details') }} ({{ $xData['totals']['expenses']->count() }})
                                 </button>
@@ -161,6 +164,21 @@
                             <span class="font-mono">{{ format_currency((float) $xData['totals']['summary']['other_cash_expenses'], $store) }}</span>
                         </div>
                         <p class="text-[10px] text-slate-400 mt-0.5">{{ __('messages.non_drawer_expenses_notice') }}</p>
+                    </div>
+                @endif
+
+                {{-- A NULL/unknown source is not proof of "safe": while a paid cash
+                     expense cannot be tied to a drawer, this reading is not final. --}}
+                @if (! ($xData['totals']['summary']['is_reconciled'] ?? true))
+                    <div class="mt-2 p-2 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 text-[11px] text-rose-900 dark:text-rose-200">
+                        <div class="flex items-center justify-between font-bold">
+                            <span>⚠️ {{ __('messages.unresolved_cash_expenses') }}:</span>
+                            <span class="font-mono">{{ format_currency((float) ($xData['totals']['summary']['unresolved_cash_expenses'] ?? 0), $store) }}</span>
+                        </div>
+                        <p class="text-[10px] mt-0.5">{{ __('messages.unresolved_cash_out_notice') }}</p>
+                        @if (!empty($xData['totals']['summary']['unresolved_expense_refs']))
+                            <p class="text-[10px] font-mono mt-0.5">{{ implode(', ', $xData['totals']['summary']['unresolved_expense_refs']) }}</p>
+                        @endif
                     </div>
                 @endif
             </div>
@@ -224,26 +242,52 @@
                     </button>
                 </div>
 
+                @php
+                    $xSummary = $xData['totals']['summary'] ?? [];
+                    $xRows = $xData['totals']['expenses'] ?? collect();
+
+                    // Same rule as the closing detail: the drawn total is computed
+                    // from the rows themselves, so the badges cannot claim a
+                    // deduction the ledger did not make.
+                    $xRowsDeducted = '0.00';
+                    foreach ($xRows as $xRow) {
+                        if (\App\POS\Services\ExpenseCashAttribution::isDeducted($xRow->cash_out_state ?? '')) {
+                            $xRowsDeducted = bcadd($xRowsDeducted, (string) $xRow->amount, 2);
+                        }
+                    }
+                @endphp
+
                 <div class="px-4 py-2 bg-slate-100/70 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div class="flex items-center gap-3">
                         <div>
                             <span class="text-slate-500 dark:text-slate-400 text-[11px]">{{ __('messages.drawer_expenses') }}:</span>
-                            <span class="font-mono font-bold text-rose-600 dark:text-rose-400 ml-1">{{ format_currency((float) ($xData['totals']['summary']['drawer_expenses'] ?? 0), $store) }}</span>
+                            <span class="font-mono font-bold text-rose-600 dark:text-rose-400 ml-1">{{ format_currency((float) ($xSummary['drawer_expenses'] ?? 0), $store) }}</span>
                         </div>
-                        @if (!empty($xData['totals']['summary']['other_cash_expenses']) && (float) $xData['totals']['summary']['other_cash_expenses'] > 0)
+                        <div>
+                            <span class="text-slate-500 dark:text-slate-400 text-[11px]">{{ __('messages.shown_rows_deducted_total') }}:</span>
+                            <span class="font-mono font-bold text-slate-700 dark:text-slate-300 ml-1">{{ format_currency((float) $xRowsDeducted, $store) }}</span>
+                        </div>
+                        @if (!empty($xSummary['other_cash_expenses']) && (float) $xSummary['other_cash_expenses'] > 0)
                             <div>
                                 <span class="text-slate-500 dark:text-slate-400 text-[11px]">{{ __('messages.other_cash_expenses') }}:</span>
-                                <span class="font-mono font-bold text-slate-700 dark:text-slate-300 ml-1">{{ format_currency((float) ($xData['totals']['summary']['other_cash_expenses'] ?? 0), $store) }}</span>
+                                <span class="font-mono font-bold text-slate-700 dark:text-slate-300 ml-1">{{ format_currency((float) $xSummary['other_cash_expenses'], $store) }}</span>
                             </div>
                         @endif
                     </div>
-                    <span class="text-[10px] text-slate-400">
-                        {{ __('messages.non_drawer_expenses_notice') }}
-                    </span>
+                    @if (! ($xSummary['is_reconciled'] ?? true))
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                            ⚠️ {{ __('messages.unresolved_cash_expenses') }}:
+                            {{ format_currency((float) ($xSummary['unresolved_cash_expenses'] ?? 0), $store) }}
+                        </span>
+                    @else
+                        <span class="text-[10px] text-slate-400">
+                            {{ __('messages.non_drawer_expenses_notice') }}
+                        </span>
+                    @endif
                 </div>
 
                 <div class="p-3 max-h-96 overflow-y-auto">
-                    @if (!empty($xData['totals']['expenses']) && $xData['totals']['expenses']->count() > 0)
+                    @if ($xRows->count() > 0)
                         <table class="w-full text-xs">
                             <thead>
                                 <tr class="text-slate-400 border-b border-slate-100 dark:border-slate-800 text-[11px]">
@@ -255,9 +299,23 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                @foreach ($xData['totals']['expenses'] as $exp)
+                                @foreach ($xRows as $exp)
                                     @php
-                                        $isDrawer = ($exp->payment_method === 'cash' && ($exp->payment_source === 'drawer' || $exp->cashier_shift_id));
+                                        $state = $exp->cash_out_state ?? \App\POS\Services\ExpenseCashAttribution::STATE_UNRESOLVED;
+                                        $isDrawer = \App\POS\Services\ExpenseCashAttribution::isDeducted($state);
+                                        $stateBadge = match ($state) {
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_DEDUCTED => 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_UNRESOLVED => 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_UNPAID => 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
+                                            default => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+                                        };
+                                        $stateIcon = match ($state) {
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_DEDUCTED => '✅',
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_UNRESOLVED => '⚠️',
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_UNPAID => '⏳',
+                                            \App\POS\Services\ExpenseCashAttribution::STATE_VOID => '🚫',
+                                            default => '•',
+                                        };
                                     @endphp
                                     <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                                         <td class="py-1.5 font-mono text-[11px] text-slate-500">
@@ -271,23 +329,13 @@
                                             @endif
                                         </td>
                                         <td class="py-1.5">
-                                            @if ($isDrawer)
-                                                @if ($exp->cashier_shift_id)
-                                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300" title="{{ __('messages.source_drawer_confirmed') }}">
-                                                        <span>✅</span>
-                                                        <span>{{ __('messages.source_drawer_confirmed') }}</span>
-                                                    </span>
-                                                @else
-                                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300" title="{{ __('messages.source_drawer_unconfirmed') }}">
-                                                        <span>⚠️</span>
-                                                        <span>{{ __('messages.source_drawer_unconfirmed') }}</span>
-                                                    </span>
-                                                @endif
-                                            @else
-                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                                    {{ \App\POS\Models\Expense::PAYMENT_SOURCES[$exp->payment_source] ?? ucfirst($exp->payment_source ?? 'other') }}
-                                                </span>
-                                                <span class="block text-[9px] text-slate-400">{{ __('messages.non_drawer_not_deducted') }}</span>
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold {{ $stateBadge }}">
+                                                <span>{{ $stateIcon }}</span>
+                                                <span>{{ \App\POS\Services\ExpenseCashAttribution::stateLabel($state) }}</span>
+                                            </span>
+                                            @php $sourceLabel = \App\POS\Models\Expense::PAYMENT_SOURCES[$exp->payment_source] ?? null; @endphp
+                                            @if ($sourceLabel)
+                                                <span class="block text-[9px] text-slate-400">{{ $sourceLabel }}</span>
                                             @endif
                                         </td>
                                         <td class="py-1.5 font-mono text-[11px] text-slate-500">
@@ -299,9 +347,9 @@
                                         </td>
                                         <td class="py-1.5 text-right font-mono font-bold {{ $isDrawer ? 'text-rose-600' : 'text-slate-500 dark:text-slate-400' }}">
                                             {{ format_currency((float) $exp->amount, $store) }}
-                                            @if (! $isDrawer)
-                                                <span class="block text-[9px] font-normal text-slate-400">({{ __('messages.not_deducted') }})</span>
-                                            @endif
+                                            <span class="block text-[9px] font-normal text-slate-400">
+                                                {{ $isDrawer ? __('messages.deducted_from_drawer') : __('messages.not_deducted') }}
+                                            </span>
                                         </td>
                                     </tr>
                                 @endforeach

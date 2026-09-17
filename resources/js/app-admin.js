@@ -6,6 +6,38 @@ import { Html5Qrcode } from 'html5-qrcode';
 window.Alpine = Alpine;
 window.Html5Qrcode = Html5Qrcode;
 
+/* ---- Expense retry identity (plain-form admin create) ----
+   The admin expense form is a normal POST, so it has no fetch() layer to hold a
+   key in memory. This pair hands the Blade form a stable per-session key and
+   clears it once the server has confirmed a write, so a re-submitted page (lost
+   response, refresh, double-click) replays the stored row instead of creating a
+   second expense. Scoped per store + session, so a different cashier logging in
+   on the same terminal never inherits the previous key. ---- */
+window.dataposExpenseKey = function (scope) {
+    const storageKey = 'datapos.expense.txid.' + scope;
+    const makeKey = () => (window.crypto && typeof window.crypto.randomUUID === 'function')
+        ? window.crypto.randomUUID()
+        : 'exp-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+
+    try {
+        const existing = window.sessionStorage.getItem(storageKey);
+        if (existing) return existing;
+        const fresh = makeKey();
+        window.sessionStorage.setItem(storageKey, fresh);
+        return fresh;
+    } catch (e) {
+        return makeKey();
+    }
+};
+
+window.dataposClearExpenseKey = function (scope) {
+    try {
+        window.sessionStorage.removeItem('datapos.expense.txid.' + scope);
+    } catch (e) {
+        // ignore
+    }
+};
+
 /* ---- brandAssetUploader: isolated state for the three Storefront brand
    asset uploaders (Storefront logo / Admin logo / Favicon). Every card owns
    its own instance so file selection, preview, errors and remove flags never
@@ -209,6 +241,10 @@ Alpine.data('posApp', (opts = {}) => ({
     // Shop Expense Modal (quick cash-out / daily store expense)
     expenseModalOpen: false, expenseBusy: false, expenseTitle: '', expenseAmount: '',
     expenseCategoryId: '', expensePaymentMethod: 'cash', expensePaidTo: '', expenseNotes: '',
+    // Retry identity for the expense currently in the modal. Survives a lost
+    // response, a re-click and a same-tab reload; cleared only once the server
+    // has confirmed the write, so the NEXT expense gets a fresh key.
+    expenseClientTxId: '', expenseConflict: '',
     // Discount Modal
     discountModalOpen: false, discountBusy: false, discountType: 'fixed', discountValue: '',
     barcodeCameraInsecure: false,
@@ -283,6 +319,8 @@ Alpine.data('posApp', (opts = {}) => ({
         if (!res.ok) {
             const err = new Error(data.error || ('HTTP ' + res.status));
             err.pinRequired = !!data.pin_required;
+            err.status = res.status;
+            err.conflict = !!data.conflict;
             throw err;
         }
         return data;
@@ -711,6 +749,8 @@ Alpine.data('posApp', (opts = {}) => ({
         this.expensePaymentMethod = 'cash';
         this.expensePaidTo = '';
         this.expenseNotes = '';
+        this.expenseConflict = '';
+        this.ensureExpenseKey();
         this.expenseModalOpen = true;
         this.$nextTick(() => {
             if (this.expenseTitle) {
@@ -719,6 +759,75 @@ Alpine.data('posApp', (opts = {}) => ({
                 this.$refs.expenseTitleInput?.focus();
             }
         });
+    },
+
+    /* ---- Expense retry identity ----
+     * A POST that times out may or may not have been written. The browser cannot
+     * know, so it resends the SAME client_transaction_id and lets the server
+     * replay the row it already stored. The key is held per store + session (so a
+     * different cashier logging in on the same terminal never inherits it) and
+     * survives a same-tab reload; it is cleared only after the server confirms
+     * the write, which is what makes the NEXT expense a new one. */
+    expenseKeyScope() {
+        return 'datapos.expense.txid.' + this.baseUrl + '.' + this.csrf;
+    },
+
+    readStoredExpenseKey() {
+        try {
+            return window.sessionStorage.getItem(this.expenseKeyScope()) || '';
+        } catch (e) {
+            return '';
+        }
+    },
+
+    storeExpenseKey(key) {
+        try {
+            window.sessionStorage.setItem(this.expenseKeyScope(), key);
+        } catch (e) {
+            // Private mode / storage disabled: the in-memory key still covers
+            // retries within this page.
+        }
+    },
+
+    clearExpenseKey() {
+        try {
+            window.sessionStorage.removeItem(this.expenseKeyScope());
+        } catch (e) {
+            // ignore
+        }
+    },
+
+    newExpenseKey() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            return window.crypto.randomUUID();
+        }
+        return 'exp-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+    },
+
+    ensureExpenseKey() {
+        if (this.expenseClientTxId) return this.expenseClientTxId;
+
+        let key = this.readStoredExpenseKey();
+        if (!key) {
+            key = this.newExpenseKey();
+        }
+        this.storeExpenseKey(key);
+        this.expenseClientTxId = key;
+
+        return key;
+    },
+
+    /**
+     * Recovery from a 409: the operator changed the values after a submission
+     * whose result they never saw. Nothing was written for the new values, so
+     * they must consciously start a NEW expense instead of retrying.
+     */
+    startNewExpenseAfterConflict() {
+        this.clearExpenseKey();
+        this.expenseClientTxId = '';
+        this.expenseConflict = '';
+        this.ensureExpenseKey();
+        this.flash(this.labels.expense_new_key_ready || 'Ready to record as a new expense', 'info');
     },
 
     setQuickExpense(title) {
@@ -744,6 +853,7 @@ Alpine.data('posApp', (opts = {}) => ({
                 title: this.expenseTitle.trim(),
                 amount: String(amt),
                 payment_method: this.expensePaymentMethod,
+                client_transaction_id: this.ensureExpenseKey(),
             };
             if (this.expenseCategoryId) body.expense_category_id = String(this.expenseCategoryId);
             if (this.expensePaidTo.trim()) body.paid_to = this.expensePaidTo.trim();
@@ -754,10 +864,18 @@ Alpine.data('posApp', (opts = {}) => ({
                 body: new URLSearchParams(body),
             });
 
+            // Confirmed by the server (fresh write or an idempotent replay of the
+            // one we already made) — only now is this key spent.
+            this.clearExpenseKey();
+            this.expenseClientTxId = '';
+            this.expenseConflict = '';
             this.expenseModalOpen = false;
             await this.refreshCart();
             this.flash(data.message || this.labels.expense_created_success || 'Expense recorded successfully', 'success');
         } catch (e) {
+            if (e.conflict || e.status === 409) {
+                this.expenseConflict = e.message;
+            }
             this.flash(e.message, 'error');
         } finally {
             this.expenseBusy = false;
