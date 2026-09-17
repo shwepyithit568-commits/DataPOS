@@ -528,8 +528,11 @@ class ServiceJobController extends Controller
             ->where('store_user.status', 'active'))
             ->orderBy('name')->get();
 
+        // products has no is_active column: on MySQL this filter 500'd the create
+        // page, and on SQLite the quoted unknown identifier degraded into the
+        // string 'is_active' which matched nothing, so the product picker was
+        // silently empty. Every product of the store is selectable on a job.
         $products = Product::where('store_id', $store->id)
-            ->where('is_active', true)
             ->with(['category.parent', 'brand'])
             ->orderBy('name')
             ->get(['id', 'store_id', 'category_id', 'brand_id', 'name', 'sku', 'retail_price']);

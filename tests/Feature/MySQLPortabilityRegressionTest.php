@@ -301,4 +301,79 @@ class MySQLPortabilityRegressionTest extends TestCase
             ->get("/store/{$store->slug}/pos/reports/reconciliation")
             ->assertOk();
     }
+
+    /**
+     * A balance row that legitimately stands at zero must NOT be reported as a
+     * mismatch. verifyBalances() compared the stored DECIMAL string against the
+     * literal "0" for a row with no movements, and MySQL renders a zero DECIMAL
+     * as "0.000" while SQLite renders "0" — so on the production engine every
+     * zero balance row looked like a broken ledger and the reconcile report cried
+     * wolf about rows that were correct.
+     */
+    public function test_zero_balance_row_is_not_reported_as_a_mismatch(): void
+    {
+        $store = $this->makeStore('port-zero');
+        $product = $this->product($store);
+
+        // A balance row that exists without a matching ledger movement.
+        DB::table('inventory_balances')->insert([
+            'store_id' => $store->id,
+            'warehouse_id' => 0,
+            'product_id' => $product->id,
+            'product_variant_id' => 0,
+            'quantity_on_hand' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $result = app(\App\POS\Services\InventoryService::class)->verifyBalances();
+
+        $this->assertSame(
+            [],
+            $result['mismatches'],
+            'A zero balance with no movements is not a mismatch.'
+        );
+    }
+
+    /**
+     * A backup must survive its own prune call, and create() must still be able to
+     * report the file it just wrote.
+     *
+     * prune() keeps the KEEP newest backups and deletes the rest, ordering by the
+     * timestamp parsed out of each filename. A backup whose timestamp sorts OLDEST
+     * — which happens whenever enough newer-looking files are already present —
+     * was deleted by its own prune, and the still-returning create() then threw
+     * "filesize(): stat failed" on a backup that had just been made successfully.
+     * That is the exact error seen from AdminBackupTest in a full suite run.
+     *
+     * The pre-seeded files below carry future-looking stamps so the freshly created
+     * backup is deterministically the oldest and would be pruned by its own call.
+     */
+    public function test_a_new_backup_survives_its_own_prune(): void
+    {
+        Storage::fake('local');
+
+        $directory = \App\Services\DatabaseBackupService::DIRECTORY;
+
+        // More pre-existing backups than KEEP, all sorting newer than "now".
+        for ($i = 0; $i < \App\Services\DatabaseBackupService::KEEP + 6; $i++) {
+            Storage::disk('local')->put(
+                $directory . '/older_' . str_pad((string) $i, 2, '0', STR_PAD_LEFT) . '_2099-01-01_0000' . str_pad((string) $i, 2, '0', STR_PAD_LEFT) . '.sql',
+                '-- dummy backup'
+            );
+        }
+
+        $result = app(\App\Services\DatabaseBackupService::class)->create('fresh', 'full');
+
+        $this->assertGreaterThan(0, $result['size'], 'create() must report a readable size for the backup it made.');
+
+        // The backup create() just reported must still be on disk.
+        Storage::disk('local')->assertExists($directory . '/' . $result['filename']);
+
+        // ...and retention still holds.
+        $this->assertLessThanOrEqual(
+            \App\Services\DatabaseBackupService::KEEP,
+            count(Storage::disk('local')->files($directory))
+        );
+    }
 }

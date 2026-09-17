@@ -139,8 +139,11 @@ class ProductionBootstrapTest extends TestCase
 
     public function test_registered_customer_cannot_escalate_to_platform_owner_or_store_manager(): void
     {
-        Store::create(['name' => 'ACDC Mobile', 'slug' => 'acdc-mobile']);
+        $store = Store::create(['name' => 'ACDC Mobile', 'slug' => 'acdc-mobile']);
 
+        // The real id, not a literal 1: on MySQL the auto-increment does not restart
+        // per test, so a hardcoded 1 pointed at a store that does not exist and the
+        // assertion below meant different things on different engines.
         $this->post('/register', [
             'name' => 'Customer',
             'phone' => '09977777777',
@@ -148,7 +151,7 @@ class ProductionBootstrapTest extends TestCase
             'password_confirmation' => 'StrongPass#12345',
             'role' => 'platform_owner',
             'store_role' => 'store_manager',
-            'store_id' => 1,
+            'store_id' => $store->id,
         ])->assertRedirect('/');
 
         $user = User::where('phone', '09977777777')->firstOrFail();
@@ -156,6 +159,6 @@ class ProductionBootstrapTest extends TestCase
         $this->assertSame('customer', $user->role);
         // Role tampering is still blocked — the shopper is enrolled only as a
         // retail_customer (shared ecommerce + POS list), never store_manager.
-        $this->assertSame('retail_customer', $user->getStoreRole(1));
+        $this->assertSame('retail_customer', $user->getStoreRole($store->id));
     }
 }

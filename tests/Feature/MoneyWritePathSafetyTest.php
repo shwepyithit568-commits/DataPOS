@@ -265,6 +265,62 @@ class MoneyWritePathSafetyTest extends TestCase
         $this->assertSame('0.300', (string) $lines[0]['quantity']);
     }
 
+    /**
+     * The everyday shape of the same rule: whole units on two lines of the same
+     * product must reserve their SUM, not the last line's quantity and not twice.
+     *
+     * This is the input the storefront actually accepts (integer, min 1), so it is
+     * asserted explicitly: order_items.quantity used to be an INT column, and on
+     * MySQL a fractional quantity was truncated to 0 instead of being rejected.
+     */
+    public function test_duplicate_order_lines_merge_whole_units(): void
+    {
+        $product = $this->product();
+        $variant = $product->variants()->create([
+            'name' => 'Default',
+            'sku' => 'SKU-' . Str::random(6),
+            'retail_price' => '100.00',
+            'wholesale_price' => '90.00',
+            'is_default' => true,
+        ]);
+
+        $order = \App\Models\Order::create([
+            'store_id'        => $this->store->id,
+            'order_number'    => 'ORD-' . Str::random(8),
+            'customer_name'   => 'Ko Aung',
+            'customer_phone'  => '09123456789',
+            'status'          => 'pending_contact',
+            'total_amount'    => '300.00',
+            'contact_channel' => 'viber',
+        ]);
+
+        foreach (['1', '2'] as $qty) {
+            $order->items()->create([
+                'product_id'         => $product->id,
+                'product_variant_id' => $variant->id,
+                'product_name'       => $product->name,
+                'unit_price'         => '100.00',
+                'quantity'           => $qty,
+                'subtotal'           => bcmul('100.00', $qty, 2),
+            ]);
+        }
+
+        // The stored column must hold what was written, on every engine.
+        $this->assertSame(
+            3.0,
+            (float) $order->fresh()->items()->sum('quantity'),
+            'A fractional-safe quantity column must still store whole units exactly.'
+        );
+
+        $adapter = app(\App\POS\Integrations\OrderInventoryAdapter::class);
+        $lines = (new \ReflectionClass($adapter))
+            ->getMethod('inventoryLines')
+            ->invoke($adapter, $order->fresh()->load('items.product'));
+
+        $this->assertCount(1, $lines);
+        $this->assertSame('3.000', (string) $lines[0]['quantity']);
+    }
+
     /* ------------------------------------------------------------------ */
     /*  Bulk price write                                                  */
     /* ------------------------------------------------------------------ */

@@ -63,6 +63,10 @@ class Phase4PosDecouplingTest extends TestCase
 
     private function createProductWithStock(Store $store, string $qty = '50.000', string $price = '15000.00'): Product
     {
+        // posted_by has a foreign key to users. A hardcoded 1 only worked because
+        // SQLite does not enforce foreign keys, and failed on MySQL.
+        $actorId = $store->users()->value('users.id') ?? $this->createStaff($store)->id;
+
         $name = 'Test Item ' . Str::random(4);
         $product = Product::create([
             'store_id' => $store->id,
@@ -87,7 +91,7 @@ class Phase4PosDecouplingTest extends TestCase
             'source_id' => 1,
             'client_transaction_id' => 'init_stock_' . $product->id,
             'occurred_at' => now(),
-            'posted_by' => 1,
+            'posted_by' => $actorId,
         ]);
 
         return $product;

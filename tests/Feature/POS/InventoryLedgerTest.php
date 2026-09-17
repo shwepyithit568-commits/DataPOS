@@ -479,8 +479,10 @@ class InventoryLedgerTest extends TestCase
         $result = $this->service->verifyBalances();
 
         $this->assertCount(1, $result['mismatches']);
-        $this->assertSame('7', $result['mismatches'][0]['stored']);
-        $this->assertSame('10', $result['mismatches'][0]['expected']);
+        // Reported at the ledger's own scale so the figure reads the same whatever
+        // engine produced it (MySQL returns DECIMAL as '7.000', SQLite as '7').
+        $this->assertSame('7.000', $result['mismatches'][0]['stored']);
+        $this->assertSame('10.000', $result['mismatches'][0]['expected']);
 
         // Rebuild makes verify pass again.
         $this->service->rebuildBalances();

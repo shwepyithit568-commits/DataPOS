@@ -85,6 +85,15 @@ class DatabaseBackupService
 
                 $zip->close();
 
+                // Size of the archive we just wrote, taken from the staging file.
+                // Stat'ing the destination afterwards was unreliable on Windows:
+                // a scanner holding the freshly copied file made filesize() fail
+                // ("stat failed") even though the backup existed, so a successful
+                // backup was reported as an error.
+                clearstatcache(true, $tempZip);
+                $archiveSize = @filesize($tempZip);
+                $archiveSize = $archiveSize === false ? 0 : $archiveSize;
+
                 // Move/copy to canonical destination with retry for Windows file locks
                 $copied = false;
                 for ($attempt = 0; $attempt < 5; $attempt++) {
@@ -100,11 +109,13 @@ class DatabaseBackupService
                     throw new \RuntimeException("Failed to write backup ZIP archive to {$zipFullPath}");
                 }
 
-                $this->prune();
+                // Pruning runs after the size is known, and never removes the file
+                // that was just written.
+                $this->prune($filename);
 
                 return [
                     'filename'   => $filename,
-                    'size'       => filesize($zipFullPath),
+                    'size'       => $archiveSize,
                     'driver'     => $driver,
                     'format'     => 'zip',
                     'created_at' => now(),
@@ -120,7 +131,7 @@ class DatabaseBackupService
                 $filename = "{$label}_{$stamp}.sqlite";
                 $relative = self::DIRECTORY . '/' . $filename;
                 Storage::disk('local')->put($relative, file_get_contents($dbPath));
-                $this->prune();
+                $this->prune($filename);
 
                 return [
                     'filename'   => $filename,
@@ -139,7 +150,7 @@ class DatabaseBackupService
         $sql = $this->dump($pdo, $driver);
         Storage::disk('local')->put($relative, $sql);
 
-        $this->prune();
+        $this->prune($filename);
 
         return [
             'filename'   => $filename,
@@ -336,8 +347,14 @@ class DatabaseBackupService
         }
     }
 
-    /** Remove the oldest backups once the count exceeds KEEP. */
-    private function prune(): void
+    /**
+     * Remove the oldest backups once the count exceeds KEEP.
+     *
+     * $justCreated is never deleted. Backups made within the same second share a
+     * timestamp (and therefore tie in the newest-first sort), so without this the
+     * file that was just written could be pruned by its own call.
+     */
+    private function prune(?string $justCreated = null): void
     {
         $backups = $this->list();
 
@@ -345,7 +362,21 @@ class DatabaseBackupService
             return;
         }
 
-        foreach (array_slice($backups, self::KEEP) as $old) {
+        $protecting = $justCreated !== null
+            && in_array($justCreated, array_column($backups, 'filename'), true);
+
+        $deletable = $protecting
+            ? array_values(array_filter($backups, fn (array $b) => $b['filename'] !== $justCreated))
+            : $backups;
+
+        // When the newest file is protected it occupies one of the KEEP slots.
+        $keep = $protecting ? self::KEEP - 1 : self::KEEP;
+
+        if (count($deletable) <= $keep) {
+            return;
+        }
+
+        foreach (array_slice($deletable, $keep) as $old) {
             $this->delete($old['filename']);
         }
     }

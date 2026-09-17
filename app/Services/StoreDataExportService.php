@@ -57,16 +57,22 @@ class StoreDataExportService
                     'sku'             => $p->sku,
                     'retail_price'    => (float) $p->retail_price,
                     'wholesale_price' => (float) $p->wholesale_price,
-                    'buy_price'       => (float) $p->buy_price,
+                    // products has no buy_price column (it is purchase_cost), so this
+                    // exported 0.00 for every product.
+                    'buy_price'       => (float) $p->purchase_cost,
                     'category'        => $p->category?->name,
                     'brand'           => $p->brand?->name,
-                    'is_active'       => (bool) $p->is_active,
+                    // ...and no is_active column either, so this exported false for
+                    // every row. A product in this list is sellable by definition.
+                    'is_active'       => true,
                     'variants'        => $p->variants->map(fn ($v) => [
                         'name'            => $v->name,
                         'sku'             => $v->sku,
                         'retail_price'    => (float) ($v->retail_price ?? 0),
                         'wholesale_price' => (float) ($v->wholesale_price ?? 0),
-                        'buy_price'       => (float) ($v->buy_price ?? 0),
+                        // A variant carries no cost of its own, so the product's is
+                        // the only truthful figure.
+                        'buy_price'       => (float) $p->purchase_cost,
                     ])->toArray(),
                 ])
                 ->toArray(),

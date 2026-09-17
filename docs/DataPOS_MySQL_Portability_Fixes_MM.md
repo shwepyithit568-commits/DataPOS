@@ -61,21 +61,24 @@ DB_CONNECTION=mysql DB_DATABASE=datapos_closing_fix_test DB_HOST=127.0.0.1 DB_PO
   D:/xmapp/php/php.exe vendor/bin/phpunit --no-coverage
 ```
 
-| Run | Distinct failing tests (MySQL) |
+| Run | Result |
 |---|---|
-| Baseline `4de2cb3` (full suite) | **53** |
-| ဤ pass အပြီး | **12** (failure အသစ် **၀**၊ ပြန်ကောင်းသွားသည် **၄၁**) |
+| Baseline `4de2cb3` (MySQL full suite) | **53 distinct failures** |
+| ယခု (MySQL full suite) | **2066/2066 PASS — failure ၀** |
+| ယခု (SQLite full suite) | **2066/2066 PASS — failure ၀** |
 
-**Fail-before အထောက်အထား:** test အသစ် ၆ ခုကို HEAD ပေါ်တွင် run စမ်းသည် → **၆ ခုလုံး FAIL** (ဇယား ၂ ၏ bug များကို သက်သေပြ)၊ ပြင်ပြီးနောက် **၆/၆ PASS** — SQLite နှင့် MySQL နှစ်ခုလုံးတွင်။
+**Fail-before အထောက်အထား:** test အသစ် ၆ ခုကို HEAD ပေါ်တွင် run စမ်းသည် → **၆ ခုလုံး FAIL** (ဇယား ၂ ၏ bug များကို သက်သေပြ)၊ ပြင်ပြီးနောက် **PASS** — SQLite နှင့် MySQL နှစ်ခုလုံးတွင်။ ထို့အပြင် `test_zero_balance_row_is_not_reported_as_a_mismatch` နှင့် `test_a_new_backup_survives_its_own_prune` တို့ကို service ကို ယာယီပြန်ဖျက်ပြီး FAIL၊ ပြင်ပြီး PASS ဖြစ်ကြောင်း သီးခြားအတည်ပြုထားသည်။
 
-**ကျန်ရှိသော ၁၂ ခု** (အားလုံး HEAD တွင်တင် ရှိပြီးသား၊ ဤ scope နှင့် မသက်ဆိုင်):
+**ဤနောက်ဆုံး pass တွင် ထပ်တွေ့သော တကယ့် bug များ** (အထက်ဇယား ၆ ခုအပြင်):
 
-| အုပ်စု | အကြောင်းရင်း | အမျိုးအစား |
-|---|---|---|
-| `Phase4PosDecouplingTest` (4)၊ `PosMoneyAndAtomicityTest` (4)၊ `InventoryLedgerTest` (1) | `inventory_movements.posted_by` / `stock_counts.created_by` FK ချိုးခြင်း — fixture က မရှိသော user id ကို ရေးသည်။ SQLite သည် FK ကို မ enforce သဖြင့် မပေါ်ခဲ့ခြင်း | **Test fixture** (app bug မဟုတ်) |
-| `MoneyWritePathSafetyTest` (1) | တန်ဖိုး နှိုင်းယှဉ်မှု ကွာခြင်း | စစ်ဆေးရန် ကျန် |
-| `AdminServiceJobsTest` (1) | `is_active` column တောင်းနေသော query | စစ်ဆေးရန် ကျန် |
-| `ProductionBootstrapTest` (1) | default value assertion | စစ်ဆေးရန် ကျန် |
+| # | နေရာ | ပြဿနာ | ရလဒ် |
+|---|---|---|---|
+| 7 | `order_items.quantity` = `int(11)` | `inventory_movements`/`pos_sale_items` တို့က decimal(12,3) ဖြစ်ပြီး order→inventory adapter က `bcadd(...,3)` သုံးသည်။ MySQL (STRICT mode မရှိ) တွင် `0.10` ကို **တိတ်ဆိတ်စွာ 0** ဟု သိမ်းသည် | migration ဖြင့် `decimal(10,3)` (တန်ဖိုးများ မပြောင်း) |
+| 8 | `InventoryService::verifyBalances()` | ရိုင်းသော string comparison — MySQL က DECIMAL ကို `7.000`၊ SQLite က `7` ပြန်သည်။ movement မရှိသော row အတွက် `'0'` literal နှင့် နှိုင်းယှဉ်သဖြင့် **zero balance row ကို အမှားပြ** | bcmath ဖြင့် scale 3 တွင် နှိုင်းယှဉ် + fixed-scale string ပြန် |
+| 9 | `ServiceJobController:531` | `Product::where('is_active', true)` — column မရှိ | MySQL တွင် Service Job create **500**၊ SQLite တွင် product dropdown **အလွတ်** → filter ဖယ် |
+| 10 | `StoreDataExportService` | `buy_price`/`is_active` column မရှိ | export တွင် cost **0.00 အမြဲ**၊ active **false အမြဲ** → `purchase_cost` + true |
+| 11 | `DatabaseBackupService` | `prune()` က မိမိဖန်တီးလိုက်သော backup ကို ဖျက်နိုင်။ destination ကို stat လုပ်ခြင်းသည် Windows scanner lock ကြောင့် ရံဖန်ရံခါ `stat failed` | အသစ်ဆုံး backup ပျောက် + အောင်မြင်သော backup ကို error ပြသည် → size ကို staging file မှ ယူ + ဖန်တီးလိုက်သည့်ဖိုင်ကို prune မဖျက် |
+| 12 | Test fixtures — `Phase4PosDecouplingTest:90` (`posted_by => 1`)၊ `PosMoneyAndAtomicityTest` (`created_by => $store->id`)၊ `ProductionBootstrapTest` (literal `store_id => 1`) | မရှိသော user id / မှားသော id ကို FK အဖြစ်ရေးခြင်း၊ hardcoded store id | MySQL တွင် ၉ ခု ကျဆင်း (SQLite က FK မ enforce) → တကယ့် id များ သုံး |
 
 ---
 
@@ -89,8 +92,13 @@ DB_CONNECTION=mysql DB_DATABASE=datapos_closing_fix_test DB_HOST=127.0.0.1 DB_PO
 ## 6. ကျန်ရှိသေးသော အလုပ်များ (Production အတွက်)
 
 1. **Printer / ESC-POS လက်တွေ့စမ်းသပ်ချက်** — မလုပ်ရသေးပါ (NOT RUN)။ အကြီးဆုံး မသေချာမှု။
-2. **ကျန်သော MySQL failure ၁၂ ခု** — အထက်တွင် ဖော်ပြထားသည့်အတိုင်း အများစုသည် fixture ပြဿနာဖြစ်သော်လည်း ၃ ခုကို စစ်ထုတ်ရန် ကျန်သည်။ ငွေနှင့် ဆက်စပ်သော `MoneyWritePathSafetyTest` ကို ဦးစားပေးစစ်ပါ။
-3. **Deploy checklist** — `APP_ENV=production`, `APP_DEBUG=false`, HTTPS, `.env` မ commit (အတည်ပြုပြီး)၊ server ပေါ်တွင် `npm run build`, migrate မတိုင်မီ DB backup။
-4. **UAT drill** — ဝန်ထမ်းအစစ်နှင့် တစ်ရက်တာ အပြည့်အစုံ လည်ပတ်စမ်းသပ်ခြင်း။
+2. **Deploy checklist** — `APP_ENV=production`, `APP_DEBUG=false`, HTTPS, `.env` မ commit (အတည်ပြုပြီး)၊ server ပေါ်တွင် `npm run build`, migrate မတိုင်မီ DB backup။
+3. **UAT drill** — ဝန်ထမ်းအစစ်နှင့် တစ်ရက်တာ အပြည့်အစုံ လည်ပတ်စမ်းသပ်ခြင်း။
 
-> ဤ scope PASS ဖြစ်ခြင်းကို **project တစ်ခုလုံး Production Ready** ဟု မသတ်မှတ်ပါ။ အထက်ပါ ၄ ချက် ကျန်ပါသည်။
+> Test suite နှစ်ခုလုံး အစိမ်းဖြစ်ခြင်းကို **project တစ်ခုလုံး Production Ready** ဟု မသတ်မှတ်ပါ။ အထက်ပါ ၃ ချက် ကျန်ပါသည်။
+
+---
+
+## 7. Test ပတ်ဝန်းကျင်အကြောင်း သတိထားရမည့်အချက် (မပြင်တော့ပါ)
+
+`Storage::fake('public')` ၏ root directory ကို test တစ်ခုနှင့်တစ်ခု အကြား Laravel က ရှင်းမပေးပါ။ ထို့ကြောင့် TestCase::tearDown တွင် fake root များကို ရှင်းရန် စမ်းခဲ့သည် — **ပိုဆိုးသွားသည်** (SQLite 1 → 7၊ MySQL 2 → 17)၊ အကြောင်းမှာ test အများအပြားသည် ထို root ထဲရှိ ဖိုင်များကို တစ်ခုနှင့်တစ်ခု မှီခိုနေသောကြောင့် ဖြစ်သည်။ ထို့ကြောင့် ထို ပြောင်းလဲမှုကို **ပြန်ဖျက်ထား**သည်။ လိုအပ်လျှင် သက်ဆိုင်ရာ test များကို တစ်ခုချင်း သီးခြားခွဲရန် လိုအပ်မည် (ဤ task scope အပြင်)။

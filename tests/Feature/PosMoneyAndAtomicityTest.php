@@ -295,11 +295,15 @@ class PosMoneyAndAtomicityTest extends TestCase
     {
         $product = $this->product($store);
 
+        // created_by is a foreign key to users. Using the STORE id here only
+        // worked because SQLite does not enforce foreign keys.
+        $actor = $store->users()->first() ?? $this->user($store);
+
         $session = StockCount::create([
             'store_id'       => $store->id,
             'session_number' => 'SC-' . Str::random(6),
             'status'         => 'in_progress',
-            'created_by'     => $store->id,
+            'created_by'     => $actor->id,
         ]);
 
         $line = StockCountLine::create([

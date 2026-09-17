@@ -35,6 +35,9 @@ class InventoryService
     public const SENTINEL_WAREHOUSE = 0;
     public const SENTINEL_VARIANT = 0;
 
+    /** Decimals used for every quantity comparison and report in this service. */
+    public const QUANTITY_SCALE = 3;
+
     public function __construct(protected StoreLocationService $storeLocations, protected CostingService $costing)
     {
     }
@@ -337,6 +340,13 @@ class InventoryService
     /**
      * Compare stored balances against movements (read-only).
      *
+     * Quantities are compared NUMERICALLY at the ledger's own scale, never as raw
+     * database strings. MySQL returns DECIMAL as '7.000' and SQLite as '7', so a
+     * string comparison made the same balance look equal on one engine and
+     * different on the other — and the "no movements at all" fallback below
+     * compared '0.000' against the literal '0', which flagged a legitimately zero
+     * balance row as a mismatch on MySQL.
+     *
      * @return array{stored:int, computed:int, mismatches:array<int, array<string, mixed>>}
      */
     public function verifyBalances(): array
@@ -354,15 +364,17 @@ class InventoryService
 
         foreach ($stored as $row) {
             $key = $this->balanceKey($row->store_id, $row->warehouse_id, $row->product_id, $row->product_variant_id);
-            $expected = isset($computed[$key]) ? (string) $computed[$key]->total : '0';
-            if ((string) $row->quantity_on_hand !== $expected) {
+            $storedQty = $this->normalizeQuantity($row->quantity_on_hand);
+            $expectedQty = $this->normalizeQuantity(isset($computed[$key]) ? $computed[$key]->total : 0);
+
+            if (bccomp($storedQty, $expectedQty, self::QUANTITY_SCALE) !== 0) {
                 $mismatches[] = [
                     'store_id' => $row->store_id,
                     'warehouse_id' => $row->warehouse_id,
                     'product_id' => $row->product_id,
                     'product_variant_id' => $row->product_variant_id,
-                    'stored' => (string) $row->quantity_on_hand,
-                    'expected' => $expected,
+                    'stored' => $storedQty,
+                    'expected' => $expectedQty,
                 ];
             }
             unset($computed[$key]);
@@ -376,7 +388,7 @@ class InventoryService
                 'product_id' => $row->product_id,
                 'product_variant_id' => $row->product_variant_id ?? 0,
                 'stored' => '(missing)',
-                'expected' => (string) $row->total,
+                'expected' => $this->normalizeQuantity($row->total),
             ];
         }
 
@@ -385,6 +397,15 @@ class InventoryService
             'computed' => $computedCount,
             'mismatches' => $mismatches,
         ];
+    }
+
+    /**
+     * Render a quantity as a fixed-scale decimal string so comparisons and
+     * reports read the same on every engine.
+     */
+    private function normalizeQuantity(mixed $value): string
+    {
+        return bcadd((string) ($value ?? '0'), '0', self::QUANTITY_SCALE);
     }
 
     /* ------------------------------------------------------------------ */
