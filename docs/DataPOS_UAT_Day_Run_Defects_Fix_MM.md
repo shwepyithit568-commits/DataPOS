@@ -154,13 +154,69 @@ app/Http/Controllers/Admin/ServiceJobController.php
 app/Http/Controllers/Admin/DashboardController.php
 app/Models/StaffRole.php                          role templates
 app/Services/AdminNavigationService.php           nav gates
-app/Console/Commands/SyncRoleRoutePermissions.php (အသစ်)
+app/Console/Commands/SyncRoleRoutePermissions.php (အသစ် — companion export rule အပါ)
+app/Models/StaffRole.php                          addCompanionExportPermissions()
+app/Services/AdminNavigationService.php           platform_owner_only in store scope
+resources/views/layouts/admin/app.blade.php       Select Store link → route('admin.dashboard')
 resources/views/pos/partials/modal-reporting.blade.php  min="0"
 resources/views/pos/closing.blade.php             countedTouched
 lang/{my,en,zh_CN}/messages.php                   key ၅ ခု + စာသားရှင်း (parity 5903×3)
 ```
 
-## 9. မစမ်းရသေးသည် (ရိုးသားစွာ)
+## 9. Live feature sweep (2026-09-18 — တစ်ခုလုံး ဖွင့်စစ်ခြင်း)
+
+Store Owner / Manager / Platform Owner ၃ မျိုးအနေဖြင့် route စာမျက်နှာများကို တိုက်ရိုက်
+request လုပ်ပြီး status မှတ်တမ်းတင်ခဲ့သည်။
+
+| အုပ်စု | အရေအတွက် | ရလဒ် |
+|---|---|---|
+| Store admin/POS index စာမျက်နှာ | 189 | 187 = 200; 2 = 403 (platform-only: backups, database) → **ဖြေရှင်း** |
+| Detail စာမျက်နှာ (real ID ဖြင့်) | 32 | 28 = 200; 4 = မှန်ကန်သော 404 (ဆိုင်နှင့်မဆိုင်၊ token လိုသည်) |
+| Export / print / template endpoint | 67 | owner 67 = 200; **manager 24 = 403 → ဖြေရှင်း** (ယခု 67 = 200) |
+| Storefront (အများသုံး) | 21 | အားလုံး 200၊ စာမျက်နှာအတွင်း error စာသား မရှိ |
+| Platform (owner-only) | 10 | 9 = 200; 1 = 404 ("Select Store" → `/admin` route မရှိ) → **ဖြေရှင်း** |
+| Manager nav လင့် | 53 | 52 = 200; 1 = 403 (web-products) → **ဖြေရှင်း** (ယခု 0) |
+
+### 10.1 export 403 အုပ်စု (အရေးကြီး — ၂၄ ခု)
+List စာမျက်နှာများသည် ကြည့်ခွင့်ရှိသူအားလုံးအတွက် XLSX/CSV ခလုတ် ပြသည်၊ သို့သော် export route က
+`X.export` ကို သီးခြား စစ်သည်။ Role template များတွင် `X.export` မပါသဖြင့် manager အတွက်
+(ဥပမာ products, customers, sales, cash, tax, stock-ledger, audit-logs, roles, debt-aging …)
+**၂၄ ခု 403** ဖြစ်ခဲ့သည်။
+
+**ဖြေရှင်းချက် (စနစ်ကျသော rule):** role တစ်ခုတွင် `X.view` ရှိပြီး catalogue တွင် `X.export` ရှိပါက
+`X.export` ကို အလိုအလျောက် ပေါင်းထည့်သည် —
+- Store အသစ်: `StaffRole::bootstrapDefaultRoles()` → `addCompanionExportPermissions()`
+- Store ရှိပြီးသား: `staff:sync-role-permissions` ရဲ့ `companionExportsFor()`
+
+**နောက်ဆက်တွဲ ထောင်ချောက်:** `StorePermissionService::enforceParentViewDependency()` သည်
+`X.view` မရှိပါက `X.<action>` ကို ဖျောက်သည်။ ထို့ကြောင့် `roles.export` ကို ပေးရုံဖြင့်
+မရ — `roles.view` ပါ လိုသည် (ထည့်ပြီး)။ ဤအချက်ကို test နှင့် ချိတ်ထားသည်။
+
+### 10.2 nav နှင့် route မကိုက်ညီမှု (ကျန် ၃ မျိုး)
+| ပြဿနာ | အကြောင်းရင်း | ဖြေရှင်းချက် |
+|---|---|---|
+| Store owner မြင်ရသော backups/database လင့် → 403 | `platform_owner_only` flag ကို platform scope တွင်သာ စစ်ပြီး store scope တွင် မစစ် | `isNodeAllowed()` တွင် flag စစ် |
+| Manager မြင်ရသော web-products → 403 | `web_products.view` မပါ | role တွင် ထည့် |
+| Platform "Select Store" → 404 | `url('/admin')` — `/admin` route မရှိ | `route('admin.dashboard')` |
+
+## 10. Feature coverage — ဘယ်အပိုင်း စစ်ပြီးလဲ (ရိုးသားစွာ)
+
+**စစ်ပြီး (သက်သေနှင့်)**
+- ငွေ/စတော့ လုပ်ငန်းစဉ် တစ်နေ့တာ (အရောင်း ၄ မျိုး၊ ကြွေးကောက်၊ စက်ပြင်အပ်ငွေ+ကျန်ငွေ၊
+  အဝယ် PO→GRV→ပေးချေ၊ အသုံးစရိတ်၊ ငွေသွင်း/ထွက်၊ နေ့ချုပ်၊ အတည်ပြု) — MySQL အစစ်ပေါ် live
+- စာမျက်နှာ ~၂၉၀ ဖွင့်စစ် (အထက်ဇယား)
+- Automated suite **2092 tests** — export/role/nav အသစ်များ အပါအဝင်
+- Returns/refunds, adjustments, buy-back, promotions, coupons, eload, transfers, stock counts
+  စသည့် flow များကို **automated test** များက ငွေတန်ဖိုး တိတိကျကျ assert လုပ်ထားသည်
+
+**မစစ်ရသေး (UI ဖြင့် လက်တွေ့)**
+- အထက်ပါ flow များကို **လူကိုယ်တိုင် UI ဖြင့်** တစ်ခုချင်း ဖြတ်စမ်းခြင်း (test ရှိသော်လည်း hand-run မလုပ်ရသေး)
+- ပရင်တာ/ESC-POS လက်တွေ့ထုတ်ခြင်း
+- Backup restore (အန္တရာယ်ရှိ — အသစ်ဖန်တီးခြင်းသာ စစ်နိုင်သည်)
+- အွန်လိုင်း အော်ဒါ အပြည့်အစုံ (order → confirm → deliver) နှင့် storefront checkout
+- Eload တကယ့် API၊ ပြင်ပ payment gateway၊ SMS/Viber/Telegram အပို့
+- Offline sync (terminal → server) နှင့် ဆိုင်ခွဲ/ဂိုဒေါင် ရွှေ့ပြောင်းမှု အပြည့်အစုံ
+- Theme publish/rollback နှင့် storefront content CRUD (banner/blog/page/navigation)
 
 - **ပရင်တာ/ESC-POS လက်တွေ့ထုတ်ခြင်း** — မရှိသေးပါ (print preview သာ)။
 - ဤ pass သည် **DB schema/migration အသစ် မလိုအပ်**ပါ (ကော်လံများ ရှိပြီးသား)။

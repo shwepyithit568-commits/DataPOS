@@ -283,6 +283,13 @@ class AdminNavigationService
      */
     protected function isNodeAllowed(array $node, User $user, Store $store): bool
     {
+        // 0. Platform-only nodes (whole-database backup / maintenance) carry a
+        // `platform_owner` route middleware, so a store owner clicking them got
+        // a 403. The store-scope tree skipped this flag entirely.
+        if (!empty($node['platform_owner_only']) && ! $user->isPlatformOwner()) {
+            return false;
+        }
+
         // 1. Channel check
         if (!empty($node['required_channel'])) {
             if (! $store->hasSalesChannel($node['required_channel'])) {

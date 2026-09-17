@@ -139,6 +139,57 @@ class MenuRoutePermissionAgreementTest extends TestCase
         $this->assertStringContainsString("'required_permissions' => ['stock_reconciliation.view'],", $source);
     }
 
+    public function test_platform_only_pages_are_not_offered_in_store_scope(): void
+    {
+        // /admin/backups and /admin/database carry the `platform_owner` route
+        // middleware, so a store owner clicking them got a 403. The store-scope
+        // tree skipped the `platform_owner_only` flag that the platform scope
+        // already honoured.
+        $owner = $this->member('store_owner', 'Owner Ko');
+
+        $nav = app(AdminNavigationService::class)->getFilteredNavigationTree($owner, $this->store);
+        $html = json_encode($nav, JSON_UNESCAPED_SLASHES);
+
+        $this->assertStringNotContainsString('/admin/database', $html);
+        $this->assertStringNotContainsString('/admin/backups', $html);
+
+        // The routes themselves still exist for the platform owner.
+        $this->assertNotNull(app('router')->getRoutes()->getByName('store.admin.backups.index'));
+        $this->assertNotNull(app('router')->getRoutes()->getByName('store.admin.database.index'));
+    }
+
+    public function test_bootstrap_gives_every_role_the_export_key_that_pairs_with_its_views(): void
+    {
+        // The export routes check `X.export` while the list pages only need
+        // `X.view`, so the CSV/XLSX buttons beside a list used to 403.
+        $expectations = [
+            'store_manager' => ['products.export', 'reports_sales.export', 'customers.export', 'audit_logs.export'],
+            'accountant' => ['products.export', 'reports_cash.export'],
+            'stock_keeper' => ['stock_ledger.export', 'stock_balance.export'],
+        ];
+
+        foreach ($expectations as $slug => $keys) {
+            $role = StaffRole::where('store_id', $this->store->id)->where('slug', $slug)->sole();
+
+            foreach ($keys as $key) {
+                $this->assertContains($key, $role->permissions, "{$slug} is missing {$key}");
+            }
+        }
+    }
+
+    public function test_export_keys_survive_the_parent_view_dependency_rule(): void
+    {
+        // StorePermissionService drops any `<resource>.<action>` when the role
+        // has no `<resource>.view`. Adding the export alone is therefore a
+        // silent no-op — this is how roles.export kept 403ing.
+        $manager = $this->member('store_manager', 'Manager Mg');
+        $service = app(StorePermissionService::class);
+
+        $this->assertTrue($service->can($manager, $this->store, 'roles.export'));
+        $this->assertTrue($service->can($manager, $this->store, 'reports_sales.export'));
+        $this->assertTrue($service->can($manager, $this->store, 'web_products.view'));
+    }
+
     // ── The sync command for stores that already exist ────────────────────────
 
     public function test_sync_command_adds_the_missing_keys_and_is_idempotent(): void
@@ -160,6 +211,11 @@ class MenuRoutePermissionAgreementTest extends TestCase
         $this->assertContains('profit_loss.export', $managerRole->fresh()->permissions);
         $this->assertContains('stock_reconciliation.view', $managerRole->fresh()->permissions);
         $this->assertContains('profit_loss.export', $accountantRole->fresh()->permissions);
+
+        // Companion keys are derived from whatever views each role already had,
+        // so the accountant picks up its report exports without a hand-written list.
+        $this->assertContains('reports_cash.export', $accountantRole->fresh()->permissions);
+        $this->assertContains('products.export', $accountantRole->fresh()->permissions);
 
         $this->assertSame(2, AuditLog::where('action', 'staff_permissions.sync_route_keys')->count());
 

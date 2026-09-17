@@ -620,9 +620,12 @@
                 </button>
 
                 @php
+                    // Platform scope has no store slug, and there is no `/admin`
+                    // route — this used to send the platform owner to a 404.
+                    // The platform dashboard is the store selector.
                     $headerDashboardUrl = $hasStoreContext
                         ? route('store.admin.dashboard', ['store_slug' => $currentSlug])
-                        : url('/admin');
+                        : route('admin.dashboard');
                 @endphp
                 <a href="{{ $headerDashboardUrl }}"
                    title="{{ __('messages.admin_dashboard') }} — {{ $activeStore->name ?? 'Select Store' }}"

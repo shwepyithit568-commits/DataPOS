@@ -228,10 +228,15 @@ class AdminSidebarNavigationUXTest extends TestCase
             'pos.purchases.index',
             'pos.adjustments.index',
             'pos.reports.sales',
-            'store.admin.backups.index',
         ] as $routeName) {
             $response->assertSee('data-route-name="' . $routeName . '"', false);
         }
+
+        // Whole-database backup and maintenance carry the `platform_owner` route
+        // middleware, so a manager who clicked them got a 403 — they must not be
+        // offered in store scope (they were, until 2026-09-18).
+        $response->assertDontSee('data-route-name="store.admin.backups.index"', false);
+        $response->assertDontSee('data-route-name="store.admin.database.index"', false);
 
         // Categories / Brands / Variant Settings live inside the Master Data
         // tabs now — they must NOT appear as standalone sidebar links.

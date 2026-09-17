@@ -848,6 +848,23 @@ class StaffRole extends Model
                     'alerts.view',
                     'audit_logs.view',
                     'settings.view',
+                    // Keys the routes behind the menu entries the manager already
+                    // uses demand but the template never granted — each one was a
+                    // 403 on a page or button the sidebar offered (measured
+                    // 2026-09-18): the web-product list, the category/banner/
+                    // glass-finder/opening-stock/product-import pages, saving
+                    // store settings and adding a printer, and the role list CSV.
+                    'settings.update',
+                    'expense_categories.view',
+                    'banners.view',
+                    'web_products.view',
+                    'glass_finder.view',
+                    'opening_stock.view',
+                    'product_import.view',
+                    // roles.export is dropped by the parent-view dependency rule
+                    // unless the matching view key is present too.
+                    'roles.view',
+                    'roles.export',
                 ],
                 'is_system'   => true,
                 'is_active'   => true,
@@ -1038,5 +1055,60 @@ class StaffRole extends Model
                 'is_active'   => true,
             ]
         );
+
+        static::addCompanionExportPermissions($store);
+    }
+
+    /**
+     * Give every role the `.export` key that pairs with a `.view` key it holds.
+     *
+     * List pages render their XLSX/CSV buttons for anyone who can view them, but
+     * the export routes check a separate `.export` permission — so a manager who
+     * could see the product list got a 403 from the Export button next to it
+     * (measured 2026-09-18: 24 of 67 export endpoints, see
+     * docs/DataPOS_UAT_Day_Run_Defects_Fix_MM.md).
+     *
+     * Only keys that exist in the catalogue are added, so this can never invent
+     * a permission the routes do not check.
+     */
+    public static function addCompanionExportPermissions(Store $store): void
+    {
+        $catalogue = static::allPermissionKeys()->flip()->all();
+        $exportKeys = array_filter(
+            array_keys($catalogue),
+            fn (string $key) => str_ends_with($key, '.export')
+        );
+
+        if ($exportKeys === []) {
+            return;
+        }
+
+        foreach (static::where('store_id', $store->id)->get() as $role) {
+            $permissions = is_array($role->permissions) ? $role->permissions : (json_decode((string) $role->permissions, true) ?: []);
+
+            if (in_array('*', $permissions, true)) {
+                continue; // owner: wildcard already covers everything
+            }
+
+            $missing = [];
+            foreach ($permissions as $granted) {
+                if (! is_string($granted) || ! str_ends_with($granted, '.view')) {
+                    continue;
+                }
+
+                $export = substr($granted, 0, -5) . '.export';
+
+                if (in_array($export, $exportKeys, true) && ! in_array($export, $permissions, true)) {
+                    $missing[] = $export;
+                }
+            }
+
+            if ($missing === []) {
+                continue;
+            }
+
+            $role->permissions = array_values(array_unique(array_merge($permissions, $missing)));
+            $role->save();
+        }
     }
 }

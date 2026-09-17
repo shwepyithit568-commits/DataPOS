@@ -37,6 +37,15 @@ class SyncRoleRoutePermissions extends Command
             'membership.view',
             'profit_loss.export',
             'stock_reconciliation.view',
+            'settings.update',
+            'expense_categories.view',
+            'banners.view',
+            'web_products.view',
+            'glass_finder.view',
+            'opening_stock.view',
+            'product_import.view',
+            'roles.view',
+            'roles.export',
         ],
         'accountant' => [
             'profit_loss.export',
@@ -58,6 +67,9 @@ class SyncRoleRoutePermissions extends Command
 
         foreach ($query->get() as $role) {
             $additions = self::ROLE_KEYS[$role->slug] ?? [];
+            $companions = $this->companionExportsFor($role);
+            $additions = array_values(array_unique(array_merge($additions, $companions)));
+
             if ($additions === []) {
                 continue;
             }
@@ -114,5 +126,44 @@ class SyncRoleRoutePermissions extends Command
             : "Updated {$updated} role(s).");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * The `.export` keys that pair with the `.view` keys this role holds.
+     *
+     * A list page shows its XLSX/CSV buttons to anyone who can view it, but the
+     * export route checks a separate key — that mismatch is what made 24 of 67
+     * export endpoints answer 403 for the store manager. Only keys present in
+     * the permission catalogue are offered, so nothing the routes do not check
+     * is ever invented.
+     *
+     * @return array<int, string>
+     */
+    protected function companionExportsFor(StaffRole $role): array
+    {
+        $permissions = is_array($role->permissions)
+            ? $role->permissions
+            : (json_decode((string) $role->permissions, true) ?: []);
+
+        if ($permissions === [] || in_array('*', $permissions, true)) {
+            return [];
+        }
+
+        $catalogue = array_flip(StaffRole::allPermissionKeys()->all());
+
+        $companions = [];
+        foreach ($permissions as $granted) {
+            if (! is_string($granted) || ! str_ends_with($granted, '.view')) {
+                continue;
+            }
+
+            $export = substr($granted, 0, -5) . '.export';
+
+            if (isset($catalogue[$export]) && ! in_array($export, $permissions, true)) {
+                $companions[] = $export;
+            }
+        }
+
+        return array_values(array_unique($companions));
     }
 }
