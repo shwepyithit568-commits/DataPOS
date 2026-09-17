@@ -178,12 +178,28 @@ class BusinessReconciliationService
             ->whereBetween('expense_date', [$start->toDateString(), $end->toDateString()])
             ->sum('amount'), 2, '.', '');
 
-        // 4. Supplier PO payments paid in cash
+        // 4. Supplier PO payments paid in cash.
+        // Only rows that actually state "cash" are deducted. Payments recorded
+        // before the method column existed (or without one) are UNRECORDED: they
+        // are reported below instead of being assumed to be cash, because a wrong
+        // assumption either hides real drawer outflow or invents it.
         $supplierPayments = number_format((float) DB::table('po_payment_logs')
             ->where('store_id', $store->id)
             ->where('payment_method', 'cash')
             ->whereBetween('paid_at', [$start, $end])
             ->sum('amount'), 2, '.', '');
+
+        $supplierPaymentsUnrecorded = number_format((float) DB::table('po_payment_logs')
+            ->where('store_id', $store->id)
+            ->whereNull('payment_method')
+            ->whereBetween('paid_at', [$start, $end])
+            ->sum('amount'), 2, '.', '');
+
+        $supplierPaymentsUnrecordedCount = DB::table('po_payment_logs')
+            ->where('store_id', $store->id)
+            ->whereNull('payment_method')
+            ->whereBetween('paid_at', [$start, $end])
+            ->count();
 
         // Inflow
         $totalInflow = bcadd(bcadd(bcadd($openingCash, $cashSales, 2), $debtCollections, 2), $cashIn, 2);
@@ -202,11 +218,14 @@ class BusinessReconciliationService
             'cash_refunds'          => $cashRefunds,
             'expenses_paid'         => $expensesPaid,
             'supplier_payments'     => $supplierPayments,
+            'supplier_payments_unrecorded' => $supplierPaymentsUnrecorded,
+            'supplier_payments_unrecorded_count' => $supplierPaymentsUnrecordedCount,
             'cash_out'              => $cashOut,
             'expected_closing_cash' => $expectedClosing,
             'counted_cash'          => $countedCash,
             'variance'              => $variance,
             'has_variance'          => bccomp($variance, '0.00', 2) !== 0,
+            'is_reconciled'         => bccomp($supplierPaymentsUnrecorded, '0.00', 2) === 0,
         ];
     }
 }

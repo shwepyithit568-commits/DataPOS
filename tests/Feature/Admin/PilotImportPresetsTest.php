@@ -90,7 +90,10 @@ class PilotImportPresetsTest extends TestCase
             'scenario' => 'general-retail',
         ])->assertRedirect();
 
-        $product = Product::where('store_id', $this->store->id)->firstOrFail();
+        // Explicit order: without it "the first product" is whatever the engine
+        // returns first, so the assertion below depended on row order and
+        // disagreed between MySQL and SQLite.
+        $product = Product::where('store_id', $this->store->id)->orderBy('id')->firstOrFail();
         Storage::disk('public')->put('products/customer-photo.webp', 'customer image');
         $product->update(['image_path' => 'products/customer-photo.webp']);
 

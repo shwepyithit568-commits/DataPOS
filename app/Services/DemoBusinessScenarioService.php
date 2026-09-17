@@ -646,7 +646,9 @@ class DemoBusinessScenarioService
         // 3. Delete POS sales, items, returns, shifts, and daily closings
         if (Schema::hasTable('pos_sales')) {
             if (Schema::hasTable('pos_sale_items')) {
-                DB::table('pos_sale_items')->whereIn('sale_id', function ($query) use ($store) {
+                // pos_sale_items' FK column is pos_sale_id — "sale_id" does not
+                // exist, so on MySQL this threw and the wipe aborted part-way.
+                DB::table('pos_sale_items')->whereIn('pos_sale_id', function ($query) use ($store) {
                     $query->select('id')->from('pos_sales')->where('store_id', $store->id);
                 })->delete();
             }
@@ -654,7 +656,9 @@ class DemoBusinessScenarioService
         }
         if (Schema::hasTable('pos_returns')) {
             if (Schema::hasTable('pos_return_items')) {
-                DB::table('pos_return_items')->whereIn('return_id', function ($query) use ($store) {
+                // Same class of bug as pos_sale_items above: the FK column is
+                // pos_return_id, not return_id.
+                DB::table('pos_return_items')->whereIn('pos_return_id', function ($query) use ($store) {
                     $query->select('id')->from('pos_returns')->where('store_id', $store->id);
                 })->delete();
             }

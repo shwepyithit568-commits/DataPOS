@@ -60,7 +60,10 @@
             </a>
 
             {{-- Export Trigger Button --}}
-            <button type="button" @click="exportModalOpen = true"
+            {{-- @click.stop: the modal's own @click.away listens on the document,
+                 so without stopping propagation this click re-closes the modal it
+                 just opened and the export chooser can never be reached. --}}
+            <button type="button" @click.stop="exportModalOpen = true"
                     class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition inline-flex items-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

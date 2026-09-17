@@ -641,6 +641,21 @@
                                class="w-full h-11 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 text-base sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition">
                     </div>
 
+                    {{-- Payment method: the cash reconciliation can only subtract the
+                         supplier payments that actually say "cash", so this is asked
+                         rather than assumed. --}}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1.5">{{ __('messages.payment_method') }}</label>
+                        <select name="payment_method"
+                                class="w-full h-11 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 text-base sm:text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition cursor-pointer">
+                            @foreach (\App\POS\Models\PoPaymentLog::PAYMENT_METHODS as $method)
+                                <option value="{{ $method }}" @selected($method === \App\POS\Models\PoPaymentLog::METHOD_CASH)>
+                                    {{ __('messages.po_payment_method_' . $method) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     {{-- Actions --}}
                     <div class="flex items-center gap-2 pt-1">
                         <button type="button" @click="payOpen = false"

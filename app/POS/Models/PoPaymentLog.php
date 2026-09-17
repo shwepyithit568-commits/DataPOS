@@ -24,11 +24,32 @@ class PoPaymentLog extends Model
 {
     protected $table = 'po_payment_logs';
 
+    /**
+     * Payment methods a supplier payment may be recorded with. `null` means the
+     * method was never stated — it is NOT treated as cash anywhere.
+     */
+    public const METHOD_CASH = 'cash';
+    public const METHOD_KPAY = 'kpay';
+    public const METHOD_WAVE = 'wave';
+    public const METHOD_CBPAY = 'cbpay';
+    public const METHOD_BANK_TRANSFER = 'bank_transfer';
+    public const METHOD_OTHER = 'other';
+
+    public const PAYMENT_METHODS = [
+        self::METHOD_CASH,
+        self::METHOD_KPAY,
+        self::METHOD_WAVE,
+        self::METHOD_CBPAY,
+        self::METHOD_BANK_TRANSFER,
+        self::METHOD_OTHER,
+    ];
+
     protected $fillable = [
         'store_id',
         'purchase_order_id',
         'supplier_id',
         'amount',
+        'payment_method',
         'reference',
         'slip_images',
         'paid_by',

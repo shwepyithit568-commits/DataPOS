@@ -222,6 +222,20 @@
                         <span class="text-slate-500">− {{ __('messages.cash_out') }}</span>
                         <span class="font-mono text-rose-600 dark:text-rose-400 font-semibold">−{{ format_currency($cash['cash_out'], $store) }}</span>
                     </div>
+
+                    {{-- Supplier payments whose method was never stated are NOT
+                         deducted (guessing either hides real outflow or invents it),
+                         so the gap is shown instead of being assumed away. --}}
+                    @if (! ($cash['is_reconciled'] ?? true))
+                        <div class="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 text-[11px] text-rose-900 dark:text-rose-200">
+                            <div class="flex items-center justify-between font-bold">
+                                <span>⚠️ {{ __('messages.supplier_payments_unrecorded') }}:</span>
+                                <span class="font-mono">{{ format_currency($cash['supplier_payments_unrecorded'], $store) }}
+                                    ({{ $cash['supplier_payments_unrecorded_count'] }})</span>
+                            </div>
+                            <p class="text-[10px] mt-0.5">{{ __('messages.supplier_payments_unrecorded_notice') }}</p>
+                        </div>
+                    @endif
                 </div>
 
                 {{-- Expected vs Counted Closing --}}

@@ -23,7 +23,8 @@
 7. [Closing Cash-Out Audit Fix](DataPOS_Closing_Cash_Out_Audit_Fix_MM.md) — ပထမ pass (`4de2cb3`)
 8. [Closing Follow-up Fix Prompt](DataPOS_Closing_Followup_Fix_Prompt_MM.md)
 9. [Closing Cash-Out Remaining Defects Fix](DataPOS_Closing_CashOut_Remaining_Defects_Fix_MM.md) — ဒုတိယ pass: retry protection, drawer attribution, unknown source, closed-shift lock, snapshot integrity
-10. [Consolidation Manifest](CONSOLIDATION_MANIFEST.md)
+10. [MySQL Portability Fixes](DataPOS_MySQL_Portability_Fixes_MM.md) — production အင်ဂျင်တွင်သာ crash ဖြစ်သော bug ၆ မျိုး (SQLite က ဖုံးထားခဲ့သည်)
+11. [Consolidation Manifest](CONSOLIDATION_MANIFEST.md)
 
 ## Historical archive
 

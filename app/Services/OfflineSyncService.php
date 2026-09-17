@@ -268,7 +268,17 @@ class OfflineSyncService
         $products = Product::query()
             ->where('store_id', $store->id)
             ->where('updated_at', '>=', $since)
-            ->select(['id', 'store_id', 'category_id', 'brand_id', 'name', 'sku', 'barcode', 'retail_price', 'wholesale_price', 'cost_price', 'is_active', 'updated_at'])
+            // products has no cost_price/is_active column — selecting them threw on
+            // MySQL and silently degraded on SQLite (quoted unknown identifier =
+            // string literal), so the pull delta never returned a real cost.
+            // purchase_cost is the real column, and a product only exists here while
+            // it is sellable, so is_active is reported as 1 for every row.
+            ->select([
+                'id', 'store_id', 'category_id', 'brand_id', 'name', 'sku', 'barcode',
+                'retail_price', 'wholesale_price', 'purchase_cost', 'updated_at',
+            ])
+            ->selectRaw('CAST(purchase_cost AS DECIMAL(12,2)) as cost_price')
+            ->selectRaw('1 as is_active')
             ->get();
 
         $categories = Category::query()

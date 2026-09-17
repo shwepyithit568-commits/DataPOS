@@ -147,7 +147,11 @@
                 <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400" x-text="d"></span>
             </div>
 
-            <div class="flex items-center gap-2">
+            {{-- min-w-0 + flex-wrap: on a ~360px phone the sync widget, clock,
+                 language, display-mode, admin and logout controls together are
+                 wider than the viewport, which used to push the whole header into
+                 a horizontal scroll. Wrapping keeps every control reachable. --}}
+            <div class="flex items-center gap-2 min-w-0 flex-wrap justify-end">
                 @if (isset($store))
                     <x-sync-status-widget :store="$store" />
                 @endif

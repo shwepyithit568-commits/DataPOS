@@ -41,7 +41,7 @@ class BulkPriceWizardService
             ->where('retail_price', '>', 0)
             ->selectRaw('
                 COUNT(*) as count,
-                AVG(((CAST(retail_price AS REAL) - CAST(purchase_cost AS REAL)) / CAST(retail_price AS REAL)) * 100.0) as avg_margin,
+                AVG(((retail_price - purchase_cost) * 1.0 / NULLIF(retail_price, 0)) * 100) as avg_margin,
                 SUM(purchase_cost) as total_cost_sum,
                 SUM(retail_price) as total_retail_sum
             ')

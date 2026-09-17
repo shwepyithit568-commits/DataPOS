@@ -836,6 +836,7 @@ class PurchaseOrderController extends Controller
         $data = $request->validate([
             'amount'         => ['required', 'decimal:0,2', 'gt:0'],
             'reference'      => ['nullable', 'string', 'max:120'],
+            'payment_method' => ['nullable', 'string', \Illuminate\Validation\Rule::in(\App\POS\Models\PoPaymentLog::PAYMENT_METHODS)],
             'slip_images'    => ['nullable', 'array', 'max:4'],
             'slip_images.*'  => ['file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],  // 5 MB each
         ]);
@@ -851,9 +852,10 @@ class PurchaseOrderController extends Controller
 
         try {
             $this->purchaseOrders->applyPayment($po, [
-                'amount'      => $data['amount'],
-                'reference'   => $data['reference'] ?? null,
-                'slip_images' => $imagePaths ?: null,
+                'amount'         => $data['amount'],
+                'reference'      => $data['reference'] ?? null,
+                'payment_method' => $data['payment_method'] ?? null,
+                'slip_images'    => $imagePaths ?: null,
             ], $request->user());
         } catch (InventoryException $e) {
             // Clean up uploaded files on failure

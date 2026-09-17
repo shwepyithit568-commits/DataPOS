@@ -142,7 +142,10 @@ class StockCountService
             $now = now();
             foreach ($products as $product) {
                 $systemQty = isset($balances[$product->id]) ? (float) $balances[$product->id]['total'] : 0.000;
-                $unitCost = (float) ($product->cost_price ?? $product->buy_price ?? 0);
+                // products has no cost_price/buy_price column — those lookups always
+                // resolved to null, so every snapshot line was valued at cost 0 and
+                // the variance figure was worthless. purchase_cost is the real column.
+                $unitCost = (float) ($product->purchase_cost ?? 0);
 
                 $lines[] = [
                     'stock_count_id' => $session->id,

@@ -167,7 +167,10 @@ class WarrantyTrackerService
                 }
             })
             ->with(['technician', 'customer'])
-            ->latest('received_at')
+            // service_jobs has no received_at column: on MySQL this ordered by a
+            // missing column (500), and on SQLite the quoted identifier degraded
+            // into the string literal 'received_at', silently ordering by nothing.
+            ->latest('created_at')
             ->get();
     }
 }

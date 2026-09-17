@@ -988,12 +988,21 @@ class PurchaseOrderService
                 $po->supplier->increment('total_repaid', $amount);
             }
 
-            // Create payment log entry (with optional slip images)
+            // Create payment log entry (with optional slip images).
+            // The method is stored only when it is one the app recognises; an
+            // unrecognised or absent value stays null = unrecorded, which the cash
+            // reconciliation reports rather than silently counting as zero.
+            $method = $payment['payment_method'] ?? null;
+            if (! in_array($method, PoPaymentLog::PAYMENT_METHODS, true)) {
+                $method = null;
+            }
+
             PoPaymentLog::create([
                 'store_id'           => $po->store_id,
                 'purchase_order_id'  => $po->id,
                 'supplier_id'        => $po->supplier_id,
                 'amount'             => $amount,
+                'payment_method'     => $method,
                 'reference'          => $payment['reference'] ?? null,
                 'slip_images'        => ! empty($payment['slip_images']) ? $payment['slip_images'] : null,
                 'paid_by'            => $actor->id,
@@ -1007,6 +1016,7 @@ class PurchaseOrderService
                 metadata: [
                     'po_number'       => $po->po_number,
                     'amount'          => $amount,
+                    'payment_method'  => $method,
                     'remaining_balance' => (string) $po->remaining_balance,
                     'reference'       => $payment['reference'] ?? null,
                     'has_slip_images' => ! empty($payment['slip_images']),
