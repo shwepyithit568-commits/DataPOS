@@ -23,6 +23,10 @@
              printType: '{{ $closing ? "z" : "x" }}',
              printLayout: '80mm',
              counted: Object.assign(Object.fromEntries(@js($methods).map(m => [m, '0'])), { credit: @js($totals['expected']['credit'] ?? '0') }),
+             // Until the cashier types a count every method reads 0, which would
+             // show the whole expected drawer as a shortage on first load. Hide
+             // the live difference until a count is actually entered.
+             countedTouched: false,
              get expected() { return @js($totals['expected']); },
              get diffs() {
                  const d = {};
@@ -170,9 +174,10 @@
                         @if ($closing)
                             {{ $diffAmount > 0 ? '+' : '' }}{{ format_currency($diffAmount, $store) }}
                         @else
-                            <span x-text="(diffs._total > 0 ? '+' : '') + (typeof window.formatCurrency === 'function' ? window.formatCurrency(diffs._total) : diffs._total.toLocaleString())">
-                                0
-                            </span>
+                            <span :class="! countedTouched
+                                      ? 'text-slate-500 dark:text-slate-400'
+                                      : (diffs._total < 0 ? 'text-rose-600 dark:text-rose-400' : (diffs._total > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-300'))"
+                                  x-text="! countedTouched ? '—' : ((diffs._total > 0 ? '+' : '') + (typeof window.formatCurrency === 'function' ? window.formatCurrency(diffs._total) : diffs._total.toLocaleString()))">—</span>
                         @endif
                     </div>
                     <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-bold uppercase tracking-wider">
@@ -559,7 +564,7 @@
                                             x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency(+expected['{{ $method }}'] || 0) : (+expected['{{ $method }}'] || 0).toLocaleString()"></td>
                                         <td class="px-3 py-1.5 text-right">
                                             <input type="number" name="counted[{{ $method }}]" min="0" step="any"
-                                                   x-model.number="counted['{{ $method }}']" :disabled="{{ $isCredit ? 'true' : 'false' }}"
+                                                   x-model.number="counted['{{ $method }}']" @input="countedTouched = true" :disabled="{{ $isCredit ? 'true' : 'false' }}"
                                                    class="h-7 w-28 sm:w-32 ml-auto rounded-md border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-right text-xs font-bold font-mono focus:outline-none focus:ring-1 focus:ring-sky-500">
                                         </td>
                                         <td class="px-3 py-1.5 text-right font-mono font-bold"
@@ -572,8 +577,8 @@
                                     <td></td>
                                     <td></td>
                                     <td class="px-3 py-1.5 text-right font-mono"
-                                        :class="diffs._total < 0 ? 'text-rose-600 dark:text-rose-400' : (diffs._total > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400')"
-                                        x-text="(diffs._total > 0 ? '+' : '') + (typeof window.formatCurrency === 'function' ? window.formatCurrency(diffs._total) : diffs._total.toLocaleString())"></td>
+                                        :class="! countedTouched ? 'text-slate-400' : (diffs._total < 0 ? 'text-rose-600 dark:text-rose-400' : (diffs._total > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'))"
+                                        x-text="! countedTouched ? '—' : ((diffs._total > 0 ? '+' : '') + (typeof window.formatCurrency === 'function' ? window.formatCurrency(diffs._total) : diffs._total.toLocaleString()))"></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -600,7 +605,7 @@
                                 <div class="flex items-center justify-between text-xs">
                                     <span class="text-slate-400">{{ __('messages.closing_counted') }}:</span>
                                     <input type="number" name="counted[{{ $method }}]" min="0" step="any"
-                                           x-model.number="counted['{{ $method }}']" :disabled="{{ $isCredit ? 'true' : 'false' }}"
+                                           x-model.number="counted['{{ $method }}']" @input="countedTouched = true" :disabled="{{ $isCredit ? 'true' : 'false' }}"
                                            class="h-7 w-28 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-right text-xs font-bold font-mono">
                                 </div>
                             </div>
@@ -608,7 +613,7 @@
                     </div>
 
                     {{-- Discrepancy Guidance Box --}}
-                    <div x-show="diffs._total !== 0" x-cloak class="p-2.5 mx-2 my-1 rounded-md border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-xs space-y-0.5 text-amber-900 dark:text-amber-300 shadow-2xs">
+                    <div x-show="countedTouched && diffs._total !== 0" x-cloak class="p-2.5 mx-2 my-1 rounded-md border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-xs space-y-0.5 text-amber-900 dark:text-amber-300 shadow-2xs">
                         <div class="flex items-center gap-1.5 font-bold">
                             <span>⚠️</span>
                             <span x-text="diffs._total < 0 ? 'ငွေစာရင်း လိုအပ်ချက် (Cash Shortage)' : 'ငွေစာရင်း ပိုလျှံမှု (Cash Overage)'"></span>

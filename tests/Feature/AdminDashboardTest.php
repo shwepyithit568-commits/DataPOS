@@ -76,6 +76,7 @@ class AdminDashboardTest extends TestCase
 
         // Fresh same-day order — the deterministic source of today's revenue
         // (cancelled ORD-STAT-2 is excluded, stale ORD-STAT-1 totals 0).
+        // Revenue counts orders the shop has accepted, so this one is confirmed.
         Order::create([
             'store_id' => $store->id,
             'order_number' => 'ORD-STAT-3',
@@ -84,6 +85,20 @@ class AdminDashboardTest extends TestCase
             'contact_channel' => 'viber',
             'pricing_type' => 'retail',
             'total_amount' => 1000.00,
+            'status' => 'confirmed',
+        ]);
+
+        // A fresh request the counter has not contacted yet: it may never
+        // become a sale, so it must not appear in today's revenue (the
+        // assertion below would read 1,500 if it did).
+        Order::create([
+            'store_id' => $store->id,
+            'order_number' => 'ORD-STAT-4',
+            'customer_name' => 'Client D',
+            'customer_phone' => '09333333336',
+            'contact_channel' => 'viber',
+            'pricing_type' => 'retail',
+            'total_amount' => 500.00,
             'status' => 'pending_contact',
         ]);
 
@@ -99,7 +114,8 @@ class AdminDashboardTest extends TestCase
         $response->assertSee('Cancelled Orders');
         $response->assertSee('data-cancelled-orders-stat', false);
         // Today / This Week stat cards (revenue excludes the cancelled order
-        // and comes from the fresh ORD-STAT-3 → Ks 1,000 revenue at any hour)
+        // and the unconfirmed ORD-STAT-4, and comes from the confirmed
+        // ORD-STAT-3 → Ks 1,000 revenue at any hour)
         $response->assertSee('Today Orders');
         $response->assertSee('This Week Orders');
         $response->assertSee('data-today-orders-stat', false);

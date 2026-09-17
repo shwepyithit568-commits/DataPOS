@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\POS\Exceptions\InventoryException;
 use App\POS\Models\CustomerLedgerEntry;
+use App\POS\Services\CounterCashPosting;
 use App\POS\Services\CustomerDebtService;
 use App\Services\StoreContext;
 use App\Support\ImageOptimizer;
@@ -333,9 +334,25 @@ class CustomerReceivableController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return redirect()
-            ->route('store.admin.receivables.show', ['store_slug' => $store->slug, 'customer' => $customerUser->id])
-            ->with('success', __('messages.debt_collected') . ' — ' . format_currency((float) $data['amount'], $store));
+        $redirect = redirect()
+            ->route('store.admin.receivables.show', ['store_slug' => $store->slug, 'customer' => $customerUser->id]);
+
+        $successMessage = __('messages.debt_collected') . ' — ' . format_currency((float) $data['amount'], $store);
+
+        // Cash handed over at the counter belongs in the drawer the closing is
+        // reconciled against. Non-cash methods never touch it.
+        if (strtolower((string) ($data['payment_method'] ?? 'cash')) !== 'cash') {
+            return $redirect->with('success', $successMessage);
+        }
+
+        $posting = app(CounterCashPosting::class)->post(
+            $store,
+            (string) $data['amount'],
+            __('messages.cash_reason_debt_collection') . ' — ' . $customerUser->name,
+            $request->user(),
+        );
+
+        return app(CounterCashPosting::class)->flash($redirect, $successMessage, $posting);
     }
 
     /**

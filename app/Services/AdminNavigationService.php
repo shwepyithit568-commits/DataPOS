@@ -815,7 +815,9 @@ class AdminNavigationService
                             'translation_key' => 'messages.sidebar_membership',
                             'route_name' => 'store.admin.membership.index',
                             'required_capability' => Capability::COMMERCE_LOYALTY,
-                            'required_permissions' => ['loyalty.view', 'loyalty.edit'],
+                            // Must be the key the route enforces, or the link shows
+                            // for users the page then rejects.
+                            'required_permissions' => ['membership.view'],
                             'active_patterns' => ['path:store/*/admin/membership*'],
                             'icon' => '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>',
                         ],
@@ -994,7 +996,10 @@ class AdminNavigationService
                             'key' => 'pos_reports_reconciliation',
                             'translation_key' => 'messages.business_reconciliation',
                             'route_name' => 'pos.reports.reconciliation',
-                            'required_permissions' => ['stock_reconciliation.view', 'stock_reconciliation.edit', 'reports_sales.view'],
+                            // The route only checks stock_reconciliation.view, and the
+                            // nav gate is an OR — listing reports_sales.view here let the
+                            // link render for users the route then rejected.
+                            'required_permissions' => ['stock_reconciliation.view'],
                             'active_patterns' => [
                                 'route:pos.reports.reconciliation*',
                                 'path:store/*/pos/reports/reconciliation*',
@@ -1133,7 +1138,9 @@ class AdminNavigationService
                             'key' => 'modules',
                             'translation_key' => 'messages.business_modules',
                             'route_name' => 'store.admin.modules.index',
-                            'required_roles' => ['store_owner', 'store_manager'],
+                            // The route is owner-only (EnsureStoreAccess:store_owner);
+                            // listing it for managers produced a 403 on click.
+                            'required_roles' => ['store_owner'],
                             'required_permissions' => ['settings.view', 'settings.edit'],
                             'active_patterns' => ['route:store.admin.modules.*'],
                             'icon' => '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
@@ -1142,7 +1149,9 @@ class AdminNavigationService
                             'key' => 'channels',
                             'translation_key' => 'messages.sales_channels',
                             'route_name' => 'store.admin.channels.index',
-                            'required_roles' => ['store_owner', 'store_manager'],
+                            // Owner-only route (EnsureStoreAccess:store_owner) — a
+                            // manager link here could only ever 403.
+                            'required_roles' => ['store_owner'],
                             'required_permissions' => ['settings.view', 'settings.edit'],
                             'active_patterns' => ['route:store.admin.channels.*'],
                             'icon' => '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',

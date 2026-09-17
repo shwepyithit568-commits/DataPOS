@@ -13,6 +13,7 @@ use App\POS\Models\ServiceJobItem;
 use App\POS\Models\ServiceJobPayment;
 use App\POS\Models\ServiceJobStatus;
 use App\POS\Models\ServiceSetting;
+use App\POS\Services\CounterCashPosting;
 use App\POS\Services\InventoryService;
 use App\Services\StoreContext;
 use Illuminate\Database\Eloquent\Builder;
@@ -242,7 +243,9 @@ class RepairController extends Controller
             ]);
         }
 
-        $job = DB::transaction(function () use ($store, $validated, $items, $request): ServiceJob {
+        $cashPosting = null;
+
+        $job = DB::transaction(function () use ($store, $validated, $items, $request, &$cashPosting): ServiceJob {
             $deviceType = !empty($validated['device_type']) ? $validated['device_type'] : (!empty($validated['category']) ? $validated['category'] : (!empty($validated['brand']) ? $validated['brand'] : 'Smartphone'));
             $reportedProblem = !empty($validated['reported_problem']) ? $validated['reported_problem'] : 'Repair Service';
             $initialStatus = !empty($validated['status']) ? $validated['status'] : 'received';
@@ -288,22 +291,36 @@ class RepairController extends Controller
 
             // Handle Advance Payment if provided
             $advance = (float) ($validated['advance_payment'] ?? 0);
+            $advanceMethod = $validated['payment_method'] ?? 'cash';
             if ($advance > 0) {
                 ServiceJobPayment::create([
                     'service_job_id' => $job->id,
-                    'method' => $validated['payment_method'] ?? 'cash',
+                    'method' => $advanceMethod,
                     'amount' => $advance,
                     'reference' => 'Advance payment on ticket intake',
                     'created_by' => $creatorId,
                 ]);
+
+                // Cash taken at intake sits in the counter drawer too.
+                if ($advanceMethod === 'cash') {
+                    $cashPosting = app(CounterCashPosting::class)->postSafely(
+                        $store,
+                        (string) $advance,
+                        __('messages.cash_reason_repair_advance') . ' — ' . $job->job_number,
+                        $request->user(),
+                    );
+                }
             }
 
             return $job;
         });
 
-        return redirect()
-            ->route('store.admin.repairs.show', [...$context->getRouteParams(), 'repair' => $job->id])
-            ->with('success', __('messages.repair_created'));
+        $redirect = redirect()
+            ->route('store.admin.repairs.show', [...$context->getRouteParams(), 'repair' => $job->id]);
+
+        return isset($cashPosting)
+            ? app(CounterCashPosting::class)->flash($redirect, __('messages.repair_created'), $cashPosting)
+            : $redirect->with('success', __('messages.repair_created'));
     }
 
     public function show(StoreContext $context, string $store_slug, ServiceJob $repair): View
@@ -503,9 +520,11 @@ class RepairController extends Controller
         ]);
 
         $amount = bcadd((string) $validated['amount'], '0', 2);
+        $cashPosting = null;
+        $store = $context->getStore();
 
         try {
-            DB::transaction(function () use ($repair, $validated, $amount) {
+            DB::transaction(function () use ($repair, $validated, $amount, $request, $store, &$cashPosting) {
                 // Lock the job so two concurrent submissions cannot both pass
                 // the overpayment guard.
                 $locked = ServiceJob::whereKey($repair->id)->lockForUpdate()->firstOrFail();
@@ -516,11 +535,20 @@ class RepairController extends Controller
 
                 ServiceJobPayment::create([
                     'service_job_id' => $repair->id,
-                    'method' => $validated['method'],
-                    'amount' => $amount,
-                    'reference' => $validated['reference'] ?? null,
-                    'created_by' => Auth::id(),
+                    'method'         => $validated['method'],
+                    'amount'         => $amount,
+                    'reference'      => $validated['reference'] ?? null,
+                    'created_by'     => Auth::id(),
                 ]);
+
+                if ($validated['method'] === 'cash') {
+                    $cashPosting = app(CounterCashPosting::class)->postSafely(
+                        $store,
+                        $amount,
+                        __('messages.cash_reason_repair_payment') . ' — ' . $repair->job_number,
+                        $request->user(),
+                    );
+                }
             });
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === 'overpay') {
@@ -530,7 +558,11 @@ class RepairController extends Controller
             throw $e;
         }
 
-        return back()->with('success', __('messages.repair_payment_recorded'));
+        $redirect = back();
+
+        return $cashPosting
+            ? app(CounterCashPosting::class)->flash($redirect, __('messages.repair_payment_recorded'), $cashPosting)
+            : $redirect->with('success', __('messages.repair_payment_recorded'));
     }
 
     /**

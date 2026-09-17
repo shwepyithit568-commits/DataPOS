@@ -264,7 +264,11 @@
                                     <option value="cash_in">+ {{ __('messages.cash_in') }}</option>
                                     <option value="cash_out">− {{ __('messages.cash_out') }}</option>
                                 </select>
-                                <input type="number" name="amount" min="1" step="100" required :placeholder="window.__currencyConfig?.currency_symbol || '0'"
+                                {{-- min must be 0 or a multiple of the step: a browser derives the
+                                     step base from min, so min="1" step="100" accepts only
+                                     1, 101, 901… and silently blocks every round amount a
+                                     cashier types (1,000 / 5,000 / 55,000). --}}
+                                <input type="number" name="amount" min="0" step="100" required :placeholder="window.__currencyConfig?.currency_symbol || '0'"
                                        class="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
                             </div>
                             <input type="text" name="reason" maxlength="255" placeholder="{{ __('messages.reason') }}"

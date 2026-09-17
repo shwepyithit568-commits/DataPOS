@@ -116,6 +116,81 @@ class CashierShiftService
     }
 
     /**
+     * The drawer that cash handed over at the counter belongs to.
+     *
+     * Null means "cannot tell", which callers must treat as "do not guess":
+     * either no shift is open, the actor holds several, or more than one
+     * register is open in the store. The drawer is what the day's closing is
+     * reconciled against, so putting counter cash on the wrong shift is worse
+     * than leaving it for the cashier to record by hand.
+     */
+    public function resolveCounterDrawer(Store $store, ?User $actor = null): ?CashierShift
+    {
+        // A store without shift tracking has no drawer to reconcile against,
+        // even if legacy open rows exist.
+        if (! $store->hasCapability(\App\Capabilities\Capability::OPERATIONS_CASHIER_SHIFTS)) {
+            return null;
+        }
+
+        if ($actor) {
+            $own = $this->openShiftsFor($store, $actor);
+
+            if ($own->count() === 1) {
+                return $own->first();
+            }
+
+            if ($own->count() > 1) {
+                return null;
+            }
+        }
+
+        $open = CashierShift::query()
+            ->where('store_id', $store->id)
+            ->where('status', 'open')
+            ->orderBy('opened_at')
+            ->get();
+
+        return $open->count() === 1 ? $open->first() : null;
+    }
+
+    /**
+     * Post counter cash — money taken outside the POS sale flow (debt
+     * collection, repair advance or balance) — into the drawer it was handed
+     * over at.
+     *
+     * Returns the event, or null when the target drawer cannot be determined
+     * (no/ambiguous open shift, or a business date already locked by an
+     * approved closing) so the caller can tell the user instead of dropping
+     * the money silently.
+     */
+    public function postCounterCashIn(Store $store, string $amount, string $reason, ?User $actor = null): ?CashEvent
+    {
+        $normalized = bcadd($amount, '0', 2);
+
+        if (bccomp($normalized, '0', 2) <= 0) {
+            return null;
+        }
+
+        $shift = $this->resolveCounterDrawer($store, $actor);
+
+        if (! $shift) {
+            return null;
+        }
+
+        // A shift can stay open across a day boundary: posting into a business
+        // date that is already closed would rewrite an approved drawer.
+        if (app(PeriodLockService::class)->isDateLocked($store, $shift->opened_at ?? now())) {
+            return null;
+        }
+
+        return $this->addCashEvent($shift, [
+            'type' => 'cash_in',
+            'amount' => $normalized,
+            'reason' => $reason,
+        ], $actor);
+    }
+
+    /**
      * @param  array{type:string, amount:float|string, reason?:string}  $data
      */
     public function addCashEvent(CashierShift $shift, array $data, ?User $actor = null): CashEvent

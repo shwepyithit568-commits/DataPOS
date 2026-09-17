@@ -13,6 +13,7 @@ use App\POS\Models\ServiceJobItem;
 use App\POS\Models\ServiceJobPayment;
 use App\POS\Models\ServiceJobStatus;
 use App\POS\Models\ServiceSetting;
+use App\POS\Services\CounterCashPosting;
 use App\POS\Services\InventoryService;
 use App\Services\StoreContext;
 use Illuminate\Database\Eloquent\Builder;
@@ -158,7 +159,9 @@ class ServiceJobController extends Controller
             ]);
         }
 
-        $job = DB::transaction(function () use ($store, $validated, $items, $request): ServiceJob {
+        $cashPosting = null;
+
+        $job = DB::transaction(function () use ($store, $validated, $items, $request, &$cashPosting): ServiceJob {
             // device_type resolves from category > brand as fallback
             $deviceType      = $validated['device_type'] ?? $validated['category'] ?? $validated['brand'] ?? 'Device';
             $reportedProblem = !empty($validated['reported_problem']) ? $validated['reported_problem'] : 'Service Request';
@@ -207,22 +210,36 @@ class ServiceJobController extends Controller
 
             // Advance payment on intake
             $advance = (float) ($validated['advance_payment'] ?? 0);
+            $advanceMethod = $validated['payment_method'] ?? 'cash';
             if ($advance > 0) {
                 ServiceJobPayment::create([
                     'service_job_id' => $job->id,
-                    'method'         => $validated['payment_method'] ?? 'cash',
+                    'method'         => $advanceMethod,
                     'amount'         => $advance,
                     'reference'      => 'Advance payment on intake',
                     'created_by'     => $creatorId,
                 ]);
+
+                // Cash handed over at intake sits in the counter drawer.
+                if ($advanceMethod === 'cash') {
+                    $cashPosting = app(CounterCashPosting::class)->postSafely(
+                        $store,
+                        (string) $advance,
+                        __('messages.cash_reason_repair_advance') . ' — ' . $job->job_number,
+                        request()->user(),
+                    );
+                }
             }
 
             return $job;
         });
 
-        return redirect()
-            ->route('store.admin.service_jobs.show', [...$context->getRouteParams(), 'job' => $job->id])
-            ->with('success', __('messages.repair_created'));
+        $redirect = redirect()
+            ->route('store.admin.service_jobs.show', [...$context->getRouteParams(), 'job' => $job->id]);
+
+        return $cashPosting
+            ? app(CounterCashPosting::class)->flash($redirect, __('messages.repair_created'), $cashPosting)
+            : $redirect->with('success', __('messages.repair_created'));
     }
 
     // ── Show & Print ───────────────────────────────────────────────────────
@@ -341,9 +358,10 @@ class ServiceJobController extends Controller
         ]);
 
         $amount = bcadd((string) $validated['amount'], '0', 2);
+        $cashPosting = null;
 
         try {
-            DB::transaction(function () use ($job, $validated, $amount) {
+            DB::transaction(function () use ($job, $validated, $amount, &$cashPosting) {
                 // Lock the job so two concurrent submissions cannot both pass
                 // the overpayment guard.
                 $locked = ServiceJob::whereKey($job->id)->lockForUpdate()->firstOrFail();
@@ -359,6 +377,15 @@ class ServiceJobController extends Controller
                     'reference'      => $validated['reference'] ?? null,
                     'created_by'     => Auth::id(),
                 ]);
+
+                if ($validated['method'] === 'cash') {
+                    $cashPosting = app(CounterCashPosting::class)->postSafely(
+                        $job->store,
+                        $amount,
+                        __('messages.cash_reason_repair_payment') . ' — ' . $job->job_number,
+                        request()->user(),
+                    );
+                }
             });
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === 'overpay') {
@@ -368,7 +395,11 @@ class ServiceJobController extends Controller
             throw $e;
         }
 
-        return back()->with('success', __('messages.repair_payment_recorded'));
+        $redirect = back();
+
+        return $cashPosting
+            ? app(CounterCashPosting::class)->flash($redirect, __('messages.repair_payment_recorded'), $cashPosting)
+            : $redirect->with('success', __('messages.repair_payment_recorded'));
     }
 
     public function deductItem(

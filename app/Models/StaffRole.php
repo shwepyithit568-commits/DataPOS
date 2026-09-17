@@ -801,6 +801,9 @@ class StaffRole extends Model
                     'membership_tiers.create',
                     'membership_tiers.update',
                     'membership_tiers.edit',
+                    // The membership page itself is gated on membership.view (the
+                    // loyalty keys above only cover tiers/points editing).
+                    'membership.view',
                     'loyalty.view',
                     'loyalty.edit',
                     'customer_groups.view',
@@ -831,12 +834,17 @@ class StaffRole extends Model
                     'payables.update',
                     'payables.edit',
                     'profit_loss.view',
+                    // The P&L page renders its XLSX/CSV buttons for anyone who can
+                    // view it; without the export key those buttons 403.
+                    'profit_loss.export',
                     'reports_sales.view',
                     'sales_analytics.view',
                     'reports_cash.view',
                     'inventory_valuation.view',
                     'debt_aging.view',
                     'reports_services.view',
+                    // Business reconciliation report (opened from the Reports menu).
+                    'stock_reconciliation.view',
                     'alerts.view',
                     'audit_logs.view',
                     'settings.view',
@@ -929,6 +937,9 @@ class StaffRole extends Model
                     'pos_closing.view',
                     'pos_returns.view',
                     'profit_loss.view',
+                    // Paired with the view key above: the P&L page shows its
+                    // XLSX/CSV buttons to anyone who can view it.
+                    'profit_loss.export',
                     'expenses.view',
                     'expenses.create',
                     'expenses.update',

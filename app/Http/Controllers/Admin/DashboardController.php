@@ -26,6 +26,12 @@ class DashboardController extends Controller
      */
     private const STATS_CACHE_TTL = 60;
 
+    /**
+     * Online order statuses that represent real revenue: the shop has accepted
+     * the order. `pending_contact` and `cancelled` are excluded.
+     */
+    private const REVENUE_ORDER_STATUSES = ['confirmed', 'delivered'];
+
     public function __construct(
         protected CashierShiftService $shifts,
     ) {
@@ -276,10 +282,15 @@ class DashboardController extends Controller
     /**
      * Revenue inside a window (or since a point when $until is null):
      * online orders + posted POS counter sales minus returns.
+     *
+     * Online orders only count once the shop has confirmed them: a
+     * `pending_contact` order is a request the counter has not agreed a price
+     * for yet, and counting it made "today's revenue" show money nobody has
+     * earned or collected.
      */
     private function revenueSumBetween(int $storeId, CarbonInterface $start, ?CarbonInterface $until): float
     {
-        $webQuery = Order::where('store_id', $storeId)->where('status', '!=', 'cancelled');
+        $webQuery = Order::where('store_id', $storeId)->whereIn('status', self::REVENUE_ORDER_STATUSES);
         $posQuery = \App\POS\Models\PosSale::where('store_id', $storeId)->whereIn('status', ['posted', 'partially_refunded', 'refunded']);
         $retQuery = \App\POS\Models\PosReturn::where('store_id', $storeId)->where('status', 'posted');
 
