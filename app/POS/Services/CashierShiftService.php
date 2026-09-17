@@ -188,21 +188,29 @@ class CashierShiftService
             // to guarantee legacy linked events or expense-linked events are NEVER double-counted.
             $hasCashEvents = DB::table('cash_events')->where('cashier_shift_id', $shift->id)->exists();
             if ($hasCashEvents) {
+                $linkedExpenseIds = DB::table('expenses')
+                    ->where('store_id', $shift->store_id)
+                    ->where('cashier_shift_id', $shift->id)
+                    ->where('payment_method', 'cash')
+                    ->where('payment_source', \App\POS\Models\Expense::SOURCE_DRAWER)
+                    ->where('status', 'paid')
+                    ->pluck('id')
+                    ->all();
+
                 $otherCashOut = exact_sum(
                     DB::table('cash_events')
                         ->where('cashier_shift_id', $shift->id)
                         ->where('type', 'cash_out')
-                        ->whereNull('expense_id')
-                        ->where(function ($q) {
-                            $q->whereNull('reason')->orWhere('reason', 'not like', 'Expense:%');
+                        ->where(function ($q) use ($linkedExpenseIds) {
+                            if (! empty($linkedExpenseIds)) {
+                                $q->whereNull('expense_id')
+                                  ->orWhereNotIn('expense_id', $linkedExpenseIds);
+                            }
                         }),
                     'amount'
                 );
             } else {
-                $otherCashOut = bcsub((string) $shift->cash_out, $shiftDrawerExpenses, 2);
-                if (bccomp($otherCashOut, '0', 2) < 0) {
-                    $otherCashOut = '0.00';
-                }
+                $otherCashOut = (string) ($shift->cash_out ?? '0.00');
             }
 
             // Expected cash = Opening + Cash Sales + Other Cash In - Cash Refunds - Drawer Expenses - Other Cash Out

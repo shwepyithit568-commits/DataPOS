@@ -149,11 +149,39 @@ class CashierShiftController extends Controller
             'payment_method' => ['required', 'string', 'in:cash,kpay,wave,cbpay,bank_transfer,other'],
             'paid_to' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'client_transaction_id' => ['nullable', 'string', 'max:100'],
         ]);
 
         $title = trim($data['title']);
         $amount = bcadd((string) $data['amount'], '0', 2);
         $paymentMethod = $data['payment_method'];
+        $clientTxId = ! empty($data['client_transaction_id']) ? trim($data['client_transaction_id']) : null;
+
+        try {
+            app(\App\POS\Services\PeriodLockService::class)->assertDateNotLocked($store, now()->toDateString(), 'expense');
+        } catch (\App\POS\Exceptions\PeriodLockedException $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
+            return back()->withInput()->withErrors(['expense' => $e->getMessage()])->with('error', $e->getMessage());
+        }
+
+        if ($clientTxId !== null) {
+            $existing = Expense::where('store_id', $store->id)
+                ->where('client_transaction_id', $clientTxId)
+                ->first();
+            if ($existing) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => __('messages.expense_created_success'),
+                        'expense' => $existing,
+                        'idempotent_replay' => true,
+                    ]);
+                }
+                return back()->with('success', __('messages.expense_created_success'));
+            }
+        }
 
         $shiftsEnabled = $store->hasCapability(Capability::OPERATIONS_CASHIER_SHIFTS);
         $openShift = null;
@@ -169,7 +197,7 @@ class CashierShiftController extends Controller
         }
 
         try {
-            $expense = DB::transaction(function () use ($store, $data, $title, $amount, $paymentMethod, $openShift) {
+            $expense = DB::transaction(function () use ($store, $data, $title, $amount, $paymentMethod, $openShift, $clientTxId) {
                 $expenseNumber = Expense::generateExpenseNumber($store->id);
                 $isCash = $paymentMethod === 'cash';
 
@@ -178,6 +206,7 @@ class CashierShiftController extends Controller
                     'cashier_shift_id' => $isCash && $openShift ? $openShift->id : null,
                     'expense_category_id' => ! empty($data['expense_category_id']) ? (int) $data['expense_category_id'] : null,
                     'expense_number' => $expenseNumber,
+                    'client_transaction_id' => $clientTxId,
                     'title' => $title,
                     'amount' => $amount,
                     'status' => 'paid',
@@ -198,6 +227,25 @@ class CashierShiftController extends Controller
 
                 return $expense;
             });
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($clientTxId !== null && ($e->errorInfo[1] ?? 0) === 1062) {
+                $existing = Expense::where('store_id', $store->id)->where('client_transaction_id', $clientTxId)->first();
+                if ($existing) {
+                    if ($request->wantsJson() || $request->ajax()) {
+                        return response()->json([
+                            'success' => true,
+                            'message' => __('messages.expense_created_success'),
+                            'expense' => $existing,
+                            'idempotent_replay' => true,
+                        ]);
+                    }
+                    return back()->with('success', __('messages.expense_created_success'));
+                }
+            }
+            if ($request->expectsJson()) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
+            return back()->withInput()->with('error', $e->getMessage());
         } catch (\Exception $e) {
             if ($request->expectsJson()) {
                 return response()->json(['error' => $e->getMessage()], 422);

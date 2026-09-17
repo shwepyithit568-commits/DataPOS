@@ -769,11 +769,11 @@
 
                         <div>
                             <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
-                                {{ __('messages.shift') }}
+                                {{ __('messages.shift') }} <span class="text-[10px] text-rose-500 font-normal">({{ __('messages.drawer_shift_required') }})</span>
                             </label>
                             <select name="cashier_shift_id"
                                     class="w-full h-8 px-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-xs font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition cursor-pointer">
-                                <option value="">Auto (Open Shift / None)</option>
+                                <option value="">-- {{ __('messages.shift') }} --</option>
                                 @foreach (\App\POS\Models\CashierShift::where('store_id', $store->id)->where('status', 'open')->get() as $sh)
                                     <option value="{{ $sh->id }}">{{ $sh->register_name }} (Shift #{{ $sh->id }})</option>
                                 @endforeach

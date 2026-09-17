@@ -224,6 +224,24 @@
                     </button>
                 </div>
 
+                <div class="px-4 py-2 bg-slate-100/70 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center gap-3">
+                        <div>
+                            <span class="text-slate-500 dark:text-slate-400 text-[11px]">{{ __('messages.drawer_expenses') }}:</span>
+                            <span class="font-mono font-bold text-rose-600 dark:text-rose-400 ml-1">{{ format_currency((float) ($xData['totals']['summary']['drawer_expenses'] ?? 0), $store) }}</span>
+                        </div>
+                        @if (!empty($xData['totals']['summary']['other_cash_expenses']) && (float) $xData['totals']['summary']['other_cash_expenses'] > 0)
+                            <div>
+                                <span class="text-slate-500 dark:text-slate-400 text-[11px]">{{ __('messages.other_cash_expenses') }}:</span>
+                                <span class="font-mono font-bold text-slate-700 dark:text-slate-300 ml-1">{{ format_currency((float) ($xData['totals']['summary']['other_cash_expenses'] ?? 0), $store) }}</span>
+                            </div>
+                        @endif
+                    </div>
+                    <span class="text-[10px] text-slate-400">
+                        {{ __('messages.non_drawer_expenses_notice') }}
+                    </span>
+                </div>
+
                 <div class="p-3 max-h-96 overflow-y-auto">
                     @if (!empty($xData['totals']['expenses']) && $xData['totals']['expenses']->count() > 0)
                         <table class="w-full text-xs">
@@ -241,7 +259,7 @@
                                     @php
                                         $isDrawer = ($exp->payment_method === 'cash' && ($exp->payment_source === 'drawer' || $exp->cashier_shift_id));
                                     @endphp
-                                    <tr>
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                                         <td class="py-1.5 font-mono text-[11px] text-slate-500">
                                             {{ $exp->expense_number }}
                                             <div class="text-[10px] text-slate-400">{{ $exp->created_at?->format('H:i') }}</div>
@@ -253,15 +271,37 @@
                                             @endif
                                         </td>
                                         <td class="py-1.5">
-                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold {{ $isDrawer ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' }}">
-                                                {{ $isDrawer ? __('messages.source_drawer') : (\App\POS\Models\Expense::PAYMENT_SOURCES[$exp->payment_source] ?? ucfirst($exp->payment_source ?? 'other')) }}
-                                            </span>
+                                            @if ($isDrawer)
+                                                @if ($exp->cashier_shift_id)
+                                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300" title="{{ __('messages.source_drawer_confirmed') }}">
+                                                        <span>✅</span>
+                                                        <span>{{ __('messages.source_drawer_confirmed') }}</span>
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300" title="{{ __('messages.source_drawer_unconfirmed') }}">
+                                                        <span>⚠️</span>
+                                                        <span>{{ __('messages.source_drawer_unconfirmed') }}</span>
+                                                    </span>
+                                                @endif
+                                            @else
+                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                    {{ \App\POS\Models\Expense::PAYMENT_SOURCES[$exp->payment_source] ?? ucfirst($exp->payment_source ?? 'other') }}
+                                                </span>
+                                                <span class="block text-[9px] text-slate-400">{{ __('messages.non_drawer_not_deducted') }}</span>
+                                            @endif
                                         </td>
                                         <td class="py-1.5 font-mono text-[11px] text-slate-500">
-                                            {{ $exp->shift?->register_name ?? '—' }}
+                                            @if ($exp->shift)
+                                                <span>{{ $exp->shift->register_name ?? 'Register' }} (#{{ $exp->shift->id }})</span>
+                                            @else
+                                                <span class="text-slate-400">—</span>
+                                            @endif
                                         </td>
-                                        <td class="py-1.5 text-right font-mono font-bold {{ $isDrawer ? 'text-rose-600' : 'text-slate-600 dark:text-slate-300' }}">
+                                        <td class="py-1.5 text-right font-mono font-bold {{ $isDrawer ? 'text-rose-600' : 'text-slate-500 dark:text-slate-400' }}">
                                             {{ format_currency((float) $exp->amount, $store) }}
+                                            @if (! $isDrawer)
+                                                <span class="block text-[9px] font-normal text-slate-400">({{ __('messages.not_deducted') }})</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach

@@ -21,6 +21,7 @@ class Expense extends Model
         'cashier_shift_id',
         'expense_category_id',
         'expense_number',
+        'client_transaction_id',
         'title',
         'amount',
         'status',

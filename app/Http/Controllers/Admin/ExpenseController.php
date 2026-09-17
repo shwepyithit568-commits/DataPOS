@@ -202,11 +202,24 @@ class ExpenseController extends Controller
                 'nullable',
                 Rule::exists('cashier_shifts', 'id')->where('store_id', $store->id),
             ],
+            'client_transaction_id' => ['nullable', 'string', 'max:100'],
             'paid_to'             => ['nullable', 'string', 'max:255'],
             'reference_no'        => ['nullable', 'string', 'max:100'],
             'notes'               => ['nullable', 'string', 'max:2000'],
             'attachment'          => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:5120'], // 5MB max
         ]);
+
+        $clientTxId = ! empty($validated['client_transaction_id']) ? trim($validated['client_transaction_id']) : null;
+        if ($clientTxId !== null) {
+            $existing = Expense::where('store_id', $store->id)
+                ->where('client_transaction_id', $clientTxId)
+                ->first();
+            if ($existing) {
+                return redirect()
+                    ->route('store.admin.expenses.index', $storeRouteParams)
+                    ->with('success', __('messages.expense_created_success'));
+            }
+        }
 
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
@@ -215,6 +228,15 @@ class ExpenseController extends Controller
 
         $expenseNumber = Expense::generateExpenseNumber($store->id);
 
+        // Period lock check: cannot post expenses to an approved daily closing period
+        try {
+            app(\App\POS\Services\PeriodLockService::class)->assertDateNotLocked($store, $validated['expense_date'], 'expense');
+        } catch (\App\POS\Exceptions\PeriodLockedException $e) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'expense_date' => $e->getMessage(),
+            ]);
+        }
+
         $paymentSource = $validated['payment_source'] ?? null;
         if (empty($paymentSource)) {
             $paymentSource = ($validated['payment_method'] === 'cash')
@@ -222,30 +244,46 @@ class ExpenseController extends Controller
                 : Expense::SOURCE_BANK;
         }
 
+        if ($paymentSource === Expense::SOURCE_DRAWER && $validated['payment_method'] !== 'cash') {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'payment_source' => __('messages.drawer_source_requires_cash'),
+            ]);
+        }
+
         $shiftId = $validated['cashier_shift_id'] ?? null;
-        if ($paymentSource === Expense::SOURCE_DRAWER && empty($shiftId)) {
-            $openShift = \App\POS\Models\CashierShift::where('store_id', $store->id)->where('status', 'open')->first();
-            $shiftId = $openShift?->id;
-        } elseif ($paymentSource !== Expense::SOURCE_DRAWER) {
+        if ($paymentSource === Expense::SOURCE_DRAWER) {
+            if (empty($shiftId)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'cashier_shift_id' => __('messages.drawer_shift_required'),
+                ]);
+            }
+            $shift = \App\POS\Models\CashierShift::where('store_id', $store->id)->where('id', $shiftId)->first();
+            if (! $shift || $shift->status !== 'open') {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'cashier_shift_id' => __('messages.shift_already_closed'),
+                ]);
+            }
+        } else {
             $shiftId = null;
         }
 
         Expense::create([
-            'store_id'            => $store->id,
-            'cashier_shift_id'    => $shiftId,
-            'expense_category_id' => $validated['expense_category_id'] ?? null,
-            'expense_number'      => $expenseNumber,
-            'title'               => trim($validated['title']),
-            'amount'              => bcadd((string) $validated['amount'], '0', 2),
-            'status'              => 'paid',
-            'expense_date'        => $validated['expense_date'],
-            'payment_method'      => $validated['payment_method'],
-            'payment_source'      => $paymentSource,
-            'paid_to'             => ! empty($validated['paid_to']) ? trim($validated['paid_to']) : null,
-            'reference_no'        => ! empty($validated['reference_no']) ? trim($validated['reference_no']) : null,
-            'notes'               => ! empty($validated['notes']) ? trim($validated['notes']) : null,
-            'attachment_path'     => $attachmentPath,
-            'recorded_by'         => $request->user()?->id,
+            'store_id'              => $store->id,
+            'cashier_shift_id'      => $shiftId,
+            'expense_category_id'   => $validated['expense_category_id'] ?? null,
+            'expense_number'        => $expenseNumber,
+            'client_transaction_id' => $clientTxId,
+            'title'                 => trim($validated['title']),
+            'amount'                => bcadd((string) $validated['amount'], '0', 2),
+            'status'                => 'paid',
+            'expense_date'          => $validated['expense_date'],
+            'payment_method'        => $validated['payment_method'],
+            'payment_source'        => $paymentSource,
+            'paid_to'               => ! empty($validated['paid_to']) ? trim($validated['paid_to']) : null,
+            'reference_no'          => ! empty($validated['reference_no']) ? trim($validated['reference_no']) : null,
+            'notes'                 => ! empty($validated['notes']) ? trim($validated['notes']) : null,
+            'attachment_path'       => $attachmentPath,
+            'recorded_by'           => $request->user()?->id,
         ]);
 
         return redirect()
@@ -281,6 +319,19 @@ class ExpenseController extends Controller
             'remove_attachment'   => ['nullable', 'boolean'],
         ]);
 
+        // Period lock check
+        try {
+            $periodLock = app(\App\POS\Services\PeriodLockService::class);
+            $periodLock->assertDateNotLocked($store, $expenseModel->expense_date, 'expense');
+            if (\Carbon\Carbon::parse($expenseModel->expense_date)->toDateString() !== \Carbon\Carbon::parse($validated['expense_date'])->toDateString()) {
+                $periodLock->assertDateNotLocked($store, $validated['expense_date'], 'expense');
+            }
+        } catch (\App\POS\Exceptions\PeriodLockedException $e) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'expense_date' => $e->getMessage(),
+            ]);
+        }
+
         $attachmentPath = $expenseModel->attachment_path;
         if (! empty($validated['remove_attachment']) && $attachmentPath) {
             Storage::disk('public')->delete($attachmentPath);
@@ -295,8 +346,26 @@ class ExpenseController extends Controller
         }
 
         $paymentSource = $validated['payment_source'] ?? $expenseModel->payment_source;
+        if ($paymentSource === Expense::SOURCE_DRAWER && $validated['payment_method'] !== 'cash') {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'payment_source' => __('messages.drawer_source_requires_cash'),
+            ]);
+        }
+
         $shiftId = array_key_exists('cashier_shift_id', $validated) ? $validated['cashier_shift_id'] : $expenseModel->cashier_shift_id;
-        if ($paymentSource !== Expense::SOURCE_DRAWER) {
+        if ($paymentSource === Expense::SOURCE_DRAWER) {
+            if (empty($shiftId)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'cashier_shift_id' => __('messages.drawer_shift_required'),
+                ]);
+            }
+            $shift = \App\POS\Models\CashierShift::where('store_id', $store->id)->where('id', $shiftId)->first();
+            if (! $shift || $shift->status !== 'open') {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'cashier_shift_id' => __('messages.shift_already_closed'),
+                ]);
+            }
+        } else {
             $shiftId = null;
         }
 
@@ -325,6 +394,13 @@ class ExpenseController extends Controller
         $storeRouteParams = $context->getRouteParams();
 
         $expenseModel = Expense::where('store_id', $store->id)->where('id', $expense)->firstOrFail();
+
+        // Period lock check
+        try {
+            app(\App\POS\Services\PeriodLockService::class)->assertDateNotLocked($store, $expenseModel->expense_date, 'expense');
+        } catch (\App\POS\Exceptions\PeriodLockedException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         if ($expenseModel->attachment_path) {
             Storage::disk('public')->delete($expenseModel->attachment_path);

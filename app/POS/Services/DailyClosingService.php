@@ -91,32 +91,32 @@ class DailyClosingService
         $drawerExpenses = exact_sum($drawerExpensesQuery, 'amount');
 
         // 2. Other Cash Out: Non-expense cash events (safe drops, owner drawings, etc.)
-        // Guaranteed single-deduction: any event with expense_id or reason 'Expense:%' is excluded.
-        if (!empty($shiftIds)) {
-            $hasCashEvents = DB::table('cash_events')->whereIn('cashier_shift_id', $shiftIds)->exists();
-            if ($hasCashEvents) {
-                $cashOut = exact_sum(
-                    DB::table('cash_events')
-                        ->whereIn('cashier_shift_id', $shiftIds)
-                        ->where('type', 'cash_out')
-                        ->whereNull('expense_id')
-                        ->where(function ($q) {
-                            $q->whereNull('reason')->orWhere('reason', 'not like', 'Expense:%');
-                        }),
-                    'amount'
-                );
-            } else {
-                $shiftsTotalOut = '0.00';
-                foreach ($shifts as $s) {
-                    $shiftsTotalOut = bcadd($shiftsTotalOut, (string) $s->cash_out, 2);
-                }
-                $cashOut = bcsub($shiftsTotalOut, $drawerExpenses, 2);
-                if (bccomp($cashOut, '0', 2) < 0) {
-                    $cashOut = '0.00';
+        // Reconciled shift-by-shift to ensure mixed legacy/current representations do NOT lose outflow (Fix B / F08).
+        $cashOut = '0.00';
+        if (!empty($shifts)) {
+            $linkedExpenseIds = (clone $drawerExpensesQuery)->pluck('id')->all();
+
+            foreach ($shifts as $s) {
+                $shiftHasEvents = DB::table('cash_events')->where('cashier_shift_id', $s->id)->exists();
+                if ($shiftHasEvents) {
+                    $shiftEventOut = exact_sum(
+                        DB::table('cash_events')
+                            ->where('cashier_shift_id', $s->id)
+                            ->where('type', 'cash_out')
+                            ->where(function ($q) use ($linkedExpenseIds) {
+                                if (! empty($linkedExpenseIds)) {
+                                    $q->whereNull('expense_id')
+                                      ->orWhereNotIn('expense_id', $linkedExpenseIds);
+                                }
+                            }),
+                        'amount'
+                    );
+                    $cashOut = bcadd($cashOut, $shiftEventOut, 2);
+                } else {
+                    // Legacy shift without granular events: preserve the shift's recorded cash_out
+                    $cashOut = bcadd($cashOut, (string) ($s->cash_out ?? '0.00'), 2);
                 }
             }
-        } else {
-            $cashOut = '0.00';
         }
 
         // 3. Other non-drawer cash expenses (e.g. paid from Safe, Petty Cash, Bank, or legacy unresolved)
@@ -244,10 +244,24 @@ class DailyClosingService
         ];
 
         // Retrieve all expenses for the business date with category/recorder/shift for drill-down breakdown.
-        $dayExpenses = \App\POS\Models\Expense::query()
-            ->where('store_id', $store->id)
-            ->whereDate('expense_date', '>=', $start->toDateString())
-            ->whereDate('expense_date', '<', $endExclusive->toDateString())
+        $expensesQuery = \App\POS\Models\Expense::query()
+            ->where('store_id', $store->id);
+
+        if (!empty($shiftIds)) {
+            $expensesQuery->where(function ($q) use ($shiftIds, $start, $endExclusive) {
+                $q->whereIn('cashier_shift_id', $shiftIds)
+                  ->orWhere(function ($sub) use ($start, $endExclusive) {
+                      $sub->whereNull('cashier_shift_id')
+                          ->whereDate('expense_date', '>=', $start->toDateString())
+                          ->whereDate('expense_date', '<', $endExclusive->toDateString());
+                  });
+            });
+        } else {
+            $expensesQuery->whereDate('expense_date', '>=', $start->toDateString())
+                          ->whereDate('expense_date', '<', $endExclusive->toDateString());
+        }
+
+        $dayExpenses = $expensesQuery
             ->with(['category', 'recorder', 'shift'])
             ->orderBy('id', 'desc')
             ->get();
