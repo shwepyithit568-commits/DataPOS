@@ -16,6 +16,7 @@ class CashEvent extends Model
     protected $fillable = [
         'store_id',
         'cashier_shift_id',
+        'expense_id',
         'type',
         'amount',
         'reason',
@@ -34,6 +35,11 @@ class CashEvent extends Model
     public function shift(): BelongsTo
     {
         return $this->belongsTo(CashierShift::class, 'cashier_shift_id');
+    }
+
+    public function expense(): BelongsTo
+    {
+        return $this->belongsTo(Expense::class, 'expense_id');
     }
 
     public function createdBy(): BelongsTo

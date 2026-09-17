@@ -171,28 +171,30 @@ class CashierShiftController extends Controller
         try {
             $expense = DB::transaction(function () use ($store, $data, $title, $amount, $paymentMethod, $openShift) {
                 $expenseNumber = Expense::generateExpenseNumber($store->id);
+                $isCash = $paymentMethod === 'cash';
 
                 $expense = Expense::create([
                     'store_id' => $store->id,
+                    'cashier_shift_id' => $isCash && $openShift ? $openShift->id : null,
                     'expense_category_id' => ! empty($data['expense_category_id']) ? (int) $data['expense_category_id'] : null,
                     'expense_number' => $expenseNumber,
                     'title' => $title,
                     'amount' => $amount,
+                    'status' => 'paid',
                     'expense_date' => now()->toDateString(),
                     'payment_method' => $paymentMethod,
+                    'payment_source' => $isCash ? Expense::SOURCE_DRAWER : Expense::SOURCE_BANK,
                     'paid_to' => ! empty($data['paid_to']) ? trim($data['paid_to']) : null,
                     'reference_no' => null,
                     'notes' => ! empty($data['notes']) ? trim($data['notes']) : null,
                     'recorded_by' => auth()->id(),
                 ]);
 
-                if ($openShift) {
-                    $this->shifts->addCashEvent($openShift, [
-                        'type' => 'cash_out',
-                        'amount' => $amount,
-                        'reason' => 'Expense: ' . $title . ($expense->expense_number ? ' (' . $expense->expense_number . ')' : ''),
-                    ], auth()->user());
-                }
+                // NOTE: We intentionally do NOT increment shift.cash_out here.
+                // Cash expenses are tracked in the `expenses` table as the single
+                // authoritative source with payment_source='drawer' and
+                // cashier_shift_id. This prevents double-counting against manual
+                // non-expense cash-outs (safe drops).
 
                 return $expense;
             });

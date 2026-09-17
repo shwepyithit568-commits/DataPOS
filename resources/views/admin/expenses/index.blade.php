@@ -524,6 +524,14 @@
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold border {{ $paymentMethodBadgeClass($exp->payment_method) }}">
                                         {{ $paymentMethodOptions[$exp->payment_method] ?? ucfirst($exp->payment_method) }}
                                     </span>
+                                    @if ($exp->payment_source)
+                                        <div class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
+                                            {{ \App\POS\Models\Expense::PAYMENT_SOURCES[$exp->payment_source] ?? ucfirst($exp->payment_source) }}
+                                            @if ($exp->shift)
+                                                <span class="font-mono text-[9px] text-sky-600">({{ $exp->shift->register_name }})</span>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </td>
 
                                 {{-- Paid To --}}
@@ -740,6 +748,34 @@
                                     class="w-full h-8 px-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-xs font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition cursor-pointer">
                                 @foreach ($paymentMethodOptions as $mKey => $mLabel)
                                     <option value="{{ $mKey }}" @selected($mKey === 'cash')>{{ $mLabel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Payment Source & Shift Register Linkage --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+                                {{ __('messages.payment_source') }}
+                            </label>
+                            <select name="payment_source"
+                                    class="w-full h-8 px-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-xs font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition cursor-pointer">
+                                @foreach (\App\POS\Models\Expense::PAYMENT_SOURCES as $sKey => $sLabel)
+                                    <option value="{{ $sKey }}" @selected($sKey === 'safe')>{{ $sLabel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+                                {{ __('messages.shift') }}
+                            </label>
+                            <select name="cashier_shift_id"
+                                    class="w-full h-8 px-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-xs font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition cursor-pointer">
+                                <option value="">Auto (Open Shift / None)</option>
+                                @foreach (\App\POS\Models\CashierShift::where('store_id', $store->id)->where('status', 'open')->get() as $sh)
+                                    <option value="{{ $sh->id }}">{{ $sh->register_name }} (Shift #{{ $sh->id }})</option>
                                 @endforeach
                             </select>
                         </div>

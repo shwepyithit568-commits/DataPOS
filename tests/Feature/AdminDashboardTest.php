@@ -240,5 +240,106 @@ class AdminDashboardTest extends TestCase
         $response->assertDontSee('/pos/daily-closing');
         $response->assertDontSee('/admin/stock-balance');
     }
+
+    public function test_dashboard_revenue_and_orders_accounting_scenarios(): void
+    {
+        $store = Store::create(['name' => 'Store Accounting', 'slug' => 'store-acct']);
+        $manager = User::create([
+            'name' => 'Manager Acct',
+            'phone' => '09888888889',
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $manager->stores()->attach($store->id, ['role' => 'store_manager', 'status' => 'active']);
+
+        // 1. Normal sale posted today (10,000 MMK)
+        $sale1 = \App\POS\Models\PosSale::create([
+            'store_id' => $store->id,
+            'receipt_number' => 'RCP-TEST-1',
+            'status' => 'posted',
+            'subtotal' => 10000.00,
+            'tax' => 0.00,
+            'total' => 10000.00,
+            'posted_at' => now(),
+            'cashier_id' => $manager->id,
+        ]);
+
+        // 2. Partial refund today: sale 20,000 MMK, refund 5,000 MMK
+        $sale2 = \App\POS\Models\PosSale::create([
+            'store_id' => $store->id,
+            'receipt_number' => 'RCP-TEST-2',
+            'status' => 'partially_refunded',
+            'subtotal' => 20000.00,
+            'tax' => 0.00,
+            'total' => 20000.00,
+            'posted_at' => now(),
+            'cashier_id' => $manager->id,
+        ]);
+        \App\POS\Models\PosReturn::create([
+            'store_id' => $store->id,
+            'pos_sale_id' => $sale2->id,
+            'refund_number' => 'RET-TEST-2',
+            'status' => 'posted',
+            'total' => 5000.00,
+            'posted_at' => now(),
+            'actor_id' => $manager->id,
+        ]);
+
+        // 3. Full refund today: sale 15,000 MMK, refund 15,000 MMK
+        $sale3 = \App\POS\Models\PosSale::create([
+            'store_id' => $store->id,
+            'receipt_number' => 'RCP-TEST-3',
+            'status' => 'refunded',
+            'subtotal' => 15000.00,
+            'tax' => 0.00,
+            'total' => 15000.00,
+            'posted_at' => now(),
+            'cashier_id' => $manager->id,
+        ]);
+        \App\POS\Models\PosReturn::create([
+            'store_id' => $store->id,
+            'pos_sale_id' => $sale3->id,
+            'refund_number' => 'RET-TEST-3',
+            'status' => 'posted',
+            'total' => 15000.00,
+            'posted_at' => now(),
+            'actor_id' => $manager->id,
+        ]);
+
+        // 4. Prior-day sale (posted yesterday) refunded today (refund 2,000 MMK today)
+        $sale4 = \App\POS\Models\PosSale::create([
+            'store_id' => $store->id,
+            'receipt_number' => 'RCP-TEST-4',
+            'status' => 'partially_refunded',
+            'subtotal' => 30000.00,
+            'tax' => 0.00,
+            'total' => 30000.00,
+            'posted_at' => now()->subDay(),
+            'cashier_id' => $manager->id,
+        ]);
+        \App\POS\Models\PosReturn::create([
+            'store_id' => $store->id,
+            'pos_sale_id' => $sale4->id,
+            'refund_number' => 'RET-TEST-4',
+            'status' => 'posted',
+            'total' => 2000.00,
+            'posted_at' => now(),
+            'actor_id' => $manager->id,
+        ]);
+
+        // Net Today Expected:
+        // Today Sales: Sale1 (10,000) + Sale2 (20,000) + Sale3 (15,000) = 45,000 MMK
+        // Today Returns: Ret2 (5,000) + Ret3 (15,000) + Ret4 (2,000) = 22,000 MMK
+        // Net Today Revenue: 45,000 - 22,000 = 23,000 MMK
+        // Today Orders Count: 3 sales posted today (Sale1, Sale2, Sale3)
+        $response = $this->actingAs($manager)
+            ->get(route('store.admin.dashboard', ['store_slug' => $store->slug]));
+
+        $response->assertOk();
+        $stats = $response->viewData('stats');
+
+        $this->assertEquals(23000.00, $stats['todayRevenue']);
+        $this->assertEquals(3, $stats['todayOrders']);
+    }
 }
 

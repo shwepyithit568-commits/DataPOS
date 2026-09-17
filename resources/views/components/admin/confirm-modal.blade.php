@@ -6,17 +6,19 @@
     cancelText: '{{ __('messages.cancel') ?? 'မလုပ်တော့ပါ' }}',
     icon: '🗑️',
     isDanger: true,
+    variant: 'danger',
     submitting: false,
     callback: null,
     targetForm: null,
 
     show(options) {
+        this.isDanger = options.isDanger !== false && options.variant !== 'success' && options.variant !== 'primary';
+        this.variant = options.variant || (this.isDanger ? 'danger' : 'success');
         this.title = options.title || '{{ __('messages.confirm_action') ?? 'အတည်ပြုပါ' }}';
-        this.message = options.message || '{{ __('messages.confirm_delete') ?? 'ဤလုပ်ဆောင်ချက်ကို ဆက်လက်လုပ်ဆောင်မှာ သေချာပါသလား?' }}';
-        this.confirmText = options.confirmText || (options.isDanger !== false ? '{{ __('messages.delete') ?? 'ဖျက်မည်' }}' : '{{ __('messages.confirm') ?? 'အတည်ပြုမည်' }}');
+        this.message = options.message || (this.isDanger ? '{{ __('messages.confirm_delete') ?? 'ဤလုပ်ဆောင်ချက်ကို ဆက်လက်လုပ်ဆောင်မှာ သေချာပါသလား?' }}' : '{{ __('messages.confirm') ?? 'ဆက်လက်လုပ်ဆောင်မှာ သေချာပါသလား?' }}');
+        this.confirmText = options.confirmText || (this.isDanger ? '{{ __('messages.delete') ?? 'ဖျက်မည်' }}' : '{{ __('messages.confirm') ?? 'အတည်ပြုမည်' }}');
         this.cancelText = options.cancelText || '{{ __('messages.cancel') ?? 'မလုပ်တော့ပါ' }}';
-        this.icon = options.icon || (options.isDanger !== false ? '🗑️' : '⚠️');
-        this.isDanger = options.isDanger !== false;
+        this.icon = options.icon || (this.isDanger ? '🗑️' : (this.variant === 'success' ? '✅' : '⚠️'));
         this.callback = options.callback || null;
         this.targetForm = options.targetForm || null;
         this.submitting = false;
@@ -71,7 +73,7 @@ x-cloak>
                  
                 <div class="flex items-start gap-3.5">
                     <div class="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center text-xl shadow-xs"
-                         :class="isDanger ? 'bg-rose-100 text-rose-600 dark:bg-rose-950/70 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50' : 'bg-amber-100 text-amber-600 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50'"
+                         :class="variant === 'danger' || isDanger ? 'bg-rose-100 text-rose-600 dark:bg-rose-950/70 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50' : (variant === 'success' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50' : 'bg-sky-100 text-sky-600 dark:bg-sky-950/70 dark:text-sky-300 border border-sky-200 dark:border-sky-900/50')"
                          x-text="icon">
                     </div>
                     <div class="space-y-1 min-w-0 flex-1">
@@ -87,7 +89,7 @@ x-cloak>
                     </button>
                     <button type="button" @click="confirm()" :disabled="submitting"
                             class="px-5 py-2 rounded-xl text-xs font-black text-white flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-                            :class="isDanger ? 'sf-btn-3d-danger' : 'sf-btn-3d-primary'">
+                            :class="variant === 'danger' || isDanger ? 'sf-btn-3d-danger' : (variant === 'success' ? 'sf-btn-3d-success' : 'sf-btn-3d-primary')">
                         <svg x-show="submitting" class="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
@@ -124,12 +126,20 @@ x-cloak>
         if (confirmMsg) {
             e.preventDefault();
             e.stopImmediatePropagation();
-            var isDanger = !form.hasAttribute('data-confirm-safe');
+            var isSafe = form.hasAttribute('data-confirm-safe');
+            var customVariant = form.getAttribute('data-confirm-variant');
+            var isDanger = !isSafe && customVariant !== 'success' && customVariant !== 'primary';
+            var variant = customVariant || (isDanger ? 'danger' : (isSafe ? 'success' : 'primary'));
+            var defaultIcon = isDanger ? '🗑️' : (variant === 'success' ? '✅' : 'ℹ️');
+
             window.confirmAction({
-                title: form.getAttribute('data-confirm-title') || '{{ __('messages.confirm_action') ?? 'အတည်ပြုပါ' }}',
+                title: form.getAttribute('data-confirm-title') || (isDanger ? '{{ __('messages.confirm_action') ?? 'အတည်ပြုပါ' }}' : '{{ __('messages.confirm') ?? 'အတည်ပြုပါ' }}'),
                 message: confirmMsg,
                 confirmText: form.getAttribute('data-confirm-button') || (isDanger ? '{{ __('messages.delete') ?? 'ဖျက်မည်' }}' : '{{ __('messages.confirm') ?? 'အတည်ပြုမည်' }}'),
+                cancelText: form.getAttribute('data-cancel-button') || '{{ __('messages.cancel') ?? 'မလုပ်တော့ပါ' }}',
+                icon: form.getAttribute('data-confirm-icon') || defaultIcon,
                 isDanger: isDanger,
+                variant: variant,
                 targetForm: form
             });
             return false;

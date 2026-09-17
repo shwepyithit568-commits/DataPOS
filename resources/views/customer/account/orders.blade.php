@@ -4,6 +4,7 @@
 
 @section('content')
 @php
+    /** @var \Illuminate\Pagination\LengthAwarePaginator<\App\Models\Order> $orders */
     $storeSlug = $store?->slug ?? request('store_slug');
     $storeSetting = $store?->setting;
     $storeLogo = $storeSetting?->adminLogo();

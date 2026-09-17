@@ -18,17 +18,34 @@ class Expense extends Model
 
     protected $fillable = [
         'store_id',
+        'cashier_shift_id',
         'expense_category_id',
         'expense_number',
         'title',
         'amount',
+        'status',
         'expense_date',
         'payment_method',
+        'payment_source',
         'paid_to',
         'reference_no',
         'notes',
         'attachment_path',
         'recorded_by',
+    ];
+
+    public const SOURCE_DRAWER = 'drawer';
+    public const SOURCE_SAFE = 'safe';
+    public const SOURCE_PETTY_CASH = 'petty_cash';
+    public const SOURCE_BANK = 'bank';
+    public const SOURCE_OTHER = 'other';
+
+    public const PAYMENT_SOURCES = [
+        self::SOURCE_DRAWER     => 'Cash Drawer (ကောင်တာငွေအံဆွဲ)',
+        self::SOURCE_SAFE       => 'Safe (သိုလှောင်သေတ္တာ)',
+        self::SOURCE_PETTY_CASH => 'Petty Cash (အသေးသုံးငွေ)',
+        self::SOURCE_BANK       => 'Bank / Account (ဘဏ်အကောင့်)',
+        self::SOURCE_OTHER      => 'Other (အခြား)',
     ];
 
     protected $casts = [
@@ -39,6 +56,11 @@ class Expense extends Model
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
+    }
+
+    public function shift(): BelongsTo
+    {
+        return $this->belongsTo(CashierShift::class, 'cashier_shift_id');
     }
 
     public function category(): BelongsTo

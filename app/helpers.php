@@ -67,6 +67,7 @@ if (! function_exists('exact_sum')) {
      */
     function exact_sum($query, string $columnOrExpression, int $scale = 2): string
     {
+        /** @var \Illuminate\Database\Connection $connection */
         $connection = $query->getConnection();
 
         if ($connection->getDriverName() !== 'sqlite') {

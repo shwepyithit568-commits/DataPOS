@@ -355,6 +355,7 @@
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                     @forelse ($users as $user)
                         @php
+                            /** @var \App\Models\User $user */
                             $membership = $user->stores->first()?->pivot;
                             $storeRole = $membership?->role ?? ($user->role === 'platform_owner' ? 'platform_owner' : 'staff');
                             $staffRoleId = $membership?->staff_role_id;

@@ -19,6 +19,7 @@
                  localStorage.setItem('pos_closing_view', mode);
              },
              showPrintModal: false,
+             showExpenseModal: false,
              printType: '{{ $closing ? "z" : "x" }}',
              printLayout: '80mm',
              counted: Object.assign(Object.fromEntries(@js($methods).map(m => [m, '0'])), { credit: @js($totals['expected']['credit'] ?? '0') }),
@@ -279,6 +280,97 @@
         @endif
 
         {{-- ============================================================
+             3.5 DRAWER MATH BREAKDOWN (Section 5 Standard)
+             ============================================================ --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-1">
+            {{-- Drawer Math Breakdown Card --}}
+            <div class="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1.5">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                    <h2 class="text-xs font-black uppercase text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                        <span>💵</span>
+                        <span>{{ __('messages.closing_drawer_heading') }}</span>
+                    </h2>
+                    <span class="text-[10px] font-mono text-slate-400">Drawer Cash Equation</span>
+                </div>
+
+                <div class="space-y-1 text-xs">
+                    <div class="flex justify-between py-0.5 border-b border-slate-50 dark:border-slate-800/60">
+                        <span class="text-slate-500">{{ __('messages.opening_float') }}</span>
+                        <span class="font-mono font-bold">{{ format_currency((float) ($totals['opening_amount'] ?? 0), $store) }}</span>
+                    </div>
+                    <div class="flex justify-between py-0.5 border-b border-slate-50 dark:border-slate-800/60">
+                        <span class="text-slate-500">{{ __('messages.cash_sales') }}</span>
+                        <span class="font-mono font-bold text-emerald-600">+{{ format_currency((float) ($summary['cash_sales'] ?? 0), $store) }}</span>
+                    </div>
+                    <div class="flex justify-between py-0.5 border-b border-slate-50 dark:border-slate-800/60">
+                        <span class="text-slate-500">{{ __('messages.cash_in') }}</span>
+                        <span class="font-mono font-bold text-sky-600">+{{ format_currency((float) ($summary['cash_in'] ?? 0), $store) }}</span>
+                    </div>
+                    <div class="flex justify-between py-0.5 border-b border-slate-50 dark:border-slate-800/60">
+                        <span class="text-slate-500">{{ __('messages.cash_refunds') }}</span>
+                        <span class="font-mono font-bold text-rose-600">-{{ format_currency((float) ($summary['cash_refunds'] ?? 0), $store) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between py-0.5 border-b border-slate-50 dark:border-slate-800/60">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-slate-500 font-semibold">{{ __('messages.drawer_expenses') }}</span>
+                            @if (!empty($totals['expenses']) && $totals['expenses']->count() > 0)
+                                <button type="button" id="btn-view-expenses-closing" @click="showExpenseModal = true"
+                                        class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition cursor-pointer">
+                                    {{ __('messages.view_expense_details') }} ({{ $totals['expenses']->count() }})
+                                </button>
+                            @endif
+                        </div>
+                        <span class="font-mono font-bold text-rose-600">-{{ format_currency((float) ($summary['drawer_expenses'] ?? 0), $store) }}</span>
+                    </div>
+                    <div class="flex justify-between py-0.5 border-b border-slate-50 dark:border-slate-800/60">
+                        <span class="text-slate-500">{{ __('messages.other_cash_out') }}</span>
+                        <span class="font-mono font-bold text-rose-600">-{{ format_currency((float) ($summary['cash_out'] ?? 0), $store) }}</span>
+                    </div>
+                    <div class="flex justify-between pt-1.5 text-sm font-black border-t border-slate-200 dark:border-slate-700">
+                        <span>{{ __('messages.expected_cash') }}</span>
+                        <span class="font-mono text-sky-600 dark:text-sky-400">{{ format_currency((float) ($totals['expected']['cash'] ?? 0), $store) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Summary & Scope Context Card --}}
+            <div class="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-2">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                    <h2 class="text-xs font-black uppercase text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                        <span>📊</span>
+                        <span>{{ __('messages.sales_summary') ?? 'Summary & Notes' }}</span>
+                    </h2>
+                    <span class="text-[10px] font-mono text-slate-400">Date: {{ $date->format('d M Y') }}</span>
+                </div>
+
+                <div class="space-y-1 text-xs">
+                    <div class="flex justify-between py-0.5 border-b border-slate-50 dark:border-slate-800/60">
+                        <span class="text-slate-500">{{ __('messages.gross_sales') ?? 'Gross Sales' }}</span>
+                        <span class="font-mono font-bold">{{ format_currency((float) ($summary['gross_sales'] ?? 0), $store) }}</span>
+                    </div>
+                    <div class="flex justify-between py-0.5 border-b border-slate-50 dark:border-slate-800/60">
+                        <span class="text-slate-500">{{ __('messages.net_sales') }}</span>
+                        <span class="font-mono font-bold text-emerald-600">{{ format_currency((float) ($summary['net_sales'] ?? 0), $store) }}</span>
+                    </div>
+                    @if (!empty($summary['other_cash_expenses']) && (float) $summary['other_cash_expenses'] > 0)
+                        <div class="p-2 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 text-[11px] text-amber-900 dark:text-amber-200 mt-2">
+                            <div class="flex items-center justify-between font-bold">
+                                <span>ℹ️ {{ __('messages.other_cash_expenses') }}:</span>
+                                <span class="font-mono">{{ format_currency((float) $summary['other_cash_expenses'], $store) }}</span>
+                            </div>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{{ __('messages.non_drawer_expenses_notice') }}</p>
+                        </div>
+                    @else
+                        <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700 text-[11px] text-slate-500 mt-2">
+                            <span>✅ {{ __('messages.cash_reconciliation_equation') }}</span>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Expected = Opening + Cash Sales + In - Refunds - Expenses - Cash Out</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        {{-- ============================================================
              4. MAIN CONTENT — TABLE & CARDS BREAKDOWN
              ============================================================ --}}
         <div class="rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs overflow-hidden">
@@ -384,7 +476,12 @@
                         </div>
                         @if ($isManager)
                             <form method="POST" action="{{ route('pos.closing.approve', ['store_slug' => $store->slug, 'closing' => $closing->id]) }}"
-                                  data-confirm="{{ __('messages.confirm_action') }}: နေ့စဉ် စာရင်းချုပ်အား အတည်ပြုရန် သေချာပါသလား? အတည်ပြုပြီးပါက ပြင်ဆင်၍ မရတော့ပါ။">
+                                  data-confirm="နေ့စဉ် စာရင်းချုပ်အား အတည်ပြုရန် သေချာပါသလား? အတည်ပြုပြီးပါက ပြင်ဆင်၍ မရတော့ပါ။"
+                                  data-confirm-safe
+                                  data-confirm-variant="success"
+                                  data-confirm-title="{{ __('messages.closing_approval') }}"
+                                  data-confirm-button="✅ {{ __('messages.closing_approve') }}"
+                                  data-confirm-icon="✅">
                                 @csrf
                                 <button type="submit"
                                         class="sf-btn-3d-success h-8 px-4 rounded-md text-xs font-black text-white cursor-pointer">
@@ -624,6 +721,80 @@
                        class="sf-btn-3d-primary h-7 px-3 text-xs font-black rounded-md text-white transition inline-flex items-center gap-1 cursor-pointer">
                         <span>🖨️ {{ __('messages.print') }} →</span>
                     </a>
+                </div>
+            </div>
+        {{-- Expense Detail Modal --}}
+        <div x-show="showExpenseModal" x-cloak
+             class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3"
+             @keydown.escape.window="showExpenseModal = false">
+            <div class="bg-white dark:bg-slate-900 rounded-xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden"
+                 @click.away="showExpenseModal = false">
+                <div class="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">📋</span>
+                        <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100">
+                            {{ __('messages.expense_details') }} — {{ $date->format('d M Y') }}
+                        </h3>
+                    </div>
+                    <button type="button" @click="showExpenseModal = false"
+                            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold cursor-pointer">
+                        ✕
+                    </button>
+                </div>
+
+                <div class="p-3 max-h-96 overflow-y-auto">
+                    @if (!empty($totals['expenses']) && $totals['expenses']->count() > 0)
+                        <table class="w-full text-xs">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-slate-100 dark:border-slate-800 text-[11px]">
+                                    <th class="text-left py-1">Ref / No</th>
+                                    <th class="text-left py-1">{{ __('messages.title') ?? 'Title' }}</th>
+                                    <th class="text-left py-1">{{ __('messages.payment_source') }}</th>
+                                    <th class="text-left py-1">{{ __('messages.shift') ?? 'Shift' }}</th>
+                                    <th class="text-right py-1">{{ __('messages.amount') ?? 'Amount' }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                @foreach ($totals['expenses'] as $exp)
+                                    @php
+                                        $isDrawer = ($exp->payment_method === 'cash' && ($exp->payment_source === 'drawer' || $exp->cashier_shift_id));
+                                    @endphp
+                                    <tr>
+                                        <td class="py-1.5 font-mono text-[11px] text-slate-500">
+                                            {{ $exp->expense_number }}
+                                            <div class="text-[10px] text-slate-400">{{ $exp->created_at?->format('H:i') }}</div>
+                                        </td>
+                                        <td class="py-1.5 font-semibold text-slate-900 dark:text-slate-100">
+                                            {{ $exp->title }}
+                                            @if ($exp->category)
+                                                <span class="block text-[10px] text-slate-400">{{ $exp->category->name }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="py-1.5">
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold {{ $isDrawer ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' }}">
+                                                {{ $isDrawer ? __('messages.source_drawer') : (\App\POS\Models\Expense::PAYMENT_SOURCES[$exp->payment_source] ?? ucfirst($exp->payment_source ?? 'other')) }}
+                                            </span>
+                                        </td>
+                                        <td class="py-1.5 font-mono text-[11px] text-slate-500">
+                                            {{ $exp->shift?->register_name ?? '—' }}
+                                        </td>
+                                        <td class="py-1.5 text-right font-mono font-bold {{ $isDrawer ? 'text-rose-600' : 'text-slate-600 dark:text-slate-300' }}">
+                                            {{ format_currency((float) $exp->amount, $store) }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <p class="text-center text-xs text-slate-400 py-4">{{ __('messages.no_records_found') }}</p>
+                    @endif
+                </div>
+
+                <div class="px-4 py-2 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+                    <button type="button" @click="showExpenseModal = false"
+                            class="sf-btn-3d px-3 py-1 text-xs font-bold rounded-lg cursor-pointer">
+                        {{ __('messages.close') ?? 'Close' }}
+                    </button>
                 </div>
             </div>
         </div>

@@ -287,6 +287,8 @@
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-3 items-start">
             @forelse ($items as $glassCode => $codeItems)
                 @php
+                    /** @var \Illuminate\Support\Collection<\App\Models\GlassFinderItem> $codeItems */
+                    $codeItems = collect($codeItems);
                     $brandsInGroup = $codeItems->pluck('brand')->unique()->values();
                     $inCount = $codeItems->filter(fn ($i) => $i->isInStock())->count();
                     $outCount = $codeItems->count() - $inCount;

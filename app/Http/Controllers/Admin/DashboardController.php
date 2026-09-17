@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\WholesaleApplication;
 use App\POS\Services\CashierShiftService;
 use App\Services\StoreContext;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -109,7 +110,7 @@ class DashboardController extends Controller
                     . ' UNION ALL'
                     . ' SELECT psi.product_name AS name, SUM(psi.quantity) AS qty, SUM(psi.line_total) AS amount'
                     . "   FROM pos_sale_items psi JOIN pos_sales ps ON ps.id = psi.pos_sale_id"
-                    . "  WHERE ps.store_id = ? AND ps.status = 'posted' GROUP BY psi.product_name"
+                    . "  WHERE ps.store_id = ? AND ps.status IN ('posted', 'partially_refunded', 'refunded') GROUP BY psi.product_name"
                     . ') AS combined_sales GROUP BY name ORDER BY qty DESC LIMIT 5',
                     [$storeId, 'cancelled', $storeId]
                 ),
@@ -127,25 +128,11 @@ class DashboardController extends Controller
                     $dayStart = $day->copy()->startOfDay();
                     $dayEnd = $day->copy()->endOfDay();
 
-                    $webRevenue = (float) Order::where('store_id', $storeId)
-                        ->where('status', '!=', 'cancelled')
-                        ->whereBetween('created_at', [$dayStart, $dayEnd])
-                        ->selectRaw('COALESCE(SUM(COALESCE(agreed_amount, total_amount)), 0) as revenue')
-                        ->value('revenue');
-
-                    $posRevenue = (float) \App\POS\Models\PosSale::where('store_id', $storeId)
-                        ->where('status', 'posted')
-                        ->whereBetween('posted_at', [$dayStart, $dayEnd])
-                        ->sum('total');
-
-                    $webOrders = Order::where('store_id', $storeId)->whereBetween('created_at', [$dayStart, $dayEnd])->count();
-                    $posOrders = \App\POS\Models\PosSale::where('store_id', $storeId)->where('status', 'posted')->whereBetween('posted_at', [$dayStart, $dayEnd])->count();
-
                     return [
                         'day' => $day->format('D'),
                         'date' => $day->format('d M'),
-                        'revenue' => $webRevenue + $posRevenue,
-                        'orders' => $webOrders + $posOrders,
+                        'revenue' => $this->revenueSumBetween($storeId, $dayStart, $dayEnd),
+                        'orders' => $this->ordersBetween($storeId, $dayStart, $dayEnd),
                     ];
                 })->all(),
                 // 2. Payment Method Mix (Last 30 Days)
@@ -281,19 +268,48 @@ class DashboardController extends Controller
      * POS counter sales. Same scope as the 7-day chart so the stat cards,
      * monthly chart and top products never disagree.
      */
-    private function revenueSumSince(int $storeId, Carbon $since): float
+    private function revenueSumSince(int $storeId, CarbonInterface $since): float
     {
         return $this->revenueSumBetween($storeId, $since, null);
     }
 
     /**
      * Revenue inside a window (or since a point when $until is null):
-     * online orders + posted POS counter sales.
+     * online orders + posted POS counter sales minus returns.
      */
-    private function revenueSumBetween(int $storeId, Carbon $start, ?Carbon $until): float
+    private function revenueSumBetween(int $storeId, CarbonInterface $start, ?CarbonInterface $until): float
     {
         $webQuery = Order::where('store_id', $storeId)->where('status', '!=', 'cancelled');
-        $posQuery = \App\POS\Models\PosSale::where('store_id', $storeId)->where('status', 'posted');
+        $posQuery = \App\POS\Models\PosSale::where('store_id', $storeId)->whereIn('status', ['posted', 'partially_refunded', 'refunded']);
+        $retQuery = \App\POS\Models\PosReturn::where('store_id', $storeId)->where('status', 'posted');
+
+        if ($until) {
+            $webQuery->whereBetween('created_at', [$start, $until]);
+            $posQuery->whereBetween('posted_at', [$start, $until]);
+            $retQuery->whereBetween('posted_at', [$start, $until]);
+        } else {
+            $webQuery->where('created_at', '>=', $start);
+            $posQuery->where('posted_at', '>=', $start);
+            $retQuery->where('posted_at', '>=', $start);
+        }
+
+        $web = (float) $webQuery
+            ->selectRaw('COALESCE(SUM(COALESCE(agreed_amount, total_amount)), 0) as revenue')
+            ->value('revenue');
+        $pos = (float) $posQuery->sum('total');
+        $ret = (float) $retQuery->sum('total');
+
+        return max(0.0, ($web + $pos) - $ret);
+    }
+
+    /**
+     * Bill count inside a window: online orders + POS sales (including
+     * partially/fully refunded sales to track total customer transactions).
+     */
+    private function ordersBetween(int $storeId, CarbonInterface $start, ?CarbonInterface $until): int
+    {
+        $webQuery = Order::where('store_id', $storeId)->where('status', '!=', 'cancelled');
+        $posQuery = \App\POS\Models\PosSale::where('store_id', $storeId)->whereIn('status', ['posted', 'partially_refunded', 'refunded']);
 
         if ($until) {
             $webQuery->whereBetween('created_at', [$start, $until]);
@@ -303,23 +319,16 @@ class DashboardController extends Controller
             $posQuery->where('posted_at', '>=', $start);
         }
 
-        $web = (float) $webQuery
-            ->selectRaw('COALESCE(SUM(COALESCE(agreed_amount, total_amount)), 0) as revenue')
-            ->value('revenue');
-        $pos = (float) $posQuery->sum('total');
-
-        return $web + $pos;
+        return $webQuery->count() + $posQuery->count();
     }
 
     /**
-     * Bill count since a timestamp: online orders + posted POS sales,
+     * Bill count since a timestamp: online orders + POS sales,
      * matching the revenue scope above.
      */
-    private function ordersSince(int $storeId, Carbon $since): int
+    private function ordersSince(int $storeId, CarbonInterface $since): int
     {
-        return Order::where('store_id', $storeId)->where('created_at', '>=', $since)->count()
-            + \App\POS\Models\PosSale::where('store_id', $storeId)
-                ->where('status', 'posted')->where('posted_at', '>=', $since)->count();
+        return $this->ordersBetween($storeId, $since, null);
     }
 
     /**

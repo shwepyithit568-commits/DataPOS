@@ -262,6 +262,7 @@
                 <tbody class="divide-y divide-slate-200/80 dark:divide-slate-800 bg-white dark:bg-slate-900">
                     @forelse($movements as $m)
                         @php
+                            /** @var \App\POS\Models\InventoryMovement $m */
                             $delta = (float) $m->quantity_delta;
                             $cost  = (float) $m->unit_cost;
                             $totalVal = round(abs($delta) * $cost, 2);
@@ -375,6 +376,7 @@
     <div x-show="viewMode === 'card' || viewMode === 'cards'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1 sm:gap-1.5">
         @forelse($movements as $m)
             @php
+                /** @var \App\POS\Models\InventoryMovement $m */
                 $delta = (float) $m->quantity_delta;
                 $cost  = (float) $m->unit_cost;
                 $totalVal = round(abs($delta) * $cost, 2);

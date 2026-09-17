@@ -540,7 +540,7 @@
 
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-0.5">{{ __('messages.amount') }}</label>
-                                <input type="number" name="amount" min="0.01" step="100" max="{{ $outstanding }}" value="{{ $outstanding }}" required
+                                <input type="number" name="amount" min="0.01" step="any" max="{{ $outstanding }}" value="{{ $outstanding }}" required
                                        class="w-full h-7 px-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono font-bold text-slate-800 dark:text-slate-200 outline-none" />
                             </div>
 

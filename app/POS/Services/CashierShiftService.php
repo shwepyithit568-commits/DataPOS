@@ -171,17 +171,52 @@ class CashierShiftService
         }
 
         return DB::transaction(function () use ($shift, $actual, $data, $actor) {
-            $expected = bcadd(
-                bcadd(
-                    bcadd($shift->opening_cash, $shift->cash_sales, 2),
-                    $shift->cash_in,
-                    2
-                ),
+            // Shift-period cash expenses deducted from drawer:
+            // ONLY expenses paid from THIS shift drawer (payment_source = 'drawer'
+            // and cashier_shift_id = $shift->id and status = 'paid').
+            $shiftDrawerExpenses = exact_sum(
+                DB::table('expenses')
+                    ->where('store_id', $shift->store_id)
+                    ->where('cashier_shift_id', $shift->id)
+                    ->where('payment_method', 'cash')
+                    ->where('payment_source', \App\POS\Models\Expense::SOURCE_DRAWER)
+                    ->where('status', 'paid'),
+                'amount'
+            );
+
+            // Other cash out: calculate non-expense cash-out events (safe drops, etc.)
+            // to guarantee legacy linked events or expense-linked events are NEVER double-counted.
+            $hasCashEvents = DB::table('cash_events')->where('cashier_shift_id', $shift->id)->exists();
+            if ($hasCashEvents) {
+                $otherCashOut = exact_sum(
+                    DB::table('cash_events')
+                        ->where('cashier_shift_id', $shift->id)
+                        ->where('type', 'cash_out')
+                        ->whereNull('expense_id')
+                        ->where(function ($q) {
+                            $q->whereNull('reason')->orWhere('reason', 'not like', 'Expense:%');
+                        }),
+                    'amount'
+                );
+            } else {
+                $otherCashOut = bcsub((string) $shift->cash_out, $shiftDrawerExpenses, 2);
+                if (bccomp($otherCashOut, '0', 2) < 0) {
+                    $otherCashOut = '0.00';
+                }
+            }
+
+            // Expected cash = Opening + Cash Sales + Other Cash In - Cash Refunds - Drawer Expenses - Other Cash Out
+            $expected = bcsub(
                 bcsub(
-                    '0',
-                    bcadd($shift->cash_refunds, $shift->cash_out, 2),
+                    bcadd(
+                        bcadd((string) $shift->opening_cash, (string) $shift->cash_sales, 2),
+                        (string) $shift->cash_in,
+                        2
+                    ),
+                    (string) $shift->cash_refunds,
                     2
                 ),
+                bcadd($shiftDrawerExpenses, $otherCashOut, 2),
                 2
             );
 

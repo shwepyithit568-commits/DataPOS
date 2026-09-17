@@ -197,6 +197,11 @@ class ExpenseController extends Controller
                 Rule::exists('expense_categories', 'id')->where('store_id', $store->id),
             ],
             'payment_method'      => ['required', 'string', 'max:50'],
+            'payment_source'      => ['nullable', 'string', 'max:50'],
+            'cashier_shift_id'    => [
+                'nullable',
+                Rule::exists('cashier_shifts', 'id')->where('store_id', $store->id),
+            ],
             'paid_to'             => ['nullable', 'string', 'max:255'],
             'reference_no'        => ['nullable', 'string', 'max:100'],
             'notes'               => ['nullable', 'string', 'max:2000'],
@@ -210,14 +215,32 @@ class ExpenseController extends Controller
 
         $expenseNumber = Expense::generateExpenseNumber($store->id);
 
+        $paymentSource = $validated['payment_source'] ?? null;
+        if (empty($paymentSource)) {
+            $paymentSource = ($validated['payment_method'] === 'cash')
+                ? Expense::SOURCE_SAFE
+                : Expense::SOURCE_BANK;
+        }
+
+        $shiftId = $validated['cashier_shift_id'] ?? null;
+        if ($paymentSource === Expense::SOURCE_DRAWER && empty($shiftId)) {
+            $openShift = \App\POS\Models\CashierShift::where('store_id', $store->id)->where('status', 'open')->first();
+            $shiftId = $openShift?->id;
+        } elseif ($paymentSource !== Expense::SOURCE_DRAWER) {
+            $shiftId = null;
+        }
+
         Expense::create([
             'store_id'            => $store->id,
+            'cashier_shift_id'    => $shiftId,
             'expense_category_id' => $validated['expense_category_id'] ?? null,
             'expense_number'      => $expenseNumber,
             'title'               => trim($validated['title']),
             'amount'              => bcadd((string) $validated['amount'], '0', 2),
+            'status'              => 'paid',
             'expense_date'        => $validated['expense_date'],
             'payment_method'      => $validated['payment_method'],
+            'payment_source'      => $paymentSource,
             'paid_to'             => ! empty($validated['paid_to']) ? trim($validated['paid_to']) : null,
             'reference_no'        => ! empty($validated['reference_no']) ? trim($validated['reference_no']) : null,
             'notes'               => ! empty($validated['notes']) ? trim($validated['notes']) : null,
@@ -246,6 +269,11 @@ class ExpenseController extends Controller
                 Rule::exists('expense_categories', 'id')->where('store_id', $store->id),
             ],
             'payment_method'      => ['required', 'string', 'max:50'],
+            'payment_source'      => ['nullable', 'string', 'max:50'],
+            'cashier_shift_id'    => [
+                'nullable',
+                Rule::exists('cashier_shifts', 'id')->where('store_id', $store->id),
+            ],
             'paid_to'             => ['nullable', 'string', 'max:255'],
             'reference_no'        => ['nullable', 'string', 'max:100'],
             'notes'               => ['nullable', 'string', 'max:2000'],
@@ -266,12 +294,20 @@ class ExpenseController extends Controller
             $attachmentPath = $request->file('attachment')->store("stores/{$store->id}/expenses", 'public');
         }
 
+        $paymentSource = $validated['payment_source'] ?? $expenseModel->payment_source;
+        $shiftId = array_key_exists('cashier_shift_id', $validated) ? $validated['cashier_shift_id'] : $expenseModel->cashier_shift_id;
+        if ($paymentSource !== Expense::SOURCE_DRAWER) {
+            $shiftId = null;
+        }
+
         $expenseModel->update([
+            'cashier_shift_id'    => $shiftId,
             'expense_category_id' => $validated['expense_category_id'] ?? null,
             'title'               => trim($validated['title']),
             'amount'              => bcadd((string) $validated['amount'], '0', 2),
             'expense_date'        => $validated['expense_date'],
             'payment_method'      => $validated['payment_method'],
+            'payment_source'      => $paymentSource,
             'paid_to'             => ! empty($validated['paid_to']) ? trim($validated['paid_to']) : null,
             'reference_no'        => ! empty($validated['reference_no']) ? trim($validated['reference_no']) : null,
             'notes'               => ! empty($validated['notes']) ? trim($validated['notes']) : null,

@@ -362,13 +362,15 @@ class CashierShiftTest extends TestCase
             'paid_to' => 'မောင်မောင် ရေသန့်',
         ]);
 
-        // Verify cash_out was recorded in cash_events and on the shift
-        $this->assertDatabaseHas('cash_events', [
+        // NEW BEHAVIOUR: Cash expenses are tracked in the `expenses` table only.
+        // shift.cash_out is NOT incremented and no cash_events row is created.
+        // DailyClosingService & CashierShiftService query expenses directly to
+        // prevent double-counting between POS-counter and Admin-route expenses.
+        $this->assertDatabaseMissing('cash_events', [
             'cashier_shift_id' => $shift->id,
             'type' => 'cash_out',
-            'amount' => 3000,
         ]);
-        $this->assertSame('3000.00', (string) $shift->fresh()->cash_out);
+        $this->assertSame('0.00', (string) $shift->fresh()->cash_out);
     }
 
     public function test_record_pos_expense_with_digital_payment_does_not_add_shift_cash_event(): void
@@ -395,7 +397,7 @@ class CashierShiftTest extends TestCase
             'payment_method' => 'kpay',
         ]);
 
-        // No cash_out event should be created on cash shift
+        // No cash_out event should be created on cash shift (digital payment)
         $this->assertDatabaseMissing('cash_events', [
             'cashier_shift_id' => $shift->id,
             'type' => 'cash_out',

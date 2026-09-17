@@ -4,6 +4,7 @@
 @section('main_padding', 'p-0.5 sm:p-1')
 
 @php
+    /** @var \Illuminate\Pagination\LengthAwarePaginator<\App\Models\Order> $orders */
     $storeRouteParams = ['store_slug' => $store->slug];
     $exportUrl = route('store.admin.orders.export', array_merge($storeRouteParams, request()->only(['search', 'sort', 'tab', 'status', 'pricing_type', 'contact_channel'])));
 @endphp

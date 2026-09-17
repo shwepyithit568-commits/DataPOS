@@ -613,15 +613,33 @@
                     <td class="meta-label">{{ __('messages.opening_float') }}:</td>
                     <td class="meta-val font-mono">{{ format_currency((float) ($totals['opening_amount'] ?? 0), $store) }}</td>
                 </tr>
+                @if (!empty($summary['cash_sales']) && (float)$summary['cash_sales'] > 0)
+                    <tr>
+                        <td class="meta-label">{{ __('messages.cash_sales') }}:</td>
+                        <td class="meta-val font-mono">+{{ format_currency((float) $summary['cash_sales'], $store) }}</td>
+                    </tr>
+                @endif
                 @if (!empty($summary['cash_in']) && (float)$summary['cash_in'] > 0)
                     <tr>
                         <td class="meta-label">{{ __('messages.cash_in') }}:</td>
                         <td class="meta-val font-mono">+{{ format_currency((float) $summary['cash_in'], $store) }}</td>
                     </tr>
                 @endif
+                @if (!empty($summary['cash_refunds']) && (float)$summary['cash_refunds'] > 0)
+                    <tr>
+                        <td class="meta-label">{{ __('messages.cash_refunds') }}:</td>
+                        <td class="meta-val font-mono">-{{ format_currency((float) $summary['cash_refunds'], $store) }}</td>
+                    </tr>
+                @endif
+                @if (!empty($summary['drawer_expenses']) && (float)$summary['drawer_expenses'] > 0)
+                    <tr>
+                        <td class="meta-label">{{ __('messages.drawer_expenses') }}:</td>
+                        <td class="meta-val font-mono">-{{ format_currency((float) $summary['drawer_expenses'], $store) }}</td>
+                    </tr>
+                @endif
                 @if (!empty($summary['cash_out']) && (float)$summary['cash_out'] > 0)
                     <tr>
-                        <td class="meta-label">{{ __('messages.cash_out') }}:</td>
+                        <td class="meta-label">{{ __('messages.other_cash_out') }}:</td>
                         <td class="meta-val font-mono">-{{ format_currency((float) $summary['cash_out'], $store) }}</td>
                     </tr>
                 @endif

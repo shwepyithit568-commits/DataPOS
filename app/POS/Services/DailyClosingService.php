@@ -52,26 +52,99 @@ class DailyClosingService
         $cashOut = '0.00';
         $drawerCash = '0.00';
 
-        // Cash expectation = the day's shifts' drawer math (open or closed).
-        CashierShift::query()
+        $shifts = CashierShift::query()
             ->where('store_id', $store->id)
             ->where('opened_at', '>=', $start)
             ->where('opened_at', '<', $endExclusive)
-            ->get(['opening_cash', 'cash_sales', 'cash_refunds', 'cash_in', 'cash_out'])
-            ->each(function (CashierShift $s) use (&$opening, &$cashSales, &$cashRefunds, &$cashIn, &$cashOut, &$drawerCash) {
-                $opening = bcadd($opening, (string) $s->opening_cash, 2);
-                $cashSales = bcadd($cashSales, (string) $s->cash_sales, 2);
-                $cashRefunds = bcadd($cashRefunds, (string) $s->cash_refunds, 2);
-                $cashIn = bcadd($cashIn, (string) $s->cash_in, 2);
-                $cashOut = bcadd($cashOut, (string) $s->cash_out, 2);
+            ->get();
 
-                $shiftNet = bcsub(
-                    bcadd(bcadd((string) $s->opening_cash, (string) $s->cash_sales, 2), (string) $s->cash_in, 2),
-                    bcadd((string) $s->cash_refunds, (string) $s->cash_out, 2),
-                    2
-                );
-                $drawerCash = bcadd($drawerCash, $shiftNet, 2);
+        $shiftIds = $shifts->pluck('id')->all();
+
+        $shifts->each(function (CashierShift $s) use (&$opening, &$cashSales, &$cashRefunds, &$cashIn) {
+            $opening = bcadd($opening, (string) $s->opening_cash, 2);
+            $cashSales = bcadd($cashSales, (string) $s->cash_sales, 2);
+            $cashRefunds = bcadd($cashRefunds, (string) $s->cash_refunds, 2);
+            $cashIn = bcadd($cashIn, (string) $s->cash_in, 2);
+        });
+
+        // 1. Drawer-paid cash expenses (authoritative source: expenses with payment_method='cash', payment_source='drawer', status='paid')
+        $drawerExpensesQuery = DB::table('expenses')
+            ->where('store_id', $store->id)
+            ->where('payment_method', 'cash')
+            ->where('payment_source', \App\POS\Models\Expense::SOURCE_DRAWER)
+            ->where('status', 'paid');
+
+        if (!empty($shiftIds)) {
+            $drawerExpensesQuery->where(function ($q) use ($shiftIds, $start, $endExclusive) {
+                $q->whereIn('cashier_shift_id', $shiftIds)
+                  ->orWhere(function ($sub) use ($start, $endExclusive) {
+                      $sub->whereNull('cashier_shift_id')
+                          ->whereDate('expense_date', '>=', $start->toDateString())
+                          ->whereDate('expense_date', '<', $endExclusive->toDateString());
+                  });
             });
+        } else {
+            $drawerExpensesQuery->whereDate('expense_date', '>=', $start->toDateString())
+                                ->whereDate('expense_date', '<', $endExclusive->toDateString());
+        }
+
+        $drawerExpenses = exact_sum($drawerExpensesQuery, 'amount');
+
+        // 2. Other Cash Out: Non-expense cash events (safe drops, owner drawings, etc.)
+        // Guaranteed single-deduction: any event with expense_id or reason 'Expense:%' is excluded.
+        if (!empty($shiftIds)) {
+            $hasCashEvents = DB::table('cash_events')->whereIn('cashier_shift_id', $shiftIds)->exists();
+            if ($hasCashEvents) {
+                $cashOut = exact_sum(
+                    DB::table('cash_events')
+                        ->whereIn('cashier_shift_id', $shiftIds)
+                        ->where('type', 'cash_out')
+                        ->whereNull('expense_id')
+                        ->where(function ($q) {
+                            $q->whereNull('reason')->orWhere('reason', 'not like', 'Expense:%');
+                        }),
+                    'amount'
+                );
+            } else {
+                $shiftsTotalOut = '0.00';
+                foreach ($shifts as $s) {
+                    $shiftsTotalOut = bcadd($shiftsTotalOut, (string) $s->cash_out, 2);
+                }
+                $cashOut = bcsub($shiftsTotalOut, $drawerExpenses, 2);
+                if (bccomp($cashOut, '0', 2) < 0) {
+                    $cashOut = '0.00';
+                }
+            }
+        } else {
+            $cashOut = '0.00';
+        }
+
+        // 3. Other non-drawer cash expenses (e.g. paid from Safe, Petty Cash, Bank, or legacy unresolved)
+        $otherCashExpenses = exact_sum(
+            DB::table('expenses')
+                ->where('store_id', $store->id)
+                ->where('payment_method', 'cash')
+                ->where(function ($q) {
+                    $q->where('payment_source', '!=', \App\POS\Models\Expense::SOURCE_DRAWER)
+                      ->orWhereNull('payment_source');
+                })
+                ->where('status', 'paid')
+                ->whereDate('expense_date', '>=', $start->toDateString())
+                ->whereDate('expense_date', '<', $endExclusive->toDateString()),
+            'amount'
+        );
+
+        // Authoritative Drawer Math (Section 4.3):
+        // Expected Cash = Opening + Cash Sales + Other Cash In - Cash Refunds - Drawer Expenses - Other Cash Out
+        $drawerCash = bcsub(
+            bcsub(
+                bcadd(bcadd($opening, $cashSales, 2), $cashIn, 2),
+                $cashRefunds,
+                2
+            ),
+            bcadd($drawerExpenses, $cashOut, 2),
+            2
+        );
 
         $expected = ['cash' => $drawerCash];
 
@@ -162,14 +235,29 @@ class DailyClosingService
             'cash_refunds' => bcadd($cashRefunds, '0', 2),
             'cash_in' => bcadd($cashIn, '0', 2),
             'cash_out' => bcadd($cashOut, '0', 2),
+            // Cash expenses paid from the drawer (single authoritative source).
+            'drawer_expenses' => bcadd($drawerExpenses, '0', 2),
+            'cash_expenses' => bcadd($drawerExpenses, '0', 2),
+            // Store cash expenses paid from Safe, Petty Cash, or other non-drawer accounts.
+            'other_cash_expenses' => bcadd($otherCashExpenses, '0', 2),
             'expected_cash' => $drawerCash,
         ];
+
+        // Retrieve all expenses for the business date with category/recorder/shift for drill-down breakdown.
+        $dayExpenses = \App\POS\Models\Expense::query()
+            ->where('store_id', $store->id)
+            ->whereDate('expense_date', '>=', $start->toDateString())
+            ->whereDate('expense_date', '<', $endExclusive->toDateString())
+            ->with(['category', 'recorder', 'shift'])
+            ->orderBy('id', 'desc')
+            ->get();
 
         return [
             'opening_amount' => bcadd($opening, '0', 2),
             'expected' => $expected,
             'date' => $date->toDateString(),
             'summary' => $summary,
+            'expenses' => $dayExpenses,
         ];
     }
 
