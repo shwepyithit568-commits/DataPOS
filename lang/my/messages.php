@@ -5971,6 +5971,8 @@ return [
     'loyalty_point_value_hint' => 'ဖောက်သည် Points သုံးသည့်အခါ ၁ မှတ် တန်ဖိုး မည်မျှ (0 = Points သုံး၍ မရ)။',
     'loyalty_note_points_redeemed' => 'ပြေစာ :receipt တွင် Points သုံးခြင်း (:points မှတ် = :amount)',
     'loyalty_note_points_returned' => 'ငွေပြန်အမ်း :refund အတွက် Points ပြန်ရရှိ',
+    'pos_qty_exceeds_stock' => 'လက်ကျန် :available သာ ရှိပါသည် — :quantity ထည့်၍ မရပါ။',
+    'pos_qty_at_stock_limit' => 'လက်ကျန် ပြည့်နေသည်',
     'pos_points' => 'Loyalty Points',
     'pos_points_placeholder' => 'သုံးမည့် Points',
     'pos_points_use_max' => 'အများဆုံး သုံးမည် (:points)',

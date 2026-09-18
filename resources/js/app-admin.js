@@ -429,18 +429,57 @@ Alpine.data('posApp', (opts = {}) => ({
         return this.isLooseWeight(line) ? 0.001 : 1;
     },
 
+    /**
+     * What the shelf can still give for this line — the cashier must not be able
+     * to ring up more than exists. `null` when the cart payload has no balance
+     * (the server is the backstop either way).
+     */
+    maxQty(line) {
+        const available = parseFloat(line && line.balance);
+        return Number.isFinite(available) ? available : null;
+    },
+
+    /** True when this line already sits at the stock ceiling. */
+    atStockCeiling(line) {
+        const max = this.maxQty(line);
+        return max !== null && (parseFloat(line.quantity) || 0) >= max;
+    },
+
+    /** Warn (once per attempt) instead of letting the server refuse silently. */
+    stockLimitNotice(line) {
+        const max = this.maxQty(line);
+        this.flash(
+            (this.labels.pos_qty_exceeds_stock || 'လက်ကျန် :available သာ ရှိပါသည် — :quantity ထည့်၍ မရပါ')
+                .replace(':available', max === null ? '0' : String(max))
+                .replace(':quantity', String((parseFloat(line.quantity) || 0) + 1)),
+            'error'
+        );
+    },
+
     async changeQty(line, delta) {
         const current = parseFloat(line.quantity) || 0;
         // Sub-unit weights step in tenths so the buttons stay useful.
         const step = this.isLooseWeight(line) && current < 1 ? delta * 0.1 : delta;
         const qty = current + step;
         if (qty <= 0) { await this.removeLine(line); return; }
+        const max = this.maxQty(line);
+        if (delta > 0 && max !== null && Math.round(qty * 1000) / 1000 > max) {
+            this.stockLimitNotice(line);
+            return;
+        }
         await this.mutate('/cart/' + line.index, { quantity: String(Math.round(qty * 1000) / 1000) });
     },
 
     async setQty(line, qty) {
         const q = parseFloat(qty);
         if (isNaN(q) || q <= 0) { await this.removeLine(line); return; }
+        const max = this.maxQty(line);
+        if (max !== null && q > max) {
+            // Typed over the shelf: take what exists and say so.
+            this.stockLimitNotice(line);
+            await this.mutate('/cart/' + line.index, { quantity: String(max) });
+            return;
+        }
         const value = this.isLooseWeight(line) ? Math.round(q * 1000) / 1000 : Math.round(q);
         if (value <= 0) { await this.removeLine(line); return; }
         await this.mutate('/cart/' + line.index, { quantity: String(value) });

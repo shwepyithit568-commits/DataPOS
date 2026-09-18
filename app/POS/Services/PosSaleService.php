@@ -462,6 +462,9 @@ class PosSaleService
                 (int) $item->product_id,
                 $item->product_variant_id ? (int) $item->product_variant_id : null,
                 (string) $item->quantity,
+                // No stock cap here: a confirmed order is holding the very units
+                // it needs, and posting releases them before the sale takes them.
+                enforceStock: false,
             );
         }
 
@@ -591,7 +594,7 @@ class PosSaleService
         return session()->get($this->cartKey($store), []);
     }
 
-    public function addToCart(Store $store, int $productId, ?int $variantId, string $quantity): void
+    public function addToCart(Store $store, int $productId, ?int $variantId, string $quantity, bool $enforceStock = true): void
     {
         $product = Product::findOrFail($productId);
         if ((int) $product->store_id !== (int) $store->id) {
@@ -612,11 +615,20 @@ class PosSaleService
 
         foreach ($lines as $i => $line) {
             if ((int) $line['product_id'] === $productId && (int) ($line['product_variant_id'] ?? 0) === (int) ($variantId ?? 0)) {
-                $lines[$i]['quantity'] = bcadd($line['quantity'], $quantity, 3);
+                $merged = bcadd($line['quantity'], $quantity, 3);
+                if ($enforceStock) {
+                    $this->assertQuantityAvailable($store, $product, $variantId, $merged);
+                }
+
+                $lines[$i]['quantity'] = $merged;
                 session([$this->cartKey($store) => $lines]);
 
                 return;
             }
+        }
+
+        if ($enforceStock) {
+            $this->assertQuantityAvailable($store, $product, $variantId, $quantity);
         }
 
         $lines[] = [
@@ -626,6 +638,27 @@ class PosSaleService
         ];
 
         session([$this->cartKey($store) => $lines]);
+    }
+
+    /**
+     * The cart may never hold more of a line than the shelf has.
+     *
+     * post() refuses the sale anyway, but a cashier who has already told the
+     * customer the total should not discover the shortage at checkout — the
+     * stepper, the typed quantity and this guard all stop at the same number.
+     */
+    private function assertQuantityAvailable(Store $store, Product $product, ?int $variantId, string $quantity): void
+    {
+        $warehouseId = $this->inventory->defaultWarehouseId($store->id);
+        $balance = $this->inventory->balanceFor($store->id, $product->id, $variantId, $warehouseId);
+        $available = $balance ? (string) $balance->quantity_on_hand : '0';
+
+        if (bccomp($available, $quantity, 3) < 0) {
+            throw new InventoryException(__('messages.pos_qty_exceeds_stock', [
+                'available' => format_quantity($available, $store),
+                'quantity' => format_quantity($quantity, $store),
+            ]));
+        }
     }
 
     public function updateCartLine(Store $store, int $index, string $quantity): void
@@ -639,6 +672,17 @@ class PosSaleService
 
             return;
         }
+
+        $product = Product::find($lines[$index]['product_id']);
+        if ($product !== null) {
+            $this->assertQuantityAvailable(
+                $store,
+                $product,
+                isset($lines[$index]['product_variant_id']) && $lines[$index]['product_variant_id'] ? (int) $lines[$index]['product_variant_id'] : null,
+                $quantity,
+            );
+        }
+
         $lines[$index]['quantity'] = $quantity;
 
         session([$this->cartKey($store) => $lines]);

@@ -380,8 +380,12 @@
                                 </span>
                             </template>
                             <template x-if="editing">
+                                {{-- The cap is the shelf: typing more than exists
+                                     is pulled back to the available quantity and
+                                     a warning says so (the server also refuses). --}}
                                 <input type="number"
                                        :min="minQty(line)" :step="minQty(line)"
+                                       :max="maxQty(line) ?? undefined"
                                        :x-ref="'qtyInput_' + line.index"
                                        x-model.number="editVal"
                                        class="w-10 sm:w-12 text-center text-xs sm:text-sm font-black border-x border-blue-400 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 outline-none py-0.5 tabular-nums rounded"
@@ -390,8 +394,17 @@
                                        @blur="if (editVal >= minQty(line)) { setQty(line, editVal); } editing = false"
                                        x-init="$nextTick(() => $el.focus())">
                             </template>
-                            <button type="button" @click="changeQty(line, 1)" class="sf-btn-3d w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-blue-600 dark:text-blue-400 font-black flex items-center justify-center cursor-pointer transition text-xs sm:text-sm">+</button>
+                            <button type="button" @click="changeQty(line, 1)" :disabled="atStockCeiling(line)"
+                                    :title="atStockCeiling(line) ? '{{ __('messages.pos_qty_at_stock_limit') }}' : ''"
+                                    class="sf-btn-3d w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-blue-600 dark:text-blue-400 font-black flex items-center justify-center transition text-xs sm:text-sm"
+                                    :class="atStockCeiling(line) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'">+</button>
                         </div>
+                        {{-- At the ceiling the cashier should see why the + is dead. --}}
+                        <template x-if="atStockCeiling(line)">
+                            <p class="mt-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                                <span x-text="'{{ __('messages.pos_qty_at_stock_limit') }}: ' + maxQty(line)"></span>
+                            </p>
+                        </template>
 
                         {{-- Price edit / inputs if editing --}}
                         <div class="flex items-center gap-1">

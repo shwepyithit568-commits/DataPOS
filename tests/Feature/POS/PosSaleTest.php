@@ -258,7 +258,10 @@ class PosSaleTest extends TestCase
         $this->seedStock($store, $product, '1');
         $shift = $this->openShift($store, $cashier);
 
-        $this->sales->addToCart($store, $product->id, null, '2');
+        // The cart itself now stops at the shelf (PosCartStockLimitTest); this
+        // test covers the POST-time backstop for stock that vanished between
+        // adding and checkout, so the line is forced in.
+        $this->sales->addToCart($store, $product->id, null, '2', enforceStock: false);
 
         try {
             $this->sales->post($store, $this->sales->cartLines($store), [['method' => 'cash', 'amount' => '20000']], $cashier, $shift);

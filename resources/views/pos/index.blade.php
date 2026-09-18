@@ -48,6 +48,8 @@
             'pos_price_pin_required' => __('messages.pos_price_pin_required'),
             'pos_price_pin_invalid' => __('messages.pos_price_pin_invalid'),
             'pos_price_pin_label' => __('messages.pos_price_pin_label'),
+            'pos_qty_exceeds_stock' => __('messages.pos_qty_exceeds_stock'),
+            'pos_qty_at_stock_limit' => __('messages.pos_qty_at_stock_limit'),
             'web_order_imported' => __('messages.web_order_imported'),
             'expense_created_success' => __('messages.expense_created_success'),
             'expense_new_key_ready' => __('messages.expense_new_key_ready'),

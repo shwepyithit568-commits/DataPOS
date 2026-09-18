@@ -5971,6 +5971,8 @@ return [
     'loyalty_point_value_hint' => 'How much one point is worth when the customer spends it (0 = points cannot be spent).',
     'loyalty_note_points_redeemed' => 'Points spent on receipt :receipt (:points points = :amount)',
     'loyalty_note_points_returned' => 'Points returned for refund :refund',
+    'pos_qty_exceeds_stock' => 'Only :available in stock — cannot add :quantity.',
+    'pos_qty_at_stock_limit' => 'At stock limit',
     'pos_points' => 'Loyalty points',
     'pos_points_placeholder' => 'Points to spend',
     'pos_points_use_max' => 'Use max (:points)',
