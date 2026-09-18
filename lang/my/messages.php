@@ -3231,6 +3231,7 @@ return [
     'product_form_variant_name' => 'Variant အမည်',
     'product_form_variant_name_placeholder' => 'ဥပမာ - 256GB / အနက်ရောင်',
     'product_form_variant_preset_card' => 'ကြိုတင်သတ်မှတ် ပုံစံခွဲများ',
+    'product_form_variant_qty_locked' => 'လက်ကျန်ကို စာရင်းမှ ပြသည် — ပြောင်းလဲရန် ပစ္စည်းအဝင် (Restock) သို့မဟုတ် အဝယ် (Purchase) ကို သုံးပါ',
     'product_form_variant_quantity' => 'လက်ကျန် အရေအတွက်',
     'product_form_variant_quantity_hint' => 'အရေအတွက် > 0 ဆိုပါက ပစ္စည်းရှိသည် ဟု အလိုအလျောက် သတ်မှတ်ပါမည်',
     'product_form_variant_retail_price' => 'လက်လီဈေး',

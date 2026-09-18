@@ -3231,6 +3231,7 @@ return [
     'product_form_variant_name' => '规格名称',
     'product_form_variant_name_placeholder' => '例如：256GB / 黑色',
     'product_form_variant_preset_card' => '常用多规格预设',
+    'product_form_variant_qty_locked' => '显示库存台账数量 — 如需调整请使用补货或采购',
     'product_form_variant_quantity' => '现有库存数量',
     'product_form_variant_quantity_hint' => '数量 > 0 时自动标记为有货',
     'product_form_variant_retail_price' => '零售价 (Ks)',

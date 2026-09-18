@@ -730,7 +730,16 @@ class ProductController extends Controller
         ]);
 
         $this->storeGalleryImages($product, $request->file('gallery_images', []));
-        $this->syncVariants($product, $validated['variants'] ?? null, $request->file('variants', []));
+        // CREATE: the quantities typed on the variant rows ARE the opening stock,
+        // so each one posts a real ledger movement (see syncVariants). Without
+        // this the shop could type "3" for Black, see 3 in the form, and still
+        // be unable to sell it — the ledger is what the POS and the reports read.
+        $this->syncVariants(
+            $product,
+            $validated['variants'] ?? null,
+            $request->file('variants', []),
+            stockFromForm: ! $isServiceOrDigital,
+        );
 
         // Variant products: main stock is derived from per-variant quantities.
         if (($validated['product_type'] ?? 'standard') === 'variant') {
@@ -741,7 +750,11 @@ class ProductController extends Controller
         // product starts with real stock (valued at the purchase cost when set).
         // Services and digital goods hold no stock, so they never open a balance
         // even if a value was typed before the product type was switched.
-        if ($initialStock > 0 && !$isServiceOrDigital) {
+        //
+        // A variant product takes its stock from the variant rows above — a
+        // product-level opening balance on top of those would count the same
+        // goods twice (and at variant_id = 0, where nothing can sell it).
+        if ($initialStock > 0 && ! $isServiceOrDigital && ($validated['product_type'] ?? 'standard') !== 'variant') {
             app(InventoryService::class)->postMovement([
                 'store_id' => $store->id,
                 'product_id' => $product->id,
@@ -823,14 +836,18 @@ class ProductController extends Controller
         $variantPresets = $this->variantPresets($store->id);
         $masterPresets = \App\Models\ProductMasterPreset::where('store_id', $store->id)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         $images = $product->images;
-        $variants = $product->variants;
+        // Show what the LEDGER says for each variant, not the mirror column: the
+        // mirror is only written once, at creation, while sales/purchases/
+        // adjustments keep moving the real number.
+        $variants = $product->variants()->withSum('inventoryBalances as ledger_qty', 'quantity_on_hand')->get();
+        $variantQtyLocked = true;
         $imageMaxMb = self::IMAGE_MAX_KB / 1024;
         $maxGalleryImages = self::MAX_GALLERY_IMAGES;
         $remainingGallerySlots = max(0, $maxGalleryImages - $images->count());
 
         $returnTo = AdminListReturn::peek('admin_products_return', '/store/' . $store->slug . '/admin/products');
 
-        return view('admin.products.edit', compact('store', 'product', 'categories', 'brands', 'suppliers', 'warehouses', 'variantPresets', 'masterPresets', 'images', 'variants', 'imageMaxMb', 'maxGalleryImages', 'remainingGallerySlots', 'returnTo'));
+        return view('admin.products.edit', compact('store', 'product', 'categories', 'brands', 'suppliers', 'warehouses', 'variantPresets', 'masterPresets', 'images', 'variants', 'variantQtyLocked', 'imageMaxMb', 'maxGalleryImages', 'remainingGallerySlots', 'returnTo'));
     }
 
     public function update(Request $request, string $store_slug, Product $product, StoreContext $context): RedirectResponse
@@ -1052,7 +1069,17 @@ class ProductController extends Controller
      * the first row otherwise). Per-variant images come from $variantFiles,
      * keyed by the same row index as the repeater.
      */
-    private function syncVariants(Product $product, ?array $variants, array $variantFiles = []): void
+    /**
+     * Persist the variant rows of the form.
+     *
+     * Stock is ledger-owned. On CREATE the quantity typed on a variant row is
+     * that variant's opening stock, so it posts an `opening_balance` movement
+     * and the row keeps a copy for display. After that the row is only a mirror:
+     * an edit never rewrites stock (that would silently change what the shop
+     * owns) — stock moves through the adjustments / purchase flows, and the edit
+     * form shows the ledger value instead of the typed one.
+     */
+    private function syncVariants(Product $product, ?array $variants, array $variantFiles = [], bool $stockFromForm = false): void
     {
         $rows = collect($variants ?? [])
             ->filter(fn ($v) => !empty($v['name']))
@@ -1063,6 +1090,14 @@ class ProductController extends Controller
 
         $defaultId = null;
         foreach ($rows as $i => $v) {
+            $isNewVariant = empty($v['id']) || ! $product->variants()->whereKey($v['id'])->exists();
+            $openingStock = $stockFromForm
+                && $isNewVariant
+                && array_key_exists('quantity_on_hand', $v)
+                && $v['quantity_on_hand'] !== '' && $v['quantity_on_hand'] !== null
+                ? (float) $v['quantity_on_hand']
+                : 0.0;
+
             $data = [
                 'name'            => $v['name'],
                 'attributes'      => $this->normalizeVariantAttributes($v['attributes'] ?? []),
@@ -1070,12 +1105,17 @@ class ProductController extends Controller
                 'retail_price'    => $v['retail_price'],
                 'wholesale_price' => !empty($v['wholesale_price']) ? $v['wholesale_price'] : null,
                 'stock_status'    => $this->variantStockStatus($v),
-                'quantity_on_hand'=> array_key_exists('quantity_on_hand', $v) && $v['quantity_on_hand'] !== '' && $v['quantity_on_hand'] !== null
-                    ? (float) $v['quantity_on_hand']
-                    : 0.0,
                 'sort_order'      => $i,
                 'is_default'      => false,
             ];
+
+            // Only a brand-new row takes its quantity from the form; existing
+            // rows keep whatever the ledger put there.
+            if ($isNewVariant) {
+                $data['quantity_on_hand'] = ($v['quantity_on_hand'] ?? null) !== '' && ($v['quantity_on_hand'] ?? null) !== null
+                    ? (float) $v['quantity_on_hand']
+                    : 0.0;
+            }
 
             if (!empty($v['id']) && ($existing = $product->variants()->find($v['id']))) {
                 if (!empty($v['remove_image'])) {
@@ -1088,6 +1128,25 @@ class ProductController extends Controller
                 $variantId = $existing->id;
             } else {
                 $variantId = $product->variants()->create($data)->id;
+            }
+
+            // The typed quantity becomes real, sellable stock — once, and only
+            // for a row that was just created.
+            if ($openingStock > 0) {
+                app(InventoryService::class)->postMovement([
+                    'store_id' => $product->store_id,
+                    'warehouse_id' => $product->warehouse_id,
+                    'product_id' => $product->id,
+                    'product_variant_id' => $variantId,
+                    'movement_type' => InventoryMovementType::OpeningBalance->value,
+                    'quantity_delta' => (string) $openingStock,
+                    'unit_cost' => $product->purchase_cost,
+                    'source_type' => 'product_create',
+                    'source_id' => $product->id,
+                    'client_transaction_id' => 'product-create:' . $product->id . ':variant:' . $variantId,
+                    'occurred_at' => now(),
+                    'posted_by' => auth()->id(),
+                ]);
             }
 
             // Optional per-variant image upload (same row index)

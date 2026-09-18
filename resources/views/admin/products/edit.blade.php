@@ -54,7 +54,9 @@
             'retail_price' => (string) (is_array($v) ? ($v['retail_price'] ?? '') : $v->retail_price),
             'wholesale_price' => (is_array($v) ? ($v['wholesale_price'] ?? null) : $v->wholesale_price) !== null ? (string) (is_array($v) ? $v['wholesale_price'] : $v->wholesale_price) : '',
             'stock_status' => is_array($v) ? ($v['stock_status'] ?? 'in_stock') : $v->stock_status,
-            'quantity_on_hand' => is_array($v) ? ($v['quantity_on_hand'] ?? 0) : ($v->quantity_on_hand ?? 0),
+            'quantity_on_hand' => is_array($v)
+                ? ($v['quantity_on_hand'] ?? 0)
+                : (float) ($v->ledger_qty ?? $v->quantity_on_hand ?? 0),
             'is_default' => (bool) (is_array($v) ? ($v['is_default'] ?? false) : $v->is_default),
             'image_path' => is_array($v) ? ($v['image_path'] ?? null) : $v->image_path,
         ])->toArray()))->map(fn($v) => [

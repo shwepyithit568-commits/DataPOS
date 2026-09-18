@@ -853,9 +853,13 @@
                                 <div>
                                     <label class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">{{ __('messages.product_form_variant_quantity') }}</label>
                                     <div class="mt-0.5 flex items-center gap-1.5">
+                                        {{-- On the edit page this number comes from the ledger and is
+                                             read-only: stock changes flow through Restock/Purchase,
+                                             never by retyping a figure here. --}}
                                         <input type="number" step="0.001" min="0" x-model="v.quantity_on_hand" :name="'variants[' + i + '][quantity_on_hand]'"
+                                            @if (!empty($variantQtyLocked)) readonly title="{{ __('messages.product_form_variant_qty_locked') }}" @endif
                                             @input="v.stock_status = (parseFloat(v.quantity_on_hand) || 0) > 0 ? 'in_stock' : 'out_of_stock'"
-                                            class="w-20 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-xs font-semibold text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500/40" placeholder="0" />
+                                            class="w-20 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-xs font-semibold text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-violet-500/40 {{ !empty($variantQtyLocked) ? 'cursor-not-allowed opacity-70' : '' }}" placeholder="0" />
                                         <span class="inline-flex items-center gap-1 px-1.5 py-1 rounded-md border text-[9px] font-black"
                                             :class="v.stock_status === 'out_of_stock' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800' : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'">
                                             <span class="w-1.5 h-1.5 rounded-full" :class="v.stock_status === 'out_of_stock' ? 'bg-rose-500' : 'bg-emerald-500'"></span>

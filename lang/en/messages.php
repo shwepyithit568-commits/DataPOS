@@ -3231,6 +3231,7 @@ return [
     'product_form_variant_name' => 'Name',
     'product_form_variant_name_placeholder' => 'e.g. 256GB',
     'product_form_variant_preset_card' => 'Variant Presets',
+    'product_form_variant_qty_locked' => 'Shown from the stock ledger — change it with a Restock or a Purchase',
     'product_form_variant_quantity' => 'Quantity on Hand',
     'product_form_variant_quantity_hint' => 'Quantity > 0 is automatically marked in stock',
     'product_form_variant_retail_price' => 'Retail Price (Ks)',
