@@ -40,6 +40,7 @@ class StockLedgerController extends Controller
             'movement_type' => $request->input('movement_type'),
             'warehouse_id' => $request->input('warehouse_id'),
             'product_id' => $request->input('product_id'),
+            'user_id' => $request->input('user_id'),
             'flow' => $request->input('flow', 'all'),
             'from' => $from,
             'to' => $to,
@@ -54,6 +55,20 @@ class StockLedgerController extends Controller
         $warehouses = Warehouse::where('store_id', $store->id)->get();
         $movementTypes = InventoryMovementType::cases();
 
+        // Who has posted stock for this store — the audit dropdown. Names come
+        // from the posters actually present in the ledger, not every user.
+        $staffOptions = \App\POS\Models\InventoryMovement::query()
+            ->where('store_id', $store->id)
+            ->whereNotNull('posted_by')
+            ->select('posted_by')
+            ->distinct()
+            ->pluck('posted_by')
+            ->map(fn ($id) => ['id' => (int) $id, 'name' => \App\Models\User::find($id)?->name])
+            ->filter(fn ($row) => $row['name'] !== null)
+            ->sortBy('name')
+            ->values()
+            ->all();
+
         $selectedProduct = !empty($filters['product_id'])
             ? Product::where('store_id', $store->id)->find($filters['product_id'])
             : null;
@@ -64,6 +79,7 @@ class StockLedgerController extends Controller
         if (!empty($filters['movement_type'])) $activeFiltersCount++;
         if (!empty($filters['warehouse_id'])) $activeFiltersCount++;
         if (!empty($filters['product_id'])) $activeFiltersCount++;
+        if (!empty($filters['user_id'])) $activeFiltersCount++;
         if (($filters['flow'] ?? 'all') !== 'all') $activeFiltersCount++;
         if ($preset !== 'this_month') $activeFiltersCount++;
 
@@ -80,6 +96,7 @@ class StockLedgerController extends Controller
             'warehouses',
             'movementTypes',
             'selectedProduct',
+            'staffOptions',
             'activeFiltersCount',
             'exportUrl',
             'perPage'

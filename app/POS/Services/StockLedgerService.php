@@ -35,6 +35,11 @@ class StockLedgerService
             $query->where('warehouse_id', (int) $filters['warehouse_id']);
         }
 
+        // Who posted it — sales, purchases and adjustments all record it.
+        if (!empty($filters['user_id'])) {
+            $query->where('posted_by', (int) $filters['user_id']);
+        }
+
         if (!empty($filters['movement_type'])) {
             $query->where('movement_type', $filters['movement_type']);
         }

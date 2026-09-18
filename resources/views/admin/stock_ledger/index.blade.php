@@ -141,6 +141,26 @@
         :searchPlaceholder="__('messages.search') . ' product, SKU, ref...'"
         :searchValue="$filters['search'] ?? ''"
         :filterCount="$activeFiltersCount ?? 0"
+        :filters="array_filter([
+            'movement_type' => [
+                'label' => __('messages.stock_ledger_movement_type'),
+                'options' => collect($movementTypes)->mapWithKeys(fn ($type) => [
+                    $type->value => __('messages.movement_type_' . $type->value),
+                ])->all(),
+                'all_label' => '-- ' . __('messages.stock_ledger_all_types') . ' --',
+            ],
+            'warehouse_id' => $warehouses->count() > 1 ? [
+                'label' => __('messages.warehouse'),
+                'options' => $warehouses->pluck('name', 'id')->all(),
+                'all_label' => '-- ' . __('messages.all_warehouses') . ' --',
+            ] : null,
+            // Who posted it — sales, purchases and adjustments alike.
+            'user_id' => ! empty($staffOptions) ? [
+                'label' => __('messages.stock_ledger_posted_by'),
+                'options' => collect($staffOptions)->pluck('name', 'id')->all(),
+                'all_label' => '-- ' . __('messages.all') . ' --',
+            ] : null,
+        ])"
         :showViewToggle="true"
         :activeView="'table'"
         :showExcel="true"
@@ -170,73 +190,30 @@
             @endforeach
         </div>
 
-        {{-- Filter Dropdown Slot --}}
-        <x-slot:filterSlot>
-            <div class="space-y-2.5 p-1">
-                {{-- Date Presets --}}
-                <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                        {{ __('messages.date') }}
-                    </label>
-                    <div class="grid grid-cols-3 gap-1">
-                        @foreach([
-                            'today' => __('messages.today'),
-                            'yesterday' => __('messages.yesterday'),
-                            '7days' => __('messages.7days'),
-                            'this_month' => __('messages.this_month'),
-                            'last_month' => __('messages.last_month'),
-                            'all' => __('messages.all'),
-                        ] as $key => $label)
-                            <a href="{{ route('store.admin.stock_ledger.index', array_merge(['store_slug' => $store->slug], request()->query(), ['preset' => $key, 'page' => 1])) }}"
-                               class="h-6 px-1.5 inline-flex items-center justify-center text-center text-xs font-bold rounded border transition {{ ($preset ?? 'this_month') === $key ? 'bg-violet-600 text-white border-violet-600 shadow-2xs' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100' }}">
-                                {{ $label }}
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
+        {{-- Date presets sit in the toolbar's default slot: the old
+             `<x-slot:filterSlot>` was never rendered by x-admin.toolbar, so these
+             presets (and the movement-type / warehouse selects that used to live
+             beside them) were invisible markup. Those three now go through the
+             component's `filters` prop. --}}
+        <div class="flex items-center gap-1 shrink-0">
+            @foreach([
+                'today' => __('messages.today'),
+                'yesterday' => __('messages.yesterday'),
+                '7days' => __('messages.7days'),
+                'this_month' => __('messages.this_month'),
+                'last_month' => __('messages.last_month'),
+                'all' => __('messages.all'),
+            ] as $key => $label)
+                <a href="{{ route('store.admin.stock_ledger.index', array_merge(['store_slug' => $store->slug], request()->query(), ['preset' => $key, 'page' => 1])) }}"
+                   class="h-6 px-2 inline-flex items-center justify-center text-[11px] font-bold rounded-md border transition {{ ($preset ?? 'this_month') === $key ? 'bg-violet-600 text-white border-violet-600 shadow-2xs' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100' }}">
+                    {{ $label }}
+                </a>
+            @endforeach
+        </div>
 
-                {{-- Movement Type Filter --}}
-                <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                        {{ __('messages.stock_ledger_movement_type') }}
-                    </label>
-                    <select name="movement_type" data-auto-submit class="w-full h-7 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:ring-1 focus:ring-violet-500">
-                        <option value="">-- {{ __('messages.stock_ledger_all_types') }} --</option>
-                        @foreach($movementTypes as $type)
-                            <option value="{{ $type->value }}" {{ ($filters['movement_type'] ?? '') === $type->value ? 'selected' : '' }}>
-                                {{ __('messages.movement_type_' . $type->value) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                {{-- Warehouse Filter --}}
-                @if($warehouses->count() > 1)
-                    <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                            {{ __('messages.warehouse') ?? 'Warehouse' }}
-                        </label>
-                        <select name="warehouse_id" data-auto-submit class="w-full h-7 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:ring-1 focus:ring-violet-500">
-                            <option value="">-- {{ __('messages.all_warehouses') }} --</option>
-                            @foreach($warehouses as $wh)
-                                <option value="{{ $wh->id }}" {{ ($filters['warehouse_id'] ?? '') == $wh->id ? 'selected' : '' }}>
-                                    {{ $wh->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                @endif
-
-                @if($activeFiltersCount > 0)
-                    <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800">
-                        <a href="{{ route('store.admin.stock_ledger.index', ['store_slug' => $store->slug]) }}"
-                           class="block w-full text-center px-2.5 py-1 text-xs font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/40 rounded-md hover:bg-rose-100 transition">
-                            {{ __('messages.reset') }}
-                        </a>
-                    </div>
-                @endif
-            </div>
-        </x-slot:filterSlot>
+                {{-- Movement Type / Warehouse / Who filters are declared on the
+                     toolbar's `filters` prop above: the component never rendered
+                     a `filterSlot`, so this markup used to be invisible. --}}
     </x-admin.toolbar>
 
     {{-- ============================================================
@@ -249,6 +226,7 @@
                 <thead class="sticky top-0 z-20 bg-slate-100 dark:bg-slate-800/95 backdrop-blur-xs border-b border-slate-200 dark:border-slate-700 shadow-2xs select-none">
                     <tr class="text-[10px] sm:text-[11px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider divide-x divide-slate-200 dark:divide-slate-700">
                         <th class="py-1.5 px-2.5 min-w-[130px]">{{ __('messages.stock_ledger_date') }}</th>
+                        <th class="py-1.5 px-2.5 min-w-[150px]">{{ __('messages.stock_ledger_posted_by') }}</th>
                         <th class="py-1.5 px-2.5 min-w-[200px]">{{ __('messages.product') }}</th>
                         <th class="py-1.5 px-2.5 min-w-[140px]">{{ __('messages.stock_ledger_movement_type') }}</th>
                         <th class="py-1.5 px-2.5 text-right min-w-[100px]">{{ __('messages.stock_ledger_delta_qty') }}</th>
@@ -270,12 +248,17 @@
                         @endphp
                         <tr class="divide-x divide-slate-200/80 dark:divide-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
 
-                            {{-- Date & Posted User --}}
+                            {{-- Date --}}
                             <td class="py-1.5 px-2.5 whitespace-nowrap">
                                 <div class="font-mono text-slate-900 dark:text-slate-100 font-bold">
                                     {{ $m->occurred_at ? $m->occurred_at->format('d/m/Y H:i') : '-' }}
                                 </div>
-                                <div class="text-[10px] text-slate-400 mt-0.5">
+                            </td>
+
+                            {{-- Who: sale, purchase, adjustment — every movement names
+                                 the person who posted it (or System for seeding). --}}
+                            <td class="py-1.5 px-2.5 whitespace-nowrap">
+                                <div class="text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-[150px]">
                                     👤 {{ $m->postedBy?->name ?? 'System' }}
                                 </div>
                             </td>
@@ -357,7 +340,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="p-8 text-center text-slate-400 dark:text-slate-500">
+                            <td colspan="9" class="p-8 text-center text-slate-400 dark:text-slate-500">
                                 <div class="flex flex-col items-center justify-center">
                                     <span class="text-3xl mb-2">📦</span>
                                     <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">{{ __('messages.stock_ledger_no_movements') }}</p>
