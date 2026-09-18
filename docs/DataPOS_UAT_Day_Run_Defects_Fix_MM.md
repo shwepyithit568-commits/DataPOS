@@ -226,3 +226,42 @@ List စာမျက်နှာများသည် ကြည့်ခွင�
   Store A ၏ 2026-09-18 business date ကို အတည်ပြုပြီး (approved) ဖြစ်နေသောကြောင့်
   shift အသစ် ဖွင့်၍ မရတော့ခြင်းဖြစ်သည် (period lock က မှန်ကန်စွာ တားသည်)။
   Store B ရှိ ဖောက်သည်နှင့် အကြွေးကို browser စမ်းသပ်မှုအတွက် fixture အဖြစ် ဖန်တီးခဲ့သည်။
+
+---
+
+## 12. Sandbox flow pass (2026-09-18 ည — store #3 `uat-full-feature`)
+
+feature အားလုံးဖွင့်ထားသော **store အသစ်** (mobile_electronics preset, capability ၂၅ ခု) ကို
+platform owner UI ဖြင့် ဖန်တီးပြီး လုပ်ငန်းစဉ်များကို လက်တွေ့ ဖြတ်စမ်းခဲ့သည်။
+store အသစ်တွင် role ၆ ခု၊ branch + warehouse၊ owner account တို့ အလိုအလျောက် ဖန်တီးသည် ✓
+
+| Flow | ရလဒ် | တိုင်းတာချက် |
+|---|---|---|
+| Store ဖန်တီးခြင်း (platform owner) | ✅ | 25 capabilities, roles ၆ ခု, branch/warehouse, owner |
+| ပစ္စည်း ဖန်တီးခြင်း + အဖွင့်စတော့ | ✅ | ၃ မျိုး၊ `opening_balance` movement များ |
+| POS ငွေသားအရောင်း (ပစ္စည်း ၂ မျိုး) | ✅ | RCP-…-0001 / 14,000 / stock −2 / shift cash_sales 14,000 |
+| POS ဖောက်သည် quick-add + တွဲခြင်း | ✅ | member ဖန်တီးပြီး cart တွင် တွဲ |
+| **ပြန်အမ်း/ငွေပြန်အမ်း (partial, cash)** | ✅ | RET-…-0001 8,000; sale → `partially_refunded`; `sales_return` movement +1; shift `cash_refunds` 8,000; expected cash 56,000 |
+| ဆိုင်ဆက်တင် သိမ်းခြင်း | ✅ | `storefront_settings.tagline` တွင် တကယ်ရောက် |
+| **စတော့ရေတွက်ခြင်း create → save → approve** | ✅ | ကွာဟချက် +9/−5/−6 ကို cost နှင့် တွက်ပြီး (108,000/12,500/18,000)၊ approve ပြီး `adjustment_in/out` ၃ ခု post၊ on-hand = ရေတွက်ရငွေ |
+| Member Points ကို manual ပြင်ခြင်း | ✅ | +50 နှင့် `loyalty_point_transactions` row (balance_after 50) |
+
+### 12.1 တွေ့ရသော Feature Gap ၂ ခု (ဆုံးဖြတ်ချက် လိုသည် — crash မဟုတ်၊ မချိတ်ထားခြင်း)
+
+**က) Promotion / Coupon ကို မည်သည့် sales channel တွင်မှ redeem လုပ်၍ မရပါ**
+- `PromotionService::validateCoupon()` / `calculateDiscount()` ကို **admin PromotionController သာ** ခေါ်သည်။
+- POS ၏ လျှော့စျေး modal သည် manual `%` / ငွေပမာဏ သာ — **coupon code ထည့်ရန် နေရာ မရှိ**။
+- `pos_sales` တွင် `promotion_id`/`coupon_code` ကော်လံ ရှိပြီး **မည်သူမှ မရေးပါ**; `orders` တွင် coupon field လုံးဝ မရှိ။
+- အကျိုးသက်ရောက်မှု: "10% off" ကြေညာထားသော်လည်း ဘယ်ဘောက်ချာမှ မလျော့ပါ → promo report 0 redemption။
+- **ရွေးချယ်စရာ:** (၁) POS cart တွင် coupon code အကွက် + validation + သိမ်းဆည်းခြင်း တည်ဆောက်၊
+  (၂) storefront checkout တွင် coupon ထည့်၊ (၃) POS တွင် promo ကို "မရနိုင်သေး" ဟု ဖျောက်ထား။
+
+**ခ) Loyalty Points က အရောင်းမှ အလိုအလျောက် မတက်ပါ**
+- `loyalty_points` / `store_user.total_spent` ကို sale posting တွင် မည်သည့်ကုဒ်မှ မရေးပါ။
+- `loyalty_point_transactions.pos_sale_id` ကော်လံ ရှိသည် — အရောင်းနှင့် ချိတ်ရန် ဒီဇိုင်းထားပြီး **မရေးရသေး**။
+- အကျိုးသက်ရောက်မှု: ဝယ်ယူမှုမှ points မရ → spend-based tier (Silver 200,000 / Gold 1,000,000) ကို
+  **အလိုအလျောက် ဘယ်တော့မှ မရောက်**။
+- **ရွေးချယ်စရာ:** points-per-amount setting + sale posting hook + tier auto-upgrade တည်ဆောက်ရမည်။
+
+> ဤ ၂ ခုတွင် schema နှင့် admin UI ရှိပြီးသား၊ သို့သော် အရောင်းလမ်းကြောင်းသို့ မချိတ်ထားပါ။
+> store #3 (sandbox) နှင့် သက်ဆိုင်ရာ customer/product/sale ဒေတာများကို ဆက်စမ်းရန် ချန်ထားသည်။
