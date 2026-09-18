@@ -5541,6 +5541,8 @@ return [
     'web_catalog_title' => 'Web Catalog & Storefront Visibility',
     'web_catalog_total_products' => 'Total Products',
     'web_catalog_updated_msg' => ':name is now :status.',
+    'web_order_not_found' => 'That web order was not found.',
+    'order_already_fulfilled' => 'This web order is already delivered or cancelled — it cannot be sold again.',
     'web_order_imported' => 'Web order loaded into cart.',
     'web_order_load_cart' => 'Load to cart',
     'welcome' => 'Welcome to DataPOS',

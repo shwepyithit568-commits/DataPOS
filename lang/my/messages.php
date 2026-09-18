@@ -5541,6 +5541,8 @@ return [
     'web_catalog_title' => 'အွန်လိုင်း Storefront ပစ္စည်းများ ထိန်းချုပ်မှု',
     'web_catalog_total_products' => 'ပစ္စည်း စုစုပေါင်း',
     'web_catalog_updated_msg' => ':name အား :status သို့ ပြောင်းလဲပြီးပါပြီ။',
+    'web_order_not_found' => 'ဤ Web အော်ဒါကို ရှာမတွေ့ပါ။',
+    'order_already_fulfilled' => 'ဤ Web အော်ဒါကို ပို့ဆောင်ပြီး သို့မဟုတ် ပယ်ဖျက်ပြီး ဖြစ်နေသဖြင့် ထပ်မံရောင်းချ၍ မရပါ။',
     'web_order_imported' => 'Web အော်ဒါကို Cart ထဲသို့ အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ။',
     'web_order_load_cart' => 'Cart ထဲသို့ ထည့်သွင်းမည်',
     'welcome' => 'DataPOS မှ ကြိုဆိုပါသည်',

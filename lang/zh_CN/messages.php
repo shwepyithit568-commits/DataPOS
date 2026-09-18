@@ -5541,6 +5541,8 @@ return [
     'web_catalog_title' => '网店商品展示与上架管理',
     'web_catalog_total_products' => '商品总数',
     'web_catalog_updated_msg' => '商品 :name 已更新为 :status。',
+    'web_order_not_found' => '未找到该网店订单。',
+    'order_already_fulfilled' => '该网店订单已送达或已取消，不能再次销售。',
     'web_order_imported' => '网店订单已加入购物车。',
     'web_order_load_cart' => '加入购物车',
     'welcome' => '欢迎使用 DataPOS',

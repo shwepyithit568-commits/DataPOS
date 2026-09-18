@@ -52,6 +52,12 @@
     {{-- Manual Login Form --}}
     <form method="POST" action="{{ route('login') }}" class="space-y-3.5" @submit="loading = true">
         @csrf
+        {{-- Carry the storefront the shopper came from: /login has no store in
+             its path, so without this the POST resolves the primary store and
+             signs them in to the wrong shop's context. --}}
+        @if (request('store_slug'))
+            <input type="hidden" name="store_slug" value="{{ request('store_slug') }}" />
+        @endif
 
         {{-- Phone Number Input --}}
         <div class="space-y-1">
@@ -247,7 +253,7 @@
     <div class="text-center pt-2 space-y-2.5 border-t border-slate-100 dark:border-slate-800/80">
         <div class="text-xs font-bold text-slate-600 dark:text-slate-400 font-myanmar">
             {{ __('messages.no_account') }}
-            <a href="{{ route('register') }}" class="font-black text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-0.5">
+            <a href="{{ route('register', request('store_slug') ? ['store_slug' => request('store_slug')] : []) }}" class="font-black text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-0.5">
                 <span>{{ __('messages.register_new') }}</span>
                 <span>&rarr;</span>
             </a>

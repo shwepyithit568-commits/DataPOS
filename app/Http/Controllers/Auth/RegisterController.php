@@ -82,6 +82,8 @@ class RegisterController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect('/');
+        // Land back on the storefront they registered at, not on whichever store
+        // happens to be primary.
+        return redirect($store !== null ? '/store/' . $store->slug : '/');
     }
 }

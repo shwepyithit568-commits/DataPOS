@@ -418,16 +418,25 @@ class LoginController extends Controller
             return '/admin/dashboard';
         }
 
+        // The storefront the sign-in form was submitted from — the login route
+        // has no store in its path, so it arrives as a hidden field. Staff and
+        // customers alike should land there rather than on the primary store.
+        $contextStore = app(\App\Services\StoreContext::class)->getStore();
+
         // 2. Store managers / staff go to their store admin dashboard
         if ($user->isStoreAdmin()) {
-            $store = $user->getPrimaryStore();
+            $store = ($contextStore && $user->stores()->wherePivot('store_id', $contextStore->id)->exists())
+                ? $contextStore
+                : $user->getPrimaryStore();
             if ($store) {
                 return '/store/' . $store->slug . '/admin/dashboard';
             }
         }
 
         // 3. Customers (retail / wholesale) go to the storefront of their store
-        $store = $user->getPrimaryStore();
+        $store = ($contextStore && $user->stores()->wherePivot('store_id', $contextStore->id)->exists())
+            ? $contextStore
+            : $user->getPrimaryStore();
         if ($store) {
             return '/store/' . $store->slug;
         }

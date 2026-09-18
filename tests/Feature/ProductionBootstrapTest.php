@@ -152,7 +152,7 @@ class ProductionBootstrapTest extends TestCase
             'role' => 'platform_owner',
             'store_role' => 'store_manager',
             'store_id' => $store->id,
-        ])->assertRedirect('/');
+        ])->assertRedirect('/store/' . $store->slug);
 
         $user = User::where('phone', '09977777777')->firstOrFail();
 

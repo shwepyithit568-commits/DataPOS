@@ -212,19 +212,16 @@ Alpine.data('posApp', (opts = {}) => ({
     async importWebOrder(order) {
         this.webOrdersOpen = false;
         try {
-            for (const item of order.items) {
-                if (!item.product_id) continue;
-                const body = { product_id: item.product_id, quantity: String(item.quantity) };
-                if (item.product_variant_id) body.product_variant_id = item.product_variant_id;
-                const data = await this.fetchJson('/cart', { method: 'POST', body: new URLSearchParams(body) });
-                this.applyCart(data);
-            }
+            // The server builds the cart: it re-prices the order's lines and
+            // aligns the total with what the shopper agreed online (coupon
+            // included), so the counter charges the order's amount.
+            const data = await this.fetchJson('/web-orders/' + order.id + '/import', {
+                method: 'POST',
+                body: new URLSearchParams({}),
+            });
+            this.applyCart(data);
             this.pendingWebOrderId = order.id;
-            if (order.user_id) {
-                this.cq = order.customer_name || '';
-                await this.attach({ id: order.user_id });
-            }
-            this.flash(this.labels.web_order_imported || 'Web order loaded into cart', 'success');
+            this.flash(data.success || this.labels.web_order_imported || 'Web order loaded into cart', 'success');
         } catch (e) {
             this.flash(e.message, 'error');
         }

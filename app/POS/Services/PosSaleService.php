@@ -2,6 +2,7 @@
 
 namespace App\POS\Services;
 
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Promotion;
@@ -417,6 +418,88 @@ class PosSaleService
             ->exists();
     }
 
+    // ── Web order fulfilment ──────────────────────────────────────────────────
+
+    /**
+     * Load a web order into the cart so the counter can hand it over.
+     *
+     * The shopper already agreed a price online — `agreed_amount` when staff
+     * renegotiated it, otherwise the order total with its coupon already taken
+     * off. The cart re-prices the same lines from TODAY's tier prices (that is
+     * what posting needs), so the difference is stored in the cart's manual
+     * discount slot: the counter charges what the order says, and the coupon is
+     * NOT redeemed a second time — the order itself already consumed its usage
+     * (`promotion_usages` + `used_count`), and re-redeeming would burn another
+     * use and can even be refused by a per-customer limit.
+     *
+     * When the order amount is ABOVE today's cart (prices dropped, or a line
+     * went missing) the discount stays at zero: the shop charges the lower,
+     * current price rather than inventing a surcharge.
+     *
+     * @return array the cart state for the POS UI
+     */
+    public function loadWebOrder(Store $store, Order $order, ?User $actor = null): array
+    {
+        if ((int) $order->store_id !== (int) $store->id) {
+            throw new InventoryException('This web order belongs to another store.');
+        }
+
+        if (! in_array($order->status, ['pending_contact', 'confirmed'], true)) {
+            throw new InventoryException(__('messages.order_already_fulfilled'));
+        }
+
+        // A fresh cart: whatever the cashier was holding is not this order.
+        $this->clearCart($store);
+
+        foreach ($order->items as $item) {
+            if (! $item->product_id) {
+                // glass-finder / legacy lines have no catalog stock to deduct.
+                continue;
+            }
+
+            $this->addToCart(
+                $store,
+                (int) $item->product_id,
+                $item->product_variant_id ? (int) $item->product_variant_id : null,
+                (string) $item->quantity,
+            );
+        }
+
+        if ($this->cartLines($store) === []) {
+            throw new InventoryException('This web order has no catalog lines to fulfil.');
+        }
+
+        // The order's shopper prices the cart (tier) and receives the receipt.
+        $customer = $order->user_id ? User::find($order->user_id) : null;
+        if ($customer !== null && $this->isStoreCustomer($store, $customer)) {
+            $this->attachCartCustomer($store, $customer);
+        }
+
+        $totals = $this->cartTotals($store);
+        $bill = $this->billBase($store, $totals['subtotal'], $totals['tax']);
+        $target = bcadd($order->effectiveAmount(), '0', 2);
+
+        if (bccomp($bill, $target, 2) > 0) {
+            $this->setDiscount($store, bcsub($bill, $target, 2));
+        } else {
+            $this->clearDiscount($store);
+        }
+
+        return $this->cartState($store, $actor);
+    }
+
+    /**
+     * The bill before any discount: the subtotal, plus the tax when the store
+     * adds it on top (an inclusive tax is already inside the line prices).
+     */
+    private function billBase(Store $store, string $subtotal, string $tax): string
+    {
+        $enableTax = (bool) ($store->setting?->getPosSetting('enable_tax', false));
+        $taxType = (string) ($store->setting?->getPosSetting('tax_type', 'exclusive'));
+
+        return ($enableTax && $taxType === 'exclusive') ? bcadd($subtotal, $tax, 2) : $subtotal;
+    }
+
     /**
      * True when the customer is a wholesale member of the store. The memberships
      * relation is loaded once per user and then cached on the model instance
@@ -738,11 +821,7 @@ class PosSaleService
         // discount; that is why it is exposed on its own as `manual_discount`.
         $manualDiscount = $this->getDiscount($store);
         $discount = $manualDiscount;
-        if ($enableTax && $taxType === 'exclusive') {
-            $rawTotal = bcadd($subtotal, $taxTotal, 2);
-        } else {
-            $rawTotal = $subtotal;
-        }
+        $rawTotal = $this->billBase($store, $subtotal, $taxTotal);
 
         // Coupon: validated against the subtotal, added to the manual discount
         // and capped at the bill. When the cart changes so the coupon no longer
@@ -1244,7 +1323,7 @@ class PosSaleService
                 $couponDiscount = $check['discount'];
                 $discount = bcadd($discount, $couponDiscount, 2);
 
-                $billBase = ($enableTax && $taxType === 'exclusive') ? bcadd($subtotal, $tax, 2) : $subtotal;
+                $billBase = $this->billBase($store, $subtotal, $tax);
 
                 if (bccomp($discount, $billBase, 2) > 0) {
                     $discount = $billBase;
@@ -1262,28 +1341,20 @@ class PosSaleService
 
         // Points: spend them on this bill (bounded by the balance and what is
         // left). The ledger row is written inside the posting transaction.
-        $pointsBill = bcsub(($enableTax && $taxType === 'exclusive') ? bcadd($subtotal, $tax, 2) : $subtotal, $discount, 2);
+        $pointsBill = bcsub($this->billBase($store, $subtotal, $tax), $discount, 2);
         $points = $this->pointsFor($store, $pointsBill, $customer);
 
         if (bccomp($points['value'], '0', 2) > 0) {
             $discount = bcadd($discount, $points['value'], 2);
         }
 
-        if ($enableTax && $taxType === 'exclusive') {
-            $billBase = bcadd($subtotal, $tax, 2);
-        } else {
-            $billBase = $subtotal;
-        }
+        $billBase = $this->billBase($store, $subtotal, $tax);
 
         if (bccomp($discount, $billBase, 2) > 0) {
             $discount = $billBase;
         }
 
-        if ($enableTax && $taxType === 'exclusive') {
-            $total = bcsub(bcadd($subtotal, $tax, 2), $discount, 2);
-        } else {
-            $total = bcsub($subtotal, $discount, 2);
-        }
+        $total = bcsub($billBase, $discount, 2);
         if ($enableTax && $taxType === 'exclusive') {
             $total = bcsub(bcadd($subtotal, $tax, 2), $discount, 2);
         } else {

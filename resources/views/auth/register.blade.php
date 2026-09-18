@@ -60,6 +60,12 @@
     {{-- Form --}}
     <form method="POST" action="{{ route('register') }}" class="space-y-3" @submit="loading = true">
         @csrf
+        {{-- The shopper registers AT a store: /register has no store in its
+             path, so the slug travels with the form — otherwise the account is
+             enrolled in the primary store instead of the one being browsed. --}}
+        @if (request('store_slug'))
+            <input type="hidden" name="store_slug" value="{{ request('store_slug') }}" />
+        @endif
 
         {{-- Full Name --}}
         <div class="space-y-1">
@@ -213,7 +219,7 @@
         {{-- Login Link --}}
         <div class="text-center pt-1 text-sm font-bold text-slate-600 dark:text-slate-400 font-myanmar">
             {{ __('messages.has_account') }}
-            <a href="{{ route('login') }}" class="font-black text-sky-600 dark:text-sky-400 hover:underline">
+            <a href="{{ route('login', request('store_slug') ? ['store_slug' => request('store_slug')] : []) }}" class="font-black text-sky-600 dark:text-sky-400 hover:underline">
                 {{ __('messages.login') }} &rarr;
             </a>
         </div>

@@ -32,7 +32,9 @@ class AuthenticationTest extends TestCase
             'role' => 'platform_owner', // Attempted role tampering by client
         ]);
 
-        $response->assertRedirect('/');
+        // Registration returns the shopper to the storefront it happened at —
+        // the store they were enrolled in, not the site root.
+        $response->assertRedirect('/store/shop-a');
         $this->assertAuthenticated();
 
         $user = User::where('phone', '09123456789')->first();
@@ -65,7 +67,7 @@ class AuthenticationTest extends TestCase
             'password_confirmation' => 'password123',
         ]);
 
-        $response->assertRedirect('/');
+        $response->assertRedirect('/store/shop-a');
         $this->assertAuthenticatedAs($quickAdded);
         $this->assertSame(1, User::where('phone', '09123456789')->count());
         $this->assertTrue(Hash::check('password123', $quickAdded->fresh()->password));
@@ -271,8 +273,11 @@ class AuthenticationTest extends TestCase
             'password' => 'password',
         ]);
 
-        // No active membership → fallback to /
-        $response->assertRedirect('/');
+        // The pending membership is not an ACTIVE one, so the shopper gets the
+        // store's public storefront rather than a staff area — but the login
+        // itself is not blocked.
+        $response->assertRedirect('/store/pending-store');
         $this->assertAuthenticatedAs($user);
+        $this->assertFalse($user->isStoreAdmin());
     }
 }

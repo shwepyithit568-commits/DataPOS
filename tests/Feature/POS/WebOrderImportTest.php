@@ -247,7 +247,7 @@ class WebOrderImportTest extends TestCase
         $this->assertSame('8.000', $this->inventory->totalOnHand($store->id, $product->id));
     }
 
-    public function test_already_delivered_order_is_left_untouched(): void
+    public function test_an_already_delivered_order_cannot_be_sold_again(): void
     {
         $store = $this->makeStore();
         $cashier = $this->staff($store);
@@ -258,14 +258,21 @@ class WebOrderImportTest extends TestCase
         $order = $this->makeOrder($store, $product, 'delivered', 2);
         $this->sales->addToCart($store, $product->id, null, '2');
 
-        $this->postCounterSale($store, $cashier, $order, [['method' => 'cash', 'amount' => '30000']]);
+        $this->actingAs($cashier)->post(
+            "/store/{$store->slug}/pos/post",
+            ['payments' => [['method' => 'cash', 'amount' => '30000']], 'web_order_id' => $order->id]
+        )->assertSessionHas('error');
 
+        // The order stays delivered, no second fulfilment is audited, and — the
+        // part that matters to the shopper — no second sale was posted.
         $this->assertSame('delivered', $order->refresh()->status);
         $this->assertDatabaseMissing('audit_logs', [
             'store_id' => $store->id,
             'action' => 'pos_web_order_fulfilled',
             'entity_id' => $order->id,
         ]);
+        $this->assertSame(0, \App\POS\Models\PosSale::where('store_id', $store->id)->where('status', 'posted')->count());
+        $this->assertSame('10.000', $this->inventory->totalOnHand($store->id, $product->id));
     }
 
     public function test_guest_is_redirected_to_login(): void
@@ -273,5 +280,150 @@ class WebOrderImportTest extends TestCase
         $store = $this->makeStore();
 
         $this->get("/store/{$store->slug}/pos/web-orders")->assertRedirect(route('login'));
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Import into the cart (prices the order, not today's shelf)          */
+    /* ------------------------------------------------------------------ */
+
+    private function importOrder(Store $store, User $staff, Order $order)
+    {
+        return $this->actingAs($staff)->postJson("/store/{$store->slug}/pos/web-orders/{$order->id}/import");
+    }
+
+    public function test_importing_an_order_prices_the_cart_at_the_order_total(): void
+    {
+        $store = $this->makeStore();
+        $staff = $this->staff($store);
+        $product = $this->makeProduct($store, 25000);
+        $this->seedStock($store, $product, '10');
+
+        // The shopper ordered the charger with a 10% coupon: 25,000 → 22,500.
+        $order = $this->makeOrder($store, $product, 'confirmed', 1);
+        $order->update(['total_amount' => '22500.00', 'discount_amount' => '2500.00', 'coupon_code' => 'WEB10']);
+
+        $response = $this->importOrder($store, $staff, $order);
+
+        $response->assertOk()
+            ->assertJsonPath('cart.totals.subtotal', '25000.00')
+            ->assertJsonPath('cart.totals.manual_discount', '2500.00')
+            ->assertJsonPath('cart.totals.discount', '2500.00')
+            ->assertJsonPath('cart.totals.total', '22500.00');
+
+        // The coupon is NOT redeemed again: the order already consumed its use.
+        $this->assertDatabaseCount('promotion_usages', 0);
+    }
+
+    public function test_importing_an_order_uses_the_agreed_amount_when_staff_renegotiated(): void
+    {
+        $store = $this->makeStore();
+        $staff = $this->staff($store);
+        $product = $this->makeProduct($store, 25000);
+        $this->seedStock($store, $product, '10');
+
+        $order = $this->makeOrder($store, $product, 'confirmed', 2);   // list 50,000
+        $order->update(['agreed_amount' => '45000.00']);
+
+        $this->importOrder($store, $staff, $order)
+            ->assertOk()
+            ->assertJsonPath('cart.totals.subtotal', '50000.00')
+            ->assertJsonPath('cart.totals.discount', '5000.00')
+            ->assertJsonPath('cart.totals.total', '45000.00');
+    }
+
+    public function test_importing_an_order_never_charges_more_than_todays_price(): void
+    {
+        $store = $this->makeStore();
+        $staff = $this->staff($store);
+        $product = $this->makeProduct($store, 15000);
+        $this->seedStock($store, $product, '10');
+
+        // The order was written when the price was higher (or a line went
+        // missing): the counter charges today's lower price, never a surcharge.
+        $order = $this->makeOrder($store, $product, 'confirmed', 1);
+        $order->update(['total_amount' => '20000.00']);
+
+        $this->importOrder($store, $staff, $order)
+            ->assertOk()
+            ->assertJsonPath('cart.totals.manual_discount', '0')
+            ->assertJsonPath('cart.totals.total', '15000.00');
+    }
+
+    public function test_importing_an_order_attaches_the_shopper_and_replaces_the_cart(): void
+    {
+        $store = $this->makeStore();
+        $staff = $this->staff($store);
+        $product = $this->makeProduct($store, 15000);
+        $other = $this->makeProduct($store, 5000);
+        $this->seedStock($store, $product, '10');
+        $this->seedStock($store, $other, '10');
+
+        $shopper = User::create([
+            'name' => 'Web Shopper',
+            'phone' => '09' . rand(10000000, 99999999),
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $shopper->stores()->attach($store->id, ['role' => 'retail_customer', 'status' => 'active']);
+
+        $order = $this->makeOrder($store, $product, 'pending_contact', 1);
+        $order->update(['user_id' => $shopper->id]);
+
+        // Something unrelated is already in the cart — the import replaces it.
+        $this->sales->addToCart($store, $other->id, null, '3');
+
+        $response = $this->importOrder($store, $staff, $order);
+
+        $response->assertOk()
+            ->assertJsonPath('cart.customer.id', $shopper->id)
+            ->assertJsonCount(1, 'cart.lines')
+            ->assertJsonPath('cart.lines.0.product_id', $product->id);
+    }
+
+    public function test_importing_an_order_from_another_store_is_refused(): void
+    {
+        $storeA = $this->makeStore('shop-a');
+        $storeB = $this->makeStore('shop-b');
+        $staffB = $this->staff($storeB);
+        $product = $this->makeProduct($storeA);
+        $order = $this->makeOrder($storeA, $product);
+
+        $this->importOrder($storeB, $staffB, $order)->assertStatus(422);
+    }
+
+    public function test_a_delivered_order_cannot_be_imported(): void
+    {
+        $store = $this->makeStore();
+        $staff = $this->staff($store);
+        $product = $this->makeProduct($store);
+        $this->seedStock($store, $product, '10');
+
+        $order = $this->makeOrder($store, $product, 'delivered', 1);
+
+        $this->importOrder($store, $staff, $order)->assertStatus(422);
+    }
+
+    /**
+     * The order holds its units while it waits (confirmed → reserved). A shop
+     * with exactly those units left must still be able to hand the order over,
+     * which is why the reservation is released before the sale takes them.
+     */
+    public function test_an_order_holding_the_last_unit_can_still_be_fulfilled(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, 15000);
+        $this->seedStock($store, $product, '1');
+        $this->openShift($store, $cashier);
+
+        $order = $this->makeOrder($store, $product, 'confirmed', 1);
+        app(OrderInventoryAdapter::class)->reserve($order);
+        $this->assertSame('0.000', $this->inventory->totalOnHand($store->id, $product->id));
+
+        $this->importOrder($store, $cashier, $order)->assertOk();
+        $this->postCounterSale($store, $cashier, $order, [['method' => 'cash', 'amount' => '15000']]);
+
+        $this->assertSame('delivered', $order->refresh()->status);
+        $this->assertSame('0.000', $this->inventory->totalOnHand($store->id, $product->id));
     }
 }

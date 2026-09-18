@@ -714,35 +714,75 @@ class PosSaleController extends Controller
     }
 
     /**
-     * Mark a web order as fulfilled from the counter. The POS sale already
-     * deducted stock (pos_sale), so any earlier reservation (confirmed order)
-     * is released first — this keeps the ledger at exactly one deduction.
+     * Load a web order into the cart (counter fulfilment).
+     *
+     * The service re-prices the order's lines the way posting needs them and
+     * aligns the cart total with the amount the shopper agreed online, so the
+     * cashier sees — and charges — the order's price, coupon included.
      */
-    private function fulfillWebOrder(Store $store, int $orderId, User $actor, string $receiptNumber): void
+    public function importWebOrder(Request $request, string $store_slug, StoreContext $context, string $order): JsonResponse|RedirectResponse
     {
-        DB::transaction(function () use ($store, $orderId, $actor, $receiptNumber) {
-            // Locked and re-read: two concurrent fulfilments would otherwise both
-            // see a non-delivered order and both release the reservation.
-            $order = Order::where('store_id', $store->id)->lockForUpdate()->find($orderId);
+        $store = $context->getStore();
 
-            if (! $order || in_array($order->status, ['delivered', 'cancelled'], true)) {
-                return; // nothing to fulfil / already handled
-            }
+        // Resolved by hand (not implicit binding): the order must belong to the
+        // store in the URL, and a miss is a friendly error rather than a 404.
+        $webOrder = Order::where('store_id', $store->id)->find((int) $order);
 
-            // Release and the status write share this transaction so a failure
-            // between them cannot strand the stock release without its status.
-            app(OrderInventoryAdapter::class)->release($order);
-            $order->update(['status' => 'delivered']);
+        if (! $webOrder) {
+            return $this->jsonOrRedirect($request, $store, null, __('messages.web_order_not_found'));
+        }
 
-            AuditLog::write(
-                storeId: $store->id,
-                action: 'pos_web_order_fulfilled',
-                entityType: 'order',
-                entityId: $order->id,
-                metadata: ['order_number' => $order->order_number, 'sale_receipt' => $receiptNumber],
-                actorId: $actor->id,
-            );
-        });
+        try {
+            $this->sales->loadWebOrder($store, $webOrder, $request->user());
+        } catch (InventoryException $e) {
+            return $this->jsonOrRedirect($request, $store, null, $e->getMessage());
+        }
+
+        return $this->jsonOrRedirect($request, $store, __('messages.web_order_imported'));
+    }
+
+    /**
+     * Hand the order's held stock back to the shelf so the sale can take it.
+     *
+     * Called BEFORE posting: a confirmed order reserves its units, and a shop
+     * with exactly those units left could otherwise not sell the order it is
+     * holding. Returns the locked order, or null when there is nothing to do.
+     */
+    private function releaseWebOrderForSale(Store $store, int $orderId): ?Order
+    {
+        $order = Order::where('store_id', $store->id)->lockForUpdate()->find($orderId);
+
+        if (! $order) {
+            throw new InventoryException(__('messages.web_order_not_found'));
+        }
+
+        // Selling an order that is already delivered or cancelled would charge
+        // the customer twice — refuse instead of quietly posting a sale.
+        if (in_array($order->status, ['delivered', 'cancelled'], true)) {
+            throw new InventoryException(__('messages.order_already_fulfilled'));
+        }
+
+        app(OrderInventoryAdapter::class)->release($order);
+
+        return $order;
+    }
+
+    /**
+     * Close a web order out after the counter sale posted: the sale already
+     * deducted the stock, so this only writes the status and the audit trail.
+     */
+    private function markWebOrderFulfilled(Store $store, Order $order, User $actor, string $receiptNumber): void
+    {
+        $order->update(['status' => 'delivered']);
+
+        AuditLog::write(
+            storeId: $store->id,
+            action: 'pos_web_order_fulfilled',
+            entityType: 'order',
+            entityId: $order->id,
+            metadata: ['order_number' => $order->order_number, 'sale_receipt' => $receiptNumber],
+            actorId: $actor->id,
+        );
     }
 
     /* ------------------------------------------------------------------ */
@@ -786,25 +826,37 @@ class PosSaleController extends Controller
                 $sale = $this->sales->sessionResumedSale($store);
             }
 
-            $posted = $this->sales->post(
-                store: $store,
-                lines: $lines,
-                payments: $data['payments'],
-                actor: $user,
-                shift: $shift,
-                heldSale: $sale,
-                customerId: isset($data['customer_id']) ? (int) $data['customer_id'] : null,
-                explicitDiscount: isset($data['discount']) && $data['discount'] !== null ? (string) $data['discount'] : null,
-                couponCode: isset($data['coupon_code']) && trim((string) $data['coupon_code']) !== '' ? (string) $data['coupon_code'] : null,
-            );
+            // A web order fulfilled at the counter: its held stock goes back to
+            // the shelf BEFORE the sale takes it (the sale itself is the one
+            // deduction), and the order is closed out afterwards. All three
+            // steps share this transaction: a failure anywhere rolls back the
+            // release too, so the reservation can never be lost while the order
+            // still claims the stock.
+            $posted = DB::transaction(function () use ($store, $data, $lines, $sale, $user, $shift) {
+                $webOrder = ! empty($data['web_order_id'])
+                    ? $this->releaseWebOrderForSale($store, (int) $data['web_order_id'])
+                    : null;
+
+                $posted = $this->sales->post(
+                    store: $store,
+                    lines: $lines,
+                    payments: $data['payments'],
+                    actor: $user,
+                    shift: $shift,
+                    heldSale: $sale,
+                    customerId: isset($data['customer_id']) ? (int) $data['customer_id'] : null,
+                    explicitDiscount: isset($data['discount']) && $data['discount'] !== null ? (string) $data['discount'] : null,
+                    couponCode: isset($data['coupon_code']) && trim((string) $data['coupon_code']) !== '' ? (string) $data['coupon_code'] : null,
+                );
+
+                if ($webOrder !== null) {
+                    $this->markWebOrderFulfilled($store, $webOrder, $user, $posted->receipt_number);
+                }
+
+                return $posted;
+            });
         } catch (InventoryException $e) {
             return back()->with('error', $e->getMessage());
-        }
-
-        // A web order fulfilled at the counter: mark it delivered. The POS
-        // sale is the single stock deduction, so any reservation is released.
-        if (! empty($data['web_order_id'])) {
-            $this->fulfillWebOrder($store, (int) $data['web_order_id'], $user, $posted->receipt_number);
         }
 
         $change = $posted->payments->firstWhere('method', 'cash')?->change_given ?? '0';

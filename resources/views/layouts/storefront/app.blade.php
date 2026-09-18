@@ -2,6 +2,10 @@
     $cspNonce = $cspNonce ?? \Illuminate\Support\Facades\View::getShared()['cspNonce'] ?? '';
     $activeStoreContext = app(\App\Services\StoreContext::class)->getStore();
     $activeStoreSlug    = request('store_slug') ?? $activeStoreContext?->slug;
+    // Sign-in links carry the store the shopper is browsing: without it the
+    // auth routes fall back to the primary store, so a customer registering at
+    // store B's storefront was enrolled in store A.
+    $authQuery          = $activeStoreSlug ? ['store_slug' => $activeStoreSlug] : [];
     $setting            = $activeStoreContext?->setting ?? $setting ?? null;
     $storeDisplayName   = $setting?->store_name ?? $activeStoreContext?->name ?? config('app.name');
     $sfColors           = $setting?->themeColors() ?? ['primary' => '#0ea5e9', 'accent' => '#7c3aed', 'header_bg' => '#ffffff', 'body_bg' => '#f8fafc', 'glow_style' => 'vivid', 'dark_mode' => 'auto'];
@@ -597,11 +601,11 @@
                         </button>
                     </form>
                 @else
-                    <a href="{{ route('login') }}" class="flex items-center gap-1.5 whitespace-nowrap hover:text-sky-600 dark:hover:text-sky-400 transition">
+                    <a href="{{ route('login', $authQuery) }}" class="flex items-center gap-1.5 whitespace-nowrap hover:text-sky-600 dark:hover:text-sky-400 transition">
                         <span aria-hidden="true">🔑</span>
                         <span>{{ __('messages.login') }}</span>
                     </a>
-                    <a href="{{ route('register') }}" class="flex items-center gap-1.5 whitespace-nowrap hover:text-sky-600 dark:hover:text-sky-400 transition">
+                    <a href="{{ route('register', $authQuery) }}" class="flex items-center gap-1.5 whitespace-nowrap hover:text-sky-600 dark:hover:text-sky-400 transition">
                         <span aria-hidden="true">📝</span>
                         <span>{{ __('messages.register') }}</span>
                     </a>
@@ -1013,10 +1017,10 @@
                                 <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">{{ __('messages.welcome') ?? 'Welcome' }}</span>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
-                                <a href="{{ route('login') }}" @click="mobileMenuOpen = false" class="sf-btn-3d active h-9 text-xs font-black">
+                                <a href="{{ route('login', $authQuery) }}" @click="mobileMenuOpen = false" class="sf-btn-3d active h-9 text-xs font-black">
                                     <span>{{ __('messages.login') }}</span>
                                 </a>
-                                <a href="{{ route('register') }}" @click="mobileMenuOpen = false" class="sf-btn-3d h-9 text-xs font-black">
+                                <a href="{{ route('register', $authQuery) }}" @click="mobileMenuOpen = false" class="sf-btn-3d h-9 text-xs font-black">
                                     <span>{{ __('messages.register') }}</span>
                                 </a>
                             </div>
@@ -1384,7 +1388,7 @@
                     <span class="text-[9.5px] sm:text-[10px] tracking-tight truncate max-w-full text-center leading-none mt-1 {{ $isAccount ? 'font-black text-white' : 'font-bold text-slate-700 dark:text-slate-300' }}">{{ __('messages.nav_account') }}</span>
                 </a>
             @else
-                <a href="{{ route('login') }}" class="sf-nav-btn flex-1 sf-nav-btn-login {{ $isAccount ? 'active' : '' }}" title="{{ __('messages.login') }}">
+                <a href="{{ route('login', $authQuery) }}" class="sf-nav-btn flex-1 sf-nav-btn-login {{ $isAccount ? 'active' : '' }}" title="{{ __('messages.login') }}">
                     <span class="inline-flex h-6 w-6 items-center justify-center relative shrink-0 {{ $isAccount ? 'text-white' : 'text-emerald-500 dark:text-emerald-400' }}">
                         <x-storefront.navigation-icon name="login" class="h-5 w-5" />
                     </span>

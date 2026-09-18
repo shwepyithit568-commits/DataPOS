@@ -26,6 +26,16 @@ class CachePublicPage
     {
         $response = $next($request);
 
+        // Only the anonymous storefront is cacheable. A page rendered for a
+        // signed-in shopper carries their name/points and a CSRF token bound to
+        // their session: a browser copy outliving a login/logout hands the next
+        // POST a token the server no longer knows (419 "Page expired"), and a
+        // back-navigation after signing out still shows the account page. Those
+        // responses keep SecurityHeaders' `no-store`.
+        if ($request->user() !== null) {
+            return $response;
+        }
+
         // Signal SecurityHeaders (global middleware, runs outside this one)
         // to leave Cache-Control alone on this response.
         $request->attributes->set('cache_public_page', true);
