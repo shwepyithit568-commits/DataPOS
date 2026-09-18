@@ -25,6 +25,7 @@
     <div class="w-full space-y-0.5 pb-6"
          x-data="{
              formModalOpen: false,
+             expanded: null,
              viewMode: localStorage.getItem('pos_adjustments_view') || 'table',
              setView(mode) {
                  this.viewMode = mode;
@@ -368,7 +369,10 @@
                             @if($req->reviewedBy)
                                 <div class="flex items-center justify-between">
                                     <span class="text-slate-400">{{ __('messages.adjustment_reviewed_by') }}:</span>
-                                    <span class="font-bold text-slate-700 dark:text-slate-300 truncate">{{ $req->reviewedBy->name }}</span>
+                                    <span class="font-bold text-slate-700 dark:text-slate-300 truncate">
+                                        {{ $req->reviewedBy->name }}
+                                        <span class="text-[10px] font-mono text-slate-400">{{ $req->reviewed_at?->format('d/m/Y H:i') }}</span>
+                                    </span>
                                 </div>
                             @endif
                         </div>
@@ -491,10 +495,25 @@
                                 <td class="py-1.5 px-2.5 font-mono text-xs text-slate-500">
                                     <div>{{ $req->created_at->format('d/m/Y H:i') }}</div>
                                     <div class="text-[10px] text-slate-400 font-sans truncate">{{ $req->submittedBy?->name ?? '—' }}</div>
+                                    {{-- Who signed it off and when — the whole point of a
+                                         stock correction is that it names a person. --}}
+                                    @if ($req->reviewedBy)
+                                        <div class="text-[10px] text-slate-400 font-sans truncate mt-0.5">
+                                            ✓ {{ $req->reviewedBy->name }}
+                                            <span class="font-mono">{{ $req->reviewed_at?->format('d/m/Y H:i') }}</span>
+                                        </div>
+                                    @endif
                                 </td>
-                                <td class="py-1.5 px-2 text-right">
+                                <td class="py-1.5 px-2 text-right whitespace-nowrap">
+                                    {{-- The lines behind the number: which product, how many,
+                                         and the reason typed for each one. --}}
+                                    <button type="button" @click="expanded = expanded === {{ $req->id }} ? null : {{ $req->id }}"
+                                            class="h-6 px-2 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer">
+                                        <span x-text="expanded === {{ $req->id }} ? '-' : '+'"></span>
+                                        {{ $req->items->count() }}
+                                    </button>
                                     @if ($req->isPending() && $isManager)
-                                        <div class="flex items-center justify-end gap-1">
+                                        <div class="flex items-center justify-end gap-1 mt-1">
                                             <form method="POST" action="{{ url('/store/' . $store->slug . '/pos/adjustments/' . $req->id . '/approve') }}">
                                                 @csrf
                                                 <button type="submit" class="h-6 px-2 rounded text-[11px] font-black bg-emerald-600 text-white hover:bg-emerald-500 transition cursor-pointer shadow-2xs">
@@ -512,6 +531,46 @@
                                     @else
                                         <span class="text-[11px] text-slate-400 font-mono">—</span>
                                     @endif
+                                </td>
+                            </tr>
+                            {{-- Every line of the correction, with its own reason: what
+                                 actually moved, so "who changed it" comes with "what". --}}
+                            <tr x-show="expanded === {{ $req->id }}" x-cloak class="bg-slate-50/70 dark:bg-slate-800/30">
+                                <td colspan="7" class="py-2 px-3">
+                                    <div class="grid gap-1">
+                                        @foreach ($req->items as $line)
+                                            <div class="flex items-center justify-between gap-3 text-[11px]">
+                                                <span class="font-bold text-slate-700 dark:text-slate-200 truncate">
+                                                    {{ $line->product?->name ?? '—' }}
+                                                    @if ($line->productVariant)
+                                                        <span class="text-slate-400">· {{ $line->productVariant->name }}</span>
+                                                    @endif
+                                                </span>
+                                                <span class="font-mono font-black tabular-nums {{ (float) $line->quantity < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+                                                    {{ (float) $line->quantity > 0 ? '+' : '' }}{{ $fmtQty($line->quantity) }}
+                                                </span>
+                                                <span class="text-slate-500 dark:text-slate-400 truncate flex-1 text-right">{{ $line->reason }}</span>
+                                            </div>
+                                        @endforeach
+                                        @if ($req->notes)
+                                            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                                                <strong>{{ __('messages.notes') ?? 'Notes' }}:</strong> {{ $req->notes }}
+                                            </div>
+                                        @endif
+                                        @if ($req->review_notes)
+                                            <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                                                <strong>{{ __('messages.adjustment_review_notes') ?? 'Review notes' }}:</strong> {{ $req->review_notes }}
+                                            </div>
+                                        @endif
+                                        <div class="text-[10px] text-slate-400 font-mono mt-0.5">
+                                            {{ __('messages.adjustment_submitted_by') }}: {{ $req->submittedBy?->name ?? '—' }}
+                                            ({{ $req->created_at->format('d/m/Y H:i') }})
+                                            @if ($req->reviewedBy)
+                                                · {{ __('messages.adjustment_reviewed_by') }}: {{ $req->reviewedBy->name }}
+                                                ({{ $req->reviewed_at?->format('d/m/Y H:i') }})
+                                            @endif
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         @empty

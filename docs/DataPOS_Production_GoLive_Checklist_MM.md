@@ -50,6 +50,14 @@ php artisan up
 
 အားလုံး nullable/default ဖြစ်သဖြင့် **rollback မလိုဘဲ** တင်နိုင်သည်။
 
+## ၃.၁။ အနုတ်လက်ကျန် (negative stock) မူဝါဒ
+
+**ဆုံးဖြတ်ပြီး:** လက်ကျန်မရှိဘဲ ရောင်းခွင့် မပေးပါ။ ကောင်တာ (POS) တွင် အနုတ်ရောင်းလို့ မရပါ —
+cart ထဲထည့်ချိန်ကတည်းက တားဆီးထားသည် (`config/inventory.php` တွင် default false၊
+မန်နေဂျာ override ကို အနာဂတ် audited feature အဖြေအဖြစ် သတ်မှတ်ထားသည် — Open Decision #16)။
+ဆိုင်ဆက်တင်ရှိ `pos_settings.allow_negative_stock` သည် **အသုံးမပြုတော့ပါ** (settings စာမျက်နှာတွင်လည်း
+မပြပါ) — အမှန်တကယ် switch မှာ server-side `INVENTORY_ALLOW_NEGATIVE_STOCK` env flag သာဖြစ်သည်။
+
 ## ၄။ ပရင်တာ (printing) — production မတင်မီ သိထားရမည်
 
 - လက်ရှိ printing သည် **browser `window.print()`** သာ — ESC/POS thermal command ပို့သည့်
