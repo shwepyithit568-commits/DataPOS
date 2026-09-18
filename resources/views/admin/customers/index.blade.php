@@ -527,6 +527,16 @@
                            class="w-full h-8 px-2.5 rounded-md text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 transition">
                 </div>
 
+                {{-- The shop's reset path: typing a phone number at the storefront
+                     no longer hands anyone the account, so a customer who lost
+                     their password is helped here. --}}
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-0.5">{{ __('messages.customer_new_password_label') }}</label>
+                    <input type="text" name="new_password" autocomplete="off"
+                           placeholder="{{ __('messages.customer_new_password_hint') }}"
+                           class="w-full h-8 px-2.5 rounded-md text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 transition">
+                </div>
+
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-0.5">{{ __('messages.customer_type_label') }} *</label>

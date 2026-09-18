@@ -19,6 +19,7 @@ class User extends Authenticatable
         'phone',
         'email',
         'password',
+        'password_set_at',
         'pos_pin',
         'role',
     ];
@@ -33,6 +34,9 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            // Null = the password is a counter-created placeholder, so the
+            // account was never really claimed by its owner.
+            'password_set_at' => 'datetime',
             'password' => 'hashed',
             'pos_pin' => 'hashed',
         ];
@@ -43,6 +47,12 @@ class User extends Authenticatable
         return $this->belongsToMany(Store::class)
             ->withPivot(['role', 'status', 'staff_role_id', 'custom_permissions'])
             ->withTimestamps();
+    }
+
+    /** Online orders placed by this shopper (see also AccountController). */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(\App\Models\Order::class);
     }
 
     /**

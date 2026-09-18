@@ -64,10 +64,17 @@ class AccountController extends Controller
         $user = auth()->user();
         $store = $context->getStore();
 
-        // Auto-claim any unlinked orders created with the user's phone number
-        if (!empty($user->phone)) {
+        // Adopt the guest orders placed with this phone number AFTER the account
+        // existed (the shopper ordered without signing in, then signed in).
+        //
+        // Deliberately not "every order ever placed with this phone": a phone
+        // number is not verified anywhere in the app (no SMS/Viber OTP yet), so
+        // claiming the whole history would let anyone who knows a number read
+        // somebody else's orders — names, addresses and what they bought.
+        if (! empty($user->phone) && $user->created_at !== null) {
             Order::whereNull('user_id')
                 ->where('customer_phone', $user->phone)
+                ->where('created_at', '>=', $user->created_at)
                 ->update(['user_id' => $user->id]);
         }
 

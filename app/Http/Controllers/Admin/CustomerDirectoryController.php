@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Store;
 use App\Models\User;
 use App\POS\Models\CustomerLedgerEntry;
@@ -209,6 +210,10 @@ class CustomerDirectoryController extends Controller
             ],
             'role'   => 'required|string|in:retail_customer,wholesale_customer',
             'status' => 'required|string|in:active,pending,suspended',
+            // The shop is the only party that can prove who a phone number
+            // belongs to, so it is also the reset path — the storefront must
+            // never hand an account to whoever types a number.
+            'new_password' => ['nullable', 'string', 'min:8', 'max:60'],
         ]);
 
         DB::transaction(function () use ($validated, $customer, $store) {
@@ -218,6 +223,22 @@ class CustomerDirectoryController extends Controller
                 'email' => $validated['email'] ?? null,
             ]);
 
+            if (! empty($validated['new_password'])) {
+                $customer->forceFill([
+                    'password' => Hash::make($validated['new_password']),
+                    'password_set_at' => now(),
+                ])->save();
+
+                AuditLog::write(
+                    storeId: $store->id,
+                    action: 'customer_password_reset',
+                    entityType: 'users',
+                    entityId: $customer->id,
+                    metadata: ['phone' => $customer->phone, 'by' => 'staff'],
+                    actorId: auth()->id(),
+                );
+            }
+
             $customer->stores()->syncWithoutDetaching([
                 $store->id => [
                     'role'   => $validated['role'],
@@ -226,7 +247,12 @@ class CustomerDirectoryController extends Controller
             ]);
         });
 
-        return back()->with('success', 'ဖောက်သည် အချက်အလက်များ အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။ (Customer updated successfully.)');
+        return back()->with(
+            'success',
+            ! empty($validated['new_password'])
+                ? __('messages.customer_password_reset_done')
+                : 'ဖောက်သည် အချက်အလက်များ အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။ (Customer updated successfully.)'
+        );
     }
 
     /**
