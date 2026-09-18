@@ -1815,6 +1815,22 @@ main div.w-full.grid > div {
     pointer-events: none;
 }
 
+/* 3D Digital Clock Widget Theme Styles (Guaranteed 100% Solid Dark in Dark Mode, Crisp Light in Light Mode) */
+.sf-clock-3d {
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+    border: 1px solid rgba(203, 213, 225, 0.9) !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+    color: #1e293b !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+}
+.dark .sf-clock-3d {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+    border: 1px solid rgba(51, 65, 85, 0.9) !important;
+    border-bottom: 2px solid #020617 !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
 /* POS & Admin Notice / Floating Toast Highest-Layer standard classes */
 .pos-toast-notice,
 .floating-toast-container {

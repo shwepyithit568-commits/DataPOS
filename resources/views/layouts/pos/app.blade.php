@@ -5,7 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>POS - {{ $store->name }}</title>
+    @php
+        $posFaviconPath = ($store ?? null)?->setting?->favicon();
+        $posFaviconHref = $posFaviconPath ? asset('storage/' . $posFaviconPath) : asset('favicon.ico');
+        $posDedicatedFavicon = ($store ?? null)?->setting?->favicon_path;
+        $posAppleTouchHref = $posDedicatedFavicon
+            ? asset('storage/' . $posDedicatedFavicon)
+            : asset('apple-touch-icon.png');
+    @endphp
+    <link rel="icon" type="{{ $posFaviconPath && str_ends_with($posFaviconPath, '.webp') ? 'image/webp' : ($posFaviconPath ? 'image/png' : 'image/x-icon') }}" href="{{ $posFaviconHref }}">
+    <link rel="apple-touch-icon" href="{{ $posAppleTouchHref }}">
     <meta name="theme-color" content="#2563eb">
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/assets/fonts/Roboto-Regular.woff2') }}">
+    <link rel="preload" as="font" type="font/ttf" crossorigin href="{{ Vite::asset('resources/assets/fonts/NotoSansMyanmar/NotoSansMyanmar-Regular.ttf') }}">
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/assets/fonts/Outfit-Regular.woff2') }}">
     <script nonce="{{ $cspNonce }}">
         // POS display mode (standard_light, high_contrast_daylight, oled_dark):
         (function () {
@@ -16,7 +29,82 @@
                 document.documentElement.classList.add('high-contrast-daylight');
             }
         })();
+
+        window.togglePosFullscreen = function() {
+            try {
+                const doc = document;
+                const docEl = doc.documentElement;
+                const isFs = !!(
+                    doc.fullscreenElement ||
+                    doc.webkitFullscreenElement ||
+                    doc.mozFullScreenElement ||
+                    doc.msFullscreenElement ||
+                    (window.innerHeight === screen.height)
+                );
+
+                if (!isFs) {
+                    const req = docEl.requestFullscreen ||
+                                docEl.webkitRequestFullscreen ||
+                                docEl.mozRequestFullScreen ||
+                                docEl.msRequestFullscreen;
+                    if (req) {
+                        const p = req.call(docEl);
+                        if (p && typeof p.catch === 'function') {
+                            p.catch(function(err) {
+                                console.warn('requestFullscreen rejected:', err);
+                            });
+                        }
+                    }
+                } else {
+                    const exit = doc.exitFullscreen ||
+                                 doc.webkitExitFullscreen ||
+                                 doc.mozCancelFullScreen ||
+                                 doc.msExitFullscreen;
+                    if (exit && (doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement)) {
+                        const p = exit.call(doc);
+                        if (p && typeof p.catch === 'function') {
+                            p.catch(function(err) {
+                                console.warn('exitFullscreen rejected:', err);
+                            });
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Fullscreen toggle error:', e);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const dBtn = document.getElementById('pos-fullscreen-btn');
+            const mBtn = document.getElementById('mobile-pos-fullscreen-btn');
+            if (dBtn) dBtn.addEventListener('click', function() { window.togglePosFullscreen(); });
+            if (mBtn) mBtn.addEventListener('click', function() { window.togglePosFullscreen(); });
+        });
     </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        :fullscreen, ::backdrop {
+            background-color: transparent;
+        }
+        html:fullscreen, body:fullscreen {
+            width: 100vw;
+            height: 100vh;
+        }
+        .sf-clock-3d {
+            background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+            border: 1px solid rgba(203, 213, 225, 0.9) !important;
+            border-bottom: 2px solid #cbd5e1 !important;
+            color: #1e293b !important;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+        }
+        .dark .sf-clock-3d {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.9) !important;
+            border-bottom: 2px solid #020617 !important;
+            color: #f1f5f9 !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+        }
+    </style>
     <x-currency-js-init :store="$store ?? null" />
     @vite(['resources/css/admin.css', 'resources/js/app-admin.js'])
 </head>
@@ -25,6 +113,7 @@
         isDark: document.documentElement.classList.contains('dark'),
         displayMode: localStorage.getItem('posDisplayMode') || (document.documentElement.classList.contains('dark') ? 'oled_dark' : 'standard_light'),
         displayMenuOpen: false,
+        isFullscreen: false,
         setDisplayMode(mode) {
             this.displayMode = mode;
             localStorage.setItem('posDisplayMode', mode);
@@ -34,6 +123,21 @@
             document.documentElement.classList.toggle('high-contrast-daylight', mode === 'high_contrast_daylight');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
             this.displayMenuOpen = false;
+        },
+        syncFullscreenState() {
+            this.isFullscreen = !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement ||
+                (window.innerHeight === screen.height)
+            );
+        },
+        toggleFullscreen() {
+            window.togglePosFullscreen();
+            this.$nextTick(() => {
+                this.syncFullscreenState();
+            });
         },
         calculatorOpen: false,
         calcDisplay: '0',
@@ -109,82 +213,129 @@
             else if (event.key === 'Enter' || event.key === '=') { event.preventDefault(); this.calculateResult(); }
             else if (event.key === 'Backspace') { event.preventDefault(); this.backspaceCalculator(); }
             else if (event.key === 'Escape') { event.preventDefault(); this.closeCalculator(); }
+        },
+        init() {
+            this.syncFullscreenState();
+            ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange', 'resize'].forEach(evt => {
+                window.addEventListener(evt, () => {
+                    this.syncFullscreenState();
+                });
+            });
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'F11') {
+                    setTimeout(() => this.syncFullscreenState(), 250);
+                }
+            });
         }
     }"
     @keydown.window="handlePosCalcKey($event)">
 
-    <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800">
-        <div class="w-full px-2 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3 min-w-0">
-                <div class="w-9 h-9 rounded-xl bg-blue-600/15 text-blue-600 dark:text-blue-400 grid place-items-center">
-                    {{-- POS cash-register mark --}}
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="2" y="6" width="20" height="4"/><path d="M4 10v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M7 14h2m4 0h4M7 18h2m4 0h4"/></svg>
-                </div>
-                <div class="min-w-0">
-                    <p class="font-black text-sm truncate">{{ $store->name }}</p>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">POS · {{ auth()->user()?->name }}</p>
-                </div>
-            </div>
-
-            {{-- Real-time clock (Alpine.js) --}}
-            <div x-data="{
-                    t: '',
-                    d: '',
-                    tick() {
-                        const now = new Date();
-                        const hh = String(now.getHours()).padStart(2,'0');
-                        const mm = String(now.getMinutes()).padStart(2,'0');
-                        const ss = String(now.getSeconds()).padStart(2,'0');
-                        this.t = hh + ':' + mm + ':' + ss;
-                        const days = ['တနင်္ဂနွေ','တနင်္လာ','အင်္ဂါ','ဗုဒ္ဓဟူး','ကြာသပတေး','သောကြာ','စနေ'];
-                        const months = ['ဇန်','ဖေဖော်','မတ်','ဧပြီ','မေ','ဇွန်','ဇူ','ဩ','စက်','အောက်','နို','ဒီ'];
-                        this.d = days[now.getDay()] + ' · ' + now.getDate() + ' ' + months[now.getMonth()];
-                    }
-                }"
-                 x-init="tick(); setInterval(() => tick(), 1000)"
-                 class="hidden md:flex flex-col items-end leading-tight select-none shrink-0">
-                <span class="font-black text-sm tabular-nums text-slate-800 dark:text-slate-100" x-text="t"></span>
-                <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400" x-text="d"></span>
-            </div>
-
-            {{-- min-w-0 + flex-wrap: on a ~360px phone the sync widget, clock,
-                 language, display-mode, admin and logout controls together are
-                 wider than the viewport, which used to push the whole header into
-                 a horizontal scroll. Wrapping keeps every control reachable. --}}
-            <div class="flex items-center gap-2 min-w-0 flex-wrap justify-end">
-                @if (isset($store))
-                    <x-sync-status-widget :store="$store" />
+    <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200/80 dark:border-slate-800/80 h-[calc(3.25rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] flex items-center justify-between px-3 sm:px-4 transition-colors duration-200 gap-1.5 sm:gap-2 sticky top-0 z-40">
+        {{-- Left Section: Store Branding, Tactile Icon & Cashier Info --}}
+        <div class="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+            <a href="{{ url('/store/' . $store->slug . '/pos') }}" class="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/90 border-b-2 border-b-slate-300 dark:border-slate-700 dark:border-b-slate-900 bg-gradient-to-b from-white via-white to-slate-50 dark:from-slate-900 dark:to-slate-950 text-sky-600 dark:text-sky-300 shadow-xs hover:shadow-sm transition-all" title="{{ $store->name }}">
+                @if (!empty($store->setting?->adminLogo()))
+                    <img src="{{ asset('storage/' . $store->setting->adminLogo()) }}" alt="{{ $store->name }}" class="h-full w-full object-contain p-0.5" loading="lazy" />
+                @else
+                    <svg class="h-5 w-5 text-sky-600 dark:text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="2" y="6" width="20" height="4"/><path d="M4 10v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M7 14h2m4 0h4M7 18h2m4 0h4"/></svg>
                 @endif
-                {{-- Mobile: time only --}}
-                <div x-data="{
-                        t: '',
-                        tick() {
-                            const n = new Date();
-                            this.t = String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
-                        }
-                    }"
-                     x-init="tick(); setInterval(() => tick(), 10000)"
-                     class="sm:hidden font-black text-sm tabular-nums text-slate-700 dark:text-slate-200"
-                     x-text="t"></div>
+            </a>
 
+            <div class="min-w-0 flex flex-col justify-center leading-tight">
+                <div class="flex items-center gap-1.5">
+                    <a href="{{ url('/store/' . $store->slug . '/pos') }}"
+                       title="POS · {{ $store->name }}"
+                       class="inline-flex items-center px-2.5 py-1 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-outfit text-xs sm:text-sm font-bold shadow-xs hover:shadow-md hover:shadow-sky-500/20 border border-sky-300/40 border-b-2 border-b-sky-800 active:translate-y-0.5 transition-all truncate max-w-[140px] sm:max-w-[200px] md:max-w-xs">
+                        <span class="truncate">{{ $store->name }}</span>
+                    </a>
+                    <span class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700 select-none">
+                        POS
+                    </span>
+                </div>
+                @if (auth()->check())
+                    <span class="hidden sm:block text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate max-w-[140px] sm:max-w-[200px]">
+                        {{ auth()->user()->name }}
+                    </span>
+                @endif
+            </div>
+        </div>
+
+        {{-- Right Section: Digital Clock, Sync Status, 3D Buttons & Mobile Overflow Menu --}}
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {{-- 1. 3D Digital Date Time Clock Widget --}}
+            <x-digital-clock class="hidden sm:inline-flex" />
+
+            {{-- 2. Sync Status Widget --}}
+            @if (isset($store))
+                <x-sync-status-widget :store="$store" />
+            @endif
+
+            {{-- 3. Desktop Action Buttons Group --}}
+            <div class="hidden sm:flex items-center gap-1.5 sm:gap-2">
                 {{-- Language Switcher (3D Sky/Telegram) --}}
-                <x-language-switcher id="pos-header" btn-class="sf-btn-3d-telegram w-10 h-10 rounded-xl inline-flex items-center justify-center text-base cursor-pointer shadow-xs text-white" />
+                <x-language-switcher id="pos-header" btn-class="sf-btn-3d-telegram h-10 w-10 rounded-xl inline-flex items-center justify-center text-base cursor-pointer shadow-xs text-white" />
+
+                {{-- View Commerce / Storefront (3D Success Emerald) --}}
+                <a href="{{ url('/store/' . $store->slug) }}" target="_blank" rel="noopener noreferrer"
+                    class="sf-btn-3d-success h-10 w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    aria-label="{{ __('messages.view_commerce') }}"
+                    title="{{ __('messages.view_commerce') }}">
+                    <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.5 5 5h14l2 5.5M4 10.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.5M3 10.5h18M8 21v-6h8v6" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 5v5.5m5-5.5v5.5M17 5v5.5" />
+                    </svg>
+                </a>
+
+                {{-- Reload POS (3D Teal with hard cache-bust) --}}
+                <button type="button"
+                        x-data="{ reloading: false }"
+                        @click="reloading = true; (async () => {
+                            if ('caches' in window) {
+                                try {
+                                    const keys = await caches.keys();
+                                    await Promise.all(keys.map(k => caches.delete(k)));
+                                } catch (e) {}
+                            }
+                            const u = new URL(window.location.href);
+                            u.searchParams.set('_r', Date.now().toString());
+                            window.location.replace(u.toString());
+                        })()"
+                        class="sf-btn-3d-teal h-10 w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        aria-label="{{ __('messages.pos_reload') }}"
+                        title="{{ __('messages.pos_reload') }} 🔄 (Ctrl+Shift+R)">
+                    <svg class="h-4 w-4 text-white" :class="reloading ? 'animate-spin' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 2v6h-6"/>
+                        <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+                        <path d="M3 22v-6h6"/>
+                        <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                    </svg>
+                </button>
+
+                {{-- Calculator (3D Primary Blue) --}}
+                <button @click="openCalculator()" type="button"
+                    class="sf-btn-3d-primary h-10 w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-label="{{ __('messages.calculator') }}"
+                    title="{{ __('messages.calculator') }}">
+                    <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <rect x="5" y="3" width="14" height="18" rx="2" stroke-width="2" />
+                        <path stroke-linecap="round" stroke-width="2" d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01" />
+                    </svg>
+                </button>
 
                 {{-- POS Display Mode Dropdown (3D Gold) --}}
                 <div class="relative" @click.away="displayMenuOpen = false">
                     <button @click="displayMenuOpen = !displayMenuOpen" type="button"
-                            class="sf-btn-3d-gold w-10 h-10 rounded-xl cursor-pointer text-white grid place-items-center shadow-xs"
-                            aria-label="Display Mode"
-                            title="POS Display Mode">
-                        <svg x-show="displayMode === 'oled_dark' || isDark" x-cloak class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        class="sf-btn-3d-gold h-10 w-10 rounded-xl cursor-pointer text-white inline-flex items-center justify-center shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        aria-label="{{ __('messages.display_mode') ?? 'Display Mode' }}"
+                        title="{{ __('messages.display_mode') ?? 'Display Mode' }}">
+                        <svg x-show="displayMode === 'oled_dark' || isDark" x-cloak class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
                         </svg>
-                        <svg x-show="displayMode !== 'oled_dark' && !isDark" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg x-show="displayMode !== 'oled_dark' && !isDark" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="4"/>
                             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
                         </svg>
                     </button>
-
                     <div x-show="displayMenuOpen" x-cloak
                          x-transition:enter="transition ease-out duration-100"
                          x-transition:enter-start="transform opacity-0 scale-95"
@@ -208,57 +359,284 @@
                     </div>
                 </div>
 
-                {{-- Calculator button (3D Primary Blue) --}}
-                <button type="button" @click="openCalculator()"
-                        class="sf-btn-3d-primary w-10 h-10 rounded-xl cursor-pointer text-white grid place-items-center shadow-xs"
-                        aria-label="{{ __('messages.calculator') }}"
-                        title="{{ __('messages.calculator') }}">
-                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="5" y="3" width="14" height="18" rx="2"/>
-                        <path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"/>
+                {{-- Fullscreen Toggle Button (3D Indigo with F11-style toggle) --}}
+                <button id="pos-fullscreen-btn" @click="toggleFullscreen()" type="button"
+                    class="sf-btn-3d-indigo h-10 w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    :title="isFullscreen ? '{{ __('messages.fullscreen_exit') }}' : '{{ __('messages.fullscreen_enter') }}'"
+                    :aria-label="isFullscreen ? '{{ __('messages.fullscreen_exit') }}' : '{{ __('messages.fullscreen_enter') }}'">
+                    {{-- Enter Fullscreen Icon (Expand) --}}
+                    <svg x-show="!isFullscreen" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                    </svg>
+                    {{-- Exit Fullscreen Icon (Compress) --}}
+                    <svg x-show="isFullscreen" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
                     </svg>
                 </button>
 
-                {{-- Reload POS button (3D Teal with Hard Reload cache-bust like Ctrl+Shift+R) --}}
-                <button type="button"
-                        x-data="{ reloading: false }"
-                        @click="reloading = true; (async () => {
-                            if ('caches' in window) {
-                                try {
-                                    const keys = await caches.keys();
-                                    await Promise.all(keys.map(k => caches.delete(k)));
-                                } catch (e) {}
-                            }
-                            const u = new URL(window.location.href);
-                            u.searchParams.set('_r', Date.now().toString());
-                            window.location.replace(u.toString());
-                        })()"
-                        class="sf-btn-3d-teal shrink-0 w-10 h-10 rounded-xl grid place-items-center cursor-pointer text-white shadow-xs"
-                        aria-label="{{ __('messages.pos_reload') }}"
-                        title="{{ __('messages.pos_reload') }} 🔄 (Ctrl+Shift+R)">
-                    <svg class="w-4 h-4 text-white" :class="reloading ? 'animate-spin' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                        <path d="M3 3v5h5"/>
-                        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
-                        <path d="M16 16h5v5"/>
-                    </svg>
-                </button>
-
-                @yield('header_extra')
-
-                {{-- Admin Panel button (3D Accent Purple) --}}
+                {{-- Admin Panel Link (3D Accent Purple) --}}
                 <a href="{{ url('/store/' . $store->slug . '/admin/dashboard') }}"
-                   class="sf-btn-3d-accent inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-xs font-bold cursor-pointer text-white shadow-xs">
-                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                    <span class="hidden sm:inline">{{ __('messages.admin_panel') }}</span>
+                   class="sf-btn-3d-accent h-10 w-10 lg:w-auto lg:px-3 rounded-xl inline-flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer text-white shadow-xs focus:outline-none focus:ring-2 focus:ring-violet-500"
+                   title="{{ __('messages.admin_panel') }}"
+                   aria-label="{{ __('messages.admin_panel') }}">
+                    <svg class="h-4 w-4 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    <span class="hidden xl:inline">{{ __('messages.admin_panel') }}</span>
                 </a>
-                <form method="POST" action="{{ url('/logout') }}">
-                    @csrf
-                    <button type="submit" class="sf-btn-3d inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-xs font-semibold hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer">
-                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-                        <span class="hidden sm:inline">{{ __('messages.logout') }}</span>
+
+                {{-- User Profile Dropdown Menu (3D Tactile with Profile Icon) --}}
+                <div class="relative" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false" @keydown.escape.window="userMenuOpen = false">
+                    <button type="button" @click="userMenuOpen = !userMenuOpen"
+                        class="sf-btn-3d h-10 w-10 lg:w-auto lg:px-2.5 rounded-xl inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-sky-500 flex-shrink-0"
+                        :aria-expanded="userMenuOpen.toString()"
+                        aria-haspopup="menu"
+                        aria-label="{{ auth()->user()?->name ?? 'User Profile' }}"
+                        title="{{ auth()->user()?->name ?? 'User Profile' }}">
+                        <div class="h-6 w-6 rounded-lg bg-sky-500/15 dark:bg-sky-400/20 text-sky-600 dark:text-sky-300 flex items-center justify-center font-bold text-xs shrink-0">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <span class="hidden xl:inline font-bold text-xs max-w-[100px] truncate">
+                            {{ auth()->user()?->name ?? 'Profile' }}
+                        </span>
+                        <svg class="hidden xl:block h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0 transition-transform duration-150" :class="userMenuOpen ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                        </svg>
                     </button>
-                </form>
+
+                    <div x-show="userMenuOpen"
+                        x-transition:enter="transition ease-out duration-150"
+                        x-transition:enter-start="opacity-0 scale-95 transform"
+                        x-transition:enter-end="opacity-100 scale-100 transform"
+                        x-transition:leave="transition ease-in duration-100"
+                        x-transition:leave-start="opacity-100 scale-100 transform"
+                        x-transition:leave-end="opacity-0 scale-95 transform"
+                        x-cloak
+                        class="absolute right-0 top-full z-50 mt-2 w-64 sm:w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900"
+                        role="menu"
+                        aria-label="{{ auth()->user()?->name ?? 'User Profile' }}">
+
+                        {{-- User Header Details --}}
+                        <div class="px-3 py-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl mb-1 border border-slate-100 dark:border-slate-800">
+                            <div class="flex items-center gap-3">
+                                <div class="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-tr from-sky-500 to-sky-600 text-white flex items-center justify-center font-bold text-sm shadow">
+                                    @if(auth()->user()?->name)
+                                        {{ mb_substr(auth()->user()->name, 0, 1) }}
+                                    @else
+                                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                                            <circle cx="12" cy="7" r="4"/>
+                                        </svg>
+                                    @endif
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
+                                        {{ auth()->user()?->name ?? 'User' }}
+                                    </p>
+                                    <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                        @if(auth()->user()?->isPlatformOwner())
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">
+                                                Super Admin
+                                            </span>
+                                        @elseif(isset($store) && auth()->user()?->getStoreRole($store->id))
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300 capitalize">
+                                                {{ str_replace('_', ' ', auth()->user()->getStoreRole($store->id)) }}
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                Cashier
+                                            </span>
+                                        @endif
+                                        @if(auth()->user()?->phone)
+                                            <span class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                                {{ auth()->user()->phone }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Admin Panel Quick Link --}}
+                        <a href="{{ url('/store/' . $store->slug . '/admin/dashboard') }}" role="menuitem" @click="userMenuOpen = false"
+                            class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                            <svg class="h-4 w-4 text-violet-600 dark:text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                            </svg>
+                            <span>{{ __('messages.admin_panel') }}</span>
+                        </a>
+
+                        {{-- Logout Form / Button --}}
+                        <div class="pt-1 mt-1 border-t border-slate-100 dark:border-slate-800">
+                            <form method="POST" action="{{ url('/logout') }}" class="w-full">
+                                @csrf
+                                <button type="submit" role="menuitem"
+                                    class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition cursor-pointer">
+                                    <svg class="h-4 w-4 text-red-500 dark:text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                        <polyline points="16 17 21 12 16 7"/>
+                                        <line x1="21" y1="12" x2="9" y2="12"/>
+                                    </svg>
+                                    <span>{{ __('messages.logout') }}</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @yield('header_extra')
+
+            {{-- 4. Mobile More '...' Menu (Floating popover) --}}
+            <div class="relative sm:hidden"
+                x-data="{
+                    moreOpen: false,
+                    menuTop: '0px',
+                    menuRight: '0px',
+                    updatePos() {
+                        const btn = this.$refs.moreBtn;
+                        if (!btn) return;
+                        const r = btn.getBoundingClientRect();
+                        this.menuTop  = (r.bottom + 8) + 'px';
+                        this.menuRight = (window.innerWidth - r.right) + 'px';
+                    },
+                    open() { this.updatePos(); this.moreOpen = true; },
+                    close() { this.moreOpen = false; }
+                }"
+                @click.outside="close()"
+                @keydown.escape.window="close()"
+                @scroll.window="moreOpen && updatePos()"
+                @resize.window="moreOpen && updatePos()">
+                <button type="button" x-ref="moreBtn" @click="moreOpen ? close() : open()"
+                    class="sf-btn-3d-accent h-10 w-10 inline-flex items-center justify-center rounded-xl text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0"
+                    :aria-expanded="moreOpen.toString()" aria-haspopup="menu" aria-label="{{ __('messages.more_actions') }}">
+                    <svg class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>
+                    </svg>
+                </button>
+                <div x-show="moreOpen" x-transition x-cloak
+                    :style="'position:fixed; top:' + menuTop + '; right:' + menuRight + '; z-index:9999;'"
+                    class="w-64 max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900"
+                    role="menu" aria-label="{{ __('messages.more_actions') }}">
+                    <div class="px-1 pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
+                        <x-digital-clock class="w-full justify-between" />
+                    </div>
+
+                    {{-- User Profile Card inside Mobile menu --}}
+                    <div class="px-3 py-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl mb-2 border border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center gap-2.5">
+                            <div class="h-9 w-9 shrink-0 rounded-xl bg-gradient-to-tr from-sky-500 to-sky-600 text-white flex items-center justify-center font-bold text-xs shadow">
+                                @if(auth()->user()?->name)
+                                    {{ mb_substr(auth()->user()->name, 0, 1) }}
+                                @else
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                @endif
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+                                    {{ auth()->user()?->name ?? 'User' }}
+                                </p>
+                                <div class="flex items-center gap-1 mt-0.5 flex-wrap">
+                                    @if(auth()->user()?->isPlatformOwner())
+                                        <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">
+                                            Super Admin
+                                        </span>
+                                    @elseif(isset($store) && auth()->user()?->getStoreRole($store->id))
+                                        <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300 capitalize">
+                                            {{ str_replace('_', ' ', auth()->user()->getStoreRole($store->id)) }}
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                            Cashier
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Language Switcher inside Mobile menu --}}
+                    <div class="px-2 py-1 mb-1 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('messages.language') ?? 'Language' }}</span>
+                        <x-language-switcher id="pos-header-mobile" btn-class="sf-btn-3d-telegram h-8 px-2 rounded-lg inline-flex items-center justify-center text-xs font-bold cursor-pointer shadow-xs text-white" />
+                    </div>
+
+                    <a href="{{ url('/store/' . $store->slug) }}" target="_blank" rel="noopener noreferrer" role="menuitem" @click="moreOpen = false"
+                        class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                        <svg class="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.5 5 5h14l2 5.5M4 10.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.5M3 10.5h18M8 21v-6h8v6" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 5v5.5m5-5.5v5.5M17 5v5.5" />
+                        </svg>
+                        {{ __('messages.view_commerce') }}
+                    </a>
+
+                    <button type="button" role="menuitem" @click="moreOpen = false; (async () => {
+                        if ('caches' in window) {
+                            try { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); } catch (e) {}
+                        }
+                        const u = new URL(window.location.href);
+                        u.searchParams.set('_r', Date.now().toString());
+                        window.location.replace(u.toString());
+                    })()"
+                        class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                        <svg class="h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 2v6h-6"/>
+                            <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+                            <path d="M3 22v-6h6"/>
+                            <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                        </svg>
+                        <span>{{ __('messages.pos_reload') }}</span>
+                    </button>
+
+                    <button type="button" role="menuitem" @click="moreOpen = false; openCalculator()"
+                        class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                        <svg class="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <rect x="5" y="3" width="14" height="18" rx="2" stroke-width="2" />
+                            <path stroke-linecap="round" stroke-width="2" d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01" />
+                        </svg>
+                        {{ __('messages.calculator') }}
+                    </button>
+
+                    {{-- Display mode selector in mobile menu --}}
+                    <div class="px-3 py-2 border-t border-slate-100 dark:border-slate-800">
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1.5">{{ __('messages.display_mode') ?? 'Display Mode' }}</span>
+                        <div class="grid grid-cols-3 gap-1">
+                            <button type="button" @click="setDisplayMode('standard_light')" class="px-2 py-1 rounded text-center text-xs font-bold border" :class="displayMode === 'standard_light' ? 'bg-sky-500 text-white border-sky-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'">Light</button>
+                            <button type="button" @click="setDisplayMode('high_contrast_daylight')" class="px-2 py-1 rounded text-center text-xs font-bold border" :class="displayMode === 'high_contrast_daylight' ? 'bg-sky-500 text-white border-sky-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'">Day</button>
+                            <button type="button" @click="setDisplayMode('oled_dark')" class="px-2 py-1 rounded text-center text-xs font-bold border" :class="displayMode === 'oled_dark' ? 'bg-sky-500 text-white border-sky-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'">Dark</button>
+                        </div>
+                    </div>
+
+                    {{-- Fullscreen button in mobile menu --}}
+                    <button id="mobile-pos-fullscreen-btn" type="button" role="menuitem" @click="moreOpen = false; toggleFullscreen()"
+                        class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                        <svg class="h-4 w-4 shrink-0 text-indigo-600 dark:text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                        </svg>
+                        <span x-text="isFullscreen ? '{{ __('messages.fullscreen_exit') }}' : '{{ __('messages.fullscreen_enter') }}'"></span>
+                    </button>
+
+                    <a href="{{ url('/store/' . $store->slug . '/admin/dashboard') }}" role="menuitem" @click="moreOpen = false"
+                        class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                        <svg class="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                        </svg>
+                        {{ __('messages.admin_panel') }}
+                    </a>
+
+                    <form method="POST" action="{{ url('/logout') }}" class="w-full pt-1 mt-1 border-t border-slate-100 dark:border-slate-800">
+                        @csrf
+                        <button type="submit" role="menuitem"
+                            class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition">
+                            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                            {{ __('messages.logout') }}
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </header>

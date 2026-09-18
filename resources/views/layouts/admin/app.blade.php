@@ -38,6 +38,29 @@
         aside a.bg-violet-600:hover {
             background-color: var(--admin-accent) !important;
         }
+        :fullscreen, ::backdrop {
+            background-color: transparent;
+        }
+        html:fullscreen, body:fullscreen {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* 3D Digital Clock Widget Theme Styles (Guaranteed 100% Solid Dark in Dark Mode, Crisp Light in Light Mode) */
+        .sf-clock-3d {
+            background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+            border: 1px solid rgba(203, 213, 225, 0.9) !important;
+            border-bottom: 2px solid #cbd5e1 !important;
+            color: #1e293b !important;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+        }
+        .dark .sf-clock-3d {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+            border: 1px solid rgba(51, 65, 85, 0.9) !important;
+            border-bottom: 2px solid #020617 !important;
+            color: #f1f5f9 !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+        }
         @media (min-width: 1024px) {
             aside.lg\:w-20 {
                 transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -196,6 +219,57 @@
         } else {
             document.documentElement.classList.remove('dark');
         }
+
+        window.toggleAdminFullscreen = function() {
+            try {
+                const doc = document;
+                const docEl = doc.documentElement;
+                const isFs = !!(
+                    doc.fullscreenElement ||
+                    doc.webkitFullscreenElement ||
+                    doc.mozFullScreenElement ||
+                    doc.msFullscreenElement ||
+                    (window.innerHeight === screen.height)
+                );
+
+                if (!isFs) {
+                    const req = docEl.requestFullscreen ||
+                                docEl.webkitRequestFullscreen ||
+                                docEl.mozRequestFullScreen ||
+                                docEl.msRequestFullscreen;
+                    if (req) {
+                        const p = req.call(docEl);
+                        if (p && typeof p.catch === 'function') {
+                            p.catch(function(err) {
+                                console.warn('requestFullscreen rejected:', err);
+                            });
+                        }
+                    }
+                } else {
+                    const exit = doc.exitFullscreen ||
+                                 doc.webkitExitFullscreen ||
+                                 doc.mozCancelFullScreen ||
+                                 doc.msExitFullscreen;
+                    if (exit && (doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement)) {
+                        const p = exit.call(doc);
+                        if (p && typeof p.catch === 'function') {
+                            p.catch(function(err) {
+                                console.warn('exitFullscreen rejected:', err);
+                            });
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Fullscreen toggle error:', e);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const dBtn = document.getElementById('admin-fullscreen-btn');
+            const mBtn = document.getElementById('mobile-fullscreen-btn');
+            if (dBtn) dBtn.addEventListener('click', function() { window.toggleAdminFullscreen(); });
+            if (mBtn) mBtn.addEventListener('click', function() { window.toggleAdminFullscreen(); });
+        });
     </script>
     <x-currency-js-init :store="$headStore ?? null" />
 </head>
@@ -212,6 +286,7 @@
         sidebarHoverTimer: null,
         viewportLg: window.innerWidth >= 1024,
         darkMode: localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
+        isFullscreen: false,
         onSidebarMouseEnter() {
             if (!this.viewportLg || !this.sidebarCollapsed) return;
             if (this.sidebarHoverTimer) clearTimeout(this.sidebarHoverTimer);
@@ -349,18 +424,45 @@
             } else {
                 document.documentElement.classList.remove('dark');
             }
+        },
+        init() {
+            window._adminData = this;
+            if (this.darkMode) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            this.syncFullscreenState();
+            ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange', 'resize'].forEach(evt => {
+                window.addEventListener(evt, () => {
+                    this.syncFullscreenState();
+                });
+            });
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'F11') {
+                    setTimeout(() => this.syncFullscreenState(), 250);
+                }
+            });
+        },
+        syncFullscreenState() {
+            this.isFullscreen = !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement ||
+                (window.innerHeight === screen.height)
+            );
+        },
+        toggleFullscreen() {
+            window.toggleAdminFullscreen();
+            this.$nextTick(() => {
+                this.syncFullscreenState();
+            });
         }
     }"
     @keydown.window="handleCalculatorKey($event)"
     @keydown.escape.window="closeDrawer()"
-    @resize.window="viewportLg = window.innerWidth >= 1024"
-    x-init="
-        if (darkMode) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    ">
+    @resize.window="viewportLg = window.innerWidth >= 1024">
     @php
         $isPlatformScope = request()->is('admin/*') && ! request()->is('store/*');
         $activeStore = $isPlatformScope ? null : ($store ?? app(\App\Services\StoreContext::class)->getStore());
@@ -635,16 +737,79 @@
             </div>
 
             <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <x-digital-clock class="hidden sm:inline-flex" />
+
                 @if ($hasStoreContext)
                     <x-sync-status-widget :store="$activeStore" />
                 @endif
 
-                {{-- Language switcher: inline on sm+ (mobile lives inside the More menu) --}}
-                <div class="hidden sm:block">
-                    <x-language-switcher id="admin-header" btn-class="sf-btn-3d-telegram h-11 w-11 sm:h-10 sm:w-10 rounded-xl inline-flex items-center justify-center text-base cursor-pointer shadow-xs text-white" />
+                {{-- Desktop action buttons: Language, Store, Reload, Calculator, Dark Mode (hidden on mobile; lives inside More '...' menu on mobile) --}}
+                <div class="hidden sm:flex items-center gap-1.5 sm:gap-2">
+                    <x-language-switcher id="admin-header" btn-class="sf-btn-3d-telegram h-10 w-10 rounded-xl inline-flex items-center justify-center text-base cursor-pointer shadow-xs text-white" />
+
+                    @if ($hasStoreContext)
+                        <a href="{{ url('/store/' . $currentSlug) }}" target="_blank" rel="noopener noreferrer"
+                            class="sf-btn-3d-success h-10 w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            aria-label="{{ __('messages.view_commerce') }}"
+                            title="{{ __('messages.view_commerce') }}">
+                            <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.5 5 5h14l2 5.5M4 10.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.5M3 10.5h18M8 21v-6h8v6" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 5v5.5m5-5.5v5.5M17 5v5.5" />
+                            </svg>
+                        </a>
+                    @endif
+
+                    <button @click="window.location.reload()" type="button"
+                        class="sf-btn-3d-teal h-10 w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        aria-label="{{ __('messages.reload_page') }}"
+                        title="{{ __('messages.reload_page') }}">
+                        <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                            <path d="M21 3v5h-5"/>
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                            <path d="M3 21v-5h5"/>
+                        </svg>
+                    </button>
+
+                    <button @click="openCalculator()" type="button"
+                        class="sf-btn-3d-primary h-10 w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        aria-label="{{ __('messages.calculator') }}"
+                        title="{{ __('messages.calculator') }}">
+                        <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <rect x="5" y="3" width="14" height="18" rx="2" stroke-width="2" />
+                            <path stroke-linecap="round" stroke-width="2" d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01" />
+                        </svg>
+                    </button>
+
+                    <button @click="toggleDarkMode()" type="button"
+                        class="sf-btn-3d-gold h-10 w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        :aria-label="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">
+                        <svg x-show="!darkMode" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.8A8.5 8.5 0 1111.2 3a6.5 6.5 0 009.8 9.8z" />
+                        </svg>
+                        <svg x-show="darkMode" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36-6.36-1.42 1.42M7.06 16.94l-1.42 1.42m12.72 0-1.42-1.42M7.06 7.06 5.64 5.64" />
+                            <circle cx="12" cy="12" r="4" stroke-width="2" />
+                        </svg>
+                    </button>
+
+                    {{-- Fullscreen Toggle Button (3D Indigo) --}}
+                    <button id="admin-fullscreen-btn" @click="toggleFullscreen()" type="button"
+                        class="sf-btn-3d-indigo h-10 w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        :title="isFullscreen ? '{{ __('messages.fullscreen_exit') }}' : '{{ __('messages.fullscreen_enter') }}'"
+                        :aria-label="isFullscreen ? '{{ __('messages.fullscreen_exit') }}' : '{{ __('messages.fullscreen_enter') }}'">
+                        {{-- Enter Fullscreen Icon (Expand) --}}
+                        <svg x-show="!isFullscreen" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                        </svg>
+                        {{-- Exit Fullscreen Icon (Compress) --}}
+                        <svg x-show="isFullscreen" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+                        </svg>
+                    </button>
                 </div>
 
-                {{-- More actions (mobile only: view store, reload, calculator, language) --}}
+                {{-- More actions (mobile only: view store, reload, calculator, dark mode, language) --}}
                 {{-- Fixed positioning breaks out of any overflow/stacking context (e.g. product table overflow-y:auto) --}}
                 <div class="relative sm:hidden"
                     x-data="{
@@ -676,6 +841,9 @@
                         :style="'position:fixed; top:' + menuTop + '; right:' + menuRight + '; z-index:9999;'"
                         class="w-60 max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900"
                         role="menu" aria-label="{{ __('messages.more_actions') }}">
+                        <div class="sm:hidden px-1 pb-1 mb-1 border-b border-slate-100 dark:border-slate-800">
+                            <x-digital-clock class="w-full justify-between" />
+                        </div>
                         @if ($hasStoreContext)
                             <a href="{{ url('/store/' . $currentSlug) }}" target="_blank" rel="noopener noreferrer" role="menuitem" @click="moreOpen = false"
                                 class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
@@ -716,6 +884,16 @@
                             </svg>
                             <span x-text="darkMode ? 'Light Mode (အလင်း)' : 'Dark Mode (အမှောင်)'"></span>
                         </button>
+                        <button id="mobile-fullscreen-btn" type="button" role="menuitem" @click="moreOpen = false; toggleFullscreen()"
+                            class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                            <svg x-show="!isFullscreen" class="h-4 w-4 shrink-0 text-indigo-600 dark:text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                            </svg>
+                            <svg x-show="isFullscreen" class="h-4 w-4 shrink-0 text-indigo-600 dark:text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+                            </svg>
+                            <span x-text="isFullscreen ? '{{ __('messages.fullscreen_exit') }}' : '{{ __('messages.fullscreen_enter') }}'"></span>
+                        </button>
                         <div class="my-1 border-t border-slate-100 dark:border-slate-800"></div>
                         {{-- Inline language switcher (no nested sub-dropdown) for mobile More menu --}}
                         <div class="flex items-center justify-between px-2.5 py-1.5">
@@ -738,52 +916,6 @@
                         </div>
                     </div>
                 </div>
-
-                @if ($hasStoreContext)
-                    <a href="{{ url('/store/' . $currentSlug) }}" target="_blank" rel="noopener noreferrer"
-                        class="sf-btn-3d-success hidden sm:inline-flex h-11 w-11 sm:h-10 sm:w-10 rounded-xl items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        aria-label="{{ __('messages.view_commerce') }}"
-                        title="{{ __('messages.view_commerce') }}">
-                        <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.5 5 5h14l2 5.5M4 10.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.5M3 10.5h18M8 21v-6h8v6" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 5v5.5m5-5.5v5.5M17 5v5.5" />
-                        </svg>
-                    </a>
-                @endif
-
-                <button @click="window.location.reload()" type="button"
-                    class="sf-btn-3d-teal hidden sm:inline-flex h-11 w-11 sm:h-10 sm:w-10 rounded-xl items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    aria-label="{{ __('messages.reload_page') }}"
-                    title="{{ __('messages.reload_page') }}">
-                    <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                        <path d="M21 3v5h-5"/>
-                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                        <path d="M3 21v-5h5"/>
-                    </svg>
-                </button>
-
-                <button @click="openCalculator()" type="button"
-                    class="sf-btn-3d-primary h-11 w-11 sm:h-10 sm:w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    aria-label="{{ __('messages.calculator') }}"
-                    title="{{ __('messages.calculator') }}">
-                    <svg class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                        <rect x="5" y="3" width="14" height="18" rx="2" stroke-width="2" />
-                        <path stroke-linecap="round" stroke-width="2" d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01" />
-                    </svg>
-                </button>
-
-                <button @click="toggleDarkMode()" type="button"
-                    class="sf-btn-3d-gold h-11 w-11 sm:h-10 sm:w-10 rounded-xl inline-flex items-center justify-center text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    :aria-label="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">
-                    <svg x-show="!darkMode" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.8A8.5 8.5 0 1111.2 3a6.5 6.5 0 009.8 9.8z" />
-                    </svg>
-                    <svg x-show="darkMode" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36-6.36-1.42 1.42M7.06 16.94l-1.42 1.42m12.72 0-1.42-1.42M7.06 7.06 5.64 5.64" />
-                        <circle cx="12" cy="12" r="4" stroke-width="2" />
-                    </svg>
-                </button>
 
                 {{-- User Profile Dropdown Menu --}}
                 <div class="relative" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false" @keydown.escape.window="userMenuOpen = false">
