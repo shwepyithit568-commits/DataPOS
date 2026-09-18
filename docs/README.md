@@ -25,7 +25,8 @@
 9. [Closing Cash-Out Remaining Defects Fix](DataPOS_Closing_CashOut_Remaining_Defects_Fix_MM.md) — ဒုတိယ pass: retry protection, drawer attribution, unknown source, closed-shift lock, snapshot integrity
 10. [MySQL Portability Fixes](DataPOS_MySQL_Portability_Fixes_MM.md) — production အင်ဂျင်တွင်သာ crash ဖြစ်သော bug ၆ မျိုး (SQLite က ဖုံးထားခဲ့သည်)
 11. [UAT Day-Run Defects Fix](DataPOS_UAT_Day_Run_Defects_Fix_MM.md) — 2026-09-18 လက်တွေ့ UAT: ကောင်တာငွေ အံဆွဲမရောက်ခြင်း၊ ငွေသွင်း/ထုတ် အဝိုင်းဂဏန်းရိုက်မရခြင်း၊ 403 လင့် ၄ ခု၊ dashboard ဝင်ငွေ
-12. [Consolidation Manifest](CONSOLIDATION_MANIFEST.md)
+12. [Coupon Redemption & Loyalty Earning](DataPOS_Coupon_And_Loyalty_Earning_MM.md) — 2026-09-19: ကောင်တာတွင် coupon သုံးနိုင်ခြင်း + အရောင်းမှ Points ရရှိခြင်း (gap ၂ ခု ဖြည့်)
+13. [Consolidation Manifest](CONSOLIDATION_MANIFEST.md)
 
 ## Historical archive
 

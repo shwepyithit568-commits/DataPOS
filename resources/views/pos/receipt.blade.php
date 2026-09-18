@@ -639,6 +639,14 @@
                     <span style="color:#d97706;">− {{ format_currency((float) $sale->discount, $store) }}</span>
                 </div>
             @endif
+            {{-- Which coupon priced this sale (the discount above is the combined
+                 manual + coupon amount; the code is what the customer asks about). --}}
+            @if ($sale->coupon_code)
+                <div class="total-row" style="font-size:11px;color:#475569;">
+                    <span>{{ __('messages.pos_coupon') }}: {{ $sale->coupon_code }}</span>
+                    <span></span>
+                </div>
+            @endif
             <div class="total-row grand">
                 <span>{{ __('messages.total') }}</span>
                 <span>{{ format_currency((float) $sale->total, $store) }}</span>
@@ -667,6 +675,27 @@
                 <div class="total-row" style="color:#d97706;font-weight:700;">
                     <span>{{ __('messages.balance_due') }}</span>
                     <span>{{ format_currency((float) $balanceDue, $store) }}</span>
+                </div>
+            @endif
+            {{-- Points this purchase earned — the customer's receipt is where the
+                 loyalty programme becomes visible to them. --}}
+            @php
+                $earnedPoints = $sale->customer_id
+                    ? \App\Models\LoyaltyPointTransaction::where('pos_sale_id', $sale->id)
+                        ->where('type', \App\POS\Services\MembershipLoyaltyService::TYPE_EARNED)
+                        ->first()
+                    : null;
+                $pointsBalance = $sale->customer_id
+                    ? (int) (\Illuminate\Support\Facades\DB::table('store_user')
+                        ->where('store_id', $store->id)
+                        ->where('user_id', $sale->customer_id)
+                        ->value('loyalty_points') ?? 0)
+                    : 0;
+            @endphp
+            @if ($earnedPoints || $pointsBalance > 0)
+                <div class="total-row" style="font-size:11px;color:#047857;font-weight:700;">
+                    <span>{{ __('messages.loyalty_points_earned') }}@if ($earnedPoints) — {{ $earnedPoints->points }}@endif</span>
+                    <span>{{ __('messages.loyalty_points_balance') }}: {{ $pointsBalance }}</span>
                 </div>
             @endif
         </div>

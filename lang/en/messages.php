@@ -5930,4 +5930,30 @@ return [
     'days_remaining' => 'Days Remaining',
     'wholesale_title' => 'Wholesale Applications',
     'templates' => 'Templates',
+
+    // ── Coupons redeemable at the counter + points earned on sales (2026-09-18) ──
+    'coupon_not_found' => 'That coupon code was not found.',
+    'coupon_inactive' => 'That coupon is inactive.',
+    'coupon_not_started' => 'That coupon has not started yet.',
+    'coupon_expired' => 'That coupon has expired.',
+    'coupon_limit_reached' => 'That coupon has reached its usage limit.',
+    'coupon_min_order' => 'This coupon needs an order of at least :amount.',
+    'coupon_customer_limit' => 'This customer has already used that coupon.',
+    'coupon_type_unsupported' => 'This promotion type is not supported at the counter yet.',
+    'coupon_rejected' => 'Coupon refused —',
+    'coupon_applied' => 'Coupon :name applied: −:amount',
+    'coupon_cleared' => 'Coupon removed from the cart.',
+    'pos_coupon' => 'Coupon code',
+    'pos_coupon_placeholder' => 'Enter the coupon code',
+    'pos_coupon_apply' => 'Apply coupon',
+    'loyalty_note_sale_earned' => 'Points earned on receipt :receipt',
+    'loyalty_note_return_reversed' => 'Points taken back for refund :refund',
+    'loyalty_points_earned' => 'Points earned',
+    'loyalty_points_balance' => 'Points balance',
+    'loyalty_settings' => 'Loyalty points earning',
+    'loyalty_amount_per_point' => 'Money per 1 point',
+    'loyalty_amount_per_point_hint' => 'How much a customer must spend to earn one point (0 = points are not earned).',
+
+    'coupon_not_applicable' => 'This coupon does not apply to anything in this cart.',
+
 ];

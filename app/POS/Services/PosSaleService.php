@@ -4,6 +4,7 @@ namespace App\POS\Services;
 
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Promotion;
 use App\Models\Store;
 use App\Models\User;
 use App\POS\Exceptions\InventoryException;
@@ -32,6 +33,8 @@ class PosSaleService
         private readonly CostingService $costing,
         private readonly CashierShiftService $shifts,
         private readonly CustomerDebtService $debts,
+        private readonly PromotionService $promotions,
+        private readonly MembershipLoyaltyService $loyalty,
     ) {
     }
 
@@ -254,6 +257,137 @@ class PosSaleService
         session()->forget($this->cartDiscountKey($store));
     }
 
+    // ---------- Cart coupon ----------
+    //
+    // The coupon lives in the session next to the manual discount, so every
+    // screen that reads cart totals (cart panel, payment modal, cash default,
+    // receipt preview) shows the discounted amount without knowing about
+    // coupons at all. Validation is re-run on every totals read: a cart edit
+    // that drops the bill below the coupon's minimum simply stops applying it.
+
+    private function cartCouponKey(Store $store): string
+    {
+        return 'pos.cart_coupon.' . $store->id;
+    }
+
+    /** The coupon currently attached to the cart, if any. */
+    public function getCoupon(Store $store): ?Promotion
+    {
+        $code = session()->get($this->cartCouponKey($store));
+
+        if (! is_string($code) || trim($code) === '') {
+            return null;
+        }
+
+        return Promotion::where('store_id', $store->id)->where('code', strtoupper(trim($code)))->first();
+    }
+
+    public function setCoupon(Store $store, ?string $code): void
+    {
+        $code = $code !== null ? trim($code) : '';
+
+        if ($code === '') {
+            $this->clearCoupon($store);
+
+            return;
+        }
+
+        session()->put($this->cartCouponKey($store), strtoupper($code));
+    }
+
+    public function clearCoupon(Store $store): void
+    {
+        session()->forget($this->cartCouponKey($store));
+    }
+
+    /**
+     * Validate the attached coupon against an order value.
+     *
+     * @return array{valid:bool, discount:string, reason:?string, params:array<string,string>, promotion:?Promotion}
+     */
+    public function couponFor(Store $store, string $orderTotal, ?User $customer, array $lines = []): array
+    {
+        $promotion = $this->getCoupon($store);
+
+        if (! $promotion) {
+            return ['valid' => false, 'discount' => '0.00', 'reason' => null, 'params' => [], 'promotion' => null];
+        }
+
+        return $this->promotions->validateCouponDecimal(
+            store: $store,
+            code: $promotion->code,
+            orderTotal: $orderTotal,
+            customerId: $customer?->id,
+            eligibleSubtotal: $this->eligibleSubtotalFor($promotion, $lines),
+        );
+    }
+
+    /**
+     * Validate a coupon the cashier just typed against the live cart, without
+     * attaching it. Scoped promotions need the cart lines to price their part,
+     * so this is the only correct entry point for a code that is not on the
+     * cart yet.
+     *
+     * @return array{valid:bool, discount:string, reason:?string, params:array<string,string>, promotion:?Promotion}
+     */
+    public function previewCoupon(Store $store, string $code, ?User $customer): array
+    {
+        $promotion = $this->promotions->findByCode($store, $code);
+        $totals = $this->cartTotals($store);
+
+        return $this->promotions->validateCouponDecimal(
+            store: $store,
+            code: $code,
+            orderTotal: (string) $totals['subtotal'],
+            customerId: $customer?->id,
+            eligibleSubtotal: $promotion
+                ? $this->eligibleSubtotalFor($promotion, $this->cartResolved($store))
+                : null,
+        );
+    }
+
+    /**
+     * The part of the cart a scoped promotion applies to (null when the coupon
+     * is not scoped, so the caller uses the whole order).
+     *
+     * @param  array<int, array{product_id:int, line_total:string, quantity:string}>  $lines
+     */
+    private function eligibleSubtotalFor(Promotion $promotion, array $lines): ?string
+    {
+        if (! $promotion->product_id && ! $promotion->category_id) {
+            return null;
+        }
+
+        if ($lines === []) {
+            return '0.00';
+        }
+
+        $categoryProductIds = null;
+
+        if ($promotion->category_id) {
+            $categoryProductIds = Product::where('store_id', $promotion->store_id)
+                ->where('category_id', $promotion->category_id)
+                ->pluck('id')
+                ->all();
+        }
+
+        $eligible = '0';
+
+        foreach ($lines as $line) {
+            if ($promotion->product_id && (int) $line['product_id'] === (int) $promotion->product_id) {
+                $eligible = bcadd($eligible, (string) $line['line_total'], 2);
+
+                continue;
+            }
+
+            if ($categoryProductIds !== null && in_array((int) $line['product_id'], $categoryProductIds, true)) {
+                $eligible = bcadd($eligible, (string) $line['line_total'], 2);
+            }
+        }
+
+        return $eligible;
+    }
+
     /**
      * True when the user is an active retail/wholesale customer of this store
      * (the same membership rule post() enforces — never cross-store).
@@ -472,6 +606,7 @@ class PosSaleService
         session()->forget($this->cartCustomerKey($store));
         session()->forget($this->resumedSaleKey($store));
         $this->clearDiscount($store);
+        $this->clearCoupon($store);
     }
 
     /**
@@ -550,7 +685,9 @@ class PosSaleService
         $defaultRate = (string) ($store->setting?->getPosSetting('default_tax_rate', 5.0));
         $taxType = (string) ($store->setting?->getPosSetting('tax_type', 'exclusive'));
 
-        foreach ($this->cartResolved($store) as $line) {
+        $lines = $this->cartResolved($store);
+
+        foreach ($lines as $line) {
             $subtotal = bcadd($subtotal, $line['line_total'], 2);
             $retailSubtotal = bcadd($retailSubtotal, $line['line_retail_total'], 2);
 
@@ -584,6 +721,18 @@ class PosSaleService
             $rawTotal = $subtotal;
         }
 
+        // Coupon: validated against the subtotal, added to the manual discount
+        // and capped at the bill. When the cart changes so the coupon no longer
+        // qualifies (min order, expiry, limit) it silently stops applying here —
+        // the same rule the posting path uses, so the shown total is the
+        // charged total.
+        $coupon = $this->couponFor($store, $subtotal, $this->cartCustomer($store), $lines);
+        $couponDiscount = $coupon['valid'] ? $coupon['discount'] : '0.00';
+
+        if (bccomp($couponDiscount, '0', 2) > 0) {
+            $discount = bcadd($discount, $couponDiscount, 2);
+        }
+
         if (bccomp($discount, $rawTotal, 2) > 0) {
             $discount = $rawTotal;
         }
@@ -604,6 +753,11 @@ class PosSaleService
             'taxable_subtotal' => $taxableSubtotal,
             'exempt_subtotal' => $exemptSubtotal,
             'total' => $total,
+            'coupon_code' => $coupon['promotion']?->code,
+            'coupon_name' => $coupon['promotion']?->name,
+            'coupon_discount' => $couponDiscount,
+            'coupon_valid' => $coupon['valid'],
+            'coupon_reason' => $coupon['reason'],
         ];
     }
 
@@ -892,6 +1046,7 @@ class PosSaleService
         ?PosSale $heldSale = null,
         ?int $customerId = null,
         ?string $explicitDiscount = null,
+        ?string $couponCode = null,
     ): PosSale {
         app(PeriodLockService::class)->assertDateNotLocked($store, now(), 'sale');
 
@@ -1026,7 +1181,65 @@ class PosSaleService
         if (bccomp($discount, '0', 2) < 0) {
             $discount = '0.00';
         }
+
         $tax = $enableTax ? $taxTotal : '0';
+
+        // Coupon: validated against the pre-discount subtotal (a promotion is an
+        // offer on the order value), added to any manual discount, and capped at
+        // the bill so it can never go negative. The redemption is written inside
+        // the posting transaction below.
+        $coupon = null;
+        $couponDiscount = '0.00';
+        $postedCoupon = $couponCode !== null && trim($couponCode) !== '';
+        $sessionCoupon = $this->getCoupon($store);
+
+        if ($postedCoupon || $sessionCoupon) {
+            $code = $postedCoupon ? trim((string) $couponCode) : (string) $sessionCoupon->code;
+
+            // Scoped coupons price only the matching lines of this sale.
+            $couponLines = array_map(fn (array $line) => [
+                'product_id' => (int) $line['product']->id,
+                'line_total' => (string) $line['line_total'],
+            ], $resolved);
+
+            $scopedPromotion = $this->promotions->findByCode($store, $code);
+
+            $check = $this->promotions->validateCouponDecimal(
+                store: $store,
+                code: $code,
+                orderTotal: $subtotal,
+                customerId: $customerId,
+                eligibleSubtotal: $scopedPromotion
+                    ? $this->eligibleSubtotalFor($scopedPromotion, $couponLines)
+                    : null,
+            );
+
+            if ($check['valid']) {
+                $coupon = $check['promotion'];
+                $couponDiscount = $check['discount'];
+                $discount = bcadd($discount, $couponDiscount, 2);
+
+                $billBase = ($enableTax && $taxType === 'exclusive') ? bcadd($subtotal, $tax, 2) : $subtotal;
+
+                if (bccomp($discount, $billBase, 2) > 0) {
+                    $discount = $billBase;
+                }
+            } elseif ($postedCoupon) {
+                // The cashier asked for this code on this sale — refuse loudly.
+                throw new InventoryException(
+                    __('messages.coupon_rejected') . ' ' . __('messages.' . ($check['reason'] ?? 'coupon_not_found'), $check['params'] ?? [])
+                );
+            }
+            // A cart coupon that stopped qualifying (the bill dropped below its
+            // minimum, it expired, its limit is used up) is simply not applied:
+            // it was already excluded from the total the cashier was shown.
+        }
+
+        if ($enableTax && $taxType === 'exclusive') {
+            $total = bcsub(bcadd($subtotal, $tax, 2), $discount, 2);
+        } else {
+            $total = bcsub($subtotal, $discount, 2);
+        }
         if ($enableTax && $taxType === 'exclusive') {
             $total = bcsub(bcadd($subtotal, $tax, 2), $discount, 2);
         } else {
@@ -1084,6 +1297,7 @@ class PosSaleService
                     $store, $resolved, $paymentRows, $actor, $shift, $heldSale,
                     $subtotal, $discount, $tax, $total, $warehouseId, $cashKept,
                     $customerId, $creditTotal, $taxType, $taxableAmount, $exemptAmount,
+                    $coupon, $couponDiscount,
                 );
             } catch (\Illuminate\Database\QueryException $e) {
                 if ($attempt === 2 || ! $this->isUniqueViolation($e)) {
@@ -1117,11 +1331,14 @@ class PosSaleService
         string $taxType = 'exclusive',
         string $taxableAmount = '0',
         string $exemptAmount = '0',
+        ?Promotion $coupon = null,
+        string $couponDiscount = '0.00',
     ): PosSale {
         return DB::transaction(function () use (
             $store, $resolved, $paymentRows, $actor, $shift, $heldSale,
             $subtotal, $discount, $tax, $total, $warehouseId, $cashKept,
             $customerId, $creditTotal, $taxType, $taxableAmount, $exemptAmount,
+            $coupon, $couponDiscount,
         ) {
             if ($heldSale) {
                 // held = still waiting in the held list; resumed = recalled
@@ -1156,7 +1373,16 @@ class PosSaleService
                 'total' => $total,
                 'posted_at' => now(),
                 'created_by' => $actor->id,
-            ])->save();
+            ]);
+
+            // Which coupon priced this sale — the columns existed but nothing
+            // ever filled them, so promotions could never be reported on.
+            if ($coupon) {
+                $sale->promotion_id = $coupon->id;
+                $sale->coupon_code = $coupon->code;
+            }
+
+            $sale->save();
 
             if ($heldSale) {
                 $sale->items()->delete();
@@ -1236,6 +1462,22 @@ class PosSaleService
             if ($shift && bccomp($cashKept, '0', 2) > 0) {
                 $this->shifts->recordCashSale($shift, $cashKept);
             }
+
+            // Coupon redemption ledger: usage row + used counter, inside the same
+            // transaction so the limit can never be bypassed by a retry.
+            if ($coupon) {
+                $this->promotions->redeem(
+                    store: $store,
+                    promotion: $coupon,
+                    discountApplied: $couponDiscount,
+                    customerId: $customerId,
+                    posSaleId: $sale->id,
+                    actor: $actor,
+                );
+            }
+
+            // Loyalty: the customer's points and spending move with the sale.
+            $this->loyalty->accrueForSale($sale, $actor);
 
             $this->clearCart($store);
 

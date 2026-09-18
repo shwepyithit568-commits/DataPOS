@@ -373,6 +373,44 @@
             </p>
         </div>
 
+        {{-- Coupon code — validated by the server against the live cart, then
+             stored with the cart so the totals below already include it. --}}
+        <div class="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.pos_coupon') }}</label>
+            <div class="flex items-center gap-1.5">
+                <input type="text"
+                       autocomplete="off"
+                       x-model="couponCode"
+                       @keydown.enter.prevent="applyCoupon()"
+                       placeholder="{{ __('messages.pos_coupon_placeholder') }}"
+                       class="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-sm font-bold uppercase tracking-wide focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition">
+                <button type="button" @click="applyCoupon()" :disabled="couponBusy || !couponCode"
+                        class="sf-btn-3d px-3 py-2 rounded-xl text-xs font-bold disabled:opacity-50 cursor-pointer">
+                    {{ __('messages.pos_coupon_apply') }}
+                </button>
+                <button type="button" @click="clearCoupon()" x-show="Number(cart.totals.coupon_discount) > 0" x-cloak
+                        class="sf-btn-3d-danger px-2.5 py-2 rounded-xl text-xs font-bold cursor-pointer">✕</button>
+            </div>
+
+            <p class="text-[11px] font-bold mt-1 truncate"
+               x-show="couponMessage !== ''" x-cloak
+               :class="couponValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
+               x-text="couponMessage"></p>
+
+            {{-- A stored coupon that no longer qualifies after a cart edit --}}
+            <p class="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-1 truncate"
+               x-show="cart.totals.coupon_code && !cart.totals.coupon_valid" x-cloak>
+                <span x-text="cart.totals.coupon_code + ' — '"></span>
+                <span>{{ __('messages.coupon_rejected') }}</span>
+            </p>
+
+            <p class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-1"
+               x-show="Number(cart.totals.coupon_discount) > 0" x-cloak>
+                <span x-text="(cart.totals.coupon_name || '') + ' (' + (cart.totals.coupon_code || '') + ')'"></span>
+                <span class="ml-1" x-text="'−' + formatCurrency(cart.totals.coupon_discount)"></span>
+            </p>
+        </div>
+
         {{-- Action Buttons --}}
         <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
             <button type="button" @click="clearDiscount()" x-show="Number(cart.totals.discount) > 0"

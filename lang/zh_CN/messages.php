@@ -5930,4 +5930,30 @@ return [
     'days_remaining' => '剩余天数',
     'wholesale_title' => '批发申请',
     'templates' => '模板',
+
+    // ── Coupons redeemable at the counter + points earned on sales (2026-09-18) ──
+    'coupon_not_found' => '找不到该优惠码。',
+    'coupon_inactive' => '该优惠券已停用。',
+    'coupon_not_started' => '该优惠券尚未开始。',
+    'coupon_expired' => '该优惠券已过期。',
+    'coupon_limit_reached' => '该优惠券已达到使用次数上限。',
+    'coupon_min_order' => '该优惠券需订单满 :amount。',
+    'coupon_customer_limit' => '该客户已使用过此优惠券。',
+    'coupon_type_unsupported' => '该促销类型暂不支持在收银台使用。',
+    'coupon_rejected' => '优惠券无法使用 —',
+    'coupon_applied' => '已使用优惠券 :name：−:amount',
+    'coupon_cleared' => '已从购物车移除优惠券。',
+    'pos_coupon' => '优惠码',
+    'pos_coupon_placeholder' => '输入优惠码',
+    'pos_coupon_apply' => '使用优惠券',
+    'loyalty_note_sale_earned' => '收据 :receipt 获得的积分',
+    'loyalty_note_return_reversed' => '退货 :refund 扣回积分',
+    'loyalty_points_earned' => '获得积分',
+    'loyalty_points_balance' => '积分余额',
+    'loyalty_settings' => '积分获取设置',
+    'loyalty_amount_per_point' => '每 1 积分所需金额',
+    'loyalty_amount_per_point_hint' => '顾客需消费多少金额获得 1 积分（0 = 不获得积分）。',
+
+    'coupon_not_applicable' => '该优惠券不适用于本购物车中的商品。',
+
 ];

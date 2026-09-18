@@ -35,6 +35,7 @@ class PosReturnService
         private readonly InventoryService $inventory,
         private readonly CashierShiftService $shifts,
         private readonly CustomerDebtService $debts,
+        private readonly MembershipLoyaltyService $loyalty,
     ) {
     }
 
@@ -401,6 +402,10 @@ class PosReturnService
             }
 
             $this->updateSaleStatus($store, $sale);
+
+            // A refund takes back the points and the spend that money earned —
+            // otherwise a customer could buy, refund and keep the points.
+            $this->loyalty->reverseForReturn($refund, $actor);
 
             AuditLog::write(
                 storeId: $store->id,

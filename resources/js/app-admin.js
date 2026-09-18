@@ -247,6 +247,8 @@ Alpine.data('posApp', (opts = {}) => ({
     expenseClientTxId: '', expenseConflict: '',
     // Discount Modal
     discountModalOpen: false, discountBusy: false, discountType: 'fixed', discountValue: '',
+    // Coupon (stored on the cart by the server; these drive the modal UI)
+    couponCode: '', couponBusy: false, couponValid: false, couponMessage: '',
     barcodeCameraInsecure: false,
     notice: '', noticeType: '', noticeTimer: null,
 
@@ -958,6 +960,62 @@ Alpine.data('posApp', (opts = {}) => ({
             this.flash(e.message, 'error');
         } finally {
             this.discountBusy = false;
+        }
+    },
+
+    /**
+     * Attach a coupon to the cart.
+     *
+     * The server validates the code against the current cart (active, in date,
+     * limits, minimum order) and stores it with the cart, so the totals it
+     * returns already include the discount — the same numbers the sale will be
+     * posted with. A refusal carries the reason in the cashier's language.
+     */
+    async applyCoupon() {
+        if (this.couponBusy) return;
+        const code = String(this.couponCode || '').trim();
+        if (!code) {
+            this.couponMessage = this.labels.pos_coupon_placeholder || 'Enter the coupon code';
+            this.couponValid = false;
+            return;
+        }
+
+        this.couponBusy = true;
+        try {
+            const data = await this.fetchJson('/cart/coupon', {
+                method: 'POST',
+                body: new URLSearchParams({ code }),
+            });
+            this.applyCart(data);
+            this.couponMessage = data.success || '';
+            this.couponValid = true;
+            this.flash(data.success || '', 'success');
+        } catch (e) {
+            this.couponMessage = e.message;
+            this.couponValid = false;
+            this.flash(e.message, 'error');
+        } finally {
+            this.couponBusy = false;
+        }
+    },
+
+    async clearCoupon() {
+        if (this.couponBusy) return;
+        this.couponBusy = true;
+        try {
+            const data = await this.fetchJson('/cart/coupon', {
+                method: 'POST',
+                body: new URLSearchParams({ code: '' }),
+            });
+            this.applyCart(data);
+            this.couponCode = '';
+            this.couponMessage = data.success || '';
+            this.couponValid = false;
+            this.flash(data.success || '', 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        } finally {
+            this.couponBusy = false;
         }
     },
 

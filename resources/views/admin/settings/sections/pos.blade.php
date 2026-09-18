@@ -35,6 +35,7 @@
     $barcodeAutoAdd = $pos['barcode_auto_add'] ?? true;
     $soundFx = $pos['enable_sound_fx'] ?? true;
     $allowNegativeStock = $pos['allow_negative_stock'] ?? false;
+    $loyaltyPerPoint = $pos['loyalty_amount_per_point'] ?? '';
 @endphp
 
 <div class="space-y-6"
@@ -150,6 +151,25 @@
                     <label class="{{ $labelClass }}">{{ __('messages.tin_number_label') }}</label>
                     <input type="text" name="pos_settings[tax_id_number]" x-model="taxId"
                            placeholder="e.g. TIN-1029384756" class="{{ $inputClass }}">
+                </div>
+            </div>
+
+            {{-- Loyalty points earning (money per 1 point; 0 = off) --}}
+            <div class="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <h3 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                        <span>🎁</span>
+                        <span>{{ __('messages.loyalty_settings') }}</span>
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="{{ $labelClass }}">{{ __('messages.loyalty_amount_per_point') }}</label>
+                        <input type="number" name="pos_settings[loyalty_amount_per_point]" min="0" step="any"
+                               value="{{ $loyaltyPerPoint }}" placeholder="0" class="{{ $inputClass }}">
+                        <p class="{{ $helpClass }}">{{ __('messages.loyalty_amount_per_point_hint') }}</p>
+                        @error('pos_settings.loyalty_amount_per_point')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+                    </div>
                 </div>
             </div>
 

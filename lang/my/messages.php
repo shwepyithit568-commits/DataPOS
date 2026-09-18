@@ -5930,4 +5930,30 @@ return [
     'days_remaining' => 'ကျန်ရှိသောရက်များ',
     'wholesale_title' => 'လက်ကား လျှောက်ထားချက်များ',
     'templates' => 'ပုံစံများ',
+
+    // ── Coupons redeemable at the counter + points earned on sales (2026-09-18) ──
+    'coupon_not_found' => 'ဤ Coupon ကုဒ်ကို ရှာမတွေ့ပါ။',
+    'coupon_inactive' => 'ဤ Coupon ကို ပိတ်ထားပါသည်။',
+    'coupon_not_started' => 'ဤ Coupon သက်တမ်း မစရသေးပါ။',
+    'coupon_expired' => 'ဤ Coupon သက်တမ်း ကုန်သွားပါပြီ။',
+    'coupon_limit_reached' => 'ဤ Coupon သုံးနိုင်သည့် အရေအတွက် ပြည့်သွားပါပြီ။',
+    'coupon_min_order' => 'ဤ Coupon အတွက် အနည်းဆုံး :amount ဖိုးဝယ်ရန် လိုပါသည်။',
+    'coupon_customer_limit' => 'ဤဖောက်သည် ဤ Coupon ကို အသုံးပြုပြီးဖြစ်ပါသည်။',
+    'coupon_type_unsupported' => 'ဤပရိုမိုးရှင်း အမျိုးအစားကို ကောင်တာတွင် အသုံးမပြုနိုင်သေးပါ။',
+    'coupon_rejected' => 'Coupon မရနိုင်ပါ —',
+    'coupon_applied' => 'Coupon :name ဖြင့် −:amount လျှော့ပြီးပါပြီ',
+    'coupon_cleared' => 'Coupon ကို ဈေးခြင်းမှ ဖျက်လိုက်ပါပြီ။',
+    'pos_coupon' => 'Coupon ကုဒ်',
+    'pos_coupon_placeholder' => 'Coupon ကုဒ် ရိုက်ထည့်ပါ',
+    'pos_coupon_apply' => 'Coupon သုံးမည်',
+    'loyalty_note_sale_earned' => 'ပြေစာ :receipt မှ ရရှိသည့် Points',
+    'loyalty_note_return_reversed' => 'ငွေပြန်အမ်း :refund အတွက် Points ပြန်ဖြတ်ခြင်း',
+    'loyalty_points_earned' => 'ရရှိသည့် Points',
+    'loyalty_points_balance' => 'Points လက်ကျန်',
+    'loyalty_settings' => 'Loyalty Points ရရှိမှု',
+    'loyalty_amount_per_point' => '၁ Points အတွက် ကုန်ကျငွေ',
+    'loyalty_amount_per_point_hint' => 'Points ၁ မှတ် ရရန် ဖောက်သည် မည်မျှဝယ်ရမည် (0 = Points မရပါ)။',
+
+    'coupon_not_applicable' => 'ဤ Coupon သည် လက်ရှိ ဈေးခြင်းထဲရှိ ပစ္စည်းများနှင့် မကိုက်ညီပါ။',
+
 ];

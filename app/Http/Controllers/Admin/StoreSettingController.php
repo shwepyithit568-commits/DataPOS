@@ -155,6 +155,8 @@ class StoreSettingController extends Controller
                 'pos_settings.barcode_auto_add' => ['nullable', 'boolean'],
                 'pos_settings.enable_sound_fx' => ['nullable', 'boolean'],
                 'pos_settings.allow_negative_stock' => ['nullable', 'boolean'],
+                // Loyalty: MMK a customer must spend to earn 1 point (0 = off).
+                'pos_settings.loyalty_amount_per_point' => ['nullable', 'numeric', 'min:0', 'max:100000000'],
             ]),
             default => $request->validate([
                 'store_name' => ['required', 'string', 'max:255'],
@@ -321,6 +323,10 @@ class StoreSettingController extends Controller
                 'barcode_auto_add'      => ! empty($rawPos['barcode_auto_add']),
                 'enable_sound_fx'       => ! empty($rawPos['enable_sound_fx']),
                 'allow_negative_stock'  => ! empty($rawPos['allow_negative_stock']),
+                // Money per 1 loyalty point; blank/0 turns earning off.
+                'loyalty_amount_per_point' => ($rawPos['loyalty_amount_per_point'] ?? '') !== ''
+                    ? round((float) $rawPos['loyalty_amount_per_point'], 2)
+                    : 0,
             ];
         }
 

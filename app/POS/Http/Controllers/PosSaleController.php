@@ -506,6 +506,51 @@ class PosSaleController extends Controller
     }
 
     /**
+     * Attach (or clear) a coupon on the live cart.
+     *
+     * The code is validated against the current cart before it is stored, and
+     * stored in the session next to the manual discount — so the cart panel,
+     * the payment modal and the receipt all show the discounted total. Nothing
+     * is redeemed here: that happens inside the sale transaction.
+     */
+    public function setCoupon(Request $request, StoreContext $context): JsonResponse
+    {
+        $store = $context->getStore();
+
+        $data = $request->validate([
+            'code' => ['nullable', 'string', 'max:40'],
+        ]);
+
+        $code = isset($data['code']) ? trim((string) $data['code']) : '';
+
+        if ($code === '') {
+            $this->sales->clearCoupon($store);
+
+            return $this->jsonOrRedirect($request, $store, __('messages.coupon_cleared'));
+        }
+
+        // previewCoupon() (not the promotion service directly): a promo scoped to
+        // a product or category can only be priced against the cart's lines.
+        $check = $this->sales->previewCoupon($store, $code, $this->sales->cartCustomer($store));
+
+        if (! $check['valid']) {
+            return $this->jsonOrRedirect(
+                $request,
+                $store,
+                error: __('messages.coupon_rejected')
+                    . ' ' . __('messages.' . ($check['reason'] ?? 'coupon_not_found'), $check['params'] ?? []),
+            );
+        }
+
+        $this->sales->setCoupon($store, $check['promotion']->code);
+
+        return $this->jsonOrRedirect($request, $store, __('messages.coupon_applied', [
+            'name' => $check['promotion']->name,
+            'amount' => format_currency((float) $check['discount'], $store),
+        ]));
+    }
+
+    /**
      * Drop the whole session cart (F4 clear-cart shortcut).
      */
     public function clearCart(Request $request, StoreContext $context): JsonResponse|RedirectResponse
@@ -683,6 +728,7 @@ class PosSaleController extends Controller
             'payments.*.amount' => ['nullable', 'decimal:0,2', 'min:0'], // empty = unused method, dropped in the service
             'customer_id' => ['nullable', 'integer', 'exists:users,id'],
             'discount' => ['nullable', 'decimal:0,2', 'min:0'],
+            'coupon_code' => ['nullable', 'string', 'max:40'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'web_order_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('orders', 'id')->where('store_id', $store->id)],
         ]);
@@ -715,6 +761,7 @@ class PosSaleController extends Controller
                 heldSale: $sale,
                 customerId: isset($data['customer_id']) ? (int) $data['customer_id'] : null,
                 explicitDiscount: isset($data['discount']) && $data['discount'] !== null ? (string) $data['discount'] : null,
+                couponCode: isset($data['coupon_code']) && trim((string) $data['coupon_code']) !== '' ? (string) $data['coupon_code'] : null,
             );
         } catch (InventoryException $e) {
             return back()->with('error', $e->getMessage());

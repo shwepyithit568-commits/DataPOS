@@ -916,6 +916,8 @@ Route::prefix('store/{store_slug}')
             // /cart/clear and /cart/discount must be registered before /cart/{line} (route order).
             Route::post('/cart/clear', [\App\POS\Http\Controllers\PosSaleController::class, 'clearCart'])->name('pos.cart.clear')->middleware('store.permission:pos_sales.update');
             Route::post('/cart/discount', [\App\POS\Http\Controllers\PosSaleController::class, 'setDiscount'])->name('pos.cart.discount')->middleware('store.permission:pos_sales.update');
+            // Coupon on the live cart: validated, then stored with the cart.
+            Route::post('/cart/coupon', [\App\POS\Http\Controllers\PosSaleController::class, 'setCoupon'])->name('pos.cart.coupon')->middleware('store.permission:pos_sales.view');
             Route::post('/cart/{line}', [\App\POS\Http\Controllers\PosSaleController::class, 'updateLine'])->name('pos.cart.update')->middleware('store.permission:pos_sales.update');
             Route::post('/cart/{line}/price', [\App\POS\Http\Controllers\PosSaleController::class, 'setLinePrice'])->name('pos.cart.price')->middleware('store.permission:pos_sales.update');
             Route::delete('/cart/{line}', [\App\POS\Http\Controllers\PosSaleController::class, 'removeLine'])->name('pos.cart.remove')->middleware('store.permission:pos_sales.update');

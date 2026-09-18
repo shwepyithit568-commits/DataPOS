@@ -179,57 +179,48 @@ class PromotionService
      */
     public function validateCoupon(Store $store, string $code, float $orderTotal, ?int $customerId = null): array
     {
-        $promotion = Promotion::where('store_id', $store->id)
-            ->where('code', strtoupper(trim($code)))
-            ->first();
+        // Delegates to the shared rule check so the admin validator and the POS
+        // checkout can never drift apart.
+        [$promotion, $reason, $params] = $this->checkCoupon($store, $code, (string) $orderTotal, $customerId);
 
-        if (!$promotion) {
-            return ['valid' => false, 'discount' => 0.0, 'message' => 'Coupon code not found.', 'promotion' => null];
-        }
-
-        if (!$promotion->is_active) {
-            return ['valid' => false, 'discount' => 0.0, 'message' => 'This promotion is inactive.', 'promotion' => $promotion];
-        }
-
-        if ($promotion->isNotStarted()) {
-            return ['valid' => false, 'discount' => 0.0, 'message' => 'This promotion has not started yet.', 'promotion' => $promotion];
-        }
-
-        if ($promotion->isExpired()) {
-            return ['valid' => false, 'discount' => 0.0, 'message' => 'This promotion has expired.', 'promotion' => $promotion];
-        }
-
-        if ($promotion->isUsageLimitReached()) {
-            return ['valid' => false, 'discount' => 0.0, 'message' => 'This promotion\'s usage limit has been reached.', 'promotion' => $promotion];
-        }
-
-        if (bccomp((string) $orderTotal, bcadd((string) ($promotion->min_order_amount ?? '0'), '0', 2), 2) < 0) {
+        if ($reason !== null) {
             return [
                 'valid' => false,
                 'discount' => 0.0,
-                'message' => 'Minimum order amount of ' . number_format((float) $promotion->min_order_amount) . ' Ks required.',
+                'message' => $this->reasonText($reason, $params),
                 'promotion' => $promotion,
             ];
         }
 
-        if ($customerId && $promotion->per_customer_limit) {
-            $customerUsed = PromotionUsage::where('promotion_id', $promotion->id)
-                ->where('customer_id', $customerId)
-                ->count();
-
-            if ($customerUsed >= $promotion->per_customer_limit) {
-                return ['valid' => false, 'discount' => 0.0, 'message' => 'You have reached the usage limit for this coupon.', 'promotion' => $promotion];
-            }
-        }
-
-        $discount = $this->calculateDiscount($promotion, $orderTotal);
+        /** @var Promotion $promotion */
+        $discount = $this->calculateDiscountDecimal($promotion, (string) $orderTotal);
 
         return [
             'valid' => true,
-            'discount' => $discount,
-            'message' => "Coupon applied: {$promotion->name} — " . number_format($discount) . ' Ks off',
+            'discount' => (float) $discount,
+            'message' => "Coupon applied: {$promotion->name} — " . number_format((float) $discount) . ' Ks off',
             'promotion' => $promotion,
         ];
+    }
+
+    /**
+     * The human sentence the admin validator returns for a rejection reason.
+     *
+     * @param  array<string,string>  $params
+     */
+    private function reasonText(string $reason, array $params = []): string
+    {
+        return match ($reason) {
+            'coupon_inactive' => 'This promotion is inactive.',
+            'coupon_not_started' => 'This promotion has not started yet.',
+            'coupon_expired' => 'This promotion has expired.',
+            'coupon_limit_reached' => 'This promotion\'s usage limit has been reached.',
+            'coupon_min_order' => 'Minimum order amount of ' . number_format((float) ($params['amount'] ?? 0)) . ' Ks required.',
+            'coupon_customer_limit' => 'You have reached the usage limit for this coupon.',
+            'coupon_type_unsupported' => 'This promotion type is not supported at the counter yet.',
+            'coupon_not_applicable' => 'This coupon does not apply to anything in this cart.',
+            default => 'Coupon code not found.',
+        };
     }
 
     /**
@@ -258,5 +249,182 @@ class PromotionService
             'bogo'        => '0.00', // BOGO is handled at line-item level in POS
             default       => '0.00',
         };
+    }
+
+    // ---------- Redemption (POS counter) ----------
+    //
+    // Coupons could be created, listed and validated from the admin screen, but
+    // nothing ever wrote a redemption: `promotions.used_count` and the
+    // `promotion_usages` ledger were read-only, so usage limits never bit, the
+    // per-customer limit never applied and the dashboard always showed 0 uses.
+    // These two methods are the write side, called from the sale transaction.
+
+    /**
+     * Validate a coupon for a POS sale and return the discount as a decimal.
+     *
+     * Same rules as validateCoupon() but decimal-safe (the discount is written
+     * onto a sale) and returning translation keys instead of English sentences,
+     * so the POS can show the reason in the cashier's language.
+     *
+     * @return array{valid:bool, discount:string, reason:?string, params:array<string,string>, promotion:?Promotion}
+     */
+    public function validateCouponDecimal(
+        Store $store,
+        string $code,
+        string $orderTotal,
+        ?int $customerId = null,
+        ?string $eligibleSubtotal = null,
+    ): array {
+        [$promotion, $reason, $params] = $this->checkCoupon($store, $code, $orderTotal, $customerId);
+
+        if (! $promotion || $reason !== null) {
+            return ['valid' => false, 'discount' => '0.00', 'reason' => $reason, 'params' => $params, 'promotion' => $promotion];
+        }
+
+        // A promotion can be limited to one product or category. Those discounts
+        // are priced on the matching part of the bill only — applying a
+        // "10% off chargers" coupon to the whole basket would give away money
+        // the shop never offered.
+        $base = $orderTotal;
+
+        if ($promotion->product_id || $promotion->category_id) {
+            if ($eligibleSubtotal === null) {
+                // The caller cannot tell us what matched, so we must not guess.
+                return ['valid' => false, 'discount' => '0.00', 'reason' => 'coupon_not_applicable', 'params' => [], 'promotion' => $promotion];
+            }
+
+            if (bccomp(bcadd($eligibleSubtotal, '0', 2), '0', 2) <= 0) {
+                return ['valid' => false, 'discount' => '0.00', 'reason' => 'coupon_not_applicable', 'params' => [], 'promotion' => $promotion];
+            }
+
+            $base = $eligibleSubtotal;
+        }
+
+        return [
+            'valid' => true,
+            'discount' => $this->calculateDiscountDecimal($promotion, $base),
+            'reason' => null,
+            'params' => [],
+            'promotion' => $promotion,
+        ];
+    }
+
+    /**
+     * Record that a coupon was used on a sale: usage ledger + used counter.
+     *
+     * Called inside the sale transaction so a sale and its redemption are one
+     * fact — a crash between the two would let the same coupon go over its limit.
+     */
+    public function redeem(
+        Store $store,
+        Promotion $promotion,
+        string $discountApplied,
+        ?int $customerId = null,
+        ?int $posSaleId = null,
+        ?User $actor = null,
+    ): PromotionUsage {
+        return DB::transaction(function () use ($store, $promotion, $discountApplied, $customerId, $posSaleId, $actor) {
+            $locked = Promotion::whereKey($promotion->id)->lockForUpdate()->firstOrFail();
+
+            $usage = PromotionUsage::create([
+                'promotion_id' => $locked->id,
+                'store_id' => $store->id,
+                'customer_id' => $customerId,
+                'pos_sale_id' => $posSaleId,
+                'discount_applied' => bcadd($discountApplied, '0', 2),
+            ]);
+
+            $locked->update(['used_count' => (int) $locked->used_count + 1]);
+
+            AuditLog::write(
+                storeId: $store->id,
+                action: 'promotion_redeemed',
+                entityType: Promotion::class,
+                entityId: $locked->id,
+                metadata: [
+                    'code' => $locked->code,
+                    'discount' => bcadd($discountApplied, '0', 2),
+                    'customer_id' => $customerId,
+                    'pos_sale_id' => $posSaleId,
+                    'used_count' => (int) $locked->used_count,
+                ],
+                actorId: $actor?->id,
+            );
+
+            return $usage;
+        });
+    }
+
+    /** The promotion a code belongs to, or null. */
+    public function findByCode(Store $store, string $code): ?Promotion
+    {
+        $code = strtoupper(trim($code));
+
+        if ($code === '') {
+            return null;
+        }
+
+        return Promotion::where('store_id', $store->id)->where('code', $code)->first();
+    }
+
+    /**
+     * The shared rule check behind both validate methods.
+     *
+     * @return array{0: ?Promotion, 1: ?string, 2: array<string,string>} [promotion, reasonKey, params]
+     */
+    private function checkCoupon(Store $store, string $code, string $orderTotal, ?int $customerId): array
+    {
+        $code = strtoupper(trim($code));
+
+        if ($code === '') {
+            return [null, 'coupon_not_found', []];
+        }
+
+        $promotion = Promotion::where('store_id', $store->id)->where('code', $code)->first();
+
+        if (! $promotion) {
+            return [null, 'coupon_not_found', []];
+        }
+
+        if (! $promotion->is_active) {
+            return [$promotion, 'coupon_inactive', []];
+        }
+
+        if ($promotion->isNotStarted()) {
+            return [$promotion, 'coupon_not_started', []];
+        }
+
+        if ($promotion->isExpired()) {
+            return [$promotion, 'coupon_expired', []];
+        }
+
+        if ($promotion->isUsageLimitReached()) {
+            return [$promotion, 'coupon_limit_reached', []];
+        }
+
+        // BOGO is priced per line item, which the POS checkout does not do yet.
+        // Charging a coupon that cannot discount anything would be worse than
+        // saying so.
+        if ($promotion->type === 'bogo') {
+            return [$promotion, 'coupon_type_unsupported', []];
+        }
+
+        $minOrder = bcadd((string) ($promotion->min_order_amount ?? '0'), '0', 2);
+
+        if (bccomp(bcadd($orderTotal !== '' ? $orderTotal : '0', '0', 2), $minOrder, 2) < 0) {
+            return [$promotion, 'coupon_min_order', ['amount' => $minOrder]];
+        }
+
+        if ($customerId && $promotion->per_customer_limit) {
+            $used = PromotionUsage::where('promotion_id', $promotion->id)
+                ->where('customer_id', $customerId)
+                ->count();
+
+            if ($used >= (int) $promotion->per_customer_limit) {
+                return [$promotion, 'coupon_customer_limit', []];
+            }
+        }
+
+        return [$promotion, null, []];
     }
 }

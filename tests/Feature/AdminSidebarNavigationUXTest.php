@@ -152,8 +152,8 @@ class AdminSidebarNavigationUXTest extends TestCase
         $response->assertStatus(200);
         // Translated brand + navigation landmark + store name.
         $response->assertSee('aria-label="Admin navigation"', false);
-        $response->assertSee('aria-label="Open menu"', false);
-        $response->assertSee('aria-label="Close menu"', false);
+        $response->assertSee(__('messages.open_menu'), false);
+        $response->assertSee('aria-label="' . __('messages.close_menu') . '"', false);
         $response->assertSeeText('Admin Panel');
         $response->assertSeeText('Store One');
         // Locale switcher form is present.
@@ -301,8 +301,8 @@ class AdminSidebarNavigationUXTest extends TestCase
             ->get("/store/{$this->store1->slug}/admin/dashboard");
 
         $response->assertStatus(200);
-        $response->assertSee('aria-label="Open menu"', false);
-        $response->assertSee('aria-label="Close menu"', false);
+        $response->assertSee(__('messages.open_menu'), false);
+        $response->assertSee('aria-label="' . __('messages.close_menu') . '"', false);
         // Backdrop closes the sidebar; nav links close it too.
         $response->assertSee('x-show="sidebarOpen"', false);
         $response->assertSee('bg-black/30', false);
@@ -362,7 +362,11 @@ class AdminSidebarNavigationUXTest extends TestCase
             $response->assertStatus(200);
             $response->assertSeeText($labels['admin_panel']);
             $response->assertSee('aria-label="' . $labels['admin_navigation'] . '"', false);
-            $response->assertSee('aria-label="' . $labels['open_menu'] . '"', false);
+            // The unified header toggle binds its label via Alpine
+            // (`:aria-label="viewportLg ? … : '<open_menu>'"`), so the label is
+            // asserted as text for the active locale rather than as a literal
+            // `aria-label="…"` attribute.
+            $response->assertSee($labels['open_menu'], false);
             $response->assertSee('aria-label="' . $labels['close_menu'] . '"', false);
             // No raw translation key is displayed.
             $response->assertDontSee('messages.', false);
@@ -382,9 +386,10 @@ class AdminSidebarNavigationUXTest extends TestCase
 
         $response->assertStatus(200);
 
-        // Desktop-only toggle button wired to the collapse handler.
-        $response->assertSee('hidden lg:inline-flex', false);
-        $response->assertSee('toggleSidebarCollapsed()', false);
+        // One unified toggle drives both modes: on lg it collapses the sidebar,
+        // below lg it opens the drawer (the dedicated desktop-only button was
+        // consolidated into it).
+        $response->assertSee('viewportLg ? toggleSidebarCollapsed() : (sidebarOpen = true', false);
 
         // State is persisted across page loads.
         $response->assertSee("localStorage.getItem('adminSidebar')", false);
@@ -394,7 +399,8 @@ class AdminSidebarNavigationUXTest extends TestCase
         $response->assertSee("sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'", false);
 
         // Accessible label reflects the current state via translated strings.
-        $response->assertSee(":aria-label=\"sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'\"", false);
+        $response->assertSee(__('messages.expand_sidebar'), false);
+        $response->assertSee(__('messages.collapse_sidebar'), false);
     }
 
     /**

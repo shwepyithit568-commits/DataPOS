@@ -55,6 +55,8 @@
             'pos_discount_applied' => __('messages.pos_discount_applied'),
             'pos_discount_cleared' => __('messages.pos_discount_cleared'),
             'pos_discount_pct_exceeded' => __('messages.pos_discount_pct_exceeded'),
+            'pos_coupon_placeholder' => __('messages.pos_coupon_placeholder'),
+            'pos_coupon_apply' => __('messages.pos_coupon_apply'),
             'credit_requires_customer' => __('messages.credit_requires_customer'),
             'pos_reload' => __('messages.pos_reload'),
             'pos_reloaded' => __('messages.pos_reloaded'),
