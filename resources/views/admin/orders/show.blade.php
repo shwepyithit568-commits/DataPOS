@@ -243,6 +243,15 @@
                     @if ($order->agreed_amount !== null)
                         <span>{{ __('messages.order_agreed_total') }}: <strong class="text-violet-600 dark:text-violet-400 font-mono">{{ format_currency($order->agreed_amount, $store) }}</strong></span>
                     @endif
+                    {{-- Fulfilled at the counter: the receipt this order was
+                         handed over on, so the paper trail is one click away. --}}
+                    @if ($order->pos_sale_id)
+                        <a href="{{ route('pos.receipt', ['store_slug' => $store->slug, 'sale' => $order->pos_sale_id]) }}"
+                           class="text-sky-600 dark:text-sky-400 font-bold hover:underline inline-flex items-center gap-1">
+                            🧾 {{ __('messages.order_counter_receipt') }}:
+                            <span class="font-mono">{{ $order->posSale?->receipt_number ?? ('#' . $order->pos_sale_id) }}</span>
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>

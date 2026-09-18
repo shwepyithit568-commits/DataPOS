@@ -222,6 +222,16 @@
                     <span class="font-black text-amber-700 dark:text-amber-400 font-mono" x-text="formatCurrency(customer.balance)"></span>
                 </div>
             </template>
+            {{-- Loyalty balance at a glance: the cashier can answer the shopper
+                 and knows what is spendable before opening the discount modal. --}}
+            <template x-if="customer && Number(customer.points) > 0">
+                <div class="mt-2 pt-2 border-t border-blue-200/60 dark:border-blue-900/60 flex items-center justify-between text-xs">
+                    <span class="font-bold text-violet-700 dark:text-violet-400 flex items-center gap-1">
+                        ⭐ {{ __('messages.loyalty_points') }}:
+                    </span>
+                    <span class="font-black text-violet-700 dark:text-violet-400 font-mono" x-text="customer.points"></span>
+                </div>
+            </template>
         </div>
 
         {{-- State 2: When NO Customer Attached (Walk-in / Search Mode) --}}

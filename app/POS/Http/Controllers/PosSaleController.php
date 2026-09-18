@@ -769,18 +769,38 @@ class PosSaleController extends Controller
 
     /**
      * Close a web order out after the counter sale posted: the sale already
-     * deducted the stock, so this only writes the status and the audit trail.
+     * deducted the stock, so this writes the status, the link to that sale and
+     * the audit trail.
+     *
+     * The order is also marked PAID when the counter collected the whole bill —
+     * a sale with no `credit` row means nothing is left owing, so leaving it
+     * "unpaid" would keep a settled order in the collection queue. An order
+     * settled partly on credit stays unpaid (the balance is on the customer's
+     * receivable, which is where the money is tracked).
      */
-    private function markWebOrderFulfilled(Store $store, Order $order, User $actor, string $receiptNumber): void
+    private function markWebOrderFulfilled(Store $store, Order $order, User $actor, PosSale $sale): void
     {
-        $order->update(['status' => 'delivered']);
+        $carriedOnCredit = $sale->payments()->where('method', 'credit')->exists();
+        $paidAtCounter = ! $carriedOnCredit;
+
+        $order->update([
+            'status' => 'delivered',
+            'pos_sale_id' => $sale->id,
+            'payment_status' => $paidAtCounter ? 'paid' : $order->payment_status,
+        ]);
 
         AuditLog::write(
             storeId: $store->id,
             action: 'pos_web_order_fulfilled',
             entityType: 'order',
             entityId: $order->id,
-            metadata: ['order_number' => $order->order_number, 'sale_receipt' => $receiptNumber],
+            metadata: [
+                'order_number' => $order->order_number,
+                'sale_receipt' => $sale->receipt_number,
+                'sale_total' => (string) $sale->total,
+                'paid_at_counter' => $paidAtCounter,
+                'carried_on_credit' => $carriedOnCredit,
+            ],
             actorId: $actor->id,
         );
     }
@@ -850,7 +870,7 @@ class PosSaleController extends Controller
                 );
 
                 if ($webOrder !== null) {
-                    $this->markWebOrderFulfilled($store, $webOrder, $user, $posted->receipt_number);
+                    $this->markWebOrderFulfilled($store, $webOrder, $user, $posted);
                 }
 
                 return $posted;

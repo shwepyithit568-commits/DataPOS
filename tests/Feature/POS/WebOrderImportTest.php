@@ -426,4 +426,136 @@ class WebOrderImportTest extends TestCase
         $this->assertSame('delivered', $order->refresh()->status);
         $this->assertSame('0.000', $this->inventory->totalOnHand($store->id, $product->id));
     }
+
+    /* ------------------------------------------------------------------ */
+    /*  What the fulfilment leaves behind                                  */
+    /* ------------------------------------------------------------------ */
+
+    public function test_fulfilling_an_order_links_the_counter_sale_to_it(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, 15000);
+        $this->seedStock($store, $product, '10');
+        $this->openShift($store, $cashier);
+
+        $order = $this->makeOrder($store, $product, 'confirmed', 1);
+        app(OrderInventoryAdapter::class)->reserve($order);
+        $this->importOrder($store, $cashier, $order);
+        $this->postCounterSale($store, $cashier, $order, [['method' => 'cash', 'amount' => '15000']]);
+
+        $sale = \App\POS\Models\PosSale::where('store_id', $store->id)->where('status', 'posted')->sole();
+
+        // The receipt is reachable from the order — before this the only trace
+        // was a line in the audit metadata.
+        $this->assertSame($sale->id, $order->refresh()->pos_sale_id);
+        $this->assertSame($sale->receipt_number, $order->posSale?->receipt_number);
+
+        $this->actingAs($cashier)
+            ->get("/store/{$store->slug}/admin/orders/{$order->id}")
+            ->assertOk()
+            ->assertSee($sale->receipt_number, false);
+    }
+
+    public function test_a_counter_sale_that_collects_the_whole_bill_marks_the_order_paid(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, 15000);
+        $this->seedStock($store, $product, '10');
+        $this->openShift($store, $cashier);
+
+        $order = $this->makeOrder($store, $product, 'confirmed', 1);
+        $this->assertSame('unpaid', $order->payment_status);
+
+        $this->importOrder($store, $cashier, $order);
+        $this->postCounterSale($store, $cashier, $order, [['method' => 'cash', 'amount' => '15000']]);
+
+        // Nothing is left owing, so a settled order must not sit in the
+        // collection queue as unpaid.
+        $this->assertSame('paid', $order->refresh()->payment_status);
+    }
+
+    public function test_an_order_settled_on_credit_stays_unpaid(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, 15000);
+        $this->seedStock($store, $product, '10');
+        $this->openShift($store, $cashier);
+
+        $shopper = User::create([
+            'name' => 'Credit Shopper',
+            'phone' => '09' . rand(10000000, 99999999),
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $shopper->stores()->attach($store->id, ['role' => 'retail_customer', 'status' => 'active']);
+
+        $order = $this->makeOrder($store, $product, 'confirmed', 1);
+        $order->update(['user_id' => $shopper->id]);
+
+        $this->importOrder($store, $cashier, $order);
+        $this->postCounterSale($store, $cashier, $order, [['method' => 'credit', 'amount' => '15000']]);
+
+        // Half the money is on the customer's receivable — the order is handed
+        // over but not paid.
+        $this->assertSame('delivered', $order->refresh()->status);
+        $this->assertSame('unpaid', $order->payment_status);
+    }
+
+    public function test_the_cart_carries_the_customers_points_balance(): void
+    {
+        $store = $this->makeStore();
+        $cashier = $this->staff($store);
+        $product = $this->makeProduct($store, 15000);
+        $this->seedStock($store, $product, '10');
+
+        $shopper = User::create([
+            'name' => 'Loyal Shopper',
+            'phone' => '09' . rand(10000000, 99999999),
+            'password' => bcrypt('password'),
+            'role' => 'customer',
+        ]);
+        $shopper->stores()->attach($store->id, ['role' => 'retail_customer', 'status' => 'active', 'loyalty_points' => 37]);
+
+        $order = $this->makeOrder($store, $product, 'pending_contact', 1);
+        $order->update(['user_id' => $shopper->id]);
+
+        // The cashier can see the balance on the customer chip without opening
+        // the discount modal.
+        $this->importOrder($store, $cashier, $order)
+            ->assertOk()
+            ->assertJsonPath('cart.customer.points', 37);
+    }
+
+    public function test_an_order_without_catalog_lines_cannot_be_imported(): void
+    {
+        $store = $this->makeStore();
+        $staff = $this->staff($store);
+
+        // Glass-finder style line: no product_id, so there is no stock to hand
+        // over and nothing to price.
+        $order = Order::create([
+            'store_id' => $store->id,
+            'order_number' => 'ORD-' . Str::upper(Str::random(6)),
+            'customer_name' => 'Glass Customer',
+            'customer_phone' => '09998765432',
+            'contact_channel' => 'phone',
+            'pricing_type' => 'retail',
+            'total_amount' => 0,
+            'payment_status' => 'unpaid',
+            'status' => 'pending_contact',
+        ]);
+        $order->items()->create([
+            'product_id' => null,
+            'product_variant_id' => null,
+            'product_name' => 'iPhone 15 glass (custom cut)',
+            'unit_price' => 0,
+            'quantity' => 1,
+            'subtotal' => 0,
+        ]);
+
+        $this->importOrder($store, $staff, $order)->assertStatus(422);
+    }
 }

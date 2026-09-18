@@ -27,8 +27,9 @@
 11. [UAT Day-Run Defects Fix](DataPOS_UAT_Day_Run_Defects_Fix_MM.md) — 2026-09-18 လက်တွေ့ UAT: ကောင်တာငွေ အံဆွဲမရောက်ခြင်း၊ ငွေသွင်း/ထုတ် အဝိုင်းဂဏန်းရိုက်မရခြင်း၊ 403 လင့် ၄ ခု၊ dashboard ဝင်ငွေ
 12. [Coupon Redemption & Loyalty Earning](DataPOS_Coupon_And_Loyalty_Earning_MM.md) — 2026-09-19: ကောင်တာတွင် coupon သုံးနိုင်ခြင်း + အရောင်းမှ Points ရရှိခြင်း (gap ၂ ခု ဖြည့်)
 13. [Storefront Coupon, Points Redemption & BOGO](DataPOS_Storefront_Coupon_Points_BOGO_MM.md) — 2026-09-19: အွန်လိုင်း checkout coupon၊ Points နဲ့ ငွေလျှော့ခြင်း၊ BOGO (၂ လမ်းကြောင်းလုံး)
-14. [Online Order → Counter Fulfillment](DataPOS_Online_Order_Counter_Fulfillment_MM.md) — 2026-09-19: ဖောက်သည်အကောင့်ဖြင့် အွန်လိုင်းဝယ် → အတည်ပြု → ကောင်တာမှ ပေးအပ် (ချို့ယွင်းချက် ၃ ခု ပြင်ဆင်ပြီး)
-15. [Consolidation Manifest](CONSOLIDATION_MANIFEST.md)
+14. [Online Order → Counter Fulfillment](DataPOS_Online_Order_Counter_Fulfillment_MM.md) — 2026-09-19: ဖောက်သည်အကောင့်ဖြင့် အွန်လိုင်းဝယ် → အတည်ပြု → ကောင်တာမှ ပေးအပ် (ချို့ယွင်းချက် ၃ ခု ပြင်ဆင်ပြီး)၊ **stock ဘယ်တုန်းလျှော့သွားသလဲ** ဇယား၊ ပြေစာလင့်နှင့် ငွေပေးချေမှုအခြေအနေ
+15. [Production Go-Live Checklist](DataPOS_Production_GoLive_Checklist_MM.md) — 2026-09-19: deploy နေ့ `.env` (APP_ENV/APP_DEBUG/SHOW_QUICK_LOGIN)၊ deploy command စဉ်၊ migration ၂ ခု၊ ပရင်တာ သတိပြုရန်၊ မစမ်းရသေးသည့်စာရင်း
+16. [Consolidation Manifest](CONSOLIDATION_MANIFEST.md)
 
 ## Historical archive
 

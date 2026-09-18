@@ -466,7 +466,7 @@ class PosSaleService
         }
 
         if ($this->cartLines($store) === []) {
-            throw new InventoryException('This web order has no catalog lines to fulfil.');
+            throw new InventoryException(__('messages.order_no_catalog_lines'));
         }
 
         // The order's shopper prices the cart (tier) and receives the receipt.
@@ -958,6 +958,10 @@ class PosSaleService
                 'phone' => $customer->phone,
                 'role' => $customer->getStoreRole($store->id),
                 'balance' => (string) $this->debts->balanceFor($store->id, $customer->id),
+                // Shown on the customer chip so the cashier can answer "how many
+                // points do I have?" — and knows what is available to spend
+                // before opening the discount modal.
+                'points' => $this->loyalty->pointsBalanceFor($store, $customer),
             ] : null,
         ];
     }

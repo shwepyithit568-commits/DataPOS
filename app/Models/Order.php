@@ -31,6 +31,7 @@ class Order extends Model
         'discount_amount',
         'coupon_code',
         'promotion_id',
+        'pos_sale_id',
         'agreed_amount',
         'payment_status',
         'status',
@@ -108,6 +109,15 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * The counter sale that handed this order over (null for orders delivered
+     * without the POS, and for anything still waiting).
+     */
+    public function posSale(): BelongsTo
+    {
+        return $this->belongsTo(\App\POS\Models\PosSale::class, 'pos_sale_id');
     }
 
     /**
