@@ -157,6 +157,8 @@ class StoreSettingController extends Controller
                 'pos_settings.allow_negative_stock' => ['nullable', 'boolean'],
                 // Loyalty: MMK a customer must spend to earn 1 point (0 = off).
                 'pos_settings.loyalty_amount_per_point' => ['nullable', 'numeric', 'min:0', 'max:100000000'],
+                // Loyalty: MMK one point is worth when the customer spends it.
+                'pos_settings.loyalty_point_value' => ['nullable', 'numeric', 'min:0', 'max:100000000'],
             ]),
             default => $request->validate([
                 'store_name' => ['required', 'string', 'max:255'],
@@ -326,6 +328,9 @@ class StoreSettingController extends Controller
                 // Money per 1 loyalty point; blank/0 turns earning off.
                 'loyalty_amount_per_point' => ($rawPos['loyalty_amount_per_point'] ?? '') !== ''
                     ? round((float) $rawPos['loyalty_amount_per_point'], 2)
+                    : 0,
+                'loyalty_point_value' => ($rawPos['loyalty_point_value'] ?? '') !== ''
+                    ? round((float) $rawPos['loyalty_point_value'], 2)
                     : 0,
             ];
         }

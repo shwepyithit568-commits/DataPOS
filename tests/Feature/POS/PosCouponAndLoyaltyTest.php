@@ -131,6 +131,30 @@ class PosCouponAndLoyaltyTest extends TestCase
         $this->store->refresh()->load('setting');
     }
 
+    /** What one point is worth when the customer spends it. */
+    private function setPointValue(string $value): void
+    {
+        $setting = StorefrontSetting::firstOrNew(
+            ['store_id' => $this->store->id],
+            ['store_name' => $this->store->name],
+        );
+        $settings = $setting->pos_settings ?? [];
+        $settings['loyalty_point_value'] = (float) $value;
+        $setting->pos_settings = $settings;
+        $setting->save();
+
+        $this->store->refresh()->load('setting');
+    }
+
+    /** Put points in the customer's wallet for a redemption test. */
+    private function givePoints(int $points): void
+    {
+        DB::table('store_user')
+            ->where('store_id', $this->store->id)
+            ->where('user_id', $this->customer->id)
+            ->update(['loyalty_points' => $points]);
+    }
+
     /** Post a one-line cash sale and return it. */
     private function sell(string $quantity = '1', ?string $coupon = null, bool $withCustomer = true)
     {
@@ -157,6 +181,124 @@ class PosCouponAndLoyaltyTest extends TestCase
     }
 
     // ── Coupons ───────────────────────────────────────────────────────────────
+
+    // ── Spending points ───────────────────────────────────────────────────────
+
+    public function test_points_can_be_spent_on_a_sale_and_the_balance_drops(): void
+    {
+        $this->setLoyaltyRate('1000'); // earn 1 point per 1,000 Ks
+        $this->setPointValue('10');    // spend 1 point for 10 Ks
+        $this->givePoints(100);        // worth 1,000 Ks
+
+        $this->sales->setPoints($this->store->fresh()->load('setting'), 50);
+
+        $sale = $this->sell('1'); // 10,000 bill
+
+        // 50 points × 10 Ks = 500 off.
+        $this->assertSame('500.00', $sale->discount);
+        $this->assertSame('9500.00', $sale->total);
+
+        $spent = LoyaltyPointTransaction::where('pos_sale_id', $sale->id)
+            ->where('type', MembershipLoyaltyService::TYPE_REDEEMED)
+            ->sole();
+
+        $this->assertSame(-50, $spent->points);
+
+        // 100 given − 50 spent + 9 earned on the 9,500 actually paid = 59
+        $pivot = DB::table('store_user')
+            ->where('store_id', $this->store->id)
+            ->where('user_id', $this->customer->id)
+            ->first();
+
+        $this->assertSame(59, (int) $pivot->loyalty_points);
+    }
+
+    public function test_points_cannot_be_spent_beyond_the_customers_balance(): void
+    {
+        $this->setPointValue('10');
+        $this->givePoints(10); // only 100 Ks worth
+
+        $this->sales->setPoints($this->store->fresh()->load('setting'), 500);
+
+        $sale = $this->sell('1');
+
+        // Clamped to the balance: 10 points = 100 Ks, not 5,000.
+        $this->assertSame('100.00', $sale->discount);
+    }
+
+    public function test_points_never_discount_more_than_the_bill(): void
+    {
+        $this->setPointValue('10');
+        $this->givePoints(5000); // 50,000 Ks worth, more than the 10,000 bill
+
+        $this->sales->setPoints($this->store->fresh()->load('setting'), 5000);
+
+        $sale = $this->sell('1');
+
+        $this->assertSame('10000.00', $sale->discount);
+        $this->assertSame('0.00', $sale->total);
+    }
+
+    public function test_points_are_not_spendable_when_no_value_is_configured(): void
+    {
+        $this->setPointValue('0');
+        $this->givePoints(100);
+
+        $this->sales->setPoints($this->store->fresh()->load('setting'), 50);
+
+        $sale = $this->sell('1');
+
+        $this->assertSame('0.00', $sale->discount);
+        $this->assertSame(0, LoyaltyPointTransaction::where('type', MembershipLoyaltyService::TYPE_REDEEMED)->count());
+    }
+
+    public function test_a_refund_returns_the_points_that_were_spent(): void
+    {
+        $this->setPointValue('10');
+        $this->givePoints(200);
+
+        $this->sales->setPoints($this->store->fresh()->load('setting'), 100); // 1,000 Ks off
+
+        $sale = $this->sell('2'); // 20,000 bill → 1,000 off → 19,000 paid
+        $item = $sale->items->first();
+
+        $before = (int) DB::table('store_user')
+            ->where('store_id', $this->store->id)
+            ->where('user_id', $this->customer->id)
+            ->value('loyalty_points');
+
+        $refund = app(PosReturnService::class)->post(
+            store: $this->store->fresh()->load('setting'),
+            sale: $sale->fresh(),
+            items: [[
+                'pos_sale_item_id' => $item->id,
+                'quantity' => '1',
+            ]],
+            refunds: [['method' => 'cash', 'amount' => '9500']],
+            actor: $this->cashier,
+            shift: app(CashierShiftService::class)->openShift($this->store, [
+                'register_name' => 'Return counter',
+                'opening_cash' => '0',
+            ], $this->cashier),
+        );
+
+        $this->assertSame('9500.00', $refund->total);
+
+        $after = (int) DB::table('store_user')
+            ->where('store_id', $this->store->id)
+            ->where('user_id', $this->customer->id)
+            ->value('loyalty_points');
+
+        // The whole 100 points were spent at the till (one redeem row)...
+        $this->assertSame(-100, (int) LoyaltyPointTransaction::where('pos_sale_id', $sale->id)
+            ->where('type', MembershipLoyaltyService::TYPE_REDEEMED)
+            ->sum('points'));
+
+        // ...and the refund hands back the half that belongs to the returned line:
+        // 200 given − 100 spent = 100, plus 50 returned = 150.
+        $this->assertGreaterThan($before, $after);
+        $this->assertSame(150, $after);
+    }
 
     public function test_a_coupon_discounts_the_sale_and_records_the_redemption(): void
     {
@@ -238,13 +380,38 @@ class PosCouponAndLoyaltyTest extends TestCase
         $this->sell('1', 'UAT10');
     }
 
-    public function test_a_bogo_coupon_is_refused_rather_than_silently_discounting_nothing(): void
+    public function test_a_bogo_coupon_gives_every_second_unit_free(): void
     {
         $this->price($this->store, ['type' => 'bogo', 'value' => 1]);
 
-        $this->expectException(InventoryException::class);
+        // 3 units at 10,000 → one is free.
+        $sale = $this->sell('3', 'UAT10');
 
-        $this->sell('1', 'UAT10');
+        $this->assertSame('30000.00', $sale->subtotal);
+        $this->assertSame('10000.00', $sale->discount);
+        $this->assertSame('20000.00', $sale->total);
+    }
+
+    public function test_a_bogo_coupon_frees_two_units_out_of_four(): void
+    {
+        $this->price($this->store, ['type' => 'bogo', 'value' => 1]);
+
+        $sale = $this->sell('4', 'UAT10');
+
+        $this->assertSame('40000.00', $sale->subtotal);
+        $this->assertSame('20000.00', $sale->discount);
+        $this->assertSame('20000.00', $sale->total);
+    }
+
+    public function test_a_bogo_coupon_on_a_single_unit_discounts_nothing_but_is_still_valid(): void
+    {
+        $this->price($this->store, ['type' => 'bogo', 'value' => 1]);
+
+        $sale = $this->sell('1', 'UAT10');
+
+        $this->assertSame('0.00', $sale->discount);
+        $this->assertSame('10000.00', $sale->total);
+        $this->assertSame('UAT10', $sale->coupon_code);
     }
 
     public function test_coupon_and_manual_discount_together_never_exceed_the_bill(): void
@@ -594,5 +761,105 @@ class PosCouponAndLoyaltyTest extends TestCase
         );
 
         $this->assertSame(5, (int) LoyaltyPointTransaction::where('pos_sale_id', $sale->id)->value('points'));
+    }
+
+    // ── What the checkout posts back ──────────────────────────────────────────
+
+    /**
+     * The checkout modal posts the manual discount back and the server adds the
+     * coupon and the spent points on top. When the posted value already carried
+     * that coupon and those points, the sale was charged twice for both: a bill
+     * the cashier saw as −500 was stored as −1,000, so the receipt and the daily
+     * total disagreed with the screen the customer was shown.
+     */
+    public function test_the_posted_manual_discount_charges_the_coupon_and_the_points_exactly_once(): void
+    {
+        $this->price($this->store);
+        $this->setPointValue('10');
+        $this->givePoints(50);
+
+        $store = $this->store->fresh()->load('setting');
+        $this->sales->attachCartCustomer($store, $this->customer);
+        $this->sales->setCoupon($store, 'UAT10');
+        $this->sales->setDiscount($store, '1000');
+        $this->sales->setPoints($store, 50);
+        $this->sales->addToCart($store, $this->product->id, null, '1');
+
+        $totals = $this->sales->cartTotals($store);
+
+        $sale = $this->sales->post(
+            store: $store->fresh()->load('setting'),
+            lines: [['product_id' => $this->product->id, 'product_variant_id' => null, 'quantity' => '1']],
+            payments: [['method' => 'cash', 'amount' => '8400']],
+            actor: $this->cashier,
+            shift: app(CashierShiftService::class)->openShift($this->store, [
+                'register_name' => 'Counter',
+                'opening_cash' => '0',
+            ], $this->cashier),
+            customerId: $this->customer->id,
+            // Exactly what the payment modal submits, and what the cashier was
+            // looking at when they hit "post".
+            explicitDiscount: $totals['manual_discount'],
+            couponCode: $totals['coupon_code'],
+        );
+
+        // 10,000 − 1,000 manual − 1,000 coupon − 500 points.
+        $this->assertSame('1000', $totals['manual_discount']);
+        $this->assertSame('2500.00', $totals['discount']);
+        $this->assertSame('7500.00', $totals['total']);
+
+        $this->assertSame($totals['discount'], $sale->discount);
+        $this->assertSame($totals['total'], $sale->total);
+
+        // The points left the wallet once, and only the redemption row is a spend.
+        $spent = LoyaltyPointTransaction::where('pos_sale_id', $sale->id)
+            ->where('type', MembershipLoyaltyService::TYPE_REDEEMED)
+            ->sum('points');
+
+        $this->assertSame(-50, (int) $spent);
+    }
+
+    public function test_the_cart_totals_separate_the_manual_discount_from_the_coupon_and_points(): void
+    {
+        $this->price($this->store);
+        $this->setPointValue('10');
+        $this->givePoints(50);
+
+        $store = $this->store->fresh()->load('setting');
+        $this->sales->attachCartCustomer($store, $this->customer);
+        $this->sales->setCoupon($store, 'UAT10');
+        $this->sales->setDiscount($store, '1000');
+        $this->sales->setPoints($store, 50);
+        $this->sales->addToCart($store, $this->product->id, null, '1');
+
+        $totals = $this->sales->cartTotals($store);
+
+        // manual 1,000 + coupon 1,000 + points 500 = 2,500 off the bill…
+        $this->assertSame('1000', $totals['manual_discount']);
+        $this->assertSame('2500.00', $totals['discount']);
+        // …and the coupon and the points stay visible on their own, so the cart
+        // can show what each one took off.
+        $this->assertSame('1000.00', $totals['coupon_discount']);
+        $this->assertSame(50, $totals['points_redeemed']);
+        $this->assertSame('500.00', $totals['points_value']);
+    }
+
+    /**
+     * The two files that turn a cart into a posted order both have to send the
+     * manual discount back — a regression here re-introduces the double charge,
+     * and nothing else in the suite can see it because the template is only
+     * exercised in a browser.
+     */
+    public function test_the_checkout_ui_sends_the_manual_discount_back(): void
+    {
+        $paymentModal = file_get_contents(resource_path('views/pos/partials/modal-payment.blade.php'));
+
+        $this->assertStringContainsString(':value="cart.totals.manual_discount', $paymentModal);
+        $this->assertStringNotContainsString(':value="cart.totals.discount', $paymentModal);
+
+        $js = file_get_contents(resource_path('js/app-admin.js'));
+
+        $this->assertStringContainsString('this.cart.totals.manual_discount', $js);
+        $this->assertStringNotContainsString("this.discountValue = Number(this.cart.totals.discount", $js);
     }
 }

@@ -411,9 +411,44 @@
             </p>
         </div>
 
+        {{-- Loyalty points: spendable when the store set a point value --}}
+        <div class="pt-2 mt-1 border-t border-slate-100 dark:border-slate-800"
+             x-show="cart.totals.points_enabled" x-cloak>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">{{ __('messages.pos_points') }}</label>
+            <div class="flex items-center gap-1.5">
+                <input type="number" min="0" step="1" inputmode="numeric"
+                       x-model="pointsInput"
+                       @keydown.enter.prevent="applyPoints(pointsInput)"
+                       placeholder="{{ __('messages.pos_points_placeholder') }}"
+                       class="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-sm font-bold tabular-nums focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition">
+                <button type="button" @click="applyPoints(pointsInput)" :disabled="pointsBusy || !pointsInput"
+                        class="sf-btn-3d px-3 py-2 rounded-xl text-xs font-bold disabled:opacity-50 cursor-pointer">
+                    {{ __('messages.apply') }}
+                </button>
+                <button type="button" @click="applyPoints(cart.totals.points_max)" :disabled="pointsBusy || !cart.totals.points_max"
+                        class="sf-btn-3d px-2.5 py-2 rounded-xl text-[11px] font-bold disabled:opacity-50 cursor-pointer">
+                    <span x-text="'{{ __('messages.pos_points_use_max', ['points' => '__P__']) }}'.replace('__P__', cart.totals.points_max || 0)"></span>
+                </button>
+                <button type="button" @click="applyPoints(0)" x-show="Number(cart.totals.points_redeemed) > 0" x-cloak
+                        class="sf-btn-3d-danger px-2.5 py-2 rounded-xl text-xs font-bold cursor-pointer">✕</button>
+            </div>
+            <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-1">
+                <span x-text="'{{ __('messages.pos_points_available', ['points' => '__P__', 'amount' => '__A__']) }}'
+                        .replace('__P__', cart.totals.points_max || 0)
+                        .replace('__A__', formatCurrency(cart.totals.points_max_value || 0))"></span>
+            </p>
+            <p class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-1"
+               x-show="Number(cart.totals.points_redeemed) > 0" x-cloak>
+                <span x-text="'{{ __('messages.loyalty_points_spent') }}: ' + (cart.totals.points_redeemed || 0)"></span>
+                <span class="ml-1" x-text="'−' + formatCurrency(cart.totals.points_value)"></span>
+            </p>
+        </div>
+
         {{-- Action Buttons --}}
         <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-            <button type="button" @click="clearDiscount()" x-show="Number(cart.totals.discount) > 0"
+            {{-- Only the manual discount: a coupon or spent points light up the
+                 discount total too, but this button cannot clear those. --}}
+            <button type="button" @click="clearDiscount()" x-show="Number(cart.totals.manual_discount) > 0"
                     class="sf-btn-3d-danger px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer">
                 {{ __('messages.clear_discount') }}
             </button>

@@ -6,7 +6,9 @@ use App\Models\GlassFinderItem;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\POS\Services\PromotionService;
 use App\Services\StoreContext;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +56,7 @@ class OrderController extends Controller
             'contact_channel' => ['required', 'in:viber,telegram,phone'],
             'contact_identifier' => ['nullable', 'string', 'max:100'],
             'quantity' => ['nullable', 'integer', 'min:1', 'max:99'],
+            'coupon_code' => ['nullable', 'string', 'max:40'],
         ]);
 
         $user = auth()->user();
@@ -249,7 +252,40 @@ class OrderController extends Controller
             $finalTotal = $subtotalAmount;
         }
 
-        $order = DB::transaction(function () use ($store, $user, $validated, $pricingType, $finalTotal, $taxTotal, $taxType, $taxableAmount, $enableTax, $orderItemsData) {
+        // Coupon: checked against the pre-discount items, priced on the lines the
+        // promotion actually covers (product/category scope), then subtracted from
+        // the bill. A refused code stops the order instead of silently ignoring it
+        // — the customer typed it on purpose.
+        $promotions = app(PromotionService::class);
+        $coupon = null;
+        $couponDiscount = '0.00';
+
+        if (! empty($validated['coupon_code'])) {
+            $check = $promotions->quoteLines(
+                store: $store,
+                code: (string) $validated['coupon_code'],
+                lines: $orderItemsData,
+                customerId: $user?->id,
+            );
+
+            if (! $check['valid']) {
+                return back()->withInput()->withErrors([
+                    'coupon_code' => __('messages.coupon_rejected') . ' '
+                        . __('messages.' . ($check['reason'] ?? 'coupon_not_found'), $check['params'] ?? []),
+                ]);
+            }
+
+            $coupon = $check['promotion'];
+            $couponDiscount = $check['discount'];
+
+            $finalTotal = bcsub($finalTotal, $couponDiscount, 2);
+
+            if (bccomp($finalTotal, '0', 2) < 0) {
+                $finalTotal = '0.00';
+            }
+        }
+
+        $order = DB::transaction(function () use ($store, $user, $validated, $pricingType, $finalTotal, $taxTotal, $taxType, $taxableAmount, $enableTax, $orderItemsData, $coupon, $couponDiscount, $promotions) {
             $order = Order::create([
                 'store_id' => $store->id,
                 'user_id' => $user?->id,
@@ -265,11 +301,26 @@ class OrderController extends Controller
                 'tax' => $enableTax ? $taxTotal : 0,
                 'tax_type' => $taxType,
                 'taxable_amount' => $taxableAmount,
+                'discount_amount' => $couponDiscount,
+                'coupon_code' => $coupon?->code,
+                'promotion_id' => $coupon?->id,
                 'status' => 'pending_contact',
             ]);
 
             foreach ($orderItemsData as $itemData) {
                 $order->items()->create($itemData);
+            }
+
+            // The redemption ledger row lives with the order it priced.
+            if ($coupon) {
+                $promotions->redeem(
+                    store: $store,
+                    promotion: $coupon,
+                    discountApplied: $couponDiscount,
+                    customerId: $user?->id,
+                    actor: $user,
+                    orderId: $order->id,
+                );
             }
 
             return $order;
@@ -314,6 +365,84 @@ class OrderController extends Controller
         }
 
         return (string) ($retail ?? '0');
+    }
+
+    /**
+     * Check a coupon against the order builder's list before the customer submits.
+     *
+     * Public on purpose: it returns the same information any shop's checkout gives
+     * back when a coupon is typed. Nothing is reserved or redeemed here.
+     */
+    public function validateCoupon(Request $request, StoreContext $context): JsonResponse
+    {
+        $store = $context->getStore();
+
+        if (! $store) {
+            return response()->json(['valid' => false, 'message' => __('messages.coupon_not_found')], 404);
+        }
+
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:40'],
+            'items_json' => ['nullable', 'string'],
+        ]);
+
+        // Rebuild only what eligibility needs (product id + line total); the
+        // submit path re-validates everything for real.
+        $items = [];
+        $subtotal = '0';
+
+        $decoded = json_decode((string) ($data['items_json'] ?? '[]'), true);
+
+        if (is_array($decoded)) {
+            foreach ($decoded as $row) {
+                $productId = (int) ($row['product_id'] ?? 0);
+                $quantity = max(1, min(99, (int) ($row['quantity'] ?? 1)));
+
+                if ($productId <= 0) {
+                    continue;
+                }
+
+                $product = Product::where('store_id', $store->id)->where('id', $productId)->first();
+
+                if (! $product) {
+                    continue;
+                }
+
+                $unitPrice = (string) ($row['price'] ?? $product->retail_price);
+                $lineTotal = bcmul($unitPrice, (string) $quantity, 2);
+
+                $subtotal = bcadd($subtotal, $lineTotal, 2);
+                $items[] = [
+                    'product_id' => $productId,
+                    'quantity' => $quantity,
+                    'unit_price' => $unitPrice,
+                    'line_total' => $lineTotal,
+                ];
+            }
+        }
+
+        $check = app(PromotionService::class)->quoteLines(
+            store: $store,
+            code: (string) $data['code'],
+            lines: $items,
+            customerId: auth()->id(),
+        );
+
+        $message = $check['valid']
+            ? __('messages.coupon_applied', [
+                'name' => $check['promotion']->name,
+                'amount' => format_currency((float) $check['discount'], $store),
+            ])
+            : __('messages.coupon_rejected') . ' ' . __('messages.' . ($check['reason'] ?? 'coupon_not_found'), $check['params'] ?? []);
+
+        return response()->json([
+            'valid' => $check['valid'],
+            'code' => $check['promotion']?->code,
+            'name' => $check['promotion']?->name,
+            'discount' => $check['discount'],
+            'discount_formatted' => format_currency((float) $check['discount'], $store),
+            'message' => $message,
+        ]);
     }
 
     /**

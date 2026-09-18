@@ -249,6 +249,8 @@ Alpine.data('posApp', (opts = {}) => ({
     discountModalOpen: false, discountBusy: false, discountType: 'fixed', discountValue: '',
     // Coupon (stored on the cart by the server; these drive the modal UI)
     couponCode: '', couponBusy: false, couponValid: false, couponMessage: '',
+    // Loyalty points spent on this cart (server-side, like the coupon)
+    pointsInput: '', pointsBusy: false,
     barcodeCameraInsecure: false,
     notice: '', noticeType: '', noticeTimer: null,
 
@@ -891,7 +893,10 @@ Alpine.data('posApp', (opts = {}) => ({
             return;
         }
         this.discountType = 'fixed';
-        this.discountValue = Number(this.cart.totals.discount || 0) > 0 ? String(this.cart.totals.discount) : '';
+        // Prefill from the manual discount alone: the coupon and the points
+        // already on the bill are not the cashier's discount to edit, and
+        // folding them in here would apply them to the bill a second time.
+        this.discountValue = Number(this.cart.totals.manual_discount || 0) > 0 ? String(this.cart.totals.manual_discount) : '';
         this.discountModalOpen = true;
         this.$nextTick(() => {
             const input = document.getElementById('pos-discount-input') || (this.$refs && this.$refs.discountInput);
@@ -996,6 +1001,29 @@ Alpine.data('posApp', (opts = {}) => ({
             this.flash(e.message, 'error');
         } finally {
             this.couponBusy = false;
+        }
+    },
+
+    /**
+     * Spend loyalty points on this cart. The server clamps the request to the
+     * customer's balance and to what is left on the bill, so the value shown is
+     * always the value that will be charged.
+     */
+    async applyPoints(points) {
+        if (this.pointsBusy) return;
+        this.pointsBusy = true;
+        try {
+            const value = (points === null || points === undefined || points === '') ? null : parseInt(points, 10);
+            const body = new URLSearchParams();
+            if (value !== null && !isNaN(value)) body.set('points', String(value));
+            const data = await this.fetchJson('/cart/points', { method: 'POST', body });
+            this.applyCart(data);
+            this.pointsInput = '';
+            this.flash(data.success || '', 'success');
+        } catch (e) {
+            this.flash(e.message, 'error');
+        } finally {
+            this.pointsBusy = false;
         }
     },
 

@@ -5956,4 +5956,17 @@ return [
 
     'coupon_not_applicable' => '该优惠券不适用于本购物车中的商品。',
 
+    'loyalty_point_value' => '1 积分价值',
+    'loyalty_point_value_hint' => '顾客使用积分时 1 积分的价值（0 = 不可使用积分）。',
+    'loyalty_note_points_redeemed' => '收据 :receipt 使用积分（:points 积分 = :amount）',
+    'loyalty_note_points_returned' => '退货 :refund 退回积分',
+    'pos_points' => '会员积分',
+    'pos_points_placeholder' => '使用积分',
+    'pos_points_use_max' => '最多使用 (:points)',
+    'pos_points_available' => '可用：:points 积分（价值 :amount）',
+    'pos_points_applied' => '已使用 :points 积分 — 减免 :amount',
+    'pos_points_cleared' => '已从购物车移除积分。',
+    'pos_points_unavailable' => '这些积分无法用于此订单。',
+    'loyalty_points_spent' => '已使用积分',
+
 ];

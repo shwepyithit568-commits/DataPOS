@@ -20,7 +20,10 @@
               @keydown.enter="if (exact) { $el.requestSubmit(); }">
             @csrf
             <input type="hidden" name="customer_id" :value="customer ? customer.id : ''">
-            <input type="hidden" name="discount" :value="cart.totals.discount || '0'">
+            {{-- Only the cashier's manual discount travels back: the server
+                 re-prices the coupon and the spent points from the sale's own
+                 lines, so sending the combined total would charge them twice. --}}
+            <input type="hidden" name="discount" :value="cart.totals.manual_discount || '0'">
             <input type="hidden" name="web_order_id" :value="pendingWebOrderId || ''">
             {{-- Hidden payment inputs → server-side PosSaleController::post() --}}
             @foreach (['cash', 'kpay', 'wavepay', 'cb_pay', 'mmqr', 'credit'] as $i => $method)

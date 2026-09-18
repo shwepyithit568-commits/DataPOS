@@ -313,13 +313,77 @@ class PosSaleService
             return ['valid' => false, 'discount' => '0.00', 'reason' => null, 'params' => [], 'promotion' => null];
         }
 
-        return $this->promotions->validateCouponDecimal(
-            store: $store,
-            code: $promotion->code,
-            orderTotal: $orderTotal,
-            customerId: $customer?->id,
-            eligibleSubtotal: $this->eligibleSubtotalFor($promotion, $lines),
-        );
+        // Pricing lives in the promotion service so the counter and the online
+        // checkout can never disagree about scope or BOGO.
+        return $this->promotions->quoteLines($store, $promotion->code, $lines, $customer?->id);
+    }
+
+    /**
+     * Cart lines in the shape the promotion service prices from.
+     *
+     * @param  array<int, array{product:object, quantity:string, unit_price:string, line_total:string}>  $resolved
+     */
+    private function promotionLines(array $resolved): array
+    {
+        return array_map(fn (array $line) => [
+            'product_id' => (int) $line['product']->id,
+            'quantity' => (string) $line['quantity'],
+            'unit_price' => (string) $line['unit_price'],
+            'line_total' => (string) $line['line_total'],
+        ], $resolved);
+    }
+
+    // ---------- Cart points ----------
+    //
+    // Points a customer spends on this cart, stored in the session beside the
+    // discount and coupon so the totals on every screen are the totals charged.
+
+    private function cartPointsKey(Store $store): string
+    {
+        return 'pos.cart_points.' . $store->id;
+    }
+
+    public function getPoints(Store $store): int
+    {
+        return max(0, (int) session()->get($this->cartPointsKey($store), 0));
+    }
+
+    public function setPoints(Store $store, int $points): void
+    {
+        if ($points <= 0) {
+            $this->clearPoints($store);
+
+            return;
+        }
+
+        session()->put($this->cartPointsKey($store), $points);
+    }
+
+    public function clearPoints(Store $store): void
+    {
+        session()->forget($this->cartPointsKey($store));
+    }
+
+    /**
+     * The points discount for the live cart: how many points apply and what they
+     * are worth, bounded by the customer's balance and the bill.
+     *
+     * @return array{points:int, value:string, max:int, enabled:bool}
+     */
+    public function pointsFor(Store $store, string $bill, ?User $customer): array
+    {
+        $loyalty = $this->loyalty;
+        $enabled = $loyalty->isRedemptionEnabled($store);
+        $max = $loyalty->maxRedeemablePoints($store, $customer, $bill);
+
+        if (! $enabled || ! $customer) {
+            return ['points' => 0, 'value' => '0.00', 'max' => 0, 'enabled' => false];
+        }
+
+        $points = min($this->getPoints($store), $max);
+        $value = $points > 0 ? bcmul((string) $points, $loyalty->redemptionValue($store), 2) : '0.00';
+
+        return ['points' => $points, 'value' => $value, 'max' => $max, 'enabled' => true];
     }
 
     /**
@@ -332,60 +396,12 @@ class PosSaleService
      */
     public function previewCoupon(Store $store, string $code, ?User $customer): array
     {
-        $promotion = $this->promotions->findByCode($store, $code);
-        $totals = $this->cartTotals($store);
-
-        return $this->promotions->validateCouponDecimal(
+        return $this->promotions->quoteLines(
             store: $store,
             code: $code,
-            orderTotal: (string) $totals['subtotal'],
+            lines: $this->promotionLines($this->cartResolved($store)),
             customerId: $customer?->id,
-            eligibleSubtotal: $promotion
-                ? $this->eligibleSubtotalFor($promotion, $this->cartResolved($store))
-                : null,
         );
-    }
-
-    /**
-     * The part of the cart a scoped promotion applies to (null when the coupon
-     * is not scoped, so the caller uses the whole order).
-     *
-     * @param  array<int, array{product_id:int, line_total:string, quantity:string}>  $lines
-     */
-    private function eligibleSubtotalFor(Promotion $promotion, array $lines): ?string
-    {
-        if (! $promotion->product_id && ! $promotion->category_id) {
-            return null;
-        }
-
-        if ($lines === []) {
-            return '0.00';
-        }
-
-        $categoryProductIds = null;
-
-        if ($promotion->category_id) {
-            $categoryProductIds = Product::where('store_id', $promotion->store_id)
-                ->where('category_id', $promotion->category_id)
-                ->pluck('id')
-                ->all();
-        }
-
-        $eligible = '0';
-
-        foreach ($lines as $line) {
-            if ($promotion->product_id && (int) $line['product_id'] === (int) $promotion->product_id) {
-                $eligible = bcadd($eligible, (string) $line['line_total'], 2);
-
-                continue;
-            }
-
-            if ($categoryProductIds !== null && in_array((int) $line['product_id'], $categoryProductIds, true)) {
-                $eligible = bcadd($eligible, (string) $line['line_total'], 2);
-            }
-        }
-
-        return $eligible;
     }
 
     /**
@@ -607,6 +623,7 @@ class PosSaleService
         session()->forget($this->resumedSaleKey($store));
         $this->clearDiscount($store);
         $this->clearCoupon($store);
+        $this->clearPoints($store);
     }
 
     /**
@@ -671,7 +688,7 @@ class PosSaleService
     }
 
     /**
-     * @return array{subtotal:string, retail_subtotal:string, discount:string, tax:string, tax_type:string, tax_enabled:bool, default_tax_rate:float, taxable_subtotal:string, exempt_subtotal:string, total:string}
+     * @return array{subtotal:string, retail_subtotal:string, discount:string, manual_discount:string, tax:string, tax_type:string, tax_enabled:bool, default_tax_rate:float, taxable_subtotal:string, exempt_subtotal:string, total:string}
      */
     public function cartTotals(Store $store): array
     {
@@ -714,7 +731,13 @@ class PosSaleService
             }
         }
 
-        $discount = $this->getDiscount($store);
+        // `$discount` accumulates everything that comes off the bill — the
+        // cashier's manual discount PLUS the coupon and PLUS the points spent.
+        // Both extras are re-priced from the sale's own lines when the sale is
+        // posted, so only the manual part may be sent back as the posted
+        // discount; that is why it is exposed on its own as `manual_discount`.
+        $manualDiscount = $this->getDiscount($store);
+        $discount = $manualDiscount;
         if ($enableTax && $taxType === 'exclusive') {
             $rawTotal = bcadd($subtotal, $taxTotal, 2);
         } else {
@@ -733,6 +756,15 @@ class PosSaleService
             $discount = bcadd($discount, $couponDiscount, 2);
         }
 
+        // Points the customer is spending on this bill — bounded by the balance
+        // and by what is left after the other discounts.
+        $pointsBill = bcsub($rawTotal, $discount, 2);
+        $points = $this->pointsFor($store, $pointsBill, $this->cartCustomer($store));
+
+        if (bccomp($points['value'], '0', 2) > 0) {
+            $discount = bcadd($discount, $points['value'], 2);
+        }
+
         if (bccomp($discount, $rawTotal, 2) > 0) {
             $discount = $rawTotal;
         }
@@ -745,6 +777,7 @@ class PosSaleService
         return [
             'subtotal' => $subtotal,
             'retail_subtotal' => $retailSubtotal,
+            'manual_discount' => $manualDiscount,
             'discount' => $discount,
             'tax' => $taxTotal,
             'tax_type' => $taxType,
@@ -758,6 +791,13 @@ class PosSaleService
             'coupon_discount' => $couponDiscount,
             'coupon_valid' => $coupon['valid'],
             'coupon_reason' => $coupon['reason'],
+            'points_redeemed' => $points['points'],
+            'points_value' => $points['value'],
+            'points_max' => $points['max'],
+            'points_max_value' => $points['max'] > 0
+                ? bcmul((string) $points['max'], $this->loyalty->redemptionValue($store), 2)
+                : '0.00',
+            'points_enabled' => $points['enabled'],
         ];
     }
 
@@ -1196,23 +1236,8 @@ class PosSaleService
         if ($postedCoupon || $sessionCoupon) {
             $code = $postedCoupon ? trim((string) $couponCode) : (string) $sessionCoupon->code;
 
-            // Scoped coupons price only the matching lines of this sale.
-            $couponLines = array_map(fn (array $line) => [
-                'product_id' => (int) $line['product']->id,
-                'line_total' => (string) $line['line_total'],
-            ], $resolved);
-
-            $scopedPromotion = $this->promotions->findByCode($store, $code);
-
-            $check = $this->promotions->validateCouponDecimal(
-                store: $store,
-                code: $code,
-                orderTotal: $subtotal,
-                customerId: $customerId,
-                eligibleSubtotal: $scopedPromotion
-                    ? $this->eligibleSubtotalFor($scopedPromotion, $couponLines)
-                    : null,
-            );
+            // Scoped and BOGO coupons are priced from the sale's own lines.
+            $check = $this->promotions->quoteLines($store, $code, $this->promotionLines($resolved), $customerId);
 
             if ($check['valid']) {
                 $coupon = $check['promotion'];
@@ -1233,6 +1258,25 @@ class PosSaleService
             // A cart coupon that stopped qualifying (the bill dropped below its
             // minimum, it expired, its limit is used up) is simply not applied:
             // it was already excluded from the total the cashier was shown.
+        }
+
+        // Points: spend them on this bill (bounded by the balance and what is
+        // left). The ledger row is written inside the posting transaction.
+        $pointsBill = bcsub(($enableTax && $taxType === 'exclusive') ? bcadd($subtotal, $tax, 2) : $subtotal, $discount, 2);
+        $points = $this->pointsFor($store, $pointsBill, $customer);
+
+        if (bccomp($points['value'], '0', 2) > 0) {
+            $discount = bcadd($discount, $points['value'], 2);
+        }
+
+        if ($enableTax && $taxType === 'exclusive') {
+            $billBase = bcadd($subtotal, $tax, 2);
+        } else {
+            $billBase = $subtotal;
+        }
+
+        if (bccomp($discount, $billBase, 2) > 0) {
+            $discount = $billBase;
         }
 
         if ($enableTax && $taxType === 'exclusive') {
@@ -1297,7 +1341,7 @@ class PosSaleService
                     $store, $resolved, $paymentRows, $actor, $shift, $heldSale,
                     $subtotal, $discount, $tax, $total, $warehouseId, $cashKept,
                     $customerId, $creditTotal, $taxType, $taxableAmount, $exemptAmount,
-                    $coupon, $couponDiscount,
+                    $coupon, $couponDiscount, $points['points'],
                 );
             } catch (\Illuminate\Database\QueryException $e) {
                 if ($attempt === 2 || ! $this->isUniqueViolation($e)) {
@@ -1333,12 +1377,13 @@ class PosSaleService
         string $exemptAmount = '0',
         ?Promotion $coupon = null,
         string $couponDiscount = '0.00',
+        int $pointsToRedeem = 0,
     ): PosSale {
         return DB::transaction(function () use (
             $store, $resolved, $paymentRows, $actor, $shift, $heldSale,
             $subtotal, $discount, $tax, $total, $warehouseId, $cashKept,
             $customerId, $creditTotal, $taxType, $taxableAmount, $exemptAmount,
-            $coupon, $couponDiscount,
+            $coupon, $couponDiscount, $pointsToRedeem,
         ) {
             if ($heldSale) {
                 // held = still waiting in the held list; resumed = recalled
@@ -1476,7 +1521,12 @@ class PosSaleService
                 );
             }
 
-            // Loyalty: the customer's points and spending move with the sale.
+            // Loyalty: points spent on this bill leave first, then the points the
+            // purchase earned are credited — all inside the sale transaction.
+            if ($pointsToRedeem > 0) {
+                $this->loyalty->redeemForSale($sale, $pointsToRedeem, $actor);
+            }
+
             $this->loyalty->accrueForSale($sale, $actor);
 
             $this->clearCart($store);

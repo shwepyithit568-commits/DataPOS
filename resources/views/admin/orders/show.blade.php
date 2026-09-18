@@ -232,6 +232,12 @@
                                 <strong class="font-mono">+{{ format_currency($orderTax, $store) }}</strong>
                             </span>
                         @endif
+                        @if ((float) ($order->discount_amount ?? 0) > 0)
+                            <span class="text-emerald-600 dark:text-emerald-400 font-bold">
+                                🎟️ {{ __('messages.pos_coupon') }} <span class="font-mono">({{ $order->coupon_code }})</span>:
+                                <strong class="font-mono">−{{ format_currency((float) $order->discount_amount, $store) }}</strong>
+                            </span>
+                        @endif
                         <span>{{ __('messages.order_original_total') }}: <strong class="text-slate-700 dark:text-slate-300 font-mono">{{ format_currency($order->total_amount, $store) }}</strong></span>
                     </div>
                     @if ($order->agreed_amount !== null)

@@ -5956,4 +5956,17 @@ return [
 
     'coupon_not_applicable' => 'This coupon does not apply to anything in this cart.',
 
+    'loyalty_point_value' => 'Value of 1 point',
+    'loyalty_point_value_hint' => 'How much one point is worth when the customer spends it (0 = points cannot be spent).',
+    'loyalty_note_points_redeemed' => 'Points spent on receipt :receipt (:points points = :amount)',
+    'loyalty_note_points_returned' => 'Points returned for refund :refund',
+    'pos_points' => 'Loyalty points',
+    'pos_points_placeholder' => 'Points to spend',
+    'pos_points_use_max' => 'Use max (:points)',
+    'pos_points_available' => 'Available: :points (worth :amount)',
+    'pos_points_applied' => ':points points used — :amount off',
+    'pos_points_cleared' => 'Points removed from the cart.',
+    'pos_points_unavailable' => 'Those points cannot be used on this bill.',
+    'loyalty_points_spent' => 'Points spent',
+
 ];

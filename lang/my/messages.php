@@ -5956,4 +5956,17 @@ return [
 
     'coupon_not_applicable' => 'ဤ Coupon သည် လက်ရှိ ဈေးခြင်းထဲရှိ ပစ္စည်းများနှင့် မကိုက်ညီပါ။',
 
+    'loyalty_point_value' => 'Points ၁ မှတ် တန်ဖိုး',
+    'loyalty_point_value_hint' => 'ဖောက်သည် Points သုံးသည့်အခါ ၁ မှတ် တန်ဖိုး မည်မျှ (0 = Points သုံး၍ မရ)။',
+    'loyalty_note_points_redeemed' => 'ပြေစာ :receipt တွင် Points သုံးခြင်း (:points မှတ် = :amount)',
+    'loyalty_note_points_returned' => 'ငွေပြန်အမ်း :refund အတွက် Points ပြန်ရရှိ',
+    'pos_points' => 'Loyalty Points',
+    'pos_points_placeholder' => 'သုံးမည့် Points',
+    'pos_points_use_max' => 'အများဆုံး သုံးမည် (:points)',
+    'pos_points_available' => 'ရရှိနိုင်သည်: :points မှတ် (တန်ဖိုး :amount)',
+    'pos_points_applied' => ':points မှတ် သုံးပြီး — :amount လျှော့ပြီးပါပြီ',
+    'pos_points_cleared' => 'Points ကို ဈေးခြင်းမှ ဖျက်လိုက်ပါပြီ။',
+    'pos_points_unavailable' => 'ဤ Points များကို ဤဘောက်ချာအတွက် သုံး၍ မရပါ။',
+    'loyalty_points_spent' => 'သုံးလိုက်သည့် Points',
+
 ];

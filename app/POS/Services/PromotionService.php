@@ -281,6 +281,13 @@ class PromotionService
             return ['valid' => false, 'discount' => '0.00', 'reason' => $reason, 'params' => $params, 'promotion' => $promotion];
         }
 
+        // Without basket lines we cannot know which units a BOGO frees, nor what a
+        // scoped promotion covers — say so instead of guessing a number.
+        // quoteLines() is the entry point that can price these.
+        if ($promotion->type === 'bogo') {
+            return ['valid' => false, 'discount' => '0.00', 'reason' => 'coupon_type_unsupported', 'params' => [], 'promotion' => $promotion];
+        }
+
         // A promotion can be limited to one product or category. Those discounts
         // are priced on the matching part of the bill only — applying a
         // "10% off chargers" coupon to the whole basket would give away money
@@ -310,6 +317,126 @@ class PromotionService
     }
 
     /**
+     * Price a coupon against actual basket lines — the one place that decides what
+     * a promotion is worth.
+     *
+     * Both channels go through here (the POS counter and the online checkout), so
+     * "10% off chargers" and "buy one get one" mean the same thing wherever the
+     * sale happens. Scope is honoured: a promotion limited to a product or
+     * category only prices the lines it covers.
+     *
+     * @param  array<int, array{product_id:int, quantity:string|int, unit_price:string|float, line_total?:string|float}>  $lines
+     * @return array{valid:bool, discount:string, reason:?string, params:array<string,string>, promotion:?Promotion}
+     */
+    public function quoteLines(Store $store, string $code, array $lines, ?int $customerId = null): array
+    {
+        $total = '0';
+        foreach ($lines as $line) {
+            $total = bcadd($total, $this->lineTotal($line), 2);
+        }
+
+        [$promotion, $reason, $params] = $this->checkCoupon($store, $code, $total, $customerId);
+
+        if (! $promotion || $reason !== null) {
+            return ['valid' => false, 'discount' => '0.00', 'reason' => $reason, 'params' => $params, 'promotion' => $promotion];
+        }
+
+        $scoped = $this->scopedLines($promotion, $lines);
+        $isScoped = (bool) ($promotion->product_id || $promotion->category_id);
+
+        if ($isScoped && $scoped === []) {
+            return ['valid' => false, 'discount' => '0.00', 'reason' => 'coupon_not_applicable', 'params' => [], 'promotion' => $promotion];
+        }
+
+        if ($promotion->type === 'bogo') {
+            $discount = $this->bogoDiscount($scoped === [] ? $lines : $scoped);
+        } else {
+            $base = '0';
+            foreach ($scoped === [] ? $lines : $scoped as $line) {
+                $base = bcadd($base, $this->lineTotal($line), 2);
+            }
+
+            $discount = $this->calculateDiscountDecimal($promotion, $base);
+        }
+
+        return ['valid' => true, 'discount' => $discount, 'reason' => null, 'params' => [], 'promotion' => $promotion];
+    }
+
+    /**
+     * Buy one get one: every second unit of a covered line is free.
+     *
+     * The free unit is the cheapest one in the pair, which is what a customer
+     * expects and what stops a "buy 1 get 1" from discounting the pricier item.
+     */
+    private function bogoDiscount(array $lines): string
+    {
+        $discount = '0';
+
+        foreach ($lines as $line) {
+            $quantity = (int) floor((float) ($line['quantity'] ?? 0));
+            $freeUnits = intdiv($quantity, 2);
+
+            if ($freeUnits <= 0) {
+                continue;
+            }
+
+            $unitPrice = bcadd((string) ($line['unit_price'] ?? '0'), '0', 2);
+            $discount = bcadd($discount, bcmul((string) $freeUnits, $unitPrice, 2), 2);
+        }
+
+        return $discount;
+    }
+
+    /** Lines a scoped promotion covers (empty when the promotion is not scoped). */
+    private function scopedLines(Promotion $promotion, array $lines): array
+    {
+        if (! $promotion->product_id && ! $promotion->category_id) {
+            return [];
+        }
+
+        $categoryProductIds = $promotion->category_id
+            ? Promotion::query()
+                ->getConnection()
+                ->table('products')
+                ->where('store_id', $promotion->store_id)
+                ->where('category_id', $promotion->category_id)
+                ->pluck('id')
+                ->all()
+            : [];
+
+        $matched = [];
+
+        foreach ($lines as $line) {
+            $productId = (int) ($line['product_id'] ?? 0);
+
+            if ($productId <= 0) {
+                continue;
+            }
+
+            if (($promotion->product_id && $productId === (int) $promotion->product_id)
+                || in_array($productId, $categoryProductIds, true)) {
+                $matched[] = $line;
+            }
+        }
+
+        return $matched;
+    }
+
+    /** A line's money: the stored line total, or unit price × quantity. */
+    private function lineTotal(array $line): string
+    {
+        if (isset($line['line_total']) && $line['line_total'] !== '' && $line['line_total'] !== null) {
+            return bcadd((string) $line['line_total'], '0', 2);
+        }
+
+        return bcmul(
+            bcadd((string) ($line['unit_price'] ?? '0'), '0', 2),
+            (string) ($line['quantity'] ?? '0'),
+            2
+        );
+    }
+
+    /**
      * Record that a coupon was used on a sale: usage ledger + used counter.
      *
      * Called inside the sale transaction so a sale and its redemption are one
@@ -322,8 +449,9 @@ class PromotionService
         ?int $customerId = null,
         ?int $posSaleId = null,
         ?User $actor = null,
+        ?int $orderId = null,
     ): PromotionUsage {
-        return DB::transaction(function () use ($store, $promotion, $discountApplied, $customerId, $posSaleId, $actor) {
+        return DB::transaction(function () use ($store, $promotion, $discountApplied, $customerId, $posSaleId, $actor, $orderId) {
             $locked = Promotion::whereKey($promotion->id)->lockForUpdate()->firstOrFail();
 
             $usage = PromotionUsage::create([
@@ -331,6 +459,7 @@ class PromotionService
                 'store_id' => $store->id,
                 'customer_id' => $customerId,
                 'pos_sale_id' => $posSaleId,
+                'order_id' => $orderId,
                 'discount_applied' => bcadd($discountApplied, '0', 2),
             ]);
 
@@ -346,6 +475,7 @@ class PromotionService
                     'discount' => bcadd($discountApplied, '0', 2),
                     'customer_id' => $customerId,
                     'pos_sale_id' => $posSaleId,
+                    'order_id' => $orderId,
                     'used_count' => (int) $locked->used_count,
                 ],
                 actorId: $actor?->id,
@@ -400,13 +530,6 @@ class PromotionService
 
         if ($promotion->isUsageLimitReached()) {
             return [$promotion, 'coupon_limit_reached', []];
-        }
-
-        // BOGO is priced per line item, which the POS checkout does not do yet.
-        // Charging a coupon that cannot discount anything would be worse than
-        // saying so.
-        if ($promotion->type === 'bogo') {
-            return [$promotion, 'coupon_type_unsupported', []];
         }
 
         $minOrder = bcadd((string) ($promotion->min_order_amount ?? '0'), '0', 2);

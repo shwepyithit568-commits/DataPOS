@@ -13,6 +13,7 @@ class PromotionUsage extends Model
         'store_id',
         'customer_id',
         'pos_sale_id',
+        'order_id',
         'discount_applied',
     ];
 
@@ -23,6 +24,12 @@ class PromotionUsage extends Model
     public function promotion(): BelongsTo
     {
         return $this->belongsTo(Promotion::class);
+    }
+
+    /** The online order this redemption belongs to (POS sales use pos_sale_id). */
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
     }
 
     public function customer(): BelongsTo

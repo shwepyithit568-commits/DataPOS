@@ -551,6 +551,40 @@ class PosSaleController extends Controller
     }
 
     /**
+     * Set (or clear) how many loyalty points the customer spends on this cart.
+     *
+     * Bounded server-side by their balance and by the bill: the store can never
+     * owe the customer money, and no one can spend points they do not have.
+     */
+    public function setPoints(Request $request, StoreContext $context): JsonResponse|RedirectResponse
+    {
+        $store = $context->getStore();
+
+        $data = $request->validate([
+            'points' => ['nullable', 'integer', 'min:0', 'max:100000000'],
+        ]);
+
+        $points = (int) ($data['points'] ?? 0);
+        $this->sales->setPoints($store, $points);
+
+        $totals = $this->sales->cartTotals($store);
+        $applied = (int) ($totals['points_redeemed'] ?? 0);
+
+        if ($applied > 0) {
+            $message = __('messages.pos_points_applied', [
+                'points' => $applied,
+                'amount' => format_currency((float) $totals['points_value'], $store),
+            ]);
+        } elseif ($points > 0) {
+            $message = __('messages.pos_points_unavailable');
+        } else {
+            $message = __('messages.pos_points_cleared');
+        }
+
+        return $this->jsonOrRedirect($request, $store, $message);
+    }
+
+    /**
      * Drop the whole session cart (F4 clear-cart shortcut).
      */
     public function clearCart(Request $request, StoreContext $context): JsonResponse|RedirectResponse

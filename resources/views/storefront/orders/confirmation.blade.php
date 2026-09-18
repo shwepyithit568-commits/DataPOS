@@ -307,6 +307,15 @@
                         <span class="font-mono font-bold">+ {{ format_currency($order->tax, $store ?? null) }}</span>
                     </div>
                 @endif
+                @if ((float) ($order->discount_amount ?? 0) > 0)
+                    <div class="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
+                        <span>
+                            {{ __('messages.pos_coupon') }}
+                            <span class="font-mono font-bold">({{ $order->coupon_code }})</span>
+                        </span>
+                        <span class="font-mono font-bold">− {{ format_currency((float) $order->discount_amount, $store ?? null) }}</span>
+                    </div>
+                @endif
                 <div class="flex items-center justify-between">
                     <span class="font-black text-xs sm:text-sm text-slate-900 dark:text-white">{{ __('messages.total_amount') }}</span>
                     <span class="font-black text-base sm:text-lg text-[color:var(--sf-primary)] font-outfit">

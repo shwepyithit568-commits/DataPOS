@@ -36,6 +36,7 @@
     $soundFx = $pos['enable_sound_fx'] ?? true;
     $allowNegativeStock = $pos['allow_negative_stock'] ?? false;
     $loyaltyPerPoint = $pos['loyalty_amount_per_point'] ?? '';
+    $loyaltyPointValue = $pos['loyalty_point_value'] ?? '';
 @endphp
 
 <div class="space-y-6"
@@ -169,6 +170,13 @@
                                value="{{ $loyaltyPerPoint }}" placeholder="0" class="{{ $inputClass }}">
                         <p class="{{ $helpClass }}">{{ __('messages.loyalty_amount_per_point_hint') }}</p>
                         @error('pos_settings.loyalty_amount_per_point')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label class="{{ $labelClass }}">{{ __('messages.loyalty_point_value') }}</label>
+                        <input type="number" name="pos_settings[loyalty_point_value]" min="0" step="any"
+                               value="{{ $loyaltyPointValue }}" placeholder="0" class="{{ $inputClass }}">
+                        <p class="{{ $helpClass }}">{{ __('messages.loyalty_point_value_hint') }}</p>
+                        @error('pos_settings.loyalty_point_value')<p class="mt-1 text-xs font-semibold text-rose-600">{{ $message }}</p>@enderror
                     </div>
                 </div>
             </div>

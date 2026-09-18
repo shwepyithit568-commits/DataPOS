@@ -125,6 +125,17 @@
                     $taxRate = (float) ($storeSetting?->getPosSetting('default_tax_rate', 5));
                     $taxType = (string) ($storeSetting?->getPosSetting('tax_type', 'exclusive'));
                 @endphp
+                @php
+                    // One expression for "bill minus coupon" (the cart panel and
+                    // the receipt use the same rule). Built with plain string
+                    // interpolation so no level of quoting can break the view.
+                    $ob = '$store.orderBuilder';
+                    $taxMultiplier = ($taxEnabled && $taxType === 'exclusive') ? (float) ($taxRate / 100) : null;
+                    $orderBaseExpr = $taxMultiplier !== null
+                        ? "({$ob} ? ({$ob}.totalAmount + (({$ob}.taxableAmount || {$ob}.totalAmount) * {$taxMultiplier})) : 0)"
+                        : "({$ob} ? {$ob}.totalAmount : 0)";
+                    $orderTotalExpr = "Math.max(0, {$orderBaseExpr} - ({$ob} ? {$ob}.couponDiscount : 0))";
+                @endphp
                 <div class="pt-2 sm:pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5 text-xs sm:text-sm">
                     @if ($taxEnabled && $taxType === 'exclusive')
                         <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
@@ -138,10 +149,16 @@
                                   x-text="'+ ' + (typeof window.formatCurrency === 'function' ? window.formatCurrency(Math.round(((($store.orderBuilder && typeof $store.orderBuilder.taxableAmount === 'number') ? $store.orderBuilder.taxableAmount : ($store.orderBuilder ? $store.orderBuilder.totalAmount : 0)) || 0) * {{ $taxRate }} / 100)) : Math.round(((($store.orderBuilder && typeof $store.orderBuilder.taxableAmount === 'number') ? $store.orderBuilder.taxableAmount : ($store.orderBuilder ? $store.orderBuilder.totalAmount : 0)) || 0) * {{ $taxRate }} / 100).toLocaleString())"></span>
                         </div>
                     @endif
+                    <div class="flex items-center justify-between text-emerald-600 dark:text-emerald-400"
+                         x-show="$store.orderBuilder && $store.orderBuilder.couponDiscount > 0" x-cloak>
+                        <span class="font-bold">{{ __('messages.pos_coupon') }} <span class="font-mono" x-text="'(' + ($store.orderBuilder ? $store.orderBuilder.couponCode : '') + ')'"></span>:</span>
+                        <span class="font-mono font-bold"
+                              x-text="'− ' + (typeof window.formatCurrency === 'function' ? window.formatCurrency($store.orderBuilder ? $store.orderBuilder.couponDiscount : 0) : ($store.orderBuilder ? $store.orderBuilder.couponDiscount.toLocaleString() : 0))"></span>
+                    </div>
                     <div class="flex items-center justify-between">
                         <span class="font-bold text-slate-700 dark:text-slate-300">{{ __('messages.total_amount') }}:</span>
                         <span class="text-base sm:text-xl font-black text-[color:var(--sf-primary)] dark:text-[color:var(--sf-primary-hover)] font-sans"
-                              x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency({{ $taxEnabled && $taxType === 'exclusive' ? 'Math.round(($store.orderBuilder ? $store.orderBuilder.totalAmount : 0) + (((($store.orderBuilder && typeof $store.orderBuilder.taxableAmount === \'number\') ? $store.orderBuilder.taxableAmount : ($store.orderBuilder ? $store.orderBuilder.totalAmount : 0)) || 0) * ' . ($taxRate / 100) . '))' : '($store.orderBuilder ? $store.orderBuilder.totalAmount : 0)' }}) : ({{ $taxEnabled && $taxType === 'exclusive' ? 'Math.round(($store.orderBuilder ? $store.orderBuilder.totalAmount : 0) + (((($store.orderBuilder && typeof $store.orderBuilder.taxableAmount === \'number\') ? $store.orderBuilder.taxableAmount : ($store.orderBuilder ? $store.orderBuilder.totalAmount : 0)) || 0) * ' . ($taxRate / 100) . ')).toLocaleString()' : '($store.orderBuilder ? $store.orderBuilder.totalAmount.toLocaleString() : 0)' }})"></span>
+                              x-text="typeof window.formatCurrency === 'function' ? window.formatCurrency({{ $orderTotalExpr }}) : ({{ $orderTotalExpr }}).toLocaleString()"></span>
                     </div>
                     @if ($taxEnabled && $taxType === 'inclusive')
                         <p class="text-[11px] text-slate-400 dark:text-slate-500 text-right">
@@ -198,8 +215,35 @@
                 </div>
 
                 <form x-ref="orderForm" method="POST" action="{{ url('/store/' . ($store?->slug ?? request('store_slug')) . '/orders') }}" @submit.prevent="submitOrder($event)" class="space-y-2.5 sm:space-y-3">
+
+                    {{-- Coupon code: checked by the server against the current list --}}
+                    <div>
+                        <label class="block text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('messages.pos_coupon') }}</label>
+                        <div class="flex items-center gap-1.5">
+                            <input type="text" autocomplete="off"
+                                   x-model="$store.orderBuilder.couponCode"
+                                   @keydown.enter.prevent="$store.orderBuilder.applyCoupon('{{ url('/store/' . ($store?->slug ?? request('store_slug')) . '/orders/coupon') }}', @js(['pos_coupon_placeholder' => __('messages.pos_coupon_placeholder'), 'pos_coupon_apply' => __('messages.pos_coupon_apply')]))"
+                                   placeholder="{{ __('messages.pos_coupon_placeholder') }}"
+                                   class="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs sm:text-sm font-bold uppercase tracking-wide focus:ring-1 focus:ring-[color:var(--sf-primary)] outline-none">
+                            <button type="button"
+                                    @click="$store.orderBuilder.applyCoupon('{{ url('/store/' . ($store?->slug ?? request('store_slug')) . '/orders/coupon') }}', @js(['pos_coupon_placeholder' => __('messages.pos_coupon_placeholder'), 'pos_coupon_apply' => __('messages.pos_coupon_apply')]))"
+                                    :disabled="$store.orderBuilder.couponBusy || !$store.orderBuilder.couponCode"
+                                    class="px-2.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-50 transition cursor-pointer">
+                                {{ __('messages.pos_coupon_apply') }}
+                            </button>
+                            <button type="button" x-show="$store.orderBuilder.couponDiscount > 0" x-cloak
+                                    @click="$store.orderBuilder.clearCoupon()"
+                                    class="px-2 py-1.5 rounded-lg text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 cursor-pointer">✕</button>
+                        </div>
+                        <p class="text-[11px] font-bold mt-1"
+                           x-show="$store.orderBuilder.couponMessage !== ''" x-cloak
+                           :class="$store.orderBuilder.couponValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
+                           x-text="$store.orderBuilder.couponMessage"></p>
+                    </div>
                     @csrf
                     <input type="hidden" name="items_json" x-ref="itemsJsonInput" value="" />
+                    {{-- Coupon the customer applied; the server re-validates it on submit. --}}
+                    <input type="hidden" name="coupon_code" x-ref="couponInput" :value="$store.orderBuilder ? $store.orderBuilder.couponCode : ''" />
                     <input type="hidden" name="contact_channel" :value="contactChannel" />
 
                     {{-- Customer Name --}}

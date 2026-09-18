@@ -199,6 +199,59 @@ Alpine.store('orderBuilder', {
         return (this.items || []).reduce((sum, i) => sum + (parseInt(i.quantity) || 0), 0);
     },
 
+    // ── Coupon (checked by the server against the current list) ──
+    couponCode: '',
+    couponDiscount: 0,
+    couponValid: false,
+    couponMessage: '',
+    couponBusy: false,
+
+    /** Ask the server what this code is worth on the current list. */
+    async applyCoupon(checkUrl, labels) {
+        if (this.couponBusy) return;
+        const code = String(this.couponCode || '').trim();
+
+        if (!code) {
+            this.couponMessage = (labels && labels.pos_coupon_placeholder) || 'Enter the coupon code';
+            this.couponValid = false;
+            return;
+        }
+
+        this.couponBusy = true;
+        try {
+            const body = new URLSearchParams();
+            body.set('code', code);
+            body.set('items_json', JSON.stringify(this.items || []));
+            body.set('_token', document.querySelector('meta[name=csrf-token]')?.content || '');
+
+            const res = await fetch(checkUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                body,
+            });
+            const json = await res.json();
+
+            this.couponValid = !!json.valid;
+            this.couponDiscount = json.valid ? (parseFloat(json.discount) || 0) : 0;
+            this.couponMessage = json.message || '';
+            if (json.valid && json.code) this.couponCode = json.code;
+        } catch (e) {
+            this.couponValid = false;
+            this.couponDiscount = 0;
+            this.couponMessage = (labels && labels.pos_coupon_apply) ? labels.pos_coupon_apply : 'Could not check that coupon.';
+        } finally {
+            this.couponBusy = false;
+        }
+    },
+
+    clearCoupon() {
+        this.couponCode = '';
+        this.couponDiscount = 0;
+        this.couponValid = false;
+        this.couponMessage = '';
+    },
+
     get totalAmount() {
         return (this.items || []).reduce((sum, i) => sum + ((parseFloat(i.price) || 0) * (parseInt(i.quantity) || 0)), 0);
     },

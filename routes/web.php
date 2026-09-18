@@ -93,6 +93,7 @@ Route::middleware(['auth', ResolveStoreContext::class, SetLocale::class, 'store.
 // Customer Order Request Route (Supports Guest & Authenticated Users)
 Route::get('/order-builder', [OrderController::class, 'builder'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.online_ordering']);
 Route::post('/store/{store_slug}/orders', [OrderController::class, 'store'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.online_ordering', 'throttle:orders']);
+Route::post('/store/{store_slug}/orders/coupon', [OrderController::class, 'validateCoupon'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.online_ordering', 'throttle:orders']);
 
 // Customer "How to Order / Contact" static guide page
 Route::get('/how-to-order', [HowToOrderController::class, 'index'])->middleware([ResolveStoreContext::class, SetLocale::class, 'store.capability:storefront.online_ordering']);
@@ -918,6 +919,8 @@ Route::prefix('store/{store_slug}')
             Route::post('/cart/discount', [\App\POS\Http\Controllers\PosSaleController::class, 'setDiscount'])->name('pos.cart.discount')->middleware('store.permission:pos_sales.update');
             // Coupon on the live cart: validated, then stored with the cart.
             Route::post('/cart/coupon', [\App\POS\Http\Controllers\PosSaleController::class, 'setCoupon'])->name('pos.cart.coupon')->middleware('store.permission:pos_sales.view');
+            // Loyalty points the customer spends on the cart.
+            Route::post('/cart/points', [\App\POS\Http\Controllers\PosSaleController::class, 'setPoints'])->name('pos.cart.points')->middleware('store.permission:pos_sales.view');
             Route::post('/cart/{line}', [\App\POS\Http\Controllers\PosSaleController::class, 'updateLine'])->name('pos.cart.update')->middleware('store.permission:pos_sales.update');
             Route::post('/cart/{line}/price', [\App\POS\Http\Controllers\PosSaleController::class, 'setLinePrice'])->name('pos.cart.price')->middleware('store.permission:pos_sales.update');
             Route::delete('/cart/{line}', [\App\POS\Http\Controllers\PosSaleController::class, 'removeLine'])->name('pos.cart.remove')->middleware('store.permission:pos_sales.update');

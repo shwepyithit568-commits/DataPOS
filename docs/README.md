@@ -26,7 +26,8 @@
 10. [MySQL Portability Fixes](DataPOS_MySQL_Portability_Fixes_MM.md) — production အင်ဂျင်တွင်သာ crash ဖြစ်သော bug ၆ မျိုး (SQLite က ဖုံးထားခဲ့သည်)
 11. [UAT Day-Run Defects Fix](DataPOS_UAT_Day_Run_Defects_Fix_MM.md) — 2026-09-18 လက်တွေ့ UAT: ကောင်တာငွေ အံဆွဲမရောက်ခြင်း၊ ငွေသွင်း/ထုတ် အဝိုင်းဂဏန်းရိုက်မရခြင်း၊ 403 လင့် ၄ ခု၊ dashboard ဝင်ငွေ
 12. [Coupon Redemption & Loyalty Earning](DataPOS_Coupon_And_Loyalty_Earning_MM.md) — 2026-09-19: ကောင်တာတွင် coupon သုံးနိုင်ခြင်း + အရောင်းမှ Points ရရှိခြင်း (gap ၂ ခု ဖြည့်)
-13. [Consolidation Manifest](CONSOLIDATION_MANIFEST.md)
+13. [Storefront Coupon, Points Redemption & BOGO](DataPOS_Storefront_Coupon_Points_BOGO_MM.md) — 2026-09-19: အွန်လိုင်း checkout coupon၊ Points နဲ့ ငွေလျှော့ခြင်း၊ BOGO (၂ လမ်းကြောင်းလုံး)
+14. [Consolidation Manifest](CONSOLIDATION_MANIFEST.md)
 
 ## Historical archive
 

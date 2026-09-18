@@ -28,6 +28,9 @@ class Order extends Model
         'tax',
         'tax_type',
         'taxable_amount',
+        'discount_amount',
+        'coupon_code',
+        'promotion_id',
         'agreed_amount',
         'payment_status',
         'status',
@@ -37,6 +40,7 @@ class Order extends Model
         'total_amount' => 'decimal:2',
         'tax' => 'decimal:2',
         'taxable_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'agreed_amount' => 'decimal:2',
     ];
 

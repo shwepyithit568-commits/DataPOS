@@ -363,6 +363,7 @@ class MembershipLoyaltyService
 
     public const TYPE_EARNED = 'bonus';
     public const TYPE_ADJUSTED = 'adjusted';
+    public const TYPE_REDEEMED = 'redeemed';
 
     /**
      * Money the customer must spend to earn one point (MMK per point).
@@ -409,6 +410,107 @@ class MembershipLoyaltyService
         $raw = bcmul(bcdiv($amount, $rate, 6), $multiplier, 6);
 
         return (int) floor((float) $raw);
+    }
+
+    // ── Redeeming points as a discount ────────────────────────────────────────
+
+    /**
+     * What one point is worth when a customer spends it (MMK per point).
+     *
+     * Separate from the earning rate on purpose: e.g. earn 1 point per 1,000 Ks
+     * spent, redeem at 10 Ks a point. 0 = redeeming is switched off.
+     */
+    public function redemptionValue(Store $store): string
+    {
+        $value = (string) ($store->setting?->getPosSetting('loyalty_point_value', 0) ?? '0');
+
+        return bcadd($value !== '' ? $value : '0', '0', 2);
+    }
+
+    public function isRedemptionEnabled(Store $store): bool
+    {
+        if (! $store->hasCapability(\App\Capabilities\Capability::COMMERCE_LOYALTY)) {
+            return false;
+        }
+
+        return bccomp($this->redemptionValue($store), '0', 2) > 0;
+    }
+
+    /** The customer's current balance in this store. */
+    public function pointsBalanceFor(Store $store, ?User $customer): int
+    {
+        if (! $customer) {
+            return 0;
+        }
+
+        return (int) (DB::table('store_user')
+            ->where('store_id', $store->id)
+            ->where('user_id', $customer->id)
+            ->value('loyalty_points') ?? 0);
+    }
+
+    /**
+     * How many points the customer may actually spend on this bill.
+     *
+     * Bounded by their balance and by the bill itself — a discount can never
+     * exceed what is owed, or the shop would owe money instead of receiving it.
+     */
+    public function maxRedeemablePoints(Store $store, ?User $customer, string $bill): int
+    {
+        if (! $this->isRedemptionEnabled($store) || ! $customer) {
+            return 0;
+        }
+
+        $value = $this->redemptionValue($store);
+
+        if (bccomp($bill, '0', 2) <= 0) {
+            return 0;
+        }
+
+        $affordable = (int) floor((float) bcdiv($bill, $value, 4));
+
+        return max(0, min($this->pointsBalanceFor($store, $customer), $affordable));
+    }
+
+    /**
+     * Spend points on a posted sale: ledger row + balance, inside the sale
+     * transaction so the discount and the points move together.
+     *
+     * @return int the money value taken off the bill
+     */
+    public function redeemForSale(PosSale $sale, int $points, ?User $actor = null): string
+    {
+        $store = $sale->store;
+        $customerId = $sale->customer_id;
+
+        if ($points <= 0 || ! $store || ! $customerId || ! $this->isRedemptionEnabled($store)) {
+            return '0.00';
+        }
+
+        $allowed = $this->maxRedeemablePoints($store, User::find($customerId), (string) $sale->total);
+        $points = min($points, $allowed);
+
+        if ($points <= 0) {
+            return '0.00';
+        }
+
+        $value = bcmul((string) $points, $this->redemptionValue($store), 2);
+
+        $this->applyPoints(
+            store: $store,
+            customerId: $customerId,
+            points: -$points,
+            type: self::TYPE_REDEEMED,
+            notes: __('messages.loyalty_note_points_redeemed', [
+                'points' => $points,
+                'amount' => $value,
+                'receipt' => $sale->receipt_number,
+            ]),
+            actor: $actor,
+            saleId: $sale->id,
+        );
+
+        return $value;
     }
 
     /**
@@ -510,6 +612,32 @@ class MembershipLoyaltyService
                 actor: $actor,
                 saleId: $sale->id,
             );
+        }
+
+        // Points the customer SPENT on this sale come back to them, in the same
+        // proportion — otherwise a refund would quietly confiscate them.
+        $spent = (int) abs((int) LoyaltyPointTransaction::where('pos_sale_id', $sale->id)
+            ->where('type', self::TYPE_REDEEMED)
+            ->sum('points'));
+
+        if ($spent > 0 && bccomp($saleTotal, '0', 2) > 0) {
+            $back = (int) floor((float) bcmul(
+                (string) $spent,
+                bcdiv($refundTotal, $saleTotal, 6),
+                6
+            ));
+
+            if ($back > 0) {
+                $this->applyPoints(
+                    store: $store,
+                    customerId: $customerId,
+                    points: $back,
+                    type: self::TYPE_ADJUSTED,
+                    notes: __('messages.loyalty_note_points_returned', ['refund' => $return->refund_number]),
+                    actor: $actor,
+                    saleId: $sale->id,
+                );
+            }
         }
 
         $this->syncTierForSpending($store, $customerId, $actor);
