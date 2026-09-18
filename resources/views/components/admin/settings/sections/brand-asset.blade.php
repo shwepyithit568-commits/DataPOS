@@ -111,16 +111,33 @@
     @error($field)<p role="alert" class="mt-1 text-xs font-bold text-rose-600 dark:text-rose-400">{{ $message }}</p>@enderror
 
     {{-- Controls --}}
+    {{--
+        FIX: scroll-to-top bug.
+        The original pattern used <label for="inputId"> with a nested sr-only
+        <input type="file">. When the user clicked the label, the browser
+        focused the hidden input (position:absolute at 0,0) and called
+        scrollIntoView(), which scrolled the page to the very top.
+        Fix: move the input outside the label, give it tabindex="-1" to
+        suppress scroll-on-focus, and use a button that calls
+        $refs.fileInput.click() programmatically.
+    --}}
+    {{-- Hidden file input placed here; tabindex=-1 prevents scroll-on-focus --}}
+    <input id="{{ $inputId }}" type="file" name="{{ $field }}" accept="{{ $accept }}"
+        x-ref="fileInput"
+        @change="handleFile($event)"
+        tabindex="-1"
+        class="sr-only" />
+
     <div class="mt-3 flex flex-wrap items-center gap-2">
-        <label for="{{ $inputId }}"
+        {{-- Trigger button uses programmatic click instead of label-for --}}
+        <button type="button"
+            @click="$refs.fileInput.click()"
             class="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
             <template x-if="!selectedFile && showCurrent"><span>Replace</span></template>
             <template x-if="!selectedFile && !showCurrent"><span>Choose image</span></template>
             <template x-if="selectedFile"><span>Choose different</span></template>
-            <input id="{{ $inputId }}" type="file" name="{{ $field }}" accept="{{ $accept }}" x-ref="fileInput"
-                @change="handleFile($event)" class="sr-only" />
-        </label>
+        </button>
 
         <button type="button" x-show="selectedFile" @click="clearSelection()"
             class="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800" x-cloak>
