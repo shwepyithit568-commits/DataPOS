@@ -436,6 +436,7 @@
             ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange', 'resize'].forEach(evt => {
                 window.addEventListener(evt, () => {
                     this.syncFullscreenState();
+                    this.viewportLg = window.innerWidth >= 1024;
                 });
             });
             window.addEventListener('keydown', (e) => {
@@ -583,7 +584,7 @@
 
         <div class="h-16 flex items-center justify-between px-4 font-bold border-b border-slate-200/80 dark:border-slate-800/80 bg-gradient-to-b from-white to-slate-50/80 dark:from-slate-950 dark:to-slate-900/80">
             <span class="font-outfit text-sky-600 dark:text-sky-400 flex min-w-0 items-center gap-3" :class="sidebarCollapsed ? 'lg:justify-center lg:gap-0' : ''">
-                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/90 border-b-2 border-b-slate-300 dark:border-slate-700 dark:border-b-slate-900 bg-gradient-to-b from-white via-white to-slate-50 dark:from-slate-900 dark:to-slate-950 text-sky-600 dark:text-sky-300 shadow-xs">
+                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/90 border-b-2 border-b-slate-300 dark:border-slate-700 dark:border-b-slate-900 bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 text-sky-600 dark:text-sky-300 shadow-xs">
                     @if (!empty($adminStoreSetting?->adminLogo()))
                         <img
                             src="{{ asset('storage/' . $adminStoreSetting->adminLogo()) }}"
@@ -705,19 +706,23 @@
 
         <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200/80 dark:border-slate-800/80 h-[calc(3.25rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] flex items-center justify-between px-3 sm:px-4 transition-colors duration-200 gap-1.5 sm:gap-2 sticky top-0 z-10">
             <div class="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-                <button x-ref="menuButton" @click="sidebarOpen = true; $nextTick(() => document.querySelector('aside [x-ref=sidebarClose]')?.focus())" class="lg:hidden inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200/80 border-b-2 border-b-slate-300 dark:border-slate-700 dark:border-b-slate-950 bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 text-slate-700 dark:text-slate-200 shadow-xs hover:shadow hover:-translate-y-0.5 active:translate-y-0.5 active:border-b transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0" aria-label="{{ __('messages.open_menu') }}">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                {{-- Single Unified Sidebar Toggle Button (3D Sky Blue) --}}
+                <button type="button" x-ref="menuButton"
+                    @click="viewportLg ? toggleSidebarCollapsed() : (sidebarOpen = true, $nextTick(() => document.querySelector('aside [x-ref=sidebarClose]')?.focus()))"
+                    class="sf-btn-3d-sky h-10 w-10 items-center justify-center rounded-xl cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-sky-500 flex-shrink-0"
+                    :title="viewportLg ? (sidebarCollapsed ? '{{ __('messages.expand_sidebar') }}' : '{{ __('messages.collapse_sidebar') }}') : '{{ __('messages.open_menu') }}'"
+                    :aria-label="viewportLg ? (sidebarCollapsed ? '{{ __('messages.expand_sidebar') }}' : '{{ __('messages.collapse_sidebar') }}') : '{{ __('messages.open_menu') }}'">
+                    {{-- Desktop Expanded: Compact Hamburger Icon --}}
+                    <svg x-show="viewportLg && !sidebarCollapsed" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 7h16M4 12h10M4 17h16" />
                     </svg>
-                </button>
-                <button type="button" @click="toggleSidebarCollapsed()"
-                    class="hidden lg:inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 border-b-2 border-b-slate-300 dark:border-slate-700 dark:border-b-slate-950 bg-gradient-to-b from-white via-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 text-slate-600 hover:text-violet-700 dark:text-slate-300 dark:hover:text-violet-300 shadow-xs hover:shadow hover:-translate-y-0.5 active:translate-y-0.5 active:border-b transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0"
-                    :aria-label="sidebarCollapsed ? '{{ __('messages.expand_sidebar') }}' : '{{ __('messages.collapse_sidebar') }}'">
-                    <svg x-show="!sidebarCollapsed" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h10M4 17h16" />
+                    {{-- Desktop Collapsed: Expand Hamburger Icon --}}
+                    <svg x-show="viewportLg && sidebarCollapsed" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 7h16M10 12h10M4 17h16" />
                     </svg>
-                    <svg x-show="sidebarCollapsed" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M10 12h10M4 17h16" />
+                    {{-- Mobile: Hamburger Menu Icon --}}
+                    <svg x-show="!viewportLg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
 
@@ -831,7 +836,7 @@
                     @scroll.window="moreOpen && updatePos()"
                     @resize.window="moreOpen && updatePos()">
                     <button type="button" x-ref="moreBtn" @click="moreOpen ? close() : open()"
-                        class="sf-btn-3d-accent h-11 w-11 inline-flex items-center justify-center rounded-xl text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0"
+                        class="sf-btn-3d-accent h-10 w-10 inline-flex items-center justify-center rounded-xl text-white cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-violet-500 flex-shrink-0"
                         :aria-expanded="moreOpen.toString()" aria-haspopup="menu" aria-label="{{ __('messages.more_actions') }}">
                         <svg class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                             <circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>
@@ -841,9 +846,6 @@
                         :style="'position:fixed; top:' + menuTop + '; right:' + menuRight + '; z-index:9999;'"
                         class="w-60 max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-900"
                         role="menu" aria-label="{{ __('messages.more_actions') }}">
-                        <div class="sm:hidden px-1 pb-1 mb-1 border-b border-slate-100 dark:border-slate-800">
-                            <x-digital-clock class="w-full justify-between" />
-                        </div>
                         @if ($hasStoreContext)
                             <a href="{{ url('/store/' . $currentSlug) }}" target="_blank" rel="noopener noreferrer" role="menuitem" @click="moreOpen = false"
                                 class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
@@ -895,21 +897,20 @@
                             <span x-text="isFullscreen ? '{{ __('messages.fullscreen_exit') }}' : '{{ __('messages.fullscreen_enter') }}'"></span>
                         </button>
                         <div class="my-1 border-t border-slate-100 dark:border-slate-800"></div>
-                        {{-- Inline language switcher (no nested sub-dropdown) for mobile More menu --}}
-                        <div class="flex items-center justify-between px-2.5 py-1.5">
-                            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">{{ __('messages.language_switcher_label') }}</span>
+                        {{-- Language switcher row in mobile More menu (3 equal columns in a single row) --}}
+                        <div class="px-1.5 py-1.5">
                             @php $supportedLocales = config('localization.supported', []); $activeLocale = app()->getLocale(); @endphp
-                            <form method="POST" action="{{ route('locale.update') }}" class="inline-flex items-center gap-1">
+                            <form method="POST" action="{{ route('locale.update') }}" class="grid grid-cols-3 gap-1.5 w-full">
                                 @csrf
                                 @foreach ($supportedLocales as $code => $locale)
                                     @php $isActive = $activeLocale === $code; @endphp
                                     <button type="submit" name="locale" value="{{ $code }}"
                                         @click="moreOpen = false"
-                                        class="h-9 w-9 inline-flex items-center justify-center rounded-lg text-lg transition focus:outline-none focus:ring-2 focus:ring-sky-500 {{ $isActive ? 'bg-sky-100 ring-1 ring-sky-300 dark:bg-sky-950 dark:ring-sky-700' : 'hover:bg-slate-100 dark:hover:bg-slate-800' }}"
+                                        class="h-9 w-full inline-flex items-center justify-center gap-1.5 rounded-xl text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-sky-500 {{ $isActive ? 'sf-btn-3d-sky text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/80' }}"
                                         title="{{ $locale['native'] }}"
                                         aria-current="{{ $isActive ? 'true' : 'false' }}">
                                         <x-flag :code="$code" />
-                                        <span class="sr-only">{{ $locale['native'] }}</span>
+                                        <span class="text-[11px] font-bold">{{ $code === 'my' ? 'မြန်မာ' : ($code === 'en' ? 'EN' : '中文') }}</span>
                                     </button>
                                 @endforeach
                             </form>

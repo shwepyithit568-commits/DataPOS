@@ -20,66 +20,28 @@
     <link rel="preload" as="font" type="font/ttf" crossorigin href="{{ Vite::asset('resources/assets/fonts/NotoSansMyanmar/NotoSansMyanmar-Regular.ttf') }}">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ Vite::asset('resources/assets/fonts/Outfit-Regular.woff2') }}">
     <script nonce="{{ $cspNonce }}">
-        // POS display mode (standard_light, high_contrast_daylight, oled_dark):
+        // POS theme (Dark / Light):
         (function () {
-            var mode = localStorage.getItem('posDisplayMode') || localStorage.getItem('theme') || 'standard_light';
+            var mode = localStorage.getItem('theme') || localStorage.getItem('posDisplayMode') || 'light';
             var isDark = mode === 'dark' || mode === 'oled_dark';
             document.documentElement.classList.toggle('dark', isDark);
-            if (mode === 'high_contrast_daylight') {
-                document.documentElement.classList.add('high-contrast-daylight');
-            }
+            document.documentElement.classList.remove('high-contrast-daylight');
         })();
 
+        // Expose a simple helper for external scripts if needed.
         window.togglePosFullscreen = function() {
-            try {
-                const doc = document;
-                const docEl = doc.documentElement;
-                const isFs = !!(
-                    doc.fullscreenElement ||
-                    doc.webkitFullscreenElement ||
-                    doc.mozFullScreenElement ||
-                    doc.msFullscreenElement ||
-                    (window.innerHeight === screen.height)
-                );
-
-                if (!isFs) {
-                    const req = docEl.requestFullscreen ||
-                                docEl.webkitRequestFullscreen ||
-                                docEl.mozRequestFullScreen ||
-                                docEl.msRequestFullscreen;
-                    if (req) {
-                        const p = req.call(docEl);
-                        if (p && typeof p.catch === 'function') {
-                            p.catch(function(err) {
-                                console.warn('requestFullscreen rejected:', err);
-                            });
-                        }
-                    }
-                } else {
-                    const exit = doc.exitFullscreen ||
-                                 doc.webkitExitFullscreen ||
-                                 doc.mozCancelFullScreen ||
-                                 doc.msExitFullscreen;
-                    if (exit && (doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement)) {
-                        const p = exit.call(doc);
-                        if (p && typeof p.catch === 'function') {
-                            p.catch(function(err) {
-                                console.warn('exitFullscreen rejected:', err);
-                            });
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error('Fullscreen toggle error:', e);
+            const el = document.documentElement;
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                (el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen)
+                    ?.call(el)
+                    ?.catch(e => console.warn('[POS] requestFullscreen:', e.message));
+            } else {
+                (document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen)
+                    ?.call(document)
+                    ?.catch(e => console.warn('[POS] exitFullscreen:', e.message));
             }
         };
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const dBtn = document.getElementById('pos-fullscreen-btn');
-            const mBtn = document.getElementById('mobile-pos-fullscreen-btn');
-            if (dBtn) dBtn.addEventListener('click', function() { window.togglePosFullscreen(); });
-            if (mBtn) mBtn.addEventListener('click', function() { window.togglePosFullscreen(); });
-        });
     </script>
     <style>
         [x-cloak] { display: none !important; }
@@ -111,33 +73,38 @@
 <body class="bg-slate-100 dark:bg-slate-950 text-gray-900 dark:text-slate-100 font-sans antialiased min-h-dvh flex flex-col transition-colors duration-200"
     x-data="{
         isDark: document.documentElement.classList.contains('dark'),
-        displayMode: localStorage.getItem('posDisplayMode') || (document.documentElement.classList.contains('dark') ? 'oled_dark' : 'standard_light'),
-        displayMenuOpen: false,
         isFullscreen: false,
-        setDisplayMode(mode) {
-            this.displayMode = mode;
+        toggleDarkMode() {
+            this.isDark = !this.isDark;
+            document.documentElement.classList.toggle('dark', this.isDark);
+            document.documentElement.classList.remove('high-contrast-daylight');
+            var mode = this.isDark ? 'dark' : 'light';
+            localStorage.setItem('theme', mode);
             localStorage.setItem('posDisplayMode', mode);
-            var isDark = mode === 'oled_dark';
-            this.isDark = isDark;
-            document.documentElement.classList.toggle('dark', isDark);
-            document.documentElement.classList.toggle('high-contrast-daylight', mode === 'high_contrast_daylight');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            this.displayMenuOpen = false;
         },
         syncFullscreenState() {
+            // Use ONLY the Fullscreen API — innerHeight check causes false-positives.
             this.isFullscreen = !!(
                 document.fullscreenElement ||
                 document.webkitFullscreenElement ||
                 document.mozFullScreenElement ||
-                document.msFullscreenElement ||
-                (window.innerHeight === screen.height)
+                document.msFullscreenElement
             );
         },
-        toggleFullscreen() {
-            window.togglePosFullscreen();
-            this.$nextTick(() => {
-                this.syncFullscreenState();
-            });
+        async toggleFullscreen() {
+            const el = document.documentElement;
+            try {
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+                    if (req) await req.call(el);
+                } else {
+                    const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+                    if (exit) await exit.call(document);
+                }
+            } catch(e) {
+                console.warn('[POS] Fullscreen toggle:', e.message);
+            }
+            this.syncFullscreenState();
         },
         calculatorOpen: false,
         calcDisplay: '0',
@@ -216,14 +183,17 @@
         },
         init() {
             this.syncFullscreenState();
-            ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange', 'resize'].forEach(evt => {
-                window.addEventListener(evt, () => {
+            // Listen to Fullscreen API events only — NOT resize, which fires for
+            // many unrelated reasons and would cause the icon to flicker.
+            ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+                document.addEventListener(evt, () => {
                     this.syncFullscreenState();
                 });
             });
+            // F11 is native browser fullscreen — sync icon state after it settles.
             window.addEventListener('keydown', (e) => {
                 if (e.key === 'F11') {
-                    setTimeout(() => this.syncFullscreenState(), 250);
+                    setTimeout(() => this.syncFullscreenState(), 300);
                 }
             });
         }
@@ -233,7 +203,7 @@
     <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200/80 dark:border-slate-800/80 h-[calc(3.25rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] flex items-center justify-between px-3 sm:px-4 transition-colors duration-200 gap-1.5 sm:gap-2 sticky top-0 z-40">
         {{-- Left Section: Store Branding, Tactile Icon & Cashier Info --}}
         <div class="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
-            <a href="{{ url('/store/' . $store->slug . '/pos') }}" class="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/90 border-b-2 border-b-slate-300 dark:border-slate-700 dark:border-b-slate-900 bg-gradient-to-b from-white via-white to-slate-50 dark:from-slate-900 dark:to-slate-950 text-sky-600 dark:text-sky-300 shadow-xs hover:shadow-sm transition-all" title="{{ $store->name }}">
+            <a href="{{ url('/store/' . $store->slug . '/pos') }}" class="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/90 border-b-2 border-b-slate-300 dark:border-slate-700 dark:border-b-slate-900 bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 text-sky-600 dark:text-sky-300 shadow-xs hover:shadow-sm transition-all" title="{{ $store->name }}">
                 @if (!empty($store->setting?->adminLogo()))
                     <img src="{{ asset('storage/' . $store->setting->adminLogo()) }}" alt="{{ $store->name }}" class="h-full w-full object-contain p-0.5" loading="lazy" />
                 @else
@@ -241,22 +211,15 @@
                 @endif
             </a>
 
-            <div class="min-w-0 flex flex-col justify-center leading-tight">
-                <div class="flex items-center gap-1.5">
-                    <a href="{{ url('/store/' . $store->slug . '/pos') }}"
-                       title="POS · {{ $store->name }}"
-                       class="inline-flex items-center px-2.5 py-1 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-outfit text-xs sm:text-sm font-bold shadow-xs hover:shadow-md hover:shadow-sky-500/20 border border-sky-300/40 border-b-2 border-b-sky-800 active:translate-y-0.5 transition-all truncate max-w-[140px] sm:max-w-[200px] md:max-w-xs">
-                        <span class="truncate">{{ $store->name }}</span>
-                    </a>
-                    <span class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700 select-none">
-                        POS
-                    </span>
-                </div>
-                @if (auth()->check())
-                    <span class="hidden sm:block text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate max-w-[140px] sm:max-w-[200px]">
-                        {{ auth()->user()->name }}
-                    </span>
-                @endif
+            <div class="min-w-0 flex items-center gap-1.5">
+                <a href="{{ url('/store/' . $store->slug . '/pos') }}"
+                   title="POS · {{ $store->name }}"
+                   class="inline-flex items-center px-2.5 py-1 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-outfit text-xs sm:text-sm font-bold shadow-xs hover:shadow-md hover:shadow-sky-500/20 border border-sky-300/40 border-b-2 border-b-sky-800 active:translate-y-0.5 transition-all truncate max-w-[140px] sm:max-w-[200px] md:max-w-xs">
+                    <span class="truncate">{{ $store->name }}</span>
+                </a>
+                <span class="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700 select-none">
+                    POS
+                </span>
             </div>
         </div>
 
@@ -322,42 +285,21 @@
                     </svg>
                 </button>
 
-                {{-- POS Display Mode Dropdown (3D Gold) --}}
-                <div class="relative" @click.away="displayMenuOpen = false">
-                    <button @click="displayMenuOpen = !displayMenuOpen" type="button"
-                        class="sf-btn-3d-gold h-10 w-10 rounded-xl cursor-pointer text-white inline-flex items-center justify-center shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        aria-label="{{ __('messages.display_mode') ?? 'Display Mode' }}"
-                        title="{{ __('messages.display_mode') ?? 'Display Mode' }}">
-                        <svg x-show="displayMode === 'oled_dark' || isDark" x-cloak class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                        </svg>
-                        <svg x-show="displayMode !== 'oled_dark' && !isDark" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="4"/>
-                            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
-                        </svg>
-                    </button>
-                    <div x-show="displayMenuOpen" x-cloak
-                         x-transition:enter="transition ease-out duration-100"
-                         x-transition:enter-start="transform opacity-0 scale-95"
-                         x-transition:enter-end="transform opacity-100 scale-100"
-                         x-transition:leave="transition ease-in duration-75"
-                         x-transition:leave-start="transform opacity-100 scale-100"
-                         x-transition:leave-end="transform opacity-0 scale-95"
-                         class="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl py-1 z-50 text-xs font-bold">
-                        <button type="button" @click="setDisplayMode('standard_light')" class="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700/60 transition" :class="displayMode === 'standard_light' ? 'text-sky-600 dark:text-sky-400' : 'text-slate-700 dark:text-slate-300'">
-                            <span>☀️ Standard Light</span>
-                            <span x-show="displayMode === 'standard_light'">✓</span>
-                        </button>
-                        <button type="button" @click="setDisplayMode('high_contrast_daylight')" class="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700/60 transition" :class="displayMode === 'high_contrast_daylight' ? 'text-sky-600 dark:text-sky-400' : 'text-slate-700 dark:text-slate-300'">
-                            <span>🌤️ High-Contrast Daylight</span>
-                            <span x-show="displayMode === 'high_contrast_daylight'">✓</span>
-                        </button>
-                        <button type="button" @click="setDisplayMode('oled_dark')" class="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700/60 transition" :class="displayMode === 'oled_dark' ? 'text-sky-600 dark:text-sky-400' : 'text-slate-700 dark:text-slate-300'">
-                            <span>🌙 OLED Dark</span>
-                            <span x-show="displayMode === 'oled_dark'">✓</span>
-                        </button>
-                    </div>
-                </div>
+                {{-- POS Theme Toggle Button (3D Gold - 1-Click Dark/Light Mode) --}}
+                <button @click="toggleDarkMode()" type="button"
+                    class="sf-btn-3d-gold h-10 w-10 rounded-xl cursor-pointer text-white inline-flex items-center justify-center shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+                    :title="isDark ? 'Light Mode (အလင်း)' : 'Dark Mode (အမှောင်)'">
+                    {{-- Sun Icon (shown in Dark Mode to switch to Light) --}}
+                    <svg x-show="isDark" x-cloak class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="4"/>
+                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                    </svg>
+                    {{-- Moon Icon (shown in Light Mode to switch to Dark) --}}
+                    <svg x-show="!isDark" class="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
 
                 {{-- Fullscreen Toggle Button (3D Indigo with F11-style toggle) --}}
                 <button id="pos-fullscreen-btn" @click="toggleFullscreen()" type="button"
@@ -559,11 +501,13 @@
                         </div>
                     </div>
 
-                    {{-- Language Switcher inside Mobile menu --}}
-                    <div class="px-2 py-1 mb-1 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('messages.language') ?? 'Language' }}</span>
-                        <x-language-switcher id="pos-header-mobile" btn-class="sf-btn-3d-telegram h-8 px-2 rounded-lg inline-flex items-center justify-center text-xs font-bold cursor-pointer shadow-xs text-white" />
-                    </div>
+                    <a href="{{ url('/store/' . $store->slug . '/admin/dashboard') }}" role="menuitem" @click="moreOpen = false"
+                        class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-semibold text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/40 transition mb-0.5">
+                        <svg class="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                        </svg>
+                        <span>{{ __('messages.admin_panel') }}</span>
+                    </a>
 
                     <a href="{{ url('/store/' . $store->slug) }}" target="_blank" rel="noopener noreferrer" role="menuitem" @click="moreOpen = false"
                         class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
@@ -601,15 +545,18 @@
                         {{ __('messages.calculator') }}
                     </button>
 
-                    {{-- Display mode selector in mobile menu --}}
-                    <div class="px-3 py-2 border-t border-slate-100 dark:border-slate-800">
-                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1.5">{{ __('messages.display_mode') ?? 'Display Mode' }}</span>
-                        <div class="grid grid-cols-3 gap-1">
-                            <button type="button" @click="setDisplayMode('standard_light')" class="px-2 py-1 rounded text-center text-xs font-bold border" :class="displayMode === 'standard_light' ? 'bg-sky-500 text-white border-sky-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'">Light</button>
-                            <button type="button" @click="setDisplayMode('high_contrast_daylight')" class="px-2 py-1 rounded text-center text-xs font-bold border" :class="displayMode === 'high_contrast_daylight' ? 'bg-sky-500 text-white border-sky-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'">Day</button>
-                            <button type="button" @click="setDisplayMode('oled_dark')" class="px-2 py-1 rounded text-center text-xs font-bold border" :class="displayMode === 'oled_dark' ? 'bg-sky-500 text-white border-sky-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'">Dark</button>
-                        </div>
-                    </div>
+                    {{-- Theme toggle in mobile menu --}}
+                    <button type="button" role="menuitem" @click="moreOpen = false; toggleDarkMode()"
+                        class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                        <svg x-show="!isDark" class="h-4 w-4 shrink-0 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                        <svg x-show="isDark" x-cloak class="h-4 w-4 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="4"/>
+                            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                        </svg>
+                        <span x-text="isDark ? 'Light Mode (အလင်း)' : 'Dark Mode (အမှောင်)'"></span>
+                    </button>
 
                     {{-- Fullscreen button in mobile menu --}}
                     <button id="mobile-pos-fullscreen-btn" type="button" role="menuitem" @click="moreOpen = false; toggleFullscreen()"
@@ -619,14 +566,26 @@
                         </svg>
                         <span x-text="isFullscreen ? '{{ __('messages.fullscreen_exit') }}' : '{{ __('messages.fullscreen_enter') }}'"></span>
                     </button>
+                    <div class="my-1 border-t border-slate-100 dark:border-slate-800"></div>
+                    {{-- Language switcher row in mobile POS menu (3 equal columns in a single row) --}}
+                    <div class="px-1.5 py-1.5">
+                        @php $supportedLocales = config('localization.supported', []); $activeLocale = app()->getLocale(); @endphp
+                        <form method="POST" action="{{ route('locale.update') }}" class="grid grid-cols-3 gap-1.5 w-full">
+                            @csrf
+                            @foreach ($supportedLocales as $code => $locale)
+                                @php $isActive = $activeLocale === $code; @endphp
+                                <button type="submit" name="locale" value="{{ $code }}"
+                                    @click="moreOpen = false"
+                                    class="h-9 w-full inline-flex items-center justify-center gap-1.5 rounded-xl text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-sky-500 {{ $isActive ? 'sf-btn-3d-sky text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/80' }}"
+                                    title="{{ $locale['native'] }}"
+                                    aria-current="{{ $isActive ? 'true' : 'false' }}">
+                                    <x-flag :code="$code" />
+                                    <span class="text-[11px] font-bold">{{ $code === 'my' ? 'မြန်မာ' : ($code === 'en' ? 'EN' : '中文') }}</span>
+                                </button>
+                            @endforeach
+                        </form>
+                    </div>
 
-                    <a href="{{ url('/store/' . $store->slug . '/admin/dashboard') }}" role="menuitem" @click="moreOpen = false"
-                        class="w-full flex items-center gap-2.5 px-3 min-h-11 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
-                        <svg class="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-                        </svg>
-                        {{ __('messages.admin_panel') }}
-                    </a>
 
                     <form method="POST" action="{{ url('/logout') }}" class="w-full pt-1 mt-1 border-t border-slate-100 dark:border-slate-800">
                         @csrf

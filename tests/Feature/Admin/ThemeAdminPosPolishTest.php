@@ -89,7 +89,7 @@ class ThemeAdminPosPolishTest extends TestCase
     // 2. POS personal display mode — independent of storefront theme
     // -------------------------------------------------------------------------
 
-    public function test_pos_layout_offers_three_display_modes(): void
+    public function test_pos_layout_offers_dark_and_light_theme_toggle(): void
     {
         $cashier = User::create(['name' => 'Cashier', 'phone' => '09333445566', 'password' => bcrypt('p'), 'role' => 'customer']);
         $cashier->stores()->attach($this->store->id, ['role' => 'staff', 'status' => 'active']);
@@ -98,9 +98,9 @@ class ThemeAdminPosPolishTest extends TestCase
             ->get(route('pos.index', ['store_slug' => $this->store->slug]))
             ->getContent();
 
-        $this->assertStringContainsString('Standard Light', $content);
-        $this->assertStringContainsString('High-Contrast Daylight', $content);
-        $this->assertStringContainsString('OLED Dark', $content);
+        $this->assertStringContainsString('toggleDarkMode()', $content);
+        $this->assertStringContainsString('Light Mode', $content);
+        $this->assertStringContainsString('Dark Mode', $content);
         // Preference key + persistence mechanism
         $this->assertStringContainsString("localStorage.getItem('posDisplayMode')", $content);
     }
@@ -126,7 +126,7 @@ class ThemeAdminPosPolishTest extends TestCase
             ->getContent();
 
         $this->assertStringNotContainsString('--sf-primary', $after);
-        // Structural markers identical: same mode dropdown, no theme bleed
-        $this->assertStringContainsString('High-Contrast Daylight', $after);
+        // Structural markers identical: same theme toggle, no theme bleed
+        $this->assertStringContainsString('toggleDarkMode()', $after);
     }
 }
