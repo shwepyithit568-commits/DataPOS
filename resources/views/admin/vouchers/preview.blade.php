@@ -555,12 +555,29 @@
     <button type="button" class="btn-pdf" data-call="saveAsPdf">
         📥 {{ __('messages.export_pdf') ?? 'Save PDF' }}
     </button>
-    <button type="button" class="btn-close" data-close-window>
+    <button type="button" class="btn-close" data-close>
         ✕ {{ __('messages.close') ?? 'Close' }}
     </button>
 </div>
 
-<script>
+<script nonce="{{ $cspNonce }}">
+    // This page is standalone (it loads no bundle, so csp-helpers.js is not
+    // here) and the CSP only allows nonce'd inline scripts — without the nonce
+    // above this whole block never runs, which left the toolbar dead.
+    document.addEventListener('click', function (event) {
+        var el = event.target.closest('[data-print], [data-close], [data-call]');
+        if (!el) return;
+        event.preventDefault();
+        if (el.hasAttribute('data-print')) {
+            window.print();
+        } else if (el.hasAttribute('data-close')) {
+            window.close();
+        } else {
+            var fn = window[el.dataset.call];
+            if (typeof fn === 'function') fn(el);
+        }
+    });
+
     function saveAsPdf() {
         var oldTitle = document.title;
         document.title = 'Voucher_{{ $template->name }}_{{ $template->paper_size }}.pdf';
