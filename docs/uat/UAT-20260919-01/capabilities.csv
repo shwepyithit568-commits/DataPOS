@@ -1,0 +1,26 @@
+feature,actual_route,supported,enabled_for_store,allowed_roles,evidence,requirement_gap
+Platform Store Management,/admin/stores,yes,global,platform_owner,routes/web.php:233,none
+Platform Store Creation,/admin/stores/create,yes,global,platform_owner,routes/web.php:234,none
+Store Admin Dashboard,/store/{store}/admin/dashboard,yes,yes,"store_owner,manager,accountant,cashier",routes/web.php,none
+POS Terminal Counter,/store/{store}/pos,yes,yes,"store_owner,manager,cashier",routes/web.php,none
+POS Shift Management,/store/{store}/pos/shifts,yes,yes,"store_owner,manager,cashier",routes/web.php,none
+POS Shift Closing,/store/{store}/pos/closing,yes,yes,"store_owner,manager,cashier",routes/web.php,none
+Product Catalog Management,/store/{store}/admin/products,yes,yes,"store_owner,manager",routes/web.php,none
+Master Data Presets,/store/{store}/admin/master-data,yes,yes,"store_owner,manager",routes/web.php,none
+Warehouse & Locations,/store/{store}/admin/warehouses,yes,yes,"store_owner,manager",routes/web.php,none
+Stock Ledger & Balance,/store/{store}/admin/inventory/ledger,yes,yes,"store_owner,manager,stock_keeper",routes/web.php,none
+Stock Transfers,/store/{store}/admin/transfers,yes,yes,"store_owner,manager,stock_keeper",routes/web.php,none
+Purchase Orders & Suppliers,/store/{store}/admin/purchases,yes,yes,"store_owner,manager",routes/web.php,none
+Suppliers Directory,/store/{store}/admin/suppliers,yes,yes,"store_owner,manager",routes/web.php,none
+Sales Returns & Refunds,/store/{store}/pos/sales/{sale}/refunds,yes,yes,"store_owner,manager,cashier",routes/web.php,none
+Customer Directory & Receivables,/store/{store}/admin/customers,yes,yes,"store_owner,manager,cashier",routes/web.php,none
+Customer Credit Collections,/store/{store}/admin/receivables,yes,yes,"store_owner,manager,cashier",routes/web.php,none
+Expense Management,/store/{store}/admin/expenses,yes,yes,"store_owner,manager,accountant",routes/web.php,none
+Repair Center & Jobs,/store/{store}/admin/repairs,yes,yes,"store_owner,manager,technician",routes/web.php,none
+Warranty Management,/store/{store}/admin/warranty,yes,yes,"store_owner,manager",routes/web.php,none
+User & Staff Management,/store/{store}/admin/users,yes,yes,"store_owner,manager",routes/web.php,none
+Roles & Permissions,/store/{store}/admin/staff-roles,yes,yes,"store_owner",routes/web.php,none
+Reports & Analytics,/store/{store}/admin/reports,yes,yes,"store_owner,manager,accountant",routes/web.php,none
+Theme & Appearance Governance,/admin/theme-governance,yes,global,platform_owner,routes/web.php:243,none
+Physical Thermal Printing,/store/{store}/admin/vouchers,partial,yes,"store_owner,manager,cashier",browser preview supported,hardware ESC/POS requires physical printer
+Offline Local Queue,/store/{store}/pos,partial,yes,cashier,service-worker cached lookup,automated sync daemon needed

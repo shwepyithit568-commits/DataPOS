@@ -1,0 +1,15 @@
+metric,expected_mmk,actual_mmk,difference,source_transaction_ids,notes
+Drawer Cash,203000,203000,0,"SHIFT:1;RCP:1;SVC:1;COL:2;RET:1;EXP:1",Reconciled exactly with zero variance (Opening 100k + Inflows 110k - Outflows 7k)
+KPay Receipts,55000,55000,0,RCP:2,DAY-04 Serialized sale RMX-2026-001
+Wholesale Invoice,139000,139000,0,RCP:3,DAY-05 Wholesale sale to U Than Lwin (140000 - 1000 discount)
+Customer Receivable,89000,89000,0,"RCP:3;COL:2",139000 sale debt minus 50000 collected cash
+Supplier Payable,150000,150000,0,PO:1,350000 PO minus 200000 paid from SAFE
+Repair Deposit Unearned,30000,30000,0,"SVC:1;EVENT:1",Ticket SVC-20260919-0001 advance deposit (cash in)
+CHARGER Stock (Total/MAIN/AUX),"14 / 9 / 5","14 / 9 / 5",0,"OSR:1;RCP:1;RCP:3;TRF:1",20 opening - 1 retail - 5 wholesale - 5 transfer (MAIN: 9 AUX: 5)
+GLASS Stock (Total/MAIN),"30 / 30","30 / 30",0,"OSR:1;RCP:1;RCP:3;RET:1",50 opening - 1 retail - 20 wholesale + 1 return (MAIN: 30)
+POWERBANK Stock (Total/MAIN),"9 / 9","9 / 9",0,"PO:1;RCP:2",10 received - 1 sold (MAIN: 9)
+Total Inventory Value,570000,570000,0,"PROD:1;2;3",14*15000 (210k) + 30*1500 (45k) + 9*35000 (315k) = 570000 MMK
+Net Goods Sales,219000,219000,0,"RCP:1;2;3;RET:1",30000 + 55000 + 139000 - 5000 refund = 219000 MMK
+Net Goods COGS,155000,155000,0,"RCP:1;2;3;RET:1",6*15000 (90k) + 20*1500 (30k) + 1*35000 (35k) = 155000 MMK
+Goods Gross Profit,64000,64000,0,"RCP:1;2;3;RET:1",219000 net sales - 155000 net COGS = 64000 MMK
+Net Profit After Expense,62000,62000,0,"EXP:1",64000 gross profit - 2000 drawer expense = 62000 MMK

@@ -1,0 +1,202 @@
+# DataPOS E2E Browser Test Checkpoint
+
+- **Run ID**: `UAT-20260919-01`
+- **Updated At**: `2026-09-19 17:21:00 (+06:30)`
+- **Target Store**: `shwe-pyi-thit-mobile` (ရွှေပြည်သစ် မိုဘိုင်းနှင့် အီလက်ထရွန်းနစ်) [Store ID: 1]
+- **Isolated Store B**: `uat-store-b` (UAT Test Store B) [Store ID: 2]
+- **Current Status**: **All Sections 1 to 12 Completed** (ENV-01..03, SET-01..04, INV-01, PUR-01, INV-02, DAY-01..10, CLOSE-01..02, REC-01, REG-01..12, SEC-01, SRV-01, EXT-01..02, SIDE-01, RESP-01..03, Section 11 Defect Audit & Section 12 Completion Gate) -> **UAT PASS**.
+
+---
+
+## 1. Completed Cases
+- **ENV-01**: Baseline verification (PHP 8.2.12, MariaDB 10.4.32, Laravel 12.64.0, HEAD `e7fad0e91e4a89adb2c65c8c90aa451f53088ef2`, Timezone `Asia/Yangon`).
+- **ENV-02**: Disposable database `datapos_browser_uat_20260919_01` created, `.env` bound, all migrations executed cleanly. Web server running on port 8501.
+- **ENV-03**: Capability & Route mapping catalogued in `capabilities.csv`.
+- **SET-01**: Store provisioned via UI (`shwe-pyi-thit-mobile`), `MAIN` and `AUX` warehouses created, `Cash` and `KPay` payment methods added, `ဆိုင်နေ့စဉ်အသုံးစရိတ်` expense category added.
+- **SET-02**: Staff roles and user accounts created (Platform Owner, Store Owner, Manager, Cashier, Store B Staff).
+- **SET-03**: Master Data presets established (Categories, Brands, Shelves, Warranties, Return Policies, Variant Presets).
+- **SET-04**: Baseline Products catalogued (CHARGER, GLASS, POWERBANK).
+- **INV-01**: Opening stock via Manager (`09200000011`):
+  - Request: `OSR-20260919-0001` (Approved)
+  - CHARGER: 20 × 15,000 = 300,000 MMK in MAIN
+  - GLASS: 50 × 1,500 = 75,000 MMK in MAIN
+  - Total Opening Stock Value: 375,000 MMK
+- **PUR-01**: Supplier purchase (`မန္တလေး အီလက်ထရွန်းနစ် ကုန်တိုက်ကြီး`):
+  - Supplier: ID 1 (`မန္တလေး အီလက်ထရွန်းနစ် ကုန်တိုက်ကြီး`)
+  - PO: `PO-20260919-0001` (Received via `GRV-20260919-0001`)
+  - POWERBANK: 10 × 35,000 = 350,000 MMK (Paid: 200,000 from SAFE, Payable: 150,000)
+  - Stock: +10 POWERBANK in MAIN
+  - 10 Serials registered: `RMX-2026-001` to `RMX-2026-010`
+  - Defect logged: BUG-001 (DeviceWarranty lacks unique serial validation)
+- **INV-02**: Warehouse transfer:
+  - Transfer: `TRF-20260919-0001` (Completed)
+  - 5 CHARGER transferred from MAIN (1) to AUX (2)
+  - Current Balances:
+    - MAIN: 15 CHARGER, 50 GLASS, 10 POWERBANK
+    - AUX: 5 CHARGER
+    - Store Total: 20 CHARGER, 50 GLASS, 10 POWERBANK (Inventory Value: 570,000 MMK)
+- **DAY-01**: Open POS Shift:
+  - Cashier: `မလှလှ (Cashier)` (`09200000022`)
+  - Register: `REG-01`
+  - Opening Float: `100,000 MMK`
+  - Shift ID: `1` (Status: `open`, Opened at: `2026-09-19 08:23:36`)
+  - Drawer Cash: `100,000 MMK`
+- **DAY-02**: Cart Barcode Scanning:
+  - Scanned `UAT-CHG-001` twice -> cart quantity incremented to 2 (50,000 MMK).
+  - Adjusted quantity back to 1 (25,000 MMK). Cart state verified without creating invoice.
+- **DAY-03**: Cash Retail Sale:
+  - Items: CHARGER (1 × 25,000 MMK) + GLASS (1 × 5,000 MMK) = `30,000 MMK`
+  - Tendered: `50,000 MMK` Cash
+  - Change: `20,000 MMK` Cash
+  - Retained Cash: `30,000 MMK`
+  - Sale Record: `RCP-20260919-0001` (Sale ID: 1, Status: `posted`)
+  - Current Drawer Cash: `130,000 MMK` (100,000 opening + 30,000 cash sale)
+  - Current Balances in MAIN: CHARGER = 14, GLASS = 49, POWERBANK = 10
+- **DAY-04**: Serialized KPay Sale:
+  - Product: POWERBANK (1 × 55,000 MMK)
+  - Payment: `kpay` 55,000 MMK (Digital payment, non-cash)
+  - Serial: `RMX-2026-001` sold and linked to warranty card
+  - Sale Record: `RCP-20260919-0002` (Sale ID: 2, Status: `posted`)
+  - Drawer Cash: Unchanged at `130,000 MMK`
+  - Current Balances in MAIN: CHARGER = 14, GLASS = 49, POWERBANK = 9
+- **DAY-05**: Wholesale Credit Sale:
+  - Customer: `ဦးသန်းလွင်` (Wholesale Customer, `09400000033`)
+  - Items: CHARGER (5 × 18,000 = 90,000 MMK) + GLASS (20 × 2,500 = 50,000 MMK) = 140,000 MMK
+  - Fixed Discount: 1,000 MMK
+  - Net Bill: `139,000 MMK`
+  - Payment: `credit` (139,000 MMK)
+  - Customer Receivable: `139,000 MMK` (Ledger ID: 1)
+  - Sale Record: `RCP-20260919-0003` (Sale ID: 3, Status: `posted`)
+  - Drawer Cash: Unchanged at `130,000 MMK`
+  - Current Balances in MAIN: CHARGER = 9, GLASS = 29, POWERBANK = 9
+- **DAY-06**: Repair Intake with Cash Deposit:
+  - Customer: `ဒေါ်ခင်စန်း` (`09400000044`)
+  - Device: iPhone 13 (Screen cracked / Touch issue)
+  - Ticket: `SVC-20260919-0001` (Estimate: 80,000 MMK)
+  - Advance Deposit: `30,000 MMK` Cash
+  - Cash Event ID 1 created and linked to Shift 1
+  - Current Drawer Cash: `160,000 MMK` (100,000 opening + 30,000 cash sale + 30,000 repair deposit)
+- **DAY-07**: Credit Debt Collection:
+  - Customer: `ဦးသန်းလွင်` (Wholesale Customer, `09400000033`)
+  - Collected Amount: `50,000 MMK` Cash (Collected by Manager Ko Thant)
+  - Ledger Entry ID 2 created (-50,000 MMK)
+  - Remaining Customer Receivable: `89,000 MMK` (139,000 - 50,000)
+  - Cash Event ID 2 created and linked to Shift 1
+  - Current Drawer Cash: `210,000 MMK` (160,000 + 50,000)
+- **DAY-08**: Cash Refund (Partial Return):
+  - Return: `RET-20260919-0001` (Return ID: 1)
+  - Returned Item: GLASS 1 pcs against Sale `RCP-20260919-0001` (DAY-03)
+  - Refund Amount: `5,000 MMK` Cash
+  - Shift 1 `cash_refunds`: `5,000 MMK`
+  - MAIN Warehouse GLASS Stock: Restored from 29 to `30`
+  - Current Drawer Cash: `205,000 MMK` (210,000 - 5,000)
+- **DAY-09**: Cash Expense (Drawer Payment):
+  - Expense: `EXP-20260919-0001` (Expense ID: 1)
+  - Category: `ဆိုင်နေ့စဉ်အသုံးစရိတ်` (ID: 1)
+  - Title: `သောက်ရေသန့်`
+  - Amount: `2,000 MMK` Cash (Drawer)
+  - Linked to Shift 1
+  - Current Drawer Cash: `203,000 MMK` (205,000 - 2,000)
+- **DAY-10**: Receipt & Persisted State Audit:
+  - Cash Sale `RCP-20260919-0001` audited: 30,000 MMK (tender 50,000, change 20,000), Cashier Ma Hla Hla, Shop name, footer, barcode verified.
+  - Credit Sale `RCP-20260919-0003` audited: 139,000 MMK credit, Customer U Than Lwin, discount 1,000 MMK.
+  - Return `RET-20260919-0001` audited: 5,000 MMK cash refund, original item GLASS 1 pcs.
+  - Expense `EXP-20260919-0001` audited: 2,000 MMK cash drawer, Category ဆိုင်နေ့စဉ်အသုံးစရိတ်.
+- **CLOSE-01**: POS Shift & Daily Closing Breakdown:
+  - Opening Float: `100,000 MMK`
+  - Net Retained Cash from Sales: `+30,000 MMK`
+  - Repair Cash Deposit: `+30,000 MMK`
+  - Credit Debt Collection: `+50,000 MMK`
+  - Customer Cash Refund: `−5,000 MMK`
+  - Paid Cash Expense: `−2,000 MMK`
+  - **Expected Drawer Cash**: **`203,000 MMK`**
+  - KPay (Non-drawer): `55,000 MMK`
+  - Cash Inflows Total: `110,000 MMK`, Outflows Total: `7,000 MMK`.
+- **CLOSE-02**: Count & Shift Close:
+  - Counted Physical Cash: `203,000 MMK` (10,000 × 20 + 1,000 × 3)
+  - Variance: `0 MMK`
+  - Cashier Shift: Closed with 0 variance
+  - Daily Closing: Submitted by Cashier Ma Hla Hla, Approved & Locked by Manager Ko Thant (`Day closing verified with zero variance.`)
+  - Print & Export: X-Report interim reading, 80mm/58mm ESC/POS Thermal preview, Excel (`.xlsx`) & CSV export verified.
+- **Section 8 (Reconciliation)**:
+  - All 14 baseline metrics reconciled with exact 0 variance against independent calculations.
+- **REG-01**: Idempotency & Double-click test (Unique constraint on `client_transaction_id` blocked duplicate expense submission).
+- **REG-02**: Return policy constraints (Preset `NORET` configured with `allow_refund=0` and content 'ပြန်အမ်းခွင့် မရှိပါ').
+- **REG-03**: Excess return rejection (Sold: 1.000, Already refunded: 1.000, Remaining refundable: 0.000; excess return blocked by `PosReturnService`).
+- **REG-04**: Sold serial duplicate rejection (Serial `RMX-2026-001` already registered in Warranty ID 1 with status active; duplicate sale prevented).
+- **REG-05**: Oversell prevention (Available stock: 9.000; requested 999 rejected with Insufficient Stock error).
+- **REG-06**: Transaction rollback (Sales count unchanged on payment simulation exception mid-transaction).
+- **REG-07**: Cash variance logging (Difference of -1,000 MMK recorded with `AuditLog` entry `cashier_shift_variance_closed`).
+- **REG-08**: Closed shift lock enforcement (Shift #1 is closed; `addCashEvent` rejected with 'Shift #1 is already closed').
+- **REG-09**: Timezone enforcement (Config timezone is `Asia/Yangon`; business date `2026-09-19` correctly parsed).
+- **REG-10**: Boundary & input validation (Validator rejected negative quantity and excessive discount).
+- **REG-11**: Historical price immutability (Sale `RCP-20260919-0001` item unit price remains exactly 25,000 MMK).
+- **REG-12**: Supplier payable tracking (PO `PO-20260919-0001` subtotal 350,000 MMK; paid 200,000 MMK; remaining payable 150,000 MMK).
+- **SEC-01**: Multi-tenant store isolation (Cashier restricted to staff; Store B staff denied access to Store A; Store A staff denied access to Store B).
+- **SRV-01**: Service lifecycle intake (Ticket `SVC-20260919-0001` for Daw Khin San recorded with estimated charge 80,000 MMK).
+- **EXT-01**: Master data extensions (Variant presets and currency settings active).
+- **EXT-02**: Hardware preview & offline service worker (Thermal print preview 80mm/58mm verified; Physical hardware N/A).
+- **SIDE-01**: Sidebar Menu Coverage Inventory (45 routes across 12 menu groups audited; all returned HTTP 200 OK / 302 redirect).
+- **RESP-01**: Mobile Viewport (375×812) verified (POS counter, 2-column product grid, bottom cart drawer, hamburger menu; zero horizontal page overflow).
+- **RESP-02**: Tablet Viewport (768×1024) verified (POS multi-column layout, split panels, touch targets >= 44px; zero horizontal overflow).
+- **RESP-03**: Desktop Viewport (1366×768) verified (Admin Dashboard ultra-dense 2px rhythm, centered row-based stat cards, dynamic MMK currency).
+
+## 2. Active Context & IDs
+- **Store 1**: ID 1, Slug `shwe-pyi-thit-mobile`
+- **Store 2 (Store B)**: ID 2, Slug `uat-store-b`
+- **Warehouses**: MAIN (ID: 1), AUX (ID: 2)
+- **Suppliers**: ID 1 (`မန္တလေး အီလက်ထရွန်းနစ် ကုန်တိုက်ကြီး`)
+- **Products**:
+  - CHARGER: ID 1 (`UAT-CHG-001`) [Stock: MAIN 9, AUX 5]
+  - GLASS: ID 2 (`UAT-GLS-001`) [Stock: MAIN 30]
+  - POWERBANK: ID 3 (`UAT-PB-001`) [Stock: MAIN 9]
+- **Shift ID 1**: Closed & Approved (Expected: `203,000 MMK`, Counted: `203,000 MMK`, Variance: `0 MMK`)
+- **Customers**:
+  - ID 6 (`ဦးသန်းလွင်`, Wholesale Customer, Receivable: 89,000 MMK)
+  - ID 7 (`ဒေါ်ခင်စန်း`, Retail Customer, Repair Ticket: `SVC-20260919-0001`)
+- **Completed Transactions**:
+  - `OSR-20260919-0001` (Opening stock 375,000 MMK)
+  - `PO-20260919-0001` / `GRV-20260919-0001` (Purchase 350,000 MMK, Paid 200,000 MMK)
+  - `TRF-20260919-0001` (Transfer 5 chargers MAIN -> AUX)
+  - Shift `1` (Opening Float 100,000 MMK, Closed with 203,000 MMK)
+  - `RCP-20260919-0001` (Cash Sale 30,000 MMK)
+  - `RCP-20260919-0002` (KPay Sale 55,000 MMK)
+  - `RCP-20260919-0003` (Credit Sale 139,000 MMK)
+  - `SVC-20260919-0001` (Repair Deposit 30,000 MMK Cash)
+  - Collection `50,000 MMK` (Customer 6 Debt Collection)
+  - `RET-20260919-0001` (Sale Return 5,000 MMK Cash Refund)
+  - `EXP-20260919-0001` (Expense 2,000 MMK Cash Drawer)
+  - Daily Closing `2026-09-19` (Approved & Locked)
+
+## 3. Evidence Paths
+- Capability Map: `docs/uat/UAT-20260919-01/capabilities.csv`
+- Case Results: `docs/uat/UAT-20260919-01/case-results.csv`
+- Defects Log: `docs/uat/UAT-20260919-01/defects.md`
+- Reconciliation Matrix: `docs/uat/UAT-20260919-01/reconciliation.csv`
+- Screenshots Dir: `docs/uat/UAT-20260919-01/screenshots/`
+- Shift Open Screenshot: `docs/uat/UAT-20260919-01/screenshots/day01_shift_opened.png`
+- Cart Scan Screenshot: `docs/uat/UAT-20260919-01/screenshots/day02_cart_scan.png`
+- Cash Sale Screenshot: `docs/uat/UAT-20260919-01/screenshots/day03_sale_completed.png`
+- KPay Sale Screenshot: `docs/uat/UAT-20260919-01/screenshots/day04_sale_completed.png`
+- Credit Sale Screenshot: `docs/uat/UAT-20260919-01/screenshots/day05_credit_sale.png`
+- Repair Created Screenshot: `docs/uat/UAT-20260919-01/screenshots/day06_repair_created.png`
+- Credit Collection Screenshot: `docs/uat/UAT-20260919-01/screenshots/day07_credit_collection.png`
+- Return Details Screenshot: `docs/uat/UAT-20260919-01/screenshots/day08_return_details.png`
+- Cash Expense Screenshot: `docs/uat/UAT-20260919-01/screenshots/day09_cash_expense.png`
+- Receipt Audit Screenshot: `docs/uat/UAT-20260919-01/screenshots/day10_receipt_audit.png`
+- Closing Breakdown Screenshot: `docs/uat/UAT-20260919-01/screenshots/close01_shift_breakdown.png`
+- Shift Closed Screenshot: `docs/uat/UAT-20260919-01/screenshots/close02_shift_closed.png`
+- Closing Approved Screenshot: `docs/uat/UAT-20260919-01/screenshots/close02_closing_approved.png`
+- X-Report Screenshot: `docs/uat/UAT-20260919-01/screenshots/close03_x_report.png`
+- Thermal Print Preview Screenshot: `docs/uat/UAT-20260919-01/screenshots/close04_print_preview.png`
+- Mobile POS Viewport (375x812): `docs/uat/UAT-20260919-01/screenshots/responsive_375x812_pos.png`
+- Mobile Products Viewport (375x812): `docs/uat/UAT-20260919-01/screenshots/responsive_375x812_products.png`
+- Tablet POS Viewport (768x1024): `docs/uat/UAT-20260919-01/screenshots/responsive_768x1024_pos.png`
+- Desktop Dashboard Viewport (1366x768): `docs/uat/UAT-20260919-01/screenshots/responsive_1366x768_dashboard.png`
+- Final UAT Report: `docs/uat/UAT-20260919-01/README_MM.md`
+
+## 4. Final Status & Gate Decision
+- **All Sections (1 to 12) Completed & Verified**
+- **Completion Gate Decision:** **စမ်းသပ်ထားသော Scope အတွင်း UAT PASS**
+- **Unresolved Blockers:** None (0 P0, 0 P1, 1 P2 finding `BUG-001`)
+- **Ready for Review:** Handed off to Boss / Platform Owner.

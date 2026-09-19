@@ -1,451 +1,400 @@
-# DataPOS — မြန်မာပြည်တွင်း လက်လီ/လက်ကား ဆိုင်အသစ်ဖွင့်လှစ်ခြင်းနှင့် နေ့စဉ်စာရင်း E2E Live Test Checklist
-> **ပတ်ဝန်းကျင်:** Local XAMPP MySQL Live (`datapos_uat` DB)  
-> **အသုံးပြုသူ အကောင့်:** Platform Owner (`09100000001` / `password`, PIN: `1234`)  
-> **စမ်းသပ်မည့် ဆိုင်အသစ်:** ရွှေပြည်သစ် မိုဘိုင်းနှင့် အီလက်ထရွန်းနစ် (`spt-mobile`)  
-> **ဆိုင်အမျိုးအစား:** မြန်မာပြည်တွင်း မိုဘိုင်း၊ ကွန်ပျူတာ၊ အပိုပစ္စည်း လက်လီ/လက်ကား အရောင်းနှင့် စက်ပြင်ဌာန  
-> **ရည်ရွယ်ချက်:** ဆော့ဝဲလ်အား Production တင်ရန် အသင့်ဖြစ်စေရန် Database အဟောင်းများအား အသစ်ပြန်ရှင်းထုတ်ခြင်းမှစ၍ Master Data Tabs များ၊ Product Create Form အချက်အလက်များ၊ ဟာ့ဒ်ဝဲပရင်တာ/ဘားကုဒ်စကင်နာ၊ လျှော့ဈေး၊ နိုင်ငံခြားငွေလဲနှုန်း၊ အော့ဖ်လိုင်းခံနိုင်ရည်၊ ဝန်ထမ်းလုပ်ပိုင်ခွင့် လုံခြုံရေးနှင့် ညနေခင်း အံဆွဲငွေစာရင်းချုပ် (Daily Closing) အထိ AI Agents / QA များ Browser Skills ဖြင့် အမှန်တကယ် Live စမ်းသပ်နိုင်ရန်။
+# DataPOS — Browser Skills ဖြင့် ဆိုင်လုပ်ငန်းစဉ် အစအဆုံး စမ်းသပ်ရန်
 
----
+> Revision: 2 • ပြင်ဆင်သည့်နေ့: 2026-09-19  
+> Mode: **Audit-only — Browser UAT + read-only verification**  
+> ပစ်မှတ်: Local XAMPP MySQL • Mobile & Accessories Retail / Wholesale / Service  
+> ဤဖိုင်တစ်ဖိုင်လုံးကို AI Agent ထံပေး၍ အသုံးပြုနိုင်သည်။ လက်ရှိ source code ကို Agent က ပထမဦးစွာ စစ်ဆေးရမည်။ ဖော်ပြထားသော route၊ role၊ table နှင့် feature များကို လက်ရှိ implementation အဖြစ် အလိုအလျောက် မယူဆရ။
 
-## ၀။ Database အဟောင်းများ ရှင်းထုတ်ပြီး Fresh Migration ပြုလုပ်ခြင်း (DB Wipe & Reset)
+## 1. Agent ထံ တိုက်ရိုက်ပေးရန် အလုပ်ညွှန်ကြားချက်
 
-စမ်းသပ်မှု မစတင်မီ `datapos_uat` Database ထဲရှိ ဒေတာအဟောင်းများအားလုံးကို အစအဆုံး အသစ်စက်စက် ရှင်းလင်း၍ Platform Owner အကောင့်အသင့်ဖြစ်စေရန် အောက်ပါ Command ကို PowerShell Terminal တွင် Run ပါ-
+သင်သည် DataPOS အတွက် QA Engineer ဖြစ်သည်။ အောက်ပါအစီအစဉ်အတိုင်း Browser skills သုံး၍ လူတစ်ယောက် ဆိုင်ကို နေ့စဉ်အသုံးပြုသကဲ့သို့ စမ်းသပ်ပါ။ Checklist ရေးပြရုံဖြင့် မရပ်ပါနှင့်။ လုပ်ဆောင်နိုင်သော case များကို အဆုံးအထိ ဆောင်ရွက်ပြီး အထောက်အထားပါသော မြန်မာဘာသာ report ထုတ်ပါ။
+
+- Repository: https://github.com/shwepyithit568-commits/DataPOS
+- Local project: `D:\xmapp\htdocs\DataPOS` — စာလုံးပေါင်းနှင့် တကယ်ရှိသော directory ကို စစ်ပါ။ မတွေ့မှ `xampp` အမည်ကွဲကို စစ်ပါ။
+- App URL: `http://127.0.0.1:8501`
+- Target store: `spt-mobile` — ရွှေပြည်သစ် မိုဘိုင်းနှင့် အီလက်ထရွန်းနစ်။
+- ယခင်ပြဿနာကို ပြန်စစ်ရန် reference: `/store/uat-pos-store/pos/closing`။ မူလဆိုင်ကို ရှင်းပစ်စရာမလိုဘဲ fresh test store တွင် cash-out behavior ကို ပြန်ထုတ်ပါ။
+- အသုံးပြုသူက backup မလိုဟု သတ်မှတ်ထားသည်။ Backup ကို prerequisite မလုပ်ပါနှင့်။ Reset အတွက် အောက်ပါ disposable-database boundary ကို လိုက်နာပါ။
+- လက်ရှိအလုပ်တွင် source code ပြင်ခြင်း၊ commit/push/deploy လုပ်ခြင်း မပါဝင်ပါ။ UAT setup နှင့် test records ဖန်တီးခြင်း ခွင့်ပြုထားသည်။ Bug တွေ့လျှင် evidence နှင့် fix handoff ရေးပါ။
+- Browser ကို မရရှိနိုင်လျှင် browser cases ကို `BLOCKED` ဟု မှတ်တမ်းတင်ပါ။ Unit tests၊ SQL သို့မဟုတ် API requests ကို Browser E2E PASS ဟု မသတ်မှတ်ပါနှင့်။
+- Business record များကို UI မှ ဖန်တီးပါ။ Read-only SQL/API ကို corroboration အဖြစ် သုံးနိုင်သည်။ DB ထဲ data တိုက်ရိုက်ရေးပြီး UI bug ကို ကျော်မသွားရ။
+- Case တစ်ခု ပိတ်ဆို့လျှင် dependent cases ကို BLOCKED လုပ်ပြီး independent cases ကို ဆက်စမ်းပါ။ ငွေစာရင်းမျှော်မှန်းတန်ဖိုးကို actual result နဲ့ကိုက်ရန် နောက်မှ ပြန်ပြင်မထားရ။
+
+## 2. လက်ရှိ project နှင့် ပတ်ဝန်းကျင်ကို အရင်စစ်ရန်
+
+### ENV-01 — Source နှင့် runtime baseline
+
+- [ ] Applicable `AGENTS.md`၊ README၊ setup docs နှင့် လက်ရှိ UAT handoff ကို ဖတ်ပါ။
+- [ ] Branch၊ full HEAD SHA၊ working-tree changes ကို မှတ်ပါ။ ရှိပြီးသား user changes ကို မဖျက်ရ။
+- [ ] လက်ရှိ PHP/framework၊ MySQL သို့မဟုတ် MariaDB version၊ database driver နှင့် browser version ကို မှတ်ပါ။ XAMPP label ကြောင့် database engine/version ကို မခန့်မှန်းပါနှင့်။ SQLite ဖြင့်အစားမထိုးရ။
+- [ ] Routes၊ authentication၊ roles/permissions၊ shifts၊ refunds၊ expenses၊ purchases၊ repair deposits၊ closing/report services နှင့် သက်ဆိုင်ရာ models/tests ကို trace လုပ်ပါ။ Table/field အမည်ကို မခန့်မှန်းရ။
+- [ ] Seeder ရှိမှုနှင့် ဖန်တီးမည့် users/stores ကို စစ်ပါ။ `UatSeeder` ဟူသောအမည်နှင့် credentials ကို အတည်မပြုဘဲ မသုံးရ။
+- [ ] Browser skill ကို ဖတ်၍ browser ချိတ်ပါ။ Agent machine ၏ localhost သည် အသုံးပြုသူ PC မဟုတ်နိုင်ကြောင်း စစ်ပါ။ App မရလျှင် reachable environment ကိုဖော်ပြ၍ BLOCKED ထားပါ။
+- [ ] Store timezone ကို `Asia/Yangon` ထားနိုင်မှု၊ business date၊ browser/server timezone နှင့် test စတင်ချိန်ကို မှတ်ပါ။
+
+ဥပမာ read-only discovery commands — project နှင့် PHP executable တကယ်ရှိကြောင်း စစ်ပြီးမှ run ပါ။
 
 ```powershell
-cd D:\xmapp\htdocs\DataPOS
-
-# 1. Database အဟောင်းများ အားလုံး ရှင်းထုတ်ပြီး Fresh Tables နှင့် Default Platform Owner ကို တည်ဆောက်ခြင်း
-php artisan migrate:fresh --seed --seeder=UatSeeder
-
-# 2. View နှင့် Config Cache များ ရှင်းလင်းခြင်း
-php artisan optimize:clear
+Set-Location 'D:\xmapp\htdocs\DataPOS'
+git status --short
+git rev-parse HEAD
+php --version
+php artisan --version
+php artisan route:list
 ```
 
-> **အတည်ပြုချက်:** အထက်ပါ Command ပြီးဆုံးပါက Database ထဲတွင် အမှိုက်ဒေတာများ ကင်းစင်သွားပြီး Platform Super Admin ဖုန်း `09100000001` ၊ Password `password` ၊ PIN `1234` အသင့် ဖြစ်သွားပါမည်။
+### ENV-02 — Test database နှင့် reset boundary
 
----
+**Default:** သီးသန့် disposable DB `datapos_browser_uat_<runid>` တည်ဆောက်၍ လက်ရှိ app မှ အဲဒီ DB သို့ ချိတ်ထားကြောင်း အတည်ပြုပြီး migrations/verified seeders သုံးပါ။ Existing shared DB တစ်ခုလုံးကို reset မလုပ်ရ။
 
-## ၁။ စမ်းသပ်မှု ပတ်ဝန်းကျင် အချက်အလက်များ (Testing Context)
+1. Run ID သတ်မှတ်ပါ၊ ဥပမာ `UAT-20260919-01`။ DB အမည်တွင် သင့်လျော်သော underscore ပုံစံသုံးပါ။
+2. လိုအပ်သော local configuration ပြောင်းပြီး cached config ကို ရှင်းပါ။ Long-running server/worker ရှိလျှင် configuration အသစ်ကိုယူအောင် restart လုပ်ပါ။
+3. CLI နှင့် web runtime နှစ်ခုလုံး၏ **effective connection/database** ကို existing safe diagnostic နည်းဖြင့် စစ်ပါ။ DB password ကို evidence ထဲ မထည့်ရ။
+4. `migrate:fresh` သည် selected connection ပေါ်ရှိ tables အားလုံးကို ဖျက်ကြောင်း နားလည်ထားပြီး dedicated disposable DB ဖြစ်ကြောင်း သက်သေရှိမှ သုံးပါ။
+5. Existing `datapos_uat` သို့မဟုတ် production-like DB ကို အမည်ကြည့်ရုံဖြင့် disposable ဟုမယူဆရ။ Isolated DB အသစ် မသုံးနိုင်လျှင် store အသစ်နှင့်စမ်းပြီး baseline ကို မှတ်ပါ။
+6. Fresh setup ပြီး application login နှင့် DB binding ကို ပြန်စစ်ပါ။ ဤအဆင့်ပြီးမှ Browser cases စပါ။
 
-| အကြောင်းအရာ | သတ်မှတ်ချက် / တန်ဖိုး |
+`UatSeeder` မရှိလျှင် လက်ရှိ project ၏ supported bootstrap နည်းကို သုံးပါ။ Seeder account ကို public report တွင် password/PIN နှင့် မထုတ်ပြပါနှင့်။
+
+### ENV-03 — Capability နှင့် route map
+
+အောက်ပါ column များဖြင့် `capabilities.csv` ရေးပါ။
+
+`feature, actual_route, supported, enabled_for_store, allowed_roles, evidence, requirement_gap`
+
+- Core: products, stock, cash/noncash sale, wholesale credit, collections, refunds, expenses, shift opening/closing, reports, store isolation.
+- Conditional: manager closing approval, multi-warehouse, repair lifecycle, variants, tax, forex payments, offline queue, physical print, ecommerce.
+- Required feature မရှိပါက `GAP` ကို report တွင် ခွဲပြပါ။ Test status က NOT TESTED/BLOCKED ဖြစ်နိုင်သော်လည်း requirement ပြည့်သည်ဟု မယူဆရ။
+- Optional feature တကယ်မသက်ဆိုင်ပါက `N/A` နှင့် အကြောင်းပြချက် ထည့်ပါ။ Core feature မရှိမှုကို N/A ဖြင့်ဖျောက်မထားရ။
+
+## 3. Role၊ ဆိုင်နှင့် master data setup
+
+### SET-01 — Platform မှ store ဖွင့်ခြင်း
+
+Platform Owner ဖြင့် login → stores → create store → save → reload → store admin သို့ switch လုပ်ပါ။
+
+| Field | Test value |
 |---|---|
-| **Database Server** | MySQL (XAMPP 127.0.0.1:3306) |
-| **Database Name** | `datapos_uat` |
-| **Active Web Server URL** | `http://127.0.0.1:8501` (PHP CLI Built-in Server) |
-| **Platform Owner Login** | ဖုန်း `09100000001` ၊ Password `password` |
-| **Default Cashier PIN** | `1234` |
-| **ငွေကြေး သတ်မှတ်ချက်** | မြန်မာကျပ်ငွေ (MMK / ကျပ်) — Dynamic `format_currency()` စံနှုန်း |
-| **စမ်းသပ်မည့် ဆိုင်သစ် အမည်** | ရွှေပြည်သစ် မိုဘိုင်းနှင့် အီလက်ထရွန်းနစ် |
-| **စမ်းသပ်မည့် ဆိုင်သစ် Slug** | `spt-mobile` |
-| **ဆိုင်သစ် Master Data URL** | `http://127.0.0.1:8501/store/spt-mobile/admin/products/master-data` |
-| **ဆိုင်သစ် Product Create URL**| `http://127.0.0.1:8501/store/spt-mobile/admin/products/create` |
-| **ဆိုင်သစ် POS URL** | `http://127.0.0.1:8501/store/spt-mobile/pos` |
+| Store name | ရွှေပြည်သစ် မိုဘိုင်းနှင့် အီလက်ထရွန်းနစ် |
+| Slug | `spt-mobile` — ရှိပြီးသားဆို `<slug>-<runid>` အသစ်သုံးပြီး actual slug ကို case အားလုံးတွင် သုံးပါ |
+| Edition | Mobile/Electronics နှင့် အနီးစပ်ဆုံး supported edition; actual value ကို မှတ်ပါ |
+| Address | အမှတ် (၁၂၃)၊ လမ်း ၃၀၊ ၇၇ x ၇၈ ကြား၊ ချမ်းအေးသာစံမြို့နယ်၊ မန္တလေးမြို့ |
+| Phone | `09450001122` — dummy test value |
+| Language / currency | Myanmar / MMK |
+| Warehouse | MAIN နှင့် AUX — **ဆိုင်တစ်ဆိုင်တည်းအတွင်း** ဂိုဒေါင်နှစ်ခု |
+| Payment methods | Cash, KPay — simulated payment; တကယ့်ငွေလွှဲမလုပ်ရ |
+| Expense category | ဆိုင်နေ့စဉ်အသုံးစရိတ် |
 
----
+Expected: store တစ်ခုသာဖန်တီး၊ reload ပြီး data မပျောက်၊ scope switch မှန်၊ unrelated store data မပေါ်။
 
-## ၂။ Admin Sidebar Menu Groups နှင့် အောက်ရှိ Sub-items များ စာရင်း (Full Inventory)
+### SET-02 — Staff နှင့် session isolation
 
-Platform Owner အကောင့်ဖြင့် ဝင်ရောက်သည့်အခါ **Platform Scope** (စနစ်တစ်ခုလုံး ကြီးကြပ်မှု) နှင့် **Store Scope** (ဆိုင်တွင်း လုပ်ငန်းဆောင်ရွက်မှု) ဟူ၍ အပိုင်း ၂ ပိုင်းလုံးကို အပြည့်အစုံ မြင်တွေ့အသုံးပြုနိုင်ပါသည်။
+| Role | Test identity | Baseline responsibility |
+|---|---|---|
+| Platform Owner | Verified bootstrap account | Store provisioning/platform settings |
+| Store Owner | UAT Store Owner | ဆိုင် settings၊ reports၊ ခွင့်ပြုထားသော approval |
+| Manager | ကိုသန့်၊ `09200000011` | Stock/purchases၊ refund approval၊ expense approval၊ closing review |
+| Cashier | မလှလှ၊ `09200000022` | POS၊ ခွင့်ပြုထားသော collection/deposit၊ ကိုယ့် shift closing |
+| Other-store staff | ဆိုင် B အတွက် သီးခြား account | Store-isolation negative tests |
 
-### က။ Platform Scope (`/admin/*`) — ပလက်ဖောင်းအဆင့် မီနူးများ
-1. **Platform Dashboard (ဒက်ရှ်ဘုတ်)** — Route: `admin.dashboard` (`/admin/dashboard`)
-2. **Store Management (ဆိုင်များ စီမံခန့်ခွဲမှု)** — Route: `admin.stores.index` (`/admin/stores`)
-3. **Theme Governance (ဒီဇိုင်းနှင့် အရောင် ကြီးကြပ်မှု)** — Route: `admin.theme-governance.index` (`/admin/theme-governance`)
+Actual role slugs/permissions ကို code နှင့် UI မှစစ်ပြီး map လုပ်ပါ။ စာရွက်ပါအမည်နှင့်မတူရုံဖြင့် bug မသတ်မှတ်ရ။ Cashier သည် platform/admin-sensitive reports ကို မဝင်နိုင်ရ။ Manager လိုသောအလုပ်ကို cashier အဖြစ် permission ချဲ့ပြီးမကျော်ရ။
 
----
+Role တစ်မျိုးစီကို separate browser context/profile ဖြင့်သုံးပါ။ Tab အသစ်တစ်ခုသည် session အသစ်မဟုတ်ပါ။ Approval ပြီး cashier session/shift မှန်သေးကြောင်း ပြန်စစ်ပါ။
 
-### ခ။ Store Admin Scope (`/store/{slug}/admin/*`) — ဆိုင်တွင်း အုပ်ချုပ်ရေး မီနူးများ (၁၂ Groups)
+### SET-03 — Master Data tabs
 
-```
-[← Platform Admin] (Platform Owner သီးသန့် မြင်တွေ့ရသော Back-link)
-├── 0. Dashboard (ဒက်ရှ်ဘုတ်)
-│
-├── 1. POS Counter (အရောင်းကောင်တာ)
-│   ├── POS Sale (အရောင်းကောင်တာဖွင့်မည်)
-│   ├── Closing (နေ့ချုပ်/ငွေစာရင်းချုပ်)
-│   ├── Sales Returns (အရောင်းပြန်သွင်းမှုများ)
-│   ├── Buyback (အဝယ်ပြန်ယူ စာရင်း)
-│   └── E-Load (ဖုန်းငွေဖြည့်သွင်းမှု)
-│
-├── 2. Inventory (ကုန်ပစ္စည်း နှင့် စတော့)
-│   ├── Master Data (အခြေခံ အချက်အလက်များ - အမှတ်တံဆိပ်၊ အမျိုးအစား၊ ယူနစ်၊ စင်၊ အာမခံ)
-│   ├── Products (ကုန်ပစ္စည်းများ စာရင်း)
-│   ├── Barcode (ဘားကုဒ် ထုတ်ဝေခြင်း)
-│   ├── Price Wizard (ဈေးနှုန်း သတ်မှတ်မှု အကူ)
-│   ├── Warranty (အာမခံ သက်တမ်း စောင့်ကြည့်မှု)
-│   ├── Stock Ledger (စတော့ အဝင်/အထွက် စာရင်းဇယား)
-│   ├── Stock Balance (စတော့ လက်ကျန် အစီရင်ခံစာ)
-│   ├── Stock Count (စတော့ ကာယကံ ရေတွက်မှု)
-│   ├── Stock Adjustments (စတော့ အတိုး/အလျော့ ပြင်ဆင်မှု)
-│   ├── Stock Reconciliation (စတော့ ညှိနှိုင်းမှု)
-│   ├── Opening Stock (စတော့ အဖွင့် စာရင်းသွင်းခြင်း)
-│   ├── Product Import (ကုန်ပစ္စည်း အစုလိုက် သွင်းယူခြင်း)
-│   └── Import History (ဖိုင်သွင်းယူမှု မှတ်တမ်း)
-│
-├── 3. Purchasing (အဝယ် နှင့် ကုန်ပေးသွေးစနစ်)
-│   ├── Suppliers (ကုန်ပစ္စည်း ပေးသွင်းသူများ)
-│   ├── Purchases (အဝယ်ဘောက်ချာ စာရင်း)
-│   ├── Purchase Returns (အဝယ်ပစ္စည်း ပြန်ပို့မှုများ)
-│   ├── Payables (ပေးရန်ကျန်ငွေ စာရင်း)
-│   ├── Transfers (ဆိုင်ခွဲ/ဂိုဒေါင် အကြား ပစ္စည်းလွှဲပြောင်းမှု)
-│   └── Warehouses (ဂိုဒေါင်များ စီမံခြင်း)
-│
-├── 4. Ecommerce (အွန်လိုင်းစတိုး နှင့် ဝဘ်ဆိုဒ်)
-│   ├── Orders (အွန်လိုင်း အော်ဒါများ)
-│   ├── Web Products (ဝဘ်ဆိုဒ်တင် ပစ္စည်းများ)
-│   ├── Promotions (ပရိုမိုးရှင်း နှင့် ကူပွန်များ)
-│   ├── Reviews (သုံးသပ်ချက်များ)
-│   ├── Home Banners (ပင်မနဖူးစည်း ပုံရိပ်များ)
-│   ├── Blog Posts (ဆောင်းပါးများ)
-│   ├── Custom Pages (စိတ်ကြိုက် စာမျက်နှာများ)
-│   ├── Storefront Navigation (ဝဘ်ဆိုဒ် မီနူးများ)
-│   ├── Glass Finder (မှန်မော်ဒယ် ရှာဖွေစနစ်)
-│   ├── Web Push (အသိပေးစာ ပေးပို့ခြင်း)
-│   └── Push History (အသိပေးစာ ပေးပို့မှု မှတ်တမ်း)
-│
-├── 5. Customers (ဖောက်သည် နှင့် အကြွေးစာရင်း)
-│   ├── Customer Directory (ဖောက်သည် စာရင်း)
-│   ├── Receivables (ရရန်ကျန်ငွေ / အကြွေးစာရင်း)
-│   ├── Wholesale Applications (လက်ကား လျှောက်ထားမှုများ)
-│   └── Membership (အဖွဲ့ဝင် နှင့် Point စနစ်)
-│
-├── 6. Service (ပြင်ဆင်ရေး စင်တာ)
-│   ├── Repair Center (စက်ပြင်ဆင်ရေး ဂျော့များ)
-│   ├── Spare Parts (အပိုပစ္စည်းများ)
-│   └── Service Settings (ပြင်ဆင်ရေး ဆက်တင်များ)
-│
-├── 7. Finance (ဘဏ္ဍာရေး နှင့် စာရင်းကိုင်)
-│   ├── Profit & Loss (အမြတ်/အရှုံး စာရင်း)
-│   ├── Expenses (ကုန်ကျစရိတ်များ)
-│   ├── Expense Categories (ကုန်ကျစရိတ် အမျိုးအစားများ)
-│   └── Transactions (ငွေစာရင်း ရှင်းတမ်း အသေးစိတ်)
-│
-├── 8. Reports (အစီရင်ခံစာများ)
-│   ├── Sales Reports (အရောင်း အစီရင်ခံစာ)
-│   ├── Payment Reports (ငွေပေးချေမှု အစီရင်ခံစာ)
-│   ├── Sales Analytics (အရောင်း စိစစ်သုံးသပ်ချက်)
-│   ├── Cash Reports (ငွေသား စီးဆင်းမှု အစီရင်ခံစာ)
-│   ├── Inventory Valuation (စတော့ တန်ဖိုး တွက်ချက်မှု)
-│   ├── Debt Aging (အကြွေး သက်တမ်း အစီရင်ခံစာ)
-│   ├── Service Reports (ပြင်ဆင်ရေး အစီရင်ခံစာ)
-│   ├── Commercial Tax (ကုန်သွယ်ခွန် အစီရင်ခံစာ)
-│   ├── Stock Reports (စတော့ အခြေအနေ အစီရင်ခံစာ)
-│   └── Business Reconciliation (လုပ်ငန်း ညှိနှိုင်းမှု ရှင်းတမ်း)
-│
-├── 9. Security (လုံခြုံရေး နှင့် အသုံးပြုသူများ)
-│   ├── Roles & Permissions (ရာထူး နှင့် လုပ်ပိုင်ခွင့်များ)
-│   ├── Users (ဝန်ထမ်း နှင့် အသုံးပြုသူများ)
-│   └── Audit Logs (စနစ် လုပ်ဆောင်ချက် မှတ်တမ်းများ)
-│
-├── 10. Maintenance (စနစ်ထိန်းသိမ်းမှု)
-│   ├── Alerts (အသိပေးချက်များ စင်တာ)
-│   ├── Database (ဒေတာဘေ့စ် ထိန်းသိမ်းမှု - Platform Owner Only)
-│   ├── Sync Manager (အော့ဖ်လိုင်း ဒေတာ ချိတ်ဆက်မှု)
-│   ├── Backups (အရန်ဒေတာ သိမ်းဆည်း/ပြန်တင်ခြင်း - Platform Owner Only)
-│   └── Pilot Import (စမ်းသပ်ဒေတာ တင်သွင်းခြင်း)
-│
-└── 11. Setup (ဆိုင်ပြင်ဆင်ချက်များ)
-    ├── Theme & Branding (ဆိုင်ဒီဇိုင်း နှင့် အမှတ်တံဆိပ်)
-    ├── Store Settings (ဆိုင် ဆက်တင်များ)
-    ├── Business Modules (လုပ်ငန်းသုံး မော်ဂျူးများ ဖွင့်/ပိတ်ခြင်း)
-    ├── Sales Channels (အရောင်းလမ်းကြောင်းများ)
-    ├── Branches (ဆိုင်ခွဲများ)
-    ├── Printers (ပရင်တာများ ချိတ်ဆက်ခြင်း)
-    ├── Voucher Templates (ဘောက်ချာ ပုံစံများ)
-    └── Exchange Rates (ငွေလဲလှယ်နှုန်းများ)
-```
+| Tab | Records |
+|---|---|
+| Categories | Parent `Phone Accessories` / `ACC`; children `Chargers & Adapters` / `CHG`, `Tempered Glass` / `GLS`, `Power Banks` / `PB` |
+| Brands | Remax / RMX, Apple / AAPL, Anker / ANK |
+| Shelves | စင် A-01၊ စင် B-02 — Shelf သည် Warehouse နှင့် မတူ |
+| Warranties | 6 months, 1 year — actual date calculation စစ်ရန် |
+| Return policies | UAT Cash Refund 7 Days; No Returns; Defect Exchange Only |
+| Variant presets | Color: Black/White/Titanium; Storage: 128GB/256GB/512GB |
 
----
+Tab တိုင်းတွင် create → reload → edit → reload စမ်းပါ။ မသုံးရသေးသော temporary record တစ်ခုကို delete လုပ်ပြီး referenced record delete ကို application rule အတိုင်းတား/handle လုပ်ကြောင်းစစ်ပါ။ Duplicate/blank validation နှင့် category parent cycle prevention ကို စစ်ပါ။
 
-## ၃။ ဆိုင်သစ် Blueprint နှင့် စမ်းသပ်မည့် Master Profile
+Baseline Glass တွင် **UAT Cash Refund 7 Days** သုံးပါ။ No Returns နှင့် Exchange Only ကို သီးခြား negative cases တွင် သုံးပါ။ Policy text ရှိရုံနှင့် enforcement ရှိသည်ဟု မယူဆရ။
 
-- **ဆိုင်သစ်အမည်:** ရွှေပြည်သစ် မိုဘိုင်းနှင့် အီလက်ထရွန်းနစ်
-- **Slug:** `spt-mobile`
-- **လိပ်စာ:** အမှတ် (၁၂၃)၊ လမ်း ၃၀၊ ၇၇ x ၇၈ ကြား၊ ချမ်းအေးသာစံမြို့နယ်၊ မန္တလေးမြို့။
-- **ဖုန်း:** `09450001122`
-- **ဝန်ထမ်းဖွဲ့စည်းမှု:**
-  - Manager: ကိုသန့် (`09200000011`, PIN `1111`) — စီမံခန့်ခွဲခွင့် အပြည့်
-  - Cashier: မလှလှ (`09200000022`, PIN `2222`) — ကောင်တာအရောင်းနှင့် နေ့ချုပ်သာ ရ
-- **Master Data Tabs အချက်အလက်များ:**
-  1. `?tab=categories`:
-     - **Main Category:** `Phone Accessories` (ဖုန်းအပိုပစ္စည်းများ)
-     - **Sub Category 1:** `Chargers & Adapters` (Code: `CHG`)
-     - **Sub Category 2:** `Tempered Glass` (Code: `GLS`)
-     - **Sub Category 3:** `Power Banks` (Code: `PB`)
-  2. `?tab=brands`:
-     - `Remax` (Code: `RMX`) ၊ `Apple` (Code: `AAPL`) ၊ `Anker` (Code: `ANK`)
-  3. `?tab=shelves`:
-     - `စင် A-01 (အရှေ့ကောင်တာမှန်ဗီရို)` ၊ `စင် B-02 (ဂိုဒေါင်အလယ်စင်)`
-  4. `?tab=warranties`:
-     - `၆ လ ကုမ္ပဏီအာမခံ (6 Months Company Warranty)`
-     - `၁ နှစ် စက်ပစ္စည်းအာမခံ (1 Year Hardware Warranty)`
-  5. `?tab=return-policies`:
-     - `၇ ရက်အတွင်း ပစ္စည်းချို့ယွင်းချက်ရှိပါက အသစ်လဲလှယ်ပေးသည် (7 Days Defect Exchange)`
-     - `ဝယ်ယူပြီး ပစ္စည်း ပြန်မလဲပါ`
-  6. `?tab=variant-presets`:
-     - Preset Name: `Color (အရောင်)` — Options: `Black`, `White`, `Titanium`
-     - Preset Name: `Storage (သိုလှောင်မှု)` — Options: `128GB`, `256GB`, `512GB`
+### SET-04 — Products
 
----
+SKU/name generator ၏ actual documented rules ကိုစစ်ပါ။ Exact generated name ကို မခန့်မှန်းရ။ Test alias ကို actual product ID/SKU နှင့် map လုပ်ပါ။
 
-## ၄။ နေ့စဉ်စာရင်းသုံး အဆင့်ဆင့် Live စမ်းသပ်မှု Checklist (Executable E2E Steps)
+| Alias | Product | Tracking | Cost | Retail | Wholesale | Barcode |
+|---|---|---|---:|---:|---:|---|
+| CHARGER | Remax RP-U25, Universal Type-C | Quantity | 15,000 | 25,000 | 18,000 | `UAT-CHG-001` |
+| GLASS | Apple-compatible IP15P Tempered Glass | Quantity | 1,500 | 5,000 | 2,500 | `UAT-GLS-001` |
+| POWERBANK | Remax RPP-292 | Serial | 35,000 | 55,000 | 42,000 | `UAT-PB-001` |
 
----
+Alphanumeric internal barcode ကို supported symbology ဖြင့်သုံးပါ။ Numeric-only validation ရှိလျှင် valid supported barcode ဖြင့် mapping ကို record လုပ်ပါ။ Baseline တွင် price ကို တိတိကျကျသတ်မှတ်ပါ။ `15,000 + 66.6% = 24,990` ဖြစ်သဖြင့် markup 66.6% ဖြင့် 25,000 ထွက်ရမည်ဟု မတောင်းဆိုရ။ Rounding သီးခြားစမ်းပါ။
 
-### အဆင့် (၁) — ဆိုင်အသစ်စတင်ဖွင့်လှစ်ခြင်း (Fresh Store Provisioning)
-Platform Owner မှ ဆိုင်အသစ်အား MySQL Database ပေါ်တွင် အစစ်အမှန် စတင်ဖန်တီးခြင်း။
+- CHARGER: category CHG, Remax, shelf A-01.
+- GLASS: category GLS, shelf A-01, UAT Cash Refund 7 Days.
+- POWERBANK: category PB, Remax, shelf B-02, 6-month warranty.
+- Products သုံးခုကို save/reload/edit ဖြင့် price၊ policy၊ tracking နှင့် dropdown references မှန်ကြောင်းစစ်ပါ။
+- Baseline products တွင် variants မဖွင့်ပါနှင့်။ Variant tests အတွက် သီးခြား product သုံးပါ။
 
-- [ ] **1.1 Platform Login (`/login`)**
-  - ဖုန်း `09100000001` နှင့် Password `password` ဖြင့် Login ဝင်ပါ။
-  - Platform Dashboard (`/admin/dashboard`) သို့ ရောက်ရှိရမည်။
-- [ ] **1.2 Create New Store (`/admin/stores/create`)**
-  - "Create Store (ဆိုင်အသစ်ဖွင့်မည်)" ခလုတ်ကို နှိပ်ပါ။
-  - **Form Data ဖြည့်သွင်းချက်:**
-    - Store Name: `ရွှေပြည်သစ် မိုဘိုင်းနှင့် အီလက်ထရွန်းနစ်`
-    - Slug: `spt-mobile`
-    - Edition: `mobile_electronics` (ဖုန်း၊ ကွန်ပျူတာနှင့် လျှပ်စစ်ပစ္စည်း အရောင်း/ပြင်ဆိုင်)
-    - Phone: `09450001122`
-    - Address: `အမှတ် (၁၂၃)၊ လမ်း ၃၀၊ ၇၇ x ၇၈ ကြား၊ ချမ်းအေးသာစံမြို့နယ်၊ မန္တလေးမြို့။`
-    - Default Language: `my` (မြန်မာ)
-  - "Save (ဆိုင်တည်ထောင်မည်)" ခလုတ်ကို နှိပ်ပါ။
-  - **စစ်ဆေးချက်:** `/admin/stores` စာရင်းတွင် `spt-mobile` ပေါ်လာပြီး MySQL `stores` ဇယားတွင် row အသစ် ချက်ချင်း ဝင်ရောက်ရမည်။
-- [ ] **1.3 Switch into Store Admin (`/store/spt-mobile/admin/dashboard`)**
-  - ဆိုင်စာရင်းမှ "Admin Panel" ခလုတ်ကို နှိပ်၍ ဆိုင်သစ်၏ Dashboard သို့ ဝင်ရောက်ပါ။
-  - Sidebar ထိပ်ဆုံးတွင် `← Platform Admin` ခလုတ် ပေါ်နေရမည်။
+## 4. Baseline စာရင်းကို တစ်မျိုးတည်းသတ်မှတ်ရန်
 
----
+Baseline တွင် tax/fees/automatic promotions မပါရ။ Store-level test configuration မှ tax disabled သို့မဟုတ် applicable test exemption ကို အတည်ပြုပါ။ မလုပ်နိုင်လျှင် transaction မစမီ independent expected sheet အသစ်တွက်ပြီး assumption ကို မှတ်ပါ။ Published totals ကို အဲဒီ run အတွက် မသုံးရ။ Legal tax rate ကို မခန့်မှန်းရ။
 
-### အဆင့် (၂) — ဆိုင်ဆက်တင်၊ နိုင်ငံခြားငွေလဲနှုန်း နှင့် ဝန်ထမ်းလုံခြုံရေး (Setup & Security)
+- Whole MMK, discount 1,000 fixed, credit collection 50,000 fixed.
+- Supplier payment သည် POS drawer မှမဟုတ်ဘဲ သီးခြား SAFE cash account မှဖြစ်ရမည်။ SAFE opening balance 300,000 သတ်မှတ်ပြီး payment 200,000 နုတ်လျှင် SAFE 100,000 ကျန်ရမည်။
+- Drawer opening 100,000 သည် သီးခြား opening float ဖြစ်သည်။ SAFE မှလွှဲခြင်းအဖြစ် ထပ်မမှတ်ရ။ System က explicit transfer လိုအပ်လျှင် SAFE 400,000 → drawer 100,000 → supplier 200,000 ဟု transaction မစမီ alternative ကိုရေးမှတ်ပါ။ SAFE final 100,000 တူရမည်။
+- Application က SAFE/out-of-shift purchasing ကို မပံ့ပိုးလျှင် procurement scenario ကို သီးခြား run ခွဲပြီး baseline ကို BLOCKED/adjusted scenario အဖြစ် သေချာဖော်ပြပါ။ Supplier cash ကို ပျောက်သွားသကဲ့သို့ မဖယ်ထုတ်ရ။
+- Repair deposit သည် cash receipt ဖြစ်ပြီး repair ဝင်ငွေရရှိပြီးသားဟု အလိုအလျောက်မယူဆရ။ Report ၏ cash/accrual basis ကို record လုပ်ပါ။
+- Reversal၊ void၊ extra test sale နှင့် variance tests ကို baseline shift ထဲ မရောရ။
 
-- [ ] **2.1 Multi-Currency Exchange Rates (`/store/spt-mobile/admin/exchange-rates`)**
-  - Setup > Exchange Rates သို့ သွားပါ။
-  - နိုင်ငံခြားငွေလဲနှုန်း သတ်မှတ်ခြင်း:
-    - Currency: `USD` ၊ Rate: `4,500` MMK
-    - Currency: `THB` ၊ Rate: `135` MMK
-    - အတည်ပြု သိမ်းဆည်းပါ။
-- [ ] **2.2 Printers & Voucher Templates (`/store/spt-mobile/admin/printers` & `vouchers`)**
-  - 80mm ESC/POS Thermal ပရင်တာ ရွေးချယ်ပါ။
-  - Voucher Header: `ရွှေပြည်သစ် မိုဘိုင်းနှင့် အီလက်ထရွန်းနစ် (မန္တလေး)`
-  - Voucher Footer: `ဝယ်ယူအားပေးမှုကို ကျေးဇူးတင်ပါသည်၊ ပစ္စည်းမှန် ဈေးနှုန်းမှန်` ဟု ထည့်သွင်းသိမ်းဆည်းပါ။
-- [ ] **2.3 Staff Setup & Role Gating (`/store/spt-mobile/admin/users`)**
-  - Manager ကိုသန့် (`09200000011`, PIN `1111`) အား Role: `store_manager` ဖြင့် ဖန်တီးပါ။
-  - Cashier မလှလှ (`09200000022`, PIN `2222`) အား Role: `staff` (Cashier) ဖြင့် ဖန်တီးပါ။
-- [ ] **2.4 Security Check (Cashier Permission Gating Audit)**
-  - Browser Incognito (သို့မဟုတ် Tab အသစ်) တွင် Cashier မလှလှ (`09200000022`) ဖြင့် ဝင်ရောက်ပါ။
-  - Cashier အနေဖြင့် `/store/spt-mobile/admin/profit-loss` သို့မဟုတ် `/admin/settings` သို့ ဝင်ရောက်ကြည့်ပါ။
-  - **စစ်ဆေးချက်:** စနစ်မှ `403 Forbidden` (သို့မဟုတ် Menu မှ ဖုံးကွယ်ထားခြင်း) ဖြင့် အမြတ်/အရှုံးနှင့် ဆိုင်ဆက်တင်များကို လုံခြုံစွာ ကာကွယ်ထားရမည်။
+## 5. Procurement နှင့် opening stock
 
----
+### INV-01 — Opening stock
 
-### အဆင့် (၃) — Master Data Tab ၆ ခု အပြည့်အစုံ ဖြည့်သွင်းခြင်း (Complete Master Data Hub)
-ပစ္စည်းများ မသွင်းမီ လိုအပ်သော Categories, Brands, Shelves, Warranties, Return Policies နှင့် Variants များကို စနစ်တကျ အရင်ဖန်တီးခြင်း။
+Manager ဖြင့် MAIN warehouse တွင် CHARGER 20 × 15,000 = 300,000၊ GLASS 50 × 1,500 = 75,000 သွင်းပါ။ Stock ledger နှင့် balance မှာ quantities၊ unit cost၊ warehouse/store မှန်ရမည်။ Opening stock value 375,000 ကို POS cash sale အဖြစ် မတွက်ရ။
 
-- [ ] **3.1 [📂Categories] Tab (`/store/spt-mobile/admin/products/master-data?tab=categories`)**
-  - "Category +" ခလုတ်ကို နှိပ်ပါ။
-  - **Main Category ဖန်တီးခြင်း:**
-    - Name: `Phone Accessories` (ဖုန်းအပိုပစ္စည်းများ) ၊ Code: `ACC` ၊ Parent: None -> သိမ်းဆည်းပါ။
-  - **Sub Categories ဖန်တီးခြင်း (Main Category အောက်တွင် ထည့်သွင်းခြင်း):**
-    - Sub 1: Name `Chargers & Adapters` ၊ Code `CHG` ၊ Parent `Phone Accessories` -> သိမ်းဆည်းပါ။
-    - Sub 2: Name `Tempered Glass` ၊ Code `GLS` ၊ Parent `Phone Accessories` -> သိမ်းဆည်းပါ။
-    - Sub 3: Name `Power Banks` ၊ Code `PB` ၊ Parent `Phone Accessories` -> သိမ်းဆည်းပါ။
-  - **စစ်ဆေးချက်:** Categories ဇယားတွင် Main Category နှင့် ၎င်းအောက်ရှိ Sub Categories ၃ ခု hierarchy ပုံစံဖြင့် တိကျစွာ ပေါ်ရမည်။
-- [ ] **3.2 [🏷️Brands] Tab (`/store/spt-mobile/admin/products/master-data?tab=brands`)**
-  - "Brand +" ခလုတ်ကို နှိပ်ပါ။
-  - Brand 1: Name `Remax` ၊ Code `RMX` -> သိမ်းဆည်းပါ။
-  - Brand 2: Name `Apple` ၊ Code `AAPL` -> သိမ်းဆည်းပါ။
-  - Brand 3: Name `Anker` ၊ Code `ANK` -> သိမ်းဆည်းပါ။
-- [ ] **3.3 [🗄️Shelf / Locations] Tab (`/store/spt-mobile/admin/products/master-data?tab=shelves`)**
-  - "Shelf Location +" ခလုတ်ကို နှိပ်ပါ။
-  - Shelf 1: Name `စင် A-01 (အရှေ့ကောင်တာမှန်ဗီရို)`
-  - Shelf 2: Name `စင် B-02 (ဂိုဒေါင်အလယ်စင်)`
-- [ ] **3.4 [🛡️Warranty Presets] Tab (`/store/spt-mobile/admin/products/master-data?tab=warranties`)**
-  - "Warranty Preset +" ခလုတ်ကို နှိပ်ပါ။
-  - Warranty 1: Name `၆ လ ကုမ္ပဏီအာမခံ (6 Months Company Warranty)`
-  - Warranty 2: Name `၁ နှစ် စက်ပစ္စည်းအာမခံ (1 Year Hardware Warranty)`
-- [ ] **3.5 [🔄Return Policies] Tab (`/store/spt-mobile/admin/products/master-data?tab=return-policies`)**
-  - "Return Policy +" ခလုတ်ကို နှိပ်ပါ။
-  - Policy 1: Name `၇ ရက်အတွင်း ပစ္စည်းချို့ယွင်းချက်ရှိပါက အသစ်လဲလှယ်ပေးသည် (7 Days Defect Exchange)`
-  - Policy 2: Name `ဝယ်ယူပြီး ပစ္စည်း ပြန်မလဲပါ (No Returns)`
-- [ ] **3.6 [⚡Variant Settings] Tab (`/store/spt-mobile/admin/products/master-data?tab=variant-presets`)**
-  - "Variant Preset +" ခလုတ်ကို နှိပ်ပါ။
-  - Preset 1: Name `Color (အရောင်)` ၊ Options: `Black`, `White`, `Titanium`
-  - Preset 2: Name `Storage (သိုလှောင်မှု)` ၊ Options: `128GB`, `256GB`, `512GB`
+### PUR-01 — Supplier purchase နှင့် partial payment
 
----
+Supplier `မန္တလေး အီလက်ထရွန်းနစ် ကုန်တိုက်ကြီး` ဖန်တီးပါ။ POWERBANK 10 × 35,000 = 350,000 အဝယ်၊ SAFE မှ 200,000 ပေး၊ payable 150,000 ချန်ပါ။
 
-### အဆင့် (၄) — Product Create Form အချက်အလက်များ အပြည့်အစုံဖြင့် ပစ္စည်း ၃ မျိုး ဖန်တီးခြင်း
-အဆင့် (၃) တွင် သွင်းခဲ့သော Master Data များကို Create Form တွင် အမှန်တကယ် ချိတ်ဆက်အသုံးပြု၍ ပစ္စည်း ၃ မျိုး ထည့်သွင်းခြင်း။
+1. Draft/order/invoice/goods receipt လက်ရှိ workflow ကိုလိုက်နာပါ။ Draft ဖန်တီးရုံဖြင့် stock တိုးမည်ဟု မယူဆရ။
+2. MAIN တွင် serial `RMX-2026-001` မှ `RMX-2026-010` အထိ 10 ခုလက်ခံပါ။ Duplicate serial ကို သီးခြား reject စမ်းပါ။
+3. Posted receipt ပြီး stock 10၊ available serial 10၊ payable 150,000၊ SAFE cash decrease 200,000 ကိုစစ်ပါ။
+4. Refresh/retry ကြောင့် stock/payment နှစ်ကြိမ်မဝင်ရ။ Receipt ID၊ invoice ID၊ payment ID ကို record လုပ်ပါ။
 
-- [ ] **4.1 ပစ္စည်း ၁: 25W Fast Charger ဖန်တီးခြင်း (`/store/spt-mobile/admin/products/create`)**
-  - **Main Category Dropdown:** `Phone Accessories` ကို ရွေးပါ
-  - **Sub Category Dropdown:** `Chargers & Adapters` ကို ရွေးပါ
-  - **Brand Dropdown:** `Remax` ကို ရွေးပါ
-  - **Auto SKU / Smart Name Generator:**
-    - Model Code ရိုက်ထည့်ပါ: `RP-U25`
-    - Compatible Models ရိုက်ထည့်ပါ: `Universal Type-C`
-    - **စစ်ဆေးချက်:** Product Name တွင် `Remax RP-U25 - Universal Type-C Chargers & Adapters` နှင့် SKU တွင် `RMX-RP-U25-CHG` အလိုအလျောက် ပေါ်လာရမည်။
-  - **Shelf Location:** `စင် A-01 (အရှေ့ကောင်တာမှန်ဗီရို)` ကို ရွေးပါ
-  - **Return Policy:** `၇ ရက်အတွင်း ပစ္စည်းချို့ယွင်းချက်ရှိပါက အသစ်လဲလှယ်ပေးသည်` ကို ရွေးပါ
-  - **Pricing Section:**
-    - Purchase Cost (ဝယ်ဈေး): `15000` MMK
-    - Retail Markup %: `66.6%` ရွေးပါ -> Retail Price: `25,000` MMK တိကျစွာ ပေါ်ရမည်
-    - Wholesale Markup %: `20%` ရွေးပါ -> Wholesale Price: `18,000` MMK တိကျစွာ ပေါ်ရမည်
-  - **Barcode:** `885123400001`
-  - "Save Product" နှိပ်ပါ။
+### INV-02 — Same-store warehouse transfer
 
-- [ ] **4.2 ပစ္စည်း ၂: 9D King Kong Tempered Glass ဖန်တီးခြင်း (`/store/spt-mobile/admin/products/create`)**
-  - **Main Category:** `Phone Accessories` -> **Sub Category:** `Tempered Glass`
-  - **Brand:** `Apple`
-  - **Model Code:** `IP15P` ၊ **Compatible Models:** `iPhone 15 Pro`
-  - **Shelf Location:** `စင် A-01 (အရှေ့ကောင်တာမှန်ဗီရို)`
-  - **Return Policy:** `ဝယ်ယူပြီး ပစ္စည်း ပြန်မလဲပါ (No Returns)`
-  - **Pricing Section:**
-    - Purchase Cost: `1500` MMK
-    - Retail Price: `5,000` MMK ၊ Wholesale Price: `2,500` MMK
-  - **Barcode:** `885123400002`
-  - "Save Product" နှိပ်ပါ။
+CHARGER 5 ခု MAIN → AUX လွှဲပါ။ Send/receive statuses နှင့် in-transit handling ကိုစစ်ပါ။ လက်ခံပြီး MAIN 15၊ AUX 5၊ store total 20၊ store stock value unchanged ဖြစ်ရမည်။ Shelf ပြောင်းခြင်းကို warehouse transfer PASS ဟု မယူဆရ။
 
-- [ ] **4.3 ပစ္စည်း ၃: Remax Power Bank ဖန်တီးခြင်း (Serialized Tracking & Warranty ပါဝင်သော ပစ္စည်း)**
-  - **Main Category:** `Phone Accessories` -> **Sub Category:** `Power Banks`
-  - **Brand:** `Remax` ၊ **Model Code:** `RPP-292`
-  - **Product Type:** **Serialized Tracking (IMEI / Serial စောင့်ကြည့်စနစ်)** အမှန်ခြစ်ပါ
-  - **Shelf Location:** `စင် B-02 (ဂိုဒေါင်အလယ်စင်)`
-  - **Warranty:** `၆ လ ကုမ္ပဏီအာမခံ (6 Months Company Warranty)`
-  - **Return Policy:** `၇ ရက်အတွင်း ပစ္စည်းချို့ယွင်းချက်ရှိပါက အသစ်လဲလှယ်ပေးသည်`
-  - **Pricing Section:**
-    - Purchase Cost: `35000` MMK
-    - Retail Price: `55,000` MMK ၊ Wholesale Price: `42,000` MMK
-  - **Barcode:** `885123400003`
-  - "Save Product" နှိပ်ပါ။
-  - **စစ်ဆေးချက်:** Products Index (`/store/spt-mobile/admin/products`) တွင် ပစ္စည်း ၃ မျိုးလုံး ပုံမှန်တက်လာရမည်။
+## 6. Baseline business day — တစ်ဆင့်ပြီးတိုင်း checkpoint ယူရန်
 
-- [ ] **4.4 Opening Stock Entry (`/store/spt-mobile/pos/opening-stock`)**
-  - 25W Fast Charger: အရေအတွက် `20` (တန်ဖိုး 300,000 MMK)
-  - 9D Tempered Glass: အရေအတွက် `50` (တန်ဖိုး 75,000 MMK)
-  - အတည်ပြု သိမ်းဆည်းပါ။ စတော့တွင် `20` နှင့် `50` ဟု `.000` မပါဘဲ သန့်ရှင်းစွာ ပေါ်ရမည်။
+Case တိုင်းတွင် actual invoice/payment/repair/refund/expense ID၊ actual cashier/shift ID နှင့် browser evidence ကိုမှတ်ပါ။ Total မကိုက်လျှင် အဲဒီနေရာမှာ defect ရေးပြီး dependent reconciliation ကို အောင်မြင်ဟုမသတ်မှတ်ရ။
 
----
+| Case | Browser လုပ်ဆောင်ချက် | မျှော်မှန်းရလဒ် | Drawer expected |
+|---|---|---|---:|
+| DAY-01 | Cashier login; MAIN POS shift ကို float 100,000 နဲ့ဖွင့် | Open shift တစ်ခု၊ owner/store/register မှန် | 100,000 |
+| DAY-02 | Barcode ဖြင့် CHARGER နှစ်ကြိမ်ထည့်၊ qty 2 စစ်၊ qty 1 ပြန်ထား | Scan input/cart qty မှန်၊ invoice မဖန်တီးသေး | 100,000 |
+| DAY-03 | CHARGER 1 + GLASS 1 ရောင်း; Cash tender 50,000 | Sale 30,000၊ change 20,000၊ retained cash 30,000 | 130,000 |
+| DAY-04 | POWERBANK 1 ကို serial RMX-2026-001 ဖြင့် KPay 55,000 ရောင်း | Cash မတိုး၊ KPay receipts 55,000၊ serial sold၊ warranty link | 130,000 |
+| DAY-05 | Wholesale customer ဦးသန်းလွင် ဖန်တီး; CHARGER 5 + GLASS 20 ကို credit ရောင်း | 90,000 + 50,000 − fixed discount 1,000 = 139,000 receivable | 130,000 |
+| DAY-06 | ဒေါ်ခင်စန်း၏ repair job intake; cash deposit 30,000 လက်ခံ | Job/deposit တစ်ကြိမ်သာ၊ cashier shift နှင့် link၊ earned revenue မဟုတ်သေး | 160,000 |
+| DAY-07 | DAY-05 invoice အတွက် Cash collection 50,000 | Receivable 89,000၊ payment တစ်ကြိမ်သာ၊ sale revenue ထပ်မတိုး | 210,000 |
+| DAY-08 | DAY-03 မှ GLASS 1 ကို return; cash refund 5,000; resellable MAIN stock သို့ပြန်ထည့် | Original line link၊ returned qty 1၊ refund 5,000၊ stock +1 | 205,000 |
+| DAY-09 | Cash expense 2,000 ကို လက်ရှိ drawer မှ တစ်ကြိမ်ထုတ် | Paid expense +2,000၊ cash −2,000၊ source shift မှန် | 203,000 |
 
-### အဆင့် (၅) — ကုန်သည်ထံမှ အဝယ်သွင်းခြင်း နှင့် ဆိုင်ခွဲ/ဂိုဒေါင် လွှဲပြောင်းမှု (Procurement & Transfer)
+DAY-06/07/08/09 အတွက် approval လိုပါက Manager သုံး၍ approved workflow အတိုင်းလုပ်ပါ။ Approval user နှင့် ငွေကိုင် drawer owner မတူနိုင်သဖြင့် ledger association ကိုစစ်ပါ။ Expense draft ကို saved ဖြစ်ရုံနှင့် ငွေထွက်ပြီးဟုမတွက်ရ။
 
-- [ ] **5.1 Supplier Setup (`/store/spt-mobile/admin/suppliers`)**
-  - "မန္တလေး အီလက်ထရွန်းနစ် ကုန်တိုက်ကြီး" ၊ ဖုန်း `09790000099` ဖြင့် ကုန်သွင်းသူအသစ် ဖွင့်ပါ။
-- [ ] **5.2 Purchase Invoice (`/store/spt-mobile/pos/purchases`)**
-  - ကုန်သွင်းသူထံမှ `Remax 20000mAh Power Bank` အရေအတွက် `10 ခု` @ 35,000 MMK = စုစုပေါင်း **၃၅၀,၀၀၀ ကျပ်** (350,000 MMK) အဝယ်သွင်းပါ။
-  - ငွေသားပေးချေမှု: `200,000 MMK` ၊ ပေးရန်ကျန်ငွေ: `150,000 MMK`
-  - **စစ်ဆေးချက်:** Payables တွင် `150,000 MMK` ပေါ်ပြီး စတော့တွင် Power Bank `10` ခု တိုးရမည်။
-- [ ] **5.3 Stock Transfer (`/store/spt-mobile/pos/transfers`)**
-  - ပင်မဆိုင်မှ ဂိုဒေါင်ခွဲသို့ `25W Fast Charger` အရေအတွက် `5 ခု` အား လွှဲပြောင်းပေးပို့ပြီး လက်ခံအတည်ပြုမှု စစ်ဆေးပါ။
+### DAY-10 — Receipt နှင့် persisted state
 
----
+- [ ] Cash receipt တွင် gross/tax/discount/net၊ tender/change၊ invoice no၊ cashier၊ date၊ shop name မှန်။
+- [ ] Shop name ကို setup အမည်အပြည့်ဖြင့် နှိုင်းပါ။ မြန်မာစာ၊ footer၊ barcode နှင့် 80mm preview ဖြတ်တောက်မှု စစ်ပါ။
+- [ ] Credit invoice တွင် paid 0 / due 139,000; collection receipt ပြီး due 89,000 ဖြစ်ကြောင်းစစ်ပါ။
+- [ ] Refund receipt နှင့် expense voucher ကို original transaction/shift နှင့် trace လုပ်နိုင်ရမည်။
+- [ ] Save ပြီး browser reload၊ logout/login နှင့် read-only persisted records ဖြင့်စစ်ပါ။
 
-### အဆင့် (၆) — မနက်ခင်း ဆိုင်ဖွင့်ချိန် အံဆွဲဖွင့်ငွေ စာရင်းသွင်းခြင်း (Morning Shift Opening)
+## 7. Closing — ထွက်ငွေ၊ count၊ approval၊ snapshot
 
-- [ ] **6.1 POS Shift Opening (`/store/spt-mobile/pos`)**
-  - POS အရောင်းကောင်တာ မျက်နှာပြင်သို့ သွားပါ။
-  - **အံဆွဲ အဖွင့်ငွေ (Opening Drawer Float):** **၁၀၀,၀၀၀ ကျပ်** (100,000 MMK) ရိုက်ထည့်၍ "Shift စတင်ဖွင့်မည်" ခလုတ်ကို နှိပ်ပါ။
-  - **စစ်ဆေးချက်:** Shift Status: `Open` ဖြစ်ပြီး `opening_cash = 100000.00` ဖြင့် MySQL row ဝင်ရောက်ရမည်။
+Actual closing route ကို discovery map မှသုံးပါ။ Candidate: `/store/{slug}/pos/closing`။
 
----
+### CLOSE-01 — Breakdown
 
-### အဆင့် (၇) — နေ့စဉ် အရောင်းအဝယ်၊ ဟာ့ဒ်ဝဲစကင်၊ လျှော့ဈေး၊ အော့ဖ်လိုင်း နှင့် ပြေစာစမ်းသပ်မှု
+| Component | MMK |
+|---|---:|
+| Opening float | 100,000 |
+| Net retained cash from sales | +30,000 |
+| Repair cash deposit | +30,000 |
+| Credit collection | +50,000 |
+| Customer cash refund | −5,000 |
+| Paid cash expense | −2,000 |
+| **Expected drawer cash** | **203,000** |
+| KPay — drawer ထဲမပါ | 55,000 |
 
-- [ ] **7.1 ဟာ့ဒ်ဝဲ ဘားကုဒ်စကင်နာ စမ်းသပ်မှု (Hardware Barcode Scanner Emulation)**
-  - Barcode Input အကွက်ထဲသို့ `885123400001` ရိုက်ထည့်ပြီး `Enter` ခေါက်ပါ။
-  - **စစ်ဆေးချက်:** `25W Fast Charger` (25,000 MMK) သည် Cart ထဲသို့ ချက်ချင်း Auto-Add ဖြစ်ရမည်။ နောက်တစ်ခါ ထပ်ဖတ်ပါက အရေအတွက်သည် `2` သို့ တိုးသွားရမည်။ (စမ်းသပ်ပြီးနောက် Quantity: `1` သို့ ပြန်ထားပါ)
-- [ ] **7.2 အရောင်း ၁: လက်လီ ငွေသားအရောင်း နှင့် အပူပေးပြေစာ ပရင့်စမ်းသပ်မှု (Cash Sale & 80mm Print)**
-  - Cart: `25W Fast Charger` (1 ခု = 25,000) + `9D Tempered Glass` (1 ခု = 5,000) = **၃၀,၀၀၀ ကျပ်**
-  - Payment: Cash `50,000 MMK` -> Change: `20,000 MMK` တိကျစွာ ပြသရမည်။
-  - **80mm ESC/POS Thermal Receipt Print Check:**
-    - ဘောက်ချာ အစမ်းပြသမှုတွင် ဆိုင်အမည် `ရွှေပြည်သစ် မိုဘိုင်း` ၊ ဖုန်း ၊ မြန်မာယူနီကုဒ် font မကွဲစေရေး ၊ ဘားကုဒ် နှင့် Footer Note စနစ်တကျ ပေါ်မပေါ် စစ်ဆေးပါ။
-  - **ငွေအံဆွဲ အခြေအနေ:** `+30,000 MMK` တိုး (အံဆွဲရှိငွေ: **130,000 MMK**)
-- [ ] **7.3 အရောင်း ၂: KPay QR ဒစ်ဂျစ်တယ် အရောင်း (Digital Bank Sale)**
-  - Cart: `Remax Power Bank` (1 ခု = 55,000 MMK) ၊ Serial: `RMX-2026-001`
-  - Payment: `KPay / Bank QR` ရွေးချယ်ပြီး အတည်ပြုပါ။
-  - **စစ်ဆေးချက်:** ဘဏ်စာရင်းတိုးပြီး အံဆွဲငွေသားကို မထိခိုက်ရ (အံဆွဲရှိငွေ: **130,000 MMK** အတိုင်း ရှိနေရမည်)။
-- [ ] **7.4 အရောင်း ၃: လက်ကား အကြွေးအရောင်း နှင့် လျှော့ဈေး (Wholesale Credit & Discount)**
-  - ဖောက်သည်: `ဦးသန်းလွင် (မင်္ဂလာဈေး)` အား ရွေးပါ။
-  - Cart: `25W Fast Charger` (5 ခု @ 18,000 = 90,000) + `9D Tempered Glass` (20 ခု @ 2,500 = 50,000) = 140,000 MMK
-  - **Discount/Coupon Test:** အထူးမိတ်ဖက်လျှော့ဈေး `1,000 MMK` Flat Discount နုတ်ပေးပါ -> စုစုပေါင်း: **၁၃၉,၀၀၀ ကျပ်** (139,000 MMK)
-  - Payment: `အကြွေး (Customer Credit / Receivable)`
-  - **စစ်ဆေးချက်:** ဦးသန်းလွင်ထံမှ ရရန်ကျန်ငွေ `139,000 MMK` တိုးလာရမည်။ (စမ်းသပ်မှု တသမတ်တည်းဖြစ်စေရန် 1,000 Ks အား လျှော့ဈေးမပါဘဲ 140,000 MMK ဖြင့် ဆက်လက်တွက်ချက်နိုင်သည်)
-- [ ] **7.5 လုပ်ငန်းစဉ် ၄: စက်ပြင်ဆင်ရေး စရံငွေ လက်ခံခြင်း (Repair Intake with Cash Deposit)**
-  - Service > Repair Center မှ ဒေါ်ခင်စန်းထံမှ စက်အဝင်လက်ခံပြီး **စရံငွေသား ၃၀,၀၀၀ ကျပ်** (30,000 MMK) ကောက်ခံပါ။
-  - **အရေးကြီး စစ်ဆေးချက်:** စရံငွေ 30,000 ကျပ်သည် Counter Shift အံဆွဲထဲသို့ `cash_in` အဖြစ် ချက်ချင်းဝင်ရမည်။ (အံဆွဲရှိငွေ: 130,000 + 30,000 = **160,000 MMK**)
-- [ ] **7.6 လုပ်ငန်းစဉ် ၅: ဖောက်သည်ထံမှ အကြွေးပြန်ကောက်ခြင်း (Collect Customer Debt)**
-  - Customers > Receivables မှ ဦးသန်းလွင် အကြွေးထဲမှ **ငွေသား ၅၀,၀၀၀ ကျပ်** (50,000 MMK) ကောက်ခံပါ။
-  - **အရေးကြီး စစ်ဆေးချက်:** ကောက်ခံငွေ 50,000 ကျပ်သည် Counter Shift အံဆွဲထဲသို့ `cash_in` အဖြစ် တိုက်ရိုက်ရောက်ရမည်။ (အံဆွဲရှိငွေ: 160,000 + 50,000 = **210,000 MMK**)
-- [ ] **7.7 လုပ်ငန်းစဉ် ၆: အရောင်းပြန်သွင်း ငွေပြန်အမ်းခြင်း (Sales Return & Refund Cash)**
-  - POS > Sales Returns မှ အရောင်း ၁ ၏ `9D Tempered Glass (5,000 MMK)` ၁ ခုအား ပြန်သွင်း၍ **ငွေသား ၅,၀၀၀ ကျပ်** ပြန်အမ်းပေးပါ။
-  - **စစ်ဆေးချက်:** အံဆွဲထဲမှ ငွေ ၅,၀၀၀ ကျပ် ထွက်သွားကြောင်း `cash_out` ဝင်ရမည်။ (အံဆွဲရှိငွေ: 210,000 - 5,000 = **205,000 MMK**)
-- [ ] **7.8 လုပ်ငန်းစဉ် ၇: ဆိုင်သုံးစရိတ် ငွေသားထုတ်ယူခြင်း (Store Expense Cash-Out)**
-  - Finance > Expenses မှ သောက်ရေသန့်ဖိုး / ဆိုင်သုံးစရိတ် **ငွေသား ၂,၀၀၀ ကျပ်** (2,000 MMK) အား Shift Drawer မှ ထုတ်ယူပါ။
-  - **စစ်ဆေးချက်:** အံဆွဲထဲမှ ငွေ ၂,၀၀၀ ကျပ် ထွက်သွားရမည်။ (အံဆွဲရှိငွေ: 205,000 - 2,000 = **203,000 MMK**)
-- [ ] **7.9 အော့ဖ်လိုင်း ခံနိုင်ရည် စမ်းသပ်မှု (Offline Resilience & Sync Check)**
-  - Browser DevTools > Network တွင် `Offline` သို့ ပြောင်းပါ။
-  - POS တွင် ပစ္စည်းရှာဖွေခြင်းနှင့် Cart ထဲသို့ ထည့်သွင်းခြင်း ပြုလုပ်ကြည့်ပါ။
-  - **စစ်ဆေးချက်:** စနစ် Crash မဖြစ်ဘဲ Local Cache မှ အချက်အလက်များ ဆက်လက်ဖတ်ရှုနိုင်ရမည်။ Network ပြန်ဖွင့်ပါက Sync Manager မှ ပုံမှန် ပြန်လည်ချိတ်ဆက်နိုင်ရမည်။
+- [ ] Cash inflows total 110,000၊ outflows total 7,000 ကို source IDs နှင့် အထောက်အထားပြနိုင်ရမည်။ Opening float ကို receipt revenue အဖြစ်မတွက်ရ။
+- [ ] Closing UI တွင် refund 5,000 နှင့် other expense 2,000 ကို ခွဲမြင်နိုင်ရမည် သို့မဟုတ် total 7,000 မှ drill-down ဖြင့် trace လုပ်နိုင်ရမည်။ Cash-out မပေါ်ခြင်းကို UI issue နှင့် calculation issue ခွဲရေးပါ။
+- [ ] Refund record က cash movement အဖြစ်ပါဝင်ပြီးသားဆို `cash_refunds` နဲ့ generic `cash_out` တွင် **နှစ်ကြိမ်မနုတ်ရ**။ Category အမည်တူမတူထက် unique economic event ကိုစစ်ပါ။
+- [ ] Supplier payment 200,000 သည် SAFE ledger တွင်ရှိပြီး drawer query ထဲ မပါရ။ Other store/warehouse/register/shift ၏ ငွေကိုရောမတွက်ရ။
+- [ ] Read-only ledger sum နှင့် UI တူရမည်။ UI number ကိုပြန်ကူးထားရုံနှင့် independent verification မဖြစ်ရ။
 
----
+### CLOSE-02 — Count နှင့် close
 
-### အဆင့် (၈) — ညနေခင်း နေ့ချုပ်ငွေစာရင်း ပိတ်သိမ်းခြင်း (Evening Daily Closing & Cash Count)
-နေ့ကုန်ဆုံးချိန်တွင် အံဆွဲရှိ လက်တွေ့ငွေသားကို ရေတွက်ပြီး စနစ်ရှိ စာရင်းနှင့် တိုက်ဆိုင် စစ်ဆေးပိတ်သိမ်းခြင်း။
+Simulated physical count: 10,000 × 20 + 1,000 × 3 = **203,000**။ ဤသည် test count ဖြစ်ပြီး လူကငွေသားတကယ်ရေတွက်ထားကြောင်း မဆိုရ။
 
-- [ ] **8.1 Open Daily Closing Page (`/store/spt-mobile/pos/closing`)**
-  - **စနစ်၏ စာရင်းတွက်ချက်မှု (System Calculated Breakdown):**
-    - အဖွင့်ငွေ (Opening Cash Float): `100,000 MMK`
-    - အရောင်းငွေသား (Cash Sales In): `+30,000 MMK`
-    - စက်ပြင်စရံငွေ (Repair Deposit In): `+30,000 MMK`
-    - အကြွေးကောက်ခံရငွေ (Debt Collected In): `+50,000 MMK`
-    - အရောင်းပြန်အမ်းငွေ (Sales Return Refund Out): `-5,000 MMK`
-    - ဆိုင်သုံးစရိတ်ငွေ (Expense Cash Out): `-2,000 MMK`
-    - **မျှော်မှန်းရမည့် အံဆွဲရှိငွေ (Expected Closing Cash):** **၂၀၃,၀၀၀ ကျပ်** (203,000 MMK)
-- [ ] **8.2 Actual Cash Count Entry**
-  - ကောင်တာ အံဆွဲထဲရှိ လက်တွေ့ရေတွက်ရရှိငွေ နေရာတွင် **၂၀၃,၀၀၀ ကျပ်** (203,000 MMK) ရိုက်ထည့်ပါ။
-  - **ကွာဟချက် စစ်ဆေးမှု:** ကွာဟချက် (Difference / Variance) သည် တိကျစွာ **၀ ကျပ် (0 Ks)** ဖြစ်ရမည်။
-- [ ] **8.3 Confirm Shift Closing**
-  - "စာရင်းချုပ် အတည်ပြု ပိတ်သိမ်းမည်" ခလုတ်ကို နှိပ်ပါ။ Shift Status: `Closed` သို့ အောင်မြင်စွာ ပြောင်းလဲရမည်။
+- [ ] Count 203,000၊ variance 0၊ calculated expected cash မှန်။
+- [ ] Cashier shift close → reload → persisted closed status နှင့် close timestamp စစ်ပါ။
+- [ ] Daily closing submission ရှိလျှင် status transitions ကို သီးခြားမှတ်ပါ။ Shift close နှင့် daily report submit ကို တစ်ခုတည်းဟုမယူဆရ။
+- [ ] Manager approval ရှိလျှင် Manager context မှ approve → reload → reviewer/status/audit trail စစ်ပါ။ မရှိလျှင် capability gap/N/A ကိုသက်ဆိုင်သလိုဖော်ပြပါ။
+- [ ] Print/export ထွက်သည့် snapshot သည် approved/closed figures နှင့်တူပြီး နောက် shift ကြောင့် တိတ်တဆိတ်ပြောင်းမသွားရ။ Correction/reopen supported ဖြစ်လျှင် authorized audited workflow သုံးရမည်။
+- [ ] Double submit/reload ကြောင့် duplicate closing မဖန်တီးရ။ Closed shift ထဲ transaction အသစ်မဝင်ရ; supported correction rules ကိုသီးခြားစစ်ပါ။
 
----
+## 8. Independent reconciliation — Baseline နောက်ဆုံးအဖြေ
 
-### အဆင့် (၉) — နေ့ချုပ်အပြီး အစီရင်ခံစာများ နှင့် Cross-Store Data Isolation စစ်ဆေးခြင်း
+Tax/fee မရှိ၊ တစ်ခုတည်းသော cost layer၊ sale/refund completed၊ transfer same-store၊ repair intake only ဟူသော Section 4 assumptions အောက်တွင်သာ အောက်ပါအဖြေများကို သုံးပါ။
 
-- [ ] **9.1 Profit & Loss Statement (`/store/spt-mobile/admin/profit-loss`)**
-  - အရောင်းဝင်ငွေ (Revenue)၊ ကုန်ကျစရိတ် (COGS)၊ အသုံးစရိတ် (Expenses) နှင့် အသားတင်အမြတ် (Net Profit) မှန်ကန်စွာ ပေါ်ရမည်။
-- [ ] **9.2 Stock Balance & Valuation (`/store/spt-mobile/pos/reports/stock`)**
-  - Charger: 14 ခု ၊ Tempered Glass: 30 ခု ၊ Power Bank: 9 ခု လက်ကျန် တိကျရမည်။
-- [ ] **9.3 Cross-Store Data Isolation Audit (ဆိုင်သီးသန့် ဒေတာ မရောနှောစေခြင်း စစ်ဆေးမှု)**
-  - ဆိုင်ဟောင်းဖြစ်သော `uat-full-feature` သို့မဟုတ် `datapos-mobile` ဆိုင်၏ Admin Dashboard သို့ သွားပါ။
-  - `spt-mobile` ဆိုင်တွင် သွင်းခဲ့သော ပစ္စည်း ၃ မျိုး၊ အဝယ်ဘောက်ချာနှင့် ရောင်းရငွေများသည် အခြားဆိုင်စာရင်းတွင် လုံးဝ ရောနှောပေါ်ထွက်လာခြင်း မရှိကြောင်း စစ်ဆေးပါ။
+| Check | Expected | Independent calculation |
+|---|---:|---|
+| Drawer cash | 203,000 | 100,000 + 110,000 − 7,000 |
+| KPay receipts | 55,000 | DAY-04 only |
+| Wholesale invoice | 139,000 | 5×18,000 + 20×2,500 − 1,000 |
+| Customer receivable | 89,000 | 139,000 − 50,000 |
+| Supplier payable | 150,000 | 350,000 − 200,000 |
+| Repair deposit pending earning | 30,000 | DAY-06 only |
+| CHARGER total / MAIN / AUX | 14 / 9 / 5 | 20 − 1 − 5; transfer 5 |
+| GLASS total / MAIN | 30 / 30 | 50 − 1 − 20 + 1 |
+| POWERBANK total / MAIN | 9 / 9 | 10 − 1 |
+| Inventory value | 570,000 | 14×15,000 + 30×1,500 + 9×35,000 |
+| MAIN / AUX inventory value | 495,000 / 75,000 | MAIN includes remaining glass and power banks |
+| Net goods sales | 219,000 | 30,000 + 55,000 + 139,000 − 5,000 |
+| Net goods COGS | 155,000 | 6×15,000 + 20×1,500 + 1×35,000 |
+| Goods gross profit | 64,000 | 219,000 − 155,000 |
+| Scenario profit after expense | 62,000 | 64,000 − 2,000; excludes unearned repair deposit |
 
----
+P&L က cash-basis report ဖြစ်လျှင် accrual goods-sales table နဲ့ မတူမှုကို accounting definition အရရှင်းပြပါ။ Customer collection၊ supplier principal payment၊ opening float၊ repair deposit တို့ကို sales/expense အဖြစ် အလိုအလျောက်ထပ်မတွက်ရ။
 
-## ၅။ AI Agent အား Browser Skills ဖြင့် Live စမ်းသပ်ခိုင်းရန် Prompt နမူနာ (Copy-Paste Ready)
+Report filters (store, warehouse, date, timezone, status) တူအောင်ထားပြီး UI၊ export၊ underlying records ကို နှိုင်းပါ။ Warehouse qty မှန်ပေမယ့် store total မှားခြင်းကိုလည်း defect အဖြစ်မှတ်ပါ။
 
-```text
-DataPOS စနစ်အား Local XAMPP MySQL (datapos_uat DB) ပေါ်တွင် အစစ်အမှန် Live စမ်းသပ်ပေးပါ။
-docs/DataPOS_Platform_Owner_E2E_Browser_Test_Checklist_MM.md စာအုပ်ပါ အဆင့် (၀) မှ (၉) အထိ အစဉ်လိုက် ဆောင်ရွက်ပါ:
+## 9. Baseline နှင့်ခွဲ၍ စမ်းသပ်မည့် regression cases
 
-၀။ Terminal တွင် php artisan migrate:fresh --seed --seeder=UatSeeder ကို run ၍ DB အဟောင်းများ ရှင်းထုတ်ပါ။
-၁။ Login URL: http://127.0.0.1:8501/login (ဖုန်း 09100000001 / စကားဝှက် password)
-၂။ http://127.0.0.1:8501/admin/stores/create မှ "ရွှေပြည်သစ် မိုဘိုင်းနှင့် အီလက်ထရွန်းနစ်" (slug: spt-mobile) အမည်ဖြင့် 
-   mobile_electronics ဆိုင်အသစ်ကို စတင်ဖွင့်လှစ်ပါ။
-၃။ Exchange Rates (USD/THB)၊ 80mm Printer နှင့် ဝန်ထမ်း မန်နေဂျာ/ငွေကိုင် ခန့်အပ်ပြီး Cashier Role Gating စစ်ဆေးပါ။
-၄။ Master Data Tab ၆ ခုစလုံးတွင် (Categories Main/Sub, Brands, Shelves, Warranties, Return Policies, Variants) အပြည့်အစုံသွင်းပါ။
-၅။ Create Product Form တွင် Master Data များနှင့် ချိတ်ဆက်၍ ပစ္စည်း ၃ မျိုး (Charger, Tempered Glass, Serialized Power Bank) သွင်းပါ။
-၆။ Supplier အဝယ်သွင်းခြင်း၊ Opening Stock သွင်းခြင်းနှင့် Stock Transfer စစ်ဆေးပါ။
-၇။ POS တွင် အံဆွဲဖွင့်ငွေ ၁၀၀,၀၀၀ ကျပ် ဖြင့် Shift စတင်ဖွင့်ပါ။
-၈။ ဘားကုဒ်စကင်ဖတ်ခြင်း၊ အရောင်း ၃ ခု (ငွေသား၊ KPay၊ လက်ကားအကြွေး/လျှော့ဈေး)၊ 80mm Print၊ စက်ပြင်စရံငွေ ၃၀,၀၀၀ ကျပ်၊ 
-   အကြွေးကောက်ငွေ ၅၀,၀၀၀ ကျပ်၊ အရောင်းပြန်သွင်းငွေအမ်း ၅,၀၀၀ ကျပ်၊ ဆိုင်သုံးစရိတ် ၂,၀၀၀ ကျပ် နှင့် အော့ဖ်လိုင်းစမ်းသပ်မှု ပြုလုပ်ပါ။
-၉။ POS Closing တွင် အံဆွဲရှိငွေ ၂၀၃,၀၀၀ ကျပ် အား ရေတွက်ရိုက်ထည့်ပြီး ကွာဟချက် ၀ ဖြင့် Shift ပိတ်သိမ်းပါ။
-၁၀။ P&L အမြတ်/အရှုံး နှင့် Cross-Store Data Isolation စစ်ဆေးအတည်ပြုပါ။
-စမ်းသပ်စဉ် Error သို့မဟုတ် ကွာဟချက် တွေ့ရှိပါက Defect Log ဖြင့် အစီရင်ခံ တင်ပြပါ။
+Case တစ်ခုချင်းစီအတွက် isolated shift/product/customer သုံးပါ။ Shared balance ကိုပေါင်းပြောင်းစေမည့် tests ကို တစ်ပြိုင်တည်းမလုပ်ပါနှင့်။
+
+| Case | Scenario | Acceptance |
+|---|---|---|
+| REG-01 | Save/pay/collect/expense ကို double-click သို့မဟုတ် retry | Business transaction တစ်ကြိမ်သာ; duplicate stock/cash/debt မဖြစ် |
+| REG-02 | No Returns ပစ္စည်း cash refund; Exchange Only ကို cash refund | Documented policy/authorized override အတိုင်း; rejection ကြောင့် stock/cash မပြောင်း |
+| REG-03 | Original sold qty ထက်ပို return၊ တူညီသော refund ထပ်လုပ် | Reject; cumulative returned qty မကျော် |
+| REG-04 | Sold/duplicate serial ထပ်ရောင်း၊ မှားသော store serial သုံး | Reject; serial/stock/payment တစ်ခုချင်း မပျက် |
+| REG-05 | Stock 1 ကို browser contexts နှစ်ခုမှ တပြိုင်နက်ရောင်း | Configured stock rule ကို server ကထိန်း; unintended oversell/duplicate serial မရှိ |
+| REG-06 | Receipt post/payment submit အတွင်း request failure | Partial stock/payment မကျန်; retry safe; console/network evidence ရှိ |
+| REG-07 | Shift float 10,000၊ actual count 9,000 / 11,000 ကို သီးခြား shift နှစ်ခုတွင်စမ်း | Variance actual−expected = −1,000 / +1,000; reason/approval rule မှန် |
+| REG-08 | Shift ပိတ်ပြီး sale/expense တင်; closing ထပ်တင် | Closed record ကာကွယ်; supported correction တွင် audit trail ရှိ |
+| REG-09 | ညသန်းခေါင်အနီး transaction/business date filter | Yangon business date မှန်; other day/shift ထဲမရော; global machine clock မပြောင်း |
+| REG-10 | Invalid/negative qty၊ discount > allowed total၊ blank input | Validation နှင့် permissions မှန်; valid zero/decimal rules ကို project policy အတိုင်းစစ် |
+| REG-11 | Product price edit ပြီး invoice အဟောင်းကြည့် | Historical unit price/discount/tax/snapshot မပြောင်း |
+| REG-12 | Partial supplier payment နှင့် purchase return | Payable/stock/cash refund ခွဲမှန်; debit note ကို cash refund အဖြစ်မယူဆ |
+
+### SEC-01 — Permissions နှင့် store isolation
+
+Cashier/Store Owner/Manager/Platform Owner တို့၏ actual permissions matrix ကိုရေးပြီး UI visibility **နှင့် server enforcement နှစ်ခုလုံး** စစ်ပါ။
+
+- Cashier ဖြင့် profit/cost report၊ settings၊ price adjustment၊ platform routes တိုက်ရိုက်ဝင်ပါ။ Menu ပျောက်ခြင်းတစ်ခုတည်းကို PASS မပေးရ။
+- ဆိုင် A staff ဖြင့် ဆိုင် B slug၊ invoice/product/customer/expense/closing IDs ကို request တွင်ပြောင်း၍ read/write/export စမ်းပါ။ Controlled UAT records ကိုသာသုံးပါ။
+- Denied request သည် 403/404 သို့မဟုတ် safe equivalent ဖြစ်ပြီး data leak/side effect မရှိရ။ Same-store valid request ကို control အဖြစ်ထားပါ။
+- Permission revoke လုပ်ပြီး existing session က stale permission ဖြင့် ဆက်လုပ်နိုင်မနိုင်စစ်ပါ။ CSRF protection ကို bypass/disable မလုပ်ရ။
+- Service module disabled ဆိုင်တွင် menu/search/quick-link/direct endpoint ကို capability rule အတိုင်းစစ်ပါ။ Platform Owner ၏ authorized access ကို cross-store vulnerability ဟုမယူဆရ။
+
+### SRV-01 — Service lifecycle (သီးခြား scenario)
+
+Service enabled store တွင် repair intake → estimate 50,000 → customer approval → spare part 1 ခု (test cost 10,000) သုံး → repair completed → delivery → final collection စမ်းပါ။
+
+- Deposit 20,000 cash၊ remaining payment 30,000 cash; total collected 50,000.
+- Quote 50,000 သည် parts အပါအဝင် fixed total ဖြစ်ကြောင်း သတ်မှတ်; tax/fee မပါ။ Spare part opening qty 2 → consumed 1 → remaining 1.
+- Status မပြောင်းခင်/ပြောင်းပြီး stock consumption ဘယ်အချိန်ဖြစ်ကြောင်း documented rule နှင့်စစ်ပါ။ Double complete ကြောင့် parts ထပ်မနုတ်ရ။
+- Deposit offset မှန်၊ due 0၊ receipt total 50,000၊ recognized revenue timing မှန်၊ deposit ကို revenue ထပ်မတိုးရ။
+- Cancellation/deposit refund ကို အခြား job ဖြင့်သီးခြားစမ်းပြီး reason/approval/cash movement စစ်ပါ။
+
+### EXT-01 — Tax၊ discount၊ forex၊ variants
+
+- Tax: approved project rule/rate၊ inclusive/exclusive mode၊ line/cart discount order နှင့် rounding ကို transaction မစမီ လက်ဖြင့်တွက်ပါ။ Partial return ပြီး tax/discount reversal နှင့် tax report ကိုနှိုင်းပါ။ Test rate ကို ဥပဒေနှုန်းဟုမဖော်ပြရ။
+- Forex: test-only USD 4,500 MMK နှင့် THB 135 MMK rates သိမ်း/reload စစ်ပါ။ Foreign-payment supported ဆို 45,000 MMK sale ကို USD 10 ဖြင့်ပေးသည့် သီးခြား case စမ်းပါ; original currency၊ rate snapshot၊ MMK equivalent၊ change rule ကိုစစ်ပါ။ Rate ပြောင်းပြီး invoice အဟောင်းမပြောင်းရ။ Rate setting ရှိရုံနှင့် forex payment PASS မပေးရ။
+- Variants: သီးခြား product တွင် Color/Storage combinations ဖန်တီး၊ duplicate combination validation၊ per-variant SKU/price/stock၊ selection ပြောင်းလျှင် stale fields မကျန်မှုကိုစစ်ပါ။ Parent stock နှင့် variant stock double count မဖြစ်ရ။
+- Markup: 15,000 × 1.666 = 24,990 ကို base result အဖြစ်ထားပြီး configured round-to-10/100/etc rule ရှိမှ rounded expectation တွက်ပါ။
+
+### EXT-02 — Offline နှင့် hardware
+
+Offline capability ကို အရင်ရှာပါ။ Local XAMPP ကိုဖွင့်ထားပြီး internet ဖြုတ်ခြင်းသည် app server မရတော့ခြင်းနှင့် မတူပါ။ Test failure mode ကိုမှတ်ပါ။
+
+- Supported offline: cached lookup/cart၊ queue ID၊ reconnect sync၊ repeated sync၊ logout/reload recovery၊ stock conflict၊ serial conflict၊ payment deduplication စစ်ပါ။ Final invoice/stock/payment တစ်ကြိမ်သာရှိရ။ သီးခြား records သုံးပါ။
+- Unsupported offline: server unavailable တွင် clear error၊ unsaved state indication၊ silent fake-success မရှိမှု စစ်ပါ။ Offline sale ကို PASS မပေးရ။
+- Scanner: keyboard barcode + Enter သည် input emulation ဖြစ်သည်။ Physical scanner မသုံးလျှင် hardware case ကို NOT TESTED လုပ်ပါ။
+- Printer: browser 80mm preview/PDF တွင် Myanmar font၊ totals၊ clipping စစ်ပါ။ Physical paper output၊ ESC/POS encoding၊ cutter/cash drawer trigger တို့ကို hardware မရှိဘဲ PASS မပေးရ။
+- အသိပေးစာ၊ real payment၊ customer message မပို့ရ။ Test-only integrations/mocks ရှိမှသုံးပြီး mocked result ဟုဖော်ပြပါ။
+
+## 10. Sidebar coverage နှင့် responsive UI
+
+Menu စာရင်းသည် coverage inventory သာဖြစ်သည်။ Page ဖွင့်လို့ရခြင်းကို CRUD/business workflow PASS အဖြစ် မသတ်မှတ်ရ။ Actual build အရရှိသည့် menus ကိုအောက်ပါ groups နှင့် map လုပ်ပါ။
+
+| Scope / group | စစ်ဆေးရန် inventory |
+|---|---|
+| Platform | Dashboard, Stores, Theme Governance |
+| Store dashboard / POS | Dashboard, POS, Closing, Sales Returns, Buyback, E-Load |
+| Inventory | Master Data, Products, Barcode, Price Wizard, Warranty, Stock Ledger/Balance/Count/Adjustments/Reconciliation, Opening Stock, Import/History |
+| Purchasing | Suppliers, Purchases, Purchase Returns, Payables, Transfers, Warehouses |
+| Ecommerce | Orders, Web Products, Promotions, Reviews, Banners, Blog, Pages, Navigation, Glass Finder, Web Push/History |
+| Customers | Directory, Receivables, Wholesale Applications, Membership |
+| Service | Repair Center, Spare Parts, Service Settings |
+| Finance | Profit & Loss, Expenses, Expense Categories, Transactions |
+| Reports | Sales, Payments, Analytics, Cash, Valuation, Debt Aging, Service, Tax, Stock, Business Reconciliation |
+| Security | Roles & Permissions, Users, Audit Logs |
+| Maintenance | Alerts, Database, Sync, Backups, Pilot Import — destructive tools ကို smoke-test အတွက်မနှိပ်ရ |
+| Setup | Theme, Store Settings, Modules, Channels, Branches, Printers, Vouchers, Exchange Rates |
+
+တစ်မျက်နှာစီ actual route၊ role၊ enabled state၊ page-load result၊ tested interaction၊ evidence၊ untested scope ကို မှတ်ပါ။ Unsupported/not enabled menus ကို reason ဖြင့်ခွဲပါ။
+
+Responsive checks: POS၊ products form/list၊ refund၊ expense၊ closing၊ sidebar ကို **375×812, 768×1024, 1366×768** တွင် စမ်းပါ။
+
+- Page-level horizontal overflow၊ ဖြတ်နေသော action buttons၊ sidebar overlay၊ modal close/scroll၊ keyboard focus၊ Burmese long labels စစ်ပါ။
+- Table အတွင်း horizontal scroll သည် ရည်ရွယ်ထားလျှင် လက်ခံနိုင်သည်။ Whole page overflow နှင့် ခွဲပါ။
+- Empty/loading/validation/error states၊ dark/light supported themes နှင့် duplicate-submit prevention ကိုစစ်ပါ။
+- Failed network requests၊ console errors၊ relevant server log excerpts ကို case နဲ့ချိတ်ပါ။ Secret/token/password မပါစေရ။
+
+## 11. Evidence၊ checkpoints နှင့် report format
+
+Test directory: `docs/uat/<runid>/` သို့မဟုတ် project ကသတ်မှတ်ထားသော evidence directory။
+
+လိုအပ်သော output များ:
+
+1. `README_MM.md` — outcome၊ environment/HEAD၊ scope၊ gate decision၊ မစမ်းရသေးသောအပိုင်း။
+2. `case-results.csv` — `case_id,role,store,shift,viewport,status,expected,actual,record_ids,evidence,notes`.
+3. `capabilities.csv` — actual routes၊ supported/enabled features၊ role mapping.
+4. `reconciliation.csv` — each expected/actual/difference နှင့် source transaction IDs.
+5. `defects.md` — reproducible bugs နှင့် prioritized fix handoff.
+6. `screenshots/`၊ လိုအပ်သော sanitized network/log/SQL excerpts.
+7. `checkpoint.md` — last completed case၊ active sessions/shift IDs၊ remaining cases၊ restart instructions.
+
+### Test status
+
+| Status | သတ်မှတ်ချက် |
+|---|---|
+| PASS | Expected result နှင့် actual result တူပြီး evidence ရှိ |
+| FAIL | Test ကို run ပြီး actual behavior က expected rule မကိုက် |
+| BLOCKED | Prerequisite/tool/access/earlier failure ကြောင့် မစမ်းနိုင် |
+| NOT TESTED | Scope ထဲပါသော်လည်း မစမ်းရသေး |
+| N/A | Capability/profile အရ အမှန်တကယ်မသက်ဆိုင်; reason လို |
+
+`GAP` သည် requirement classification ဖြစ်ပြီး PASS အစားမဟုတ်ပါ။ Screenshots သည် UI evidence ဖြစ်ပြီး persistence/ledger correctness အတွက် record IDs/read-only checks နှင့်တွဲသုံးပါ။
+
+### Defect template
+
+```markdown
+### BUG-001 — [တိုတောင်းသော ခေါင်းစဉ်]
+- Severity: P0 / P1 / P2 / P3
+- Case ID / HEAD / environment:
+- Role / store / shift / URL / viewport:
+- Preconditions + exact record IDs:
+- Reproduction steps:
+- Expected:
+- Actual:
+- Business impact:
+- Evidence links:
+- Suspected code path / root cause: confirmed or hypothesis
+- Smallest proposed fix:
+- Regression checks after fix:
+- Status: open / fixed by another change / retest pending
 ```
 
----
+P0: store isolation breach၊ severe data corruption။ P1: cash/stock/debt wrong၊ duplicate payment၊ checkout/closing blocked။ P2: usable workaround ရှိသော workflow/report/UI issue။ P3: cosmetic issue။ အကျိုးသက်ရောက်မှုအရချိန်ညှိပြီး severity ကို အထောက်အထားနှင့်ရေးပါ။
 
-## ၆။ တွေ့ရှိရသော ချို့ယွင်းချက် မှတ်တမ်းပုံစံ (Defect Log Template)
+Agent context/time limit နီးလာလျှင် checkpoint ရေးပါ။ နောက် agent သည် အဲဒီ state မှဆက်ရမည်။ Database reset သို့မဟုတ် baseline transactions ပြန်လုပ်ခြင်းကြောင့် duplicate မဖြစ်စေရ။
 
-| စဉ် | စာမျက်နှာ URL | ပြုလုပ်ခဲ့သော အဆင့် (Steps to Reproduce) | ဖြစ်ပေါ်သည့် အမှား (Actual Result) | မျှော်မှန်းရလဒ် (Expected Result) | အရေးကြီးမှု (Severity) |
-|---|---|---|---|---|---|
-| 1 | `/store/spt-mobile/...` | ၁။ ... နှိပ်သည်<br>၂။ ... ရိုက်ထည့်သည် | 500 Error / ကွာဟချက် | အောင်မြင်စွာ တွက်ချက်ရမည် | Critical / Minor |
+## 12. Completion gate နှင့် fix handoff
+
+အောက်ပါတို့ ပြည့်မှ **“စမ်းသပ်ထားသော scope အတွင်း UAT PASS”** ဟုရေးပါ။
+
+- Core business day နှင့် closing အဆင့်များ actual browser evidence ဖြင့် PASS.
+- Cash၊ noncash၊ receivable၊ payable၊ stock/serial၊ refund/expense reconciliation မှန်.
+- Permissions/store isolation အတွက် UI + server checks PASS.
+- Required P0/P1 cases တွင် unresolved FAIL/BLOCKED မရှိ.
+- Required capability gaps၊ hardware/offline မစမ်းရသေးမှုနှင့် report scope ကို ရှင်းလင်းဖော်ပြထား.
+
+**Overall result:** PASS / FAIL / INCOMPLETE. Required case BLOCKED/NOT TESTED ဖြစ်လျှင် INCOMPLETE; confirmed core failure ရှိလျှင် FAIL. Optional exclusions ကိုဖော်ပြပြီး scope-limited verdict သာပေးပါ။
+
+Code changes မလုပ်ထားလျှင် “Source changes: none; commit/push/deploy: not performed” ဟုရေးပါ။ User က နောက်မှ fix ခွင့်ပြုလျှင် defect IDs ကိုအခြေခံ၍ reproduce → root cause → smallest fix → regression test → affected browser retest အတိုင်းဆက်ပါ။ Existing architecture၊ authorization၊ store isolation၊ money/quantity formatting ကိုထိန်းပါ။ Shared services/routes/migrations ပြင်ခြင်းကို အစီအစဉ်တကျလုပ်ပြီး unrelated refactor မလုပ်ရ။
+
+Final Burmese report တွင် PASS/FAIL/BLOCKED/NOT TESTED/N/A counts၊ အဓိကတွေ့ရှိချက်၊ closing expected/actual၊ unresolved bug priorities၊ evidence directory နှင့် နောက်ဆက်လုပ်ရန် case IDs ကို ပေးပါ။ “Production ready” ကို ဤစမ်းသပ်မှုတစ်ခုတည်းကြောင့် မကြေညာရ။
