@@ -248,6 +248,46 @@ class BuyBackModuleTest extends TestCase
         $res->assertSee($store->name);
     }
 
+    /**
+     * A shop with no internet must still be able to print, save a PDF and share
+     * the slip. That only works while every asset on this page is served from
+     * this origin: the admin CSP is script-src 'self' + nonce / font-src 'self',
+     * so a CDN <script> or Google Fonts <link> is blocked outright — the
+     * Download PDF and Share JPG buttons were dead because of exactly that.
+     */
+    public function test_buyback_print_page_depends_on_no_external_host(): void
+    {
+        $store = $this->makeStore();
+        $manager = $this->staff($store, 'store_manager');
+        $product = $this->makeProduct($store, 50000);
+
+        $buyback = BuyBack::create([
+            'store_id'       => $store->id,
+            'buyback_number' => BuyBack::generateNumber($store->id),
+            'total_value'    => 45000,
+            'refund_amount'  => 45000,
+            'status'         => 'completed',
+            'created_by'     => $manager->id,
+        ]);
+        $buyback->items()->create([
+            'product_id' => $product->id,
+            'quantity'   => 1,
+            'unit_price' => 45000,
+        ]);
+
+        $html = $this->actingAs($manager)
+            ->get("/store/{$store->slug}/pos/buy-back/{$buyback->id}/print")
+            ->assertOk()
+            ->getContent();
+
+        foreach (['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'unpkg.com'] as $host) {
+            $this->assertStringNotContainsString($host, $html, "the slip must not fetch {$host}");
+        }
+
+        // The PDF/JPG tool is bundled locally instead (resources/js/buyback-print.js).
+        $this->assertStringContainsString('buyback-print', $html);
+    }
+
     public function test_buyback_show_json_returns_modal_data(): void
     {
         $store = $this->makeStore();

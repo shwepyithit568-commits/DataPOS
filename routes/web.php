@@ -832,6 +832,9 @@ Route::prefix('store/{store_slug}')
         // unauthenticated calls to /api/v1/.../sync/*.
         Route::get('/admin/sync/status', [\App\Http\Controllers\Admin\SyncAdminController::class, 'status'])->name('store.admin.sync.status')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.view']);
         Route::post('/admin/sync/trigger', [\App\Http\Controllers\Admin\SyncAdminController::class, 'trigger'])->name('store.admin.sync.trigger')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.update']);
+        // Reachability probe — separate from index() so a page load never waits
+        // on the HTTP timeout when the shop has no internet.
+        Route::get('/admin/sync/test', [\App\Http\Controllers\Admin\SyncAdminController::class, 'testConnection'])->name('store.admin.sync.test')->middleware([EnsureStoreAccess::class . ':store_manager,staff', 'store.permission:settings.view']);
         // Terminal credential for the machine-to-machine sync API.
         Route::post('/admin/sync/key', [\App\Http\Controllers\Admin\SyncAdminController::class, 'rotateKey'])->name('store.admin.sync.key.rotate')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:settings.update']);
         Route::delete('/admin/sync/key', [\App\Http\Controllers\Admin\SyncAdminController::class, 'revokeKey'])->name('store.admin.sync.key.revoke')->middleware([EnsureStoreAccess::class . ':store_manager', 'store.permission:settings.update']);

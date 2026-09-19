@@ -127,6 +127,103 @@
         @endif
     </div>
 
+    {{-- 1c. Replication shape: is this counter actually sending anything out? --}}
+    @php
+        $problemCount = count($replication['problems']);
+        // A shop that never intends to replicate is not "misconfigured" — only
+        // warn about missing keys when this installation is meant to send.
+        $wantsReplication = $replication['enabled'] || $replication['role'] === 'terminal';
+        $tone = ! $replication['is_terminal']
+            ? 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+            : ($problemCount > 0
+                ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/60'
+                : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60');
+        $roleLabel = $replication['is_terminal']
+            ? __('messages.sync_role_terminal')
+            : __('messages.sync_role_standalone');
+    @endphp
+    <div class="px-2 py-2 bg-white dark:bg-slate-900 rounded border border-slate-200/90 dark:border-slate-800 shadow-2xs transition"
+         x-data="{
+            testing: false,
+            result: null,
+            async test() {
+                this.testing = true;
+                this.result = null;
+                try {
+                    const res = await fetch('{{ route('store.admin.sync.test', $storeRouteParams) }}', { headers: { 'Accept': 'application/json' } });
+                    const data = await res.json();
+                    this.result = data.message;
+                } catch (e) {
+                    this.result = 'offline';
+                } finally {
+                    this.testing = false;
+                }
+            }
+         }">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
+            <div class="flex items-start gap-2 min-w-0">
+                <div class="w-7 h-7 rounded-lg bg-violet-600 text-white flex items-center justify-center text-sm shrink-0">🛰️</div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-xs font-black text-slate-900 dark:text-white tracking-tight">{{ __('messages.sync_replication') }}</span>
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded border {{ $tone }}">
+                            {{ $roleLabel }}
+                        </span>
+                        @if($replication['central_url'] !== '')
+                            <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate max-w-[240px]">{{ $replication['central_url'] }}</span>
+                        @endif
+                    </div>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                        {{ $replication['is_terminal'] ? __('messages.sync_replication_desc_terminal') : __('messages.sync_replication_desc_standalone') }}
+                    </p>
+
+                    @if($wantsReplication && $problemCount > 0)
+                        <p class="text-[10px] font-bold text-rose-600 dark:text-rose-400 mt-1 leading-snug">
+                            {{ __('messages.sync_config_missing', ['keys' => implode(', ', $replication['problems'])]) }}
+                        </p>
+                    @elseif(! $wantsReplication)
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                            {{ __('messages.sync_local_only_hint') }}
+                        </p>
+                    @else
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-snug font-mono">
+                            {{ __('messages.sync_store_slug') }}: {{ $replication['store_slug'] }} ·
+                            {{ __('messages.sync_key') }}: ••••{{ $replication['key_last4'] }} ·
+                            {{ __('messages.sync_device') }}: {{ $replication['device'] }}
+                        </p>
+                    @endif
+
+                    @if($oldestPending)
+                        <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-1 font-bold">
+                            {{ __('messages.sync_oldest_pending') }}: {{ $oldestPending->created_offline_at?->diffForHumans() }}
+                        </p>
+                    @endif
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 shrink-0">
+                <span class="text-[10px] font-bold" x-show="result === 'online'" x-cloak
+                      x-text="'{{ __('messages.sync_connection_online') }}'"
+                      class="text-emerald-600 dark:text-emerald-400"></span>
+                <span class="text-[10px] font-bold" x-show="result === 'offline'" x-cloak
+                      x-text="'{{ __('messages.sync_connection_offline') }}'"
+                      class="text-amber-600 dark:text-amber-400"></span>
+                <span class="text-[10px] font-bold" x-show="result === 'unauthorized'" x-cloak
+                      x-text="'{{ __('messages.sync_connection_unauthorized') }}'"
+                      class="text-rose-600 dark:text-rose-400"></span>
+                @if($problemCount === 0)
+                    <button type="button" @click="test()" :disabled="testing"
+                            class="sf-btn-3d h-7 px-2.5 rounded-md text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-60">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                        </svg>
+                        <span x-text="testing ? '…' : '{{ __('messages.sync_test_connection') }}'"></span>
+                    </button>
+                @endif
+            </div>
+        </div>
+    </div>
+
     {{-- 2. Centered Row-based 4 Stat Cards (Standard v4.1) --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-1 select-none">
         <div class="rounded border p-1.5 sm:p-2 shadow-2xs flex items-center justify-center gap-2.5 sm:gap-3 transition bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800"
@@ -234,7 +331,12 @@
                             <td class="py-1.5 px-2 font-mono text-slate-500 dark:text-slate-400">{{ $rec->created_offline_at?->format('d/m/Y H:i:s') ?? '—' }}</td>
                             <td class="py-1.5 px-2 font-mono text-slate-500 dark:text-slate-400">{{ $rec->synced_at?->format('d/m/Y H:i:s') ?? '—' }}</td>
                             <td class="py-1.5 px-2">
-                                @if($rec->status === 'synced')
+                                @if($rec->status === 'synced' && \Illuminate\Support\Str::startsWith((string) $rec->error_message, 'warning:'))
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                                          title="{{ $rec->error_message }}">
+                                        ⚠ {{ __('messages.sync_badge_synced_warning') }}
+                                    </span>
+                                @elseif($rec->status === 'synced')
                                     <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
                                         ✓ {{ __('messages.sync_badge_synced') }}
                                     </span>

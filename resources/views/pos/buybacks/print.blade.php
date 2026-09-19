@@ -10,11 +10,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ __('messages.buyback_slip_title') }} - {{ $buyback->buyback_number }}</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Outfit:wght@100..900&family=JetBrains+Mono:wght@400;500;600;700&family=Padauk:wght@400;700&display=swap" rel="stylesheet">
-
-    @vite(['resources/css/app.css'])
+    {{-- Fonts and the PDF tool are bundled locally: the admin/POS CSP allows
+         same-origin scripts only, and a counter with no internet could not
+         fetch a CDN copy anyway. --}}
+    @vite(['resources/css/app.css', 'resources/js/buyback-print.js'])
 
     <style>
         :root {
@@ -28,7 +27,9 @@
         }
 
         body {
-            font-family: 'DM Sans', 'Padauk', sans-serif;
+            /* The app's own bundled stack (Outfit + Noto Sans Myanmar, both
+               served from this origin) — no Google Fonts request. */
+            font-family: var(--font-sans);
             background: #0f172a;
             color: #0f172a;
             margin: 0;
@@ -337,7 +338,6 @@
         <span id="toastText"></span>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script nonce="{{ $cspNonce }}">
         const currentPaper = '{{ $paperSize }}';
         const buybackNumber = '{{ $buyback->buyback_number }}';
@@ -388,8 +388,22 @@
             });
         }
 
+        // Exports need the bundled html2pdf (resources/js/buyback-print.js).
+        // Say so plainly rather than throwing when a stale page is cached.
+        function pdfToolReady() {
+            if (typeof window.html2pdf === 'function') {
+                return true;
+            }
+
+            showToast(@js(__('messages.buyback_toast_pdf_unavailable')));
+
+            return false;
+        }
+
         // PDF download handler
         document.getElementById('btnDownloadPdf')?.addEventListener('click', () => {
+            if (! pdfToolReady()) return;
+
             const element = document.getElementById('printableVoucher');
             const opt = {
                 margin: [4, 4, 4, 4],
@@ -399,12 +413,14 @@
                 jsPDF: { unit: 'mm', format: currentPaper === 'a4' ? 'a4' : (currentPaper === 'a5' ? 'a5' : [80, 200]), orientation: 'portrait' }
             };
             html2pdf().set(opt).from(element).save().then(() => {
-                showToast('PDF downloaded successfully!');
+                showToast(@js(__('messages.buyback_toast_pdf_saved')));
             });
         });
 
         // JPG Share / Clipboard copy handler
         document.getElementById('btnShareJpg')?.addEventListener('click', async () => {
+            if (! pdfToolReady()) return;
+
             const element = document.getElementById('printableVoucher');
             const opt = {
                 margin: 2,
@@ -419,7 +435,7 @@
                             await navigator.clipboard.write([
                                 new ClipboardItem({ 'image/png': blob })
                             ]);
-                            showToast('ပြေစာပုံရိပ်ကို Clipboard သို့ ကူးယူပြီးပါပြီ။ Viber/Telegram တွင် Paste (Ctrl+V) လုပ်နိုင်ပါသည်။');
+                            showToast(@js(__('messages.buyback_toast_copy_done')));
                             return;
                         } catch (e) {
                             console.warn('Clipboard write failed, downloading image instead', e);
@@ -430,11 +446,11 @@
                     link.download = `BuyBack_${buybackNumber}.jpg`;
                     link.href = canvas.toDataURL('image/jpeg', 0.95);
                     link.click();
-                    showToast('JPG Image saved successfully!');
+                    showToast(@js(__('messages.buyback_toast_jpg_saved')));
                 }, 'image/png');
             } catch (err) {
                 console.error(err);
-                showToast('Failed to generate JPG image');
+                showToast(@js(__('messages.buyback_toast_jpg_failed')));
             }
         });
     </script>

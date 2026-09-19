@@ -364,3 +364,12 @@ Schedule::command('queue:work', ['--once', '--stop-when-empty', '--tries=3', '--
     ->withoutOverlapping()
     ->when(fn () => config('queue.default') !== 'sync')
     ->appendOutputTo(storage_path('logs/queue-worker.log'));
+
+// Shop ⇄ cloud replication: drain the outbox whenever the internet happens to
+// be up. A shop that is offline is a normal state, not a failure — the command
+// exits 0 and the queue keeps every row for the next attempt.
+Schedule::command('sync:push')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->when(fn () => config('sync.enabled'))
+    ->appendOutputTo(storage_path('logs/sync-push.log'));

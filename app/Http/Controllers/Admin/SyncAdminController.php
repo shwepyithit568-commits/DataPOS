@@ -7,6 +7,8 @@ use App\Models\AuditLog;
 use App\Models\Store;
 use App\Models\SyncOutboxRecord;
 use App\Services\OfflineSyncService;
+use App\Services\SyncClientService;
+use App\Services\SyncOutboxWriter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,7 +17,9 @@ use Illuminate\View\View;
 class SyncAdminController extends Controller
 {
     public function __construct(
-        private readonly OfflineSyncService $syncService
+        private readonly OfflineSyncService $syncService,
+        private readonly SyncClientService $client,
+        private readonly SyncOutboxWriter $writer,
     ) {
     }
 
@@ -35,30 +39,42 @@ class SyncAdminController extends Controller
         $records = $query->orderBy('created_at', 'desc')->paginate(25)->withQueryString();
         $health = $this->syncService->getSyncHealth($store);
 
-        return view('admin.sync.index', compact('store', 'records', 'health', 'status'));
+        $oldestPending = SyncOutboxRecord::query()
+            ->where('store_id', $store->id)
+            ->whereIn('status', ['pending', 'failed'])
+            ->orderBy('created_offline_at')
+            ->first();
+
+        // How — and whether — this installation replicates. A shop owner looking
+        // at a growing queue needs to see "why is nothing leaving" without
+        // reading .env.
+        $replication = [
+            'enabled'      => (bool) config('sync.enabled'),
+            'role'         => (string) config('sync.role'),
+            'is_terminal'  => $this->writer->isTerminal(),
+            'central_url'  => (string) config('sync.central_url'),
+            'store_slug'   => (string) config('sync.store_slug'),
+            'key_last4'    => (string) config('sync.api_key') !== ''
+                ? substr((string) config('sync.api_key'), -4)
+                : null,
+            'device'       => $this->writer->deviceId(),
+            'problems'     => $this->writer->configProblems(),
+        ];
+
+        return view('admin.sync.index', compact('store', 'records', 'health', 'status', 'replication', 'oldestPending'));
     }
 
     /**
-     * Retry an individual failed sync record.
+     * Retry an individual failed sync record — over the network, to the central.
      */
     public function retry(Request $request, string $store_slug, int $id): RedirectResponse
     {
         $store = Store::where('slug', $store_slug)->firstOrFail();
         $record = SyncOutboxRecord::where('store_id', $store->id)->findOrFail($id);
 
-        $results = $this->syncService->processPushBatch($store, [[
-            'client_transaction_id' => $record->client_transaction_id,
-            'record_type'           => $record->record_type,
-            'payload'               => $record->payload,
-            'created_offline_at'    => $record->created_offline_at?->toIso8601String(),
-        ]]);
+        $result = $this->client->push($store, 1, $record->client_transaction_id);
 
-        $status = $results[0]['status'] ?? 'failed';
-        if ($status === 'synced') {
-            return redirect()->back()->with('success', __('messages.sync_retry_success') ?? 'Sync successful!');
-        }
-
-        return redirect()->back()->with('error', $results[0]['error'] ?? 'Sync failed.');
+        return $this->redirectWithPushResult($result);
     }
 
     /**
@@ -67,23 +83,8 @@ class SyncAdminController extends Controller
     public function retryAll(Request $request, string $store_slug): RedirectResponse
     {
         $store = Store::where('slug', $store_slug)->firstOrFail();
-        $pending = $this->syncService->getPendingQueue($store, 100);
 
-        if ($pending->isEmpty()) {
-            return redirect()->back()->with('info', __('messages.sync_no_pending') ?? 'No pending records to sync.');
-        }
-
-        $records = $pending->map(fn ($r) => [
-            'client_transaction_id' => $r->client_transaction_id,
-            'record_type'           => $r->record_type,
-            'payload'               => $r->payload,
-            'created_offline_at'    => $r->created_offline_at?->toIso8601String(),
-        ])->all();
-
-        $results = $this->syncService->processPushBatch($store, $records);
-        $syncedCount = count(array_filter($results, fn ($r) => ($r['status'] ?? '') === 'synced'));
-
-        return redirect()->back()->with('success', "Processed {$syncedCount} of " . count($results) . " records successfully.");
+        return $this->redirectWithPushResult($this->client->push($store));
     }
 
     /**
@@ -140,8 +141,6 @@ class SyncAdminController extends Controller
 
     /**
      * JSON sync health for the admin status widget (session-authenticated).
-     *
-     * Replaces the widget's old unauthenticated hit on /api/v1/.../sync/status.
      */
     public function status(Request $request, string $store_slug): JsonResponse
     {
@@ -155,27 +154,65 @@ class SyncAdminController extends Controller
     }
 
     /**
-     * Process the pending outbox for the status widget (session-authenticated).
+     * Drain the queue towards the central installation (status widget button).
      */
     public function trigger(Request $request, string $store_slug): JsonResponse
     {
         $store = Store::where('slug', $store_slug)->firstOrFail();
-        $pending = $this->syncService->getPendingQueue($store);
 
-        if ($pending->isNotEmpty()) {
-            $records = $pending->map(fn ($r) => [
-                'client_transaction_id' => $r->client_transaction_id,
-                'record_type'           => $r->record_type,
-                'payload'               => $r->payload,
-                'created_offline_at'    => $r->created_offline_at?->toIso8601String(),
-            ])->all();
-
-            $this->syncService->processPushBatch($store, $records);
-        }
+        $result = $this->client->push($store);
 
         return response()->json([
             'success' => true,
+            'message' => $result['message'],
+            'pushed'  => $result['pushed'],
+            'synced'  => $result['synced'],
+            'failed'  => $result['failed'],
             'health'  => $this->syncService->getSyncHealth($store),
         ]);
+    }
+
+    /**
+     * Probe the central installation so the owner can tell a dead link from a
+     * rejected key. Kept out of index() so a page load never waits on a timeout.
+     */
+    public function testConnection(Request $request, string $store_slug): JsonResponse
+    {
+        $store = Store::where('slug', $store_slug)->firstOrFail();
+
+        return response()->json($this->client->ping($store) + [
+            'success' => true,
+            'store'   => $store->slug,
+        ]);
+    }
+
+    /**
+     * @param  array{ok:bool, pushed:int, synced:int, failed:int, message:string}  $result
+     */
+    private function redirectWithPushResult(array $result): RedirectResponse
+    {
+        if (! $result['ok']) {
+            $message = match ($result['message']) {
+                'offline'        => __('messages.sync_push_offline'),
+                'unauthorized'   => __('messages.sync_connection_unauthorized'),
+                'not_configured' => __('messages.sync_config_missing', ['keys' => implode(', ', $result['problems'] ?? [])]),
+                'nothing_to_push' => __('messages.sync_no_pending'),
+                default          => __('messages.sync_push_failed', ['reason' => $result['message']]),
+            };
+
+            return redirect()->back()->with('error', $message);
+        }
+
+        if ($result['pushed'] === 0) {
+            return redirect()->back()->with('info', __('messages.sync_no_pending'));
+        }
+
+        return redirect()->back()->with(
+            $result['failed'] > 0 ? 'warning' : 'success',
+            __('messages.sync_pushed_counts', [
+                'synced' => $result['synced'],
+                'failed' => $result['failed'],
+            ])
+        );
     }
 }

@@ -13,6 +13,7 @@ use App\POS\Models\CashierShift;
 use App\POS\Models\PosPayment;
 use App\POS\Models\PosSale;
 use App\POS\Models\PosSaleItem;
+use App\Services\SyncOutboxWriter;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -36,6 +37,7 @@ class PosSaleService
         private readonly CustomerDebtService $debts,
         private readonly PromotionService $promotions,
         private readonly MembershipLoyaltyService $loyalty,
+        private readonly SyncOutboxWriter $outbox,
     ) {
     }
 
@@ -1649,6 +1651,14 @@ class PosSaleService
             $this->loyalty->accrueForSale($sale, $actor);
 
             $this->clearCart($store);
+
+            // Transactional outbox: when this installation replicates its sales
+            // to a central one, the queue row is written in the SAME transaction
+            // as the sale. A sale can therefore never exist without its
+            // replication row, and a rolled-back sale never queues anything.
+            // recordPostedSale() swallows its own errors — the receipt matters
+            // more than the queue row.
+            $this->outbox->recordPostedSale($store, $sale);
 
             return $sale->load(['items', 'payments', 'customer']);
         });

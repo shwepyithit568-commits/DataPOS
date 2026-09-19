@@ -30,7 +30,9 @@
 14. [Online Order → Counter Fulfillment](DataPOS_Online_Order_Counter_Fulfillment_MM.md) — 2026-09-19: ဖောက်သည်အကောင့်ဖြင့် အွန်လိုင်းဝယ် → အတည်ပြု → ကောင်တာမှ ပေးအပ် (ချို့ယွင်းချက် ၃ ခု ပြင်ဆင်ပြီး)၊ **stock ဘယ်တုန်းလျှော့သွားသလဲ** ဇယား၊ ပြေစာလင့်နှင့် ငွေပေးချေမှုအခြေအနေ
 15. [Production Go-Live Checklist](DataPOS_Production_GoLive_Checklist_MM.md) — 2026-09-19: deploy နေ့ `.env` (APP_ENV/APP_DEBUG/SHOW_QUICK_LOGIN)၊ deploy command စဉ်၊ migration ၂ ခု၊ ပရင်တာ သတိပြုရန်၊ မစမ်းရသေးသည့်စာရင်း
 16. [Account Security Fix](DataPOS_Account_Security_Fix_MM.md) — 2026-09-19: ဖုန်းနံပါတ်ဖြင့် အကောင့်လွှဲယူနိုင်ခဲ့သည့် အန္တရာယ် ပိတ်ခြင်း (password_set_at၊ owner guard၊ အော်ဒါမှတ်တမ်း၊ ဆိုင်မှ reset) + လက်တွေ့စမ်းသပ်ချက်
-17. [Consolidation Manifest](CONSOLIDATION_MANIFEST.md)
+17. [Offline / LAN အသုံးပြုနည်းနှင့် အရောင်းပို့ခြင်း](DataPOS_Offline_Sync_MM.md) — 2026-09-19: အင်တာနက်မရှိချိန် Admin+POS အသုံးပြုနိုင်သည့် ပုံစံ ၂ မျိုး၊ terminal→central အရောင်းပို့ခြင်း၊ ငွေတိကျမှု အာမခံချက်၊ troubleshooting
+18. [Offline Sync — လက်တွေ့ စမ်းသပ်မှု အစီရင်ခံစာ](DataPOS_Offline_Sync_Verification_MM.md) — 2026-09-19: instance နှစ်ခု တကယ့် HTTP ဖြင့် စမ်းသပ်ချက် — ငွေကိုက်ခြင်း၊ idempotency၊ ရက်စွဲအလိုက် register၊ တွေ့ရှိပြင်ဆင်ခဲ့သည့် ချို့ယွင်းချက် ၇ ခု
+19. [Consolidation Manifest](CONSOLIDATION_MANIFEST.md)
 
 ## Historical archive
 
